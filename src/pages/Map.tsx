@@ -4,19 +4,20 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
-
-// TODO: Replace with your Mapbox token
-const MAPBOX_TOKEN = "YOUR_MAPBOX_TOKEN";
+import { MapboxConfig, useMapboxToken } from "@/components/MapboxConfig";
 
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [filters, setFilters] = useState<FilterType>();
+  const mapboxToken = useMapboxToken();
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+    console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
+    mapboxgl.accessToken = mapboxToken;
+    
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
@@ -30,6 +31,7 @@ const MapPage = () => {
     // Get user location
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        console.log("Got user location:", position.coords);
         if (map.current) {
           map.current.flyTo({
             center: [position.coords.longitude, position.coords.latitude],
@@ -45,7 +47,7 @@ const MapPage = () => {
     return () => {
       map.current?.remove();
     };
-  }, []);
+  }, [mapboxToken]);
 
   // Handle filter changes
   const handleFiltersChange = (newFilters: FilterType) => {
@@ -53,6 +55,10 @@ const MapPage = () => {
     console.log("Filters updated:", newFilters);
     // TODO: Fetch and update vehicles based on filters
   };
+
+  if (!mapboxToken) {
+    return <MapboxConfig />;
+  }
 
   return (
     <div className="h-screen relative">
