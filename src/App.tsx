@@ -19,7 +19,7 @@ const App = () => (
           <Route path="/map" element={<Map />} />
           <Route path="/saved" element={<div>Saved Cars Coming Soon</div>} />
           <Route path="/more" element={<div>More Options Coming Soon</div>} />
-          <Route path="/profile" element={<div>Profile Coming Soon</div>} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
