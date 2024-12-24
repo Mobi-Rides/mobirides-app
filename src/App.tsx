@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Map from "./pages/Map";
 import Profile from "./pages/Profile";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -20,7 +21,7 @@ const App = () => (
           <Route path="/saved" element={<ProtectedRoute><div>Saved Cars Coming Soon</div></ProtectedRoute>} />
           <Route path="/more" element={<ProtectedRoute><div>More Options Coming Soon</div></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/login" element={<div>Login Page Coming Soon</div>} />
+          <Route path="/login" element={<Login />} />
         </Routes>
         <Toaster />
         <Sonner />
