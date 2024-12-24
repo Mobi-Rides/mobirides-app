@@ -3,12 +3,34 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+      } catch (error) {
+        console.error('Error loading avatar:', error);
+      }
+    }
+    loadProfile();
+  }, []);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -61,13 +83,16 @@ const Profile = () => {
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-4">Avatar</h2>
         <div className="flex items-center gap-4">
-          {avatarUrl && (
-            <img
-              src={`${supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl}`}
-              alt="Avatar"
-              className="w-16 h-16 rounded-full object-cover"
+          <Avatar className="h-16 w-16">
+            <AvatarImage 
+              src={avatarUrl ? `${supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl}` : undefined}
+              alt="Profile Avatar" 
             />
-          )}
+            <AvatarFallback>
+              {/* Display initials or default avatar */}
+              👤
+            </AvatarFallback>
+          </Avatar>
           <Button 
             variant="outline" 
             disabled={uploading}
