@@ -3,7 +3,6 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthProvider } from "@supabase/auth-ui-react/dist/components/Auth/AuthProvider";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -32,14 +31,12 @@ const Login = () => {
           </p>
         </div>
         <div className="mt-8">
-          <AuthProvider supabaseClient={supabase}>
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
-              theme="light"
-              providers={[]}
-            />
-          </AuthProvider>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            theme="light"
+            providers={[]}
+          />
         </div>
       </div>
     </div>
