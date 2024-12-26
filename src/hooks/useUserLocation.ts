@@ -1,27 +1,10 @@
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { createUserMarker, handleLocationError, getLocationOptions } from '@/utils/locationUtils';
 import type { LocationState } from '@/types/location';
 
-/**
- * Hook to handle user location tracking on a Mapbox map instance
- * 
- * KNOWN ISSUES:
- * - Location accuracy may vary significantly depending on:
- *   1. Device GPS capabilities
- *   2. Environmental factors (indoor/outdoor, urban canyons)
- *   3. Browser implementation of Geolocation API
- * 
- * TODO: Future optimizations needed:
- * - Implement accuracy threshold filtering
- * - Add fallback to IP-based geolocation
- * - Consider using device orientation for better positioning
- * - Add location accuracy confidence indicator
- * - Implement retry mechanism for failed location attempts
- */
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
-  const { toast } = useToast();
   const [state, setState] = useState<LocationState>({
     watchId: null,
     userMarker: null
@@ -46,8 +29,8 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     const handleSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude, accuracy } = position.coords;
       console.log("User location updated:", { 
-        latitude, 
-        longitude, 
+        latitude: latitude.toFixed(6), 
+        longitude: longitude.toFixed(6), 
         accuracyInMeters: accuracy 
       });
       
@@ -61,17 +44,12 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
         const newMarker = createUserMarker(longitude, latitude, accuracy, mapInstance);
         setState(prev => ({ ...prev, userMarker: newMarker }));
 
-        // Only fly to location on first fix
-        if (!state.watchId) {
+        // Only fly to location on first fix or if accuracy improves significantly
+        if (!state.watchId || accuracy < 50) {
           mapInstance.flyTo({
             center: [longitude, latitude],
             zoom: 15,
             essential: true
-          });
-
-          toast({
-            title: "Location Found",
-            description: `Accuracy: ${Math.round(accuracy)} meters`,
           });
         }
       } catch (error) {
@@ -84,11 +62,15 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       }
     };
 
-    // Start watching position
+    // Start watching position with high accuracy
     const id = navigator.geolocation.watchPosition(
       handleSuccess,
       handleLocationError,
-      getLocationOptions()
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
     );
     
     setState(prev => ({ ...prev, watchId: id }));
@@ -104,7 +86,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
         state.userMarker.remove();
       }
     };
-  }, [mapInstance, toast]);
+  }, [mapInstance]);
 
   return state.watchId;
 };
