@@ -25,7 +25,7 @@ const Login = () => {
 
   const loginWithTestAccount = async (email: string, password: string) => {
     try {
-      console.log('Attempting to login with:', email);
+      console.log('Starting login attempt for:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -33,18 +33,22 @@ const Login = () => {
       });
 
       if (error) {
-        console.error('Login error:', error.message);
-        toast.error(error.message);
+        console.error('Login error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+        toast.error(error.message || "Failed to login");
         return;
       }
 
       if (data?.user) {
-        console.log('Login successful:', data.user.email);
-        toast.success("Logged in successfully");
+        console.log('Login successful for user:', data.user.email);
+        toast.success(`Welcome back, ${data.user.email}`);
       }
     } catch (error) {
       console.error('Unexpected error during login:', error);
-      toast.error("An unexpected error occurred during login");
+      toast.error("An unexpected error occurred");
     }
   };
 
@@ -55,6 +59,9 @@ const Login = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Use the test accounts below or create a new account
+          </p>
         </div>
         
         <div className="flex gap-4 justify-center">
