@@ -56,14 +56,16 @@ export const NotificationsSection = () => {
     fetchUserRole();
   }, []);
 
-  // Fetch messages based on user role
+  // Fetch messages for the current user
   const { data: messages } = useQuery({
-    queryKey: ['messages', userRole],
+    queryKey: ['messages'],
     queryFn: async () => {
+      console.log("Fetching messages");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data: messages } = await supabase
+      // Fetch all messages where the current user is either the receiver or sender
+      const { data: messages, error } = await supabase
         .from('messages')
         .select(`
           id,
@@ -77,9 +79,15 @@ export const NotificationsSection = () => {
             avatar_url
           )
         `)
-        .eq(userRole === 'host' ? 'receiver_id' : 'sender_id', user.id)
+        .or(`receiver_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
+      if (error) {
+        console.error("Error fetching messages:", error);
+        return [];
+      }
+
+      console.log("Messages fetched:", messages);
       return messages as Message[] || [];
     }
   });
@@ -107,7 +115,7 @@ export const NotificationsSection = () => {
       console.error('Error updating message status:', error);
     } else {
       // Invalidate the messages query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ['messages', userRole] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
     }
 
     setSelectedChat({
