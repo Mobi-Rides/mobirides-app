@@ -11,6 +11,8 @@ const Login = () => {
   const location = useLocation();
 
   useEffect(() => {
+    checkSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         const from = location.state?.from?.pathname || "/";
@@ -23,9 +25,17 @@ const Login = () => {
     };
   }, [navigate, location]);
 
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const from = location.state?.from?.pathname || "/";
+      navigate(from);
+    }
+  };
+
   const loginWithTestAccount = async (email: string, password: string) => {
     try {
-      console.log('Starting login attempt for:', email);
+      console.log('Login attempt started for:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -33,22 +43,26 @@ const Login = () => {
       });
 
       if (error) {
-        console.error('Login error details:', {
+        console.error('Login error:', {
           message: error.message,
           status: error.status,
-          name: error.name
+          name: error.name,
         });
-        toast.error(error.message || "Failed to login");
+        
+        toast.error("Invalid email or password. Please try again.");
         return;
       }
 
-      if (data?.user) {
-        console.log('Login successful for user:', data.user.email);
-        toast.success(`Welcome back, ${data.user.email}`);
+      if (data.user) {
+        console.log('Login successful for:', data.user.email);
+        toast.success(`Welcome back!`);
+        
+        const from = location.state?.from?.pathname || "/";
+        navigate(from);
       }
     } catch (error) {
-      console.error('Unexpected error during login:', error);
-      toast.error("An unexpected error occurred");
+      console.error('Unexpected error:', error);
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 
