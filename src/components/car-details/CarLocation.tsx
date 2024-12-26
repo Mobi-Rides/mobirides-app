@@ -52,7 +52,6 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
       // Add new marker
       marker.current = new mapboxgl.Marker({
         color: "#FF0000",
-        draggable: isAdjusting // Marker is draggable only in adjustment mode
       })
         .setLngLat([lng, lat])
         .addTo(map.current);
@@ -60,16 +59,17 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      // Handle marker drag events when in adjustment mode
-      if (isAdjusting && marker.current) {
-        marker.current.on('dragend', () => {
-          const coordinates = marker.current?.getLngLat();
-          if (coordinates) {
-            console.log("New marker position:", coordinates);
-            setNewCoordinates({ lat: coordinates.lat, lng: coordinates.lng });
-          }
-        });
-      }
+      // Handle map click events when in adjustment mode
+      map.current.on('click', (e) => {
+        if (isAdjusting && marker.current) {
+          const newLng = e.lngLat.lng;
+          const newLat = e.lngLat.lat;
+          
+          console.log("New marker position from click:", { lat: newLat, lng: newLng });
+          marker.current.setLngLat([newLng, newLat]);
+          setNewCoordinates({ lat: newLat, lng: newLng });
+        }
+      });
 
       map.current.on('load', () => {
         console.log("Map loaded successfully at coordinates:", {
@@ -90,10 +90,7 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
 
   const handleAdjustLocation = () => {
     setIsAdjusting(true);
-    if (marker.current) {
-      marker.current.setDraggable(true);
-    }
-    toast.info("Drag the marker to adjust the location. Click 'Save Location' when done.");
+    toast.info("Tap anywhere on the map to adjust the location. Click 'Save Location' when done.");
   };
 
   const handleSaveLocation = () => {
@@ -102,9 +99,6 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
       toast.success("New coordinates captured. Please review the console output.");
     }
     setIsAdjusting(false);
-    if (marker.current) {
-      marker.current.setDraggable(false);
-    }
   };
 
   if (!token) {
