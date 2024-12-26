@@ -23,6 +23,11 @@ const SavedCars = () => {
 
       console.log("Saved cars fetched:", savedCars);
       
+      if (!Array.isArray(savedCars)) {
+        console.log("savedCars is not an array, returning empty array");
+        return [];
+      }
+      
       // Map the nested cars data to a flat array and mark them as saved
       const validCars = savedCars
         .filter(saved => saved.cars !== null)

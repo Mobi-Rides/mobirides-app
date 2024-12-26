@@ -11,7 +11,7 @@ interface CarGridProps {
 }
 
 export const CarGrid = ({
-  cars,
+  cars = [],
   isLoading,
   error,
   loadMoreRef,
@@ -43,7 +43,7 @@ export const CarGrid = ({
     );
   }
 
-  if (cars.length === 0) {
+  if (!Array.isArray(cars) || cars.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
         No cars found matching your criteria.
@@ -68,6 +68,7 @@ export const CarGrid = ({
               seats={car.seats}
               location={car.location}
               year={car.year}
+              isSaved={car.isSaved}
             />
           </div>
         ))}
