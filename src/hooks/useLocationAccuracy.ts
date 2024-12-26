@@ -29,7 +29,7 @@ export const useLocationAccuracy = () => {
           icon: null,
           className: 'group relative',
           classNames: {
-            closeButton: 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-150 opacity-0 transition-opacity duration-200 p-2 group-hover:opacity-100'
+            closeButton: 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[400%] opacity-0 transition-opacity duration-200 p-2 group-hover:opacity-100'
           },
           onDismiss: () => {
             console.log("Toast manually dismissed by user");
@@ -48,7 +48,7 @@ export const useLocationAccuracy = () => {
           icon: null,
           className: 'group relative',
           classNames: {
-            closeButton: 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-150 opacity-0 transition-opacity duration-200 p-2 group-hover:opacity-100'
+            closeButton: 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[400%] opacity-0 transition-opacity duration-200 p-2 group-hover:opacity-100'
           },
           onDismiss: () => {
             console.log("Toast manually dismissed by user");
