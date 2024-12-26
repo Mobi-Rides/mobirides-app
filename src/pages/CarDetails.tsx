@@ -1,16 +1,15 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
-import { Heart, Share2, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { CarActions } from "@/components/car-details/CarActions";
 import type { Car } from "@/types/car";
 
 const CarDetails = () => {
   const { id } = useParams();
-  const { toast } = useToast();
 
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", id],
@@ -37,58 +36,6 @@ const CarDetails = () => {
       return data as Car & { profiles: { full_name: string; avatar_url: string | null } };
     },
   });
-
-  const handleSaveCar = async () => {
-    try {
-      // Get the current user's session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) throw sessionError;
-      if (!session?.user?.id) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to save cars.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from("saved_cars")
-        .insert({ 
-          car_id: id,
-          user_id: session.user.id
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Car saved!",
-        description: "You can find it in your saved cars list.",
-      });
-    } catch (error) {
-      console.error("Error saving car:", error);
-      toast({
-        title: "Error",
-        description: "Could not save the car. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleShare = () => {
-    navigator.share?.({
-      title: `${car?.brand} ${car?.model}`,
-      url: window.location.href,
-    }).catch((error) => {
-      console.error("Error sharing:", error);
-      toast({
-        title: "Error",
-        description: "Could not share the car details.",
-        variant: "destructive",
-      });
-    });
-  };
 
   if (isLoading) {
     return (
@@ -129,24 +76,6 @@ const CarDetails = () => {
             alt={`${car.brand} ${car.model}`}
             className="w-full h-64 object-cover rounded-lg"
           />
-          <div className="absolute top-4 right-4 flex gap-2">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="rounded-full bg-white/80 hover:bg-white"
-              onClick={handleShare}
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="rounded-full bg-white/80 hover:bg-white"
-              onClick={handleSaveCar}
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
 
         <div>
@@ -194,9 +123,7 @@ const CarDetails = () => {
           </Button>
         </div>
 
-        <Button className="w-full" size="lg">
-          Book Now
-        </Button>
+        <CarActions car={car} />
       </div>
       <Navigation />
     </div>

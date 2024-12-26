@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          car_id: string
+          created_at: string
+          end_date: string
+          id: string
+          renter_id: string
+          start_date: string
+          status: Database["public"]["Enums"]["booking_status"]
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          renter_id: string
+          start_date: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          total_price: number
+          updated_at?: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          renter_id?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_renter_id_fkey"
+            columns: ["renter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cars: {
         Row: {
           brand: string
@@ -151,6 +202,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       user_role: "host" | "renter"
       vehicle_type:
         | "Basic"
