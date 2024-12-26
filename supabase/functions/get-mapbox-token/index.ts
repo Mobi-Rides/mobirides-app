@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,23 +13,35 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const token = Deno.env.get('MAPBOX_TOKEN');
-  
-  if (!token) {
+  try {
+    const token = Deno.env.get('MAPBOX_TOKEN');
+    console.log('Retrieved Mapbox token:', token ? 'Token exists' : 'No token found');
+    
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: 'Mapbox token not configured' }),
+        { 
+          status: 404,
+          headers: corsHeaders
+        }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: 'Mapbox token not configured' }),
+      JSON.stringify({ token }),
+      { 
+        status: 200,
+        headers: corsHeaders
+      }
+    );
+  } catch (error) {
+    console.error('Error retrieving token:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
       { 
         status: 500,
         headers: corsHeaders
       }
     );
   }
-
-  return new Response(
-    JSON.stringify({ token }),
-    { 
-      status: 200,
-      headers: corsHeaders
-    }
-  );
 });

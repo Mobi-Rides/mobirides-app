@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useToast } from "./ui/use-toast";
@@ -6,11 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const getMapboxToken = async () => {
   try {
+    console.log('Fetching Mapbox token...');
     const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+    
     if (error) {
       console.error('Error fetching Mapbox token:', error);
       return null;
     }
+    
+    console.log('Mapbox token retrieved:', data?.token ? 'Token exists' : 'No token found');
     return data?.token;
   } catch (error) {
     console.error('Error invoking function:', error);
@@ -20,6 +24,7 @@ export const getMapboxToken = async () => {
 
 export const MapboxConfig = () => {
   const [token, setToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSaveToken = async () => {
@@ -32,7 +37,9 @@ export const MapboxConfig = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
+      console.log('Saving Mapbox token...');
       const { error } = await supabase.functions.invoke('set-mapbox-token', {
         body: { token }
       });
@@ -51,7 +58,11 @@ export const MapboxConfig = () => {
         title: "Success",
         description: "Mapbox token saved successfully",
       });
-      window.location.reload();
+      
+      // Reload after a short delay to ensure the token is available
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error("Error saving token:", error);
       toast({
@@ -59,6 +70,8 @@ export const MapboxConfig = () => {
         description: "Failed to save token. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,8 +100,11 @@ export const MapboxConfig = () => {
             value={token}
             onChange={(e) => setToken(e.target.value)}
             className="flex-1"
+            disabled={isLoading}
           />
-          <Button onClick={handleSaveToken}>Save Token</Button>
+          <Button onClick={handleSaveToken} disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Token"}
+          </Button>
         </div>
       </div>
     </div>

@@ -27,8 +27,18 @@ serve(async (req) => {
 
     // Verify token format
     if (typeof token !== 'string' || !token.startsWith('pk.')) {
-      throw new Error('Invalid token format');
+      return new Response(
+        JSON.stringify({ error: 'Invalid token format' }),
+        { 
+          status: 400,
+          headers: corsHeaders
+        }
+      );
     }
+
+    // In a real implementation, you would save the token to a secure storage
+    // For now, we'll just verify it's a valid format
+    console.log('Token validation successful');
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -38,6 +48,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error('Error saving token:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

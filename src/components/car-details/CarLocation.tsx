@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { MapboxConfig, getMapboxToken } from "../MapboxConfig";
+import { MapboxConfig } from "../MapboxConfig";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { useMapLocation } from "@/hooks/useMapLocation";
 import { updateCarLocation } from "@/services/carLocation";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface CarLocationProps {
@@ -19,12 +20,12 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   const [isAdjusting, setIsAdjusting] = useState(false);
   const { id: carId } = useParams();
   const queryClient = useQueryClient();
-  const mapboxToken = getMapboxToken();
+  const { token, isLoading } = useMapboxToken();
 
   const { mapContainer, map, newCoordinates, setNewCoordinates } = useMapLocation({
     initialLatitude: latitude || 0,
     initialLongitude: longitude || 0,
-    mapboxToken,
+    mapboxToken: token,
     isAdjusting
   });
 
@@ -59,7 +60,11 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
     }
   };
 
-  if (!mapboxToken) {
+  if (isLoading) {
+    return <div>Loading map configuration...</div>;
+  }
+
+  if (!token) {
     return <MapboxConfig />;
   }
 
