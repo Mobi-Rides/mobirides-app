@@ -28,7 +28,22 @@ export const useLocationAccuracy = () => {
         closeButton: true,
         icon: null,
         style: {
-          paddingRight: '32px' // Make room for the close button
+          position: 'relative',
+          paddingRight: '32px', // Make room for the close button
+        },
+        className: 'group',
+        closeButtonStyle: {
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          opacity: 0,
+          transition: 'opacity 0.2s',
+          padding: '8px',
+          scale: '1.5',
+        },
+        classNames: {
+          closeButton: 'group-hover:opacity-100'
         }
       });
       setToastId(id);
@@ -41,7 +56,22 @@ export const useLocationAccuracy = () => {
         closeButton: true,
         icon: null,
         style: {
-          paddingRight: '32px' // Make room for the close button
+          position: 'relative',
+          paddingRight: '32px', // Make room for the close button
+        },
+        className: 'group',
+        closeButtonStyle: {
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          opacity: 0,
+          transition: 'opacity 0.2s',
+          padding: '8px',
+          scale: '1.5',
+        },
+        classNames: {
+          closeButton: 'group-hover:opacity-100'
         }
       });
     }
