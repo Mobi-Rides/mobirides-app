@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Message {
@@ -112,8 +112,21 @@ export const ChatDrawer = ({ isOpen, onClose, receiverId, receiverName, carId }:
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
       <DrawerContent className="h-[90vh]">
-        <DrawerHeader>
-          <DrawerTitle>Chat with {receiverName}</DrawerTitle>
+        <DrawerHeader className="flex items-center justify-between border-b pb-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+            <DrawerTitle>{receiverName}</DrawerTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </DrawerHeader>
         <div className="p-4 flex flex-col h-full">
           <ScrollArea className="flex-1 mb-4">
