@@ -1,12 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { LOCATION_SETTINGS } from '@/utils/locationConstants';
-import { X } from 'lucide-react';
 
 export const useLocationAccuracy = () => {
   const [bestAccuracy, setBestAccuracy] = useState<number | null>(null);
-  const [toastId, setToastId] = useState<string | number | null>(null);
-  const [isToastDismissed, setIsToastDismissed] = useState(false);
+  const toastIdRef = useRef<string | number | null>(null);
+  const isDismissedRef = useRef(false);
 
   const updateAccuracy = useCallback((accuracy: number) => {
     setBestAccuracy(prev => {
@@ -18,11 +17,10 @@ export const useLocationAccuracy = () => {
     });
 
     // Only show toast if it hasn't been manually dismissed
-    if (!isToastDismissed) {
+    if (!isDismissedRef.current) {
       const message = `Location accuracy: ${Math.round(accuracy)}m`;
-      const { HIGH, GOOD } = LOCATION_SETTINGS.ACCURACY_THRESHOLDS;
       
-      if (!toastId) {
+      if (!toastIdRef.current) {
         // Create initial toast with close button
         const id = toast.info(message, {
           duration: Infinity,
@@ -35,15 +33,15 @@ export const useLocationAccuracy = () => {
           },
           onDismiss: () => {
             console.log("Toast manually dismissed by user");
-            setIsToastDismissed(true);
-            setToastId(null);
+            isDismissedRef.current = true;
+            toastIdRef.current = null;
           }
         });
-        setToastId(id);
+        toastIdRef.current = id;
       } else {
         // Update existing toast
         toast.message(message, {
-          id: toastId,
+          id: toastIdRef.current,
           duration: Infinity,
           dismissible: true,
           closeButton: true,
@@ -54,13 +52,13 @@ export const useLocationAccuracy = () => {
           },
           onDismiss: () => {
             console.log("Toast manually dismissed by user");
-            setIsToastDismissed(true);
-            setToastId(null);
+            isDismissedRef.current = true;
+            toastIdRef.current = null;
           }
         });
       }
     }
-  }, [toastId, isToastDismissed]);
+  }, []);
 
   return { bestAccuracy, updateAccuracy };
 };
