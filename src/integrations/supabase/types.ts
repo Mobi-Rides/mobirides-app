@@ -60,6 +60,41 @@ export type Database = {
           },
         ]
       }
+      car_images: {
+        Row: {
+          car_id: string
+          created_at: string
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_images_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cars: {
         Row: {
           brand: string

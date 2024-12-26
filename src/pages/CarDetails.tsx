@@ -8,6 +8,7 @@ import { CarHeader } from "@/components/car-details/CarHeader";
 import { CarSpecs } from "@/components/car-details/CarSpecs";
 import { CarOwner } from "@/components/car-details/CarOwner";
 import { CarDescription } from "@/components/car-details/CarDescription";
+import { CarImageCarousel } from "@/components/car-details/CarImageCarousel";
 import type { Car } from "@/types/car";
 
 const CarDetails = () => {
@@ -76,6 +77,7 @@ const CarDetails = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="space-y-4 p-4">
+        <CarImageCarousel carId={car.id} mainImageUrl={car.image_url} />
         <CarHeader
           brand={car.brand}
           model={car.model}
