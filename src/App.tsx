@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import AddCar from "./pages/AddCar";
 import SavedCars from "./pages/SavedCars";
+import More from "./pages/More";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +23,7 @@ const App = () => (
           <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
           <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
           <Route path="/saved" element={<ProtectedRoute><SavedCars /></ProtectedRoute>} />
-          <Route path="/more" element={<ProtectedRoute><div>More Options Coming Soon</div></ProtectedRoute>} />
+          <Route path="/more" element={<ProtectedRoute><More /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
         </Routes>
