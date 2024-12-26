@@ -9,6 +9,9 @@ import { NotificationsSection } from "@/components/profile/NotificationsSection"
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
 import { Navigation } from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,17 @@ const Profile = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Logged out successfully");
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Failed to log out");
+    }
+  };
+
   if (loading) return <ProfileLoading />;
   if (error) return <ProfileError error={error} />;
 
@@ -67,6 +81,16 @@ const Profile = () => {
       <ProfileForm initialValues={initialFormValues} />
       <NotificationsSection />
       <RoleSection />
+      <div className="mb-20">
+        <Button 
+          variant="destructive" 
+          className="w-full" 
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Log Out
+        </Button>
+      </div>
       <Navigation />
     </div>
   );
