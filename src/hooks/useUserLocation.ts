@@ -2,6 +2,22 @@ import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from '@/components/ui/use-toast';
 
+/**
+ * Hook to handle user location tracking on a Mapbox map instance
+ * 
+ * KNOWN ISSUES:
+ * - Location accuracy may vary significantly depending on:
+ *   1. Device GPS capabilities
+ *   2. Environmental factors (indoor/outdoor, urban canyons)
+ *   3. Browser implementation of Geolocation API
+ * 
+ * TODO: Future optimizations needed:
+ * - Implement accuracy threshold filtering
+ * - Add fallback to IP-based geolocation
+ * - Consider using device orientation for better positioning
+ * - Add location accuracy confidence indicator
+ * - Implement retry mechanism for failed location attempts
+ */
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
   const { toast } = useToast();
   const [watchId, setWatchId] = useState<number | null>(null);
