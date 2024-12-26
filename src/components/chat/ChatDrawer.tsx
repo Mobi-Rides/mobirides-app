@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,10 +28,28 @@ export const ChatDrawer = ({ isOpen, onClose, receiverId, receiverName, carId }:
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [receiverAvatar, setReceiverAvatar] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!isOpen) return;
+
+    const fetchReceiverProfile = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', receiverId)
+        .single();
+
+      if (profile?.avatar_url) {
+        const { data } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(profile.avatar_url);
+        setReceiverAvatar(data.publicUrl);
+      }
+    };
+
+    fetchReceiverProfile();
 
     const fetchMessages = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,7 +90,7 @@ export const ChatDrawer = ({ isOpen, onClose, receiverId, receiverName, carId }:
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isOpen]);
+  }, [isOpen, receiverId]);
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -117,7 +136,15 @@ export const ChatDrawer = ({ isOpen, onClose, receiverId, receiverName, carId }:
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
-            <DrawerTitle>{receiverName}</DrawerTitle>
+            <div className="flex items-center gap-3">
+              <DrawerTitle>{receiverName}</DrawerTitle>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={receiverAvatar || undefined} alt={receiverName} />
+                <AvatarFallback>
+                  {receiverName.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
