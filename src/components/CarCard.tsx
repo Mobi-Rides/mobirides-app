@@ -54,7 +54,8 @@ export const CarCard = ({
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/book/${id}`);
+    // Instead of navigating to /book/:id, we'll navigate to /cars/:id which has the booking dialog
+    navigate(`/cars/${id}`);
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
