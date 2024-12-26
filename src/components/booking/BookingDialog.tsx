@@ -21,6 +21,23 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const createNotification = async (senderId: string, receiverId: string, content: string, carId: string) => {
+    console.log("Creating notification:", { senderId, receiverId, content, carId });
+    const { error } = await supabase
+      .from("messages")
+      .insert({
+        sender_id: senderId,
+        receiver_id: receiverId,
+        content,
+        related_car_id: carId,
+      });
+
+    if (error) {
+      console.error("Error creating notification:", error);
+      throw error;
+    }
+  };
+
   const handleBooking = async () => {
     if (!startDate || !endDate) {
       toast({
@@ -55,28 +72,20 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (bookingError) throw bookingError;
 
       // Create notification for renter
-      const { error: renterNotificationError } = await supabase
-        .from("messages")
-        .insert({
-          sender_id: car.owner_id,
-          receiver_id: session.session.user.id,
-          content: `Your booking for ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")} has been confirmed.`,
-          related_car_id: car.id,
-        });
-
-      if (renterNotificationError) console.error("Error creating renter notification:", renterNotificationError);
+      await createNotification(
+        car.owner_id,
+        session.session.user.id,
+        `Your booking for ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")} has been confirmed.`,
+        car.id
+      );
 
       // Create notification for host
-      const { error: hostNotificationError } = await supabase
-        .from("messages")
-        .insert({
-          sender_id: session.session.user.id,
-          receiver_id: car.owner_id,
-          content: `New booking received for your ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
-          related_car_id: car.id,
-        });
-
-      if (hostNotificationError) console.error("Error creating host notification:", hostNotificationError);
+      await createNotification(
+        session.session.user.id,
+        car.owner_id,
+        `New booking received for your ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
+        car.id
+      );
 
       toast({
         title: "Success",

@@ -28,7 +28,8 @@ const Bookings = () => {
           cars (
             brand,
             model,
-            image_url
+            image_url,
+            owner_id
           )
         `)
         .order("created_at", { ascending: false });
@@ -43,14 +44,40 @@ const Bookings = () => {
     },
   });
 
+  const createCancellationNotifications = async (booking: any) => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session?.user) return;
+
+    // Notify the car owner
+    await supabase.from("messages").insert({
+      sender_id: session.session.user.id,
+      receiver_id: booking.cars.owner_id,
+      content: `Booking for ${booking.cars.brand} ${booking.cars.model} from ${format(new Date(booking.start_date), "PPP")} to ${format(new Date(booking.end_date), "PPP")} has been cancelled.`,
+      related_car_id: booking.car_id,
+    });
+
+    // Notify the renter (confirmation of cancellation)
+    await supabase.from("messages").insert({
+      sender_id: booking.cars.owner_id,
+      receiver_id: session.session.user.id,
+      content: `Your booking for ${booking.cars.brand} ${booking.cars.model} from ${format(new Date(booking.start_date), "PPP")} to ${format(new Date(booking.end_date), "PPP")} has been cancelled.`,
+      related_car_id: booking.car_id,
+    });
+  };
+
   const handleCancelBooking = async (bookingId: string) => {
     try {
+      const bookingToCancel = bookings?.find(b => b.id === bookingId);
+      if (!bookingToCancel) return;
+
       const { error } = await supabase
         .from("bookings")
         .update({ status: "cancelled" })
         .eq("id", bookingId);
 
       if (error) throw error;
+
+      await createCancellationNotifications(bookingToCancel);
 
       toast({
         title: "Success",
