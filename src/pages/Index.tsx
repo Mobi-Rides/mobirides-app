@@ -13,11 +13,18 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
+import type { Car, CarQueryResponse } from "@/types/car";
 
 const ITEMS_PER_PAGE = 10;
 
 // Fetch cars from Supabase with filters and pagination
-const fetchCars = async ({ pageParam = 0, filters }: { pageParam?: number; filters?: Filters }) => {
+const fetchCars = async ({ 
+  pageParam = 0, 
+  filters 
+}: { 
+  pageParam?: number; 
+  filters?: Filters 
+}): Promise<CarQueryResponse> => {
   console.log("Fetching cars with filters:", filters, "page:", pageParam);
   let query = supabase
     .from("cars")
@@ -45,11 +52,15 @@ const fetchCars = async ({ pageParam = 0, filters }: { pageParam?: number; filte
   }
 
   console.log("Cars fetched successfully:", data);
-  return { data, nextPage: data.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined, count };
+  return { 
+    data: data || [], 
+    nextPage: data && data.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
+    count 
+  };
 };
 
 // Get unique brands from cars
-const getUniqueBrands = (cars: any[]) => {
+const getUniqueBrands = (cars: Car[]) => {
   const brands = [...new Set(cars.map(car => car.brand))];
   return brands.map(name => ({
     name,
@@ -83,7 +94,6 @@ const Index = () => {
     queryKey: ["cars", filters],
     queryFn: ({ pageParam }) => fetchCars({ pageParam, filters }),
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    initialPageSize: ITEMS_PER_PAGE,
   });
 
   useEffect(() => {
