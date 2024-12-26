@@ -17,28 +17,63 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   const token = useMapboxToken();
 
   useEffect(() => {
-    if (!token || !mapContainer.current || !latitude || !longitude) return;
+    if (!token || !mapContainer.current || !latitude || !longitude) {
+      console.log("Missing required parameters for map:", { token: !!token, latitude, longitude });
+      return;
+    }
 
-    console.log("Initializing map with coordinates:", { latitude, longitude });
+    console.log("Initializing map with precise coordinates:", { 
+      latitude: latitude.toFixed(6), 
+      longitude: longitude.toFixed(6) 
+    });
     
     mapboxgl.accessToken = token;
     
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [longitude, latitude],
-      zoom: 14,
-    });
+    // Ensure coordinates are properly converted to numbers
+    const lng = Number(longitude);
+    const lat = Number(latitude);
+    
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [lng, lat],
+        zoom: 15, // Increased zoom level for better precision
+        pitchWithRotate: false, // Disable pitch with rotate for better accuracy
+      });
 
-    marker.current = new mapboxgl.Marker()
-      .setLngLat([longitude, latitude])
-      .addTo(map.current);
+      // Remove any existing marker
+      if (marker.current) {
+        marker.current.remove();
+      }
 
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      // Add new marker
+      marker.current = new mapboxgl.Marker({
+        color: "#FF0000",
+        draggable: false
+      })
+        .setLngLat([lng, lat])
+        .addTo(map.current);
 
-    return () => {
-      map.current?.remove();
-    };
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      // Log when map is fully loaded
+      map.current.on('load', () => {
+        console.log("Map loaded successfully at coordinates:", {
+          center: map.current?.getCenter(),
+          zoom: map.current?.getZoom()
+        });
+      });
+
+      return () => {
+        console.log("Cleaning up map instance");
+        marker.current?.remove();
+        map.current?.remove();
+      };
+    } catch (error) {
+      console.error("Error initializing map:", error);
+    }
   }, [latitude, longitude, token]);
 
   if (!token) {
@@ -61,6 +96,9 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
       <div className="relative w-full h-[300px] rounded-lg overflow-hidden">
         <div ref={mapContainer} className="absolute inset-0" />
       </div>
+      <p className="text-xs text-muted-foreground">
+        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+      </p>
     </div>
   );
 };
