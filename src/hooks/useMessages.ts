@@ -19,6 +19,7 @@ export const useMessages = () => {
           content,
           created_at,
           sender_id,
+          receiver_id,
           status,
           sender:profiles!messages_sender_id_fkey (
             id,
@@ -26,7 +27,7 @@ export const useMessages = () => {
             avatar_url
           )
         `)
-        .or(`receiver_id.eq.${user.id}`)
+        .eq('receiver_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -35,7 +36,7 @@ export const useMessages = () => {
       }
 
       console.log("Messages fetched:", messages);
-      return messages as Message[] || [];
+      return messages as Message[];
     }
   });
 

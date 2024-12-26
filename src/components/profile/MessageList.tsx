@@ -20,10 +20,10 @@ export const MessageList = ({ messages, onMessageClick }: MessageListProps) => {
         <div 
           key={message.id} 
           className="mb-4 cursor-pointer hover:bg-muted p-2 rounded-md transition-colors"
-          onClick={() => onMessageClick(message.sender_id, message.sender.full_name)}
+          onClick={() => onMessageClick(message.sender_id, message.sender?.full_name || null)}
         >
           <div className="flex items-center gap-2">
-            <span className="font-medium">{message.sender.full_name || 'Unknown User'}</span>
+            <span className="font-medium">{message.sender?.full_name || 'Unknown User'}</span>
             <span className="text-sm text-muted-foreground">
               {new Date(message.created_at).toLocaleDateString()}
             </span>

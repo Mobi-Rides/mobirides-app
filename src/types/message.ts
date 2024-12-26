@@ -6,4 +6,9 @@ export interface Message {
   related_car_id?: string;
   created_at: string;
   status?: 'sent' | 'delivered' | 'read';
+  sender?: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
 }
