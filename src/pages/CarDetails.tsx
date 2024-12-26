@@ -118,6 +118,8 @@ const CarDetails = () => {
         <CarOwner
           ownerName={car.profiles.full_name}
           avatarUrl={avatarUrl}
+          ownerId={car.owner_id}
+          carId={car.id}
         />
         <CarReviews car={car} />
         <CarActions car={car} />
