@@ -11,7 +11,7 @@ export const LOCATION_SETTINGS = {
 } as const;
 
 export const MAP_SETTINGS = {
-  ZOOM_LEVEL: 15,
+  ZOOM_LEVEL: 16,
   ANIMATION_DURATION: 1000,
   VERTICAL_OFFSET_PERCENT: 0.25,
   PADDING: {

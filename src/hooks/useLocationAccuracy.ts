@@ -4,6 +4,7 @@ import { LOCATION_SETTINGS } from '@/utils/locationConstants';
 
 export const useLocationAccuracy = () => {
   const [bestAccuracy, setBestAccuracy] = useState<number | null>(null);
+  const [toastId, setToastId] = useState<string | null>(null);
 
   const updateAccuracy = useCallback((accuracy: number) => {
     setBestAccuracy(prev => {
@@ -14,18 +15,24 @@ export const useLocationAccuracy = () => {
       return prev;
     });
 
-    // Provide feedback about location accuracy
+    // Update or create accuracy toast
+    const message = `Location accuracy: ${Math.round(accuracy)}m`;
     const { HIGH, GOOD } = LOCATION_SETTINGS.ACCURACY_THRESHOLDS;
-    if (accuracy <= GOOD) {
-      if (accuracy <= HIGH) {
-        toast.success(`High accuracy location obtained (${Math.round(accuracy)}m)`);
-      } else {
-        toast.success(`Good accuracy location obtained (${Math.round(accuracy)}m)`);
-      }
+    
+    if (!toastId) {
+      // Create initial toast
+      const id = toast.info(message, {
+        duration: Infinity,
+      });
+      setToastId(id);
     } else {
-      toast.warning(`Still improving accuracy... Current: ${Math.round(accuracy)}m`);
+      // Update existing toast
+      toast.message(message, {
+        id: toastId,
+        duration: Infinity,
+      });
     }
-  }, []);
+  }, [toastId]);
 
   return { bestAccuracy, updateAccuracy };
 };

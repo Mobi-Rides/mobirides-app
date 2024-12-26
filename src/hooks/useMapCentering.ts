@@ -7,15 +7,14 @@ export const useMapCentering = (mapInstance: mapboxgl.Map | null) => {
     if (!mapInstance) return;
 
     const mapDiv = mapInstance.getContainer();
-    const verticalOffset = mapDiv.clientHeight * MAP_SETTINGS.VERTICAL_OFFSET_PERCENT;
+    const verticalOffset = -mapDiv.clientHeight * MAP_SETTINGS.VERTICAL_OFFSET_PERCENT;
 
     mapInstance.flyTo({
       center: [longitude, latitude],
       zoom: MAP_SETTINGS.ZOOM_LEVEL,
       essential: true,
       duration: MAP_SETTINGS.ANIMATION_DURATION,
-      offset: [0, verticalOffset],
-      padding: MAP_SETTINGS.PADDING
+      offset: [0, verticalOffset]
     });
   }, [mapInstance]);
 
