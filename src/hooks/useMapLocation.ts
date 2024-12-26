@@ -52,13 +52,14 @@ export const useMapLocation = ({
 
       marker.current = new mapboxgl.Marker({
         color: "#FF0000",
+        draggable: isAdjusting
       })
         .setLngLat([initialLongitude, initialLatitude])
         .addTo(map.current);
 
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      map.current.on('click', (e) => {
+      const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
         if (isAdjusting && marker.current) {
           const newLng = e.lngLat.lng;
           const newLat = e.lngLat.lat;
@@ -67,7 +68,9 @@ export const useMapLocation = ({
           marker.current.setLngLat([newLng, newLat]);
           setNewCoordinates({ lat: newLat, lng: newLng });
         }
-      });
+      };
+
+      map.current.on('click', handleMapClick);
 
       map.current.on('load', () => {
         console.log("Map loaded successfully at coordinates:", {
