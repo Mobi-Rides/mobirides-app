@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMapboxToken } from "../MapboxConfig";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMapLocation } from "@/hooks/useMapLocation";
+import { updateCarLocation } from "@/services/carLocation";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface CarLocationProps {
   latitude: number | null;
@@ -15,83 +15,17 @@ interface CarLocationProps {
 }
 
 export const CarLocation = ({ latitude, longitude, location }: CarLocationProps) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const marker = useRef<mapboxgl.Marker | null>(null);
   const token = useMapboxToken();
   const [isAdjusting, setIsAdjusting] = useState(false);
-  const [newCoordinates, setNewCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const { id: carId } = useParams();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!token || !mapContainer.current || !latitude || !longitude) {
-      console.log("Missing required parameters for map:", { token: !!token, latitude, longitude });
-      return;
-    }
-
-    console.log("Initializing map with coordinates:", { 
-      latitude: latitude.toFixed(6), 
-      longitude: longitude.toFixed(6) 
-    });
-    
-    mapboxgl.accessToken = token;
-    
-    const lng = Number(longitude);
-    const lat = Number(latitude);
-    
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [lng, lat],
-        zoom: 15,
-        pitchWithRotate: false,
-      });
-
-      // Remove any existing marker
-      if (marker.current) {
-        marker.current.remove();
-      }
-
-      // Add new marker
-      marker.current = new mapboxgl.Marker({
-        color: "#FF0000",
-      })
-        .setLngLat([lng, lat])
-        .addTo(map.current);
-
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      // Handle map click events when in adjustment mode
-      map.current.on('click', (e) => {
-        if (isAdjusting && marker.current) {
-          const newLng = e.lngLat.lng;
-          const newLat = e.lngLat.lat;
-          
-          console.log("New marker position from click:", { lat: newLat, lng: newLng });
-          marker.current.setLngLat([newLng, newLat]);
-          setNewCoordinates({ lat: newLat, lng: newLng });
-        }
-      });
-
-      map.current.on('load', () => {
-        console.log("Map loaded successfully at coordinates:", {
-          center: map.current?.getCenter(),
-          zoom: map.current?.getZoom()
-        });
-      });
-
-      return () => {
-        console.log("Cleaning up map instance");
-        marker.current?.remove();
-        map.current?.remove();
-      };
-    } catch (error) {
-      console.error("Error initializing map:", error);
-    }
-  }, [latitude, longitude, token, isAdjusting]);
+  const { mapContainer, newCoordinates, setNewCoordinates } = useMapLocation({
+    initialLatitude: latitude || 0,
+    initialLongitude: longitude || 0,
+    mapboxToken: token,
+    isAdjusting
+  });
 
   const handleAdjustLocation = () => {
     setIsAdjusting(true);
@@ -99,29 +33,19 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   };
 
   const handleSaveLocation = async () => {
-    if (newCoordinates && carId) {
-      console.log("Saving new coordinates:", newCoordinates);
-      
-      const { error } = await supabase
-        .from('cars')
-        .update({
-          latitude: newCoordinates.lat,
-          longitude: newCoordinates.lng
-        })
-        .eq('id', carId);
+    if (!newCoordinates || !carId) return;
 
-      if (error) {
-        console.error("Error updating coordinates:", error);
-        toast.error("Failed to save new location");
-        return;
-      }
+    const success = await updateCarLocation(
+      carId,
+      newCoordinates.lat,
+      newCoordinates.lng
+    );
 
-      toast.success("Location updated successfully");
-      // Invalidate the car query to refresh the data
+    if (success) {
       queryClient.invalidateQueries({ queryKey: ['car', carId] });
+      setIsAdjusting(false);
+      setNewCoordinates(null);
     }
-    setIsAdjusting(false);
-    setNewCoordinates(null);
   };
 
   if (!token) {

@@ -1,0 +1,95 @@
+import { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import { toast } from "sonner";
+
+interface UseMapLocationProps {
+  initialLatitude: number;
+  initialLongitude: number;
+  mapboxToken: string | null;
+  isAdjusting: boolean;
+}
+
+export const useMapLocation = ({ 
+  initialLatitude, 
+  initialLongitude, 
+  mapboxToken, 
+  isAdjusting 
+}: UseMapLocationProps) => {
+  const mapContainer = useRef<HTMLDivElement | null>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+  const [newCoordinates, setNewCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!mapboxToken || !mapContainer.current || !initialLatitude || !initialLongitude) {
+      console.log("Missing required parameters for map:", { 
+        token: !!mapboxToken, 
+        latitude: initialLatitude, 
+        longitude: initialLongitude 
+      });
+      return;
+    }
+
+    console.log("Initializing map with coordinates:", { 
+      latitude: initialLatitude.toFixed(6), 
+      longitude: initialLongitude.toFixed(6) 
+    });
+    
+    mapboxgl.accessToken = mapboxToken;
+    
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [initialLongitude, initialLatitude],
+        zoom: 15,
+        pitchWithRotate: false,
+      });
+
+      if (marker.current) {
+        marker.current.remove();
+      }
+
+      marker.current = new mapboxgl.Marker({
+        color: "#FF0000",
+      })
+        .setLngLat([initialLongitude, initialLatitude])
+        .addTo(map.current);
+
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      map.current.on('click', (e) => {
+        if (isAdjusting && marker.current) {
+          const newLng = e.lngLat.lng;
+          const newLat = e.lngLat.lat;
+          
+          console.log("New marker position from click:", { lat: newLat, lng: newLng });
+          marker.current.setLngLat([newLng, newLat]);
+          setNewCoordinates({ lat: newLat, lng: newLng });
+        }
+      });
+
+      map.current.on('load', () => {
+        console.log("Map loaded successfully at coordinates:", {
+          center: map.current?.getCenter(),
+          zoom: map.current?.getZoom()
+        });
+      });
+
+      return () => {
+        console.log("Cleaning up map instance");
+        marker.current?.remove();
+        map.current?.remove();
+      };
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Error initializing map");
+    }
+  }, [initialLatitude, initialLongitude, mapboxToken, isAdjusting]);
+
+  return {
+    mapContainer,
+    newCoordinates,
+    setNewCoordinates
+  };
+};
