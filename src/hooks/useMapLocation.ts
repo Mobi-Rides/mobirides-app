@@ -45,18 +45,16 @@ export const useMapLocation = ({
           style: "mapbox://styles/mapbox/streets-v12",
           center: [initialLongitude, initialLatitude],
           zoom: 15,
-          pitchWithRotate: false,
         });
 
         map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
       }
 
-      // Always update the center and zoom when coordinates change
+      // Update the center when coordinates change
       if (map.current) {
-        map.current.flyTo({
+        map.current.easeTo({
           center: [initialLongitude, initialLatitude],
           zoom: 15,
-          essential: true,
           duration: 1000
         });
       }
@@ -99,7 +97,6 @@ export const useMapLocation = ({
           marker.current.remove();
           marker.current = null;
         }
-        // Don't remove the map on cleanup, just remove the marker
       };
     } catch (error) {
       console.error("Error initializing map:", error);
