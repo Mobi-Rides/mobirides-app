@@ -1,0 +1,23 @@
+import { useCallback } from 'react';
+import mapboxgl from 'mapbox-gl';
+import { MAP_SETTINGS } from '@/utils/locationConstants';
+
+export const useMapCentering = (mapInstance: mapboxgl.Map | null) => {
+  const centerMapOnLocation = useCallback((longitude: number, latitude: number) => {
+    if (!mapInstance) return;
+
+    const mapDiv = mapInstance.getContainer();
+    const verticalOffset = mapDiv.clientHeight * MAP_SETTINGS.VERTICAL_OFFSET_PERCENT;
+
+    mapInstance.flyTo({
+      center: [longitude, latitude],
+      zoom: MAP_SETTINGS.ZOOM_LEVEL,
+      essential: true,
+      duration: MAP_SETTINGS.ANIMATION_DURATION,
+      offset: [0, verticalOffset],
+      padding: MAP_SETTINGS.PADDING
+    });
+  }, [mapInstance]);
+
+  return { centerMapOnLocation };
+};

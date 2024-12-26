@@ -2,6 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { createUserMarker, handleLocationError } from '@/utils/locationUtils';
+import { LOCATION_SETTINGS } from '@/utils/locationConstants';
+import { useLocationAccuracy } from './useLocationAccuracy';
+import { useMapCentering } from './useMapCentering';
 import type { LocationState } from '@/types/location';
 
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
@@ -9,7 +12,9 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     watchId: null,
     userMarker: null
   });
-  const [bestAccuracy, setBestAccuracy] = useState<number | null>(null);
+
+  const { bestAccuracy, updateAccuracy } = useLocationAccuracy();
+  const { centerMapOnLocation } = useMapCentering(mapInstance);
 
   const handleSuccess = useCallback((position: GeolocationPosition) => {
     if (!mapInstance) return;
@@ -19,21 +24,13 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       latitude: latitude.toFixed(6), 
       longitude: longitude.toFixed(6), 
       accuracyInMeters: accuracy,
-      // Log additional position information if available
       altitude: position.coords.altitude,
       altitudeAccuracy: position.coords.altitudeAccuracy,
       speed: position.coords.speed,
       timestamp: new Date(position.timestamp).toISOString()
     });
 
-    // Update best accuracy achieved
-    setBestAccuracy(prev => {
-      if (!prev || accuracy < prev) {
-        console.log("New best accuracy achieved:", accuracy, "meters");
-        return accuracy;
-      }
-      return prev;
-    });
+    updateAccuracy(accuracy);
     
     try {
       // Remove existing user marker if it exists
@@ -45,35 +42,13 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       const newMarker = createUserMarker(longitude, latitude, accuracy, mapInstance);
       setLocationState(prev => ({ ...prev, userMarker: newMarker }));
 
-      // Calculate the vertical offset to center the marker
-      const mapDiv = mapInstance.getContainer();
-      const verticalOffset = mapDiv.clientHeight * 0.25; // Offset by 25% of the viewport height
-
-      // Always fly to location when manually refreshing, with vertical offset
-      mapInstance.flyTo({
-        center: [longitude, latitude],
-        zoom: 15,
-        essential: true,
-        duration: 1000,
-        offset: [0, verticalOffset], // This ensures the marker appears in the center-bottom area
-        padding: { top: 50, bottom: 50, left: 50, right: 50 } // Add padding to ensure visibility
-      });
-
-      // Provide more detailed feedback about location accuracy
-      if (accuracy <= 50) {
-        if (accuracy <= 10) {
-          toast.success(`High accuracy location obtained (${Math.round(accuracy)}m)`);
-        } else {
-          toast.success(`Good accuracy location obtained (${Math.round(accuracy)}m)`);
-        }
-      } else {
-        toast.warning(`Still improving accuracy... Current: ${Math.round(accuracy)}m`);
-      }
+      // Center map on new location
+      centerMapOnLocation(longitude, latitude);
     } catch (error) {
       console.error("Error updating user location:", error);
       toast.error("Could not update your location on the map");
     }
-  }, [mapInstance, locationState.userMarker]);
+  }, [mapInstance, locationState.userMarker, updateAccuracy, centerMapOnLocation]);
 
   const refreshLocation = useCallback(() => {
     if (!("geolocation" in navigator)) {
@@ -85,11 +60,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     navigator.geolocation.getCurrentPosition(
       handleSuccess,
       handleLocationError,
-      {
-        enableHighAccuracy: true, // This enables use of WiFi and other sources
-        timeout: 30000, // Increased timeout for better accuracy
-        maximumAge: 0 // Always get fresh position
-      }
+      LOCATION_SETTINGS.HIGH_ACCURACY
     );
   }, [handleSuccess]);
 
@@ -109,17 +80,12 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     const id = navigator.geolocation.watchPosition(
       handleSuccess,
       handleLocationError,
-      {
-        enableHighAccuracy: true, // Enable WiFi and other sources
-        timeout: 30000,
-        maximumAge: 0
-      }
+      LOCATION_SETTINGS.HIGH_ACCURACY
     );
     
     setLocationState(prev => ({ ...prev, watchId: id }));
     console.log("Started watching user location with high accuracy settings (WiFi enabled), ID:", id);
 
-    // Cleanup function
     return () => {
       if (locationState.watchId) {
         navigator.geolocation.clearWatch(locationState.watchId);
