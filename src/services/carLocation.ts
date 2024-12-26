@@ -9,24 +9,26 @@ export const updateCarLocation = async (
   console.log("Attempting to update car location:", { carId, latitude, longitude });
 
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('cars')
       .update({ 
         latitude, 
         longitude,
         updated_at: new Date().toISOString()
       })
-      .eq('id', carId)
-      .select()
-      .maybeSingle();
+      .eq('id', carId);
 
     if (error) {
       console.error("Error updating car location:", error);
-      toast.error("Failed to update location");
+      if (error.code === 'PGRST116') {
+        toast.error("You don't have permission to update this car's location");
+      } else {
+        toast.error("Failed to update location");
+      }
       return false;
     }
 
-    console.log("Location update response:", data);
+    console.log("Location update successful");
     toast.success("Location updated successfully");
     return true;
   } catch (error) {
