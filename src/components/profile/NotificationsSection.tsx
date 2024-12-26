@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,6 +33,8 @@ export const NotificationsSection = () => {
     senderId: '',
     senderName: '',
   });
+
+  const queryClient = useQueryClient();
 
   // Fetch user role
   useEffect(() => {
@@ -88,7 +90,26 @@ export const NotificationsSection = () => {
     setUnreadCount(unread);
   }, [messages]);
 
-  const handleChatClick = (senderId: string, senderName: string | null) => {
+  const handleChatClick = async (senderId: string, senderName: string | null) => {
+    // Mark messages as read when opening chat
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Update message status to 'read'
+    const { error } = await supabase
+      .from('messages')
+      .update({ status: 'read' })
+      .eq('sender_id', senderId)
+      .eq('receiver_id', user.id)
+      .eq('status', 'sent');
+
+    if (error) {
+      console.error('Error updating message status:', error);
+    } else {
+      // Invalidate the messages query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ['messages', userRole] });
+    }
+
     setSelectedChat({
       isOpen: true,
       senderId,
