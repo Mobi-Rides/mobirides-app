@@ -11,14 +11,6 @@ import { fetchCars } from "@/utils/carFetching";
 import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
 
-const getUniqueBrands = (cars: Car[]) => {
-  const brands = [...new Set(cars.map(car => car.brand))];
-  return brands.map(name => ({
-    name,
-    logo: "/placeholder.svg"
-  }));
-};
-
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,12 +26,13 @@ const Index = () => {
   const { ref: loadMoreRef, inView } = useInView();
 
   // Fetch saved cars
-  const { data: savedCars } = useQuery({
+  const { data: savedCarIds } = useQuery({
     queryKey: ["saved-cars"],
     queryFn: async () => {
       const { data: savedCarsData } = await supabase
         .from("saved_cars")
         .select("car_id");
+      console.log("Saved car IDs:", savedCarsData);
       return new Set(savedCarsData?.map(saved => saved.car_id) || []);
     }
   });
@@ -76,7 +69,7 @@ const Index = () => {
     return matchesBrand && matchesSearch;
   }).map(car => ({
     ...car,
-    isSaved: savedCars?.has(car.id) || false
+    isSaved: savedCarIds ? Array.from(savedCarIds).includes(car.id) : false
   }));
 
   return (
@@ -119,6 +112,14 @@ const Index = () => {
       <Navigation />
     </div>
   );
+};
+
+const getUniqueBrands = (cars: Car[]) => {
+  const brands = [...new Set(cars.map(car => car.brand))];
+  return brands.map(name => ({
+    name,
+    logo: "/placeholder.svg"
+  }));
 };
 
 export default Index;
