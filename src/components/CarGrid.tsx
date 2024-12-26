@@ -57,6 +57,7 @@ export const CarGrid = ({
         {cars.map((car) => (
           <div key={car.id} className="animate-fade-in">
             <CarCard
+              id={car.id}
               brand={car.brand}
               model={car.model}
               price={car.price_per_day}
@@ -65,6 +66,8 @@ export const CarGrid = ({
               transmission={car.transmission}
               fuel={car.fuel}
               seats={car.seats}
+              location={car.location}
+              year={car.year}
             />
           </div>
         ))}

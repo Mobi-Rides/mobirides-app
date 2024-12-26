@@ -1,6 +1,8 @@
-import { Heart } from "lucide-react";
+import { Heart, Car, MapPin, Calendar } from "lucide-react";
 import { useState } from "react";
 import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface CarCardProps {
   brand: string;
@@ -11,6 +13,9 @@ interface CarCardProps {
   transmission: string;
   fuel: string;
   seats: number;
+  location: string;
+  year: number;
+  id: string;
 }
 
 export const CarCard = ({
@@ -22,8 +27,21 @@ export const CarCard = ({
   transmission,
   fuel,
   seats,
+  location,
+  year,
+  id,
 }: CarCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
+  const navigate = useNavigate();
+
+  const handleViewDetails = () => {
+    navigate(`/cars/${id}`);
+  };
+
+  const handleBookNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/book/${id}`);
+  };
 
   return (
     <Card className="overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-lg">
@@ -58,21 +76,46 @@ export const CarCard = ({
           </div>
           <div className="text-right">
             <p className="text-primary font-bold">BWP {price}/day</p>
+            <p className="text-sm text-gray-500">{year}</p>
           </div>
         </div>
-        <div className="flex gap-3 text-sm text-gray-600 mt-3">
-          <span className="flex items-center gap-1">
-            <i className="w-4 h-4">🔄</i>
-            {transmission}
-          </span>
-          <span className="flex items-center gap-1">
-            <i className="w-4 h-4">⛽</i>
-            {fuel}
-          </span>
-          <span className="flex items-center gap-1">
-            <i className="w-4 h-4">👥</i>
-            {seats} Seats
-          </span>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <MapPin className="w-4 h-4" />
+            <span className="truncate">{location}</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
+            <span className="flex items-center gap-1">
+              <Car className="w-4 h-4" />
+              {transmission}
+            </span>
+            <span className="flex items-center gap-1">
+              <i className="w-4 h-4">⛽</i>
+              {fuel}
+            </span>
+            <span className="flex items-center gap-1">
+              <i className="w-4 h-4">👥</i>
+              {seats} Seats
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewDetails();
+            }}
+          >
+            View Details
+          </Button>
+          <Button className="flex-1" onClick={handleBookNow}>
+            Book Now
+          </Button>
         </div>
       </div>
     </Card>
