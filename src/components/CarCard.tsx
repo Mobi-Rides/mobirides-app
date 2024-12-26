@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Card } from "./ui/card";
 import { CarImage } from "./car-card/CarImage";
 import { CarInfo } from "./car-card/CarInfo";
@@ -37,6 +40,8 @@ export const CarCard = ({
 }: CarCardProps) => {
   const [isFavorite, setIsFavorite] = useState(isSaved);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsFavorite(isSaved);
@@ -52,9 +57,64 @@ export const CarCard = ({
     navigate(`/book/${id}`);
   };
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to save cars",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isFavorite) {
+        // Remove from saved cars
+        const { error } = await supabase
+          .from('saved_cars')
+          .delete()
+          .eq('car_id', id)
+          .eq('user_id', session.user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Car removed",
+          description: "Car removed from your saved list",
+        });
+      } else {
+        // Add to saved cars
+        const { error } = await supabase
+          .from('saved_cars')
+          .insert({
+            car_id: id,
+            user_id: session.user.id
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Car saved",
+          description: "Car added to your saved list",
+        });
+      }
+
+      setIsFavorite(!isFavorite);
+      // Invalidate saved cars query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ["saved-cars"] });
+      
+    } catch (error) {
+      console.error('Error toggling saved state:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update saved cars",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
