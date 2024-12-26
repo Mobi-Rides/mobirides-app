@@ -60,6 +60,23 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     }
   }, [mapInstance, locationState.userMarker]);
 
+  const refreshLocation = useCallback(() => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      handleLocationError,
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0
+      }
+    );
+  }, [handleSuccess]);
+
   useEffect(() => {
     if (!mapInstance) {
       console.log("Map instance not available for location tracking");
@@ -98,5 +115,5 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     };
   }, [mapInstance, handleSuccess]);
 
-  return { watchId: locationState.watchId, bestAccuracy };
+  return { watchId: locationState.watchId, bestAccuracy, refreshLocation };
 };
