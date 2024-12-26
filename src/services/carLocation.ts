@@ -6,32 +6,26 @@ export const updateCarLocation = async (
   latitude: number,
   longitude: number
 ): Promise<boolean> => {
-  console.log("Updating car location:", { carId, latitude, longitude });
+  console.log("Attempting to update car location:", { carId, latitude, longitude });
 
-  try {
-    const { error, data } = await supabase
-      .from('cars')
-      .update({
-        latitude,
-        longitude,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', carId)
-      .select()
-      .single();
+  const { data, error } = await supabase
+    .from('cars')
+    .update({
+      latitude,
+      longitude,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', carId)
+    .select('*')
+    .single();
 
-    if (error) {
-      console.error("Error updating car location:", error);
-      toast.error("Failed to save new location");
-      return false;
-    }
-
-    console.log("Location updated successfully:", data);
-    toast.success("Location updated successfully");
-    return true;
-  } catch (error) {
-    console.error("Unexpected error updating location:", error);
-    toast.error("An unexpected error occurred");
+  if (error) {
+    console.error("Error updating car location:", error);
+    toast.error("Failed to update location");
     return false;
   }
+
+  console.log("Location updated successfully:", data);
+  toast.success("Location updated successfully");
+  return true;
 };

@@ -29,12 +29,16 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
 
   const handleAdjustLocation = () => {
     setIsAdjusting(true);
-    toast.info("Tap anywhere on the map to adjust the location. Click 'Save Location' when done.");
+    toast.info("Click anywhere on the map to adjust the location. Click 'Save Location' when done.");
   };
 
   const handleSaveLocation = async () => {
-    if (!newCoordinates || !carId) return;
+    if (!newCoordinates || !carId) {
+      console.log("Missing required data for location update:", { newCoordinates, carId });
+      return;
+    }
 
+    console.log("Saving new location:", newCoordinates);
     const success = await updateCarLocation(
       carId,
       newCoordinates.lat,
@@ -42,7 +46,7 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
     );
 
     if (success) {
-      queryClient.invalidateQueries({ queryKey: ['car', carId] });
+      await queryClient.invalidateQueries({ queryKey: ['car', carId] });
       setIsAdjusting(false);
       setNewCoordinates(null);
     }
