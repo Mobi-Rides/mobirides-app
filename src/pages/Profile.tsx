@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { Navigation } from "@/components/Navigation";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -62,6 +63,7 @@ const Profile = () => {
           <div className="h-10 w-full max-w-sm bg-gray-200 rounded mb-4"></div>
           <div className="h-10 w-full max-w-sm bg-gray-200 rounded"></div>
         </div>
+        <Navigation />
       </div>
     );
   }
@@ -72,12 +74,13 @@ const Profile = () => {
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+        <Navigation />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pb-20">
       <h1 className="text-2xl font-bold mb-6">Profile</h1>
       
       <ProfileAvatar 
@@ -93,6 +96,7 @@ const Profile = () => {
         <h2 className="text-lg font-semibold mb-4">Select Your Role</h2>
         <RoleSelector />
       </div>
+      <Navigation />
     </div>
   );
 };
