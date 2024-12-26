@@ -25,17 +25,24 @@ const Login = () => {
 
   const loginWithTestAccount = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to login with:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Login error details:', error);
+        throw error;
+      }
       
-      toast.success("Logged in successfully");
-    } catch (error) {
+      if (data.user) {
+        console.log('Login successful:', data.user.email);
+        toast.success("Logged in successfully");
+      }
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("Failed to login with test account");
+      toast.error(error.message || "Failed to login with test account");
     }
   };
 
