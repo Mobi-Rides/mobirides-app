@@ -18,13 +18,15 @@ export const useLocationMarker = (mapInstance: mapboxgl.Map | null) => {
     console.log("Updating user location marker:", { 
       latitude: latitude.toFixed(6), 
       longitude: longitude.toFixed(6), 
-      accuracyInMeters: accuracy
+      accuracyInMeters: accuracy,
+      existingMarker: !!existingMarker
     });
 
     updateAccuracy(accuracy);
 
-    // Remove existing marker if it exists
+    // Always remove existing marker if it exists
     if (existingMarker) {
+      console.log("Removing existing marker");
       existingMarker.remove();
     }
 

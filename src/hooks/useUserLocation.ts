@@ -16,7 +16,16 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     (position: GeolocationPosition) => {
       try {
         const newMarker = updateMarker(position, locationState.userMarker);
-        setLocationState(prev => ({ ...prev, userMarker: newMarker }));
+        if (newMarker) {
+          setLocationState(prev => {
+            // Remove old marker if it exists
+            if (prev.userMarker) {
+              console.log("Cleaning up old marker from state");
+              prev.userMarker.remove();
+            }
+            return { ...prev, userMarker: newMarker };
+          });
+        }
       } catch (error) {
         console.error("Error updating user location:", error);
         toast.error("Could not update your location on the map");
@@ -38,6 +47,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
         watchIdRef.current = null;
       }
       if (locationState.userMarker) {
+        console.log("Cleaning up marker on unmount");
         locationState.userMarker.remove();
       }
     };
