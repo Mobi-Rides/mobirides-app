@@ -39,7 +39,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       const numberOfDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       const totalPrice = numberOfDays * car.price_per_day;
 
-      const { error } = await supabase
+      // Create the booking
+      const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           car_id: car.id,
@@ -47,9 +48,35 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           start_date: format(startDate, "yyyy-MM-dd"),
           end_date: format(endDate, "yyyy-MM-dd"),
           total_price: totalPrice,
+        })
+        .select()
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      // Create notification for renter
+      const { error: renterNotificationError } = await supabase
+        .from("messages")
+        .insert({
+          sender_id: car.owner_id,
+          receiver_id: session.session.user.id,
+          content: `Your booking for ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")} has been confirmed.`,
+          related_car_id: car.id,
         });
 
-      if (error) throw error;
+      if (renterNotificationError) console.error("Error creating renter notification:", renterNotificationError);
+
+      // Create notification for host
+      const { error: hostNotificationError } = await supabase
+        .from("messages")
+        .insert({
+          sender_id: session.session.user.id,
+          receiver_id: car.owner_id,
+          content: `New booking received for your ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
+          related_car_id: car.id,
+        });
+
+      if (hostNotificationError) console.error("Error creating host notification:", hostNotificationError);
 
       toast({
         title: "Success",
@@ -57,7 +84,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       });
       
       onClose();
-      navigate("/profile"); // Redirect to profile to see bookings
+      navigate("/bookings");
     } catch (error) {
       console.error("Booking error:", error);
       toast({
