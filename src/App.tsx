@@ -12,6 +12,7 @@ import AddCar from "./pages/AddCar";
 import SavedCars from "./pages/SavedCars";
 import More from "./pages/More";
 import CarDetails from "./pages/CarDetails";
+import Bookings from "./pages/Bookings";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/more" element={<ProtectedRoute><More /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/cars/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
+          <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
         </Routes>
         <Toaster />
