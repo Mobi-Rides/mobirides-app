@@ -5,7 +5,7 @@ import { Navigation } from "@/components/Navigation";
 import type { Car } from "@/types/car";
 
 const SavedCars = () => {
-  const { data: cars, isLoading, error } = useQuery({
+  const { data: cars = [], isLoading, error } = useQuery({
     queryKey: ["saved-cars"],
     queryFn: async () => {
       console.log("Fetching saved cars...");
@@ -13,26 +13,7 @@ const SavedCars = () => {
         .from("saved_cars")
         .select(`
           car_id,
-          cars:car_id (
-            id,
-            owner_id,
-            brand,
-            model,
-            year,
-            vehicle_type,
-            price_per_day,
-            location,
-            latitude,
-            longitude,
-            transmission,
-            fuel,
-            seats,
-            description,
-            image_url,
-            is_available,
-            created_at,
-            updated_at
-          )
+          cars:car_id (*)
         `);
 
       if (savedCarsError) {
@@ -41,11 +22,16 @@ const SavedCars = () => {
       }
 
       console.log("Saved cars fetched:", savedCars);
-      // Filter out any null cars and map to the car objects
+      
+      // Map the nested cars data to a flat array and mark them as saved
       const validCars = savedCars
         .filter(saved => saved.cars !== null)
-        .map(saved => saved.cars) as Car[];
+        .map(saved => ({
+          ...saved.cars,
+          isSaved: true
+        })) as Car[];
       
+      console.log("Processed cars:", validCars);
       return validCars;
     },
   });
@@ -58,7 +44,7 @@ const SavedCars = () => {
 
       <main className="p-4">
         <CarGrid
-          cars={cars || []}
+          cars={cars}
           isLoading={isLoading}
           error={error}
           loadMoreRef={() => {}}
