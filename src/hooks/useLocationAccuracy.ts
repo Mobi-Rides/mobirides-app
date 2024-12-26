@@ -23,7 +23,7 @@ export const useLocationAccuracy = () => {
       if (!toastIdRef.current) {
         // Create initial toast with close button
         const id = toast.info(message, {
-          duration: Infinity,
+          duration: 3000, // Changed from Infinity to 3 seconds
           dismissible: true,
           closeButton: true,
           icon: null,
@@ -42,7 +42,7 @@ export const useLocationAccuracy = () => {
         // Update existing toast
         toast.message(message, {
           id: toastIdRef.current,
-          duration: Infinity,
+          duration: 3000, // Changed from Infinity to 3 seconds
           dismissible: true,
           closeButton: true,
           icon: null,
