@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useToast } from "./ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useMapboxToken = async () => {
+export const getMapboxToken = async () => {
   try {
     const { data, error } = await supabase.functions.invoke('get-mapbox-token');
     if (error) {
       console.error('Error fetching Mapbox token:', error);
       return null;
     }
-    return data.token;
+    return data?.token;
   } catch (error) {
     console.error('Error invoking function:', error);
     return null;
