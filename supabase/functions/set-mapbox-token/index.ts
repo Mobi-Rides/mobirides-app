@@ -37,9 +37,8 @@ serve(async (req) => {
       )
     }
 
-    // Store token in environment variable
     // Note: In Supabase Edge Functions, we can't actually set environment variables
-    // at runtime. This is just for validation.
+    // at runtime. The token needs to be set in the Supabase dashboard.
     console.log('Token validation successful')
 
     return new Response(
