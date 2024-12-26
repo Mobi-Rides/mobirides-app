@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { LOCATION_SETTINGS } from '@/utils/locationConstants';
+import { X } from 'lucide-react';
 
 export const useLocationAccuracy = () => {
   const [bestAccuracy, setBestAccuracy] = useState<number | null>(null);
@@ -23,7 +24,12 @@ export const useLocationAccuracy = () => {
       // Create initial toast with close button
       const id = toast.info(message, {
         duration: Infinity,
-        dismissible: true, // Makes the toast dismissible
+        dismissible: true,
+        closeButton: true,
+        icon: null,
+        style: {
+          paddingRight: '32px' // Make room for the close button
+        }
       });
       setToastId(id);
     } else {
@@ -31,7 +37,12 @@ export const useLocationAccuracy = () => {
       toast.message(message, {
         id: toastId,
         duration: Infinity,
-        dismissible: true, // Makes the toast dismissible
+        dismissible: true,
+        closeButton: true,
+        icon: null,
+        style: {
+          paddingRight: '32px' // Make room for the close button
+        }
       });
     }
   }, [toastId]);
