@@ -13,9 +13,27 @@ const SavedCars = () => {
         .from("saved_cars")
         .select(`
           car_id,
-          cars (*)
-        `)
-        .returns<{ cars: Car }[]>();
+          cars:car_id (
+            id,
+            owner_id,
+            brand,
+            model,
+            year,
+            vehicle_type,
+            price_per_day,
+            location,
+            latitude,
+            longitude,
+            transmission,
+            fuel,
+            seats,
+            description,
+            image_url,
+            is_available,
+            created_at,
+            updated_at
+          )
+        `);
 
       if (savedCarsError) {
         console.error("Error fetching saved cars:", savedCarsError);
@@ -23,7 +41,12 @@ const SavedCars = () => {
       }
 
       console.log("Saved cars fetched:", savedCars);
-      return savedCars.map(saved => saved.cars);
+      // Filter out any null cars and map to the car objects
+      const validCars = savedCars
+        .filter(saved => saved.cars !== null)
+        .map(saved => saved.cars) as Car[];
+      
+      return validCars;
     },
   });
 
