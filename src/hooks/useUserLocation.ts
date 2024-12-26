@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from '@/components/ui/use-toast';
+import { createUserMarker, handleLocationError, getLocationOptions } from '@/utils/locationUtils';
+import type { LocationState } from '@/types/location';
 
 /**
  * Hook to handle user location tracking on a Mapbox map instance
@@ -20,7 +22,10 @@ import { useToast } from '@/components/ui/use-toast';
  */
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
   const { toast } = useToast();
-  const [watchId, setWatchId] = useState<number | null>(null);
+  const [state, setState] = useState<LocationState>({
+    watchId: null,
+    userMarker: null
+  });
 
   useEffect(() => {
     if (!mapInstance) {
@@ -38,8 +43,6 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       return;
     }
 
-    let userMarker: mapboxgl.Marker | null = null;
-
     const handleSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude, accuracy } = position.coords;
       console.log("User location updated:", { 
@@ -50,26 +53,16 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       
       try {
         // Remove existing user marker if it exists
-        if (userMarker) {
-          userMarker.remove();
+        if (state.userMarker) {
+          state.userMarker.remove();
         }
 
         // Create a new marker for user's location
-        userMarker = new mapboxgl.Marker({
-          color: "#FF0000",
-          scale: 0.8
-        })
-          .setLngLat([longitude, latitude])
-          .setPopup(new mapboxgl.Popup().setHTML(`
-            <div class="p-2">
-              <p class="font-semibold">Your Location</p>
-              <p class="text-sm">Accuracy: ${Math.round(accuracy)}m</p>
-            </div>
-          `))
-          .addTo(mapInstance);
+        const newMarker = createUserMarker(longitude, latitude, accuracy, mapInstance);
+        setState(prev => ({ ...prev, userMarker: newMarker }));
 
         // Only fly to location on first fix
-        if (!watchId) {
+        if (!state.watchId) {
           mapInstance.flyTo({
             center: [longitude, latitude],
             zoom: 15,
@@ -91,42 +84,27 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       }
     };
 
-    const handleError = (error: GeolocationPositionError) => {
-      console.error("Geolocation error:", error.message);
-      toast({
-        title: "Location Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    };
-
-    const options: PositionOptions = {
-      enableHighAccuracy: true, // Request highest possible accuracy
-      timeout: 10000, // Wait up to 10 seconds for a position
-      maximumAge: 5000 // Accept positions up to 5 seconds old
-    };
-
     // Start watching position
     const id = navigator.geolocation.watchPosition(
       handleSuccess,
-      handleError,
-      options
+      handleLocationError,
+      getLocationOptions()
     );
     
-    setWatchId(id);
+    setState(prev => ({ ...prev, watchId: id }));
     console.log("Started watching user location with ID:", id);
 
     // Cleanup function
     return () => {
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
+      if (state.watchId) {
+        navigator.geolocation.clearWatch(state.watchId);
         console.log("Stopped watching user location");
       }
-      if (userMarker) {
-        userMarker.remove();
+      if (state.userMarker) {
+        state.userMarker.remove();
       }
     };
   }, [mapInstance, toast]);
 
-  return watchId;
+  return state.watchId;
 };

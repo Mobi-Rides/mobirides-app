@@ -1,29 +1,39 @@
-export const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+import mapboxgl from 'mapbox-gl';
+import { toast } from '@/components/ui/use-toast';
+
+export const createUserMarker = (
+  longitude: number,
+  latitude: number,
+  accuracy: number,
+  mapInstance: mapboxgl.Map
+): mapboxgl.Marker => {
+  const marker = new mapboxgl.Marker({
+    color: "#FF0000",
+    scale: 0.8
+  })
+    .setLngLat([longitude, latitude])
+    .setPopup(new mapboxgl.Popup().setHTML(`
+      <div class="p-2">
+        <p class="font-semibold">Your Location</p>
+        <p class="text-sm">Accuracy: ${Math.round(accuracy)}m</p>
+      </div>
+    `))
+    .addTo(mapInstance);
+
+  return marker;
 };
 
-const toRad = (value: number): number => {
-  return (value * Math.PI) / 180;
+export const handleLocationError = (error: GeolocationPositionError) => {
+  console.error("Geolocation error:", error.message);
+  toast({
+    title: "Location Error",
+    description: error.message,
+    variant: "destructive",
+  });
 };
 
-export const formatDistance = (distance: number): string => {
-  if (distance < 1) {
-    return `${Math.round(distance * 1000)}m`;
-  }
-  return `${distance.toFixed(1)}km`;
-};
+export const getLocationOptions = (): PositionOptions => ({
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 5000
+});
