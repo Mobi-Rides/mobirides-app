@@ -38,26 +38,34 @@ export const useMapLocation = ({
     mapboxgl.accessToken = mapboxToken;
     
     try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [initialLongitude, initialLatitude],
-        zoom: 15,
-        pitchWithRotate: false,
-      });
+      // Initialize map if it doesn't exist
+      if (!map.current) {
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: "mapbox://styles/mapbox/streets-v12",
+          center: [initialLongitude, initialLatitude],
+          zoom: 15,
+          pitchWithRotate: false,
+        });
 
+        map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      } else {
+        // If map exists, just update the center
+        map.current.setCenter([initialLongitude, initialLatitude]);
+      }
+
+      // Remove existing marker if it exists
       if (marker.current) {
         marker.current.remove();
       }
 
+      // Create new marker
       marker.current = new mapboxgl.Marker({
         color: "#FF0000",
         draggable: isAdjusting
       })
         .setLngLat([initialLongitude, initialLatitude])
         .addTo(map.current);
-
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
       const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
         if (isAdjusting && marker.current) {
@@ -80,9 +88,11 @@ export const useMapLocation = ({
       });
 
       return () => {
-        console.log("Cleaning up map instance");
-        marker.current?.remove();
-        map.current?.remove();
+        if (marker.current) {
+          marker.current.remove();
+          marker.current = null;
+        }
+        // Don't remove the map on cleanup, just remove the marker
       };
     } catch (error) {
       console.error("Error initializing map:", error);
