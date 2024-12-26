@@ -12,52 +12,66 @@ const MapPage = () => {
   const [filters, setFilters] = useState<FilterType>();
   const mapboxToken = useMapboxToken();
 
+  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
+
+    let mapInstance: mapboxgl.Map | null = null;
 
     try {
       console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
       mapboxgl.accessToken = mapboxToken;
       
-      const mapInstance = new mapboxgl.Map({
+      mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v12",
         center: [25.9231, -24.6282], // Gaborone coordinates
         zoom: 12
       });
 
-      // Store map instance in ref
       map.current = mapInstance;
 
       // Add navigation controls
-      mapInstance.addControl(new mapboxgl.NavigationControl(), "top-right");
+      const navControl = new mapboxgl.NavigationControl();
+      mapInstance.addControl(navControl, "top-right");
 
       // Get user location
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log("Got user location:", {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-          if (mapInstance) {
-            mapInstance.flyTo({
-              center: [position.coords.longitude, position.coords.latitude],
-              zoom: 14
-            });
+      const getUserLocation = () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log("Got user location:", { latitude, longitude });
+            
+            if (mapInstance) {
+              mapInstance.flyTo({
+                center: [longitude, latitude],
+                zoom: 14
+              });
+            }
+          },
+          (error) => {
+            console.error("Error getting location:", error.message);
           }
-        },
-        (error) => {
-          console.error("Error getting location:", error.message);
-        }
-      );
-
-      // Cleanup
-      return () => {
-        mapInstance.remove();
+        );
       };
+
+      getUserLocation();
     } catch (error) {
       console.error("Error initializing map:", error);
     }
+
+    // Cleanup function
+    return () => {
+      try {
+        if (mapInstance) {
+          console.log("Cleaning up map instance");
+          mapInstance.remove();
+          map.current = null;
+        }
+      } catch (error) {
+        console.error("Error cleaning up map:", error);
+      }
+    };
   }, [mapboxToken]);
 
   // Handle filter changes
