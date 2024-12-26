@@ -7,6 +7,7 @@ import { CarActions } from "@/components/car-details/CarActions";
 import { CarHeader } from "@/components/car-details/CarHeader";
 import { CarSpecs } from "@/components/car-details/CarSpecs";
 import { CarOwner } from "@/components/car-details/CarOwner";
+import { CarDescription } from "@/components/car-details/CarDescription";
 import type { Car } from "@/types/car";
 
 const CarDetails = () => {
@@ -82,25 +83,16 @@ const CarDetails = () => {
           location={car.location}
           imageUrl={car.image_url}
         />
-
         <CarSpecs
           pricePerDay={car.price_per_day}
           transmission={car.transmission}
           seats={car.seats}
         />
-
-        {car.description && (
-          <div>
-            <h2 className="font-semibold mb-2">Description</h2>
-            <p className="text-muted-foreground">{car.description}</p>
-          </div>
-        )}
-
+        <CarDescription description={car.description} />
         <CarOwner
           ownerName={car.profiles.full_name}
           avatarUrl={avatarUrl}
         />
-
         <CarActions car={car} />
       </div>
       <Navigation />

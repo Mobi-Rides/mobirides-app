@@ -1,11 +1,12 @@
-import { RoleSelector } from "@/components/RoleSelector";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { RoleSection } from "@/components/profile/RoleSection";
+import { ProfileLoading } from "@/components/profile/ProfileLoading";
+import { ProfileError } from "@/components/profile/ProfileError";
 import { Navigation } from "@/components/Navigation";
 
 const Profile = () => {
@@ -55,48 +56,15 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 w-32 bg-gray-200 rounded mb-6"></div>
-          <div className="h-16 w-16 bg-gray-200 rounded-full mb-4"></div>
-          <div className="h-10 w-full max-w-sm bg-gray-200 rounded mb-4"></div>
-          <div className="h-10 w-full max-w-sm bg-gray-200 rounded"></div>
-        </div>
-        <Navigation />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        <Navigation />
-      </div>
-    );
-  }
+  if (loading) return <ProfileLoading />;
+  if (error) return <ProfileError error={error} />;
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
       <ProfileHeader />
-      
-      <ProfileAvatar 
-        avatarUrl={avatarUrl} 
-        setAvatarUrl={setAvatarUrl} 
-      />
-
-      <ProfileForm 
-        initialValues={initialFormValues}
-      />
-
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Select Your Role</h2>
-        <RoleSelector />
-      </div>
+      <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
+      <ProfileForm initialValues={initialFormValues} />
+      <RoleSection />
       <Navigation />
     </div>
   );
