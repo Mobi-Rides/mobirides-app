@@ -31,7 +31,7 @@ const MapPage = () => {
       <div 
         ref={mapContainer} 
         className="w-full h-full"
-        style={{ position: 'relative' }} // This can help with certain rendering issues
+        style={{ position: 'relative' }}
       />
       <Navigation />
     </div>

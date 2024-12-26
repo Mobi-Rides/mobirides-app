@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { getMapboxToken } from "../MapboxConfig";
+import { MapboxConfig, useMapboxToken } from "../MapboxConfig";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { useMapLocation } from "@/hooks/useMapLocation";
@@ -16,18 +16,10 @@ interface CarLocationProps {
 }
 
 export const CarLocation = ({ latitude, longitude, location }: CarLocationProps) => {
-  const [token, setToken] = useState<string | null>(null);
   const [isAdjusting, setIsAdjusting] = useState(false);
   const { id: carId } = useParams();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const fetchToken = async () => {
-      const fetchedToken = await getMapboxToken();
-      setToken(fetchedToken);
-    };
-    fetchToken();
-  }, []);
+  const token = useMapboxToken();
 
   const { mapContainer, map, newCoordinates, setNewCoordinates } = useMapLocation({
     initialLatitude: latitude || 0,
@@ -68,7 +60,7 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   };
 
   if (!token) {
-    return null;
+    return <MapboxConfig />;
   }
 
   if (!latitude || !longitude) {

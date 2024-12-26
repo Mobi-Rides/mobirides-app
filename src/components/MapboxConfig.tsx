@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useToast } from "./ui/use-toast";
@@ -16,6 +16,21 @@ export const getMapboxToken = async () => {
     console.error('Error invoking function:', error);
     return null;
   }
+};
+
+// New hook to manage token state
+export const useMapboxToken = () => {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      const fetchedToken = await getMapboxToken();
+      setToken(fetchedToken);
+    };
+    fetchToken();
+  }, []);
+
+  return token;
 };
 
 export const MapboxConfig = () => {
