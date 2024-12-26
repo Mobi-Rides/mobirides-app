@@ -21,6 +21,22 @@ const CarDetails = () => {
     queryKey: ["car", id],
     queryFn: async () => {
       console.log("Fetching car details for ID:", id);
+      
+      // Update coordinates for this specific car
+      if (id === "af67919d-012e-418a-a183-0d390caeef1f") {
+        const { error: updateError } = await supabase
+          .from("cars")
+          .update({
+            latitude: -24.6527,  // Updated latitude for Molepolole Road area
+            longitude: 25.9088   // Updated longitude for Molepolole Road area
+          })
+          .eq("id", id);
+
+        if (updateError) {
+          console.error("Error updating car coordinates:", updateError);
+        }
+      }
+
       const { data, error } = await supabase
         .from("cars")
         .select(`
