@@ -2,10 +2,12 @@ import { RoleSelector } from "@/components/RoleSelector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Navigation } from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { CalendarDays } from "lucide-react";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,15 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      <h1 className="text-2xl font-bold mb-6">Profile</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Profile</h1>
+        <Link to="/bookings">
+          <Button variant="outline" className="gap-2">
+            <CalendarDays className="h-4 w-4" />
+            My Bookings
+          </Button>
+        </Link>
+      </div>
       
       <ProfileAvatar 
         avatarUrl={avatarUrl} 

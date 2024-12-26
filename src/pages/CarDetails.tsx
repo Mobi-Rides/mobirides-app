@@ -2,10 +2,11 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, CalendarDays } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { CarActions } from "@/components/car-details/CarActions";
+import { Link } from "react-router-dom";
 import type { Car } from "@/types/car";
 
 const CarDetails = () => {
@@ -80,6 +81,12 @@ const CarDetails = () => {
             alt={`${car.brand} ${car.model}`}
             className="w-full h-64 object-cover rounded-lg"
           />
+          <Link 
+            to="/bookings" 
+            className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+          >
+            <CalendarDays className="h-5 w-5 text-primary" />
+          </Link>
         </div>
 
         <div>
