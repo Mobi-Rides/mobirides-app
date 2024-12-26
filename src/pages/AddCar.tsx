@@ -2,18 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
+import { CarBasicInfo } from "@/components/add-car/CarBasicInfo";
+import { CarDetails } from "@/components/add-car/CarDetails";
+import { CarDescription } from "@/components/add-car/CarDescription";
+import { ImageUpload } from "@/components/add-car/ImageUpload";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
@@ -24,18 +18,6 @@ const AddCar = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        navigate('/login');
-        return;
-      }
-      setUserId(session.user.id);
-    };
-    checkUser();
-  }, [navigate]);
 
   const [formData, setFormData] = useState({
     brand: "",
@@ -49,6 +31,18 @@ const AddCar = () => {
     seats: "",
     description: "",
   });
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        navigate('/login');
+        return;
+      }
+      setUserId(session.user.id);
+    };
+    checkUser();
+  }, [navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -110,7 +104,6 @@ const AddCar = () => {
       });
 
       const { error } = await supabase.from("cars").insert({
-        ...formData,
         owner_id: userId,
         image_url,
         latitude: position.coords.latitude,
@@ -118,6 +111,13 @@ const AddCar = () => {
         price_per_day: parseFloat(formData.price_per_day),
         year: parseInt(formData.year.toString()),
         seats: parseInt(formData.seats.toString()),
+        brand: formData.brand,
+        model: formData.model,
+        vehicle_type: formData.vehicle_type,
+        location: formData.location,
+        transmission: formData.transmission,
+        fuel: formData.fuel,
+        description: formData.description,
       });
 
       if (error) throw error;
@@ -146,156 +146,24 @@ const AddCar = () => {
         <h1 className="text-2xl font-semibold mb-6">List Your Car</h1>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="brand">Brand</Label>
-              <Input
-                id="brand"
-                name="brand"
-                value={formData.brand}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Input
-                id="model"
-                name="model"
-                value={formData.model}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
+          <CarBasicInfo 
+            formData={formData}
+            onInputChange={handleInputChange}
+            onSelectChange={handleSelectChange}
+          />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="year">Year</Label>
-              <Input
-                id="year"
-                name="year"
-                type="number"
-                value={formData.year}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="vehicle_type">Vehicle Type</Label>
-              <Select
-                value={formData.vehicle_type}
-                onValueChange={(value) => handleSelectChange("vehicle_type", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {["Basic", "Standard", "Executive", "4x4", "SUV", "Electric", "Exotic"].map(
-                    (type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CarDetails
+            formData={formData}
+            onInputChange={handleInputChange}
+            onSelectChange={handleSelectChange}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="price_per_day">Price per Day (BWP)</Label>
-            <Input
-              id="price_per_day"
-              name="price_per_day"
-              type="number"
-              value={formData.price_per_day}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+          <CarDescription
+            description={formData.description}
+            onChange={handleInputChange}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="transmission">Transmission</Label>
-              <Select
-                value={formData.transmission}
-                onValueChange={(value) => handleSelectChange("transmission", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select transmission" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Auto">Automatic</SelectItem>
-                  <SelectItem value="Manual">Manual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fuel">Fuel Type</Label>
-              <Select
-                value={formData.fuel}
-                onValueChange={(value) => handleSelectChange("fuel", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select fuel type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Petrol">Petrol</SelectItem>
-                  <SelectItem value="Diesel">Diesel</SelectItem>
-                  <SelectItem value="Electric">Electric</SelectItem>
-                  <SelectItem value="Hybrid">Hybrid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="seats">Number of Seats</Label>
-            <Input
-              id="seats"
-              name="seats"
-              type="number"
-              value={formData.seats}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              className="h-32"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="image">Car Image</Label>
-            <Input
-              id="image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-          </div>
+          <ImageUpload onImageChange={handleImageChange} />
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Adding Car..." : "Add Car"}
