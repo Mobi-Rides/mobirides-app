@@ -9,6 +9,77 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cars: {
+        Row: {
+          brand: string
+          created_at: string
+          description: string | null
+          fuel: string
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          latitude: number | null
+          location: string
+          longitude: number | null
+          model: string
+          owner_id: string
+          price_per_day: number
+          seats: number
+          transmission: string
+          updated_at: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          year: number
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          description?: string | null
+          fuel: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          model: string
+          owner_id: string
+          price_per_day: number
+          seats: number
+          transmission: string
+          updated_at?: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          year: number
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          description?: string | null
+          fuel?: string
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          model?: string
+          owner_id?: string
+          price_per_day?: number
+          seats?: number
+          transmission?: string
+          updated_at?: string
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cars_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -45,6 +116,14 @@ export type Database = {
     }
     Enums: {
       user_role: "host" | "renter"
+      vehicle_type:
+        | "Basic"
+        | "Standard"
+        | "Executive"
+        | "4x4"
+        | "SUV"
+        | "Electric"
+        | "Exotic"
     }
     CompositeTypes: {
       [_ in never]: never

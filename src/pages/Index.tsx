@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { CarCard } from "@/components/CarCard";
 import { BrandFilter } from "@/components/BrandFilter";
 import { Navigation } from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
 
 const brands = [
   { name: "Honda", logo: "/placeholder.svg" },
@@ -45,6 +47,7 @@ const cars = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -64,6 +67,14 @@ const Index = () => {
           <div className="flex-1">
             <h1 className="text-xl font-semibold">Gaborone, Botswana</h1>
           </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full"
+            onClick={() => navigate("/add-car")}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
           <button className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
             <span className="text-xl">🔔</span>
           </button>
