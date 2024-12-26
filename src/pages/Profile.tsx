@@ -5,6 +5,7 @@ import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { RoleSection } from "@/components/profile/RoleSection";
+import { NotificationsSection } from "@/components/profile/NotificationsSection";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
 import { Navigation } from "@/components/Navigation";
@@ -64,6 +65,7 @@ const Profile = () => {
       <ProfileHeader />
       <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
       <ProfileForm initialValues={initialFormValues} />
+      <NotificationsSection />
       <RoleSection />
       <Navigation />
     </div>
