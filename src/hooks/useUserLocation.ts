@@ -40,12 +40,18 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       const newMarker = createUserMarker(longitude, latitude, accuracy, mapInstance);
       setLocationState(prev => ({ ...prev, userMarker: newMarker }));
 
-      // Always fly to location when manually refreshing
+      // Calculate the vertical offset to center the marker
+      const mapDiv = mapInstance.getContainer();
+      const verticalOffset = mapDiv.clientHeight * 0.25; // Offset by 25% of the viewport height
+
+      // Always fly to location when manually refreshing, with vertical offset
       mapInstance.flyTo({
         center: [longitude, latitude],
         zoom: 15,
         essential: true,
-        duration: 1000
+        duration: 1000,
+        offset: [0, verticalOffset], // This ensures the marker appears in the center-bottom area
+        padding: { top: 50, bottom: 50, left: 50, right: 50 } // Add padding to ensure visibility
       });
 
       if (accuracy <= 50) {
