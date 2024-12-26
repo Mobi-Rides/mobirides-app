@@ -6,20 +6,33 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ChatDrawer } from "@/components/chat/ChatDrawer";
 
 interface Message {
   id: string;
   content: string;
   created_at: string;
+  sender_id: string;
+  status: 'sent' | 'read';
   sender: {
-    full_name: string;
-    avatar_url: string;
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
   };
 }
 
 export const NotificationsSection = () => {
   const [userRole, setUserRole] = useState<'host' | 'renter'>('renter');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedChat, setSelectedChat] = useState<{
+    isOpen: boolean;
+    senderId: string;
+    senderName: string;
+  }>({
+    isOpen: false,
+    senderId: '',
+    senderName: '',
+  });
 
   // Fetch user role
   useEffect(() => {
@@ -54,7 +67,10 @@ export const NotificationsSection = () => {
           id,
           content,
           created_at,
-          sender:sender_id(
+          sender_id,
+          status,
+          sender:profiles!messages_sender_id_fkey (
+            id,
             full_name,
             avatar_url
           )
@@ -62,7 +78,7 @@ export const NotificationsSection = () => {
         .eq(userRole === 'host' ? 'receiver_id' : 'sender_id', user.id)
         .order('created_at', { ascending: false });
 
-      return messages || [];
+      return messages as Message[] || [];
     }
   });
 
@@ -71,6 +87,14 @@ export const NotificationsSection = () => {
     const unread = messages?.filter(msg => msg.status === 'sent').length || 0;
     setUnreadCount(unread);
   }, [messages]);
+
+  const handleChatClick = (senderId: string, senderName: string | null) => {
+    setSelectedChat({
+      isOpen: true,
+      senderId,
+      senderName: senderName || 'Unknown User',
+    });
+  };
 
   return (
     <div className="mb-8">
@@ -95,10 +119,14 @@ export const NotificationsSection = () => {
 
         <TabsContent value="inbox">
           <ScrollArea className="h-[300px] rounded-md border p-4">
-            {messages?.map((message: Message) => (
-              <div key={message.id} className="mb-4">
+            {messages?.map((message) => (
+              <div 
+                key={message.id} 
+                className="mb-4 cursor-pointer hover:bg-muted p-2 rounded-md transition-colors"
+                onClick={() => handleChatClick(message.sender_id, message.sender.full_name)}
+              >
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{message.sender.full_name}</span>
+                  <span className="font-medium">{message.sender.full_name || 'Unknown User'}</span>
                   <span className="text-sm text-muted-foreground">
                     {new Date(message.created_at).toLocaleDateString()}
                   </span>
@@ -119,6 +147,13 @@ export const NotificationsSection = () => {
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      <ChatDrawer
+        isOpen={selectedChat.isOpen}
+        onClose={() => setSelectedChat({ isOpen: false, senderId: '', senderName: '' })}
+        receiverId={selectedChat.senderId}
+        receiverName={selectedChat.senderName}
+      />
     </div>
   );
 };
