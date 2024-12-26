@@ -40,14 +40,15 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       const newMarker = createUserMarker(longitude, latitude, accuracy, mapInstance);
       setLocationState(prev => ({ ...prev, userMarker: newMarker }));
 
-      // Only fly to location if accuracy is good enough
-      if (accuracy <= 50) {
-        mapInstance.flyTo({
-          center: [longitude, latitude],
-          zoom: 15,
-          essential: true
-        });
+      // Always fly to location when manually refreshing
+      mapInstance.flyTo({
+        center: [longitude, latitude],
+        zoom: 15,
+        essential: true,
+        duration: 1000
+      });
 
+      if (accuracy <= 50) {
         if (accuracy <= 10) {
           toast.success(`High accuracy location obtained: ${Math.round(accuracy)}m`);
         }
@@ -66,6 +67,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       return;
     }
 
+    console.log("Manually refreshing location...");
     navigator.geolocation.getCurrentPosition(
       handleSuccess,
       handleLocationError,
