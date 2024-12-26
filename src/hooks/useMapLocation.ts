@@ -49,9 +49,16 @@ export const useMapLocation = ({
         });
 
         map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-      } else {
-        // If map exists, just update the center
-        map.current.setCenter([initialLongitude, initialLatitude]);
+      }
+
+      // Always update the center and zoom when coordinates change
+      if (map.current) {
+        map.current.flyTo({
+          center: [initialLongitude, initialLatitude],
+          zoom: 15,
+          essential: true,
+          duration: 1000
+        });
       }
 
       // Remove existing marker if it exists
