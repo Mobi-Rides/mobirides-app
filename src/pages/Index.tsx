@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
 import { Navigation } from "@/components/Navigation";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import type { Car } from "@/types/car";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { fetchCars } from "@/utils/carFetching";
@@ -31,6 +32,17 @@ const Index = () => {
   });
 
   const { ref: loadMoreRef, inView } = useInView();
+
+  // Fetch saved cars
+  const { data: savedCars } = useQuery({
+    queryKey: ["saved-cars"],
+    queryFn: async () => {
+      const { data: savedCarsData } = await supabase
+        .from("saved_cars")
+        .select("car_id");
+      return new Set(savedCarsData?.map(saved => saved.car_id) || []);
+    }
+  });
 
   const {
     data,
@@ -62,7 +74,10 @@ const Index = () => {
       car.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
       car.model.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesBrand && matchesSearch;
-  });
+  }).map(car => ({
+    ...car,
+    isSaved: savedCars?.has(car.id) || false
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

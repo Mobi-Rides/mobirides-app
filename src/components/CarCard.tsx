@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "./ui/card";
 import { CarImage } from "./car-card/CarImage";
@@ -18,6 +18,7 @@ interface CarCardProps {
   location: string;
   year: number;
   id: string;
+  isSaved?: boolean;
 }
 
 export const CarCard = ({
@@ -32,9 +33,14 @@ export const CarCard = ({
   location,
   year,
   id,
+  isSaved = false,
 }: CarCardProps) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(isSaved);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setIsFavorite(isSaved);
+  }, [isSaved]);
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
