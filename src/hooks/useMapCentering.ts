@@ -9,10 +9,9 @@ export const useMapCentering = (mapInstance: mapboxgl.Map | null) => {
     const mapDiv = mapInstance.getContainer();
     const verticalOffset = -mapDiv.clientHeight * MAP_SETTINGS.VERTICAL_OFFSET_PERCENT;
 
-    mapInstance.flyTo({
+    mapInstance.easeTo({
       center: [longitude, latitude],
       zoom: MAP_SETTINGS.ZOOM_LEVEL,
-      essential: true,
       duration: MAP_SETTINGS.ANIMATION_DURATION,
       offset: [0, verticalOffset]
     });
