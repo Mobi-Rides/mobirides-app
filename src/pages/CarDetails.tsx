@@ -67,6 +67,10 @@ const CarDetails = () => {
     );
   }
 
+  const avatarUrl = car.profiles.avatar_url
+    ? supabase.storage.from('avatars').getPublicUrl(car.profiles.avatar_url).data.publicUrl
+    : "/placeholder.svg";
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="space-y-4 p-4">
@@ -108,12 +112,12 @@ const CarDetails = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src={car.profiles.avatar_url || "/placeholder.svg"}
-              alt={car.profiles.full_name}
-              className="w-12 h-12 rounded-full object-cover"
+              src={avatarUrl}
+              alt={car.profiles.full_name || "Car Owner"}
+              className="w-12 h-12 rounded-full object-cover bg-muted"
             />
             <div>
-              <p className="font-semibold">{car.profiles.full_name}</p>
+              <p className="font-semibold">{car.profiles.full_name || "Car Owner"}</p>
               <p className="text-sm text-muted-foreground">Car Owner</p>
             </div>
           </div>
