@@ -40,21 +40,17 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
 
     console.log("Saving new location:", newCoordinates);
     
-    try {
-      const success = await updateCarLocation(
-        carId,
-        newCoordinates.lat,
-        newCoordinates.lng
-      );
+    const success = await updateCarLocation(
+      carId,
+      newCoordinates.lat,
+      newCoordinates.lng
+    );
 
-      if (success) {
-        await queryClient.invalidateQueries({ queryKey: ['car', carId] });
-        setIsAdjusting(false);
-        setNewCoordinates(null);
-      }
-    } catch (error) {
-      console.error("Error saving location:", error);
-      toast.error("Failed to save location. Please try again.");
+    if (success) {
+      await queryClient.invalidateQueries({ queryKey: ['car', carId] });
+      setIsAdjusting(false);
+      setNewCoordinates(null);
+      toast.success("Location updated successfully");
     }
   };
 

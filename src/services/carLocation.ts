@@ -11,22 +11,13 @@ export const updateCarLocation = async (
   try {
     const { data, error } = await supabase
       .from('cars')
-      .update({
-        latitude,
-        longitude
-      })
+      .update({ latitude, longitude })
       .eq('id', carId)
       .select()
-      .maybeSingle();
+      .single();
 
     if (error) {
       console.error("Error updating car location:", error);
-      toast.error("Failed to update location");
-      return false;
-    }
-
-    if (!data) {
-      console.error("No data returned after update");
       toast.error("Failed to update location");
       return false;
     }
