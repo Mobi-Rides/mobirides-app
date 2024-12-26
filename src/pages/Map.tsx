@@ -2,14 +2,14 @@ import { useRef } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
-import { MapboxConfig, useMapboxToken } from "@/components/MapboxConfig";
+import { MapboxConfig, getMapboxToken } from "@/components/MapboxConfig";
 import { useMapInitialization } from "@/hooks/useMapInitialization";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapboxToken = useMapboxToken();
+  const mapboxToken = getMapboxToken();
   const mapInstanceRef = useMapInitialization(mapContainer, mapboxToken);
 
   // Initialize user location after map is ready
@@ -18,10 +18,6 @@ const MapPage = () => {
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
   };
-
-  if (!mapboxToken) {
-    return <MapboxConfig />;
-  }
 
   return (
     <div className="h-screen relative">
