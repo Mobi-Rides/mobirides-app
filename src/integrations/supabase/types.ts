@@ -166,6 +166,61 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          receiver_id: string
+          related_car_id: string | null
+          sender_id: string
+          status: Database["public"]["Enums"]["message_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          receiver_id: string
+          related_car_id?: string | null
+          sender_id: string
+          status?: Database["public"]["Enums"]["message_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          related_car_id?: string | null
+          sender_id?: string
+          status?: Database["public"]["Enums"]["message_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_related_car_id_fkey"
+            columns: ["related_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -317,6 +372,7 @@ export type Database = {
     }
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      message_status: "sent" | "delivered" | "read"
       review_type: "car" | "renter"
       user_role: "host" | "renter"
       vehicle_type:
