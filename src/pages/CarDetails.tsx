@@ -83,7 +83,6 @@ const CarDetails = () => {
           model={car.model}
           year={car.year}
           location={car.location}
-          imageUrl={car.image_url}
         />
         <CarSpecs
           pricePerDay={car.price_per_day}
