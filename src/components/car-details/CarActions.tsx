@@ -27,6 +27,23 @@ export const CarActions = ({ car }: CarActionsProps) => {
         return;
       }
 
+      // First check if the car is already saved
+      const { data: existingSave } = await supabase
+        .from("saved_cars")
+        .select()
+        .eq('car_id', car.id)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (existingSave) {
+        toast({
+          title: "Already saved",
+          description: "This car is already in your saved list.",
+        });
+        return;
+      }
+
+      // If not saved, proceed with saving
       const { error } = await supabase
         .from("saved_cars")
         .insert({ 
