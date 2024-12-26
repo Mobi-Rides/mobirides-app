@@ -11,13 +11,25 @@ export const useMapCentering = (mapInstance: mapboxgl.Map | null) => {
       latitude: latitude.toFixed(6)
     });
 
-    // Use easeTo for smoother movement without locking controls
-    mapInstance.easeTo({
-      center: [longitude, latitude],
-      zoom: MAP_SETTINGS.ZOOM_LEVEL,
-      duration: MAP_SETTINGS.ANIMATION_DURATION,
-      essential: false // Allow interruption of animation
-    });
+    // Check if user is currently interacting with the map
+    if (mapInstance.isEasing() || mapInstance.isMoving()) {
+      console.log("Map is currently being manipulated by user, skipping centering");
+      return;
+    }
+
+    // Use panTo for immediate response without animation when user is interacting
+    mapInstance.panTo(
+      [longitude, latitude],
+      {
+        duration: 0, // No animation duration
+        essential: false // Allow interruption
+      }
+    );
+
+    // Set zoom level separately to avoid locking
+    if (mapInstance.getZoom() !== MAP_SETTINGS.ZOOM_LEVEL) {
+      mapInstance.setZoom(MAP_SETTINGS.ZOOM_LEVEL);
+    }
   }, [mapInstance]);
 
   return { centerMapOnLocation };
