@@ -4,7 +4,7 @@ import { LOCATION_SETTINGS } from '@/utils/locationConstants';
 
 export const useLocationAccuracy = () => {
   const [bestAccuracy, setBestAccuracy] = useState<number | null>(null);
-  const [toastId, setToastId] = useState<string | null>(null);
+  const [toastId, setToastId] = useState<string | number | null>(null);
 
   const updateAccuracy = useCallback((accuracy: number) => {
     setBestAccuracy(prev => {
