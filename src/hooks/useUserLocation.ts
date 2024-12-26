@@ -15,16 +15,12 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
   } = useLocationTracking(
     (position: GeolocationPosition) => {
       try {
-        const newMarker = updateMarker(position, locationState.userMarker);
-        if (newMarker) {
-          setLocationState(prev => {
-            // Remove old marker if it exists
-            if (prev.userMarker) {
-              console.log("Cleaning up old marker from state");
-              prev.userMarker.remove();
-            }
-            return { ...prev, userMarker: newMarker };
-          });
+        // Only update marker if map instance exists
+        if (mapInstance) {
+          const newMarker = updateMarker(position, locationState.userMarker);
+          if (newMarker) {
+            setLocationState(prev => ({ ...prev, userMarker: newMarker }));
+          }
         }
       } catch (error) {
         console.error("Error updating user location:", error);
@@ -39,7 +35,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       return;
     }
 
-    startTracking();
+    const watchId = startTracking();
     
     return () => {
       if (watchIdRef.current) {
@@ -47,7 +43,6 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
         watchIdRef.current = null;
       }
       if (locationState.userMarker) {
-        console.log("Cleaning up marker on unmount");
         locationState.userMarker.remove();
       }
     };

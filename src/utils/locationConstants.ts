@@ -12,7 +12,7 @@ export const LOCATION_SETTINGS = {
 
 export const MAP_SETTINGS = {
   ZOOM_LEVEL: 16,
-  ANIMATION_DURATION: 1000,
+  ANIMATION_DURATION: 1500, // Increased for smoother animation
   VERTICAL_OFFSET_PERCENT: 0.25,
   PADDING: {
     top: 50,
