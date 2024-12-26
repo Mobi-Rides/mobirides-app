@@ -40,9 +40,25 @@ const CarDetails = () => {
 
   const handleSaveCar = async () => {
     try {
+      // Get the current user's session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) throw sessionError;
+      if (!session?.user?.id) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save cars.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("saved_cars")
-        .insert({ car_id: id });
+        .insert({ 
+          car_id: id,
+          user_id: session.user.id
+        });
 
       if (error) throw error;
 
