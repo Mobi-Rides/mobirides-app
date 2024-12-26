@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from '@/components/ui/use-toast';
 
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
   const { toast } = useToast();
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!mapInstance) {
@@ -21,31 +22,54 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       return;
     }
 
+    let userMarker: mapboxgl.Marker | null = null;
+
     const handleSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      console.log("User location:", { latitude, longitude });
+      const { latitude, longitude, accuracy } = position.coords;
+      console.log("User location updated:", { 
+        latitude, 
+        longitude, 
+        accuracyInMeters: accuracy 
+      });
       
       try {
-        mapInstance.flyTo({
-          center: [longitude, latitude],
-          zoom: 14,
-          essential: true
-        });
+        // Remove existing user marker if it exists
+        if (userMarker) {
+          userMarker.remove();
+        }
 
-        // Add a marker for user's location
-        new mapboxgl.Marker({ color: "#FF0000" })
+        // Create a new marker for user's location
+        userMarker = new mapboxgl.Marker({
+          color: "#FF0000",
+          scale: 0.8
+        })
           .setLngLat([longitude, latitude])
+          .setPopup(new mapboxgl.Popup().setHTML(`
+            <div class="p-2">
+              <p class="font-semibold">Your Location</p>
+              <p class="text-sm">Accuracy: ${Math.round(accuracy)}m</p>
+            </div>
+          `))
           .addTo(mapInstance);
 
-        toast({
-          title: "Location Found",
-          description: "Map centered to your current location",
-        });
+        // Only fly to location on first fix
+        if (!watchId) {
+          mapInstance.flyTo({
+            center: [longitude, latitude],
+            zoom: 15,
+            essential: true
+          });
+
+          toast({
+            title: "Location Found",
+            description: `Accuracy: ${Math.round(accuracy)} meters`,
+          });
+        }
       } catch (error) {
-        console.error("Error flying to user location:", error);
+        console.error("Error updating user location:", error);
         toast({
           title: "Location Error",
-          description: "Could not center map to your location",
+          description: "Could not update your location on the map",
           variant: "destructive",
         });
       }
@@ -60,12 +84,33 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       });
     };
 
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0
+    const options: PositionOptions = {
+      enableHighAccuracy: true, // Request highest possible accuracy
+      timeout: 10000, // Wait up to 10 seconds for a position
+      maximumAge: 5000 // Accept positions up to 5 seconds old
     };
 
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, options);
+    // Start watching position
+    const id = navigator.geolocation.watchPosition(
+      handleSuccess,
+      handleError,
+      options
+    );
+    
+    setWatchId(id);
+    console.log("Started watching user location with ID:", id);
+
+    // Cleanup function
+    return () => {
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+        console.log("Stopped watching user location");
+      }
+      if (userMarker) {
+        userMarker.remove();
+      }
+    };
   }, [mapInstance, toast]);
+
+  return watchId;
 };
