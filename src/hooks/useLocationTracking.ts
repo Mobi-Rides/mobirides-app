@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { LOCATION_SETTINGS } from '@/utils/locationConstants';
 import { handleLocationError } from '@/utils/locationUtils';
@@ -9,12 +9,20 @@ export const useLocationTracking = (handleSuccess: (position: GeolocationPositio
     watchId: null,
     userMarker: null
   });
+  
+  // Use ref to maintain watch ID across renders
+  const watchIdRef = useRef<number | null>(null);
 
   const startTracking = useCallback(() => {
     if (!("geolocation" in navigator)) {
       console.log("Geolocation not supported");
       toast.error("Geolocation is not supported by your browser");
-      return;
+      return null;
+    }
+
+    // Clear existing watch if any
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
     }
 
     // Start watching position with maximum accuracy settings
@@ -24,6 +32,7 @@ export const useLocationTracking = (handleSuccess: (position: GeolocationPositio
       LOCATION_SETTINGS.HIGH_ACCURACY
     );
     
+    watchIdRef.current = id;
     setLocationState(prev => ({ ...prev, watchId: id }));
     console.log("Started watching user location with high accuracy settings (WiFi enabled), ID:", id);
 
@@ -44,5 +53,11 @@ export const useLocationTracking = (handleSuccess: (position: GeolocationPositio
     );
   }, [handleSuccess]);
 
-  return { locationState, setLocationState, startTracking, refreshLocation };
+  return { 
+    locationState, 
+    setLocationState, 
+    startTracking, 
+    refreshLocation,
+    watchIdRef 
+  };
 };

@@ -6,7 +6,13 @@ import { useLocationMarker } from './useLocationMarker';
 
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
   const { updateMarker, bestAccuracy } = useLocationMarker(mapInstance);
-  const { locationState, setLocationState, startTracking, refreshLocation } = useLocationTracking(
+  const { 
+    locationState, 
+    setLocationState, 
+    startTracking, 
+    refreshLocation,
+    watchIdRef 
+  } = useLocationTracking(
     (position: GeolocationPosition) => {
       try {
         const newMarker = updateMarker(position, locationState.userMarker);
@@ -24,18 +30,22 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       return;
     }
 
-    const watchId = startTracking();
+    startTracking();
     
     return () => {
-      if (locationState.watchId) {
-        navigator.geolocation.clearWatch(locationState.watchId);
-        console.log("Stopped watching user location");
+      if (watchIdRef.current) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
       }
       if (locationState.userMarker) {
         locationState.userMarker.remove();
       }
     };
-  }, [mapInstance, startTracking, locationState.watchId, locationState.userMarker]);
+  }, [mapInstance, startTracking, locationState.userMarker, watchIdRef]);
 
-  return { watchId: locationState.watchId, bestAccuracy, refreshLocation };
+  return { 
+    watchId: locationState.watchId, 
+    bestAccuracy, 
+    refreshLocation 
+  };
 };
