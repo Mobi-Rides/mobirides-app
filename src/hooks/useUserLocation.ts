@@ -18,7 +18,12 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     console.log("User location update:", { 
       latitude: latitude.toFixed(6), 
       longitude: longitude.toFixed(6), 
-      accuracyInMeters: accuracy 
+      accuracyInMeters: accuracy,
+      // Log additional position information if available
+      altitude: position.coords.altitude,
+      altitudeAccuracy: position.coords.altitudeAccuracy,
+      speed: position.coords.speed,
+      timestamp: new Date(position.timestamp).toISOString()
     });
 
     // Update best accuracy achieved
@@ -54,12 +59,15 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
         padding: { top: 50, bottom: 50, left: 50, right: 50 } // Add padding to ensure visibility
       });
 
+      // Provide more detailed feedback about location accuracy
       if (accuracy <= 50) {
         if (accuracy <= 10) {
-          toast.success(`High accuracy location obtained: ${Math.round(accuracy)}m`);
+          toast.success(`High accuracy location obtained (${Math.round(accuracy)}m)`);
+        } else {
+          toast.success(`Good accuracy location obtained (${Math.round(accuracy)}m)`);
         }
       } else {
-        toast.warning(`Waiting for better accuracy... Current: ${Math.round(accuracy)}m`);
+        toast.warning(`Still improving accuracy... Current: ${Math.round(accuracy)}m`);
       }
     } catch (error) {
       console.error("Error updating user location:", error);
@@ -73,14 +81,14 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       return;
     }
 
-    console.log("Manually refreshing location...");
+    console.log("Manually refreshing location with high accuracy settings...");
     navigator.geolocation.getCurrentPosition(
       handleSuccess,
       handleLocationError,
       {
-        enableHighAccuracy: true,
-        timeout: 30000,
-        maximumAge: 0
+        enableHighAccuracy: true, // This enables use of WiFi and other sources
+        timeout: 30000, // Increased timeout for better accuracy
+        maximumAge: 0 // Always get fresh position
       }
     );
   }, [handleSuccess]);
@@ -102,14 +110,14 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
       handleSuccess,
       handleLocationError,
       {
-        enableHighAccuracy: true,
+        enableHighAccuracy: true, // Enable WiFi and other sources
         timeout: 30000,
         maximumAge: 0
       }
     );
     
     setLocationState(prev => ({ ...prev, watchId: id }));
-    console.log("Started watching user location with high accuracy settings, ID:", id);
+    console.log("Started watching user location with high accuracy settings (WiFi enabled), ID:", id);
 
     // Cleanup function
     return () => {
