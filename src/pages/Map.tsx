@@ -15,38 +15,49 @@ const MapPage = () => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [25.9231, -24.6282], // Gaborone coordinates
-      zoom: 12
-    });
+    try {
+      console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
+      mapboxgl.accessToken = mapboxToken;
+      
+      const mapInstance = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [25.9231, -24.6282], // Gaborone coordinates
+        zoom: 12
+      });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      // Store map instance in ref
+      map.current = mapInstance;
 
-    // Get user location
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log("Got user location:", position.coords);
-        if (map.current) {
-          map.current.flyTo({
-            center: [position.coords.longitude, position.coords.latitude],
-            zoom: 14
+      // Add navigation controls
+      mapInstance.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      // Get user location
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("Got user location:", {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
           });
+          if (mapInstance) {
+            mapInstance.flyTo({
+              center: [position.coords.longitude, position.coords.latitude],
+              zoom: 14
+            });
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error.message);
         }
-      },
-      (error) => {
-        console.error("Error getting location:", error);
-      }
-    );
+      );
 
-    return () => {
-      map.current?.remove();
-    };
+      // Cleanup
+      return () => {
+        mapInstance.remove();
+      };
+    } catch (error) {
+      console.error("Error initializing map:", error);
+    }
   }, [mapboxToken]);
 
   // Handle filter changes
