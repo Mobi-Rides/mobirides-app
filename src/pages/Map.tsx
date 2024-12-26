@@ -16,9 +16,9 @@ const MapPage = () => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    const initializeMap = () => {
+    const initializeMap = async () => {
       try {
-        console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
+        console.log("Starting map initialization...");
         mapboxgl.accessToken = mapboxToken;
         
         const map = new mapboxgl.Map({
@@ -28,59 +28,52 @@ const MapPage = () => {
           zoom: 12
         });
 
+        // Store map instance
         mapInstance.current = map;
 
         // Add navigation controls
         map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
         // Get user location
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            console.log("Got user location coordinates:", latitude, longitude);
-            
-            if (mapInstance.current) {
-              mapInstance.current.flyTo({
-                center: [longitude, latitude],
-                zoom: 14
-              });
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords;
+              console.log("User location:", { latitude, longitude });
+              
+              if (mapInstance.current) {
+                mapInstance.current.flyTo({
+                  center: [longitude, latitude],
+                  zoom: 14
+                });
+              }
+            },
+            (error) => {
+              console.error("Geolocation error:", error.message);
             }
-          },
-          (error) => {
-            console.error("Geolocation error:", error.message);
-          }
-        );
+          );
+        }
 
-        return map;
+        return () => {
+          console.log("Cleaning up map instance...");
+          if (mapInstance.current) {
+            mapInstance.current.remove();
+            mapInstance.current = null;
+          }
+        };
       } catch (error) {
         console.error("Map initialization error:", error);
         return null;
       }
     };
 
-    const map = initializeMap();
-
-    // Cleanup function
-    return () => {
-      console.log("Running cleanup...");
-      if (mapInstance.current) {
-        try {
-          mapInstance.current.remove();
-          console.log("Map instance removed successfully");
-        } catch (error) {
-          console.error("Error during map cleanup:", error);
-        } finally {
-          mapInstance.current = null;
-        }
-      }
-    };
+    initializeMap();
   }, [mapboxToken]);
 
   // Handle filter changes
   const handleFiltersChange = (newFilters: FilterType) => {
     setFilters(newFilters);
     console.log("Filters updated:", newFilters);
-    // TODO: Fetch and update vehicles based on filters
   };
 
   if (!mapboxToken) {
