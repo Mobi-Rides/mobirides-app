@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useLocationTracking } from './useLocationTracking';
 import { useLocationMarker } from './useLocationMarker';
 
-export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
+export const useUserLocation = (mapInstance: mapboxgl.Map | null, initialCenter: boolean = false) => {
   const { updateMarker, bestAccuracy } = useLocationMarker(mapInstance);
   const { 
     locationState, 
@@ -13,14 +13,14 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     refreshLocation,
     watchIdRef 
   } = useLocationTracking(
-    (position: GeolocationPosition) => {
+    (position: GeolocationPosition, forceCenter: boolean = false) => {
       if (!mapInstance) {
         console.log("Map instance not available, skipping marker update");
         return;
       }
 
       try {
-        const newMarker = updateMarker(position, locationState.userMarker);
+        const newMarker = updateMarker(position, locationState.userMarker, forceCenter || initialCenter);
         if (newMarker) {
           setLocationState(prev => {
             // Clean up old marker if it exists

@@ -17,15 +17,15 @@ const MapPage = () => {
   const mapInstanceRef = useMapInitialization(mapContainer, token);
 
   // Initialize continuous user location tracking
-  const { refreshLocation } = useUserLocation(mapInstanceRef.current);
+  const { refreshLocation } = useUserLocation(mapInstanceRef.current, true); // Pass true for forceCenter
 
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
   };
 
   const handleGeolocate = () => {
-    console.log("Manual location refresh requested");
-    refreshLocation();
+    console.log("Manual location refresh requested with forced centering");
+    refreshLocation(true); // Pass true to force centering
     toast.info("Updating your location...");
   };
 
