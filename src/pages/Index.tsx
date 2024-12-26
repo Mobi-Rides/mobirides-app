@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Search, Plus, SlidersHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { CarCard } from "@/components/CarCard";
 import { BrandFilter } from "@/components/BrandFilter";
 import { Navigation } from "@/components/Navigation";
@@ -11,14 +11,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
+import { useInView } from "react-intersection-observer";
+import { useEffect } from "react";
 
-// Fetch cars from Supabase with filters
-const fetchCars = async (filters?: Filters) => {
-  console.log("Fetching cars with filters:", filters);
+const ITEMS_PER_PAGE = 10;
+
+// Fetch cars from Supabase with filters and pagination
+const fetchCars = async ({ pageParam = 0, filters }: { pageParam?: number; filters?: Filters }) => {
+  console.log("Fetching cars with filters:", filters, "page:", pageParam);
   let query = supabase
     .from("cars")
-    .select("*")
-    .eq("is_available", true);
+    .select("*", { count: "exact" })
+    .eq("is_available", true)
+    .range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);
 
   if (filters?.vehicleType) {
     query = query.eq("vehicle_type", filters.vehicleType);
@@ -28,12 +33,11 @@ const fetchCars = async (filters?: Filters) => {
     query = query.ilike("location", `%${filters.location}%`);
   }
 
-  // Add sorting
   if (filters?.sortBy === "price") {
     query = query.order("price_per_day", { ascending: filters.sortOrder === "asc" });
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     console.error("Error fetching cars:", error);
@@ -41,7 +45,7 @@ const fetchCars = async (filters?: Filters) => {
   }
 
   console.log("Cars fetched successfully:", data);
-  return data;
+  return { data, nextPage: data.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined, count };
 };
 
 // Get unique brands from cars
@@ -66,16 +70,34 @@ const Index = () => {
     sortOrder: "asc",
   });
 
-  const { data: cars = [], isLoading, error } = useQuery({
+  const { ref: loadMoreRef, inView } = useInView();
+
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
     queryKey: ["cars", filters],
-    queryFn: () => fetchCars(filters),
+    queryFn: ({ pageParam }) => fetchCars({ pageParam, filters }),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageSize: ITEMS_PER_PAGE,
   });
 
-  console.log("Current state:", { cars, isLoading, error, selectedBrand, searchQuery, filters });
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const brands = cars.length > 0 ? getUniqueBrands(cars) : [];
+  const allCars = data?.pages.flatMap(page => page.data) ?? [];
+  console.log("Current state:", { allCars, isLoading, error, selectedBrand, searchQuery, filters });
 
-  const filteredCars = cars.filter((car) => {
+  const brands = allCars.length > 0 ? getUniqueBrands(allCars) : [];
+
+  const filteredCars = allCars.filter((car) => {
     const matchesBrand = !selectedBrand || car.brand === selectedBrand;
     const matchesSearch =
       !searchQuery ||
@@ -170,21 +192,33 @@ const Index = () => {
               No cars found matching your criteria.
             </div>
           ) : (
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-              {filteredCars.map((car) => (
-                <CarCard
-                  key={car.id}
-                  brand={car.brand}
-                  model={car.model}
-                  price={car.price_per_day}
-                  image={car.image_url || "/placeholder.svg"}
-                  rating={4.5} // We'll implement real ratings later
-                  transmission={car.transmission}
-                  fuel={car.fuel}
-                  seats={car.seats}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                {filteredCars.map((car) => (
+                  <div
+                    key={car.id}
+                    className="animate-fade-in"
+                  >
+                    <CarCard
+                      brand={car.brand}
+                      model={car.model}
+                      price={car.price_per_day}
+                      image={car.image_url || "/placeholder.svg"}
+                      rating={4.5} // We'll implement real ratings later
+                      transmission={car.transmission}
+                      fuel={car.fuel}
+                      seats={car.seats}
+                    />
+                  </div>
+                ))}
+              </div>
+              {/* Infinite scroll trigger */}
+              <div ref={loadMoreRef} className="h-10 flex items-center justify-center mt-4">
+                {isFetchingNextPage && (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                )}
+              </div>
+            </>
           )}
         </section>
       </main>
