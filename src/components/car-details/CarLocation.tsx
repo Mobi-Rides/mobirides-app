@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { useMapLocation } from "@/hooks/useMapLocation";
 import { updateCarLocation } from "@/services/carLocation";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface CarLocationProps {
@@ -20,12 +21,15 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   const { id: carId } = useParams();
   const queryClient = useQueryClient();
 
-  const { mapContainer, newCoordinates, setNewCoordinates } = useMapLocation({
+  const { mapContainer, map, newCoordinates, setNewCoordinates } = useMapLocation({
     initialLatitude: latitude || 0,
     initialLongitude: longitude || 0,
     mapboxToken: token,
     isAdjusting
   });
+
+  // Initialize user location tracking
+  useUserLocation(map);
 
   const handleAdjustLocation = () => {
     setIsAdjusting(true);
@@ -50,7 +54,6 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
       await queryClient.invalidateQueries({ queryKey: ['car', carId] });
       setIsAdjusting(false);
       setNewCoordinates(null);
-      toast.success("Location updated successfully");
     }
   };
 

@@ -92,6 +92,7 @@ export const useMapLocation = ({
 
   return {
     mapContainer,
+    map: map.current,
     newCoordinates,
     setNewCoordinates
   };
