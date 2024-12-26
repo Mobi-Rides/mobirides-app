@@ -193,6 +193,74 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          car_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          review_type: Database["public"]["Enums"]["review_type"]
+          reviewee_id: string
+          reviewer_id: string
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          car_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          review_type: Database["public"]["Enums"]["review_type"]
+          reviewee_id: string
+          reviewer_id: string
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          car_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          review_type?: Database["public"]["Enums"]["review_type"]
+          reviewee_id?: string
+          reviewer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewee_id_fkey"
+            columns: ["reviewee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_cars: {
         Row: {
           car_id: string
@@ -234,10 +302,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_car_rating: {
+        Args: {
+          car_uuid: string
+        }
+        Returns: number
+      }
+      calculate_user_rating: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      review_type: "car" | "renter"
       user_role: "host" | "renter"
       vehicle_type:
         | "Basic"

@@ -9,6 +9,7 @@ import { CarSpecs } from "@/components/car-details/CarSpecs";
 import { CarOwner } from "@/components/car-details/CarOwner";
 import { CarDescription } from "@/components/car-details/CarDescription";
 import { CarImageCarousel } from "@/components/car-details/CarImageCarousel";
+import { CarReviews } from "@/components/car-details/CarReviews";
 import type { Car } from "@/types/car";
 
 const CarDetails = () => {
@@ -94,6 +95,7 @@ const CarDetails = () => {
           ownerName={car.profiles.full_name}
           avatarUrl={avatarUrl}
         />
+        <CarReviews car={car} />
         <CarActions car={car} />
       </div>
       <Navigation />
