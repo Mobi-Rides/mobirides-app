@@ -21,6 +21,7 @@ export const createUserMarker = (
   const circleSize = Math.min(Math.max(accuracy / 5, 16), 100); // Min 16px, Max 100px
   circle.style.width = `${circleSize}px`;
   circle.style.height = `${circleSize}px`;
+  circle.style.position = 'absolute';
   circle.style.left = `${-circleSize/2 + 8}px`; // Center relative to dot
   circle.style.top = `${-circleSize/2 + 8}px`;
   circle.className = 'absolute rounded-full bg-blue-500/20 animate-pulse';
