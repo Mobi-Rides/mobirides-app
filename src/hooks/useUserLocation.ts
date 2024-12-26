@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { toast } from '@/components/ui/use-toast';
-import { createUserMarker, handleLocationError, getLocationOptions } from '@/utils/locationUtils';
+import { toast } from 'sonner';
+import { createUserMarker, handleLocationError } from '@/utils/locationUtils';
 import type { LocationState } from '@/types/location';
 
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
@@ -9,6 +9,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     watchId: null,
     userMarker: null
   });
+  const [bestAccuracy, setBestAccuracy] = useState<number | null>(null);
 
   useEffect(() => {
     if (!mapInstance) {
@@ -18,21 +19,23 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
 
     if (!("geolocation" in navigator)) {
       console.log("Geolocation not supported");
-      toast({
-        title: "Location Error",
-        description: "Geolocation is not supported by your browser",
-        variant: "destructive",
-      });
+      toast.error("Geolocation is not supported by your browser");
       return;
     }
 
     const handleSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude, accuracy } = position.coords;
-      console.log("User location updated:", { 
+      console.log("User location update:", { 
         latitude: latitude.toFixed(6), 
         longitude: longitude.toFixed(6), 
         accuracyInMeters: accuracy 
       });
+
+      // Update best accuracy achieved
+      if (!bestAccuracy || accuracy < bestAccuracy) {
+        setBestAccuracy(accuracy);
+        console.log("New best accuracy achieved:", accuracy, "meters");
+      }
       
       try {
         // Remove existing user marker if it exists
@@ -44,37 +47,39 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
         const newMarker = createUserMarker(longitude, latitude, accuracy, mapInstance);
         setState(prev => ({ ...prev, userMarker: newMarker }));
 
-        // Only fly to location on first fix or if accuracy improves significantly
-        if (!state.watchId || accuracy < 50) {
+        // Only fly to location if accuracy is good enough
+        if (accuracy <= 50) {
           mapInstance.flyTo({
             center: [longitude, latitude],
             zoom: 15,
             essential: true
           });
+
+          if (accuracy <= 10) {
+            toast.success(`High accuracy location obtained: ${Math.round(accuracy)}m`);
+          }
+        } else {
+          toast.warning(`Waiting for better accuracy... Current: ${Math.round(accuracy)}m`);
         }
       } catch (error) {
         console.error("Error updating user location:", error);
-        toast({
-          title: "Location Error",
-          description: "Could not update your location on the map",
-          variant: "destructive",
-        });
+        toast.error("Could not update your location on the map");
       }
     };
 
-    // Start watching position with high accuracy
+    // Start watching position with maximum accuracy settings
     const id = navigator.geolocation.watchPosition(
       handleSuccess,
       handleLocationError,
       {
         enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
+        timeout: 30000, // Increased timeout for better accuracy
+        maximumAge: 0 // Always get fresh position
       }
     );
     
     setState(prev => ({ ...prev, watchId: id }));
-    console.log("Started watching user location with ID:", id);
+    console.log("Started watching user location with high accuracy settings, ID:", id);
 
     // Cleanup function
     return () => {
@@ -88,5 +93,5 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     };
   }, [mapInstance]);
 
-  return state.watchId;
+  return { watchId: state.watchId, bestAccuracy };
 };

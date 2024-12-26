@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export const createUserMarker = (
   longitude: number,
@@ -15,9 +15,15 @@ export const createUserMarker = (
   const dot = document.createElement('div');
   dot.className = 'w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg';
   
-  // Create the accuracy circle
+  // Create the accuracy circle with dynamic size based on accuracy
   const circle = document.createElement('div');
-  circle.className = 'absolute -inset-2 rounded-full bg-blue-500/20 animate-pulse';
+  // Adjust circle size based on accuracy (smaller when more accurate)
+  const circleSize = Math.min(Math.max(accuracy / 5, 16), 100); // Min 16px, Max 100px
+  circle.style.width = `${circleSize}px`;
+  circle.style.height = `${circleSize}px`;
+  circle.style.left = `${-circleSize/2 + 8}px`; // Center relative to dot
+  circle.style.top = `${-circleSize/2 + 8}px`;
+  circle.className = 'absolute rounded-full bg-blue-500/20 animate-pulse';
   
   // Add elements to the marker container
   el.appendChild(circle);
@@ -33,13 +39,18 @@ export const createUserMarker = (
       <div class="p-2">
         <p class="font-semibold">Your Location</p>
         <p class="text-sm text-muted-foreground">Accuracy: ${Math.round(accuracy)}m</p>
+        ${accuracy > 50 ? 
+          '<p class="text-xs text-orange-500">⚠️ Low accuracy. Try moving to an open area.</p>' : 
+          '<p class="text-xs text-green-500">✓ Good accuracy</p>'
+        }
       </div>
     `))
     .addTo(mapInstance);
 
   console.log("Created user location marker at:", { 
     longitude: longitude.toFixed(6), 
-    latitude: latitude.toFixed(6) 
+    latitude: latitude.toFixed(6),
+    accuracy: `${accuracy.toFixed(1)}m`
   });
 
   return marker;
@@ -47,15 +58,21 @@ export const createUserMarker = (
 
 export const handleLocationError = (error: GeolocationPositionError) => {
   console.error("Geolocation error:", error.message);
-  toast({
-    title: "Location Error",
-    description: error.message,
-    variant: "destructive",
-  });
+  
+  let errorMessage = "Could not get your location. ";
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      errorMessage += "Please enable location services in your browser settings.";
+      break;
+    case error.POSITION_UNAVAILABLE:
+      errorMessage += "Try moving to an area with better GPS signal.";
+      break;
+    case error.TIMEOUT:
+      errorMessage += "It's taking too long to get an accurate position. Try again in an open area.";
+      break;
+    default:
+      errorMessage += error.message;
+  }
+  
+  toast.error(errorMessage);
 };
-
-export const getLocationOptions = (): PositionOptions => ({
-  enableHighAccuracy: true,
-  timeout: 10000,
-  maximumAge: 5000
-});
