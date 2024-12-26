@@ -27,23 +27,9 @@ export const useLocationAccuracy = () => {
         dismissible: true,
         closeButton: true,
         icon: null,
-        style: {
-          position: 'relative',
-          paddingRight: '32px', // Make room for the close button
-        },
-        className: 'group',
-        closeButtonStyle: {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          opacity: 0,
-          transition: 'opacity 0.2s',
-          padding: '8px',
-          scale: '1.5',
-        },
+        className: 'group relative',
         classNames: {
-          closeButton: 'group-hover:opacity-100'
+          closeButton: 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-150 opacity-0 transition-opacity duration-200 p-2 group-hover:opacity-100'
         }
       });
       setToastId(id);
@@ -55,23 +41,9 @@ export const useLocationAccuracy = () => {
         dismissible: true,
         closeButton: true,
         icon: null,
-        style: {
-          position: 'relative',
-          paddingRight: '32px', // Make room for the close button
-        },
-        className: 'group',
-        closeButtonStyle: {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          opacity: 0,
-          transition: 'opacity 0.2s',
-          padding: '8px',
-          scale: '1.5',
-        },
+        className: 'group relative',
         classNames: {
-          closeButton: 'group-hover:opacity-100'
+          closeButton: 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-150 opacity-0 transition-opacity duration-200 p-2 group-hover:opacity-100'
         }
       });
     }
