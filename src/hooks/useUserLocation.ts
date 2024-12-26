@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { useToast } from '@/components/ui/use-toast';
 
 export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
+  const { toast } = useToast();
+
   useEffect(() => {
     if (!mapInstance) {
       console.log("Map instance not available for location tracking");
@@ -10,6 +13,11 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
 
     if (!("geolocation" in navigator)) {
       console.log("Geolocation not supported");
+      toast({
+        title: "Location Error",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -21,15 +29,35 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
         mapInstance.flyTo({
           center: [longitude, latitude],
           zoom: 14,
-          essential: true // This animation is considered essential for the map's purpose
+          essential: true
+        });
+
+        // Add a marker for user's location
+        new mapboxgl.Marker({ color: "#FF0000" })
+          .setLngLat([longitude, latitude])
+          .addTo(mapInstance);
+
+        toast({
+          title: "Location Found",
+          description: "Map centered to your current location",
         });
       } catch (error) {
         console.error("Error flying to user location:", error);
+        toast({
+          title: "Location Error",
+          description: "Could not center map to your location",
+          variant: "destructive",
+        });
       }
     };
 
     const handleError = (error: GeolocationPositionError) => {
       console.error("Geolocation error:", error.message);
+      toast({
+        title: "Location Error",
+        description: error.message,
+        variant: "destructive",
+      });
     };
 
     const options = {
@@ -39,5 +67,5 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null) => {
     };
 
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, options);
-  }, [mapInstance]);
+  }, [mapInstance, toast]);
 };

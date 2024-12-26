@@ -21,13 +21,33 @@ export const MapboxConfig = () => {
       return;
     }
 
-    localStorage.setItem("mapbox_token", token);
-    toast({
-      title: "Success",
-      description: "Mapbox token saved successfully",
-    });
-    window.location.reload();
+    try {
+      localStorage.setItem("mapbox_token", token);
+      toast({
+        title: "Success",
+        description: "Mapbox token saved successfully",
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error("Error saving token:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save token. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "mapbox_token") {
+        setToken(e.newValue || "");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm p-4 flex items-center justify-center">
@@ -53,6 +73,7 @@ export const MapboxConfig = () => {
             placeholder="Enter your Mapbox token"
             value={token}
             onChange={(e) => setToken(e.target.value)}
+            className="flex-1"
           />
           <Button onClick={handleSaveToken}>Save Token</Button>
         </div>
