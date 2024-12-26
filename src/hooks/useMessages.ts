@@ -21,6 +21,7 @@ export const useMessages = () => {
           sender_id,
           receiver_id,
           status,
+          related_car_id,
           sender:profiles!messages_sender_id_fkey (
             id,
             full_name,
@@ -37,7 +38,8 @@ export const useMessages = () => {
 
       console.log("Messages fetched:", messages);
       return messages as Message[];
-    }
+    },
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   const markMessageAsRead = async (senderId: string) => {
