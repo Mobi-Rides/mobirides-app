@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
+import type { Database } from "@/integrations/supabase/types";
+
+type VehicleType = Database['public']['Enums']['vehicle_type'];
 
 const AddCar = () => {
   const navigate = useNavigate();
@@ -38,7 +41,7 @@ const AddCar = () => {
     brand: "",
     model: "",
     year: new Date().getFullYear(),
-    vehicle_type: "",
+    vehicle_type: "" as VehicleType,
     price_per_day: "",
     location: "",
     transmission: "",
@@ -55,7 +58,11 @@ const AddCar = () => {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'vehicle_type') {
+      setFormData((prev) => ({ ...prev, [name]: value as VehicleType }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
