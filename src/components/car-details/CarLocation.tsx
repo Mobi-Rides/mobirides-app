@@ -4,6 +4,9 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapboxToken } from "../MapboxConfig";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CarLocationProps {
   latitude: number | null;
@@ -18,6 +21,8 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   const token = useMapboxToken();
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [newCoordinates, setNewCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const { id: carId } = useParams();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!token || !mapContainer.current || !latitude || !longitude) {
@@ -93,12 +98,30 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
     toast.info("Tap anywhere on the map to adjust the location. Click 'Save Location' when done.");
   };
 
-  const handleSaveLocation = () => {
-    if (newCoordinates) {
+  const handleSaveLocation = async () => {
+    if (newCoordinates && carId) {
       console.log("Saving new coordinates:", newCoordinates);
-      toast.success("New coordinates captured. Please review the console output.");
+      
+      const { error } = await supabase
+        .from('cars')
+        .update({
+          latitude: newCoordinates.lat,
+          longitude: newCoordinates.lng
+        })
+        .eq('id', carId);
+
+      if (error) {
+        console.error("Error updating coordinates:", error);
+        toast.error("Failed to save new location");
+        return;
+      }
+
+      toast.success("Location updated successfully");
+      // Invalidate the car query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['car', carId] });
     }
     setIsAdjusting(false);
+    setNewCoordinates(null);
   };
 
   if (!token) {
