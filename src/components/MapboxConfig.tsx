@@ -2,16 +2,27 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useToast } from "./ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-export const useMapboxToken = () => {
-  return localStorage.getItem("mapbox_token");
+export const useMapboxToken = async () => {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+    if (error) {
+      console.error('Error fetching Mapbox token:', error);
+      return null;
+    }
+    return data.token;
+  } catch (error) {
+    console.error('Error invoking function:', error);
+    return null;
+  }
 };
 
 export const MapboxConfig = () => {
-  const [token, setToken] = useState(localStorage.getItem("mapbox_token") || "");
+  const [token, setToken] = useState("");
   const { toast } = useToast();
 
-  const handleSaveToken = () => {
+  const handleSaveToken = async () => {
     if (!token) {
       toast({
         title: "Error",
@@ -22,7 +33,20 @@ export const MapboxConfig = () => {
     }
 
     try {
-      localStorage.setItem("mapbox_token", token);
+      const { error } = await supabase.functions.invoke('set-mapbox-token', {
+        body: { token }
+      });
+
+      if (error) {
+        console.error("Error saving token:", error);
+        toast({
+          title: "Error",
+          description: "Failed to save token. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Success",
         description: "Mapbox token saved successfully",
@@ -37,17 +61,6 @@ export const MapboxConfig = () => {
       });
     }
   };
-
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "mapbox_token") {
-        setToken(e.newValue || "");
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm p-4 flex items-center justify-center">
