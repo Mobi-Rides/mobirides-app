@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,19 @@ const AddCar = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        navigate('/login');
+        return;
+      }
+      setUserId(session.user.id);
+    };
+    checkUser();
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     brand: "",
@@ -53,6 +66,15 @@ const AddCar = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add a car",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -82,6 +104,7 @@ const AddCar = () => {
 
       const { error } = await supabase.from("cars").insert({
         ...formData,
+        owner_id: userId,
         image_url,
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
