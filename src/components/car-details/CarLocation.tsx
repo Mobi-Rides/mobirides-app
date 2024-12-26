@@ -39,6 +39,7 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   const handleSaveLocation = async () => {
     if (!newCoordinates || !carId) {
       console.log("Missing required data for location update:", { newCoordinates, carId });
+      toast.error("Please select a new location first");
       return;
     }
 
@@ -51,6 +52,7 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
     );
 
     if (success) {
+      console.log("Location update successful, invalidating queries");
       await queryClient.invalidateQueries({ queryKey: ['car', carId] });
       setIsAdjusting(false);
       setNewCoordinates(null);

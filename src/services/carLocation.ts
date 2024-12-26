@@ -9,10 +9,16 @@ export const updateCarLocation = async (
   console.log("Attempting to update car location:", { carId, latitude, longitude });
 
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('cars')
-      .update({ latitude, longitude })
-      .eq('id', carId);
+      .update({ 
+        latitude, 
+        longitude,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', carId)
+      .select()
+      .maybeSingle();
 
     if (error) {
       console.error("Error updating car location:", error);
@@ -20,7 +26,7 @@ export const updateCarLocation = async (
       return false;
     }
 
-    console.log("Location updated successfully");
+    console.log("Location update response:", data);
     toast.success("Location updated successfully");
     return true;
   } catch (error) {
