@@ -1,21 +1,39 @@
 import { useState } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, SlidersHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { CarCard } from "@/components/CarCard";
 import { BrandFilter } from "@/components/BrandFilter";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
+import { SearchFilters } from "@/components/SearchFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import type { SearchFilters as Filters } from "@/components/SearchFilters";
 
-// Fetch cars from Supabase
-const fetchCars = async () => {
-  console.log("Fetching cars from Supabase...");
-  const { data, error } = await supabase
+// Fetch cars from Supabase with filters
+const fetchCars = async (filters?: Filters) => {
+  console.log("Fetching cars with filters:", filters);
+  let query = supabase
     .from("cars")
     .select("*")
-    .order("created_at", { ascending: false });
+    .eq("is_available", true);
+
+  if (filters?.vehicleType) {
+    query = query.eq("vehicle_type", filters.vehicleType);
+  }
+
+  if (filters?.location) {
+    query = query.ilike("location", `%${filters.location}%`);
+  }
+
+  // Add sorting
+  if (filters?.sortBy === "price") {
+    query = query.order("price_per_day", { ascending: filters.sortOrder === "asc" });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching cars:", error);
@@ -39,13 +57,21 @@ const Index = () => {
   const navigate = useNavigate();
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const { data: cars = [], isLoading, error } = useQuery({
-    queryKey: ["cars"],
-    queryFn: fetchCars,
+  const [filters, setFilters] = useState<Filters>({
+    startDate: undefined,
+    endDate: undefined,
+    vehicleType: undefined,
+    location: "",
+    sortBy: "distance",
+    sortOrder: "asc",
   });
 
-  console.log("Current state:", { cars, isLoading, error, selectedBrand, searchQuery });
+  const { data: cars = [], isLoading, error } = useQuery({
+    queryKey: ["cars", filters],
+    queryFn: () => fetchCars(filters),
+  });
+
+  console.log("Current state:", { cars, isLoading, error, selectedBrand, searchQuery, filters });
 
   const brands = cars.length > 0 ? getUniqueBrands(cars) : [];
 
@@ -86,15 +112,27 @@ const Index = () => {
             <span className="text-xl">🔔</span>
           </button>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search cars..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-primary"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search cars..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-primary"
+            />
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-full">
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SearchFilters onFiltersChange={setFilters} />
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
