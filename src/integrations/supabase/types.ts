@@ -23,7 +23,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
