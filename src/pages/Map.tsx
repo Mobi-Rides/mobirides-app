@@ -8,7 +8,7 @@ import { MapboxConfig, useMapboxToken } from "@/components/MapboxConfig";
 
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const mapInstance = useRef<mapboxgl.Map | null>(null);
   const [filters, setFilters] = useState<FilterType>();
   const mapboxToken = useMapboxToken();
 
@@ -16,60 +16,62 @@ const MapPage = () => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    let mapInstance: mapboxgl.Map | null = null;
+    const initializeMap = () => {
+      try {
+        console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
+        mapboxgl.accessToken = mapboxToken;
+        
+        const map = new mapboxgl.Map({
+          container: mapContainer.current!,
+          style: "mapbox://styles/mapbox/streets-v12",
+          center: [25.9231, -24.6282], // Gaborone coordinates
+          zoom: 12
+        });
 
-    try {
-      console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
-      mapboxgl.accessToken = mapboxToken;
-      
-      mapInstance = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [25.9231, -24.6282], // Gaborone coordinates
-        zoom: 12
-      });
+        mapInstance.current = map;
 
-      map.current = mapInstance;
+        // Add navigation controls
+        map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      // Add navigation controls
-      const navControl = new mapboxgl.NavigationControl();
-      mapInstance.addControl(navControl, "top-right");
-
-      // Get user location
-      const getUserLocation = () => {
+        // Get user location
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            console.log("Got user location:", { latitude, longitude });
+            console.log("Got user location coordinates:", latitude, longitude);
             
-            if (mapInstance) {
-              mapInstance.flyTo({
+            if (mapInstance.current) {
+              mapInstance.current.flyTo({
                 center: [longitude, latitude],
                 zoom: 14
               });
             }
           },
           (error) => {
-            console.error("Error getting location:", error.message);
+            console.error("Geolocation error:", error.message);
           }
         );
-      };
 
-      getUserLocation();
-    } catch (error) {
-      console.error("Error initializing map:", error);
-    }
+        return map;
+      } catch (error) {
+        console.error("Map initialization error:", error);
+        return null;
+      }
+    };
+
+    const map = initializeMap();
 
     // Cleanup function
     return () => {
-      try {
-        if (mapInstance) {
-          console.log("Cleaning up map instance");
-          mapInstance.remove();
-          map.current = null;
+      console.log("Running cleanup...");
+      if (mapInstance.current) {
+        try {
+          mapInstance.current.remove();
+          console.log("Map instance removed successfully");
+        } catch (error) {
+          console.error("Error during map cleanup:", error);
+        } finally {
+          mapInstance.current = null;
         }
-      } catch (error) {
-        console.error("Error cleaning up map:", error);
       }
     };
   }, [mapboxToken]);
