@@ -20,9 +20,10 @@ export const useLocationAccuracy = () => {
     const { HIGH, GOOD } = LOCATION_SETTINGS.ACCURACY_THRESHOLDS;
     
     if (!toastId) {
-      // Create initial toast
+      // Create initial toast with close button
       const id = toast.info(message, {
         duration: Infinity,
+        dismissible: true, // Makes the toast dismissible
       });
       setToastId(id);
     } else {
@@ -30,6 +31,7 @@ export const useLocationAccuracy = () => {
       toast.message(message, {
         id: toastId,
         duration: Infinity,
+        dismissible: true, // Makes the toast dismissible
       });
     }
   }, [toastId]);
