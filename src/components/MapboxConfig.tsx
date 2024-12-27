@@ -26,10 +26,12 @@ export const MapboxConfig = () => {
 
     setIsLoading(true);
     try {
-      console.log('Saving Mapbox token...');
+      console.log('Invoking set-mapbox-token function with token:', token.substring(0, 10) + '...');
       const { data, error } = await supabase.functions.invoke('set-mapbox-token', {
         body: { token }
       });
+
+      console.log('Response from set-mapbox-token:', { data, error });
 
       if (error) {
         console.error("Error from set-mapbox-token function:", error);

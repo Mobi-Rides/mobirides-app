@@ -19,7 +19,7 @@ serve(async (req) => {
 
   try {
     const { token } = await req.json();
-    console.log('Received token request:', { hasToken: !!token });
+    console.log('Received token request:', { hasToken: !!token, tokenPrefix: token?.substring(0, 5) });
     
     if (!token) {
       console.error('No token provided in request');
