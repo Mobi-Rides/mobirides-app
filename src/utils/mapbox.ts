@@ -2,18 +2,23 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const getMapboxToken = async () => {
   try {
-    console.log('Fetching Mapbox token...');
+    console.log('Invoking get-mapbox-token function...');
     const { data, error } = await supabase.functions.invoke('get-mapbox-token');
     
     if (error) {
       console.error('Error fetching Mapbox token:', error);
+      throw error;
+    }
+    
+    if (!data?.token) {
+      console.warn('No Mapbox token found in response');
       return null;
     }
     
-    console.log('Mapbox token retrieved:', data?.token ? 'Token exists' : 'No token found');
-    return data?.token;
+    console.log('Successfully retrieved Mapbox token');
+    return data.token;
   } catch (error) {
-    console.error('Error invoking function:', error);
-    return null;
+    console.error('Error in getMapboxToken:', error);
+    throw error;
   }
 };
