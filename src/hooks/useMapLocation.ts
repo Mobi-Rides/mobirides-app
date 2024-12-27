@@ -19,22 +19,26 @@ export const useMapLocation = ({
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const [newCoordinates, setNewCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
-  const map = useMapInitialization({ 
+  // Initialize map
+  const mapInstance = useMapInitialization({ 
     initialLatitude, 
     initialLongitude, 
-    mapboxToken 
+    mapboxToken,
+    mapContainer 
   });
 
+  // Manage marker
   const marker = useMarkerManagement({
-    map: map.current,
+    map: mapInstance.current,
     initialLatitude,
     initialLongitude,
     isAdjusting,
     onCoordinatesChange: setNewCoordinates
   });
 
+  // Handle map clicks
   useMapClickHandler({
-    map: map.current,
+    map: mapInstance.current,
     marker: marker.current,
     isAdjusting,
     onCoordinatesChange: setNewCoordinates
@@ -42,7 +46,7 @@ export const useMapLocation = ({
 
   return {
     mapContainer,
-    map: map.current,
+    map: mapInstance.current,
     newCoordinates,
     setNewCoordinates
   };

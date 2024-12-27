@@ -56,7 +56,6 @@ const MapPage = () => {
         ref={mapContainer} 
         id="map"
         className="w-full h-full"
-        style={{ position: 'relative' }}
       />
       <Button
         onClick={handleGeolocate}
