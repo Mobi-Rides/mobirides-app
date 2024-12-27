@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     console.log('Attempting to retrieve Mapbox token...')
-    const token = Deno.env.get('MAPBOX_PUBLIC_TOKEN') // Changed from MAPBOX_TOKEN to match Supabase secret name
+    const token = Deno.env.get('MAPBOX_PUBLIC_TOKEN')
     
     if (!token) {
       console.log('No Mapbox token found in environment variables')
