@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
