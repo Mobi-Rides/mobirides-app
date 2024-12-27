@@ -19,15 +19,26 @@ export const MapboxConfig = () => {
       return;
     }
 
+    if (!token.startsWith('pk.')) {
+      toast.error("Invalid Mapbox token format. Public tokens should start with 'pk.'");
+      return;
+    }
+
     setIsLoading(true);
     try {
       console.log('Saving Mapbox token...');
-      const { error } = await supabase.functions.invoke('set-mapbox-token', {
+      const { data, error } = await supabase.functions.invoke('set-mapbox-token', {
         body: { token }
       });
 
       if (error) {
-        console.error("Error saving token:", error);
+        console.error("Error from set-mapbox-token function:", error);
+        toast.error("Failed to save token. Please try again.");
+        return;
+      }
+
+      if (!data?.success) {
+        console.error("Unexpected response from set-mapbox-token:", data);
         toast.error("Failed to save token. Please try again.");
         return;
       }

@@ -6,56 +6,75 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('set-mapbox-token function called with method:', req.method);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    console.log('Handling CORS preflight request');
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    });
   }
 
   try {
-    const { token } = await req.json()
+    const { token } = await req.json();
+    console.log('Received token request:', { hasToken: !!token });
     
     if (!token) {
-      console.log('No token provided in request')
+      console.error('No token provided in request');
       return new Response(
-        JSON.stringify({ error: 'Token is required' }),
+        JSON.stringify({ 
+          error: 'Token is required',
+          message: 'Please provide a Mapbox token'
+        }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
 
     // Verify token format (Mapbox public tokens start with 'pk.')
     if (typeof token !== 'string' || !token.startsWith('pk.')) {
-      console.log('Invalid token format provided')
+      console.error('Invalid token format provided');
       return new Response(
-        JSON.stringify({ error: 'Invalid token format' }),
+        JSON.stringify({ 
+          error: 'Invalid token format',
+          message: 'Mapbox public tokens should start with pk.'
+        }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
 
     // Note: In Supabase Edge Functions, we can't actually set environment variables
     // at runtime. The token needs to be set in the Supabase dashboard.
-    console.log('Token validation successful')
+    console.log('Token validation successful');
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true,
+        message: 'Token format validated successfully'
+      }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   } catch (error) {
-    console.error('Error saving token:', error)
+    console.error('Error in set-mapbox-token function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        message: 'Internal server error while processing token'
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
-})
+});
