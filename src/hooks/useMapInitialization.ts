@@ -35,8 +35,14 @@ export const useMapInitialization = ({
     try {
       // Initialize map if it doesn't exist
       if (!map.current) {
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) {
+          console.error("Map container not found");
+          return;
+        }
+
         map.current = new mapboxgl.Map({
-          container: 'map',
+          container: mapContainer,
           style: "mapbox://styles/mapbox/streets-v12",
           center: [initialLongitude, initialLatitude],
           zoom: 15,

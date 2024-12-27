@@ -4,8 +4,7 @@ import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
-import { useMapInitialization } from "@/hooks/useMapInitialization";
-import { useUserLocation } from "@/hooks/useUserLocation";
+import { useMapLocation } from "@/hooks/useMapLocation";
 import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
 import { toast } from "sonner";
@@ -14,10 +13,16 @@ import "mapbox-gl/dist/mapbox-gl.css";
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { token, isLoading } = useMapboxToken();
-  const mapInstanceRef = useMapInitialization(mapContainer, token);
+  
+  const { map } = useMapLocation({ 
+    initialLatitude: 0,
+    initialLongitude: 0,
+    mapboxToken: token,
+    isAdjusting: false
+  });
 
   // Initialize continuous user location tracking
-  const { refreshLocation } = useUserLocation(mapInstanceRef.current, true);
+  const { refreshLocation } = useUserLocation(map, true);
 
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
@@ -44,6 +49,7 @@ const MapPage = () => {
       </div>
       <div 
         ref={mapContainer} 
+        id="map"
         className="w-full h-full"
         style={{ position: 'relative' }}
       />
