@@ -20,9 +20,15 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   const [isAdjusting, setIsAdjusting] = useState(false);
   const { id: carId } = useParams();
   const queryClient = useQueryClient();
-  const { token, isLoading } = useMapboxToken();
+  const { token, isLoading: isTokenLoading } = useMapboxToken();
 
-  const { mapContainer, map, newCoordinates, setNewCoordinates } = useMapLocation({
+  const { 
+    mapContainer, 
+    map, 
+    newCoordinates, 
+    setNewCoordinates,
+    isMapLoaded 
+  } = useMapLocation({
     initialLatitude: latitude || 0,
     initialLongitude: longitude || 0,
     mapboxToken: token,
@@ -60,7 +66,7 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
     }
   };
 
-  if (isLoading) {
+  if (isTokenLoading) {
     return <div>Loading map configuration...</div>;
   }
 
@@ -104,6 +110,11 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
       <p className="text-muted-foreground mb-2">{location}</p>
       <div className="relative w-full h-[300px] rounded-lg overflow-hidden">
         <div ref={mapContainer} className="absolute inset-0" />
+        {!isMapLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+            <div className="animate-pulse text-primary">Loading map...</div>
+          </div>
+        )}
       </div>
       <div className="space-y-1 text-xs text-muted-foreground">
         <p>Current coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}</p>
