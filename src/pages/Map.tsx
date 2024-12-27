@@ -5,6 +5,7 @@ import { Navigation } from "@/components/Navigation";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useMapLocation } from "@/hooks/useMapLocation";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
 import { toast } from "sonner";
