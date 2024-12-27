@@ -11,9 +11,9 @@ import { Locate } from "lucide-react";
 import { toast } from "sonner";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-// Default to a central location (can be adjusted as needed)
-const DEFAULT_LATITUDE = 0;
-const DEFAULT_LONGITUDE = 0;
+// Gaborone, Botswana coordinates
+const DEFAULT_LATITUDE = -24.6282;
+const DEFAULT_LONGITUDE = 25.9231;
 
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
