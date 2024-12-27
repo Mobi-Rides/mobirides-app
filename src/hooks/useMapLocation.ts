@@ -16,7 +16,7 @@ export const useMapLocation = ({
   isAdjusting
 }: UseMapLocationProps) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const mapInstance = useRef<mapboxgl.Map | null>(null);
   const [newCoordinates, setNewCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
@@ -45,7 +45,7 @@ export const useMapLocation = ({
         zoom: 15,
       });
 
-      map.current = newMap;
+      mapInstance.current = newMap;
 
       newMap.on('load', () => {
         console.log("Map loaded successfully");
@@ -74,17 +74,17 @@ export const useMapLocation = ({
     }
 
     return () => {
-      if (map.current) {
+      if (mapInstance.current) {
         console.log("Cleaning up map instance");
-        map.current.remove();
-        map.current = null;
+        mapInstance.current.remove();
+        mapInstance.current = null;
       }
     };
   }, [mapContainer, mapboxToken, initialLatitude, initialLongitude, isAdjusting]);
 
   return { 
     mapContainer, 
-    map: map.current, 
+    map: mapInstance, 
     newCoordinates, 
     setNewCoordinates,
     isMapLoaded 

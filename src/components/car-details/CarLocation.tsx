@@ -36,7 +36,7 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   });
 
   // Initialize user location tracking
-  useUserLocation(map.current);
+  useUserLocation(map?.current);
 
   const handleAdjustLocation = () => {
     setIsAdjusting(true);
