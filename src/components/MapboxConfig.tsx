@@ -3,23 +3,10 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 
 export const getMapboxToken = async () => {
-  try {
-    console.log('Fetching Mapbox token...');
-    const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-    
-    if (error) {
-      console.error('Error fetching Mapbox token:', error);
-      return null;
-    }
-    
-    console.log('Mapbox token retrieved:', data?.token ? 'Token exists' : 'No token found');
-    return data?.token;
-  } catch (error) {
-    console.error('Error invoking function:', error);
-    return null;
-  }
+  return mapboxTokenManager.getToken();
 };
 
 export const MapboxConfig = () => {
@@ -45,6 +32,9 @@ export const MapboxConfig = () => {
         return;
       }
 
+      // Clear the cached token to force a fresh fetch
+      mapboxTokenManager.clearToken();
+      
       toast.success("Mapbox token saved successfully");
       
       // Reload after a short delay to ensure the token is available

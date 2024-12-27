@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getMapboxToken } from "@/utils/mapbox";
+import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 
 export const useMapboxToken = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -9,10 +9,8 @@ export const useMapboxToken = () => {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        console.log("Fetching Mapbox token...");
-        const fetchedToken = await getMapboxToken();
-        console.log("Token fetch result:", fetchedToken ? "Success" : "No token found");
-        setToken(fetchedToken);
+        const token = await mapboxTokenManager.getToken();
+        setToken(token);
       } catch (error) {
         console.error("Error fetching Mapbox token:", error);
         setError(error instanceof Error ? error.message : "Failed to fetch token");
