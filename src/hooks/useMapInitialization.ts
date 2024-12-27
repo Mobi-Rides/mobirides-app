@@ -1,50 +1,78 @@
-import { useEffect, useRef, MutableRefObject } from 'react';
-import mapboxgl from 'mapbox-gl';
+import { useEffect, useRef } from "react";
+import mapboxgl from "mapbox-gl";
+import { toast } from "sonner";
 
-export const useMapInitialization = (
-  mapContainer: MutableRefObject<HTMLDivElement | null>,
-  mapboxToken: string | null
-) => {
-  const mapInstanceRef = useRef<mapboxgl.Map | null>(null);
+interface UseMapInitializationProps {
+  initialLatitude: number;
+  initialLongitude: number;
+  mapboxToken: string | null;
+}
+
+export const useMapInitialization = ({ 
+  initialLatitude, 
+  initialLongitude, 
+  mapboxToken 
+}: UseMapInitializationProps) => {
+  const map = useRef<mapboxgl.Map | null>(null);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) {
-      console.log("Missing required map initialization parameters");
+    if (!mapboxToken || !initialLatitude || !initialLongitude) {
+      console.log("Missing required parameters for map:", { 
+        token: !!mapboxToken, 
+        latitude: initialLatitude, 
+        longitude: initialLongitude 
+      });
       return;
     }
 
+    console.log("Initializing map with coordinates:", { 
+      latitude: initialLatitude.toFixed(6), 
+      longitude: initialLongitude.toFixed(6) 
+    });
+    
+    mapboxgl.accessToken = mapboxToken;
+    
     try {
-      console.log("Starting map initialization...");
-      mapboxgl.accessToken = mapboxToken;
+      // Initialize map if it doesn't exist
+      if (!map.current) {
+        map.current = new mapboxgl.Map({
+          container: 'map',
+          style: "mapbox://styles/mapbox/streets-v12",
+          center: [initialLongitude, initialLatitude],
+          zoom: 15,
+          trackResize: true
+        });
 
-      const map = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [25.9231, -24.6282],
-        zoom: 12,
-        preserveDrawingBuffer: true // This can help with certain rendering issues
-      });
+        map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      }
 
-      map.addControl(new mapboxgl.NavigationControl(), "top-right");
-      mapInstanceRef.current = map;
+      // Update the center when coordinates change
+      if (map.current) {
+        map.current.easeTo({
+          center: [initialLongitude, initialLatitude],
+          zoom: 15,
+          duration: 1000
+        });
+      }
 
-      // Wait for map to load before considering initialization complete
-      map.on('load', () => {
-        console.log("Map loaded successfully");
+      map.current.on('load', () => {
+        console.log("Map loaded successfully at coordinates:", {
+          center: map.current?.getCenter(),
+          zoom: map.current?.getZoom()
+        });
       });
 
       return () => {
-        console.log("Cleaning up map instance...");
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.remove();
-          mapInstanceRef.current = null;
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
         }
       };
     } catch (error) {
-      console.error("Error during map initialization:", error);
-      return undefined;
+      console.error("Error initializing map:", error);
+      toast.error("Error initializing map");
     }
-  }, [mapContainer, mapboxToken]);
+  }, [initialLatitude, initialLongitude, mapboxToken]);
 
-  return mapInstanceRef;
+  return map;
 };
