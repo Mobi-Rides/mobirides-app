@@ -33,7 +33,13 @@ class MapboxTokenManager {
     
     try {
       this.token = await this.tokenPromise;
+      if (!this.token) {
+        console.error('No token returned from fetchToken');
+      }
       return this.token;
+    } catch (error) {
+      console.error('Error in getToken:', error);
+      throw error;
     } finally {
       this.tokenPromise = null;
     }
@@ -41,27 +47,29 @@ class MapboxTokenManager {
 
   private async fetchToken(): Promise<string | null> {
     try {
+      console.log('Invoking get-mapbox-token function...');
       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
       
       if (error) {
-        console.error('Error fetching Mapbox token:', error);
-        return null;
+        console.error('Error from Supabase function:', error);
+        throw new Error(`Failed to fetch Mapbox token: ${error.message}`);
       }
       
       if (!data?.token) {
-        console.warn('No Mapbox token found in response');
-        return null;
+        console.error('No token in response:', data);
+        throw new Error('No Mapbox token found in response');
       }
       
       console.log('Successfully retrieved Mapbox token');
       return data.token;
     } catch (error) {
-      console.error('Error in token fetch:', error);
-      return null;
+      console.error('Error in fetchToken:', error);
+      throw error;
     }
   }
 
   clearToken() {
+    console.log('Clearing cached Mapbox token');
     this.token = null;
     this.tokenPromise = null;
   }
