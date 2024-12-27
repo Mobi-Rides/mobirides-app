@@ -20,7 +20,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null, initialCenter:
       }
 
       try {
-        const newMarker = updateMarker(position, locationState.userMarker, forceCenter || initialCenter);
+        const newMarker = updateMarker(position, locationState.userMarker);
         if (newMarker) {
           setLocationState(prev => {
             // Clean up old marker if it exists
