@@ -45,6 +45,7 @@ export const useMapLocation = ({
           style: "mapbox://styles/mapbox/streets-v12",
           center: [initialLongitude, initialLatitude],
           zoom: 15,
+          trackResize: true
         });
 
         map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -64,13 +65,25 @@ export const useMapLocation = ({
         marker.current.remove();
       }
 
-      // Create new marker
+      // Create new marker with fixed coordinates
       marker.current = new mapboxgl.Marker({
         color: "#FF0000",
-        draggable: isAdjusting
+        draggable: isAdjusting,
+        anchor: 'center'
       })
         .setLngLat([initialLongitude, initialLatitude])
         .addTo(map.current);
+
+      // If marker is draggable, update coordinates on dragend
+      if (isAdjusting) {
+        marker.current.on('dragend', () => {
+          const lngLat = marker.current?.getLngLat();
+          if (lngLat) {
+            console.log("New marker position from drag:", { lat: lngLat.lat, lng: lngLat.lng });
+            setNewCoordinates({ lat: lngLat.lat, lng: lngLat.lng });
+          }
+        });
+      }
 
       const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
         if (isAdjusting && marker.current) {
