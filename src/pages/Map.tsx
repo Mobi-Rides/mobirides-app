@@ -2,27 +2,18 @@ import { useRef, useState } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
-import { useMap } from "@/hooks/useMap";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { useMapInitialization } from "@/hooks/useMapInitialization";
 import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
 import { toast } from "sonner";
+import { MapboxConfig } from "@/components/MapboxConfig";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const { 
-    isLoading, 
-    error, 
-    refreshLocation,
-    isConfigured
-  } = useMap({ 
-    container: mapContainer,
-    initialView: {
-      latitude: -24.6282,
-      longitude: 25.9231,
-      zoom: 12
-    }
-  });
+  const { token, isLoading: isTokenLoading } = useMapboxToken();
+  const [isMapReady, setIsMapReady] = useState(false);
 
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
@@ -30,43 +21,41 @@ const MapPage = () => {
 
   const handleGeolocate = () => {
     console.log("Manual location refresh requested");
-    refreshLocation(true);
     toast.info("Updating your location...");
   };
 
-  if (!isConfigured) {
+  // Initialize map only after we have the container and token
+  const { isMapLoaded } = token && mapContainer.current ? useMapInitialization({
+    container: mapContainer.current,
+    mapboxToken: token,
+    initialLatitude: -24.6282,
+    initialLongitude: 25.9231,
+    zoom: 12
+  }) : { isMapLoaded: false };
+
+  // Update map ready state
+  useEffect(() => {
+    if (isMapLoaded) {
+      setIsMapReady(true);
+    }
+  }, [isMapLoaded]);
+
+  if (isTokenLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="max-w-md p-6 text-center">
-          <h2 className="text-lg font-semibold mb-2">Mapbox Configuration Required</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Please configure your Mapbox token in the Supabase Edge Function settings.
-          </p>
-          <a 
-            href="https://account.mapbox.com/access-tokens/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Get your Mapbox token
-          </a>
-        </div>
+        <div className="animate-pulse text-primary">Loading map configuration...</div>
       </div>
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-primary">Loading map...</div>
-      </div>
-    );
+  if (!token) {
+    return <MapboxConfig />;
   }
 
-  if (error) {
+  if (!isMapReady) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="text-destructive">Error loading map: {error}</div>
+        <div className="animate-pulse text-primary">Initializing map...</div>
       </div>
     );
   }
