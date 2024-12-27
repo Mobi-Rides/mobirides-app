@@ -3,15 +3,16 @@ import { SearchFilters, type SearchFilters as FilterType } from "@/components/Se
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
-import { useMapInitialization } from "@/hooks/useMapInitialization";
+import { MapboxConfig } from "@/components/MapboxConfig";
 import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
 import { toast } from "sonner";
-import { MapboxConfig } from "@/components/MapboxConfig";
+import mapboxgl from 'mapbox-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
   const { token, isLoading: isTokenLoading } = useMapboxToken();
   const [isMapReady, setIsMapReady] = useState(false);
 
@@ -20,25 +21,63 @@ const MapPage = () => {
   };
 
   const handleGeolocate = () => {
-    console.log("Manual location refresh requested");
-    toast.info("Updating your location...");
+    if (!map.current) return;
+    
+    if ("geolocation" in navigator) {
+      toast.info("Updating your location...");
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          map.current?.flyTo({
+            center: [position.coords.longitude, position.coords.latitude],
+            zoom: 14,
+            essential: true
+          });
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast.error("Could not get your location. Please check your settings.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser");
+    }
   };
 
-  // Initialize map only after we have the container and token
-  const { isMapLoaded } = token && mapContainer.current ? useMapInitialization({
-    container: mapContainer.current,
-    mapboxToken: token,
-    initialLatitude: -24.6282,
-    initialLongitude: 25.9231,
-    zoom: 12
-  }) : { isMapLoaded: false };
-
-  // Update map ready state
+  // Initialize map when token is available
   useEffect(() => {
-    if (isMapLoaded) {
-      setIsMapReady(true);
+    if (!token || !mapContainer.current || map.current) return;
+
+    console.log("Initializing map with token");
+    mapboxgl.accessToken = token;
+
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [-24.6282, 25.9231],
+        zoom: 12
+      });
+
+      map.current.on('load', () => {
+        console.log("Map loaded successfully");
+        setIsMapReady(true);
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Failed to initialize map. Please try again.");
     }
-  }, [isMapLoaded]);
+
+    return () => {
+      if (map.current) {
+        console.log("Cleaning up map instance");
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [token]);
 
   if (isTokenLoading) {
     return (
@@ -52,23 +91,18 @@ const MapPage = () => {
     return <MapboxConfig />;
   }
 
-  if (!isMapReady) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-primary">Initializing map...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-screen relative">
       <div className="absolute top-4 left-4 right-4 z-10">
         <SearchFilters onFiltersChange={handleFiltersChange} />
       </div>
-      <div 
-        ref={mapContainer} 
-        className="w-full h-full"
-      />
+      <div ref={mapContainer} className="w-full h-full">
+        {!isMapReady && (
+          <div className="h-full flex items-center justify-center">
+            <div className="animate-pulse text-primary">Initializing map...</div>
+          </div>
+        )}
+      </div>
       <Button
         onClick={handleGeolocate}
         className="absolute bottom-24 right-4 z-10"
