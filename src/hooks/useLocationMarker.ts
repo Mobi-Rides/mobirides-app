@@ -10,7 +10,8 @@ export const useLocationMarker = (mapInstance: mapboxgl.Map | null) => {
 
   const updateMarker = useCallback((
     position: GeolocationPosition,
-    existingMarker: mapboxgl.Marker | null
+    existingMarker: mapboxgl.Marker | null,
+    forceCenter?: boolean
   ) => {
     if (!mapInstance) return null;
 
@@ -19,7 +20,8 @@ export const useLocationMarker = (mapInstance: mapboxgl.Map | null) => {
       latitude: latitude.toFixed(6), 
       longitude: longitude.toFixed(6), 
       accuracy: `${accuracy.toFixed(1)}m`,
-      hasExistingMarker: !!existingMarker
+      hasExistingMarker: !!existingMarker,
+      forceCenter
     });
 
     // First remove existing marker
@@ -36,7 +38,9 @@ export const useLocationMarker = (mapInstance: mapboxgl.Map | null) => {
     updateAccuracy(accuracy);
     
     // Center map with animation but don't lock controls
-    centerMapOnLocation(longitude, latitude);
+    if (forceCenter) {
+      centerMapOnLocation(longitude, latitude);
+    }
 
     return newMarker;
   }, [mapInstance, updateAccuracy, centerMapOnLocation]);
