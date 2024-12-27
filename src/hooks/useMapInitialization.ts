@@ -16,12 +16,8 @@ export const useMapInitialization = ({
   const map = useRef<mapboxgl.Map | null>(null);
 
   useEffect(() => {
-    if (!mapboxToken || !initialLatitude || !initialLongitude) {
-      console.log("Missing required parameters for map:", { 
-        token: !!mapboxToken, 
-        latitude: initialLatitude, 
-        longitude: initialLongitude 
-      });
+    if (!mapboxToken) {
+      console.log("Missing Mapbox token");
       return;
     }
 
@@ -45,20 +41,11 @@ export const useMapInitialization = ({
           container: mapContainer,
           style: "mapbox://styles/mapbox/streets-v12",
           center: [initialLongitude, initialLatitude],
-          zoom: 15,
+          zoom: 2, // Start with a zoomed out view
           trackResize: true
         });
 
         map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-      }
-
-      // Update the center when coordinates change
-      if (map.current) {
-        map.current.easeTo({
-          center: [initialLongitude, initialLatitude],
-          zoom: 15,
-          duration: 1000
-        });
       }
 
       map.current.on('load', () => {

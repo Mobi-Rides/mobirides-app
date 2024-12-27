@@ -11,13 +11,17 @@ import { Locate } from "lucide-react";
 import { toast } from "sonner";
 import "mapbox-gl/dist/mapbox-gl.css";
 
+// Default to a central location (can be adjusted as needed)
+const DEFAULT_LATITUDE = 0;
+const DEFAULT_LONGITUDE = 0;
+
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { token, isLoading } = useMapboxToken();
   
   const { map } = useMapLocation({ 
-    initialLatitude: 0,
-    initialLongitude: 0,
+    initialLatitude: DEFAULT_LATITUDE,
+    initialLongitude: DEFAULT_LONGITUDE,
     mapboxToken: token,
     isAdjusting: false
   });
