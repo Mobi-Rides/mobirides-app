@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { useToast } from "./ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const getMapboxToken = async () => {
@@ -25,15 +25,10 @@ export const getMapboxToken = async () => {
 export const MapboxConfig = () => {
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleSaveToken = async () => {
     if (!token) {
-      toast({
-        title: "Error",
-        description: "Please enter a Mapbox token",
-        variant: "destructive",
-      });
+      toast.error("Please enter a Mapbox token");
       return;
     }
 
@@ -46,18 +41,11 @@ export const MapboxConfig = () => {
 
       if (error) {
         console.error("Error saving token:", error);
-        toast({
-          title: "Error",
-          description: "Failed to save token. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to save token. Please try again.");
         return;
       }
 
-      toast({
-        title: "Success",
-        description: "Mapbox token saved successfully",
-      });
+      toast.success("Mapbox token saved successfully");
       
       // Reload after a short delay to ensure the token is available
       setTimeout(() => {
@@ -65,11 +53,7 @@ export const MapboxConfig = () => {
       }, 1000);
     } catch (error) {
       console.error("Error saving token:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save token. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to save token. Please try again.");
     } finally {
       setIsLoading(false);
     }

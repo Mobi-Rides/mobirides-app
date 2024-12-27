@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { useMapInitialization } from "./useMapInitialization";
+import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import { toast } from "sonner";
 
 interface UseMapLocationProps {
   initialLatitude: number;
@@ -15,29 +16,77 @@ export const useMapLocation = ({
   isAdjusting
 }: UseMapLocationProps) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
   const [newCoordinates, setNewCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  const { map, isMapLoaded } = useMapInitialization({
-    container: mapContainer.current!,
-    initialLatitude,
-    initialLongitude,
-    mapboxToken: mapboxToken || '',
-    zoom: 15
-  });
+  useEffect(() => {
+    if (!mapboxToken || !mapContainer.current) {
+      console.log("Missing map initialization requirements:", {
+        hasToken: !!mapboxToken,
+        hasContainer: !!mapContainer.current
+      });
+      return;
+    }
 
-  // Set up click handler for location adjustment
-  if (map && isAdjusting) {
-    map.on("click", (e) => {
-      console.log("Map clicked:", e.lngLat);
-      setNewCoordinates({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    console.log("Initializing map with:", {
+      initialLatitude,
+      initialLongitude,
+      hasToken: !!mapboxToken
     });
-  }
+
+    try {
+      mapboxgl.accessToken = mapboxToken;
+
+      const newMap = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [initialLongitude, initialLatitude],
+        zoom: 15,
+      });
+
+      map.current = newMap;
+
+      newMap.on('load', () => {
+        console.log("Map loaded successfully");
+        setIsMapLoaded(true);
+      });
+
+      newMap.on('error', (e) => {
+        console.error("Map error:", e);
+        toast.error("Error loading map. Please try again.");
+      });
+
+      // Add navigation controls
+      newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      // Set up click handler for location adjustment
+      if (isAdjusting) {
+        newMap.on("click", (e) => {
+          console.log("Map clicked:", e.lngLat);
+          setNewCoordinates({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+        });
+      }
+
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Failed to initialize map. Please check your connection and try again.");
+    }
+
+    return () => {
+      if (map.current) {
+        console.log("Cleaning up map instance");
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [mapContainer, mapboxToken, initialLatitude, initialLongitude, isAdjusting]);
 
   return { 
     mapContainer, 
-    map, 
+    map: map.current, 
     newCoordinates, 
-    setNewCoordinates, 
+    setNewCoordinates,
     isMapLoaded 
   };
 };
