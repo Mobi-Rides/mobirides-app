@@ -13,7 +13,7 @@ export const useUserLocation = (mapInstance: mapboxgl.Map | null, initialCenter:
     refreshLocation,
     watchIdRef 
   } = useLocationTracking(
-    (position: GeolocationPosition, forceCenter: boolean = false) => {
+    (position: GeolocationPosition, forceCenter?: boolean) => {
       if (!mapInstance) {
         console.log("Map instance not available, skipping marker update");
         return;

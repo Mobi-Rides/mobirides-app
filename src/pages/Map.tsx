@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
@@ -17,7 +17,7 @@ const MapPage = () => {
   const mapInstanceRef = useMapInitialization(mapContainer, token);
 
   // Initialize continuous user location tracking
-  const { refreshLocation } = useUserLocation(mapInstanceRef.current, true); // Pass true for forceCenter
+  const { refreshLocation } = useUserLocation(mapInstanceRef.current, true);
 
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
@@ -25,7 +25,7 @@ const MapPage = () => {
 
   const handleGeolocate = () => {
     console.log("Manual location refresh requested with forced centering");
-    refreshLocation(true); // Pass true to force centering
+    refreshLocation(true);
     toast.info("Updating your location...");
   };
 

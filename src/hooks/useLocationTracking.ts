@@ -4,7 +4,9 @@ import { LOCATION_SETTINGS } from '@/utils/locationConstants';
 import { handleLocationError } from '@/utils/locationUtils';
 import type { LocationState } from '@/types/location';
 
-export const useLocationTracking = (handleSuccess: (position: GeolocationPosition) => void) => {
+type SuccessCallback = (position: GeolocationPosition, forceCenter?: boolean) => void;
+
+export const useLocationTracking = (handleSuccess: SuccessCallback) => {
   const [locationState, setLocationState] = useState<LocationState>({
     watchId: null,
     userMarker: null
@@ -27,7 +29,7 @@ export const useLocationTracking = (handleSuccess: (position: GeolocationPositio
 
     // Start watching position with maximum accuracy settings
     const id = navigator.geolocation.watchPosition(
-      handleSuccess,
+      (position) => handleSuccess(position),
       handleLocationError,
       LOCATION_SETTINGS.HIGH_ACCURACY
     );
@@ -39,7 +41,7 @@ export const useLocationTracking = (handleSuccess: (position: GeolocationPositio
     return id;
   }, [handleSuccess]);
 
-  const refreshLocation = useCallback(() => {
+  const refreshLocation = useCallback((forceCenter?: boolean) => {
     if (!("geolocation" in navigator)) {
       toast.error("Geolocation is not supported by your browser");
       return;
@@ -47,7 +49,7 @@ export const useLocationTracking = (handleSuccess: (position: GeolocationPositio
 
     console.log("Manually refreshing location with high accuracy settings...");
     navigator.geolocation.getCurrentPosition(
-      handleSuccess,
+      (position) => handleSuccess(position, forceCenter),
       handleLocationError,
       LOCATION_SETTINGS.HIGH_ACCURACY
     );
