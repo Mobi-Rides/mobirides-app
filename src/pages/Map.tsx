@@ -16,6 +16,7 @@ const GABORONE_COORDINATES: [number, number] = [25.9231, -24.6282];
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { token, isLoading: isTokenLoading } = useMapboxToken();
+  const [isContainerReady, setIsContainerReady] = useState(false);
   
   const { map, isMapReady } = useMapInitialization({
     container: mapContainer.current!,
@@ -71,14 +72,19 @@ const MapPage = () => {
       <div className="absolute top-4 left-4 right-4 z-10">
         <SearchFilters onFiltersChange={handleFiltersChange} />
       </div>
-      <div className="w-full h-full">
-        <div ref={mapContainer} className="w-full h-full">
-          {!isMapReady && (
-            <div className="h-full flex items-center justify-center">
-              <div className="animate-pulse text-primary">Initializing map...</div>
-            </div>
-          )}
-        </div>
+      <div 
+        ref={mapContainer} 
+        className="w-full h-full"
+        onLoad={() => {
+          console.log("Map container mounted");
+          setIsContainerReady(true);
+        }}
+      >
+        {!isMapReady && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+            <div className="animate-pulse text-primary">Initializing map...</div>
+          </div>
+        )}
       </div>
       <Button
         onClick={handleGeolocate}
