@@ -10,6 +10,12 @@ import { toast } from "sonner";
 import mapboxgl from 'mapbox-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
 
+// Gaborone coordinates
+const GABORONE_COORDINATES = {
+  lat: -24.6282,
+  lng: 25.9231
+};
+
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -47,19 +53,19 @@ const MapPage = () => {
   useEffect(() => {
     if (!token || !mapContainer.current || map.current) return;
 
-    console.log("Initializing map with token");
+    console.log("Initializing map with token at Gaborone coordinates:", GABORONE_COORDINATES);
     mapboxgl.accessToken = token;
 
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v12",
-        center: [-24.6282, 25.9231],
-        zoom: 12
+        center: [GABORONE_COORDINATES.lng, GABORONE_COORDINATES.lat], // Set initial center to Gaborone
+        zoom: 12 // Zoom level appropriate for city view
       });
 
       map.current.on('load', () => {
-        console.log("Map loaded successfully");
+        console.log("Map loaded successfully at Gaborone");
         setIsMapReady(true);
       });
 
