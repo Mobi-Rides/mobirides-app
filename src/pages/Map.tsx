@@ -1,39 +1,45 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapboxConfig } from "@/components/MapboxConfig";
+import { useMapInitialization } from "@/hooks/useMapInitialization";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
 import { toast } from "sonner";
-import mapboxgl from 'mapbox-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
 
 // Gaborone coordinates
-const GABORONE_COORDINATES = {
-  lat: -24.6282,
-  lng: 25.9231
-};
+const GABORONE_COORDINATES: [number, number] = [25.9231, -24.6282];
 
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
   const { token, isLoading: isTokenLoading } = useMapboxToken();
-  const [isMapReady, setIsMapReady] = useState(false);
+  
+  const { map, isMapReady } = useMapInitialization({
+    container: mapContainer.current!,
+    initialCenter: GABORONE_COORDINATES,
+    mapboxToken: token || '',
+    zoom: 12
+  });
+
+  // Initialize user location tracking
+  useUserLocation(map);
 
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
   };
 
   const handleGeolocate = () => {
-    if (!map.current) return;
+    if (!map) return;
     
     if ("geolocation" in navigator) {
       toast.info("Updating your location...");
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          map.current?.flyTo({
+          map.flyTo({
             center: [position.coords.longitude, position.coords.latitude],
             zoom: 14,
             essential: true
@@ -48,42 +54,6 @@ const MapPage = () => {
       toast.error("Geolocation is not supported by your browser");
     }
   };
-
-  // Initialize map when token is available
-  useEffect(() => {
-    if (!token || !mapContainer.current || map.current) return;
-
-    console.log("Initializing map with token at Gaborone coordinates:", GABORONE_COORDINATES);
-    mapboxgl.accessToken = token;
-
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [GABORONE_COORDINATES.lng, GABORONE_COORDINATES.lat], // Set initial center to Gaborone
-        zoom: 12 // Zoom level appropriate for city view
-      });
-
-      map.current.on('load', () => {
-        console.log("Map loaded successfully at Gaborone");
-        setIsMapReady(true);
-      });
-
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-    } catch (error) {
-      console.error("Error initializing map:", error);
-      toast.error("Failed to initialize map. Please try again.");
-    }
-
-    return () => {
-      if (map.current) {
-        console.log("Cleaning up map instance");
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, [token]);
 
   if (isTokenLoading) {
     return (

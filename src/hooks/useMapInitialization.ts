@@ -4,21 +4,19 @@ import { toast } from 'sonner';
 
 interface MapConfig {
   container: HTMLDivElement;
-  initialLongitude: number;
-  initialLatitude: number;
-  mapboxToken: string;
+  initialCenter: [number, number];
   zoom?: number;
+  mapboxToken: string;
 }
 
 export const useMapInitialization = ({
   container,
-  initialLongitude,
-  initialLatitude,
+  initialCenter,
   mapboxToken,
-  zoom = 15
+  zoom = 12
 }: MapConfig) => {
   const map = useRef<mapboxgl.Map | null>(null);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     if (!mapboxToken || !container) {
@@ -30,35 +28,32 @@ export const useMapInitialization = ({
     }
 
     console.log("Initializing map with:", {
-      initialLatitude,
-      initialLongitude,
+      center: initialCenter,
       hasToken: !!mapboxToken
     });
 
     try {
       mapboxgl.accessToken = mapboxToken;
 
-      const newMap = new mapboxgl.Map({
+      map.current = new mapboxgl.Map({
         container,
         style: "mapbox://styles/mapbox/streets-v12",
-        center: [initialLongitude, initialLatitude],
+        center: initialCenter,
         zoom,
       });
 
-      map.current = newMap;
-
-      newMap.on('load', () => {
+      map.current.on('load', () => {
         console.log("Map loaded successfully");
-        setIsMapLoaded(true);
+        setIsMapReady(true);
       });
 
-      newMap.on('error', (e) => {
+      map.current.on('error', (e) => {
         console.error("Map error:", e);
         toast.error("Error loading map. Please try again.");
       });
 
       // Add navigation controls
-      newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     } catch (error) {
       console.error("Error initializing map:", error);
@@ -72,7 +67,7 @@ export const useMapInitialization = ({
         map.current = null;
       }
     };
-  }, [container, mapboxToken, initialLatitude, initialLongitude, zoom]);
+  }, [container, mapboxToken, initialCenter, zoom]);
 
-  return { map: map.current, isMapLoaded };
+  return { map: map.current, isMapReady };
 };
