@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
-import { VehicleMarker } from "@/components/VehicleMarker";
 import { Navigation } from "@/components/Navigation";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapboxConfig } from "@/components/MapboxConfig";
@@ -72,12 +71,14 @@ const MapPage = () => {
       <div className="absolute top-4 left-4 right-4 z-10">
         <SearchFilters onFiltersChange={handleFiltersChange} />
       </div>
-      <div ref={mapContainer} className="w-full h-full">
-        {!isMapReady && (
-          <div className="h-full flex items-center justify-center">
-            <div className="animate-pulse text-primary">Initializing map...</div>
-          </div>
-        )}
+      <div className="w-full h-full">
+        <div ref={mapContainer} className="w-full h-full">
+          {!isMapReady && (
+            <div className="h-full flex items-center justify-center">
+              <div className="animate-pulse text-primary">Initializing map...</div>
+            </div>
+          )}
+        </div>
       </div>
       <Button
         onClick={handleGeolocate}

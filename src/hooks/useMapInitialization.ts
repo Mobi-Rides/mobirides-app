@@ -29,10 +29,16 @@ export const useMapInitialization = ({
 
     console.log("Initializing map with:", {
       center: initialCenter,
-      hasToken: !!mapboxToken
+      hasToken: !!mapboxToken,
+      container: !!container
     });
 
     try {
+      if (map.current) {
+        console.log("Removing existing map instance");
+        map.current.remove();
+      }
+
       mapboxgl.accessToken = mapboxToken;
 
       map.current = new mapboxgl.Map({
