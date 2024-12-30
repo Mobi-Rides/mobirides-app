@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { Navigation } from "@/components/Navigation";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
@@ -17,11 +17,14 @@ const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { token, isLoading: isTokenLoading } = useMapboxToken();
   
-  console.log("Map container ref:", mapContainer.current);
-  console.log("Mapbox token status:", { token: !!token, isLoading: isTokenLoading });
+  console.log("Map page render:", {
+    hasContainer: !!mapContainer.current,
+    hasToken: !!token,
+    isTokenLoading
+  });
 
   const { map, isMapReady } = useMapInitialization({
-    container: mapContainer.current!,
+    container: mapContainer.current,
     initialCenter: GABORONE_COORDINATES,
     mapboxToken: token || '',
     zoom: 12

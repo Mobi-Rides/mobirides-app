@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 
 interface MapConfig {
-  container: HTMLDivElement;
+  container: HTMLDivElement | null;
   initialCenter: [number, number];
   zoom?: number;
   mapboxToken: string;
@@ -19,31 +19,31 @@ export const useMapInitialization = ({
   const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
-    if (!mapboxToken) {
-      console.error("No Mapbox token provided");
-      return;
+    // Clear state when dependencies change
+    setIsMapReady(false);
+
+    // Clean up existing map instance if it exists
+    if (map.current) {
+      console.log("Cleaning up existing map instance");
+      map.current.remove();
+      map.current = null;
     }
 
-    if (!container) {
-      console.error("No container element provided");
+    // Don't proceed if we don't have all required dependencies
+    if (!mapboxToken || !container) {
+      console.log("Waiting for initialization dependencies:", {
+        hasToken: !!mapboxToken,
+        hasContainer: !!container
+      });
       return;
     }
 
     console.log("Starting map initialization with:", {
-      hasToken: !!mapboxToken,
-      container: container,
       center: initialCenter,
       zoom
     });
 
     try {
-      // Clean up existing map instance if it exists
-      if (map.current) {
-        console.log("Cleaning up existing map instance");
-        map.current.remove();
-        map.current = null;
-      }
-
       // Set the Mapbox access token
       mapboxgl.accessToken = mapboxToken;
 
