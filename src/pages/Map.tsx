@@ -17,30 +17,45 @@ const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const { token, isLoading: isTokenLoading } = useMapboxToken();
   const [isContainerMounted, setIsContainerMounted] = useState(false);
-  
-  // Reset container mounted state when component unmounts
+
+  // Initialize container and check dimensions
   useEffect(() => {
-    return () => setIsContainerMounted(false);
+    const checkContainer = () => {
+      if (!mapContainer.current) {
+        console.log("Map container ref not available");
+        return;
+      }
+
+      const { offsetWidth, offsetHeight } = mapContainer.current;
+      console.log("Checking map container dimensions:", { width: offsetWidth, height: offsetHeight });
+
+      if (offsetWidth > 0 && offsetHeight > 0) {
+        console.log("Map container has valid dimensions, setting as mounted");
+        setIsContainerMounted(true);
+      } else {
+        console.log("Container dimensions are zero, will retry");
+      }
+    };
+
+    // Initial check
+    checkContainer();
+
+    // Set up a mutation observer to detect changes in the container
+    const observer = new MutationObserver(checkContainer);
+    if (mapContainer.current) {
+      observer.observe(mapContainer.current, { 
+        attributes: true, 
+        childList: true, 
+        subtree: true 
+      });
+    }
+
+    // Cleanup
+    return () => {
+      observer.disconnect();
+      setIsContainerMounted(false);
+    };
   }, []);
-
-  // Initialize container
-  useEffect(() => {
-    if (!mapContainer.current) {
-      console.log("Map container not available");
-      return;
-    }
-
-    const { offsetWidth, offsetHeight } = mapContainer.current;
-    console.log("Map container dimensions:", { width: offsetWidth, height: offsetHeight });
-
-    if (offsetWidth === 0 || offsetHeight === 0) {
-      console.log("Container has zero dimensions, waiting...");
-      return;
-    }
-
-    console.log("Map container mounted and has valid dimensions");
-    setIsContainerMounted(true);
-  }, [mapContainer.current]);
 
   const { map, isMapReady } = useMapInitialization({
     container: isContainerMounted ? mapContainer.current : null,

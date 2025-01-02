@@ -19,6 +19,15 @@ export const useMapInitialization = ({
   const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
+    console.log("Map initialization triggered with:", {
+      hasContainer: !!container,
+      hasToken: !!mapboxToken,
+      containerDimensions: container ? {
+        width: container.offsetWidth,
+        height: container.offsetHeight
+      } : null
+    });
+
     // Clear state when dependencies change
     setIsMapReady(false);
 
@@ -31,39 +40,18 @@ export const useMapInitialization = ({
 
     // Don't proceed if we don't have all required dependencies
     if (!mapboxToken || !container) {
-      console.log("Waiting for initialization dependencies:", {
-        hasToken: !!mapboxToken,
-        hasContainer: !!container,
-        containerDimensions: container ? {
-          width: container.offsetWidth,
-          height: container.offsetHeight
-        } : null
-      });
-      return;
-    }
-
-    // Ensure container has dimensions
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      console.log("Container has no dimensions, skipping initialization");
+      console.log("Missing required dependencies for map initialization");
       return;
     }
 
     try {
-      console.log("Starting map initialization with:", {
-        center: initialCenter,
-        zoom,
-        containerDimensions: {
-          width: container.offsetWidth,
-          height: container.offsetHeight
-        }
-      });
-
+      console.log("Starting map initialization");
+      
       // Set the Mapbox access token
       mapboxgl.accessToken = mapboxToken;
 
       // Create new map instance
-      console.log("Creating new map instance");
-      const newMap = new mapboxgl.Map({
+      map.current = new mapboxgl.Map({
         container,
         style: "mapbox://styles/mapbox/streets-v12",
         center: initialCenter,
@@ -71,21 +59,18 @@ export const useMapInitialization = ({
       });
 
       // Set up event listeners
-      newMap.on('load', () => {
+      map.current.on('load', () => {
         console.log("Map loaded successfully");
         setIsMapReady(true);
       });
 
-      newMap.on('error', (e) => {
+      map.current.on('error', (e) => {
         console.error("Map error:", e);
         toast.error("Error loading map. Please try again.");
       });
 
       // Add navigation controls
-      newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      // Store the map instance
-      map.current = newMap;
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
       console.log("Map initialization completed");
 
