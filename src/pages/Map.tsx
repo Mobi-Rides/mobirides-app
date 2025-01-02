@@ -18,7 +18,6 @@ const MapPage = () => {
   const { token, isLoading: isTokenLoading } = useMapboxToken();
   const [isContainerMounted, setIsContainerMounted] = useState(false);
 
-  // Initialize container and check dimensions
   useEffect(() => {
     const checkContainer = () => {
       if (!mapContainer.current) {
@@ -27,32 +26,30 @@ const MapPage = () => {
       }
 
       const { offsetWidth, offsetHeight } = mapContainer.current;
-      console.log("Checking map container dimensions:", { width: offsetWidth, height: offsetHeight });
+      console.log("Container dimensions check:", { width: offsetWidth, height: offsetHeight });
 
       if (offsetWidth > 0 && offsetHeight > 0) {
-        console.log("Map container has valid dimensions, setting as mounted");
+        console.log("Container has valid dimensions, marking as mounted");
         setIsContainerMounted(true);
-      } else {
-        console.log("Container dimensions are zero, will retry");
       }
     };
 
     // Initial check
     checkContainer();
 
-    // Set up a mutation observer to detect changes in the container
-    const observer = new MutationObserver(checkContainer);
+    // Set up a resize observer to detect size changes
+    const resizeObserver = new ResizeObserver(() => {
+      console.log("Container size changed, rechecking dimensions");
+      checkContainer();
+    });
+
     if (mapContainer.current) {
-      observer.observe(mapContainer.current, { 
-        attributes: true, 
-        childList: true, 
-        subtree: true 
-      });
+      resizeObserver.observe(mapContainer.current);
     }
 
     // Cleanup
     return () => {
-      observer.disconnect();
+      resizeObserver.disconnect();
       setIsContainerMounted(false);
     };
   }, []);

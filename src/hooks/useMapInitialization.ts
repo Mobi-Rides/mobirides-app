@@ -17,15 +17,19 @@ export const useMapInitialization = ({
 }: MapConfig) => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const initializationAttempted = useRef(false);
 
   useEffect(() => {
-    console.log("Map initialization triggered with:", {
+    // Log initialization attempt
+    console.log("Map initialization check:", {
       hasContainer: !!container,
       hasToken: !!mapboxToken,
       containerDimensions: container ? {
         width: container.offsetWidth,
         height: container.offsetHeight
-      } : null
+      } : null,
+      hasExistingMap: !!map.current,
+      initializationAttempted: initializationAttempted.current
     });
 
     // Clear state when dependencies change
@@ -36,6 +40,7 @@ export const useMapInitialization = ({
       console.log("Cleaning up existing map instance");
       map.current.remove();
       map.current = null;
+      initializationAttempted.current = false;
     }
 
     // Don't proceed if we don't have all required dependencies
@@ -44,8 +49,24 @@ export const useMapInitialization = ({
       return;
     }
 
+    // Verify container dimensions
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.log("Container dimensions are invalid:", {
+        width: container.offsetWidth,
+        height: container.offsetHeight
+      });
+      return;
+    }
+
+    // Prevent multiple initialization attempts
+    if (initializationAttempted.current) {
+      console.log("Map initialization already attempted");
+      return;
+    }
+
     try {
       console.log("Starting map initialization");
+      initializationAttempted.current = true;
       
       // Set the Mapbox access token
       mapboxgl.accessToken = mapboxToken;
@@ -67,6 +88,7 @@ export const useMapInitialization = ({
       map.current.on('error', (e) => {
         console.error("Map error:", e);
         toast.error("Error loading map. Please try again.");
+        initializationAttempted.current = false;
       });
 
       // Add navigation controls
@@ -77,6 +99,7 @@ export const useMapInitialization = ({
     } catch (error) {
       console.error("Error initializing map:", error);
       toast.error("Failed to initialize map. Please check your connection and try again.");
+      initializationAttempted.current = false;
     }
 
     // Cleanup function
@@ -85,6 +108,7 @@ export const useMapInitialization = ({
         console.log("Cleaning up map instance on unmount");
         map.current.remove();
         map.current = null;
+        initializationAttempted.current = false;
       }
     };
   }, [container, mapboxToken, initialCenter, zoom]);
