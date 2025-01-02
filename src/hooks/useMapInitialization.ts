@@ -34,7 +34,10 @@ export const useMapInitialization = ({
       console.log("Waiting for initialization dependencies:", {
         hasToken: !!mapboxToken,
         hasContainer: !!container,
-        containerElement: container
+        containerDimensions: container ? {
+          width: container.offsetWidth,
+          height: container.offsetHeight
+        } : null
       });
       return;
     }
@@ -43,7 +46,10 @@ export const useMapInitialization = ({
       console.log("Starting map initialization with:", {
         center: initialCenter,
         zoom,
-        container
+        containerDimensions: {
+          width: container.offsetWidth,
+          height: container.offsetHeight
+        }
       });
 
       // Set the Mapbox access token

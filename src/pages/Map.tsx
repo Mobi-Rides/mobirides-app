@@ -19,18 +19,24 @@ const MapPage = () => {
   const [isContainerMounted, setIsContainerMounted] = useState(false);
   
   useEffect(() => {
-    if (mapContainer.current) {
-      console.log("Map container mounted");
-      setIsContainerMounted(true);
-    }
-  }, []);
+    const checkContainer = () => {
+      if (mapContainer.current) {
+        console.log("Map container mounted with dimensions:", {
+          width: mapContainer.current.offsetWidth,
+          height: mapContainer.current.offsetHeight
+        });
+        setIsContainerMounted(true);
+      }
+    };
 
-  console.log("Map page render:", {
-    hasContainer: !!mapContainer.current,
-    hasToken: !!token,
-    isTokenLoading,
-    isContainerMounted
-  });
+    // Check immediately
+    checkContainer();
+    
+    // Also check after a short delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(checkContainer, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const { map, isMapReady } = useMapInitialization({
     container: isContainerMounted ? mapContainer.current : null,
@@ -89,6 +95,7 @@ const MapPage = () => {
       <div 
         ref={mapContainer} 
         className="w-full h-full"
+        style={{ minHeight: "400px" }}
       >
         {!isMapReady && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80">
