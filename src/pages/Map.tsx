@@ -61,8 +61,13 @@ const MapPage = () => {
     zoom: 12
   });
 
-  // Initialize user location tracking
-  useUserLocation(map);
+  // Only initialize user location when map is ready
+  useEffect(() => {
+    if (isMapReady && map) {
+      console.log("Map is ready, initializing user location tracking");
+      useUserLocation(map);
+    }
+  }, [isMapReady, map]);
 
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
