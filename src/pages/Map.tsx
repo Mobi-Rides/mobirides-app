@@ -14,29 +14,33 @@ import "mapbox-gl/dist/mapbox-gl.css";
 const GABORONE_COORDINATES: [number, number] = [25.9231, -24.6282];
 
 const MapPage = () => {
-  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapContainer = useRef<HTMLDivElement | null>(null);
   const { token, isLoading: isTokenLoading } = useMapboxToken();
   const [isContainerMounted, setIsContainerMounted] = useState(false);
   
+  // Reset container mounted state when component unmounts
   useEffect(() => {
-    const checkContainer = () => {
-      if (mapContainer.current) {
-        console.log("Map container mounted with dimensions:", {
-          width: mapContainer.current.offsetWidth,
-          height: mapContainer.current.offsetHeight
-        });
-        setIsContainerMounted(true);
-      }
-    };
-
-    // Check immediately
-    checkContainer();
-    
-    // Also check after a short delay to ensure DOM is fully rendered
-    const timeoutId = setTimeout(checkContainer, 100);
-
-    return () => clearTimeout(timeoutId);
+    return () => setIsContainerMounted(false);
   }, []);
+
+  // Initialize container
+  useEffect(() => {
+    if (!mapContainer.current) {
+      console.log("Map container not available");
+      return;
+    }
+
+    const { offsetWidth, offsetHeight } = mapContainer.current;
+    console.log("Map container dimensions:", { width: offsetWidth, height: offsetHeight });
+
+    if (offsetWidth === 0 || offsetHeight === 0) {
+      console.log("Container has zero dimensions, waiting...");
+      return;
+    }
+
+    console.log("Map container mounted and has valid dimensions");
+    setIsContainerMounted(true);
+  }, [mapContainer.current]);
 
   const { map, isMapReady } = useMapInitialization({
     container: isContainerMounted ? mapContainer.current : null,

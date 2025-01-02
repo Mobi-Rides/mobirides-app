@@ -42,6 +42,12 @@ export const useMapInitialization = ({
       return;
     }
 
+    // Ensure container has dimensions
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.log("Container has no dimensions, skipping initialization");
+      return;
+    }
+
     try {
       console.log("Starting map initialization with:", {
         center: initialCenter,
