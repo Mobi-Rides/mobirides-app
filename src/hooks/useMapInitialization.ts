@@ -33,17 +33,19 @@ export const useMapInitialization = ({
     if (!mapboxToken || !container) {
       console.log("Waiting for initialization dependencies:", {
         hasToken: !!mapboxToken,
-        hasContainer: !!container
+        hasContainer: !!container,
+        containerElement: container
       });
       return;
     }
 
-    console.log("Starting map initialization with:", {
-      center: initialCenter,
-      zoom
-    });
-
     try {
+      console.log("Starting map initialization with:", {
+        center: initialCenter,
+        zoom,
+        container
+      });
+
       // Set the Mapbox access token
       mapboxgl.accessToken = mapboxToken;
 

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { Navigation } from "@/components/Navigation";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
@@ -16,15 +16,24 @@ const GABORONE_COORDINATES: [number, number] = [25.9231, -24.6282];
 const MapPage = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { token, isLoading: isTokenLoading } = useMapboxToken();
+  const [isContainerMounted, setIsContainerMounted] = useState(false);
   
+  useEffect(() => {
+    if (mapContainer.current) {
+      console.log("Map container mounted");
+      setIsContainerMounted(true);
+    }
+  }, []);
+
   console.log("Map page render:", {
     hasContainer: !!mapContainer.current,
     hasToken: !!token,
-    isTokenLoading
+    isTokenLoading,
+    isContainerMounted
   });
 
   const { map, isMapReady } = useMapInitialization({
-    container: mapContainer.current,
+    container: isContainerMounted ? mapContainer.current : null,
     initialCenter: GABORONE_COORDINATES,
     mapboxToken: token || '',
     zoom: 12
