@@ -25,7 +25,7 @@ const MapPage = () => {
 
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
   
-  const { map, isMapReady } = useMapInitialization({
+  const { map, isMapReady, containerRef } = useMapInitialization({
     container: mapContainerRef.current,
     initialCenter: [25.9692, -24.6282],
     zoom: 12,
