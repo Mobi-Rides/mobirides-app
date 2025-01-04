@@ -66,8 +66,9 @@ const MapPage = () => {
         onFiltersChange={handleFiltersChange}
       />
       
+      {!token && <MapboxConfig />}
+      
       <div className="flex-1 relative">
-        {!token && <MapboxConfig />}
         <div ref={mapContainerRef} className="absolute inset-0">
           {isMapReady && userLocation && (
             <VehicleMarker
