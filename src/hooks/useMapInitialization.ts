@@ -18,38 +18,37 @@ export const useMapInitialization = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const initializationAttempted = useRef(false);
+  const cleanupTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Detailed initialization logging with serializable data only
-    console.log("Map initialization attempt:", {
+    console.log("Map initialization starting with:", {
       hasContainer: !!container,
       hasToken: !!mapboxToken,
       containerDimensions: container ? {
         width: container.offsetWidth,
-        height: container.offsetHeight,
-        clientWidth: container.clientWidth,
-        clientHeight: container.clientHeight,
-        scrollWidth: container.scrollWidth,
-        scrollHeight: container.scrollHeight
+        height: container.offsetHeight
       } : null,
-      hasExistingMap: !!map.current,
-      initializationAttempted: initializationAttempted.current,
-      parentDimensions: container?.parentElement ? {
-        width: container.parentElement.offsetWidth,
-        height: container.parentElement.offsetHeight
-      } : null
+      hasExistingMap: !!map.current
     });
 
     // Reset state when dependencies change
     setIsMapReady(false);
 
-    // Cleanup existing map instance
-    if (map.current) {
-      console.log("Cleaning up existing map instance");
-      map.current.remove();
-      map.current = null;
-      initializationAttempted.current = false;
+    // Clear any pending cleanup
+    if (cleanupTimeout.current) {
+      clearTimeout(cleanupTimeout.current);
+      cleanupTimeout.current = null;
     }
+
+    // Cleanup existing map instance
+    const cleanup = () => {
+      if (map.current) {
+        console.log("Cleaning up existing map instance");
+        map.current.remove();
+        map.current = null;
+        initializationAttempted.current = false;
+      }
+    };
 
     // Validate dependencies
     if (!mapboxToken || !container) {
@@ -57,77 +56,70 @@ export const useMapInitialization = ({
         hasToken: !!mapboxToken,
         hasContainer: !!container
       });
+      cleanup();
       return;
     }
 
-    // Validate container dimensions
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      // Log only serializable data
-      console.warn("Invalid container dimensions:", {
-        width: container.offsetWidth,
-        height: container.offsetHeight,
-        computedStyles: {
-          width: window.getComputedStyle(container).width,
-          height: window.getComputedStyle(container).height,
-          display: window.getComputedStyle(container).display,
-          position: window.getComputedStyle(container).position
-        }
-      });
-      return;
-    }
-
-    // Prevent multiple initialization attempts
-    if (initializationAttempted.current) {
-      console.log("Map initialization already attempted");
-      return;
-    }
-
-    try {
-      console.log("Starting map initialization with token:", mapboxToken.substring(0, 10) + '...');
-      initializationAttempted.current = true;
-      
-      // Set Mapbox token
-      mapboxgl.accessToken = mapboxToken;
-
-      // Create map instance
-      map.current = new mapboxgl.Map({
-        container,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: initialCenter,
-        zoom,
-      });
-
-      // Set up event listeners
-      map.current.on('load', () => {
-        console.log("Map loaded successfully");
-        setIsMapReady(true);
-      });
-
-      map.current.on('error', (e) => {
-        console.error("Map error:", e);
-        toast.error("Error loading map. Please try again.");
-        initializationAttempted.current = false;
-      });
-
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      console.log("Map initialization completed");
-
-    } catch (error) {
-      console.error("Error initializing map:", error);
-      toast.error("Failed to initialize map. Please check your connection and try again.");
-      initializationAttempted.current = false;
-    }
-
-    // Cleanup function
-    return () => {
-      if (map.current) {
-        console.log("Cleaning up map instance on unmount");
-        map.current.remove();
-        map.current = null;
-        initializationAttempted.current = false;
+    // Validate container dimensions with a small delay to ensure proper mounting
+    setTimeout(() => {
+      if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+        console.warn("Invalid container dimensions:", {
+          width: container.offsetWidth,
+          height: container.offsetHeight
+        });
+        cleanup();
+        return;
       }
+
+      // Prevent multiple initialization attempts
+      if (initializationAttempted.current || map.current) {
+        console.log("Map already initialized or attempting initialization");
+        return;
+      }
+
+      try {
+        console.log("Starting map initialization");
+        initializationAttempted.current = true;
+        
+        // Set Mapbox token
+        mapboxgl.accessToken = mapboxToken;
+
+        // Create map instance
+        map.current = new mapboxgl.Map({
+          container,
+          style: "mapbox://styles/mapbox/streets-v12",
+          center: initialCenter,
+          zoom,
+        });
+
+        // Set up event listeners
+        map.current.on('load', () => {
+          console.log("Map loaded successfully");
+          setIsMapReady(true);
+        });
+
+        map.current.on('error', (e) => {
+          console.error("Map error:", e);
+          toast.error("Error loading map. Please try again.");
+          cleanup();
+        });
+
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      } catch (error) {
+        console.error("Error initializing map:", error);
+        toast.error("Failed to initialize map. Please check your connection and try again.");
+        cleanup();
+      }
+    }, 100); // Small delay to ensure container is properly mounted
+
+    // Cleanup function with delay
+    return () => {
+      console.log("Starting cleanup process");
+      cleanupTimeout.current = setTimeout(() => {
+        cleanup();
+      }, 200); // Delay cleanup to prevent premature removal
     };
   }, [container, mapboxToken, initialCenter, zoom]);
 
