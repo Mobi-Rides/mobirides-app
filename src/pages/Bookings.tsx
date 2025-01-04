@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const Bookings = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["bookings"],
@@ -78,6 +79,9 @@ const Bookings = () => {
       if (error) throw error;
 
       await createCancellationNotifications(bookingToCancel);
+
+      // Invalidate and refetch bookings after successful cancellation
+      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
 
       toast({
         title: "Success",
