@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
@@ -7,12 +7,12 @@ import { VehicleMarker } from "@/components/VehicleMarker";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useMapInitialization } from "@/hooks/useMapInitialization";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import { useMarkerManagement } from "@/hooks/useMarkerManagement";
 import type { Car } from "@/types/car";
 import type { SearchFilters } from "@/components/SearchFilters";
 
 const MapPage = () => {
   const navigate = useNavigate();
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({
     startDate: undefined,
@@ -25,8 +25,8 @@ const MapPage = () => {
 
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
   
-  const { map, container: mapContainer, isMapReady } = useMapInitialization({
-    container: null,
+  const { map, isMapReady } = useMapInitialization({
+    container: mapContainerRef.current,
     initialCenter: [25.9692, -24.6282],
     zoom: 12,
     mapboxToken: token || ""
@@ -67,7 +67,7 @@ const MapPage = () => {
       />
       
       <div className="flex-1 relative">
-        <div ref={mapContainer} className="absolute inset-0">
+        <div ref={mapContainerRef} className="absolute inset-0">
           <MapboxConfig />
           {isMapReady && map && userLocation && (
             <VehicleMarker

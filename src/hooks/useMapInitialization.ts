@@ -16,8 +16,14 @@ export const useMapInitialization = ({
   zoom = 12
 }: MapConfig) => {
   const map = useRef<mapboxgl.Map | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const initializationAttempted = useRef(false);
+
+  // Store container reference
+  useEffect(() => {
+    containerRef.current = container;
+  }, [container]);
 
   useEffect(() => {
     // Log initialization attempt
@@ -113,5 +119,9 @@ export const useMapInitialization = ({
     };
   }, [container, mapboxToken, initialCenter, zoom]);
 
-  return { map: map.current, isMapReady };
+  return { 
+    map: map.current, 
+    isMapReady,
+    containerRef 
+  };
 };
