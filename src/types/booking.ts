@@ -7,7 +7,7 @@ export interface Booking {
   start_date: string;
   end_date: string;
   total_price: number;
-  status: "pending" | "approved" | "cancelled" | "completed";
+  status: "pending" | "confirmed" | "cancelled" | "completed";
   created_at: string;
   updated_at: string;
   cars: Car;

@@ -4,6 +4,7 @@ import { Navigation } from "@/components/Navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BookingTable } from "@/components/booking/BookingTable";
+import { format } from "date-fns";
 
 const Bookings = () => {
   const { toast } = useToast();
