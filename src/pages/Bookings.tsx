@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BookingTable } from "@/components/booking/BookingTable";
 import { format } from "date-fns";
+import { Booking } from "@/types/booking";
 
 const Bookings = () => {
   const { toast } = useToast();
@@ -33,11 +34,11 @@ const Bookings = () => {
       }
 
       console.log("Bookings fetched:", data);
-      return data;
+      return data as Booking[];
     },
   });
 
-  const createCancellationNotifications = async (booking: any) => {
+  const createCancellationNotifications = async (booking: Booking) => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session?.user) return;
 
