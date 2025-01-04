@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { useMap } from "@/hooks/useMap";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Car } from "@/types/car";
 import type { SearchFilters } from "@/components/SearchFilters";
 
@@ -22,6 +23,9 @@ const MapPage = () => {
   });
 
   const { mapContainer, map, isLoaded, error } = useMap();
+  const { userLocation } = useUserLocation(map);
+
+  console.log("User location state:", userLocation);
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     console.log("Filters updated:", newFilters);
