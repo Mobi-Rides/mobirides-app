@@ -221,6 +221,64 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          related_booking_id: string | null
+          related_car_id: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          related_booking_id?: string | null
+          related_car_id?: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          related_booking_id?: string | null
+          related_car_id?: string | null
+          type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_car_id_fkey"
+            columns: ["related_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -373,6 +431,11 @@ export type Database = {
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       message_status: "sent" | "delivered" | "read"
+      notification_type:
+        | "booking_cancelled"
+        | "booking_confirmed"
+        | "booking_request"
+        | "message_received"
       review_type: "car" | "renter"
       user_role: "host" | "renter"
       vehicle_type:
