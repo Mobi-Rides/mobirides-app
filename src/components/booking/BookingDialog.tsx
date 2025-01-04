@@ -21,15 +21,16 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const createNotification = async (senderId: string, receiverId: string, content: string, carId: string) => {
-    console.log("Creating notification:", { senderId, receiverId, content, carId });
+  const createNotification = async (userId: string, type: 'booking_request', content: string, carId: string, bookingId: string) => {
+    console.log("Creating notification:", { userId, type, content, carId, bookingId });
     const { error } = await supabase
-      .from("messages")
+      .from("notifications")
       .insert({
-        sender_id: senderId,
-        receiver_id: receiverId,
+        user_id: userId,
+        type,
         content,
         related_car_id: carId,
+        related_booking_id: bookingId
       });
 
     if (error) {
@@ -73,18 +74,20 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
       // Create notification for renter
       await createNotification(
-        car.owner_id,
         session.session.user.id,
-        `Your booking for ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")} has been confirmed.`,
-        car.id
+        'booking_request',
+        `Your booking request for ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")} has been submitted.`,
+        car.id,
+        booking.id
       );
 
       // Create notification for host
       await createNotification(
-        session.session.user.id,
         car.owner_id,
-        `New booking received for your ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
-        car.id
+        'booking_request',
+        `New booking request received for your ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
+        car.id,
+        booking.id
       );
 
       toast({
