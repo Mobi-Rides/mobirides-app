@@ -9,39 +9,33 @@ import { useMapInitialization } from "@/hooks/useMapInitialization";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useMarkerManagement } from "@/hooks/useMarkerManagement";
 import type { Car } from "@/types/car";
-import type { SearchFilters as FilterType } from "@/components/SearchFilters";
+import type { SearchFilters } from "@/components/SearchFilters";
 
 const MapPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<FilterType>({
-    priceRange: [0, 1000],
-    brands: [],
-    vehicleTypes: [],
-    transmission: "all",
-    fuel: "all",
+  const [filters, setFilters] = useState<SearchFilters>({
+    startDate: undefined,
+    endDate: undefined,
+    vehicleType: undefined,
+    location: "",
+    sortBy: "distance",
+    sortOrder: "asc"
   });
 
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
   
-  const {
-    map,
-    mapContainer,
-    isMapReady,
-    error: mapError,
-  } = useMapInitialization({
-    token,
-    initialState: {
-      lng: 25.9692,
-      lat: -24.6282,
-      zoom: 12
-    }
+  const { map, container: mapContainer, isMapReady } = useMapInitialization({
+    container: null,
+    initialCenter: [25.9692, -24.6282],
+    zoom: 12,
+    mapboxToken: token || ""
   });
 
   // Initialize user location tracking when map is ready
-  const { userLocation, locationError } = useUserLocation(isMapReady ? map : null);
+  const { userLocation, error: locationError } = useUserLocation(isMapReady ? map : null);
 
-  const handleFiltersChange = (newFilters: FilterType) => {
+  const handleFiltersChange = (newFilters: SearchFilters) => {
     console.log("Filters updated:", newFilters);
     setFilters(newFilters);
   };
@@ -60,8 +54,8 @@ const MapPage = () => {
     return <div>Loading map configuration...</div>;
   }
 
-  if (tokenError || mapError || locationError) {
-    return <div>Error: {tokenError || mapError || locationError}</div>;
+  if (tokenError || locationError) {
+    return <div>Error: {tokenError || locationError}</div>;
   }
 
   return (
@@ -75,12 +69,17 @@ const MapPage = () => {
       <div className="flex-1 relative">
         <div ref={mapContainer} className="absolute inset-0">
           <MapboxConfig />
-          {isMapReady && map && (
+          {isMapReady && map && userLocation && (
             <VehicleMarker
-              map={map}
-              filters={filters}
-              searchQuery={searchQuery}
-              onCarClick={handleCarClick}
+              price={100}
+              brand="Example"
+              model="Car"
+              type="Basic"
+              rating={4.5}
+              distance="2km"
+              latitude={userLocation.latitude}
+              longitude={userLocation.longitude}
+              onClick={() => {}}
             />
           )}
         </div>
