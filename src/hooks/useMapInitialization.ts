@@ -16,14 +16,8 @@ export const useMapInitialization = ({
   zoom = 12
 }: MapConfig) => {
   const map = useRef<mapboxgl.Map | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const initializationAttempted = useRef(false);
-
-  // Store container reference
-  useEffect(() => {
-    containerRef.current = container;
-  }, [container]);
 
   useEffect(() => {
     // Log initialization attempt
@@ -51,7 +45,10 @@ export const useMapInitialization = ({
 
     // Don't proceed if we don't have all required dependencies
     if (!mapboxToken || !container) {
-      console.log("Missing required dependencies for map initialization");
+      console.log("Missing required dependencies for map initialization:", {
+        hasToken: !!mapboxToken,
+        hasContainer: !!container
+      });
       return;
     }
 
@@ -71,7 +68,7 @@ export const useMapInitialization = ({
     }
 
     try {
-      console.log("Starting map initialization");
+      console.log("Starting map initialization with token:", mapboxToken.substring(0, 10) + '...');
       initializationAttempted.current = true;
       
       // Set the Mapbox access token
@@ -121,7 +118,6 @@ export const useMapInitialization = ({
 
   return { 
     map: map.current, 
-    isMapReady,
-    containerRef 
+    isMapReady
   };
 };
