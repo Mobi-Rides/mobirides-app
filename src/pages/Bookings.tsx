@@ -73,12 +73,14 @@ const Bookings = () => {
       const bookingToCancel = bookings?.find(b => b.id === bookingId);
       if (!bookingToCancel) return;
 
+      const now = new Date().toISOString();
+
       // First update the local state optimistically
       queryClient.setQueryData(["bookings"], (oldData: any) => {
         if (!oldData) return oldData;
         return oldData.map((booking: any) => 
           booking.id === bookingId 
-            ? { ...booking, status: "cancelled" }
+            ? { ...booking, status: "cancelled", updated_at: now }
             : booking
         );
       });
@@ -88,7 +90,7 @@ const Bookings = () => {
         .from("bookings")
         .update({ 
           status: "cancelled",
-          updated_at: new Date().toISOString()
+          updated_at: now
         })
         .eq("id", bookingId);
 
