@@ -27,12 +27,11 @@ const MapPage = () => {
   
   const { map, isMapReady } = useMapInitialization({
     container: mapContainerRef.current,
-    initialCenter: [25.9692, -24.6282],
+    initialCenter: [25.9692, -24.6282], // Gaborone coordinates
     zoom: 12,
     mapboxToken: token || ""
   });
 
-  // Initialize user location tracking when map is ready
   const { userLocation, error: locationError } = useUserLocation(isMapReady ? map : null);
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
@@ -49,13 +48,20 @@ const MapPage = () => {
     navigate(`/cars/${car.id}`);
   };
 
-  // Handle loading and error states
   if (isTokenLoading) {
-    return <div>Loading map configuration...</div>;
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-lg">Loading map configuration...</div>
+      </div>
+    );
   }
 
-  if (tokenError || locationError) {
-    return <div>Error: {tokenError || locationError}</div>;
+  if (tokenError) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-lg text-red-500">Error loading map: {tokenError}</div>
+      </div>
+    );
   }
 
   return (
@@ -69,7 +75,11 @@ const MapPage = () => {
       {!token && <MapboxConfig />}
       
       <div className="flex-1 relative">
-        <div ref={mapContainerRef} className="absolute inset-0">
+        <div 
+          ref={mapContainerRef} 
+          className="absolute inset-0"
+          style={{ minHeight: "400px" }} // Ensure minimum height
+        >
           {isMapReady && userLocation && (
             <VehicleMarker
               price={100}

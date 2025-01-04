@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface MapConfig {
   container: HTMLDivElement | null;
@@ -18,7 +19,6 @@ export const useMapInitialization = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const initializationAttempted = useRef(false);
-  const cleanupTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     console.log("Map initialization starting with:", {
@@ -27,17 +27,19 @@ export const useMapInitialization = ({
       containerDimensions: container ? {
         width: container.offsetWidth,
         height: container.offsetHeight
-      } : null,
-      hasExistingMap: !!map.current
+      } : null
     });
 
     // Reset state when dependencies change
     setIsMapReady(false);
 
-    // Clear any pending cleanup
-    if (cleanupTimeout.current) {
-      clearTimeout(cleanupTimeout.current);
-      cleanupTimeout.current = null;
+    // Validate dependencies
+    if (!mapboxToken || !container) {
+      console.log("Missing required dependencies:", {
+        hasToken: !!mapboxToken,
+        hasContainer: !!container
+      });
+      return;
     }
 
     // Cleanup existing map instance
@@ -50,24 +52,13 @@ export const useMapInitialization = ({
       }
     };
 
-    // Validate dependencies
-    if (!mapboxToken || !container) {
-      console.log("Missing required dependencies:", {
-        hasToken: !!mapboxToken,
-        hasContainer: !!container
-      });
-      cleanup();
-      return;
-    }
-
-    // Validate container dimensions with a small delay to ensure proper mounting
-    setTimeout(() => {
+    // Initialize map with a small delay to ensure container is ready
+    const initTimeout = setTimeout(() => {
       if (container.offsetWidth === 0 || container.offsetHeight === 0) {
         console.warn("Invalid container dimensions:", {
           width: container.offsetWidth,
           height: container.offsetHeight
         });
-        cleanup();
         return;
       }
 
@@ -81,10 +72,8 @@ export const useMapInitialization = ({
         console.log("Starting map initialization");
         initializationAttempted.current = true;
         
-        // Set Mapbox token
         mapboxgl.accessToken = mapboxToken;
 
-        // Create map instance
         map.current = new mapboxgl.Map({
           container,
           style: "mapbox://styles/mapbox/streets-v12",
@@ -92,19 +81,17 @@ export const useMapInitialization = ({
           zoom,
         });
 
-        // Set up event listeners
         map.current.on('load', () => {
           console.log("Map loaded successfully");
           setIsMapReady(true);
         });
 
         map.current.on('error', (e) => {
-          console.error("Map error:", e);
+          console.error("Map error:", e.error);
           toast.error("Error loading map. Please try again.");
           cleanup();
         });
 
-        // Add navigation controls
         map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
       } catch (error) {
@@ -112,14 +99,12 @@ export const useMapInitialization = ({
         toast.error("Failed to initialize map. Please check your connection and try again.");
         cleanup();
       }
-    }, 100); // Small delay to ensure container is properly mounted
+    }, 100);
 
-    // Cleanup function with delay
+    // Cleanup function
     return () => {
-      console.log("Starting cleanup process");
-      cleanupTimeout.current = setTimeout(() => {
-        cleanup();
-      }, 200); // Delay cleanup to prevent premature removal
+      clearTimeout(initTimeout);
+      cleanup();
     };
   }, [container, mapboxToken, initialCenter, zoom]);
 
