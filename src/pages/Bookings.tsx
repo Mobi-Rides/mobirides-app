@@ -49,20 +49,22 @@ const Bookings = () => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session?.user) return;
 
-    // Notify the car owner
-    await supabase.from("messages").insert({
-      sender_id: session.session.user.id,
-      receiver_id: booking.cars.owner_id,
+    // Create a notification for the car owner
+    await supabase.from("notifications").insert({
+      user_id: booking.cars.owner_id,
+      type: 'booking_cancelled',
       content: `Booking for ${booking.cars.brand} ${booking.cars.model} from ${format(new Date(booking.start_date), "PPP")} to ${format(new Date(booking.end_date), "PPP")} has been cancelled.`,
       related_car_id: booking.car_id,
+      related_booking_id: booking.id
     });
 
-    // Notify the renter (confirmation of cancellation)
-    await supabase.from("messages").insert({
-      sender_id: booking.cars.owner_id,
-      receiver_id: session.session.user.id,
+    // Create a notification for the renter (confirmation)
+    await supabase.from("notifications").insert({
+      user_id: session.session.user.id,
+      type: 'booking_cancelled',
       content: `Your booking for ${booking.cars.brand} ${booking.cars.model} from ${format(new Date(booking.start_date), "PPP")} to ${format(new Date(booking.end_date), "PPP")} has been cancelled.`,
       related_car_id: booking.car_id,
+      related_booking_id: booking.id
     });
   };
 
