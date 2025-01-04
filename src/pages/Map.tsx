@@ -1,20 +1,16 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { VehicleMarker } from "@/components/VehicleMarker";
-import { useMapboxToken } from "@/hooks/useMapboxToken";
-import { useMapInitialization } from "@/hooks/useMapInitialization";
-import { useUserLocation } from "@/hooks/useUserLocation";
+import { useMap } from "@/hooks/useMap";
 import type { Car } from "@/types/car";
 import type { SearchFilters } from "@/components/SearchFilters";
 
 const MapPage = () => {
   console.log("MapPage rendering");
   const navigate = useNavigate();
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [containerReady, setContainerReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({
     startDate: undefined,
@@ -25,52 +21,7 @@ const MapPage = () => {
     sortOrder: "asc"
   });
 
-  // Monitor container dimensions
-  useEffect(() => {
-    const checkContainer = () => {
-      if (mapContainerRef.current?.offsetWidth && mapContainerRef.current?.offsetHeight) {
-        console.log("Container ready with dimensions:", {
-          width: mapContainerRef.current.offsetWidth,
-          height: mapContainerRef.current.offsetHeight
-        });
-        setContainerReady(true);
-      }
-    };
-
-    checkContainer();
-    const observer = new ResizeObserver(checkContainer);
-    if (mapContainerRef.current) {
-      observer.observe(mapContainerRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
-  console.log("Mapbox token status:", { 
-    hasToken: !!token, 
-    isLoading: isTokenLoading, 
-    error: tokenError 
-  });
-  
-  const { map, isMapReady } = useMapInitialization({
-    container: containerReady ? mapContainerRef.current : null,
-    initialCenter: [25.9692, -24.6282], // Gaborone coordinates
-    zoom: 12,
-    mapboxToken: token || ""
-  });
-
-  console.log("Map initialization status:", { 
-    hasMap: !!map, 
-    isMapReady,
-    containerReady 
-  });
-
-  const { userLocation, error: locationError } = useUserLocation(isMapReady ? map : null);
-  console.log("User location status:", { 
-    hasLocation: !!userLocation, 
-    error: locationError 
-  });
+  const { mapContainer, map, isLoaded, error } = useMap();
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     console.log("Filters updated:", newFilters);
@@ -87,25 +38,10 @@ const MapPage = () => {
     navigate(`/cars/${car.id}`);
   };
 
-  if (isTokenLoading) {
-    console.log("Showing loading state");
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-lg">Loading map configuration...</div>
-      </div>
-    );
+  if (error) {
+    return <MapboxConfig />;
   }
 
-  if (tokenError) {
-    console.error("Token error:", tokenError);
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-lg text-red-500">Error loading map: {tokenError}</div>
-      </div>
-    );
-  }
-
-  console.log("Rendering map page with container");
   return (
     <div className="h-screen flex flex-col">
       <Header
@@ -114,15 +50,13 @@ const MapPage = () => {
         onFiltersChange={handleFiltersChange}
       />
       
-      {!token && <MapboxConfig />}
-      
       <div className="flex-1 relative">
         <div 
-          ref={mapContainerRef} 
+          ref={mapContainer} 
           className="absolute inset-0"
           style={{ minHeight: "400px" }}
         >
-          {isMapReady && userLocation && (
+          {isLoaded && (
             <VehicleMarker
               price={100}
               brand="Example"
@@ -130,8 +64,8 @@ const MapPage = () => {
               type="Basic"
               rating={4.5}
               distance="2km"
-              latitude={userLocation.latitude}
-              longitude={userLocation.longitude}
+              latitude={-24.6282}
+              longitude={25.9692}
               onClick={() => {}}
             />
           )}

@@ -5,7 +5,9 @@ class MapboxTokenManager {
   private token: string | null = null;
   private tokenPromise: Promise<string | null> | null = null;
 
-  private constructor() {}
+  private constructor() {
+    console.log('MapboxTokenManager initialized');
+  }
 
   static getInstance(): MapboxTokenManager {
     if (!MapboxTokenManager.instance) {
@@ -33,9 +35,7 @@ class MapboxTokenManager {
     
     try {
       this.token = await this.tokenPromise;
-      if (!this.token) {
-        console.error('No token returned from fetchToken');
-      }
+      console.log('Token fetch completed:', this.token ? 'success' : 'no token');
       return this.token;
     } catch (error) {
       console.error('Error in getToken:', error);
