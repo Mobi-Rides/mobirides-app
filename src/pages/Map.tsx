@@ -25,7 +25,7 @@ const MapPage = () => {
 
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
   
-  const { map, isMapReady, containerRef } = useMapInitialization({
+  const { map, isMapReady } = useMapInitialization({
     container: mapContainerRef.current,
     initialCenter: [25.9692, -24.6282],
     zoom: 12,
@@ -33,7 +33,7 @@ const MapPage = () => {
   });
 
   // Initialize user location tracking when map is ready
-  const { userLocation, error: locationError } = useUserLocation(isMapReady ? map : null);
+  const { userLocation, error: locationError } = useUserLocation(map);
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     console.log("Filters updated:", newFilters);
@@ -69,7 +69,7 @@ const MapPage = () => {
       <div className="flex-1 relative">
         <div ref={mapContainerRef} className="absolute inset-0">
           {!token && <MapboxConfig />}
-          {isMapReady && map && userLocation && (
+          {isMapReady && userLocation && (
             <VehicleMarker
               price={100}
               brand="Example"
