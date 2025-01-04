@@ -20,22 +20,30 @@ export const useMapInitialization = ({
   const initializationAttempted = useRef(false);
 
   useEffect(() => {
-    // Log initialization attempt
-    console.log("Map initialization check:", {
+    // Detailed initialization logging
+    console.log("Map initialization attempt:", {
       hasContainer: !!container,
       hasToken: !!mapboxToken,
       containerDimensions: container ? {
         width: container.offsetWidth,
-        height: container.offsetHeight
+        height: container.offsetHeight,
+        clientWidth: container.clientWidth,
+        clientHeight: container.clientHeight,
+        scrollWidth: container.scrollWidth,
+        scrollHeight: container.scrollHeight
       } : null,
       hasExistingMap: !!map.current,
-      initializationAttempted: initializationAttempted.current
+      initializationAttempted: initializationAttempted.current,
+      parentDimensions: container?.parentElement ? {
+        width: container.parentElement.offsetWidth,
+        height: container.parentElement.offsetHeight
+      } : null
     });
 
-    // Clear state when dependencies change
+    // Reset state when dependencies change
     setIsMapReady(false);
 
-    // Clean up existing map instance if it exists
+    // Cleanup existing map instance
     if (map.current) {
       console.log("Cleaning up existing map instance");
       map.current.remove();
@@ -43,20 +51,22 @@ export const useMapInitialization = ({
       initializationAttempted.current = false;
     }
 
-    // Don't proceed if we don't have all required dependencies
+    // Validate dependencies
     if (!mapboxToken || !container) {
-      console.log("Missing required dependencies for map initialization:", {
+      console.log("Missing required dependencies:", {
         hasToken: !!mapboxToken,
         hasContainer: !!container
       });
       return;
     }
 
-    // Verify container dimensions
+    // Validate container dimensions
     if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      console.log("Container dimensions are invalid:", {
+      console.warn("Invalid container dimensions:", {
         width: container.offsetWidth,
-        height: container.offsetHeight
+        height: container.offsetHeight,
+        element: container,
+        styles: window.getComputedStyle(container)
       });
       return;
     }
@@ -71,10 +81,10 @@ export const useMapInitialization = ({
       console.log("Starting map initialization with token:", mapboxToken.substring(0, 10) + '...');
       initializationAttempted.current = true;
       
-      // Set the Mapbox access token
+      // Set Mapbox token
       mapboxgl.accessToken = mapboxToken;
 
-      // Create new map instance
+      // Create map instance
       map.current = new mapboxgl.Map({
         container,
         style: "mapbox://styles/mapbox/streets-v12",
