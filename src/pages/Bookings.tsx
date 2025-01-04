@@ -71,16 +71,31 @@ const Bookings = () => {
       const bookingToCancel = bookings?.find(b => b.id === bookingId);
       if (!bookingToCancel) return;
 
+      // Update the booking status in Supabase
       const { error } = await supabase
         .from("bookings")
-        .update({ status: "cancelled" })
+        .update({ 
+          status: "cancelled",
+          updated_at: new Date().toISOString()
+        })
         .eq("id", bookingId);
 
       if (error) throw error;
 
+      // Create notifications about the cancellation
       await createCancellationNotifications(bookingToCancel);
 
-      // Invalidate and refetch bookings after successful cancellation
+      // Immediately update the local query data
+      queryClient.setQueryData(["bookings"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((booking: any) => 
+          booking.id === bookingId 
+            ? { ...booking, status: "cancelled" }
+            : booking
+        );
+      });
+
+      // Then invalidate to ensure we're in sync with the server
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
 
       toast({
