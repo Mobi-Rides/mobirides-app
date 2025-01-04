@@ -20,7 +20,7 @@ export const useMapInitialization = ({
   const initializationAttempted = useRef(false);
 
   useEffect(() => {
-    // Detailed initialization logging
+    // Detailed initialization logging with serializable data only
     console.log("Map initialization attempt:", {
       hasContainer: !!container,
       hasToken: !!mapboxToken,
@@ -62,11 +62,16 @@ export const useMapInitialization = ({
 
     // Validate container dimensions
     if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      // Log only serializable data
       console.warn("Invalid container dimensions:", {
         width: container.offsetWidth,
         height: container.offsetHeight,
-        element: container,
-        styles: window.getComputedStyle(container)
+        computedStyles: {
+          width: window.getComputedStyle(container).width,
+          height: window.getComputedStyle(container).height,
+          display: window.getComputedStyle(container).display,
+          position: window.getComputedStyle(container).position
+        }
       });
       return;
     }
