@@ -68,7 +68,7 @@ const MapPage = () => {
       
       <div className="flex-1 relative">
         <div ref={mapContainerRef} className="absolute inset-0">
-          <MapboxConfig />
+          {!token && <MapboxConfig />}
           {isMapReady && map && userLocation && (
             <VehicleMarker
               price={100}
