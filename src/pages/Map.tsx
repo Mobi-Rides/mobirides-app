@@ -11,6 +11,7 @@ import type { Car } from "@/types/car";
 import type { SearchFilters } from "@/components/SearchFilters";
 
 const MapPage = () => {
+  console.log("MapPage rendering");
   const navigate = useNavigate();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,7 +24,17 @@ const MapPage = () => {
     sortOrder: "asc"
   });
 
+  console.log("MapPage container dimensions:", {
+    width: mapContainerRef.current?.offsetWidth,
+    height: mapContainerRef.current?.offsetHeight
+  });
+
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
+  console.log("Mapbox token status:", { 
+    hasToken: !!token, 
+    isLoading: isTokenLoading, 
+    error: tokenError 
+  });
   
   const { map, isMapReady } = useMapInitialization({
     container: mapContainerRef.current,
@@ -32,7 +43,16 @@ const MapPage = () => {
     mapboxToken: token || ""
   });
 
+  console.log("Map initialization status:", { 
+    hasMap: !!map, 
+    isMapReady 
+  });
+
   const { userLocation, error: locationError } = useUserLocation(isMapReady ? map : null);
+  console.log("User location status:", { 
+    hasLocation: !!userLocation, 
+    error: locationError 
+  });
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     console.log("Filters updated:", newFilters);
@@ -45,10 +65,12 @@ const MapPage = () => {
   };
 
   const handleCarClick = (car: Car) => {
+    console.log("Car clicked:", car.id);
     navigate(`/cars/${car.id}`);
   };
 
   if (isTokenLoading) {
+    console.log("Showing loading state");
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-lg">Loading map configuration...</div>
@@ -57,6 +79,7 @@ const MapPage = () => {
   }
 
   if (tokenError) {
+    console.error("Token error:", tokenError);
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-lg text-red-500">Error loading map: {tokenError}</div>
@@ -64,6 +87,7 @@ const MapPage = () => {
     );
   }
 
+  console.log("Rendering map page with container");
   return (
     <div className="h-screen flex flex-col">
       <Header
@@ -78,7 +102,7 @@ const MapPage = () => {
         <div 
           ref={mapContainerRef} 
           className="absolute inset-0"
-          style={{ minHeight: "400px" }} // Ensure minimum height
+          style={{ minHeight: "400px" }}
         >
           {isMapReady && userLocation && (
             <VehicleMarker

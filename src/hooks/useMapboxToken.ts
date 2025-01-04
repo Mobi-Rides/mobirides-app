@@ -10,7 +10,7 @@ export const useMapboxToken = () => {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        console.log('Fetching Mapbox token from edge function...');
+        console.log('Starting Mapbox token fetch...');
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         
         if (error) {
@@ -21,7 +21,7 @@ export const useMapboxToken = () => {
         }
 
         if (!data?.token) {
-          console.log('No token found in response');
+          console.log('No token found in response:', data);
           setError("No Mapbox token found");
           toast.error("Map configuration is missing");
           return;
@@ -35,6 +35,7 @@ export const useMapboxToken = () => {
         setError(errorMessage);
         toast.error("Failed to load map configuration");
       } finally {
+        console.log('Token fetch completed');
         setIsLoading(false);
       }
     };
