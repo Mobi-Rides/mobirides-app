@@ -75,7 +75,21 @@ const Bookings = () => {
 
       const now = new Date().toISOString();
 
-      // First update the local state optimistically
+      // Update in Supabase first
+      const { error: updateError } = await supabase
+        .from("bookings")
+        .update({ 
+          status: "cancelled",
+          updated_at: now
+        })
+        .eq("id", bookingId);
+
+      if (updateError) {
+        console.error("Error updating booking:", updateError);
+        throw updateError;
+      }
+
+      // Then update the local state
       queryClient.setQueryData(["bookings"], (oldData: any) => {
         if (!oldData) return oldData;
         return oldData.map((booking: any) => 
@@ -85,23 +99,11 @@ const Bookings = () => {
         );
       });
 
-      // Then update in Supabase
-      const { error } = await supabase
-        .from("bookings")
-        .update({ 
-          status: "cancelled",
-          updated_at: now
-        })
-        .eq("id", bookingId);
-
-      if (error) {
-        // If there's an error, revert the optimistic update
-        await queryClient.invalidateQueries({ queryKey: ["bookings"] });
-        throw error;
-      }
-
       // Create notifications about the cancellation
       await createCancellationNotifications(bookingToCancel);
+
+      // Invalidate the query to refetch fresh data
+      await queryClient.invalidateQueries({ queryKey: ["bookings"] });
 
       toast({
         title: "Success",
@@ -114,6 +116,8 @@ const Bookings = () => {
         description: "Failed to cancel booking",
         variant: "destructive",
       });
+      // Refetch to ensure UI shows correct state
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
     }
   };
 
