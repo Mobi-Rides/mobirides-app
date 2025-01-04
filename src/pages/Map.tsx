@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
@@ -14,6 +14,7 @@ const MapPage = () => {
   console.log("MapPage rendering");
   const navigate = useNavigate();
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [containerReady, setContainerReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({
     startDate: undefined,
@@ -24,10 +25,26 @@ const MapPage = () => {
     sortOrder: "asc"
   });
 
-  console.log("MapPage container dimensions:", {
-    width: mapContainerRef.current?.offsetWidth,
-    height: mapContainerRef.current?.offsetHeight
-  });
+  // Monitor container dimensions
+  useEffect(() => {
+    const checkContainer = () => {
+      if (mapContainerRef.current?.offsetWidth && mapContainerRef.current?.offsetHeight) {
+        console.log("Container ready with dimensions:", {
+          width: mapContainerRef.current.offsetWidth,
+          height: mapContainerRef.current.offsetHeight
+        });
+        setContainerReady(true);
+      }
+    };
+
+    checkContainer();
+    const observer = new ResizeObserver(checkContainer);
+    if (mapContainerRef.current) {
+      observer.observe(mapContainerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
   console.log("Mapbox token status:", { 
@@ -37,7 +54,7 @@ const MapPage = () => {
   });
   
   const { map, isMapReady } = useMapInitialization({
-    container: mapContainerRef.current,
+    container: containerReady ? mapContainerRef.current : null,
     initialCenter: [25.9692, -24.6282], // Gaborone coordinates
     zoom: 12,
     mapboxToken: token || ""
@@ -45,7 +62,8 @@ const MapPage = () => {
 
   console.log("Map initialization status:", { 
     hasMap: !!map, 
-    isMapReady 
+    isMapReady,
+    containerReady 
   });
 
   const { userLocation, error: locationError } = useUserLocation(isMapReady ? map : null);

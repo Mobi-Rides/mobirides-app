@@ -19,57 +19,61 @@ export const useMapInitialization = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const initializationAttempted = useRef(false);
+  const initTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    console.log("Map initialization starting with:", {
-      hasContainer: !!container,
-      hasToken: !!mapboxToken,
-      containerDimensions: container ? {
-        width: container.offsetWidth,
-        height: container.offsetHeight
-      } : null
-    });
-
     // Reset state when dependencies change
     setIsMapReady(false);
+    initializationAttempted.current = false;
 
     // Validate dependencies
     if (!mapboxToken || !container) {
-      console.log("Missing required dependencies:", {
+      console.log("Missing map initialization requirements:", {
         hasToken: !!mapboxToken,
         hasContainer: !!container
       });
       return;
     }
 
-    // Cleanup existing map instance
+    // Wait for container to have dimensions
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.log("Container not ready:", {
+        width: container.offsetWidth,
+        height: container.offsetHeight
+      });
+      return;
+    }
+
+    console.log("Starting map initialization with:", {
+      containerDimensions: {
+        width: container.offsetWidth,
+        height: container.offsetHeight
+      },
+      hasToken: !!mapboxToken
+    });
+
+    // Cleanup function
     const cleanup = () => {
+      if (initTimeout.current) {
+        clearTimeout(initTimeout.current);
+        initTimeout.current = null;
+      }
       if (map.current) {
         console.log("Cleaning up existing map instance");
         map.current.remove();
         map.current = null;
-        initializationAttempted.current = false;
       }
     };
 
-    // Initialize map with a small delay to ensure container is ready
-    const initTimeout = setTimeout(() => {
-      if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-        console.warn("Invalid container dimensions:", {
-          width: container.offsetWidth,
-          height: container.offsetHeight
-        });
-        return;
-      }
-
-      // Prevent multiple initialization attempts
+    // Initialize map
+    const initializeMap = () => {
       if (initializationAttempted.current || map.current) {
         console.log("Map already initialized or attempting initialization");
         return;
       }
 
       try {
-        console.log("Starting map initialization");
+        console.log("Creating new map instance");
         initializationAttempted.current = true;
         
         mapboxgl.accessToken = mapboxToken;
@@ -99,13 +103,12 @@ export const useMapInitialization = ({
         toast.error("Failed to initialize map. Please check your connection and try again.");
         cleanup();
       }
-    }, 100);
-
-    // Cleanup function
-    return () => {
-      clearTimeout(initTimeout);
-      cleanup();
     };
+
+    // Add a small delay to ensure container is fully ready
+    initTimeout.current = setTimeout(initializeMap, 100);
+
+    return cleanup;
   }, [container, mapboxToken, initialCenter, zoom]);
 
   return { 
