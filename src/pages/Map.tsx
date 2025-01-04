@@ -33,7 +33,7 @@ const MapPage = () => {
   });
 
   // Initialize user location tracking when map is ready
-  const { userLocation, error: locationError } = useUserLocation(map);
+  const { userLocation, error: locationError } = useUserLocation(isMapReady ? map : null);
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     console.log("Filters updated:", newFilters);
@@ -67,8 +67,8 @@ const MapPage = () => {
       />
       
       <div className="flex-1 relative">
+        {!token && <MapboxConfig />}
         <div ref={mapContainerRef} className="absolute inset-0">
-          {!token && <MapboxConfig />}
           {isMapReady && userLocation && (
             <VehicleMarker
               price={100}
