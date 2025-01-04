@@ -1,137 +1,91 @@
-import { useRef, useEffect, useState } from "react";
-import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
-import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { Header } from "@/components/Header";
 import { MapboxConfig } from "@/components/MapboxConfig";
+import { VehicleMarker } from "@/components/VehicleMarker";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useMapInitialization } from "@/hooks/useMapInitialization";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import { Button } from "@/components/ui/button";
-import { Locate } from "lucide-react";
-import { toast } from "sonner";
-import "mapbox-gl/dist/mapbox-gl.css";
-
-// Gaborone coordinates
-const GABORONE_COORDINATES: [number, number] = [25.9231, -24.6282];
+import { useMarkerManagement } from "@/hooks/useMarkerManagement";
+import type { Car } from "@/types/car";
+import type { SearchFilters as FilterType } from "@/components/SearchFilters";
 
 const MapPage = () => {
-  const mapContainer = useRef<HTMLDivElement | null>(null);
-  const { token, isLoading: isTokenLoading } = useMapboxToken();
-  const [isContainerMounted, setIsContainerMounted] = useState(false);
-
-  useEffect(() => {
-    const checkContainer = () => {
-      if (!mapContainer.current) {
-        console.log("Map container ref not available");
-        return;
-      }
-
-      const { offsetWidth, offsetHeight } = mapContainer.current;
-      console.log("Container dimensions check:", { width: offsetWidth, height: offsetHeight });
-
-      if (offsetWidth > 0 && offsetHeight > 0) {
-        console.log("Container has valid dimensions, marking as mounted");
-        setIsContainerMounted(true);
-      }
-    };
-
-    // Initial check
-    checkContainer();
-
-    // Set up a resize observer to detect size changes
-    const resizeObserver = new ResizeObserver(() => {
-      console.log("Container size changed, rechecking dimensions");
-      checkContainer();
-    });
-
-    if (mapContainer.current) {
-      resizeObserver.observe(mapContainer.current);
-    }
-
-    // Cleanup
-    return () => {
-      resizeObserver.disconnect();
-      setIsContainerMounted(false);
-    };
-  }, []);
-
-  const { map, isMapReady } = useMapInitialization({
-    container: isContainerMounted ? mapContainer.current : null,
-    initialCenter: GABORONE_COORDINATES,
-    mapboxToken: token || '',
-    zoom: 12
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<FilterType>({
+    priceRange: [0, 1000],
+    brands: [],
+    vehicleTypes: [],
+    transmission: "all",
+    fuel: "all",
   });
 
-  // Only initialize user location when map is ready
-  useEffect(() => {
-    if (isMapReady && map) {
-      console.log("Map is ready, initializing user location tracking");
-      useUserLocation(map);
+  const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
+  
+  const {
+    map,
+    mapContainer,
+    isMapReady,
+    error: mapError,
+  } = useMapInitialization({
+    token,
+    initialState: {
+      lng: 25.9692,
+      lat: -24.6282,
+      zoom: 12
     }
-  }, [isMapReady, map]);
+  });
+
+  // Initialize user location tracking when map is ready
+  const { userLocation, locationError } = useUserLocation(isMapReady ? map : null);
 
   const handleFiltersChange = (newFilters: FilterType) => {
     console.log("Filters updated:", newFilters);
+    setFilters(newFilters);
   };
 
-  const handleGeolocate = () => {
-    if (!map) return;
-    
-    if ("geolocation" in navigator) {
-      toast.info("Updating your location...");
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          map.flyTo({
-            center: [position.coords.longitude, position.coords.latitude],
-            zoom: 14,
-            essential: true
-          });
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-          toast.error("Could not get your location. Please check your settings.");
-        }
-      );
-    } else {
-      toast.error("Geolocation is not supported by your browser");
-    }
+  const handleSearchChange = (query: string) => {
+    console.log("Search query updated:", query);
+    setSearchQuery(query);
   };
 
+  const handleCarClick = (car: Car) => {
+    navigate(`/cars/${car.id}`);
+  };
+
+  // Handle loading and error states
   if (isTokenLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-primary">Loading map configuration...</div>
-      </div>
-    );
+    return <div>Loading map configuration...</div>;
   }
 
-  if (!token) {
-    return <MapboxConfig />;
+  if (tokenError || mapError || locationError) {
+    return <div>Error: {tokenError || mapError || locationError}</div>;
   }
 
   return (
-    <div className="h-screen relative">
-      <div className="absolute top-4 left-4 right-4 z-10">
-        <SearchFilters onFiltersChange={handleFiltersChange} />
+    <div className="h-screen flex flex-col">
+      <Header
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onFiltersChange={handleFiltersChange}
+      />
+      
+      <div className="flex-1 relative">
+        <div ref={mapContainer} className="absolute inset-0">
+          <MapboxConfig />
+          {isMapReady && map && (
+            <VehicleMarker
+              map={map}
+              filters={filters}
+              searchQuery={searchQuery}
+              onCarClick={handleCarClick}
+            />
+          )}
+        </div>
       </div>
-      <div 
-        ref={mapContainer} 
-        className="w-full h-full"
-        style={{ minHeight: "400px" }}
-      >
-        {!isMapReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <div className="animate-pulse text-primary">Initializing map...</div>
-          </div>
-        )}
-      </div>
-      <Button
-        onClick={handleGeolocate}
-        className="absolute bottom-24 right-4 z-10"
-        size="icon"
-        variant="secondary"
-      >
-        <Locate className="h-4 w-4" />
-      </Button>
+
       <Navigation />
     </div>
   );
