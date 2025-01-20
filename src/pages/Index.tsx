@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
 import { Navigation } from "@/components/Navigation";
 import { useInView } from "react-intersection-observer";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Car } from "@/types/car";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
@@ -14,6 +13,7 @@ import { CarGrid } from "@/components/CarGrid";
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
   const [filters, setFilters] = useState<Filters>({
     startDate: undefined,
     endDate: undefined,
@@ -24,6 +24,26 @@ const Index = () => {
   });
 
   const { ref: loadMoreRef, inView } = useInView();
+
+  // Fetch user role
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile) {
+          setUserRole(profile.role);
+        }
+      }
+    };
+    
+    fetchUserRole();
+  }, []);
 
   // Fetch saved cars
   const { data: savedCarIds } = useQuery({
@@ -37,9 +57,30 @@ const Index = () => {
     }
   });
 
+  // Fetch host's cars if user is a host
+  const { data: hostCars, isLoading: hostCarsLoading } = useQuery({
+    queryKey: ["host-cars"],
+    queryFn: async () => {
+      if (userRole !== "host") return null;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("owner_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: userRole === "host"
+  });
+
+  // Fetch all cars for renters
   const {
     data,
-    isLoading,
+    isLoading: allCarsLoading,
     error,
     fetchNextPage,
     hasNextPage,
@@ -48,7 +89,8 @@ const Index = () => {
     queryKey: ["cars", filters],
     queryFn: ({ pageParam }) => fetchCars({ pageParam, filters }),
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    initialPageParam: 0
+    initialPageParam: 0,
+    enabled: userRole === "renter" || userRole === null
   });
 
   useEffect(() => {
@@ -60,7 +102,8 @@ const Index = () => {
   const allCars = data?.pages.flatMap(page => page.data) ?? [];
   const brands = allCars.length > 0 ? getUniqueBrands(allCars) : [];
 
-  const filteredCars = allCars.filter((car) => {
+  const filteredCars = (userRole === "host" ? hostCars : allCars)?.filter((car) => {
+    if (!car) return false;
     const matchesBrand = !selectedBrand || car.brand === selectedBrand;
     const matchesSearch =
       !searchQuery ||
@@ -70,7 +113,9 @@ const Index = () => {
   }).map(car => ({
     ...car,
     isSaved: savedCarIds ? Array.from(savedCarIds).includes(car.id) : false
-  }));
+  })) ?? [];
+
+  const isLoading = userRole === "host" ? hostCarsLoading : allCarsLoading;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -81,32 +126,51 @@ const Index = () => {
       />
 
       <main className="p-4 max-w-2xl mx-auto">
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Brands</h2>
-            <button className="text-primary text-sm">See All</button>
-          </div>
-          <BrandFilter
-            brands={brands}
-            selectedBrand={selectedBrand}
-            onSelectBrand={setSelectedBrand}
-          />
-        </section>
+        {userRole === "host" ? (
+          <section>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Your Listed Cars</h2>
+              <button className="text-primary text-sm">Manage Listings</button>
+            </div>
+            
+            <CarGrid
+              cars={filteredCars}
+              isLoading={isLoading}
+              error={error}
+              loadMoreRef={loadMoreRef}
+              isFetchingNextPage={false}
+            />
+          </section>
+        ) : (
+          <>
+            <section className="mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Brands</h2>
+                <button className="text-primary text-sm">See All</button>
+              </div>
+              <BrandFilter
+                brands={brands}
+                selectedBrand={selectedBrand}
+                onSelectBrand={setSelectedBrand}
+              />
+            </section>
 
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Available Cars</h2>
-            <button className="text-primary text-sm">See All</button>
-          </div>
-          
-          <CarGrid
-            cars={filteredCars}
-            isLoading={isLoading}
-            error={error}
-            loadMoreRef={loadMoreRef}
-            isFetchingNextPage={isFetchingNextPage}
-          />
-        </section>
+            <section>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Available Cars</h2>
+                <button className="text-primary text-sm">See All</button>
+              </div>
+              
+              <CarGrid
+                cars={filteredCars}
+                isLoading={isLoading}
+                error={error}
+                loadMoreRef={loadMoreRef}
+                isFetchingNextPage={isFetchingNextPage}
+              />
+            </section>
+          </>
+        )}
       </main>
 
       <Navigation />
