@@ -16,18 +16,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     },
   });
 
-  const { data: hasLicense, isLoading: licenseLoading } = useQuery({
-    queryKey: ["driver-license"],
-    enabled: !!session?.user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("driver_licenses")
-        .select("id")
-        .eq("user_id", session!.user.id)
-        .single();
-      return !!data;
-    },
-  });
+  // Temporarily disable license check for development
+  const hasLicense = true;
+  const licenseLoading = false;
 
   useEffect(() => {
     if (!sessionLoading && !session) {
@@ -37,17 +28,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         variant: "destructive",
       });
       navigate("/login");
-    } else if (!licenseLoading && session && !hasLicense) {
-      const currentPath = window.location.pathname;
-      if (currentPath !== "/driver-license") {
-        toast({
-          title: "Driver License Required",
-          description: "Please provide your driver license information to continue",
-        });
-        navigate("/driver-license");
-      }
     }
-  }, [session, sessionLoading, hasLicense, licenseLoading, navigate, toast]);
+  }, [session, sessionLoading, navigate, toast]);
 
   if (sessionLoading || licenseLoading) {
     return <div>Loading...</div>;
