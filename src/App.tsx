@@ -10,6 +10,9 @@ import CarDetails from "./pages/CarDetails";
 import Messages from "./pages/Messages";
 import Bookings from "./pages/Bookings";
 import DriverLicense from "./pages/DriverLicense";
+import Map from "./pages/Map";
+import SavedCars from "./pages/SavedCars";
+import More from "./pages/More";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +75,30 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <DriverLicense />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/map"
+            element={
+              <ProtectedRoute>
+                <Map />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/saved"
+            element={
+              <ProtectedRoute>
+                <SavedCars />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/more"
+            element={
+              <ProtectedRoute>
+                <More />
               </ProtectedRoute>
             }
           />
