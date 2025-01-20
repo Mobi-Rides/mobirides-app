@@ -1,68 +1,34 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Message } from "@/types/message";
+import type { Message } from "@/types/database/message";
 
-export const useMessages = () => {
-  const queryClient = useQueryClient();
-
-  const { data: messages, isLoading } = useQuery({
-    queryKey: ['messages'],
+export const useMessages = (userId: string) => {
+  return useQuery({
+    queryKey: ["messages", userId],
     queryFn: async () => {
-      console.log("Fetching messages");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data: messages, error } = await supabase
-        .from('messages')
+      const { data, error } = await supabase
+        .from("messages")
         .select(`
-          id,
-          content,
-          created_at,
-          sender_id,
-          receiver_id,
-          status,
-          related_car_id,
-          sender:profiles!messages_sender_id_fkey (
+          *,
+          sender:sender_id (
             id,
             full_name,
             avatar_url
           )
         `)
-        .eq('receiver_id', user.id)
-        .order('created_at', { ascending: false });
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching messages:", error);
-        return [];
-      }
+      if (error) throw error;
 
-      console.log("Messages fetched:", messages);
-      return messages as Message[];
+      // Transform the data to match the Message type
+      const messages = data.map((message): Message => ({
+        ...message,
+        sender: message.sender[0], // Take first sender since it's returned as an array
+      }));
+
+      return messages;
     },
-    refetchInterval: 5000, // Refetch every 5 seconds
+    enabled: !!userId,
   });
-
-  const markMessageAsRead = async (senderId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('messages')
-      .update({ status: 'read' })
-      .eq('sender_id', senderId)
-      .eq('receiver_id', user.id)
-      .eq('status', 'sent');
-
-    if (error) {
-      console.error('Error updating message status:', error);
-    } else {
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
-    }
-  };
-
-  return {
-    messages,
-    isLoading,
-    markMessageAsRead
-  };
 };
