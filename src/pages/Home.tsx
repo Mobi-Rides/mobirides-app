@@ -1,7 +1,9 @@
+import React from "react";
 import { CarGrid } from "@/components/CarGrid";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { supabase } from "@/integrations/supabase/client";
+import type { Car } from "@/types/car";
 
 const Home = () => {
   const { ref, inView } = useInView();
@@ -24,8 +26,9 @@ const Home = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Car[];
     },
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.length === 10 ? allPages.length : undefined;
     },
