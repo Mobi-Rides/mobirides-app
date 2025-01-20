@@ -20,90 +20,92 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-car"
-            element={
-              <ProtectedRoute>
-                <AddCar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/car/:id"
-            element={
-              <ProtectedRoute>
-                <CarDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <Messages />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bookings"
-            element={
-              <ProtectedRoute>
-                <Bookings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/driver-license"
-            element={
-              <ProtectedRoute>
-                <DriverLicense />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/map"
-            element={
-              <ProtectedRoute>
-                <Map />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/saved"
-            element={
-              <ProtectedRoute>
-                <SavedCars />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/more"
-            element={
-              <ProtectedRoute>
-                <More />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-        <Toaster />
+        <>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-car"
+              element={
+                <ProtectedRoute>
+                  <AddCar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/car/:id"
+              element={
+                <ProtectedRoute>
+                  <CarDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/messages"
+              element={
+                <ProtectedRoute>
+                  <Messages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bookings"
+              element={
+                <ProtectedRoute>
+                  <Bookings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver-license"
+              element={
+                <ProtectedRoute>
+                  <DriverLicense />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/map"
+              element={
+                <ProtectedRoute>
+                  <Map />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/saved"
+              element={
+                <ProtectedRoute>
+                  <SavedCars />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/more"
+              element={
+                <ProtectedRoute>
+                  <More />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+          <Toaster />
+        </>
       </BrowserRouter>
     </QueryClientProvider>
   );
