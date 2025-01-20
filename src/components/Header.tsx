@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SearchFilters } from "@/components/SearchFilters";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 
 interface HeaderProps {
@@ -14,20 +16,40 @@ interface HeaderProps {
 export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderProps) => {
   const navigate = useNavigate();
 
+  const { data: userRole } = useQuery({
+    queryKey: ["user-role"],
+    queryFn: async () => {
+      console.log("Fetching user role");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      console.log("User role:", profile?.role);
+      return profile?.role;
+    }
+  });
+
   return (
     <header className="bg-white p-4 sticky top-0 z-10 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <div className="flex-1">
           <h1 className="text-xl font-semibold">Gaborone, Botswana</h1>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-full"
-          onClick={() => navigate("/add-car")}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        {userRole === "host" && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full"
+            onClick={() => navigate("/add-car")}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
         <button className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
           <span className="text-xl">🔔</span>
         </button>
