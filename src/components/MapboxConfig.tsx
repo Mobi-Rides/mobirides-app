@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 
 export const getMapboxToken = async () => {
@@ -26,25 +25,9 @@ export const MapboxConfig = () => {
 
     setIsLoading(true);
     try {
-      console.log('Invoking set-mapbox-token function with token:', token.substring(0, 10) + '...');
-      const { data, error } = await supabase.functions.invoke('set-mapbox-token', {
-        body: { token }
-      });
-
-      console.log('Response from set-mapbox-token:', { data, error });
-
-      if (error) {
-        console.error("Error from set-mapbox-token function:", error);
-        toast.error("Failed to save token. Please try again.");
-        return;
-      }
-
-      if (!data?.success) {
-        console.error("Unexpected response from set-mapbox-token:", data);
-        toast.error("Failed to save token. Please try again.");
-        return;
-      }
-
+      // Store token locally instead of calling Supabase
+      localStorage.setItem('mapbox_token', token);
+      
       // Clear the cached token to force a fresh fetch
       mapboxTokenManager.clearToken();
       
