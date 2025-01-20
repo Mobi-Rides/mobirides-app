@@ -14,6 +14,7 @@ const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
+  const [isLoadingRole, setIsLoadingRole] = useState(true);
   const [filters, setFilters] = useState<Filters>({
     startDate: undefined,
     endDate: undefined,
@@ -28,21 +29,47 @@ const Index = () => {
   // Fetch user role
   useEffect(() => {
     const fetchUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
+      try {
+        setIsLoadingRole(true);
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (profile) {
-          setUserRole(profile.role);
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (profile) {
+            console.log("User role fetched:", profile.role);
+            setUserRole(profile.role);
+          }
+        } else {
+          console.log("No authenticated user found");
+          setUserRole(null);
         }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+        setUserRole(null);
+      } finally {
+        setIsLoadingRole(false);
       }
     };
     
     fetchUserRole();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUserRole(null);
+      } else if (session) {
+        fetchUserRole();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Fetch saved cars
@@ -54,7 +81,8 @@ const Index = () => {
         .select("car_id");
       console.log("Saved car IDs:", savedCarsData);
       return new Set(savedCarsData?.map(saved => saved.car_id) || []);
-    }
+    },
+    enabled: !!userRole // Only fetch if user is authenticated
   });
 
   // Fetch host's cars if user is a host
@@ -63,13 +91,13 @@ const Index = () => {
     queryFn: async () => {
       if (userRole !== "host") return null;
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return null;
 
       const { data, error } = await supabase
         .from("cars")
         .select("*")
-        .eq("owner_id", user.id);
+        .eq("owner_id", session.user.id);
 
       if (error) throw error;
       return data;
@@ -115,7 +143,15 @@ const Index = () => {
     isSaved: savedCarIds ? Array.from(savedCarIds).includes(car.id) : false
   })) ?? [];
 
-  const isLoading = userRole === "host" ? hostCarsLoading : allCarsLoading;
+  const isLoading = isLoadingRole || (userRole === "host" ? hostCarsLoading : allCarsLoading);
+
+  if (isLoadingRole) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
