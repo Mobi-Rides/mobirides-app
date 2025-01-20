@@ -1,6 +1,5 @@
 import { CarCard } from "@/components/CarCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Car } from "@/types/car";
 
 interface CarGridProps {
@@ -46,11 +45,9 @@ export const CarGrid = ({
 
   if (!Array.isArray(cars) || cars.length === 0) {
     return (
-      <Alert className="my-8">
-        <AlertDescription>
-          You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars.
-        </AlertDescription>
-      </Alert>
+      <div className="text-center py-8 text-gray-500">
+        No cars found matching your criteria.
+      </div>
     );
   }
 

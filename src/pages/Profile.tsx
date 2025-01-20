@@ -18,59 +18,44 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        return;
-      }
-    };
-
-    const loadProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          throw new Error('No authenticated user found');
-        }
-
-        console.log("Loading profile data...");
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('avatar_url, full_name')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) throw error;
-        
-        if (data) {
-          console.log("Profile data loaded:", { avatarUrl: data.avatar_url, fullName: data.full_name });
-          setAvatarUrl(data.avatar_url);
-          setInitialFormValues({ full_name: data.full_name || "" });
-        }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-        setError("Failed to load profile data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     checkUser();
     loadProfile();
+  }, []);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        navigate("/login");
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/login");
+    }
+  };
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url, full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        setAvatarUrl(data.avatar_url);
+        setInitialFormValues({ full_name: data.full_name || "" });
       }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      setError("Failed to load profile data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) return <ProfileLoading />;
   if (error) return <ProfileError error={error} />;

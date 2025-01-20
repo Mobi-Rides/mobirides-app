@@ -26,35 +26,31 @@ export const ProfileAvatar = ({ avatarUrl, setAvatarUrl }: ProfileAvatarProps) =
       const fileExt = file.name.split('.').pop();
       const filePath = `${Math.random()}.${fileExt}`;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('No authenticated user found');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
 
-      console.log("Uploading avatar...");
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      console.log("Avatar uploaded, updating profile...");
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: filePath })
-        .eq('id', session.user.id);
+        .eq('id', user.id);
 
       if (updateError) throw updateError;
 
       setAvatarUrl(filePath);
-      console.log("Avatar update complete");
       toast({
         title: "Success",
         description: "Avatar uploaded successfully",
       });
     } catch (error) {
-      console.error("Error uploading avatar:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to upload avatar",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -62,17 +58,13 @@ export const ProfileAvatar = ({ avatarUrl, setAvatarUrl }: ProfileAvatarProps) =
     }
   };
 
-  const avatarPublicUrl = avatarUrl 
-    ? supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl 
-    : null;
-
   return (
     <div className="mb-8">
       <h2 className="text-lg font-semibold mb-4">Avatar</h2>
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
           <AvatarImage 
-            src={avatarPublicUrl || undefined}
+            src={avatarUrl ? `${supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl}` : undefined}
             alt="Profile Avatar" 
           />
           <AvatarFallback>👤</AvatarFallback>
@@ -87,7 +79,6 @@ export const ProfileAvatar = ({ avatarUrl, setAvatarUrl }: ProfileAvatarProps) =
             accept="image/*"
             onChange={uploadAvatar}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            disabled={uploading}
           />
           <Upload className="w-4 h-4 mr-2" />
           {uploading ? 'Uploading...' : 'Upload Avatar'}
