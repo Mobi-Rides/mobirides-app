@@ -26,23 +26,24 @@ export const MapboxConfig = () => {
 
     setIsLoading(true);
     try {
-      // For development, store token in localStorage as fallback
+      // Always store in localStorage first as primary storage
       localStorage.setItem('mapbox_token', token);
+      console.log('Token saved to localStorage');
       
-      // Try to save to Supabase if available
+      // Attempt to save to Supabase as backup, but don't block on it
       try {
         console.log('Attempting to save token to Supabase...');
-        const { data, error } = await supabase.functions.invoke('set-mapbox-token', {
+        const { error } = await supabase.functions.invoke('set-mapbox-token', {
           body: { token }
         });
 
         if (error) {
-          console.warn("Supabase function error (using local storage fallback):", error);
+          console.warn("Supabase function error (using localStorage):", error);
         } else {
-          console.log('Token saved to Supabase successfully');
+          console.log('Token also saved to Supabase successfully');
         }
       } catch (e) {
-        console.warn("Supabase function unavailable (using local storage fallback):", e);
+        console.warn("Supabase function unavailable (using localStorage):", e);
       }
 
       // Clear the cached token to force a fresh fetch

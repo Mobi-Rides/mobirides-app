@@ -47,32 +47,34 @@ class MapboxTokenManager {
 
   private async fetchToken(): Promise<string | null> {
     try {
-      // First try to get token from localStorage
+      // Always check localStorage first
       const localToken = localStorage.getItem('mapbox_token');
       if (localToken) {
         console.log('Using token from localStorage');
         return localToken;
       }
 
-      // If no local token, try Supabase
-      console.log('Trying to fetch token from Supabase...');
+      // Only try Supabase if localStorage is empty
+      console.log('No token in localStorage, trying Supabase...');
       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
       
       if (error) {
         console.error('Error from Supabase function:', error);
-        throw new Error(`Failed to fetch Mapbox token: ${error.message}`);
+        return null;
       }
       
       if (!data?.token) {
-        console.error('No token in response:', data);
-        throw new Error('No Mapbox token found in response');
+        console.log('No token in Supabase response');
+        return null;
       }
       
-      console.log('Successfully retrieved Mapbox token from Supabase');
+      console.log('Successfully retrieved token from Supabase');
+      // Save to localStorage for future use
+      localStorage.setItem('mapbox_token', data.token);
       return data.token;
     } catch (error) {
       console.error('Error in fetchToken:', error);
-      throw error;
+      return null;
     }
   }
 
