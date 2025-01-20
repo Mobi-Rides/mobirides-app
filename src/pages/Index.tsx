@@ -34,14 +34,20 @@ const Index = () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          const { data: profile } = await supabase
+          console.log("Fetching role for user ID:", session.user.id);
+          const { data: profile, error } = await supabase
             .from("profiles")
             .select("role")
             .eq("id", session.user.id)
             .single();
+
+          if (error) {
+            console.error("Error fetching profile:", error);
+            throw error;
+          }
           
           if (profile) {
-            console.log("User role fetched:", profile.role);
+            console.log("Profile data received:", profile);
             setUserRole(profile.role);
           }
         } else {
