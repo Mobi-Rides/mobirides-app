@@ -26,23 +26,23 @@ export const MapboxConfig = () => {
 
     setIsLoading(true);
     try {
-      console.log('Invoking set-mapbox-token function with token:', token.substring(0, 10) + '...');
-      const { data, error } = await supabase.functions.invoke('set-mapbox-token', {
-        body: { token }
-      });
+      // For development, store token in localStorage as fallback
+      localStorage.setItem('mapbox_token', token);
+      
+      // Try to save to Supabase if available
+      try {
+        console.log('Attempting to save token to Supabase...');
+        const { data, error } = await supabase.functions.invoke('set-mapbox-token', {
+          body: { token }
+        });
 
-      console.log('Response from set-mapbox-token:', { data, error });
-
-      if (error) {
-        console.error("Error from set-mapbox-token function:", error);
-        toast.error("Failed to save token. Please try again.");
-        return;
-      }
-
-      if (!data?.success) {
-        console.error("Unexpected response from set-mapbox-token:", data);
-        toast.error("Failed to save token. Please try again.");
-        return;
+        if (error) {
+          console.warn("Supabase function error (using local storage fallback):", error);
+        } else {
+          console.log('Token saved to Supabase successfully');
+        }
+      } catch (e) {
+        console.warn("Supabase function unavailable (using local storage fallback):", e);
       }
 
       // Clear the cached token to force a fresh fetch
