@@ -8,9 +8,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
+    console.log("ProtectedRoute: Checking authentication");
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("ProtectedRoute: Auth state changed:", event);
       setAuthenticated(!!session);
       setLoading(false);
     });
@@ -22,6 +24,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const checkAuth = async () => {
     try {
+      console.log("ProtectedRoute: Checking session");
       const { data: { session } } = await supabase.auth.getSession();
       setAuthenticated(!!session);
 
@@ -41,7 +44,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       }
       */
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('ProtectedRoute: Error checking auth status:', error);
     } finally {
       setLoading(false);
     }
@@ -56,6 +59,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!authenticated) {
+    console.log("ProtectedRoute: User not authenticated, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

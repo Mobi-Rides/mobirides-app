@@ -41,11 +41,7 @@ const Login = () => {
       
       if (error) {
         console.error("Session check error:", error);
-        toast({
-          title: "Authentication Error",
-          description: "Please try signing in again",
-          variant: "destructive",
-        });
+        toast.error("Please try signing in again");
         return;
       }
 
@@ -56,11 +52,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Session check failed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to check authentication status",
-        variant: "destructive",
-      });
+      toast.error("Failed to check authentication status");
     }
   };
 
