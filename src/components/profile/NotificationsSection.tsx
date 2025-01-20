@@ -20,7 +20,16 @@ export const NotificationsSection = () => {
     senderName: '',
   });
 
-  const { messages, markMessageAsRead } = useMessages();
+  // Get current user ID
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    },
+  });
+
+  const { messages, markMessageAsRead } = useMessages(session?.user?.id);
   const unreadCount = messages?.filter(msg => msg.status === 'sent').length || 0;
 
   const { data: notifications } = useQuery({
