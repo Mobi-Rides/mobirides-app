@@ -9,56 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      driver_licenses: {
-        Row: {
-          id: string
-          user_id: string
-          license_number: string
-          country_of_issue: string
-          expiry_date: string
-          date_of_birth: string
-          phone_number: string
-          front_image_url: string
-          back_image_url: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          license_number: string
-          country_of_issue: string
-          expiry_date: string
-          date_of_birth: string
-          phone_number: string
-          front_image_url: string
-          back_image_url: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          license_number?: string
-          country_of_issue?: string
-          expiry_date?: string
-          date_of_birth?: string
-          phone_number?: string
-          front_image_url?: string
-          back_image_url?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "driver_licenses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       bookings: {
         Row: {
           car_id: string

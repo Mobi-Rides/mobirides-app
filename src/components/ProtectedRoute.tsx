@@ -1,42 +1,46 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const { data: session, isLoading: sessionLoading } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
-    },
-  });
-
-  // Temporarily disable license check for development
-  const hasLicense = true;
-  const licenseLoading = false;
+export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    if (!sessionLoading && !session) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to access this page",
-        variant: "destructive",
-      });
-      navigate("/login");
-    }
-  }, [session, sessionLoading, navigate, toast]);
+    checkAuth();
 
-  if (sessionLoading || licenseLoading) {
-    return <div>Loading...</div>;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAuthenticated(!!session);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      setAuthenticated(!!session);
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!authenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

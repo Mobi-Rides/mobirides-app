@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { VehicleMarker } from "@/components/VehicleMarker";
 import { useMap } from "@/hooks/useMap";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import type { Car } from "@/types/car";
 import type { SearchFilters } from "@/components/SearchFilters";
 
-const Map = () => {
+const MapPage = () => {
   console.log("MapPage rendering");
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({
     startDate: undefined,
@@ -32,6 +35,11 @@ const Map = () => {
   const handleSearchChange = (query: string) => {
     console.log("Search query updated:", query);
     setSearchQuery(query);
+  };
+
+  const handleCarClick = (car: Car) => {
+    console.log("Car clicked:", car.id);
+    navigate(`/cars/${car.id}`);
   };
 
   if (error) {
@@ -73,4 +81,4 @@ const Map = () => {
   );
 };
 
-export default Map;
+export default MapPage;

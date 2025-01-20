@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
 import { Navigation } from "@/components/Navigation";
-import type { Car } from "@/types/database/car";
+import type { Car } from "@/types/car";
 
 const SavedCars = () => {
   const { data: cars = [], isLoading, error } = useQuery({
@@ -32,9 +32,9 @@ const SavedCars = () => {
       const validCars = savedCars
         .filter(saved => saved.cars !== null)
         .map(saved => ({
-          ...(saved.cars as Car),
+          ...saved.cars,
           isSaved: true
-        }));
+        })) as Car[];
       
       console.log("Processed cars:", validCars);
       return validCars;
