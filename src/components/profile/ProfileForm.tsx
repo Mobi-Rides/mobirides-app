@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 interface ProfileFormValues {
   full_name: string;
@@ -15,32 +16,40 @@ interface ProfileFormProps {
 
 export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<ProfileFormValues>({
     defaultValues: initialValues,
   });
 
   const onSubmit = async (values: ProfileFormValues) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
+      setIsLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('No authenticated user found');
+      }
 
       const { error } = await supabase
         .from('profiles')
         .update({ full_name: values.full_name })
-        .eq('id', user.id);
+        .eq('id', session.user.id);
 
       if (error) throw error;
 
+      console.log("Profile updated successfully");
       toast({
         title: "Success",
         description: "Profile updated successfully",
       });
     } catch (error) {
+      console.error("Error updating profile:", error);
       toast({
         title: "Error",
         description: "Failed to update profile",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,14 +65,14 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
               <FormItem>
                 <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your full name" {...field} />
+                  <Input placeholder="Enter your full name" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Changes"}
           </Button>
         </form>
       </Form>
