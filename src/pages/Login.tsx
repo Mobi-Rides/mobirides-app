@@ -10,49 +10,25 @@ const Login = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log("Login component mounted - checking session");
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, "Session:", session ? "exists" : "null");
-      
       if (event === "SIGNED_IN" && session) {
-        console.log("User signed in successfully");
         const from = location.state?.from?.pathname || "/";
         navigate(from);
-      }
-
-      if (event === "SIGNED_OUT") {
-        console.log("User signed out");
-        navigate("/login");
       }
     });
 
     return () => {
-      console.log("Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, [navigate, location]);
 
   const checkSession = async () => {
-    try {
-      console.log("Checking current session");
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error("Session check error:", error);
-        toast.error("Please try signing in again");
-        return;
-      }
-
-      if (session) {
-        console.log("Valid session found - redirecting");
-        const from = location.state?.from?.pathname || "/";
-        navigate(from);
-      }
-    } catch (error) {
-      console.error("Session check failed:", error);
-      toast.error("Failed to check authentication status");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const from = location.state?.from?.pathname || "/";
+      navigate(from);
     }
   };
 

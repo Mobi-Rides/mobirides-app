@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 
 export const getMapboxToken = async () => {
@@ -25,9 +26,26 @@ export const MapboxConfig = () => {
 
     setIsLoading(true);
     try {
-      // Store token locally instead of calling Supabase
+      // Always store in localStorage first as primary storage
       localStorage.setItem('mapbox_token', token);
+      console.log('Token saved to localStorage');
       
+      // Attempt to save to Supabase as backup, but don't block on it
+      try {
+        console.log('Attempting to save token to Supabase...');
+        const { error } = await supabase.functions.invoke('set-mapbox-token', {
+          body: { token }
+        });
+
+        if (error) {
+          console.warn("Supabase function error (using localStorage):", error);
+        } else {
+          console.log('Token also saved to Supabase successfully');
+        }
+      } catch (e) {
+        console.warn("Supabase function unavailable (using localStorage):", e);
+      }
+
       // Clear the cached token to force a fresh fetch
       mapboxTokenManager.clearToken();
       

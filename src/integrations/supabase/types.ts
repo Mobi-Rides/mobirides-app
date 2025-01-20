@@ -410,59 +410,6 @@ export type Database = {
           },
         ]
       }
-      driver_licenses: {
-        Row: {
-          id: string
-          user_id: string
-          license_number: string
-          country_of_issue: string
-          expiry_date: string
-          date_of_birth: string
-          phone_number: string
-          front_image_url: string
-          back_image_url: string
-          created_at: string
-          updated_at: string
-          verified: boolean
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          license_number: string
-          country_of_issue: string
-          expiry_date: string
-          date_of_birth: string
-          phone_number: string
-          front_image_url: string
-          back_image_url: string
-          created_at?: string
-          updated_at?: string
-          verified?: boolean
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          license_number?: string
-          country_of_issue?: string
-          expiry_date?: string
-          date_of_birth?: string
-          phone_number?: string
-          front_image_url?: string
-          back_image_url?: string
-          created_at?: string
-          updated_at?: string
-          verified?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "driver_licenses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -515,7 +462,7 @@ export type Tables<
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {

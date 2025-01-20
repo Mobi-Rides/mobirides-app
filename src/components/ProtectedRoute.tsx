@@ -8,11 +8,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log("ProtectedRoute: Checking authentication");
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("ProtectedRoute: Auth state changed:", event);
       setAuthenticated(!!session);
       setLoading(false);
     });
@@ -24,27 +22,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const checkAuth = async () => {
     try {
-      console.log("ProtectedRoute: Checking session");
       const { data: { session } } = await supabase.auth.getSession();
       setAuthenticated(!!session);
-
-      // License verification is currently disabled for development
-      // Uncomment when ready to enforce license verification
-      /*
-      if (session) {
-        const { data: license } = await supabase
-          .from("driver_licenses")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .single();
-
-        if (!license && location.pathname !== "/driver-license") {
-          return <Navigate to="/driver-license" state={{ from: location }} replace />;
-        }
-      }
-      */
     } catch (error) {
-      console.error('ProtectedRoute: Error checking auth status:', error);
+      console.error('Error checking auth status:', error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +40,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!authenticated) {
-    console.log("ProtectedRoute: User not authenticated, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
