@@ -14,27 +14,23 @@ interface BrandFilterProps {
 const defaultBrands: Brand[] = [
   {
     name: "Toyota",
-    logo: "/lovable-uploads/936632e6-7dea-4beb-8af7-89c524e48299.png"
-  },
-  {
-    name: "Honda",
-    logo: "/lovable-uploads/4d0e305b-d93c-433b-ab24-54ab59b56cd9.png"
+    logo: "/lovable-uploads/31367394-9fa8-4403-bf56-effabd0dbcd7.png"
   },
   {
     name: "BMW",
-    logo: "/lovable-uploads/a4dd6d94-a886-4f07-a237-9428b128b1e3.png"
+    logo: "/lovable-uploads/d288dd7e-4953-4114-8c21-d4b4573686bf.png"
   },
   {
     name: "Ford",
-    logo: "/lovable-uploads/f912a336-76af-4364-afe8-a81133c45845.png"
-  },
-  {
-    name: "Audi",
-    logo: "/lovable-uploads/3614aa6e-77ab-44f2-ac12-2909809ba782.png"
+    logo: "/lovable-uploads/e5bdd673-275b-4080-b16e-61c2d59f2de5.png"
   },
   {
     name: "Mercedes",
-    logo: "/lovable-uploads/5db2a3dd-0313-4674-ba80-97d005b1cfff.png"
+    logo: "/lovable-uploads/fd57c122-c300-4f20-a95c-377836bc6722.png"
+  },
+  {
+    name: "Range Rover",
+    logo: "/lovable-uploads/20413623-c36b-434d-a57f-fee1f63c4915.png"
   }
 ];
 
