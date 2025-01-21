@@ -9,10 +9,12 @@ type UserRole = Database["public"]["Enums"]["user_role"];
 export const RoleSelector = () => {
   const [role, setRole] = useState<UserRole>("renter");
   const [loading, setLoading] = useState(true);
+  const [hasListedCar, setHasListedCar] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     getInitialRole();
+    checkListedCars();
   }, []);
 
   const getInitialRole = async () => {
@@ -20,6 +22,7 @@ export const RoleSelector = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      console.log("Fetching initial role for user:", user.id);
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
@@ -27,6 +30,7 @@ export const RoleSelector = () => {
         .maybeSingle();
 
       if (profile?.role) {
+        console.log("User role found:", profile.role);
         setRole(profile.role);
       }
       setLoading(false);
@@ -36,11 +40,34 @@ export const RoleSelector = () => {
     }
   };
 
+  const checkListedCars = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      console.log("Checking listed cars for user:", user.id);
+      const { data: cars, error } = await supabase
+        .from("cars")
+        .select("id")
+        .eq("owner_id", user.id)
+        .limit(1);
+
+      if (error) throw error;
+
+      const hasListed = cars && cars.length > 0;
+      console.log("User has listed cars:", hasListed);
+      setHasListedCar(hasListed);
+    } catch (error) {
+      console.error('Error checking listed cars:', error);
+    }
+  };
+
   const updateRole = async (newRole: UserRole) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      console.log("Updating role to:", newRole);
       const { error } = await supabase
         .from("profiles")
         .update({ role: newRole })
@@ -65,6 +92,16 @@ export const RoleSelector = () => {
 
   if (loading) {
     return <div>Loading...</div>;
+  }
+
+  if (!hasListedCar && role === "renter") {
+    return (
+      <div className="w-full max-w-sm mx-auto text-center">
+        <p className="text-sm text-gray-600">
+          List a car to unlock host features
+        </p>
+      </div>
+    );
   }
 
   return (
