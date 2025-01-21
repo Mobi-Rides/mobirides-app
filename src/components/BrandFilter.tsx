@@ -6,7 +6,7 @@ interface Brand {
 }
 
 interface BrandFilterProps {
-  brands: Brand[];
+  brands?: Brand[];
   selectedBrand: string | null;
   onSelectBrand: (brand: string | null) => void;
 }
@@ -14,7 +14,7 @@ interface BrandFilterProps {
 const defaultBrands: Brand[] = [
   {
     name: "Toyota",
-    logo: "/lovable-uploads/e68159b2-790d-477d-ac9f-a4d618ad5137.png"
+    logo: "/lovable-uploads/936632e6-7dea-4beb-8af7-89c524e48299.png"
   },
   {
     name: "Honda",
