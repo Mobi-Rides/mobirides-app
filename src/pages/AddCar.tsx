@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -8,6 +8,7 @@ import { CarBasicInfo } from "@/components/add-car/CarBasicInfo";
 import { CarDetails } from "@/components/add-car/CarDetails";
 import { CarDescription } from "@/components/add-car/CarDescription";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
+import { DocumentUpload } from "@/components/add-car/DocumentUpload";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
@@ -17,6 +18,11 @@ const AddCar = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [documents, setDocuments] = useState<{
+    registration?: File;
+    insurance?: File;
+    additional?: FileList;
+  }>({});
   const [userId, setUserId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -65,6 +71,32 @@ const AddCar = () => {
     }
   };
 
+  const handleDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    if (e.target.files) {
+      if (type === 'additional') {
+        setDocuments(prev => ({ ...prev, [type]: e.target.files }));
+      } else {
+        setDocuments(prev => ({ ...prev, [type]: e.target.files[0] }));
+      }
+    }
+  };
+
+  const uploadDocument = async (file: File, path: string) => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `${path}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("car-documents")
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    return supabase.storage
+      .from("car-documents")
+      .getPublicUrl(filePath).data.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) {
@@ -80,6 +112,9 @@ const AddCar = () => {
 
     try {
       let image_url = null;
+      let registration_url = null;
+      let insurance_url = null;
+      let additional_urls: string[] = [];
 
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
@@ -98,6 +133,24 @@ const AddCar = () => {
         image_url = publicUrl;
       }
 
+      // Upload registration document
+      if (documents.registration) {
+        registration_url = await uploadDocument(documents.registration, 'registration');
+      }
+
+      // Upload insurance document
+      if (documents.insurance) {
+        insurance_url = await uploadDocument(documents.insurance, 'insurance');
+      }
+
+      // Upload additional documents
+      if (documents.additional) {
+        for (let i = 0; i < documents.additional.length; i++) {
+          const url = await uploadDocument(documents.additional[i], 'additional');
+          additional_urls.push(url);
+        }
+      }
+
       // Get user's location
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject);
@@ -106,6 +159,9 @@ const AddCar = () => {
       const { error } = await supabase.from("cars").insert({
         owner_id: userId,
         image_url,
+        registration_url,
+        insurance_url,
+        additional_docs_urls: additional_urls,
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
         price_per_day: parseFloat(formData.price_per_day),
@@ -164,6 +220,8 @@ const AddCar = () => {
           />
 
           <ImageUpload onImageChange={handleImageChange} />
+          
+          <DocumentUpload onDocumentChange={handleDocumentChange} />
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Adding Car..." : "Add Car"}

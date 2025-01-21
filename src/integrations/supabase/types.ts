@@ -110,6 +110,9 @@ export type Database = {
           model: string
           owner_id: string
           price_per_day: number
+          registration_url: string | null
+          insurance_url: string | null
+          additional_docs_urls: string[] | null
           seats: number
           transmission: string
           updated_at: string
@@ -130,6 +133,9 @@ export type Database = {
           model: string
           owner_id: string
           price_per_day: number
+          registration_url?: string | null
+          insurance_url?: string | null
+          additional_docs_urls?: string[] | null
           seats: number
           transmission: string
           updated_at?: string
@@ -150,6 +156,9 @@ export type Database = {
           model?: string
           owner_id?: string
           price_per_day?: number
+          registration_url?: string | null
+          insurance_url?: string | null
+          additional_docs_urls?: string[] | null
           seats?: number
           transmission?: string
           updated_at?: string
@@ -462,7 +471,7 @@ export type Tables<
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
