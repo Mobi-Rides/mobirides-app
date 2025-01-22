@@ -224,11 +224,11 @@ const DriverLicense = () => {
           <div className="space-y-4">
             <div>
               <FormLabel>Front of License</FormLabel>
-              <ImageUpload onImageChange={onFrontImageChange} />
+              <ImageUpload onImageChange={onFrontImageChange} label="Front of License" />
             </div>
             <div>
               <FormLabel>Back of License</FormLabel>
-              <ImageUpload onImageChange={onBackImageChange} />
+              <ImageUpload onImageChange={onBackImageChange} label="Back of License" />
             </div>
           </div>
 
