@@ -2,12 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/types/car";
-import { X } from "lucide-react";
 
 interface BookingDialogProps {
   car: Car;
@@ -112,30 +111,29 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[400px] p-0">
-        <DialogHeader className="p-4 flex flex-row items-center justify-between border-b">
-          <DialogTitle className="text-lg">Book {car.brand} {car.model}</DialogTitle>
-          <DialogClose className="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center">
-            <X className="h-4 w-4" />
-          </DialogClose>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Book {car.brand} {car.model}</DialogTitle>
         </DialogHeader>
-        <div className="p-4">
-          <Calendar
-            mode="range"
-            selected={{
-              from: startDate,
-              to: endDate,
-            }}
-            onSelect={(range) => {
-              setStartDate(range?.from);
-              setEndDate(range?.to);
-            }}
-            numberOfMonths={1}
-            disabled={(date) => date < new Date()}
-            className="rounded-md border-0"
-          />
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <h4 className="font-medium">Select dates</h4>
+            <Calendar
+              mode="range"
+              selected={{
+                from: startDate,
+                to: endDate,
+              }}
+              onSelect={(range) => {
+                setStartDate(range?.from);
+                setEndDate(range?.to);
+              }}
+              numberOfMonths={2}
+              disabled={(date) => date < new Date()}
+            />
+          </div>
           {startDate && endDate && (
-            <div className="space-y-2 mt-4">
+            <div className="space-y-2">
               <h4 className="font-medium">Summary</h4>
               <div className="text-sm space-y-1">
                 <p>Start date: {format(startDate, "PPP")}</p>
@@ -147,20 +145,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-2 p-4 border-t">
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-            className="flex-1"
-          >
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleBooking} 
-            disabled={!startDate || !endDate || isLoading}
-            className="flex-1 bg-violet-500 hover:bg-violet-600"
-          >
-            {isLoading ? "Booking..." : "Confirm"}
+          <Button onClick={handleBooking} disabled={!startDate || !endDate || isLoading}>
+            {isLoading ? "Booking..." : "Confirm Booking"}
           </Button>
         </div>
       </DialogContent>
