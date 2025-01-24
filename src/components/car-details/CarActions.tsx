@@ -20,7 +20,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
+    <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t z-50">
       <div className="max-w-2xl mx-auto flex gap-4">
         {isOwner ? (
           <Button 
@@ -33,7 +33,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
         ) : (
           <>
             <Button 
-              className="w-full" 
+              className="w-full bg-primary hover:bg-primary/90" 
               onClick={() => setIsBookingOpen(true)}
             >
               Book Now
