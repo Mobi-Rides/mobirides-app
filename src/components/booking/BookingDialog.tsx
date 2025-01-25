@@ -111,7 +111,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Book {car.brand} {car.model}</DialogTitle>
         </DialogHeader>
@@ -128,7 +128,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 setStartDate(range?.from);
                 setEndDate(range?.to);
               }}
-              numberOfMonths={2}
+              numberOfMonths={1}
               disabled={(date) => date < new Date()}
             />
           </div>
@@ -150,7 +150,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             Cancel
           </Button>
           <Button onClick={handleBooking} disabled={!startDate || !endDate || isLoading}>
-            {isLoading ? "Booking..." : "Confirm Booking"}
+            {isLoading ? "Booking..." : "Confirm"}
           </Button>
         </div>
       </DialogContent>
