@@ -1,32 +1,66 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { useToast } from "./ui/use-toast";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 
-export const useMapboxToken = () => {
-  return localStorage.getItem("mapbox_token");
+export const getMapboxToken = async () => {
+  return mapboxTokenManager.getToken();
 };
 
 export const MapboxConfig = () => {
-  const [token, setToken] = useState(localStorage.getItem("mapbox_token") || "");
-  const { toast } = useToast();
+  const [token, setToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSaveToken = () => {
+  const handleSaveToken = async () => {
     if (!token) {
-      toast({
-        title: "Error",
-        description: "Please enter a Mapbox token",
-        variant: "destructive",
-      });
+      toast.error("Please enter a Mapbox token");
       return;
     }
 
-    localStorage.setItem("mapbox_token", token);
-    toast({
-      title: "Success",
-      description: "Mapbox token saved successfully",
-    });
-    window.location.reload();
+    if (!token.startsWith('pk.')) {
+      toast.error("Invalid Mapbox token format. Public tokens should start with 'pk.'");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Always store in localStorage first as primary storage
+      localStorage.setItem('mapbox_token', token);
+      console.log('Token saved to localStorage');
+      
+      // Attempt to save to Supabase as backup, but don't block on it
+      try {
+        console.log('Attempting to save token to Supabase...');
+        const { error } = await supabase.functions.invoke('set-mapbox-token', {
+          body: { token }
+        });
+
+        if (error) {
+          console.warn("Supabase function error (using localStorage):", error);
+        } else {
+          console.log('Token also saved to Supabase successfully');
+        }
+      } catch (e) {
+        console.warn("Supabase function unavailable (using localStorage):", e);
+      }
+
+      // Clear the cached token to force a fresh fetch
+      mapboxTokenManager.clearToken();
+      
+      toast.success("Mapbox token saved successfully");
+      
+      // Reload after a short delay to ensure the token is available
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Error saving token:", error);
+      toast.error("Failed to save token. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,8 +87,12 @@ export const MapboxConfig = () => {
             placeholder="Enter your Mapbox token"
             value={token}
             onChange={(e) => setToken(e.target.value)}
+            className="flex-1"
+            disabled={isLoading}
           />
-          <Button onClick={handleSaveToken}>Save Token</Button>
+          <Button onClick={handleSaveToken} disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Token"}
+          </Button>
         </div>
       </div>
     </div>
