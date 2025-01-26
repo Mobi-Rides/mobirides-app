@@ -17,6 +17,11 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
   return (
     <header className="bg-white p-4 sticky top-0 z-10 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
+        <img
+          src="/lovable-uploads/9bb8c367-3153-4561-870a-faadfe15b30c.png"
+          alt="Mobirides Logo"
+          className="h-10 w-10"
+        />
         <div className="flex-1">
           <h1 className="text-xl font-semibold">Gaborone, Botswana</h1>
         </div>
@@ -24,7 +29,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
           variant="outline"
           size="icon"
           className="rounded-full"
-          onClick={() => navigate("/add-car")}
+          onClick={() => navigate("/cars/add")}
         >
           <Plus className="h-4 w-4" />
         </Button>
