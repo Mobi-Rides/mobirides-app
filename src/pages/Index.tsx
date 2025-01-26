@@ -26,7 +26,6 @@ const Index = () => {
 
   const { ref: loadMoreRef, inView } = useInView();
 
-  // Fetch user role
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
@@ -78,7 +77,6 @@ const Index = () => {
     };
   }, []);
 
-  // Fetch saved cars
   const { data: savedCarIds } = useQuery({
     queryKey: ["saved-cars"],
     queryFn: async () => {
@@ -91,7 +89,6 @@ const Index = () => {
     enabled: !!userRole // Only fetch if user is authenticated
   });
 
-  // Fetch host's cars if user is a host
   const { data: hostCars, isLoading: hostCarsLoading } = useQuery({
     queryKey: ["host-cars"],
     queryFn: async () => {
@@ -111,7 +108,6 @@ const Index = () => {
     enabled: userRole === "host"
   });
 
-  // Fetch all cars for renters
   const {
     data,
     isLoading: allCarsLoading,
@@ -134,8 +130,6 @@ const Index = () => {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const allCars = data?.pages.flatMap(page => page.data) ?? [];
-  const brands = allCars.length > 0 ? getUniqueBrands(allCars) : [];
-
   const filteredCars = (userRole === "host" ? hostCars : allCars)?.filter((car) => {
     if (!car) return false;
     const matchesBrand = !selectedBrand || car.brand === selectedBrand;
@@ -188,10 +182,8 @@ const Index = () => {
             <section className="mb-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Brands</h2>
-                <button className="text-primary text-sm">See All</button>
               </div>
               <BrandFilter
-                brands={brands}
                 selectedBrand={selectedBrand}
                 onSelectBrand={setSelectedBrand}
               />
@@ -218,14 +210,6 @@ const Index = () => {
       <Navigation />
     </div>
   );
-};
-
-const getUniqueBrands = (cars: Car[]) => {
-  const brands = [...new Set(cars.map(car => car.brand))];
-  return brands.map(name => ({
-    name,
-    logo: "/placeholder.svg"
-  }));
 };
 
 export default Index;
