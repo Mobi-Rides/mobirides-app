@@ -9,12 +9,20 @@ const SavedCars = () => {
     queryKey: ["saved-cars"],
     queryFn: async () => {
       console.log("Fetching saved cars...");
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log("No active session found");
+        return [];
+      }
+
       const { data: savedCars, error: savedCarsError } = await supabase
         .from("saved_cars")
         .select(`
           car_id,
           cars:car_id (*)
-        `);
+        `)
+        .eq('user_id', session.user.id);
 
       if (savedCarsError) {
         console.error("Error fetching saved cars:", savedCarsError);
