@@ -10,10 +10,13 @@ const Login = () => {
   const location = useLocation();
 
   useEffect(() => {
+    console.log("Login: Checking session");
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
       if (event === "SIGNED_IN" && session) {
+        console.log("User signed in, redirecting to home");
         const from = location.state?.from?.pathname || "/";
         navigate(from);
       }
@@ -27,6 +30,7 @@ const Login = () => {
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
+      console.log("Active session found, redirecting to home");
       const from = location.state?.from?.pathname || "/";
       navigate(from);
     }
@@ -37,8 +41,11 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            Welcome to CarShare
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Sign in to start sharing or renting cars
+          </p>
         </div>
         
         <div className="mt-8">

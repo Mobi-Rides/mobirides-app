@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Index from "@/pages/Index";
@@ -21,7 +21,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          <Route path="/" element={<Index />} />
+          {/* Public landing route that redirects to login */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Index />
+            </ProtectedRoute>
+          } />
           <Route path="/login" element={<Login />} />
           <Route path="/map" element={<Map />} />
           <Route
@@ -66,6 +71,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Catch all unmatched routes and redirect to login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
         <Toaster position="top-center" richColors />
       </Router>
