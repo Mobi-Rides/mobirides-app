@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { CarCard } from "@/components/CarCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import type { Car } from "@/types/car";
 
 interface CarGridProps {
@@ -18,6 +20,8 @@ export const CarGrid = ({
   loadMoreRef,
   isFetchingNextPage,
 }: CarGridProps) => {
+  const [showAll, setShowAll] = useState(false);
+  
   const CarSkeleton = () => (
     <div className="space-y-3">
       <Skeleton className="h-48 w-full" />
@@ -54,10 +58,12 @@ export const CarGrid = ({
     );
   }
 
+  const visibleCars = showAll ? cars : cars.slice(0, 6);
+
   return (
-    <>
+    <div className="space-y-6">
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        {cars.map((car) => (
+        {visibleCars.map((car) => (
           <div key={car.id} className="animate-fade-in">
             <CarCard
               id={car.id}
@@ -76,11 +82,24 @@ export const CarGrid = ({
           </div>
         ))}
       </div>
+
+      {cars.length > 6 && (
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            onClick={() => setShowAll(!showAll)}
+            className="text-primary hover:text-primary/80"
+          >
+            {showAll ? "Show Less" : "See All"}
+          </Button>
+        </div>
+      )}
+
       <div ref={loadMoreRef} className="h-10 flex items-center justify-center mt-4">
         {isFetchingNextPage && (
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         )}
       </div>
-    </>
+    </div>
   );
 };
