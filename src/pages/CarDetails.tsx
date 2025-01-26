@@ -11,7 +11,6 @@ import { CarDescription } from "@/components/car-details/CarDescription";
 import { CarImageCarousel } from "@/components/car-details/CarImageCarousel";
 import { CarReviews } from "@/components/car-details/CarReviews";
 import { CarLocation } from "@/components/car-details/CarLocation";
-import { MapboxConfig } from "@/components/MapboxConfig";
 import type { Car } from "@/types/car";
 
 const CarDetails = () => {
@@ -95,7 +94,6 @@ const CarDetails = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <MapboxConfig />
       <div className="space-y-4 p-4">
         <CarImageCarousel carId={car.id} mainImageUrl={car.image_url} />
         <CarHeader
