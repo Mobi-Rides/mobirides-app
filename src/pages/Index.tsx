@@ -9,6 +9,13 @@ import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { fetchCars } from "@/utils/carFetching";
 import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
+import { ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -131,6 +138,7 @@ const Index = () => {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const allCars = data?.pages.flatMap(page => page.data) ?? [];
+
   const filteredCars = (userRole === "host" ? hostCars : allCars)?.filter((car) => {
     if (!car) return false;
     const matchesBrand = !selectedBrand || car.brand === selectedBrand;
@@ -199,12 +207,25 @@ const Index = () => {
             <section>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Available Cars</h2>
-                <button 
-                  onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
-                  className="flex items-center gap-2 text-primary hover:text-primary/80"
-                >
-                  <span className="text-sm">Price {sortOrder === "asc" ? "Low to High" : "High to Low"}</span>
-                </button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button 
+                        onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+                        className="flex items-center gap-2 text-primary hover:text-primary/80 p-2"
+                      >
+                        {sortOrder === "asc" ? (
+                          <ArrowUp className="h-5 w-5" />
+                        ) : (
+                          <ArrowDown className="h-5 w-5" />
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Sort by price: {sortOrder === "asc" ? "Low to High" : "High to Low"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               
               <CarGrid
