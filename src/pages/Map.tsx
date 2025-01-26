@@ -1,81 +1,71 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Navigation } from "@/components/Navigation";
-import { Header } from "@/components/Header";
-import { MapboxConfig } from "@/components/MapboxConfig";
+import { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { SearchFilters, type SearchFilters as FilterType } from "@/components/SearchFilters";
 import { VehicleMarker } from "@/components/VehicleMarker";
-import { useMap } from "@/hooks/useMap";
-import { useUserLocation } from "@/hooks/useUserLocation";
-import type { Car } from "@/types/car";
-import type { SearchFilters } from "@/components/SearchFilters";
+import { Navigation } from "@/components/Navigation";
+import { MapboxConfig, useMapboxToken } from "@/components/MapboxConfig";
 
 const MapPage = () => {
-  console.log("MapPage rendering");
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<SearchFilters>({
-    startDate: undefined,
-    endDate: undefined,
-    vehicleType: undefined,
-    location: "",
-    sortBy: "distance",
-    sortOrder: "asc"
-  });
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [filters, setFilters] = useState<FilterType>();
+  const mapboxToken = useMapboxToken();
 
-  const { mapContainer, map, isLoaded, error } = useMap();
-  const { userLocation } = useUserLocation(map);
+  useEffect(() => {
+    if (!mapContainer.current || !mapboxToken) return;
 
-  console.log("User location state:", userLocation);
+    console.log("Initializing map with token:", mapboxToken.slice(0, 8) + "...");
+    mapboxgl.accessToken = mapboxToken;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [25.9231, -24.6282], // Gaborone coordinates
+      zoom: 12
+    });
 
-  const handleFiltersChange = (newFilters: SearchFilters) => {
-    console.log("Filters updated:", newFilters);
+    // Add navigation controls
+    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+    // Get user location
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log("Got user location:", position.coords);
+        if (map.current) {
+          map.current.flyTo({
+            center: [position.coords.longitude, position.coords.latitude],
+            zoom: 14
+          });
+        }
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+      }
+    );
+
+    return () => {
+      map.current?.remove();
+    };
+  }, [mapboxToken]);
+
+  // Handle filter changes
+  const handleFiltersChange = (newFilters: FilterType) => {
     setFilters(newFilters);
+    console.log("Filters updated:", newFilters);
+    // TODO: Fetch and update vehicles based on filters
   };
 
-  const handleSearchChange = (query: string) => {
-    console.log("Search query updated:", query);
-    setSearchQuery(query);
-  };
-
-  const handleCarClick = (car: Car) => {
-    console.log("Car clicked:", car.id);
-    navigate(`/cars/${car.id}`);
-  };
-
-  if (error) {
+  if (!mapboxToken) {
     return <MapboxConfig />;
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <Header
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        onFiltersChange={handleFiltersChange}
-      />
-      
-      <div className="flex-1 relative">
-        <div 
-          ref={mapContainer} 
-          className="absolute inset-0"
-          style={{ minHeight: "400px" }}
-        >
-          {isLoaded && (
-            <VehicleMarker
-              price={100}
-              brand="Example"
-              model="Car"
-              type="Basic"
-              rating={4.5}
-              distance="2km"
-              latitude={-24.6282}
-              longitude={25.9692}
-              onClick={() => {}}
-            />
-          )}
-        </div>
+    <div className="h-screen relative">
+      <div className="absolute top-4 left-4 right-4 z-10">
+        <SearchFilters onFiltersChange={handleFiltersChange} />
       </div>
-
+      <div ref={mapContainer} className="w-full h-full" />
       <Navigation />
     </div>
   );
