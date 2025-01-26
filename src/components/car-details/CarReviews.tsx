@@ -84,6 +84,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         return;
       }
 
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from("reviews")
         .insert({
@@ -94,6 +95,8 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
           rating,
           comment,
           review_type: "car",
+          created_at: now,
+          updated_at: now,
         });
 
       if (error) throw error;
