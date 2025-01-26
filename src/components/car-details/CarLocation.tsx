@@ -68,13 +68,13 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
 
   // Show loading state while token is being fetched
   if (isTokenLoading) {
-    console.log("Loading token...");
+    console.log("Loading token state:", { isTokenLoading, token });
     return <div>Loading map configuration...</div>;
   }
 
-  // Show MapboxConfig only if there's no token and we're not loading
+  // Show MapboxConfig only if there's no token
   if (!token) {
-    console.log("No token available, showing MapboxConfig");
+    console.log("Token state check:", { token, isTokenLoading });
     return <MapboxConfig />;
   }
 
