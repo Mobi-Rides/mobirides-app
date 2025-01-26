@@ -51,7 +51,17 @@ const Login = () => {
         <div className="mt-8">
           <Auth
             supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#7C3AED',
+                    brandAccent: '#6D28D9',
+                  },
+                },
+              },
+            }}
             theme="light"
             providers={[]}
           />
