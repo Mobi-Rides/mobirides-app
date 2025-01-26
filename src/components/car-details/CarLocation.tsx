@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { MapboxConfig } from "../MapboxConfig";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { useMapLocation } from "@/hooks/useMapLocation";
@@ -72,10 +71,10 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
     return <div>Loading map configuration...</div>;
   }
 
-  // Show MapboxConfig only if there's no token
+  // Don't show MapboxConfig overlay, just show a message if there's no token
   if (!token) {
     console.log("Token state check:", { token, isTokenLoading });
-    return <MapboxConfig />;
+    return <div className="text-muted-foreground">Map configuration required</div>;
   }
 
   if (!latitude || !longitude) {
