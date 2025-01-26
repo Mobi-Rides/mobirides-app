@@ -15,6 +15,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filters, setFilters] = useState<Filters>({
     startDate: undefined,
     endDate: undefined,
@@ -138,10 +139,16 @@ const Index = () => {
       car.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
       car.model.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesBrand && matchesSearch;
-  }).map(car => ({
+  })
+  .map(car => ({
     ...car,
     isSaved: savedCarIds ? Array.from(savedCarIds).includes(car.id) : false
-  })) ?? [];
+  }))
+  .sort((a, b) => {
+    return sortOrder === "asc" 
+      ? a.price_per_day - b.price_per_day 
+      : b.price_per_day - a.price_per_day;
+  }) ?? [];
 
   const isLoading = isLoadingRole || (userRole === "host" ? hostCarsLoading : allCarsLoading);
 
@@ -192,6 +199,12 @@ const Index = () => {
             <section>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Available Cars</h2>
+                <button 
+                  onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+                  className="flex items-center gap-2 text-primary hover:text-primary/80"
+                >
+                  <span className="text-sm">Price {sortOrder === "asc" ? "Low to High" : "High to Low"}</span>
+                </button>
               </div>
               
               <CarGrid
