@@ -192,7 +192,6 @@ const Index = () => {
             <section>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Available Cars</h2>
-                <button className="text-primary text-sm">See All</button>
               </div>
               
               <CarGrid
