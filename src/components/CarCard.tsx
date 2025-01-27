@@ -1,185 +1,141 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Fuel, GaugeCircle, Users } from "lucide-react";
+import { BookingDialog } from "@/components/booking/BookingDialog";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Card } from "./ui/card";
-import { CarImage } from "./car-card/CarImage";
-import { CarInfo } from "./car-card/CarInfo";
-import { CarSpecs } from "./car-card/CarSpecs";
-import { CarActions } from "./car-card/CarActions";
-import { BookingDialog } from "./booking/BookingDialog";
+import type { Car } from "@/types/car";
 
 interface CarCardProps {
+  id: string;
   brand: string;
   model: string;
-  price: number;
-  image: string;
-  rating: number;
+  price_per_day: number;
+  image_url: string;
   transmission: string;
   fuel: string;
   seats: number;
   location: string;
   year: number;
-  id: string;
+  onSaveToggle?: () => void;
   isSaved?: boolean;
 }
 
 export const CarCard = ({
+  id,
   brand,
   model,
-  price,
-  image,
-  rating,
+  price_per_day,
+  image_url,
   transmission,
   fuel,
   seats,
   location,
   year,
-  id,
-  isSaved = false,
+  onSaveToggle,
+  isSaved,
 }: CarCardProps) => {
-  const [isFavorite, setIsFavorite] = useState(isSaved);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    setIsFavorite(isSaved);
-  }, [isSaved]);
+  const { data: carDetails } = useQuery({
+    queryKey: ['car', id],
+    queryFn: async () => {
+      console.log("Fetching complete car details for booking");
+      const { data, error } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-  const handleViewDetails = (e: React.MouseEvent) => {
-    e.stopPropagation();
+      if (error) {
+        console.error("Error fetching car details:", error);
+        throw error;
+      }
+
+      console.log("Car details fetched:", data);
+      return data as Car;
+    },
+    enabled: isBookingOpen // Only fetch when dialog is about to open
+  });
+
+  const handleCardClick = () => {
     navigate(`/cars/${id}`);
   };
 
-  const handleBookNow = (e: React.MouseEvent) => {
+  const handleBookNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsBookingOpen(true);
   };
 
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
+  const handleSaveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to save cars",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (isFavorite) {
-        // Remove from saved cars
-        const { error } = await supabase
-          .from('saved_cars')
-          .delete()
-          .eq('car_id', id)
-          .eq('user_id', session.user.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Car removed",
-          description: "Car removed from your saved list",
-        });
-      } else {
-        // Add to saved cars
-        const { error } = await supabase
-          .from('saved_cars')
-          .insert({
-            car_id: id,
-            user_id: session.user.id
-          });
-
-        if (error) throw error;
-
-        toast({
-          title: "Car saved",
-          description: "Car added to your saved list",
-        });
-      }
-
-      setIsFavorite(!isFavorite);
-      // Invalidate saved cars query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ["saved-cars"] });
-      
-    } catch (error) {
-      console.error('Error toggling saved state:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update saved cars",
-        variant: "destructive",
-      });
-    }
+    onSaveToggle?.();
   };
 
   return (
     <>
-      <Card className="overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-lg">
-        <CarImage
-          image={image}
-          brand={brand}
-          model={model}
-          isFavorite={isFavorite}
-          onFavoriteClick={handleFavoriteClick}
-        />
+      <Card
+        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+        onClick={handleCardClick}
+      >
+        <div className="relative">
+          <img
+            src={image_url}
+            alt={`${brand} ${model}`}
+            className="w-full h-48 object-cover"
+          />
+          {onSaveToggle && (
+            <button
+              onClick={handleSaveClick}
+              className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+            >
+              {isSaved ? "❤️" : "🤍"}
+            </button>
+          )}
+        </div>
         <div className="p-4">
-          <CarInfo
-            brand={brand}
-            model={model}
-            rating={rating}
-            price={price}
-            year={year}
-            location={location}
-          />
-          <div className="space-y-2 mt-2">
-            <CarSpecs
-              transmission={transmission}
-              fuel={fuel}
-              seats={seats}
-            />
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <h3 className="font-semibold">{brand} {model}</h3>
+              <p className="text-sm text-gray-500">{year}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-semibold">BWP {price_per_day}</p>
+              <p className="text-xs text-gray-500">per day</p>
+            </div>
           </div>
-          <CarActions
-            onViewDetails={handleViewDetails}
-            onBookNow={handleBookNow}
-          />
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <GaugeCircle className="w-4 h-4" />
+              {transmission}
+            </div>
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <Fuel className="w-4 h-4" />
+              {fuel}
+            </div>
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <Users className="w-4 h-4" />
+              {seats}
+            </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <Badge variant="secondary">{location}</Badge>
+            <Button onClick={handleBookNow}>Book now</Button>
+          </div>
         </div>
       </Card>
 
-      <BookingDialog
-        car={{
-          id,
-          brand,
-          model,
-          price_per_day: price,
-          image_url: image,
-          transmission,
-          fuel,
-          seats,
-          location,
-          year,
-          // Adding required properties with default values
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          description: null,
-          is_available: true,
-          latitude: null,
-          longitude: null,
-          owner_id: "", // This should ideally come from the car data
-          vehicle_type: "Standard",
-          registration_url: null,
-          insurance_url: null,
-          additional_docs_urls: null
-        }}
-        isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
-      />
+      {isBookingOpen && carDetails && (
+        <BookingDialog
+          car={carDetails}
+          isOpen={isBookingOpen}
+          onClose={() => setIsBookingOpen(false)}
+        />
+      )}
     </>
   );
 };
