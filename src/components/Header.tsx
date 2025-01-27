@@ -3,6 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SearchFilters } from "@/components/SearchFilters";
 import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 
 interface HeaderProps {
@@ -13,6 +17,55 @@ interface HeaderProps {
 
 export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderProps) => {
   const navigate = useNavigate();
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url, full_name')
+        .eq('id', user.id)
+        .single();
+
+      return data;
+    }
+  });
+
+  const { data: notificationCount } = useQuery({
+    queryKey: ['notification-count'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { messages: 0, notifications: 0 };
+
+      const [messagesResponse, notificationsResponse] = await Promise.all([
+        supabase
+          .from('messages')
+          .select('id', { count: 'exact' })
+          .eq('receiver_id', user.id)
+          .eq('status', 'sent'),
+        supabase
+          .from('notifications')
+          .select('id', { count: 'exact' })
+          .eq('user_id', user.id)
+          .eq('is_read', false)
+      ]);
+
+      return {
+        messages: messagesResponse.count || 0,
+        notifications: notificationsResponse.count || 0
+      };
+    },
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+
+  const totalNotifications = (notificationCount?.messages || 0) + (notificationCount?.notifications || 0);
+
+  const avatarUrl = profile?.avatar_url 
+    ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl 
+    : null;
 
   return (
     <header className="bg-white p-4 sticky top-0 z-10 shadow-sm">
@@ -34,9 +87,29 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         >
           <Plus className="h-4 w-4" />
         </Button>
-        <button className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-          <span className="text-xl">🔔</span>
-        </button>
+        <div className="relative">
+          <button 
+            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"
+            onClick={() => navigate("/profile")}
+          >
+            {avatarUrl ? (
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={avatarUrl} alt="Profile" />
+                <AvatarFallback>👤</AvatarFallback>
+              </Avatar>
+            ) : (
+              <span className="text-xl">🔔</span>
+            )}
+          </button>
+          {totalNotifications > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {totalNotifications}
+            </Badge>
+          )}
+        </div>
       </div>
       <div className="flex gap-2">
         <div className="relative flex-1">
