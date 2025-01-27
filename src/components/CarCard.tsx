@@ -163,7 +163,19 @@ export const CarCard = ({
           fuel,
           seats,
           location,
-          year
+          year,
+          // Adding required properties with default values
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          description: null,
+          is_available: true,
+          latitude: null,
+          longitude: null,
+          owner_id: "", // This should ideally come from the car data
+          vehicle_type: "Standard",
+          registration_url: null,
+          insurance_url: null,
+          additional_docs_urls: null
         }}
         isOpen={isBookingOpen}
         onClose={() => setIsBookingOpen(false)}
