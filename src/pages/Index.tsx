@@ -10,6 +10,7 @@ import { fetchCars } from "@/utils/carFetching";
 import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
 import { ArrowUp, ArrowDown } from "lucide-react";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
@@ -38,19 +39,28 @@ const Index = () => {
     const fetchUserRole = async () => {
       try {
         setIsLoadingRole(true);
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          toast.error("Failed to fetch user session. Please try refreshing the page.");
+          setUserRole(null);
+          return;
+        }
         
         if (session?.user) {
           console.log("Fetching role for user ID:", session.user.id);
-          const { data: profile, error } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("role")
             .eq("id", session.user.id)
             .single();
 
-          if (error) {
-            console.error("Error fetching profile:", error);
-            throw error;
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            toast.error("Failed to fetch user profile. Please try refreshing the page.");
+            setUserRole(null);
+            return;
           }
           
           if (profile) {
@@ -62,7 +72,8 @@ const Index = () => {
           setUserRole(null);
         }
       } catch (error) {
-        console.error("Error fetching user role:", error);
+        console.error("Error in fetchUserRole:", error);
+        toast.error("An error occurred while fetching user data. Please try refreshing the page.");
         setUserRole(null);
       } finally {
         setIsLoadingRole(false);
@@ -71,7 +82,6 @@ const Index = () => {
     
     fetchUserRole();
 
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         setUserRole(null);
@@ -85,35 +95,59 @@ const Index = () => {
     };
   }, []);
 
-  const { data: savedCarIds } = useQuery({
+  const { data: savedCarIds, error: savedCarsError } = useQuery({
     queryKey: ["saved-cars"],
     queryFn: async () => {
-      const { data: savedCarsData } = await supabase
-        .from("saved_cars")
-        .select("car_id");
-      console.log("Saved car IDs:", savedCarsData);
-      return new Set(savedCarsData?.map(saved => saved.car_id) || []);
+      try {
+        const { data: savedCarsData, error } = await supabase
+          .from("saved_cars")
+          .select("car_id");
+        
+        if (error) {
+          console.error("Error fetching saved cars:", error);
+          toast.error("Failed to fetch saved cars");
+          throw error;
+        }
+
+        console.log("Saved car IDs:", savedCarsData);
+        return new Set(savedCarsData?.map(saved => saved.car_id) || []);
+      } catch (error) {
+        console.error("Error in savedCars query:", error);
+        throw error;
+      }
     },
-    enabled: !!userRole // Only fetch if user is authenticated
+    enabled: !!userRole,
+    retry: 3
   });
 
-  const { data: hostCars, isLoading: hostCarsLoading } = useQuery({
+  const { data: hostCars, isLoading: hostCarsLoading, error: hostCarsError } = useQuery({
     queryKey: ["host-cars"],
     queryFn: async () => {
       if (userRole !== "host") return null;
       
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return null;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return null;
 
-      const { data, error } = await supabase
-        .from("cars")
-        .select("*")
-        .eq("owner_id", session.user.id);
+        const { data, error } = await supabase
+          .from("cars")
+          .select("*")
+          .eq("owner_id", session.user.id);
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          console.error("Error fetching host cars:", error);
+          toast.error("Failed to fetch your listed cars");
+          throw error;
+        }
+
+        return data;
+      } catch (error) {
+        console.error("Error in hostCars query:", error);
+        throw error;
+      }
     },
-    enabled: userRole === "host"
+    enabled: userRole === "host",
+    retry: 3
   });
 
   const {
@@ -186,8 +220,8 @@ const Index = () => {
             
             <CarGrid
               cars={filteredCars}
-              isLoading={isLoading}
-              error={error}
+              isLoading={hostCarsLoading}
+              error={hostCarsError}
               loadMoreRef={loadMoreRef}
               isFetchingNextPage={false}
             />
