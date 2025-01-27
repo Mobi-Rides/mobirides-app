@@ -8,6 +8,7 @@ import { CarImage } from "./car-card/CarImage";
 import { CarInfo } from "./car-card/CarInfo";
 import { CarSpecs } from "./car-card/CarSpecs";
 import { CarActions } from "./car-card/CarActions";
+import { BookingDialog } from "./booking/BookingDialog";
 
 interface CarCardProps {
   brand: string;
@@ -39,6 +40,7 @@ export const CarCard = ({
   isSaved = false,
 }: CarCardProps) => {
   const [isFavorite, setIsFavorite] = useState(isSaved);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -54,8 +56,7 @@ export const CarCard = ({
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Instead of navigating to /book/:id, we'll navigate to /cars/:id which has the booking dialog
-    navigate(`/cars/${id}`);
+    setIsBookingOpen(true);
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
@@ -119,35 +120,54 @@ export const CarCard = ({
   };
 
   return (
-    <Card className="overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-lg">
-      <CarImage
-        image={image}
-        brand={brand}
-        model={model}
-        isFavorite={isFavorite}
-        onFavoriteClick={handleFavoriteClick}
-      />
-      <div className="p-4">
-        <CarInfo
+    <>
+      <Card className="overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-lg">
+        <CarImage
+          image={image}
           brand={brand}
           model={model}
-          rating={rating}
-          price={price}
-          year={year}
-          location={location}
+          isFavorite={isFavorite}
+          onFavoriteClick={handleFavoriteClick}
         />
-        <div className="space-y-2 mt-2">
-          <CarSpecs
-            transmission={transmission}
-            fuel={fuel}
-            seats={seats}
+        <div className="p-4">
+          <CarInfo
+            brand={brand}
+            model={model}
+            rating={rating}
+            price={price}
+            year={year}
+            location={location}
+          />
+          <div className="space-y-2 mt-2">
+            <CarSpecs
+              transmission={transmission}
+              fuel={fuel}
+              seats={seats}
+            />
+          </div>
+          <CarActions
+            onViewDetails={handleViewDetails}
+            onBookNow={handleBookNow}
           />
         </div>
-        <CarActions
-          onViewDetails={handleViewDetails}
-          onBookNow={handleBookNow}
-        />
-      </div>
-    </Card>
+      </Card>
+
+      <BookingDialog
+        car={{
+          id,
+          brand,
+          model,
+          price_per_day: price,
+          image_url: image,
+          transmission,
+          fuel,
+          seats,
+          location,
+          year
+        }}
+        isOpen={isBookingOpen}
+        onClose={() => setIsBookingOpen(false)}
+      />
+    </>
   );
 };
