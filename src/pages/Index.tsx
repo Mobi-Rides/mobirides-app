@@ -42,9 +42,10 @@ const Index = () => {
     queryFn: ({ pageParam = 0 }) => fetchCars({ 
       pageParam, 
       filters,
-      searchParams: selectedBrand ? { brand: selectedBrand } : undefined
+      searchParams: selectedBrand ? { model: selectedBrand } : undefined
     }),
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: (lastPage) => lastPage.nextPage || undefined,
+    initialPageParam: 0,
     enabled: userRole === 'renter'
   });
 
