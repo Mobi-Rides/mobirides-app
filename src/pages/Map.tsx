@@ -93,7 +93,7 @@ const MapPage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col pb-16">
       <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}

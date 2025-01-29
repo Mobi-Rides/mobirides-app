@@ -9,7 +9,6 @@ import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { fetchCars } from "@/utils/carFetching";
 import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
-import { ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -163,13 +162,12 @@ const Index = () => {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <Header 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onFiltersChange={setFilters}
       />
-      <Navigation />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           <BrandFilter
@@ -185,6 +183,7 @@ const Index = () => {
           />
         </div>
       </main>
+      <Navigation />
     </div>
   );
 };
