@@ -82,7 +82,7 @@ const Index = () => {
     enabled: userRole === 'host'
   });
 
-  // Query for saved cars - only when viewing saved cars
+  // Query for saved cars - enabled for renters to show saved status
   const { data: savedCarsData = new Set<string>() } = useQuery({
     queryKey: ['saved-cars'],
     queryFn: async () => {
@@ -104,13 +104,18 @@ const Index = () => {
       console.log("Saved car IDs:", Array.from(savedIds));
       return savedIds;
     },
-    enabled: false // Disable this query on the index page
+    enabled: userRole === 'renter' // Only enable for renters
   });
 
   const hostCars = hostCarsData || [];
   
-  // Flatten available cars from all pages without marking them as saved
-  const allAvailableCars = availableCars?.pages.flatMap(page => page.data) || [];
+  // Flatten available cars from all pages and mark saved ones
+  const allAvailableCars = availableCars?.pages.flatMap(page => 
+    page.data.map(car => ({
+      ...car,
+      isSaved: savedCarsData.has(car.id)
+    }))
+  ) || [];
 
   console.log("Available cars:", allAvailableCars);
 
