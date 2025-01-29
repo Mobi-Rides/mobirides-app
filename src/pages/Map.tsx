@@ -22,10 +22,10 @@ const MapPage = () => {
     sortOrder: "asc"
   });
 
-  // Create serializable versions of handlers
   const handleFiltersChange = (newFilters: SearchFilters) => {
-    console.log("Filters updated:", JSON.parse(JSON.stringify(newFilters)));
-    setFilters(newFilters);
+    const serializedFilters = JSON.parse(JSON.stringify(newFilters));
+    console.log("Filters updated:", serializedFilters);
+    setFilters(serializedFilters);
   };
 
   const handleSearchChange = (query: string) => {
@@ -33,13 +33,11 @@ const MapPage = () => {
     setSearchQuery(query);
   };
 
-  const handleCarClick = (car: Car) => {
-    const carId = car.id;
+  const handleCarClick = (carId: string) => {
     console.log("Car clicked:", carId);
     navigate(`/cars/${carId}`);
   };
 
-  // Initialize map with error handling
   const { mapContainer, map, isLoaded, error } = useMap({
     onMapClick: (e) => {
       console.log("Map clicked at:", {
@@ -49,7 +47,6 @@ const MapPage = () => {
     }
   });
 
-  // Get user location with serializable data handling
   const { userLocation } = useUserLocation(map);
 
   if (error) {
@@ -81,7 +78,7 @@ const MapPage = () => {
               latitude={-24.6282}
               longitude={25.9692}
               onClick={() => {
-                handleCarClick({
+                const exampleCar: Car = {
                   id: "example-car",
                   brand: "Example",
                   model: "Car",
@@ -103,7 +100,8 @@ const MapPage = () => {
                   registration_url: null,
                   insurance_url: null,
                   additional_docs_urls: null
-                });
+                };
+                handleCarClick(exampleCar.id);
               }}
             />
           )}
