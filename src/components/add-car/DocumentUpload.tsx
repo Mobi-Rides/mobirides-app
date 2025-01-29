@@ -15,7 +15,6 @@ export const DocumentUpload = ({ onDocumentChange }: DocumentUploadProps) => {
           type="file"
           accept=".pdf,.jpg,.jpeg,.png"
           onChange={(e) => onDocumentChange(e, 'registration')}
-          required
         />
       </div>
 
