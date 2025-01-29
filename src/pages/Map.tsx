@@ -23,9 +23,14 @@ const MapPage = () => {
   });
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
-    const serializedFilters = JSON.parse(JSON.stringify(newFilters));
-    console.log("Filters updated:", serializedFilters);
-    setFilters(serializedFilters);
+    try {
+      // Ensure filters are serializable
+      const serializedFilters = JSON.parse(JSON.stringify(newFilters));
+      console.log("Filters updated:", serializedFilters);
+      setFilters(serializedFilters);
+    } catch (error) {
+      console.error("Error serializing filters:", error);
+    }
   };
 
   const handleSearchChange = (query: string) => {
@@ -34,16 +39,26 @@ const MapPage = () => {
   };
 
   const handleCarClick = (carId: string) => {
-    console.log("Car clicked:", carId);
-    navigate(`/cars/${carId}`);
+    try {
+      console.log("Car clicked, navigating to:", carId);
+      navigate(`/cars/${carId}`);
+    } catch (error) {
+      console.error("Error handling car click:", error);
+    }
   };
 
   const { mapContainer, map, isLoaded, error } = useMap({
     onMapClick: (e) => {
-      console.log("Map clicked at:", {
-        lat: e.lat,
-        lng: e.lng
-      });
+      try {
+        // Only pass serializable data
+        const coordinates = {
+          lat: e.lat,
+          lng: e.lng
+        };
+        console.log("Map clicked at:", coordinates);
+      } catch (error) {
+        console.error("Error handling map click:", error);
+      }
     }
   });
 
@@ -52,6 +67,30 @@ const MapPage = () => {
   if (error) {
     return <MapboxConfig />;
   }
+
+  const exampleCar: Car = {
+    id: "example-car",
+    brand: "Example",
+    model: "Car",
+    owner_id: "example-owner",
+    price_per_day: 100,
+    vehicle_type: "Basic",
+    year: 2024,
+    transmission: "automatic",
+    fuel: "petrol",
+    seats: 5,
+    location: "Example Location",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    description: null,
+    image_url: null,
+    is_available: true,
+    latitude: -24.6282,
+    longitude: 25.9692,
+    registration_url: null,
+    insurance_url: null,
+    additional_docs_urls: null
+  };
 
   return (
     <div className="h-screen flex flex-col">
@@ -69,40 +108,15 @@ const MapPage = () => {
         >
           {isLoaded && (
             <VehicleMarker
-              price={100}
-              brand="Example"
-              model="Car"
-              type="Basic"
+              price={exampleCar.price_per_day}
+              brand={exampleCar.brand}
+              model={exampleCar.model}
+              type={exampleCar.vehicle_type}
               rating={4.5}
               distance="2km"
-              latitude={-24.6282}
-              longitude={25.9692}
-              onClick={() => {
-                const exampleCar: Car = {
-                  id: "example-car",
-                  brand: "Example",
-                  model: "Car",
-                  owner_id: "example-owner",
-                  price_per_day: 100,
-                  vehicle_type: "Basic",
-                  year: 2024,
-                  transmission: "automatic",
-                  fuel: "petrol",
-                  seats: 5,
-                  location: "Example Location",
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                  description: null,
-                  image_url: null,
-                  is_available: true,
-                  latitude: -24.6282,
-                  longitude: 25.9692,
-                  registration_url: null,
-                  insurance_url: null,
-                  additional_docs_urls: null
-                };
-                handleCarClick(exampleCar.id);
-              }}
+              latitude={exampleCar.latitude}
+              longitude={exampleCar.longitude}
+              onClick={() => handleCarClick(exampleCar.id)}
             />
           )}
         </div>
