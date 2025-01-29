@@ -17,6 +17,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -32,6 +34,12 @@ const Index = () => {
     sortBy: "distance",
     sortOrder: "asc",
   });
+
+  // New search state
+  const [modelSearch, setModelSearch] = useState("");
+  const [yearSearch, setYearSearch] = useState<string>("");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
 
   const { ref: loadMoreRef, inView } = useInView();
 
@@ -95,60 +103,12 @@ const Index = () => {
     };
   }, []);
 
-  const { data: savedCarIds, error: savedCarsError } = useQuery({
-    queryKey: ["saved-cars"],
-    queryFn: async () => {
-      try {
-        const { data: savedCarsData, error } = await supabase
-          .from("saved_cars")
-          .select("car_id");
-        
-        if (error) {
-          console.error("Error fetching saved cars:", error);
-          toast.error("Failed to fetch saved cars");
-          throw error;
-        }
-
-        console.log("Saved car IDs:", savedCarsData);
-        return new Set(savedCarsData?.map(saved => saved.car_id) || []);
-      } catch (error) {
-        console.error("Error in savedCars query:", error);
-        throw error;
-      }
-    },
-    enabled: !!userRole,
-    retry: 3
-  });
-
-  const { data: hostCars, isLoading: hostCarsLoading, error: hostCarsError } = useQuery({
-    queryKey: ["host-cars"],
-    queryFn: async () => {
-      if (userRole !== "host") return null;
-      
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return null;
-
-        const { data, error } = await supabase
-          .from("cars")
-          .select("*")
-          .eq("owner_id", session.user.id);
-
-        if (error) {
-          console.error("Error fetching host cars:", error);
-          toast.error("Failed to fetch your listed cars");
-          throw error;
-        }
-
-        return data;
-      } catch (error) {
-        console.error("Error in hostCars query:", error);
-        throw error;
-      }
-    },
-    enabled: userRole === "host",
-    retry: 3
-  });
+  const searchParams = {
+    model: modelSearch || undefined,
+    year: yearSearch ? parseInt(yearSearch) : undefined,
+    minPrice: minPrice ? parseInt(minPrice) : undefined,
+    maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
+  };
 
   const {
     data,
@@ -158,8 +118,8 @@ const Index = () => {
     hasNextPage,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ["cars", filters],
-    queryFn: ({ pageParam }) => fetchCars({ pageParam, filters }),
+    queryKey: ["cars", filters, searchParams],
+    queryFn: ({ pageParam }) => fetchCars({ pageParam, filters, searchParams }),
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
     enabled: userRole === "renter" || userRole === null
@@ -236,6 +196,50 @@ const Index = () => {
                 selectedBrand={selectedBrand}
                 onSelectBrand={setSelectedBrand}
               />
+            </section>
+
+            <section className="mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white rounded-lg shadow-sm">
+                <div>
+                  <Label htmlFor="model">Model</Label>
+                  <Input
+                    id="model"
+                    placeholder="Search by model..."
+                    value={modelSearch}
+                    onChange={(e) => setModelSearch(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="year">Year</Label>
+                  <Input
+                    id="year"
+                    type="number"
+                    placeholder="Search by year..."
+                    value={yearSearch}
+                    onChange={(e) => setYearSearch(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="minPrice">Min Price (BWP)</Label>
+                  <Input
+                    id="minPrice"
+                    type="number"
+                    placeholder="Min price..."
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxPrice">Max Price (BWP)</Label>
+                  <Input
+                    id="maxPrice"
+                    type="number"
+                    placeholder="Max price..."
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                  />
+                </div>
+              </div>
             </section>
 
             <section>

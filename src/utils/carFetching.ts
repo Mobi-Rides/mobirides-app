@@ -6,18 +6,44 @@ const ITEMS_PER_PAGE = 10;
 
 export const fetchCars = async ({ 
   pageParam = 0, 
-  filters 
+  filters,
+  searchParams 
 }: { 
-  pageParam?: number; 
-  filters?: SearchFilters 
+  pageParam?: number;
+  filters?: SearchFilters;
+  searchParams?: {
+    model?: string;
+    year?: number;
+    minPrice?: number;
+    maxPrice?: number;
+  };
 }): Promise<CarQueryResponse> => {
-  console.log("Fetching cars with filters:", filters, "page:", pageParam);
+  console.log("Fetching cars with filters:", filters, "search params:", searchParams, "page:", pageParam);
+  
   let query = supabase
     .from("cars")
     .select("*", { count: "exact" })
     .eq("is_available", true)
     .range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);
 
+  // Apply search filters
+  if (searchParams?.model) {
+    query = query.ilike("model", `%${searchParams.model}%`);
+  }
+
+  if (searchParams?.year) {
+    query = query.eq("year", searchParams.year);
+  }
+
+  if (searchParams?.minPrice) {
+    query = query.gte("price_per_day", searchParams.minPrice);
+  }
+
+  if (searchParams?.maxPrice) {
+    query = query.lte("price_per_day", searchParams.maxPrice);
+  }
+
+  // Apply existing filters
   if (filters?.vehicleType) {
     query = query.eq("vehicle_type", filters.vehicleType);
   }
