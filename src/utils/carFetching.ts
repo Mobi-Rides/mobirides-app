@@ -18,7 +18,7 @@ export const fetchCars = async ({
     maxPrice?: number;
   };
 }): Promise<CarQueryResponse> => {
-  console.log("Fetching cars with filters:", filters, "search params:", searchParams, "page:", pageParam);
+  console.log("Fetching cars with filters:", filters);
   
   let query = supabase
     .from("cars")
@@ -26,24 +26,23 @@ export const fetchCars = async ({
     .eq("is_available", true)
     .range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);
 
-  // Apply search filters
-  if (searchParams?.model) {
-    query = query.ilike("model", `%${searchParams.model}%`);
+  // Apply filters if they exist
+  if (filters?.model) {
+    query = query.ilike("model", `%${filters.model}%`);
   }
 
-  if (searchParams?.year) {
-    query = query.eq("year", searchParams.year);
+  if (filters?.year) {
+    query = query.eq("year", filters.year);
   }
 
-  if (searchParams?.minPrice) {
-    query = query.gte("price_per_day", searchParams.minPrice);
+  if (filters?.minPrice) {
+    query = query.gte("price_per_day", filters.minPrice);
   }
 
-  if (searchParams?.maxPrice) {
-    query = query.lte("price_per_day", searchParams.maxPrice);
+  if (filters?.maxPrice) {
+    query = query.lte("price_per_day", filters.maxPrice);
   }
 
-  // Apply existing filters
   if (filters?.vehicleType) {
     query = query.eq("vehicle_type", filters.vehicleType);
   }
@@ -63,7 +62,6 @@ export const fetchCars = async ({
     throw error;
   }
 
-  console.log("Cars fetched successfully:", data);
   return { 
     data: data || [], 
     nextPage: data && data.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
