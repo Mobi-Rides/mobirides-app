@@ -22,13 +22,9 @@ const MapPage = () => {
     sortOrder: "asc"
   });
 
-  const { mapContainer, map, isLoaded, error } = useMap();
-  const { userLocation } = useUserLocation(map);
-
-  console.log("User location state:", userLocation);
-
+  // Create serializable versions of handlers
   const handleFiltersChange = (newFilters: SearchFilters) => {
-    console.log("Filters updated:", newFilters);
+    console.log("Filters updated:", JSON.parse(JSON.stringify(newFilters)));
     setFilters(newFilters);
   };
 
@@ -38,9 +34,25 @@ const MapPage = () => {
   };
 
   const handleCarClick = (car: Car) => {
-    console.log("Car clicked:", car.id);
-    navigate(`/cars/${car.id}`);
+    // Ensure we're only passing serializable data
+    const carId = car.id;
+    console.log("Car clicked:", carId);
+    navigate(`/cars/${carId}`);
   };
+
+  // Initialize map with error handling
+  const { mapContainer, map, isLoaded, error } = useMap({
+    onMapClick: (e) => {
+      // Ensure we only pass serializable data
+      console.log("Map clicked at:", {
+        lat: e.lat,
+        lng: e.lng
+      });
+    }
+  });
+
+  // Get user location with serializable data handling
+  const { userLocation } = useUserLocation(map);
 
   if (error) {
     return <MapboxConfig />;
@@ -70,7 +82,17 @@ const MapPage = () => {
               distance="2km"
               latitude={-24.6282}
               longitude={25.9692}
-              onClick={() => {}}
+              onClick={() => {
+                // Use a simple callback that only passes serializable data
+                handleCarClick({
+                  id: "example-car",
+                  brand: "Example",
+                  model: "Car",
+                  price: 100,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+              }}
             />
           )}
         </div>
