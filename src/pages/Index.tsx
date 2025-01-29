@@ -20,6 +20,7 @@ import {
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -122,7 +123,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header 
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onFiltersChange={setFilters}
+      />
       <Navigation />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
