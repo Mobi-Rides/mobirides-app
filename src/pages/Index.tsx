@@ -11,12 +11,6 @@ import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -35,6 +29,25 @@ const Index = () => {
 
   const { ref: loadMoreRef, inView } = useInView();
 
+  // Query for all available cars (for renters)
+  const { 
+    data: availableCars,
+    isLoading: isLoadingCars,
+    error: carsError,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
+    queryKey: ['available-cars', selectedBrand, filters],
+    queryFn: ({ pageParam = 0 }) => fetchCars({ 
+      pageParam, 
+      filters,
+      searchParams: selectedBrand ? { brand: selectedBrand } : undefined
+    }),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    enabled: userRole === 'renter'
+  });
+
   // Query for host's cars
   const { 
     data: hostCarsData, 
@@ -43,6 +56,7 @@ const Index = () => {
   } = useQuery({
     queryKey: ['host-cars'],
     queryFn: async () => {
+      console.log("Fetching host cars");
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return [];
       
@@ -52,6 +66,7 @@ const Index = () => {
         .eq('owner_id', session.user.id);
 
       if (error) throw error;
+      console.log("Host cars fetched:", data);
       return data as Car[];
     },
     enabled: userRole === 'host'
@@ -76,6 +91,16 @@ const Index = () => {
 
   const savedCarIds = savedCarsData || new Set<string>();
   const hostCars = hostCarsData || [];
+  
+  // Flatten available cars from all pages
+  const allAvailableCars = availableCars?.pages.flatMap(page => 
+    page.data.map(car => ({
+      ...car,
+      isSaved: savedCarIds.has(car.id)
+    }))
+  ) || [];
+
+  console.log("Available cars:", allAvailableCars);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -121,6 +146,13 @@ const Index = () => {
     fetchUserRole();
   }, []);
 
+  // Load more cars when scrolling
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header 
@@ -136,11 +168,11 @@ const Index = () => {
             onSelectBrand={setSelectedBrand}
           />
           <CarGrid
-            cars={hostCars}
-            isLoading={hostCarsLoading}
-            error={hostCarsError}
+            cars={userRole === 'host' ? hostCars : allAvailableCars}
+            isLoading={userRole === 'host' ? hostCarsLoading : isLoadingCars}
+            error={userRole === 'host' ? hostCarsError : carsError}
             loadMoreRef={loadMoreRef}
-            isFetchingNextPage={false}
+            isFetchingNextPage={isFetchingNextPage}
           />
         </div>
       </main>
