@@ -34,7 +34,6 @@ const MapPage = () => {
   };
 
   const handleCarClick = (car: Car) => {
-    // Ensure we're only passing serializable data
     const carId = car.id;
     console.log("Car clicked:", carId);
     navigate(`/cars/${carId}`);
@@ -43,7 +42,6 @@ const MapPage = () => {
   // Initialize map with error handling
   const { mapContainer, map, isLoaded, error } = useMap({
     onMapClick: (e) => {
-      // Ensure we only pass serializable data
       console.log("Map clicked at:", {
         lat: e.lat,
         lng: e.lng
@@ -83,14 +81,28 @@ const MapPage = () => {
               latitude={-24.6282}
               longitude={25.9692}
               onClick={() => {
-                // Use a simple callback that only passes serializable data
                 handleCarClick({
                   id: "example-car",
                   brand: "Example",
                   model: "Car",
-                  price: 100,
+                  owner_id: "example-owner",
+                  price_per_day: 100,
+                  vehicle_type: "Basic",
+                  year: 2024,
+                  transmission: "automatic",
+                  fuel: "petrol",
+                  seats: 5,
+                  location: "Example Location",
                   created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
+                  updated_at: new Date().toISOString(),
+                  description: null,
+                  image_url: null,
+                  is_available: true,
+                  latitude: -24.6282,
+                  longitude: 25.9692,
+                  registration_url: null,
+                  insurance_url: null,
+                  additional_docs_urls: null
                 });
               }}
             />
