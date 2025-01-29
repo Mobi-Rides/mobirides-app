@@ -43,6 +43,48 @@ const Index = () => {
 
   const { ref: loadMoreRef, inView } = useInView();
 
+  // Query for host's cars
+  const { 
+    data: hostCarsData, 
+    isLoading: hostCarsLoading,
+    error: hostCarsError
+  } = useQuery({
+    queryKey: ['host-cars'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('owner_id', session.user.id);
+
+      if (error) throw error;
+      return data as Car[];
+    },
+    enabled: userRole === 'host'
+  });
+
+  // Query for saved cars
+  const { data: savedCarsData } = useQuery({
+    queryKey: ['saved-cars'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return new Set<string>();
+
+      const { data, error } = await supabase
+        .from('saved_cars')
+        .select('car_id')
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+      return new Set(data.map(saved => saved.car_id));
+    }
+  });
+
+  const savedCarIds = savedCarsData || new Set<string>();
+  const hostCars = hostCarsData || [];
+
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
