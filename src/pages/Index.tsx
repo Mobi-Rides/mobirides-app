@@ -1,4 +1,3 @@
-<lov-code>
 import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
@@ -21,7 +20,6 @@ import {
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -96,4 +94,53 @@ const Index = () => {
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("role")
-            .eq("id", session
+            .eq("id", session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Profile error:", profileError);
+            toast.error("Failed to fetch user profile. Please try refreshing the page.");
+            setUserRole(null);
+            return;
+          }
+
+          if (profile) {
+            console.log("User role:", profile.role);
+            setUserRole(profile.role);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+        toast.error("An unexpected error occurred. Please try refreshing the page.");
+      } finally {
+        setIsLoadingRole(false);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <Navigation />
+      <main className="container mx-auto px-4 py-8">
+        <div className="space-y-6">
+          <BrandFilter
+            selectedBrand={selectedBrand}
+            onSelectBrand={setSelectedBrand}
+          />
+          <CarGrid
+            cars={hostCars}
+            isLoading={hostCarsLoading}
+            error={hostCarsError}
+            loadMoreRef={loadMoreRef}
+            isFetchingNextPage={false}
+          />
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Index;
