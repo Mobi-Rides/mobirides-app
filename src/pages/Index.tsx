@@ -77,6 +77,7 @@ const Index = () => {
   const { data: savedCarsData } = useQuery({
     queryKey: ['saved-cars'],
     queryFn: async () => {
+      console.log("Fetching saved car IDs");
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return new Set<string>();
 
@@ -85,15 +86,22 @@ const Index = () => {
         .select('car_id')
         .eq('user_id', session.user.id);
 
-      if (error) throw error;
-      return new Set(data.map(saved => saved.car_id));
+      if (error) {
+        console.error('Error fetching saved cars:', error);
+        return new Set<string>();
+      }
+
+      // Convert the array of car_ids to a Set
+      const savedIds = new Set(data.map(saved => saved.car_id));
+      console.log("Saved car IDs:", Array.from(savedIds));
+      return savedIds;
     }
   });
 
   const savedCarIds = savedCarsData || new Set<string>();
   const hostCars = hostCarsData || [];
   
-  // Flatten available cars from all pages
+  // Flatten available cars from all pages and mark saved ones
   const allAvailableCars = availableCars?.pages.flatMap(page => 
     page.data.map(car => ({
       ...car,
