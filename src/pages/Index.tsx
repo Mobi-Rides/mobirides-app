@@ -73,8 +73,8 @@ const Index = () => {
     enabled: userRole === 'host'
   });
 
-  // Query for saved cars
-  const { data: savedCarsData } = useQuery({
+  // Query for saved cars - ensuring we always return a Set
+  const { data: savedCarsData = new Set<string>() } = useQuery({
     queryKey: ['saved-cars'],
     queryFn: async () => {
       console.log("Fetching saved car IDs");
@@ -95,17 +95,17 @@ const Index = () => {
       const savedIds = new Set(data.map(saved => saved.car_id));
       console.log("Saved car IDs:", Array.from(savedIds));
       return savedIds;
-    }
+    },
+    initialData: new Set<string>() // Provide initial data as an empty Set
   });
 
-  const savedCarIds = savedCarsData || new Set<string>();
   const hostCars = hostCarsData || [];
   
   // Flatten available cars from all pages and mark saved ones
   const allAvailableCars = availableCars?.pages.flatMap(page => 
     page.data.map(car => ({
       ...car,
-      isSaved: savedCarIds.has(car.id)
+      isSaved: savedCarsData.has(car.id)
     }))
   ) || [];
 
