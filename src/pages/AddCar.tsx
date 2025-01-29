@@ -81,25 +81,32 @@ const AddCar = () => {
     }
   };
 
-  const uploadDocument = async (file: File, path: string) => {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `${path}/${fileName}`;
+  const uploadDocument = async (file: File, path: string): Promise<string | null> => {
+    console.log(`Attempting to upload document to ${path}`);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${path}/${fileName}`;
 
-    const { error: uploadError, data } = await supabase.storage
-      .from("car-documents")
-      .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage
+        .from("car-documents")
+        .upload(filePath, file);
 
-    if (uploadError) {
-      console.error("Error uploading document:", uploadError);
+      if (uploadError) {
+        console.error("Error uploading document:", uploadError);
+        return null;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("car-documents")
+        .getPublicUrl(filePath);
+
+      console.log(`Document uploaded successfully to ${publicUrl}`);
+      return publicUrl;
+    } catch (error) {
+      console.error("Error in uploadDocument:", error);
       return null;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from("car-documents")
-      .getPublicUrl(filePath);
-
-    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,20 +173,6 @@ const AddCar = () => {
         }
       }
 
-      // Get user's location if available
-      let latitude = null;
-      let longitude = null;
-      
-      try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        latitude = position.coords.latitude;
-        longitude = position.coords.longitude;
-      } catch (error) {
-        console.warn("Could not get user location:", error);
-      }
-
       console.log("Inserting car data into database...");
       const { error: insertError } = await supabase.from("cars").insert({
         owner_id: userId,
@@ -187,8 +180,6 @@ const AddCar = () => {
         registration_url,
         insurance_url,
         additional_docs_urls: additional_urls.length > 0 ? additional_urls : null,
-        latitude,
-        longitude,
         price_per_day: parseFloat(formData.price_per_day),
         year: parseInt(formData.year.toString()),
         seats: parseInt(formData.seats),
