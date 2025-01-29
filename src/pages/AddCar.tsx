@@ -86,19 +86,26 @@ const AddCar = () => {
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `${path}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError, data } = await supabase.storage
       .from("car-documents")
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error("Error uploading document:", uploadError);
+      return null;
+    }
 
-    return supabase.storage
+    const { data: { publicUrl } } = supabase.storage
       .from("car-documents")
-      .getPublicUrl(filePath).data.publicUrl;
+      .getPublicUrl(filePath);
+
+    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Starting car submission process...");
+    
     if (!userId) {
       toast({
         title: "Error",
@@ -116,57 +123,75 @@ const AddCar = () => {
       let insurance_url = null;
       let additional_urls: string[] = [];
 
+      // Upload main car image if provided
       if (imageFile) {
+        console.log("Uploading main car image...");
         const fileExt = imageFile.name.split(".").pop();
-        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("car-images")
           .upload(filePath, imageFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Error uploading car image:", uploadError);
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from("car-images")
           .getPublicUrl(filePath);
 
         image_url = publicUrl;
+        console.log("Car image uploaded successfully:", image_url);
       }
 
-      // Upload registration document
+      // Upload optional documents if provided
       if (documents.registration) {
+        console.log("Uploading registration document...");
         registration_url = await uploadDocument(documents.registration, 'registration');
       }
 
-      // Upload insurance document
       if (documents.insurance) {
+        console.log("Uploading insurance document...");
         insurance_url = await uploadDocument(documents.insurance, 'insurance');
       }
 
-      // Upload additional documents
       if (documents.additional) {
+        console.log("Uploading additional documents...");
         for (let i = 0; i < documents.additional.length; i++) {
           const url = await uploadDocument(documents.additional[i], 'additional');
-          additional_urls.push(url);
+          if (url) additional_urls.push(url);
         }
       }
 
-      // Get user's location
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
-      });
+      // Get user's location if available
+      let latitude = null;
+      let longitude = null;
+      
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      } catch (error) {
+        console.warn("Could not get user location:", error);
+      }
 
-      const { error } = await supabase.from("cars").insert({
+      console.log("Inserting car data into database...");
+      const { error: insertError } = await supabase.from("cars").insert({
         owner_id: userId,
         image_url,
         registration_url,
         insurance_url,
-        additional_docs_urls: additional_urls,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+        additional_docs_urls: additional_urls.length > 0 ? additional_urls : null,
+        latitude,
+        longitude,
         price_per_day: parseFloat(formData.price_per_day),
         year: parseInt(formData.year.toString()),
-        seats: parseInt(formData.seats.toString()),
+        seats: parseInt(formData.seats),
         brand: formData.brand,
         model: formData.model,
         vehicle_type: formData.vehicle_type,
@@ -174,10 +199,15 @@ const AddCar = () => {
         transmission: formData.transmission,
         fuel: formData.fuel,
         description: formData.description,
+        is_available: true,
       });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error("Error inserting car data:", insertError);
+        throw insertError;
+      }
 
+      console.log("Car listed successfully!");
       toast({
         title: "Success",
         description: "Your car has been listed successfully!",
