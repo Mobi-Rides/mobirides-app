@@ -37,33 +37,43 @@ const Index = () => {
     fetchNextPage,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ['available-cars', selectedBrand, filters],
+    queryKey: ['available-cars', selectedBrand, filters, searchQuery],
     queryFn: ({ pageParam = 0 }) => fetchCars({ 
       pageParam, 
       filters,
-      searchParams: selectedBrand ? { model: selectedBrand } : undefined
+      searchParams: {
+        ...(selectedBrand ? { brand: selectedBrand } : {}),
+        ...(searchQuery ? { searchTerm: searchQuery } : {})
+      }
     }),
     getNextPageParam: (lastPage) => lastPage.nextPage || undefined,
     initialPageParam: 0,
     enabled: userRole === 'renter'
   });
 
-  // Query for host's cars
+  // Query for host's cars with search
   const { 
     data: hostCarsData, 
     isLoading: hostCarsLoading,
     error: hostCarsError
   } = useQuery({
-    queryKey: ['host-cars'],
+    queryKey: ['host-cars', searchQuery],
     queryFn: async () => {
-      console.log("Fetching host cars");
+      console.log("Fetching host cars with search:", searchQuery);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('cars')
         .select('*')
         .eq('owner_id', session.user.id);
+
+      // Apply search filter if exists
+      if (searchQuery) {
+        query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       console.log("Host cars fetched:", data);

@@ -12,19 +12,31 @@ export const fetchCars = async ({
   pageParam?: number;
   filters?: SearchFilters;
   searchParams?: {
-    model?: string;
+    brand?: string;
     year?: number;
     minPrice?: number;
     maxPrice?: number;
+    searchTerm?: string;
   };
 }): Promise<CarQueryResponse> => {
   console.log("Fetching cars with filters:", filters);
+  console.log("Search params:", searchParams);
   
   let query = supabase
     .from("cars")
     .select("*", { count: "exact" })
     .eq("is_available", true)
     .range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);
+
+  // Apply search term if it exists
+  if (searchParams?.searchTerm) {
+    query = query.or(`brand.ilike.%${searchParams.searchTerm}%,model.ilike.%${searchParams.searchTerm}%`);
+  }
+
+  // Apply brand filter if it exists
+  if (searchParams?.brand) {
+    query = query.eq("brand", searchParams.brand);
+  }
 
   // Apply filters if they exist
   if (filters?.model) {
