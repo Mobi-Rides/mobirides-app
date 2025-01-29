@@ -126,8 +126,6 @@ const AddCar = () => {
 
     try {
       let image_url = null;
-      let registration_url = null;
-      let insurance_url = null;
 
       // Upload main car image if provided
       if (imageFile) {
@@ -153,23 +151,10 @@ const AddCar = () => {
         console.log("Car image uploaded successfully:", image_url);
       }
 
-      // Upload optional documents if provided
-      if (documents.registration) {
-        console.log("Uploading registration document...");
-        registration_url = await uploadDocument(documents.registration, 'registration');
-      }
-
-      if (documents.insurance) {
-        console.log("Uploading insurance document...");
-        insurance_url = await uploadDocument(documents.insurance, 'insurance');
-      }
-
       console.log("Inserting car data into database...");
       const { error: insertError } = await supabase.from("cars").insert({
         owner_id: userId,
         image_url,
-        registration_url,
-        insurance_url,
         price_per_day: parseFloat(formData.price_per_day),
         year: parseInt(formData.year.toString()),
         seats: parseInt(formData.seats),
