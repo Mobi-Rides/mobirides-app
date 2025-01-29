@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
@@ -10,7 +10,6 @@ import type { Car } from "@/types/car";
 import type { SearchFilters } from "@/components/SearchFilters";
 
 const MapPage = () => {
-  console.log("MapPage rendering");
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({
@@ -22,20 +21,19 @@ const MapPage = () => {
     sortOrder: "asc"
   });
 
+  const handleSearchChange = (query: string) => {
+    console.log("Search query updated:", query);
+    setSearchQuery(query);
+  };
+
   const handleFiltersChange = (newFilters: SearchFilters) => {
     try {
-      // Ensure filters are serializable
       const serializedFilters = JSON.parse(JSON.stringify(newFilters));
       console.log("Filters updated:", serializedFilters);
       setFilters(serializedFilters);
     } catch (error) {
       console.error("Error serializing filters:", error);
     }
-  };
-
-  const handleSearchChange = (query: string) => {
-    console.log("Search query updated:", query);
-    setSearchQuery(query);
   };
 
   const handleCarClick = (carId: string) => {
@@ -50,7 +48,6 @@ const MapPage = () => {
   const { mapContainer, map, isLoaded, error } = useMap({
     onMapClick: (e) => {
       try {
-        // Only pass serializable data
         const coordinates = {
           lat: e.lat,
           lng: e.lng
@@ -93,7 +90,7 @@ const MapPage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col pb-16">
+    <div className="h-screen flex flex-col pb-20">
       <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
