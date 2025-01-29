@@ -49,10 +49,16 @@ export const CarGrid = ({
   }
 
   if (!Array.isArray(cars) || cars.length === 0) {
+    // Check if we're on the index page (has search functionality)
+    const isIndexPage = window.location.pathname === "/";
+    
     return (
       <Alert className="my-8">
         <AlertDescription>
-          You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars.
+          {isIndexPage 
+            ? "The car/s you are searching for cannot be found"
+            : "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars."
+          }
         </AlertDescription>
       </Alert>
     );
