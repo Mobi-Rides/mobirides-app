@@ -121,6 +121,7 @@ const AddCar = () => {
       let image_url = null;
       let registration_url = null;
       let insurance_url = null;
+      let additional_urls: string[] = [];
 
       // Upload main car image if provided
       if (imageFile) {
@@ -157,6 +158,14 @@ const AddCar = () => {
         insurance_url = await uploadDocument(documents.insurance, 'insurance');
       }
 
+      if (documents.additional) {
+        console.log("Uploading additional documents...");
+        for (let i = 0; i < documents.additional.length; i++) {
+          const url = await uploadDocument(documents.additional[i], 'additional');
+          if (url) additional_urls.push(url);
+        }
+      }
+
       // Get user's location if available
       let latitude = null;
       let longitude = null;
@@ -177,6 +186,7 @@ const AddCar = () => {
         image_url,
         registration_url,
         insurance_url,
+        additional_docs_urls: additional_urls.length > 0 ? additional_urls : null,
         latitude,
         longitude,
         price_per_day: parseFloat(formData.price_per_day),
