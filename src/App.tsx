@@ -1,6 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
@@ -8,85 +6,49 @@ import Map from "@/pages/Map";
 import More from "@/pages/More";
 import CarDetails from "@/pages/CarDetails";
 import AddCar from "@/pages/AddCar";
+import DriverLicense from "@/pages/DriverLicense";
 import EditCar from "@/pages/EditCar";
 import Bookings from "@/pages/Bookings";
 import SavedCars from "@/pages/SavedCars";
 import NotificationDetails from "@/pages/NotificationDetails";
+import BookingRequestDetails from "@/pages/BookingRequestDetails";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import "./App.css";
 
-const queryClient = new QueryClient();
-
-function App() {
+const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          {/* Public landing route that redirects to login */}
-          <Route path="/" element={
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
+        <Route path="/more" element={<ProtectedRoute><More /></ProtectedRoute>} />
+        <Route path="/cars/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
+        <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
+        <Route path="/driver-license" element={<ProtectedRoute><DriverLicense /></ProtectedRoute>} />
+        <Route path="/edit-car/:id" element={<ProtectedRoute><EditCar /></ProtectedRoute>} />
+        <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+        <Route path="/saved-cars" element={<ProtectedRoute><SavedCars /></ProtectedRoute>} />
+        <Route
+          path="/notifications/:id"
+          element={
             <ProtectedRoute>
-              <Index />
+              <NotificationDetails />
             </ProtectedRoute>
-          } />
-          <Route path="/login" element={<Login />} />
-          <Route path="/map" element={<Map />} />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications/:id"
-            element={
-              <ProtectedRoute>
-                <NotificationDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/saved"
-            element={
-              <ProtectedRoute>
-                <SavedCars />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/more" element={<More />} />
-          <Route path="/cars/:id" element={<CarDetails />} />
-          <Route
-            path="/cars/add"
-            element={
-              <ProtectedRoute>
-                <AddCar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cars/:id/edit"
-            element={
-              <ProtectedRoute>
-                <EditCar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bookings"
-            element={
-              <ProtectedRoute>
-                <Bookings />
-              </ProtectedRoute>
-            }
-          />
-          {/* Catch all unmatched routes and redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-        <Toaster position="top-center" richColors />
-      </Router>
-    </QueryClientProvider>
+          }
+        />
+        <Route
+          path="/booking-requests/:id"
+          element={
+            <ProtectedRoute>
+              <BookingRequestDetails />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;

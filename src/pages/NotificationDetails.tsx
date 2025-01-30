@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 
 const NotificationDetails = () => {
@@ -62,6 +62,16 @@ const NotificationDetails = () => {
             <p className="text-sm text-gray-400">
               Received on: {new Date(notification.created_at).toLocaleDateString()}
             </p>
+            
+            {notification.type === 'booking_request' && notification.related_booking_id && (
+              <Button 
+                className="w-full mt-4"
+                onClick={() => navigate(`/booking-requests/${notification.related_booking_id}`)}
+              >
+                View Booking Request
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
           </div>
         ) : (
           <p className="text-gray-600">Notification not found</p>
