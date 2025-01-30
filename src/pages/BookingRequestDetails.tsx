@@ -103,7 +103,7 @@ const BookingRequestDetails = () => {
                 />
                 <div>
                   <p className="font-medium">{booking.renter.full_name}</p>
-                  {renterRating !== null && (
+                  {typeof renterRating === 'number' && (
                     <div className="flex items-center gap-1 text-yellow-500">
                       <Star className="h-4 w-4 fill-current" />
                       <span>{renterRating.toFixed(1)}</span>
