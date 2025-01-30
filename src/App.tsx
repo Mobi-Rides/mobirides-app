@@ -11,6 +11,7 @@ import AddCar from "@/pages/AddCar";
 import EditCar from "@/pages/EditCar";
 import Bookings from "@/pages/Bookings";
 import SavedCars from "@/pages/SavedCars";
+import NotificationDetails from "@/pages/NotificationDetails";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import "./App.css";
 
@@ -34,6 +35,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications/:id"
+            element={
+              <ProtectedRoute>
+                <NotificationDetails />
               </ProtectedRoute>
             }
           />

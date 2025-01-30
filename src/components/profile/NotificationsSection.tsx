@@ -8,8 +8,10 @@ import { useMessages } from "@/hooks/useMessages";
 import { MessageList } from "./MessageList";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export const NotificationsSection = () => {
+  const navigate = useNavigate();
   const [selectedChat, setSelectedChat] = useState<{
     isOpen: boolean;
     senderId: string;
@@ -43,6 +45,11 @@ export const NotificationsSection = () => {
       senderId,
       senderName: senderName || 'Unknown User',
     });
+  };
+
+  const handleNotificationClick = (notificationId: string) => {
+    console.log('Navigating to notification:', notificationId);
+    navigate(`/notifications/${notificationId}`);
   };
 
   return (
@@ -82,7 +89,8 @@ export const NotificationsSection = () => {
                     key={notification.id} 
                     className={`p-4 rounded-lg border ${
                       notification.is_read ? 'bg-white' : 'bg-blue-50'
-                    }`}
+                    } cursor-pointer hover:bg-gray-50 transition-colors`}
+                    onClick={() => handleNotificationClick(notification.id)}
                   >
                     <p className="text-sm text-gray-600">{notification.content}</p>
                     <span className="text-xs text-gray-400 mt-2 block">
