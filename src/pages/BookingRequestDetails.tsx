@@ -1,15 +1,17 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle, XCircle } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
-import { Star } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ['booking-request', id],
@@ -53,6 +55,42 @@ const BookingRequestDetails = () => {
     },
     enabled: !!booking?.renter_id
   });
+
+  const updateBookingStatus = useMutation({
+    mutationFn: async ({ status }: { status: 'confirmed' | 'cancelled' }) => {
+      console.log('Updating booking status:', status);
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      const action = variables.status === 'confirmed' ? 'approved' : 'cancelled';
+      toast({
+        title: `Booking ${action}`,
+        description: `The booking request has been successfully ${action}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['booking-request', id] });
+    },
+    onError: (error) => {
+      console.error('Error updating booking status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update the booking status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApprove = () => {
+    updateBookingStatus.mutate({ status: 'confirmed' });
+  };
+
+  const handleCancel = () => {
+    updateBookingStatus.mutate({ status: 'cancelled' });
+  };
 
   if (isLoading) {
     return (
@@ -156,6 +194,38 @@ const BookingRequestDetails = () => {
                 <p className="text-xl font-bold">BWP {booking.total_price}</p>
               </div>
             </div>
+
+            {/* Action Buttons */}
+            {booking.status === 'pending' && (
+              <div className="flex gap-4 justify-end border-t pt-6">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={handleCancel}
+                  disabled={updateBookingStatus.isPending}
+                >
+                  <XCircle className="h-4 w-4" />
+                  Cancel Request
+                </Button>
+                <Button
+                  className="flex items-center gap-2"
+                  onClick={handleApprove}
+                  disabled={updateBookingStatus.isPending}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Approve Request
+                </Button>
+              </div>
+            )}
+
+            {/* Status Badge */}
+            {booking.status !== 'pending' && (
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium">
+                  Status: <span className="capitalize">{booking.status}</span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
