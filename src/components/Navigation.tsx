@@ -5,7 +5,7 @@ export const Navigation = () => {
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: Map, label: "Map", path: "/map" },
-    { icon: Heart, label: "Saved", path: "/saved" },
+    { icon: Heart, label: "Saved", path: "/saved-cars" },
     { icon: Settings, label: "More", path: "/more" },
     { icon: User, label: "Profile", path: "/profile" },
   ];
