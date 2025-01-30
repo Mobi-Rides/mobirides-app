@@ -9,6 +9,7 @@ import { CarDetails } from "@/components/add-car/CarDetails";
 import { CarDescription } from "@/components/add-car/CarDescription";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { DocumentUpload } from "@/components/add-car/DocumentUpload";
+import { ArrowLeft } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
@@ -195,7 +196,17 @@ const AddCar = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-2xl mx-auto p-4">
-        <h1 className="text-2xl font-semibold mb-6">List Your Car</h1>
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-semibold">List Your Car</h1>
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <CarBasicInfo 
