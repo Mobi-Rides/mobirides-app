@@ -1,24 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, LogOut } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { CalendarDays, LayoutDashboard } from "lucide-react";
 
 export const ProfileHeader = () => {
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.success("Logged out successfully");
-      navigate("/login");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to log out");
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -30,10 +14,12 @@ export const ProfileHeader = () => {
               My Bookings
             </Button>
           </Link>
-          <Button variant="destructive" className="gap-2" onClick={handleLogout}>
-            <LogOut className="h-4 w-4" />
-            Log Out
-          </Button>
+          <Link to="/dashboard">
+            <Button className="gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ import Bookings from "@/pages/Bookings";
 import SavedCars from "@/pages/SavedCars";
 import NotificationDetails from "@/pages/NotificationDetails";
 import BookingRequestDetails from "@/pages/BookingRequestDetails";
+import Dashboard from "@/pages/Dashboard";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import "./App.css";
 
@@ -22,6 +23,7 @@ const App = () => {
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
         <Route path="/more" element={<ProtectedRoute><More /></ProtectedRoute>} />
         <Route path="/cars/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
