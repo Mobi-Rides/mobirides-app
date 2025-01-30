@@ -16,11 +16,12 @@ const SavedCars = () => {
         return [];
       }
 
+      // Join saved_cars with cars table to get full car details
       const { data: savedCars, error: savedCarsError } = await supabase
         .from("saved_cars")
         .select(`
           car_id,
-          cars:car_id (*)
+          cars:cars(*)
         `)
         .eq('user_id', session.user.id);
 
@@ -29,7 +30,7 @@ const SavedCars = () => {
         throw savedCarsError;
       }
 
-      console.log("Saved cars fetched:", savedCars);
+      console.log("Raw saved cars data:", savedCars);
       
       if (!Array.isArray(savedCars)) {
         console.log("savedCars is not an array, returning empty array");
@@ -38,7 +39,7 @@ const SavedCars = () => {
       
       // Map the nested cars data to a flat array and mark them as saved
       const validCars = savedCars
-        .filter(saved => saved.cars !== null)
+        .filter(saved => saved.cars)
         .map(saved => ({
           ...saved.cars,
           isSaved: true
@@ -55,7 +56,7 @@ const SavedCars = () => {
         <h1 className="text-xl font-semibold">Saved Cars</h1>
       </header>
 
-      <main className="p-4">
+      <main className="container mx-auto px-4 py-8">
         <CarGrid
           cars={cars}
           isLoading={isLoading}
