@@ -89,16 +89,18 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         </Button>
         <div className="relative">
           <button 
-            className="w-13 h-13 rounded-full bg-gray-100 flex items-center justify-center"
+            className="rounded-full bg-gray-100 flex items-center justify-center"
             onClick={() => navigate("/profile")}
           >
             {avatarUrl ? (
-              <Avatar className="h-13 w-13">
+              <Avatar className="h-10 w-10">
                 <AvatarImage src={avatarUrl} alt="Profile" />
                 <AvatarFallback>👤</AvatarFallback>
               </Avatar>
             ) : (
-              <span className="text-xl">🔔</span>
+              <Avatar className="h-10 w-10">
+                <AvatarFallback>👤</AvatarFallback>
+              </Avatar>
             )}
           </button>
           {totalNotifications > 0 && (
