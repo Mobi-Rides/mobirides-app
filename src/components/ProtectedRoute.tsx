@@ -12,19 +12,27 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     console.log("ProtectedRoute: Initializing");
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, !!session);
       
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        setAuthenticated(!!session);
+      if (event === 'SIGNED_OUT') {
+        console.log("User signed out");
+        setAuthenticated(false);
         setLoading(false);
+        return;
       }
 
-      // Handle token refresh errors
-      if (event === 'TOKEN_REFRESHED' && !session) {
-        console.log("Token refresh failed");
-        toast.error("Your session has expired. Please sign in again.");
-        setAuthenticated(false);
+      if (event === 'TOKEN_REFRESHED') {
+        console.log("Token refresh attempt completed");
+        if (session) {
+          console.log("Token refresh successful");
+          setAuthenticated(true);
+        } else {
+          console.log("Token refresh failed - clearing auth state");
+          await supabase.auth.signOut();
+          setAuthenticated(false);
+          toast.error("Your session has expired. Please sign in again.");
+        }
         setLoading(false);
       }
     });
@@ -42,6 +50,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error("Error checking auth status:", error);
+        await supabase.auth.signOut();
         toast.error("Authentication error. Please sign in again.");
         setAuthenticated(false);
         return;
@@ -53,10 +62,20 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // Verify the session is still valid
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log("Session exists but user data is invalid");
+        await supabase.auth.signOut();
+        setAuthenticated(false);
+        return;
+      }
+
       console.log("Valid session found");
       setAuthenticated(true);
     } catch (error) {
       console.error("Error in checkAuth:", error);
+      await supabase.auth.signOut();
       setAuthenticated(false);
     } finally {
       setLoading(false);
