@@ -73,7 +73,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         <img
           src="/lovable-uploads/9bb8c367-3153-4561-870a-faadfe15b30c.png"
           alt="Mobirides Logo"
-          className="h-20 w-20 cursor-pointer"
+          className="h-14 w-14 cursor-pointer"
           onClick={() => navigate("/")}
         />
         <div className="flex-1">
@@ -89,11 +89,11 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         </Button>
         <div className="relative">
           <button 
-            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"
+            className="w-13 h-13 rounded-full bg-gray-100 flex items-center justify-center"
             onClick={() => navigate("/profile")}
           >
             {avatarUrl ? (
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-13 w-13">
                 <AvatarImage src={avatarUrl} alt="Profile" />
                 <AvatarFallback>👤</AvatarFallback>
               </Avatar>
