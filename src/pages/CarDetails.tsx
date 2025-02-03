@@ -26,8 +26,8 @@ const CarDetails = () => {
         const { error: updateError } = await supabase
           .from("cars")
           .update({
-            latitude: -24.6527,  // Updated latitude for Molepolole Road area
-            longitude: 25.9088   // Updated longitude for Molepolole Road area
+            latitude: -24.6527,
+            longitude: 25.9088
           })
           .eq("id", id);
 
@@ -88,7 +88,8 @@ const CarDetails = () => {
     );
   }
 
-  const avatarUrl = car.profiles.avatar_url
+  // Safely handle avatar URL
+  const avatarUrl = car.profiles?.avatar_url 
     ? supabase.storage.from('avatars').getPublicUrl(car.profiles.avatar_url).data.publicUrl
     : "/placeholder.svg";
 
@@ -114,7 +115,7 @@ const CarDetails = () => {
           location={car.location}
         />
         <CarOwner
-          ownerName={car.profiles.full_name}
+          ownerName={car.profiles?.full_name || "Car Owner"}
           avatarUrl={avatarUrl}
           ownerId={car.owner_id}
           carId={car.id}
