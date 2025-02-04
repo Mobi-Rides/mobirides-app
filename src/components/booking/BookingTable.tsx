@@ -1,6 +1,5 @@
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BookingRow } from "./BookingRow";
 import { Booking } from "@/types/booking";
+import { BookingCard } from "./BookingCard";
 
 interface BookingTableProps {
   bookings: Booking[] | undefined;
@@ -8,28 +7,23 @@ interface BookingTableProps {
 }
 
 export const BookingTable = ({ bookings, onCancelBooking }: BookingTableProps) => {
+  if (!bookings?.length) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No bookings found
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Car</TableHead>
-            <TableHead>Dates</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bookings?.map((booking) => (
-            <BookingRow 
-              key={booking.id} 
-              booking={booking} 
-              onCancelBooking={onCancelBooking}
-            />
-          ))}
-        </TableBody>
-      </Table>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {bookings.map((booking) => (
+        <BookingCard 
+          key={booking.id} 
+          booking={booking} 
+          onCancelBooking={onCancelBooking}
+        />
+      ))}
     </div>
   );
 };
