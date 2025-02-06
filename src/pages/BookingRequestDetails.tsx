@@ -20,31 +20,42 @@ const BookingRequestDetails = () => {
     queryKey: ['booking-request', id],
     queryFn: async () => {
       console.log('Fetching booking request details for ID:', id);
+      
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!id || !uuidRegex.test(id)) {
+        throw new Error("Invalid booking ID format");
+      }
+
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
-          renter:profiles!renter_id (
+          renter:profiles!bookings_renter_id_fkey (
             full_name,
             avatar_url
           ),
-          car:cars (
+          car:cars!bookings_car_id_fkey (
             brand,
             model,
             image_url,
             location,
             price_per_day,
-            owner_id
-          ),
-          car_owner:profiles!cars(owner_id) (
-            id,
-            full_name
+            owner_id,
+            owner:profiles!cars_owner_id_fkey (
+              id,
+              full_name
+            )
           )
         `)
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching booking:', error);
+        throw error;
+      }
+      
       console.log('Fetched booking data:', data);
       return data;
     }
@@ -94,7 +105,7 @@ const BookingRequestDetails = () => {
   });
 
   const handleMessageHost = () => {
-    if (!booking?.car_owner) {
+    if (!booking?.car?.owner) {
       toast({
         title: "Error",
         description: "Could not find car owner details",
@@ -244,12 +255,12 @@ const BookingRequestDetails = () => {
         </div>
       </div>
 
-      {booking.car_owner && (
+      {booking.car.owner && (
         <ChatDrawer
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
-          receiverId={booking.car_owner.id}
-          receiverName={booking.car_owner.full_name}
+          receiverId={booking.car.owner.id}
+          receiverName={booking.car.owner.full_name}
           carId={booking.car_id}
         />
       )}
