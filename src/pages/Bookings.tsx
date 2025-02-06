@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -23,7 +24,8 @@ const Bookings = () => {
             brand,
             model,
             image_url,
-            owner_id
+            owner_id,
+            location
           )
         `)
         .order("created_at", { ascending: false });
