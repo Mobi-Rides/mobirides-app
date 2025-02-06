@@ -67,6 +67,11 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
     ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl 
     : null;
 
+  const handleFiltersChange = (filters: Filters) => {
+    console.log('Filters changed:', filters);
+    onFiltersChange({ ...filters, searchQuery });
+  };
+
   return (
     <header className="bg-white p-4 sticky top-0 z-10 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
@@ -131,7 +136,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
             </Button>
           </SheetTrigger>
           <SheetContent>
-            <SearchFilters onFiltersChange={onFiltersChange} />
+            <SearchFilters onFiltersChange={handleFiltersChange} />
           </SheetContent>
         </Sheet>
       </div>

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 
 export type VehicleType = "Basic" | "Standard" | "Executive" | "4x4" | "SUV" | "Electric" | "Exotic";
 
-interface SearchFiltersProps {
+export interface SearchFiltersProps {
   onFiltersChange: (filters: SearchFilters) => void;
 }
 
@@ -25,6 +25,7 @@ export interface SearchFilters {
   year?: number;
   minPrice?: number;
   maxPrice?: number;
+  searchQuery?: string;
 }
 
 export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
@@ -39,9 +40,11 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
     year: undefined,
     minPrice: undefined,
     maxPrice: undefined,
+    searchQuery: "",
   });
 
   const handleFilterChange = (key: keyof SearchFilters, value: any) => {
+    console.log(`Updating filter ${key} with value:`, value);
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFiltersChange(newFilters);
