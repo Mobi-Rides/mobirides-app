@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Star, CheckCircle, XCircle, MessageCircle } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import { useState } from "react";
 
@@ -24,27 +24,30 @@ const BookingRequestDetails = () => {
         .from('bookings')
         .select(`
           *,
-          renter:profiles!renter_id (
+          renter:profiles!bookings_renter_id_fkey (
             full_name,
             avatar_url
           ),
-          car:cars (
+          car:cars!bookings_car_id_fkey (
             brand,
             model,
             image_url,
             location,
             price_per_day,
-            owner_id
-          ),
-          car_owner:profiles!cars(owner_id) (
-            id,
-            full_name
+            owner_id,
+            owner:profiles!cars_owner_id_fkey (
+              id,
+              full_name
+            )
           )
         `)
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching booking:', error);
+        throw error;
+      }
       console.log('Fetched booking data:', data);
       return data;
     }
@@ -94,7 +97,7 @@ const BookingRequestDetails = () => {
   });
 
   const handleMessageHost = () => {
-    if (!booking?.car_owner) {
+    if (!booking?.car?.owner) {
       toast({
         title: "Error",
         description: "Could not find car owner details",
@@ -244,12 +247,12 @@ const BookingRequestDetails = () => {
         </div>
       </div>
 
-      {booking.car_owner && (
+      {booking.car?.owner && (
         <ChatDrawer
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
-          receiverId={booking.car_owner.id}
-          receiverName={booking.car_owner.full_name}
+          receiverId={booking.car.owner.id}
+          receiverName={booking.car.owner.full_name}
           carId={booking.car_id}
         />
       )}
