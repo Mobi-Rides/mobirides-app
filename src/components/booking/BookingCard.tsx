@@ -1,9 +1,11 @@
+
 import { format } from "date-fns";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Booking } from "@/types/booking";
+import { useNavigate } from "react-router-dom";
 
 interface BookingCardProps {
   booking: Booking;
@@ -11,6 +13,8 @@ interface BookingCardProps {
 }
 
 export const BookingCard = ({ booking, onCancelBooking }: BookingCardProps) => {
+  const navigate = useNavigate();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -24,9 +28,16 @@ export const BookingCard = ({ booking, onCancelBooking }: BookingCardProps) => {
     }
   };
 
+  const handleImageClick = () => {
+    navigate(`/booking-requests/${booking.id}`);
+  };
+
   return (
     <Card className="overflow-hidden">
-      <div className="relative h-48">
+      <div 
+        className="relative h-48 cursor-pointer"
+        onClick={handleImageClick}
+      >
         <img
           src={booking.cars.image_url || "/placeholder.svg"}
           alt={`${booking.cars.brand} ${booking.cars.model}`}
@@ -67,17 +78,24 @@ export const BookingCard = ({ booking, onCancelBooking }: BookingCardProps) => {
         </div>
       </CardContent>
 
-      {booking.status === "pending" && (
-        <CardFooter>
+      <CardFooter className="flex gap-2">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => navigate(`/booking-requests/${booking.id}`)}
+        >
+          View Details
+        </Button>
+        {booking.status === "pending" && (
           <Button
             variant="destructive"
-            className="w-full"
+            className="flex-1"
             onClick={() => onCancelBooking(booking.id)}
           >
             Cancel Booking
           </Button>
-        </CardFooter>
-      )}
+        )}
+      </CardFooter>
     </Card>
   );
 };
