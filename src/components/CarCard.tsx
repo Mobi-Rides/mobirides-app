@@ -44,24 +44,10 @@ export const CarCard = ({
   const { data: carDetails } = useQuery({
     queryKey: ['car', id],
     queryFn: async () => {
-      console.log("Fetching complete car details for booking, car ID:", id);
-      
-      // Validate UUID format before making the request
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(id)) {
-        console.error("Invalid car ID format:", id);
-        throw new Error("Invalid car ID format");
-      }
-
+      console.log("Fetching complete car details for booking");
       const { data, error } = await supabase
         .from('cars')
-        .select(`
-          *,
-          owner:profiles!owner_id (
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 

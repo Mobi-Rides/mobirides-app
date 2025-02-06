@@ -1,90 +1,80 @@
-import { Link } from "react-router-dom";
+import { Settings, Info, HelpCircle, Shield, Bell, LogOut } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Car,
-  LogOut,
-  UserCircle,
-  Bell,
-  BookOpen,
-  Heart,
-  FileText,
-  Plus
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const More = () => {
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
+  const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
+      toast.success("Logged out successfully");
       navigate("/login");
     } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Failed to sign out. Please try again.");
+      console.error("Error logging out:", error);
+      toast.error("Failed to log out");
     }
   };
 
+  const menuItems = [
+    {
+      icon: Settings,
+      label: "App Settings",
+      onClick: () => toast.info("App Settings coming soon"),
+    },
+    {
+      icon: Bell,
+      label: "Notifications",
+      onClick: () => toast.info("Notifications coming soon"),
+    },
+    {
+      icon: Shield,
+      label: "Privacy & Security",
+      onClick: () => toast.info("Privacy settings coming soon"),
+    },
+    {
+      icon: Info,
+      label: "About",
+      onClick: () => toast.info("About page coming soon"),
+    },
+    {
+      icon: HelpCircle,
+      label: "Help & Support",
+      onClick: () => toast.info("Help center coming soon"),
+    },
+    {
+      icon: LogOut,
+      label: "Log Out",
+      onClick: handleLogout,
+      className: "text-red-600",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="max-w-2xl mx-auto p-4">
-        <h1 className="text-2xl font-semibold mb-6">More</h1>
-        
-        <div className="space-y-4">
-          <Link 
-            to="/profile" 
-            className="flex items-center p-4 bg-white rounded-lg shadow hover:bg-gray-50"
-          >
-            <UserCircle className="w-6 h-6 text-gray-500 mr-3" />
-            <span>Profile</span>
-          </Link>
+    <div className="min-h-screen pb-20">
+      <header className="bg-white p-4 sticky top-0 z-10 shadow-sm">
+        <h1 className="text-xl font-semibold">More</h1>
+      </header>
 
-          <Link 
-            to="/add-car" 
-            className="flex items-center p-4 bg-white rounded-lg shadow hover:bg-gray-50"
-          >
-            <Plus className="w-6 h-6 text-gray-500 mr-3" />
-            <span>List Your Car</span>
-          </Link>
-
-          <Link 
-            to="/bookings" 
-            className="flex items-center p-4 bg-white rounded-lg shadow hover:bg-gray-50"
-          >
-            <BookOpen className="w-6 h-6 text-gray-500 mr-3" />
-            <span>My Bookings</span>
-          </Link>
-
-          <Link 
-            to="/saved-cars" 
-            className="flex items-center p-4 bg-white rounded-lg shadow hover:bg-gray-50"
-          >
-            <Heart className="w-6 h-6 text-gray-500 mr-3" />
-            <span>Saved Cars</span>
-          </Link>
-
-          <Link 
-            to="/driver-license" 
-            className="flex items-center p-4 bg-white rounded-lg shadow hover:bg-gray-50"
-          >
-            <FileText className="w-6 h-6 text-gray-500 mr-3" />
-            <span>Driver License</span>
-          </Link>
-
-          <Button 
-            variant="ghost" 
-            className="w-full flex items-center justify-start p-4 bg-white rounded-lg shadow hover:bg-gray-50"
-            onClick={handleSignOut}
-          >
-            <LogOut className="w-6 h-6 text-gray-500 mr-3" />
-            <span>Sign Out</span>
-          </Button>
+      <main className="p-4">
+        <div className="space-y-2">
+          {menuItems.map((item, index) => (
+            <button
+              key={index}
+              onClick={item.onClick}
+              className={`w-full flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm ${
+                item.className || "text-gray-700"
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span>{item.label}</span>
+            </button>
+          ))}
         </div>
-      </div>
+      </main>
+
       <Navigation />
     </div>
   );
