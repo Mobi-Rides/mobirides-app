@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export const CarCard = ({
       console.log("Car details fetched:", data);
       return data as Car;
     },
-    enabled: isBookingOpen // Only fetch when dialog is about to open
+    enabled: isBookingOpen
   });
 
   const handleCardClick = () => {
@@ -79,14 +80,14 @@ export const CarCard = ({
   return (
     <>
       <Card
-        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[28rem]"
         onClick={handleCardClick}
       >
-        <div className="relative">
+        <div className="relative h-48">
           <img
             src={image_url}
             alt={`${brand} ${model}`}
-            className="w-full h-48 object-cover"
+            className="w-full h-full object-cover"
           />
           {onSaveToggle && (
             <button
@@ -97,14 +98,14 @@ export const CarCard = ({
             </button>
           )}
         </div>
-        <div className="p-4">
+        <div className="p-4 flex flex-col h-[calc(28rem-12rem)]">
           <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-semibold">{brand} {model}</h3>
+            <div className="flex-1">
+              <h3 className="font-semibold text-left break-words line-clamp-2">{brand} {model}</h3>
               <p className="text-sm text-gray-500">{year}</p>
             </div>
-            <div className="text-right">
-              <p className="font-semibold">BWP {price_per_day}</p>
+            <div className="text-right ml-2">
+              <p className="font-semibold whitespace-nowrap">BWP {price_per_day}</p>
               <p className="text-xs text-gray-500">per day</p>
             </div>
           </div>
@@ -122,8 +123,8 @@ export const CarCard = ({
               {seats}
             </div>
           </div>
-          <div className="flex justify-between items-center">
-            <Badge variant="secondary">{location}</Badge>
+          <div className="mt-auto flex justify-between items-center">
+            <Badge variant="secondary" className="truncate max-w-[150px]">{location}</Badge>
             <Button onClick={handleBookNow}>Book now</Button>
           </div>
         </div>
