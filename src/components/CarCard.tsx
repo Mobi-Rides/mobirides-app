@@ -105,13 +105,11 @@ export const CarCard = ({
               {isSaved ? "❤️" : "🤍"}
             </button>
           )}
-          <div className="absolute bottom-2 left-2">
-            <span className="px-3 py-1 rounded-full text-sm bg-[#F1F0FB] text-[#7C3AED]">
-              {getCarType(seats)}
-            </span>
-          </div>
         </div>
         <div className="p-4 flex flex-col h-[calc(28rem-12rem)]">
+          <span className="px-3 py-1 rounded-full text-sm bg-[#F1F0FB] text-[#7C3AED] w-fit mb-2">
+            {getCarType(seats)}
+          </span>
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
               <h3 className="font-semibold text-left break-words line-clamp-2">{brand} {model}</h3>
