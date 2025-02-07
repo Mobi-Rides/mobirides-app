@@ -102,7 +102,7 @@ export const CarCard = ({
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
               <h3 className="font-semibold text-left break-words line-clamp-2">{brand} {model}</h3>
-              <p className="text-sm text-gray-500">{year}</p>
+              <p className="text-sm text-gray-500 text-left">{year}</p>
             </div>
             <div className="text-right ml-2">
               <div className="flex items-center gap-1 justify-end">
@@ -112,15 +112,15 @@ export const CarCard = ({
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="flex items-center justify-center gap-1 text-sm text-primary">
+            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
               <GaugeCircle className="w-4 h-4 text-primary" />
               {transmission}
             </div>
-            <div className="flex items-center justify-center gap-1 text-sm text-primary">
+            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
               <Fuel className="w-4 h-4 text-primary" />
               {fuel}
             </div>
-            <div className="flex items-center justify-center gap-1 text-sm text-primary">
+            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
               <Users className="w-4 h-4 text-primary" />
               {seats}
             </div>
