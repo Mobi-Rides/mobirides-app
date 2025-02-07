@@ -77,6 +77,14 @@ export const CarCard = ({
     onSaveToggle?.();
   };
 
+  // Determine car type based on seats
+  const getCarType = (seats: number) => {
+    if (seats <= 2) return "Sports";
+    if (seats <= 5) return "Sedan";
+    if (seats <= 7) return "SUV";
+    return "Van";
+  };
+
   return (
     <>
       <Card
@@ -97,6 +105,11 @@ export const CarCard = ({
               {isSaved ? "❤️" : "🤍"}
             </button>
           )}
+          <div className="absolute bottom-2 left-2">
+            <span className="px-3 py-1 rounded-full text-sm bg-[#F1F0FB] text-[#7C3AED]">
+              {getCarType(seats)}
+            </span>
+          </div>
         </div>
         <div className="p-4 flex flex-col h-[calc(28rem-12rem)]">
           <div className="flex justify-between items-start mb-2">
