@@ -106,22 +106,22 @@ export const CarCard = ({
             </div>
             <div className="text-right ml-2">
               <div className="flex items-center gap-1 justify-end">
-                <p className="font-semibold whitespace-nowrap">BWP {price_per_day}</p>
+                <p className="font-semibold whitespace-nowrap text-primary">BWP {price_per_day}</p>
                 <p className="text-xs text-gray-500">/day</p>
               </div>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-              <GaugeCircle className="w-4 h-4" />
+            <div className="flex items-center justify-center gap-1 text-sm text-primary">
+              <GaugeCircle className="w-4 h-4 text-primary" />
               {transmission}
             </div>
-            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-              <Fuel className="w-4 h-4" />
+            <div className="flex items-center justify-center gap-1 text-sm text-primary">
+              <Fuel className="w-4 h-4 text-primary" />
               {fuel}
             </div>
-            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-              <Users className="w-4 h-4" />
+            <div className="flex items-center justify-center gap-1 text-sm text-primary">
+              <Users className="w-4 h-4 text-primary" />
               {seats}
             </div>
           </div>
