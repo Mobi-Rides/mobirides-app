@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
@@ -83,7 +84,7 @@ const Index = () => {
   });
 
   // Query for saved cars - enabled for renters to show saved status
-  const { data: savedCarsData = new Set<string>() } = useQuery({
+  const { data: savedCarIds } = useQuery({
     queryKey: ['saved-cars'],
     queryFn: async () => {
       console.log("Fetching saved car IDs");
@@ -100,20 +101,21 @@ const Index = () => {
         return new Set<string>();
       }
 
-      const savedIds = new Set(data.map(saved => saved.car_id));
-      console.log("Saved car IDs:", Array.from(savedIds));
-      return savedIds;
+      return new Set(data.map(saved => saved.car_id));
     },
     enabled: userRole === 'renter' // Only enable for renters
   });
 
   const hostCars = hostCarsData || [];
   
+  // Ensure savedCarIds is always a Set, even if the query hasn't completed
+  const savedCarsSet = savedCarIds || new Set<string>();
+  
   // Flatten available cars from all pages and mark saved ones
   const allAvailableCars = availableCars?.pages.flatMap(page => 
     page.data.map(car => ({
       ...car,
-      isSaved: savedCarsData.has(car.id)
+      isSaved: savedCarsSet.has(car.id)
     }))
   ) || [];
 
