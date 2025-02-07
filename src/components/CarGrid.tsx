@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CarCard } from "@/components/CarCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,7 +41,7 @@ export const CarGrid = ({
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <CarSkeleton key={i} />
         ))}
@@ -67,7 +68,7 @@ export const CarGrid = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {visibleCars.map((car) => (
           <div key={car.id} className="animate-fade-in">
             <CarCard
