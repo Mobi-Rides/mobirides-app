@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
@@ -6,7 +7,7 @@ import type { Car } from "@/types/car";
 
 const SavedCars = () => {
   const { data: cars = [], isLoading, error } = useQuery({
-    queryKey: ["saved-cars"],
+    queryKey: ["saved-cars-full"], // Changed query key to be distinct
     queryFn: async () => {
       console.log("Fetching saved cars...");
       const { data: { session } } = await supabase.auth.getSession();

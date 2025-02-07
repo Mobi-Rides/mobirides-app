@@ -83,11 +83,11 @@ const Index = () => {
     enabled: userRole === 'host'
   });
 
-  // Query for saved cars - enabled for renters to show saved status
+  // Query for saved cars IDs - enabled for renters to show saved status
   const { data: savedCarIds } = useQuery({
-    queryKey: ['saved-cars'],
+    queryKey: ['saved-car-ids'], // Changed query key to be distinct
     queryFn: async () => {
-      console.log("Fetching saved car IDs");
+      console.log("Fetching saved car IDs for home page");
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return new Set<string>();
 
@@ -101,7 +101,9 @@ const Index = () => {
         return new Set<string>();
       }
 
-      return new Set(data.map(saved => saved.car_id));
+      const savedIds = new Set(data.map(saved => saved.car_id));
+      console.log("Saved car IDs for home page:", Array.from(savedIds));
+      return savedIds;
     },
     enabled: userRole === 'renter' // Only enable for renters
   });
@@ -200,3 +202,4 @@ const Index = () => {
 };
 
 export default Index;
+
