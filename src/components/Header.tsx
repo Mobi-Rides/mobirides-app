@@ -1,3 +1,4 @@
+
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -88,7 +89,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
           variant="outline"
           size="icon"
           className="rounded-full"
-          onClick={() => navigate("/cars/add")}
+          onClick={() => navigate("/add-car")}
         >
           <Plus className="h-4 w-4" />
         </Button>
