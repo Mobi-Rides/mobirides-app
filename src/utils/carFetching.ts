@@ -19,22 +19,27 @@ export const fetchCars = async ({
     searchTerm?: string;
   };
 }): Promise<CarQueryResponse> => {
-  console.log("Fetching cars with filters:", filters);
-  console.log("Search params:", searchParams);
+  console.log("Starting car fetch with params:", { pageParam, filters, searchParams });
   
   let query = supabase
     .from("cars")
-    .select("*", { count: "exact" })
-    .eq("is_available", true)
-    .range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);
+    .select("*", { count: "exact" });
+
+  // Remove the is_available filter temporarily to see all cars
+  // .eq("is_available", true)
+  
+  // Apply pagination
+  query = query.range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);
 
   // Apply search term if it exists
   if (searchParams?.searchTerm) {
+    console.log("Applying search term:", searchParams.searchTerm);
     query = query.or(`brand.ilike.%${searchParams.searchTerm}%,model.ilike.%${searchParams.searchTerm}%`);
   }
 
   // Apply brand filter if it exists
   if (searchParams?.brand) {
+    console.log("Filtering by brand:", searchParams.brand);
     query = query.eq("brand", searchParams.brand);
   }
 
@@ -67,6 +72,7 @@ export const fetchCars = async ({
     query = query.order("price_per_day", { ascending: filters.sortOrder === "asc" });
   }
 
+  console.log("Executing Supabase query...");
   const { data, error, count } = await query;
 
   if (error) {
@@ -74,6 +80,8 @@ export const fetchCars = async ({
     throw error;
   }
 
+  console.log("Cars fetched successfully:", { count, dataLength: data?.length });
+  
   return { 
     data: data || [], 
     nextPage: data && data.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
