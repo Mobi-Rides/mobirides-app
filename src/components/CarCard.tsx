@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export const CarCard = ({
       console.log("Car details fetched:", data);
       return data as Car;
     },
-    enabled: isBookingOpen // Only fetch when dialog is about to open
+    enabled: isBookingOpen
   });
 
   const handleCardClick = () => {
@@ -76,17 +77,25 @@ export const CarCard = ({
     onSaveToggle?.();
   };
 
+  // Determine car type based on seats
+  const getCarType = (seats: number) => {
+    if (seats <= 2) return "Sports";
+    if (seats <= 5) return "Sedan";
+    if (seats <= 7) return "SUV";
+    return "Van";
+  };
+
   return (
     <>
       <Card
-        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[28rem]"
         onClick={handleCardClick}
       >
-        <div className="relative">
+        <div className="relative h-48">
           <img
             src={image_url}
             alt={`${brand} ${model}`}
-            className="w-full h-48 object-cover"
+            className="w-full h-full object-cover"
           />
           {onSaveToggle && (
             <button
@@ -97,33 +106,38 @@ export const CarCard = ({
             </button>
           )}
         </div>
-        <div className="p-4">
+        <div className="p-4 flex flex-col h-[calc(28rem-12rem)]">
+          <span className="px-3 py-1 rounded-full text-sm bg-[#F1F0FB] text-[#7C3AED] w-fit mb-2">
+            {getCarType(seats)}
+          </span>
           <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-semibold">{brand} {model}</h3>
-              <p className="text-sm text-gray-500">{year}</p>
+            <div className="flex-1">
+              <h3 className="font-semibold text-left break-words line-clamp-2">{brand} {model}</h3>
+              <p className="text-sm text-gray-500 text-left">{year}</p>
             </div>
-            <div className="text-right">
-              <p className="font-semibold">BWP {price_per_day}</p>
-              <p className="text-xs text-gray-500">per day</p>
+            <div className="text-right ml-2">
+              <div className="flex items-center gap-1 justify-end">
+                <p className="font-semibold whitespace-nowrap text-primary">BWP {price_per_day}</p>
+                <p className="text-xs text-gray-500">/day</p>
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <GaugeCircle className="w-4 h-4" />
+            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
+              <GaugeCircle className="w-4 h-4 text-primary" />
               {transmission}
             </div>
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Fuel className="w-4 h-4" />
+            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
+              <Fuel className="w-4 h-4 text-primary" />
               {fuel}
             </div>
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Users className="w-4 h-4" />
+            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
+              <Users className="w-4 h-4 text-primary" />
               {seats}
             </div>
           </div>
-          <div className="flex justify-between items-center">
-            <Badge variant="secondary">{location}</Badge>
+          <div className="mt-auto flex justify-between items-center">
+            <Badge variant="secondary" className="truncate max-w-[150px]">{location}</Badge>
             <Button onClick={handleBookNow}>Book now</Button>
           </div>
         </div>
