@@ -11,6 +11,8 @@ import { fetchCars } from "@/utils/carFetching";
 import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -23,11 +25,19 @@ const Index = () => {
     endDate: undefined,
     vehicleType: undefined,
     location: "",
-    sortBy: "distance",
+    sortBy: "price",
     sortOrder: "asc",
   });
 
   const { ref: loadMoreRef, inView } = useInView();
+
+  // Update filters when sortOrder changes
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      sortOrder: sortOrder
+    }));
+  }, [sortOrder]);
 
   // Query for all available cars (for renters)
   const { 
@@ -58,7 +68,7 @@ const Index = () => {
     isLoading: hostCarsLoading,
     error: hostCarsError
   } = useQuery({
-    queryKey: ['host-cars', searchQuery],
+    queryKey: ['host-cars', searchQuery, sortOrder],
     queryFn: async () => {
       console.log("Fetching host cars with search:", searchQuery);
       const { data: { session } } = await supabase.auth.getSession();
@@ -73,6 +83,9 @@ const Index = () => {
       if (searchQuery) {
         query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
       }
+
+      // Apply sorting
+      query = query.order('price_per_day', { ascending: sortOrder === 'asc' });
 
       const { data, error } = await query;
 
@@ -174,6 +187,10 @@ const Index = () => {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header 
@@ -183,10 +200,19 @@ const Index = () => {
       />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
-          <BrandFilter
-            selectedBrand={selectedBrand}
-            onSelectBrand={setSelectedBrand}
-          />
+          <div className="flex justify-between items-center">
+            <BrandFilter
+              selectedBrand={selectedBrand}
+              onSelectBrand={setSelectedBrand}
+            />
+            <Button
+              variant="outline"
+              onClick={toggleSortOrder}
+              className="flex items-center gap-2"
+            >
+              Sort by Price {sortOrder === "asc" ? <ArrowUpAZ /> : <ArrowDownAZ />}
+            </Button>
+          </div>
           <CarGrid
             cars={userRole === 'host' ? hostCars : allAvailableCars}
             isLoading={userRole === 'host' ? hostCarsLoading : isLoadingCars}
@@ -202,4 +228,3 @@ const Index = () => {
 };
 
 export default Index;
-
