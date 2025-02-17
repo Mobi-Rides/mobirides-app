@@ -16,8 +16,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, !!session);
       
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-        console.log("User signed out or deleted");
+      if (event === 'SIGNED_OUT') {
+        console.log("User signed out");
         setAuthenticated(false);
         setLoading(false);
         return;
@@ -30,7 +30,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           setAuthenticated(true);
         } else {
           console.log("Token refresh failed - clearing auth state");
-          handleAuthError();
+          await handleAuthError("Session refresh failed. Please sign in again.");
         }
         setLoading(false);
       }
@@ -42,11 +42,13 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const handleAuthError = async () => {
-    console.log("Handling auth error - signing out user");
+  const handleAuthError = async (message: string = "Your session has expired. Please sign in again.") => {
+    console.log("Handling auth error:", message);
+    // Clear any stored session data
     await supabase.auth.signOut();
+    localStorage.removeItem('supabase.auth.token');
     setAuthenticated(false);
-    toast.error("Your session has expired. Please sign in again.");
+    toast.error(message);
   };
 
   const checkAuth = async () => {
@@ -56,7 +58,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error("Error checking auth status:", error);
-        handleAuthError();
+        await handleAuthError("Authentication error. Please sign in again.");
         return;
       }
 
@@ -70,9 +72,15 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       // Verify token is still valid
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (userError || !user) {
-        console.log("Invalid session or user data");
-        handleAuthError();
+      if (userError) {
+        console.log("Error fetching user data:", userError);
+        await handleAuthError("Unable to verify your session. Please sign in again.");
+        return;
+      }
+
+      if (!user) {
+        console.log("No user data found");
+        await handleAuthError();
         return;
       }
 
@@ -80,7 +88,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       setAuthenticated(true);
     } catch (error) {
       console.error("Error in checkAuth:", error);
-      handleAuthError();
+      await handleAuthError("An unexpected error occurred. Please sign in again.");
     } finally {
       setLoading(false);
     }
