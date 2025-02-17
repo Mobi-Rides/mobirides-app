@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
@@ -20,6 +21,11 @@ const Login = () => {
         const from = location.state?.from?.pathname || "/";
         navigate(from);
       }
+
+      if (event === "SIGNED_OUT") {
+        console.log("User signed out");
+        // Clear any stored auth data if needed
+      }
     });
 
     return () => {
@@ -28,11 +34,23 @@ const Login = () => {
   }, [navigate, location]);
 
   const checkSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      console.log("Active session found, redirecting to home");
-      const from = location.state?.from?.pathname || "/";
-      navigate(from);
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error checking session:", error);
+        toast.error("There was an error checking your session");
+        return;
+      }
+
+      if (session) {
+        console.log("Active session found, redirecting to home");
+        const from = location.state?.from?.pathname || "/";
+        navigate(from);
+      }
+    } catch (error) {
+      console.error("Error in checkSession:", error);
+      toast.error("There was an error checking your session");
     }
   };
 
