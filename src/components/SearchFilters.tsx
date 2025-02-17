@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -63,8 +64,9 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
   }, [filters, onFiltersChange]);
 
   return (
-    <div className="w-full rounded-lg border bg-card shadow-sm">
-      <ScrollArea className="h-[calc(100vh-120px)]">
+    <div className="w-full rounded-lg border bg-card shadow-sm my-5 relative">
+      <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-background to-transparent z-10" />
+      <ScrollArea className="h-[calc(100vh-160px)]">
         <div className="flex flex-col gap-4 p-4">
           <div className="space-y-4">
             <div>
@@ -197,6 +199,7 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
           </Button>
         </div>
       </ScrollArea>
+      <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent z-10" />
     </div>
   );
 };
