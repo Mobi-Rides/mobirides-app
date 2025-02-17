@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
@@ -12,7 +11,7 @@ import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -31,7 +30,6 @@ const Index = () => {
 
   const { ref: loadMoreRef, inView } = useInView();
 
-  // Update filters when sortOrder changes
   useEffect(() => {
     setFilters(prev => ({
       ...prev,
@@ -39,7 +37,6 @@ const Index = () => {
     }));
   }, [sortOrder]);
 
-  // Query for all available cars (for renters)
   const { 
     data: availableCars,
     isLoading: isLoadingCars,
@@ -62,7 +59,6 @@ const Index = () => {
     enabled: userRole === 'renter'
   });
 
-  // Query for host's cars with search
   const { 
     data: hostCarsData, 
     isLoading: hostCarsLoading,
@@ -79,12 +75,10 @@ const Index = () => {
         .select('*')
         .eq('owner_id', session.user.id);
 
-      // Apply search filter if exists
       if (searchQuery) {
         query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
       }
 
-      // Apply sorting
       query = query.order('price_per_day', { ascending: sortOrder === 'asc' });
 
       const { data, error } = await query;
@@ -96,9 +90,8 @@ const Index = () => {
     enabled: userRole === 'host'
   });
 
-  // Query for saved cars IDs - enabled for renters to show saved status
   const { data: savedCarIds } = useQuery({
-    queryKey: ['saved-car-ids'], // Changed query key to be distinct
+    queryKey: ['saved-car-ids'],
     queryFn: async () => {
       console.log("Fetching saved car IDs for home page");
       const { data: { session } } = await supabase.auth.getSession();
@@ -118,23 +111,19 @@ const Index = () => {
       console.log("Saved car IDs for home page:", Array.from(savedIds));
       return savedIds;
     },
-    enabled: userRole === 'renter' // Only enable for renters
+    enabled: userRole === 'renter'
   });
 
   const hostCars = hostCarsData || [];
   
-  // Ensure savedCarIds is always a Set, even if the query hasn't completed
   const savedCarsSet = savedCarIds || new Set<string>();
   
-  // Flatten available cars from all pages and mark saved ones
   const allAvailableCars = availableCars?.pages.flatMap(page => 
     page.data.map(car => ({
       ...car,
       isSaved: savedCarsSet.has(car.id)
     }))
   ) || [];
-
-  console.log("Available cars:", allAvailableCars);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -180,7 +169,6 @@ const Index = () => {
     fetchUserRole();
   }, []);
 
-  // Load more cars when scrolling
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -206,11 +194,23 @@ const Index = () => {
               onSelectBrand={setSelectedBrand}
             />
             <Button
-              variant="outline"
+              variant={sortOrder ? "secondary" : "outline"}
               onClick={toggleSortOrder}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-colors ${
+                sortOrder ? "bg-accent text-accent-foreground" : ""
+              }`}
             >
-              Sort by Price {sortOrder === "asc" ? <ArrowUpAZ /> : <ArrowDownAZ />}
+              {sortOrder === "asc" ? (
+                <>
+                  Price: Low to High
+                  <ArrowUpAZ className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Price: High to Low
+                  <ArrowDownAZ className="h-4 w-4" />
+                </>
+              )}
             </Button>
           </div>
           <CarGrid
