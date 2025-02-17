@@ -74,7 +74,7 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
           Filters
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="start">
+      <PopoverContent className="w-80" align="start" hideClose>
         <div className="flex flex-col gap-4 p-4">
           <div className="space-y-4">
             <div>
