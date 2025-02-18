@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, isToday, parseISO } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const HostDashboard = () => {
@@ -136,6 +137,20 @@ export const HostDashboard = () => {
                     <p className="text-sm">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
+                    <div className="flex justify-between items-center pt-2">
+                      <Link to={`/booking-requests/${booking.id}`}>
+                        <Button variant="outline" size="sm">
+                          View Details
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="secondary"
+                        size="sm"
+                        disabled={!isToday(parseISO(booking.start_date))}
+                      >
+                        Initiate Handover
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
