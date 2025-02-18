@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +7,7 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { RoleSection } from "@/components/profile/RoleSection";
 import { NotificationsSection } from "@/components/profile/NotificationsSection";
+import { OnlineStatusToggle } from "@/components/profile/OnlineStatusToggle";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
 import { Navigation } from "@/components/Navigation";
@@ -80,6 +82,7 @@ const Profile = () => {
       <ProfileHeader />
       <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
       <ProfileForm initialValues={initialFormValues} />
+      <OnlineStatusToggle />
       <NotificationsSection />
       <RoleSection />
       <Navigation />
