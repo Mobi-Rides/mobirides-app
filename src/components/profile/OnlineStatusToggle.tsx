@@ -15,17 +15,16 @@ export const OnlineStatusToggle = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
-        .from('profiles')
-        .select('is_online')
-        .eq('id', user.id)
-        .single();
+      const { data: cars } = await supabase
+        .from('cars')
+        .select('latitude, longitude')
+        .eq('owner_id', user.id)
+        .not('latitude', 'is', null);
 
-      if (data) {
-        setIsOnline(!!data.is_online);
-        if (data.is_online) {
-          startLocationTracking();
-        }
+      // Consider user online if they have any cars with location data
+      if (data && data.length > 0) {
+        setIsOnline(true);
+        startLocationTracking();
       }
     };
 
@@ -94,22 +93,33 @@ export const OnlineStatusToggle = () => {
 
       const newStatus = !isOnline;
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_online: newStatus })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      setIsOnline(newStatus);
-      
       if (newStatus) {
         startLocationTracking();
         toast.success("You are now online and visible to renters");
       } else {
         stopLocationTracking();
+        // Clear location data from cars
+        const { data: cars } = await supabase
+          .from('cars')
+          .select('id')
+          .eq('owner_id', user.id);
+
+        if (cars) {
+          for (const car of cars) {
+            await supabase
+              .from('cars')
+              .update({ 
+                latitude: null, 
+                longitude: null,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', car.id);
+          }
+        }
         toast.success("You are now offline");
       }
+
+      setIsOnline(newStatus);
     } catch (error) {
       console.error("Error updating online status:", error);
       toast.error("Failed to update online status");
