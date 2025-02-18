@@ -22,7 +22,7 @@ export const OnlineStatusToggle = () => {
         .not('latitude', 'is', null);
 
       // Consider user online if they have any cars with location data
-      if (data && data.length > 0) {
+      if (cars && cars.length > 0) {
         setIsOnline(true);
         startLocationTracking();
       }
