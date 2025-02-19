@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { toast } from "sonner";
@@ -41,62 +42,91 @@ export const useUserLocation = (map: mapboxgl.Map | null) => {
 
     function initializeLocationTracking() {
       if (!navigator.geolocation) {
-        console.log("Geolocation not supported");
-        setError("Geolocation is not supported by your browser");
-        toast.error("Geolocation is not supported by your browser");
+        const errorMsg = "Geolocation is not supported by your browser";
+        console.log(errorMsg);
+        setError(errorMsg);
+        toast.error(errorMsg);
         return;
       }
 
-      const handleSuccess = (position: GeolocationPosition) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        console.log("User location updated:", { latitude, longitude, accuracy });
-
-        setUserLocation({ latitude, longitude, accuracy });
-
-        // Remove existing marker if it exists
-        if (markerRef.current) {
-          markerRef.current.remove();
+      // First request permission explicitly
+      navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
+        if (permissionStatus.state === 'denied') {
+          const errorMsg = "Location access was denied. Please enable location services to use this feature.";
+          console.log(errorMsg);
+          setError(errorMsg);
+          toast.error(errorMsg);
+          return;
         }
 
-        try {
-          // Create a marker for user location
-          const el = createMarkerElement(accuracy);
-          
-          markerRef.current = new mapboxgl.Marker({ element: el })
-            .setLngLat([longitude, latitude]);
+        const handleSuccess = (position: GeolocationPosition) => {
+          const { latitude, longitude, accuracy } = position.coords;
+          console.log("User location updated:", { latitude, longitude, accuracy });
 
-          // Only add to map if map is valid
-          if (map && map.loaded()) {
-            markerRef.current.addTo(map);
+          setUserLocation({ latitude, longitude, accuracy });
+          setError(null); // Clear any previous errors
+
+          // Remove existing marker if it exists
+          if (markerRef.current) {
+            markerRef.current.remove();
           }
 
-          // Center map on user location
-          map?.flyTo({
-            center: [longitude, latitude],
-            zoom: 14,
-          });
-        } catch (err) {
-          console.error("Error creating location marker:", err);
-        }
-      };
+          try {
+            // Create a marker for user location
+            const el = createMarkerElement(accuracy);
+            
+            markerRef.current = new mapboxgl.Marker({ element: el })
+              .setLngLat([longitude, latitude]);
 
-      const handleError = (error: GeolocationPositionError) => {
-        console.error("Geolocation error:", error);
-        const errorMessage = "Failed to get your location. Please check your permissions.";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      };
+            // Only add to map if map is valid
+            if (map && map.loaded()) {
+              markerRef.current.addTo(map);
+              
+              // Fly to the location with smooth animation
+              map.flyTo({
+                center: [longitude, latitude],
+                zoom: 14,
+                essential: true
+              });
+            }
+          } catch (err) {
+            console.error("Error creating location marker:", err);
+          }
+        };
 
-      // Start watching position
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        handleSuccess,
-        handleError,
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0,
-        }
-      );
+        const handleError = (error: GeolocationPositionError) => {
+          let errorMessage = "Failed to get your location. ";
+          
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage += "Location permission was denied.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage += "Location information is unavailable.";
+              break;
+            case error.TIMEOUT:
+              errorMessage += "Location request timed out.";
+              break;
+            default:
+              errorMessage += "An unknown error occurred.";
+          }
+          
+          console.error("Geolocation error:", { code: error.code, message: error.message });
+          setError(errorMessage);
+          toast.error(errorMessage);
+        };
+
+        // Start watching position with improved options
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          handleSuccess,
+          handleError,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000, // Increased timeout
+            maximumAge: 5000 // Allow slightly older positions
+          }
+        );
+      });
     }
 
     // Cleanup function
