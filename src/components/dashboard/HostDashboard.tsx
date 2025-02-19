@@ -170,8 +170,9 @@ export const HostDashboard = () => {
                         </Button>
                       </Link>
                       <Button 
-                        variant="secondary"
+                        variant="default"
                         size="sm"
+                        className={`${isToday(parseISO(booking.start_date)) ? "bg-primary hover:bg-primary/90" : "bg-secondary hover:bg-secondary/80"}`}
                         disabled={!isToday(parseISO(booking.start_date))}
                         onClick={() => initiateHandover(booking.id, booking.renter.id)}
                       >
