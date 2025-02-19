@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export const HostDashboard = () => {
   const { data: hostData, isLoading } = useQuery({
@@ -32,7 +32,8 @@ export const HostDashboard = () => {
               location
             ),
             renter:profiles!renter_id (
-              full_name
+              full_name,
+              id
             )
           `)
           .eq("cars.owner_id", user.id)
@@ -51,6 +52,31 @@ export const HostDashboard = () => {
       };
     }
   });
+
+  const initiateHandover = async (bookingId: string, renterId: string) => {
+    try {
+      // Create a notification for the renter
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: renterId,
+          content: 'Your host is requesting your location for vehicle handover.',
+          type: 'booking_request',
+          related_booking_id: bookingId,
+          is_read: false
+        });
+
+      if (notificationError) {
+        console.error("Error creating notification:", notificationError);
+        throw notificationError;
+      }
+
+      toast.success("Handover request sent to renter");
+    } catch (error) {
+      console.error("Error initiating handover:", error);
+      toast.error("Failed to send handover request");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -147,6 +173,7 @@ export const HostDashboard = () => {
                         variant="secondary"
                         size="sm"
                         disabled={!isToday(parseISO(booking.start_date))}
+                        onClick={() => initiateHandover(booking.id, booking.renter.id)}
                       >
                         Initiate Handover
                       </Button>
