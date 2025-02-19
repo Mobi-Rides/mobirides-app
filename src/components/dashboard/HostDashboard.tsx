@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export const HostDashboard = () => {
+  const navigate = useNavigate();
+  
   const { data: hostData, isLoading } = useQuery({
     queryKey: ["host-dashboard"],
     queryFn: async () => {
@@ -72,6 +74,9 @@ export const HostDashboard = () => {
       }
 
       toast.success("Handover request sent to renter");
+      
+      // Navigate to map page with booking ID and renter ID as query parameters
+      navigate(`/map?bookingId=${bookingId}&renterId=${renterId}&mode=handover`);
     } catch (error) {
       console.error("Error initiating handover:", error);
       toast.error("Failed to send handover request");
