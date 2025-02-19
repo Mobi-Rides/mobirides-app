@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "../ui/button";
@@ -7,6 +8,8 @@ import { useMapLocation } from "@/hooks/useMapLocation";
 import { updateCarLocation } from "@/services/carLocation";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { Car } from "lucide-react";
+import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface CarLocationProps {
@@ -17,6 +20,7 @@ interface CarLocationProps {
 
 export const CarLocation = ({ latitude, longitude, location }: CarLocationProps) => {
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [hostMarker, setHostMarker] = useState<mapboxgl.Marker | null>(null);
   const { id: carId } = useParams();
   const queryClient = useQueryClient();
   const { token, isLoading: isTokenLoading } = useMapboxToken();
@@ -35,7 +39,43 @@ export const CarLocation = ({ latitude, longitude, location }: CarLocationProps)
   });
 
   // Initialize user location tracking
-  useUserLocation(map?.current);
+  const { userLocation } = useUserLocation(map?.current);
+
+  // Update host marker when user location changes
+  useEffect(() => {
+    if (!map?.current || !userLocation) return;
+
+    // Remove existing host marker if it exists
+    if (hostMarker) {
+      hostMarker.remove();
+    }
+
+    // Create a custom marker element
+    const el = document.createElement('div');
+    el.className = 'bg-primary text-white p-2 rounded-full';
+    el.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>';
+
+    // Create and add the new marker
+    const newMarker = new mapboxgl.Marker({
+      element: el,
+      anchor: 'center'
+    })
+      .setLngLat([userLocation.longitude, userLocation.latitude])
+      .addTo(map.current);
+
+    setHostMarker(newMarker);
+
+    // Update map bounds to show both car and host locations
+    if (latitude && longitude) {
+      const bounds = new mapboxgl.LngLatBounds()
+        .extend([longitude, latitude])
+        .extend([userLocation.longitude, userLocation.latitude]);
+
+      map.current.fitBounds(bounds, {
+        padding: 100
+      });
+    }
+  }, [map?.current, userLocation, latitude, longitude]);
 
   const handleAdjustLocation = () => {
     setIsAdjusting(true);
