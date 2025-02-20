@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -29,7 +28,6 @@ const MapPage = () => {
     sortOrder: "asc"
   });
 
-  // Get URL parameters
   const bookingId = searchParams.get('bookingId');
   const hostId = searchParams.get('hostId');
   const mode = searchParams.get('mode');
@@ -74,9 +72,27 @@ const MapPage = () => {
 
   const { userLocation } = useUserLocation(map);
 
-  // Subscribe to host's car location updates if in handover mode
   useEffect(() => {
-    if (!map || !mode || mode !== 'handover' || !hostId || !bookingId) return;
+    console.log("Map component mounted with params:", {
+      mode,
+      hostId,
+      bookingId,
+      isMapLoaded: !!map
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log("Checking conditions for host subscription:", {
+      hasMap: !!map,
+      mode,
+      hostId,
+      bookingId
+    });
+
+    if (!map || !mode || mode !== 'handover' || !hostId || !bookingId) {
+      console.log("Skipping host subscription due to missing requirements");
+      return;
+    }
 
     console.log("Setting up location subscription for host:", hostId);
 
@@ -95,22 +111,29 @@ const MapPage = () => {
           (payload) => {
             console.log("Received host location update:", payload);
             if (payload.new && 'latitude' in payload.new && 'longitude' in payload.new) {
-              setHostLocation({
+              const newLocation = {
                 lat: payload.new.latitude as number,
                 lng: payload.new.longitude as number
-              });
+              };
+              console.log("Setting new host location:", newLocation);
+              setHostLocation(newLocation);
 
               // Center map on host location
               if (map) {
+                console.log("Centering map on host location");
                 map.flyTo({
                   center: [payload.new.longitude as number, payload.new.latitude as number],
                   zoom: 14
                 });
               }
+            } else {
+              console.log("Invalid payload structure:", payload);
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log("Subscription status:", status);
+        });
     } catch (error) {
       console.error("Error setting up realtime subscription:", error);
       toast.error("Failed to track host location");
@@ -124,17 +147,26 @@ const MapPage = () => {
     };
   }, [map, mode, hostId, bookingId]);
 
-  // Update map view when locations change
   useEffect(() => {
-    if (!map || !isLoaded) return;
+    console.log("Location update effect running:", {
+      hasMap: !!map,
+      isLoaded,
+      hostLocation,
+      userLocation
+    });
+
+    if (!map || !isLoaded) {
+      console.log("Map not ready yet");
+      return;
+    }
 
     // Clear existing markers (to prevent duplicates)
     const markers = document.querySelectorAll('.host-marker, .user-marker');
+    console.log("Clearing existing markers:", markers.length);
     markers.forEach(marker => marker.remove());
 
     if (hostLocation) {
-      console.log("Updating host marker position:", hostLocation);
-      // Add or update host marker
+      console.log("Creating host marker at:", hostLocation);
       const hostMarker = document.createElement('div');
       hostMarker.className = 'host-marker';
       hostMarker.innerHTML = `
@@ -143,14 +175,18 @@ const MapPage = () => {
         </div>
       `;
 
-      new mapboxgl.Marker({ element: hostMarker })
-        .setLngLat([hostLocation.lng, hostLocation.lat])
-        .addTo(map);
+      try {
+        new mapboxgl.Marker({ element: hostMarker })
+          .setLngLat([hostLocation.lng, hostLocation.lat])
+          .addTo(map);
+        console.log("Host marker added successfully");
+      } catch (error) {
+        console.error("Error adding host marker:", error);
+      }
     }
 
     if (userLocation) {
-      console.log("Updating user marker position:", userLocation);
-      // Add or update user marker
+      console.log("Creating user marker at:", userLocation);
       const userMarker = document.createElement('div');
       userMarker.className = 'user-marker';
       userMarker.innerHTML = `
@@ -159,20 +195,26 @@ const MapPage = () => {
         </div>
       `;
 
-      new mapboxgl.Marker({ element: userMarker })
-        .setLngLat([userLocation.longitude, userLocation.latitude])
-        .addTo(map);
+      try {
+        new mapboxgl.Marker({ element: userMarker })
+          .setLngLat([userLocation.longitude, userLocation.latitude])
+          .addTo(map);
+        console.log("User marker added successfully");
 
-      // Fit bounds to include both markers if both exist
-      if (hostLocation) {
-        const bounds = new mapboxgl.LngLatBounds()
-          .extend([hostLocation.lng, hostLocation.lat])
-          .extend([userLocation.longitude, userLocation.latitude]);
+        // Fit bounds to include both markers if both exist
+        if (hostLocation) {
+          console.log("Fitting bounds to include both markers");
+          const bounds = new mapboxgl.LngLatBounds()
+            .extend([hostLocation.lng, hostLocation.lat])
+            .extend([userLocation.longitude, userLocation.latitude]);
 
-        map.fitBounds(bounds, {
-          padding: 100,
-          maxZoom: 15
-        });
+          map.fitBounds(bounds, {
+            padding: 100,
+            maxZoom: 15
+          });
+        }
+      } catch (error) {
+        console.error("Error adding user marker:", error);
       }
     }
   }, [map, isLoaded, hostLocation, userLocation]);
