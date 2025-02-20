@@ -89,6 +89,21 @@ const MapPage = () => {
     enabled: !!bookingId
   });
 
+  const handleSearchChange = (query: string) => {
+    console.log("Search query updated:", query);
+    setSearchQuery(query);
+  };
+
+  const handleFiltersChange = (newFilters: SearchFilters) => {
+    try {
+      const serializedFilters = JSON.parse(JSON.stringify(newFilters));
+      console.log("Filters updated:", serializedFilters);
+      setFilters(serializedFilters);
+    } catch (error) {
+      console.error("Error serializing filters:", error);
+    }
+  };
+
   const { mapContainer, map, isLoaded, error } = useMap({
     onMapClick: (e) => {
       try {
