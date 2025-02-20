@@ -11,6 +11,7 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { useHostLocation } from "@/hooks/useHostLocation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getMapboxToken } from "@/components/MapboxConfig";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { SearchFilters } from "@/components/SearchFilters";
@@ -18,6 +19,16 @@ import type { SearchFilters } from "@/components/SearchFilters";
 const MapPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [hasToken, setHasToken] = useState<boolean>(false);
+
+  // Check for Mapbox token on component mount
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await getMapboxToken();
+      setHasToken(!!token);
+    };
+    checkToken();
+  }, []);
 
   // State declarations
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -138,22 +149,23 @@ const MapPage = () => {
     return () => clearTimeout(timeoutId);
   }, [handoverStatus?.shouldShowSheet, map, isLoaded]);
 
-  if (error) {
+  if (!hasToken || error) {
     return <MapboxConfig />;
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-background">
       <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         onFiltersChange={handleFiltersChange}
       />
       
-      <div className="flex-1 relative w-full h-full">
+      <div className="flex-1 relative w-full" style={{ minHeight: '400px' }}>
         <div 
           ref={mapContainer} 
           className="absolute inset-0 w-full h-full"
+          style={{ minHeight: '400px' }}
         />
 
         <MapMarkers
