@@ -20,6 +20,7 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [hasToken, setHasToken] = useState<boolean>(false);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
   useEffect(() => {
     const checkToken = async () => {
@@ -131,30 +132,40 @@ const MapPage = () => {
   const { userLocation } = useUserLocation(map);
   const hostLocation = useHostLocation(map, mode, hostId, bookingId);
 
-  // Add a delay before triggering resize to ensure container is ready
+  // Ensure map is properly initialized and sized
   useEffect(() => {
     if (!map || !isLoaded) return;
 
-    let timeoutId: NodeJS.Timeout;
-
-    const handleResize = () => {
-      if (map) {
-        console.log("Resizing map after container is ready");
+    const initializeMap = () => {
+      try {
+        console.log("Initializing map with resize");
         map.resize();
+        setMapInitialized(true);
+      } catch (error) {
+        console.error("Error during map initialization:", error);
       }
     };
 
-    // Initial resize after mount
-    timeoutId = setTimeout(handleResize, 500);
+    // Initial initialization
+    const timeoutId = setTimeout(initializeMap, 100);
 
-    // Add resize listener
-    window.addEventListener('resize', handleResize);
+    // Handle window resize
+    window.addEventListener('resize', initializeMap);
 
     return () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', initializeMap);
+      setMapInitialized(false);
     };
   }, [map, isLoaded]);
+
+  // Handle sheet visibility changes
+  useEffect(() => {
+    if (map && isLoaded && mapInitialized) {
+      console.log("Handling sheet visibility change");
+      map.resize();
+    }
+  }, [map, isLoaded, mapInitialized, handoverStatus?.shouldShowSheet]);
 
   if (!hasToken || error) {
     return <MapboxConfig />;
@@ -168,17 +179,17 @@ const MapPage = () => {
         onFiltersChange={handleFiltersChange}
       />
       
-      <main 
-        className="flex-1 relative w-full" 
-        style={{ height: 'calc(100% - 64px)' }}
-      >
+      <main className="flex-1 relative w-full overflow-hidden" style={{ height: 'calc(100% - 64px)' }}>
         <div 
           ref={mapContainer} 
-          className="absolute inset-0 w-full h-full z-0"
-          style={{ visibility: isLoaded ? 'visible' : 'hidden' }}
+          className="absolute inset-0 w-full h-full"
+          style={{
+            visibility: isLoaded && mapInitialized ? 'visible' : 'hidden',
+            zIndex: 0
+          }}
         />
 
-        {isLoaded && (
+        {isLoaded && mapInitialized && (
           <MapMarkers
             map={map}
             isLoaded={isLoaded}
