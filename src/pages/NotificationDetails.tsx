@@ -16,34 +16,46 @@ const NotificationDetails = () => {
     queryKey: ['notification', id],
     queryFn: async () => {
       console.log('Fetching notification details for ID:', id);
-      const { data, error } = await supabase
-        .from('notifications')
-        .select(`
-          *,
-          booking:bookings!related_booking_id (
-            id,
-            cars (
-              owner_id
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select(`
+            *,
+            booking:bookings!related_booking_id (
+              id,
+              cars (
+                owner_id
+              )
             )
-          )
-        `)
-        .eq('id', id)
-        .single();
+          `)
+          .eq('id', id)
+          .single();
 
-      if (error) throw error;
-      
-      // Mark notification as read
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
+        if (error) {
+          console.error('Error fetching notification:', error);
+          throw error;
+        }
+        
+        // Mark notification as read
+        await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('id', id);
 
-      return data;
+        return data;
+      } catch (error) {
+        console.error('Error in notification query:', error);
+        toast.error('Failed to load notification details');
+        throw error;
+      }
     }
   });
 
   const handleLocationRequest = async () => {
+    console.log('Location request initiated');
+    
     if (!notification?.booking?.id || !notification?.booking?.cars?.owner_id) {
+      console.error('Missing booking information:', { notification });
       toast.error("Booking information not found");
       return;
     }
@@ -51,6 +63,7 @@ const NotificationDetails = () => {
     try {
       // Request location permission
       if (!navigator.geolocation) {
+        console.error('Geolocation not supported');
         toast.error("Geolocation is not supported by your browser");
         return;
       }
@@ -58,48 +71,92 @@ const NotificationDetails = () => {
       // Start watching position
       const watchId = navigator.geolocation.watchPosition(
         async (position) => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            toast.error("User not authenticated");
-            return;
-          }
+          console.log('Position received:', {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
 
-          // Update user's location in the database
-          const { data: cars } = await supabase
-            .from('cars')
-            .select('id')
-            .eq('owner_id', user.id);
+          try {
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            if (authError) {
+              throw new Error('Authentication error: ' + authError.message);
+            }
+            
+            if (!user) {
+              throw new Error('User not authenticated');
+            }
 
-          if (cars) {
+            // Update user's location in the database
+            const { data: cars, error: carsError } = await supabase
+              .from('cars')
+              .select('id')
+              .eq('owner_id', user.id);
+
+            if (carsError) {
+              throw new Error('Error fetching cars: ' + carsError.message);
+            }
+
+            if (!cars || cars.length === 0) {
+              throw new Error('No cars found for user');
+            }
+
+            console.log('Updating location for cars:', cars);
+
             for (const car of cars) {
-              await updateCarLocation(
+              const success = await updateCarLocation(
                 car.id,
                 position.coords.latitude,
                 position.coords.longitude
               );
+              
+              if (!success) {
+                console.error('Failed to update location for car:', car.id);
+              }
             }
-          }
 
-          // Navigate to map page to see host's location
-          navigate(`/map?bookingId=${notification.booking.id}&hostId=${notification.booking.cars.owner_id}&mode=handover`);
+            // Navigate to map page to see host's location
+            navigate(`/map?bookingId=${notification.booking.id}&hostId=${notification.booking.cars.owner_id}&mode=handover`);
+          } catch (error) {
+            console.error('Error processing location update:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to process location update');
+            
+            // Clear the watch if we encounter an error
+            navigator.geolocation.clearWatch(watchId);
+            localStorage.removeItem('locationWatchId');
+          }
         },
         (error) => {
-          console.error("Error getting location:", error);
-          toast.error("Failed to get your location. Please enable location services.");
+          console.error("Geolocation error:", error);
+          let errorMessage = 'Failed to get your location';
+          
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location permission denied. Please enable location services.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information is unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Location request timed out.';
+              break;
+          }
+          
+          toast.error(errorMessage);
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 10000,
           maximumAge: 0
         }
       );
 
       // Store watchId in localStorage to clear it later if needed
       localStorage.setItem('locationWatchId', watchId.toString());
+      console.log('Location watch started with ID:', watchId);
 
     } catch (error) {
-      console.error("Error handling location request:", error);
-      toast.error("Failed to process location request");
+      console.error("Error in location request handler:", error);
+      toast.error("Failed to process location request. Please try again.");
     }
   };
 
