@@ -89,21 +89,6 @@ const MapPage = () => {
     enabled: !!bookingId
   });
 
-  const handleSearchChange = (query: string) => {
-    console.log("Search query updated:", query);
-    setSearchQuery(query);
-  };
-
-  const handleFiltersChange = (newFilters: SearchFilters) => {
-    try {
-      const serializedFilters = JSON.parse(JSON.stringify(newFilters));
-      console.log("Filters updated:", serializedFilters);
-      setFilters(serializedFilters);
-    } catch (error) {
-      console.error("Error serializing filters:", error);
-    }
-  };
-
   const { mapContainer, map, isLoaded, error } = useMap({
     onMapClick: (e) => {
       try {
@@ -124,9 +109,16 @@ const MapPage = () => {
   // Handle sheet state changes
   useEffect(() => {
     if (map && isLoaded) {
-      setTimeout(() => {
-        map.resize();
-      }, 300);
+      // Delay resize to ensure DOM is ready
+      const timeoutId = setTimeout(() => {
+        if (map) {
+          map.resize();
+          // Force a re-render of the map
+          map.triggerRepaint();
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [handoverStatus?.shouldShowSheet, map, isLoaded]);
 
@@ -135,18 +127,17 @@ const MapPage = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col pb-[50px]">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         onFiltersChange={handleFiltersChange}
       />
       
-      <div className="flex-1 relative">
+      <div className="flex-1 relative w-full h-full">
         <div 
           ref={mapContainer} 
-          className="absolute inset-0"
-          style={{ minHeight: "400px" }}
+          className="absolute inset-0 w-full h-full"
         />
 
         <MapMarkers
