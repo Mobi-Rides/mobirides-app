@@ -4,6 +4,7 @@ import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { VehicleMarker } from "@/components/VehicleMarker";
+import { HandoverSheet } from "@/components/handover/HandoverSheet";
 import { useMap } from "@/hooks/useMap";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,14 +20,20 @@ const MapPage = () => {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [hostLocation, setHostLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [filters, setFilters] = useState<SearchFilters>({
-    startDate: undefined,
-    endDate: undefined,
-    vehicleType: undefined,
-    location: "",
-    sortBy: "distance",
-    sortOrder: "asc"
+  const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(true);
+  const [renterDetails, setRenterDetails] = useState({
+    renterName: "John Doe",
+    renterAvatar: "/placeholder.svg",
+    startLocation: {
+      address: "123 Main St, City",
+      coordinates: { lat: -24.6527, lng: 25.9088 }
+    },
+    destination: {
+      address: "456 Park Ave, City",
+      coordinates: { lat: -24.6627, lng: 25.9188 }
+    }
   });
+  const [isRenterSharingLocation, setIsRenterSharingLocation] = useState(false);
 
   const bookingId = searchParams.get('bookingId');
   const hostId = searchParams.get('hostId');
@@ -161,12 +168,42 @@ const MapPage = () => {
     }
 
     // Clear existing markers (to prevent duplicates)
-    const markers = document.querySelectorAll('.host-marker, .user-marker');
+    const markers = document.querySelectorAll('.host-marker, .user-marker, .destination-marker');
     console.log("Clearing existing markers:", markers.length);
     markers.forEach(marker => marker.remove());
 
+    // Add fixed renter location marker
+    if (renterDetails.startLocation.coordinates) {
+      const renterMarker = document.createElement('div');
+      renterMarker.className = 'user-marker';
+      renterMarker.innerHTML = `
+        <div class="bg-blue-500 text-white p-2 rounded-full shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+        </div>
+      `;
+
+      new mapboxgl.Marker({ element: renterMarker })
+        .setLngLat([renterDetails.startLocation.coordinates.lng, renterDetails.startLocation.coordinates.lat])
+        .addTo(map);
+    }
+
+    // Add destination marker
+    if (renterDetails.destination.coordinates) {
+      const destinationMarker = document.createElement('div');
+      destinationMarker.className = 'destination-marker';
+      destinationMarker.innerHTML = `
+        <div class="bg-destructive text-white p-2 rounded-full shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+      `;
+
+      new mapboxgl.Marker({ element: destinationMarker })
+        .setLngLat([renterDetails.destination.coordinates.lng, renterDetails.destination.coordinates.lat])
+        .addTo(map);
+    }
+
+    // Add host marker
     if (hostLocation) {
-      console.log("Creating host marker at:", hostLocation);
       const hostMarker = document.createElement('div');
       hostMarker.className = 'host-marker';
       hostMarker.innerHTML = `
@@ -175,49 +212,22 @@ const MapPage = () => {
         </div>
       `;
 
-      try {
-        new mapboxgl.Marker({ element: hostMarker })
-          .setLngLat([hostLocation.lng, hostLocation.lat])
-          .addTo(map);
-        console.log("Host marker added successfully");
-      } catch (error) {
-        console.error("Error adding host marker:", error);
-      }
+      new mapboxgl.Marker({ element: hostMarker })
+        .setLngLat([hostLocation.lng, hostLocation.lat])
+        .addTo(map);
+
+      // Fit bounds to include all markers
+      const bounds = new mapboxgl.LngLatBounds()
+        .extend([hostLocation.lng, hostLocation.lat])
+        .extend([renterDetails.startLocation.coordinates.lng, renterDetails.startLocation.coordinates.lat])
+        .extend([renterDetails.destination.coordinates.lng, renterDetails.destination.coordinates.lat]);
+
+      map.fitBounds(bounds, {
+        padding: 100,
+        maxZoom: 15
+      });
     }
-
-    if (userLocation) {
-      console.log("Creating user marker at:", userLocation);
-      const userMarker = document.createElement('div');
-      userMarker.className = 'user-marker';
-      userMarker.innerHTML = `
-        <div class="bg-blue-500 text-white p-2 rounded-full shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-        </div>
-      `;
-
-      try {
-        new mapboxgl.Marker({ element: userMarker })
-          .setLngLat([userLocation.longitude, userLocation.latitude])
-          .addTo(map);
-        console.log("User marker added successfully");
-
-        // Fit bounds to include both markers if both exist
-        if (hostLocation) {
-          console.log("Fitting bounds to include both markers");
-          const bounds = new mapboxgl.LngLatBounds()
-            .extend([hostLocation.lng, hostLocation.lat])
-            .extend([userLocation.longitude, userLocation.latitude]);
-
-          map.fitBounds(bounds, {
-            padding: 100,
-            maxZoom: 15
-          });
-        }
-      } catch (error) {
-        console.error("Error adding user marker:", error);
-      }
-    }
-  }, [map, isLoaded, hostLocation, userLocation]);
+  }, [map, isLoaded, hostLocation, renterDetails]);
 
   if (error) {
     return <MapboxConfig />;
@@ -238,6 +248,13 @@ const MapPage = () => {
           style={{ minHeight: "400px" }}
         />
       </div>
+
+      <HandoverSheet
+        isOpen={isHandoverSheetOpen}
+        onClose={() => setIsHandoverSheetOpen(false)}
+        bookingDetails={renterDetails}
+        isRenterSharingLocation={isRenterSharingLocation}
+      />
 
       <Navigation />
     </div>
