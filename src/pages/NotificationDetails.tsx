@@ -1,9 +1,12 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
+import { toast } from "sonner";
+import { updateCarLocation } from "@/services/carLocation";
 
 const NotificationDetails = () => {
   const { id } = useParams();
@@ -15,7 +18,15 @@ const NotificationDetails = () => {
       console.log('Fetching notification details for ID:', id);
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select(`
+          *,
+          booking:bookings!related_booking_id (
+            id,
+            cars (
+              owner_id
+            )
+          )
+        `)
         .eq('id', id)
         .single();
 
@@ -30,6 +41,67 @@ const NotificationDetails = () => {
       return data;
     }
   });
+
+  const handleLocationRequest = async () => {
+    if (!notification?.booking?.id || !notification?.booking?.cars?.owner_id) {
+      toast.error("Booking information not found");
+      return;
+    }
+
+    try {
+      // Request location permission
+      if (!navigator.geolocation) {
+        toast.error("Geolocation is not supported by your browser");
+        return;
+      }
+
+      // Start watching position
+      const watchId = navigator.geolocation.watchPosition(
+        async (position) => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            toast.error("User not authenticated");
+            return;
+          }
+
+          // Update user's location in the database
+          const { data: cars } = await supabase
+            .from('cars')
+            .select('id')
+            .eq('owner_id', user.id);
+
+          if (cars) {
+            for (const car of cars) {
+              await updateCarLocation(
+                car.id,
+                position.coords.latitude,
+                position.coords.longitude
+              );
+            }
+          }
+
+          // Navigate to map page to see host's location
+          navigate(`/map?bookingId=${notification.booking.id}&hostId=${notification.booking.cars.owner_id}&mode=handover`);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast.error("Failed to get your location. Please enable location services.");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+
+      // Store watchId in localStorage to clear it later if needed
+      localStorage.setItem('locationWatchId', watchId.toString());
+
+    } catch (error) {
+      console.error("Error handling location request:", error);
+      toast.error("Failed to process location request");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -64,13 +136,26 @@ const NotificationDetails = () => {
             </p>
             
             {notification.type === 'booking_request' && notification.related_booking_id && (
-              <Button 
-                className="w-full mt-4"
-                onClick={() => navigate(`/booking-requests/${notification.related_booking_id}`)}
-              >
-                View Booking Request
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  className="w-full"
+                  onClick={() => navigate(`/booking-requests/${notification.related_booking_id}`)}
+                >
+                  View Booking Request
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+
+                {notification.content.includes("requesting your location") && (
+                  <Button 
+                    variant="default"
+                    className="w-full bg-primary hover:bg-primary/90"
+                    onClick={handleLocationRequest}
+                  >
+                    Share Location & View Host
+                    <MapPin className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         ) : (
