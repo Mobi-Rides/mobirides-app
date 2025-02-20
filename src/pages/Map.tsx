@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -21,7 +20,6 @@ const MapPage = () => {
   const [searchParams] = useSearchParams();
   const [hasToken, setHasToken] = useState<boolean>(false);
 
-  // Check for Mapbox token on component mount
   useEffect(() => {
     const checkToken = async () => {
       const token = await getMapboxToken();
@@ -30,7 +28,6 @@ const MapPage = () => {
     checkToken();
   }, []);
 
-  // State declarations
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filters, setFilters] = useState<SearchFilters>({
     startDate: undefined,
@@ -41,7 +38,6 @@ const MapPage = () => {
     sortOrder: "asc",
   });
 
-  // Handler functions defined using useCallback to prevent unnecessary re-renders
   const handleSearchChange = useCallback((query: string) => {
     console.log("Search query updated:", query);
     setSearchQuery(query);
@@ -75,7 +71,6 @@ const MapPage = () => {
   const hostId = searchParams.get('hostId');
   const mode = searchParams.get('mode');
 
-  // Query to check if the current user is involved in an active handover
   const { data: handoverStatus } = useQuery({
     queryKey: ['handover-status', bookingId],
     queryFn: async () => {
@@ -135,7 +130,6 @@ const MapPage = () => {
   const { userLocation } = useUserLocation(map);
   const hostLocation = useHostLocation(map, mode, hostId, bookingId);
 
-  // Handle sheet state changes
   useEffect(() => {
     if (!map || !isLoaded) return;
 
@@ -154,18 +148,17 @@ const MapPage = () => {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-background">
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-background relative">
       <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         onFiltersChange={handleFiltersChange}
       />
       
-      <div className="flex-1 relative w-full" style={{ minHeight: '400px' }}>
+      <div className="flex-1 relative w-full" style={{ height: 'calc(100vh - 130px)' }}>
         <div 
           ref={mapContainer} 
           className="absolute inset-0 w-full h-full"
-          style={{ minHeight: '400px' }}
         />
 
         <MapMarkers
