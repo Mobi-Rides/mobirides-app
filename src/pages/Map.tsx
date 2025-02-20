@@ -9,6 +9,8 @@ import { MapMarkers } from "@/components/map/MapMarkers";
 import { useMap } from "@/hooks/useMap";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useHostLocation } from "@/hooks/useHostLocation";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { SearchFilters } from "@/components/SearchFilters";
@@ -25,7 +27,7 @@ const MapPage = () => {
     sortBy: "price",
     sortOrder: "asc",
   });
-  const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(true);
+
   const [renterDetails, setRenterDetails] = useState({
     renterName: "John Doe",
     renterAvatar: "/placeholder.svg",
@@ -43,6 +45,49 @@ const MapPage = () => {
   const bookingId = searchParams.get('bookingId');
   const hostId = searchParams.get('hostId');
   const mode = searchParams.get('mode');
+
+  // Query to check if the current user is involved in an active handover
+  const { data: handoverStatus } = useQuery({
+    queryKey: ['handover-status', bookingId],
+    queryFn: async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !bookingId) return null;
+
+        const { data: booking, error } = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            cars (
+              owner_id
+            ),
+            renter:profiles!renter_id (
+              id,
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('id', bookingId)
+          .single();
+
+        if (error) throw error;
+
+        const isHost = booking.cars.owner_id === user.id;
+        const isRenter = booking.renter_id === user.id;
+        const isHandoverMode = mode === 'handover';
+
+        return {
+          shouldShowSheet: (isHost || isRenter) && isHandoverMode,
+          booking,
+          currentUserRole: isHost ? 'host' : isRenter ? 'renter' : null
+        };
+      } catch (error) {
+        console.error('Error fetching handover status:', error);
+        return null;
+      }
+    },
+    enabled: !!bookingId
+  });
 
   const handleSearchChange = (query: string) => {
     console.log("Search query updated:", query);
@@ -83,7 +128,7 @@ const MapPage = () => {
         map.resize();
       }, 300);
     }
-  }, [isHandoverSheetOpen, map, isLoaded]);
+  }, [handoverStatus?.shouldShowSheet, map, isLoaded]);
 
   if (error) {
     return <MapboxConfig />;
@@ -112,12 +157,19 @@ const MapPage = () => {
         />
       </div>
 
-      <HandoverSheet
-        isOpen={isHandoverSheetOpen}
-        onClose={() => setIsHandoverSheetOpen(false)}
-        bookingDetails={renterDetails}
-        isRenterSharingLocation={isRenterSharingLocation}
-      />
+      {handoverStatus?.shouldShowSheet && (
+        <HandoverSheet
+          isOpen={true}
+          onClose={() => navigate(-1)}
+          bookingDetails={{
+            renterName: handoverStatus.booking.renter.full_name,
+            renterAvatar: handoverStatus.booking.renter.avatar_url || "/placeholder.svg",
+            startLocation: renterDetails.startLocation,
+            destination: renterDetails.destination
+          }}
+          isRenterSharingLocation={isRenterSharingLocation}
+        />
+      )}
 
       <Navigation />
     </div>
