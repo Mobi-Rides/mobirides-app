@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -132,7 +131,6 @@ const MapPage = () => {
   const { userLocation } = useUserLocation(map);
   const hostLocation = useHostLocation(map, mode, hostId, bookingId);
 
-  // Ensure map is properly initialized and sized
   useEffect(() => {
     if (!map || !isLoaded) return;
 
@@ -146,10 +144,8 @@ const MapPage = () => {
       }
     };
 
-    // Initial initialization
     const timeoutId = setTimeout(initializeMap, 100);
 
-    // Handle window resize
     window.addEventListener('resize', initializeMap);
 
     return () => {
@@ -159,7 +155,6 @@ const MapPage = () => {
     };
   }, [map, isLoaded]);
 
-  // Handle sheet visibility changes
   useEffect(() => {
     if (map && isLoaded && mapInitialized) {
       console.log("Handling sheet visibility change");
@@ -172,20 +167,20 @@ const MapPage = () => {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-background">
+    <div className="h-screen w-full flex flex-col bg-white">
       <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         onFiltersChange={handleFiltersChange}
       />
       
-      <main className="flex-1 relative w-full overflow-hidden" style={{ height: 'calc(100% - 64px)' }}>
+      <main className="flex-1 relative w-full" style={{ height: 'calc(100% - 64px)' }}>
         <div 
           ref={mapContainer} 
           className="absolute inset-0 w-full h-full"
           style={{
-            visibility: isLoaded && mapInitialized ? 'visible' : 'hidden',
-            zIndex: 0
+            opacity: isLoaded && mapInitialized ? 1 : 0,
+            transition: 'opacity 0.3s ease-in-out'
           }}
         />
 
