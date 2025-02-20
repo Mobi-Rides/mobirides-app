@@ -9,8 +9,11 @@ import { useMap } from "@/hooks/useMap";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Car } from "@/types/car";
 import type { SearchFilters } from "@/components/SearchFilters";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 const MapPage = () => {
   const navigate = useNavigate();
@@ -77,35 +80,57 @@ const MapPage = () => {
 
     console.log("Setting up location subscription for host:", hostId);
 
-    const subscription = supabase
-      .from('cars')
-      .select('latitude, longitude')
-      .eq('owner_id', hostId)
-      .subscribe((payload) => {
-        console.log("Received host location update:", payload);
-        if (payload.new && payload.new.latitude && payload.new.longitude) {
-          setHostLocation({
-            lat: payload.new.latitude,
-            lng: payload.new.longitude
-          });
+    let channel: RealtimeChannel;
 
-          // Center map on host location
-          map.flyTo({
-            center: [payload.new.longitude, payload.new.latitude],
-            zoom: 14
-          });
-        }
-      });
+    try {
+      channel = supabase.channel('car-location')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'cars',
+            filter: `owner_id=eq.${hostId}`
+          },
+          (payload) => {
+            console.log("Received host location update:", payload);
+            if (payload.new && 'latitude' in payload.new && 'longitude' in payload.new) {
+              setHostLocation({
+                lat: payload.new.latitude as number,
+                lng: payload.new.longitude as number
+              });
+
+              // Center map on host location
+              if (map) {
+                map.flyTo({
+                  center: [payload.new.longitude as number, payload.new.latitude as number],
+                  zoom: 14
+                });
+              }
+            }
+          }
+        )
+        .subscribe();
+    } catch (error) {
+      console.error("Error setting up realtime subscription:", error);
+      toast.error("Failed to track host location");
+    }
 
     return () => {
       console.log("Cleaning up host location subscription");
-      subscription.unsubscribe();
+      if (channel) {
+        channel.unsubscribe();
+      }
     };
   }, [map, mode, hostId, bookingId]);
 
   // Update map view when locations change
   useEffect(() => {
     if (!map || !isLoaded) return;
+
+    // Clear existing markers (to prevent duplicates)
+    const markers = document.querySelectorAll('.host-marker, .user-marker');
+    markers.forEach(marker => marker.remove());
 
     if (hostLocation) {
       console.log("Updating host marker position:", hostLocation);
