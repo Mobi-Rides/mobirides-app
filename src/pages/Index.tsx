@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
@@ -188,11 +189,11 @@ const Index = () => {
       />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <BrandFilter
-              selectedBrand={selectedBrand}
-              onSelectBrand={setSelectedBrand}
-            />
+          <BrandFilter
+            selectedBrand={selectedBrand}
+            onSelectBrand={setSelectedBrand}
+          />
+          <div className="flex justify-end">
             <Button
               variant={sortOrder ? "secondary" : "outline"}
               onClick={toggleSortOrder}
