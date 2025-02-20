@@ -131,18 +131,30 @@ const MapPage = () => {
   const { userLocation } = useUserLocation(map);
   const hostLocation = useHostLocation(map, mode, hostId, bookingId);
 
+  // Add a delay before triggering resize to ensure container is ready
   useEffect(() => {
     if (!map || !isLoaded) return;
 
-    const timeoutId = setTimeout(() => {
-      if (map) {
-        map.resize();
-        map.triggerRepaint();
-      }
-    }, 100);
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearTimeout(timeoutId);
-  }, [handoverStatus?.shouldShowSheet, map, isLoaded]);
+    const handleResize = () => {
+      if (map) {
+        console.log("Resizing map after container is ready");
+        map.resize();
+      }
+    };
+
+    // Initial resize after mount
+    timeoutId = setTimeout(handleResize, 500);
+
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [map, isLoaded]);
 
   if (!hasToken || error) {
     return <MapboxConfig />;
@@ -156,18 +168,24 @@ const MapPage = () => {
         onFiltersChange={handleFiltersChange}
       />
       
-      <main className="flex-1 relative w-full" style={{ height: 'calc(100% - 64px)' }}>
+      <main 
+        className="flex-1 relative w-full" 
+        style={{ height: 'calc(100% - 64px)' }}
+      >
         <div 
           ref={mapContainer} 
           className="absolute inset-0 w-full h-full z-0"
+          style={{ visibility: isLoaded ? 'visible' : 'hidden' }}
         />
 
-        <MapMarkers
-          map={map}
-          isLoaded={isLoaded}
-          hostLocation={hostLocation}
-          renterDetails={renterDetails}
-        />
+        {isLoaded && (
+          <MapMarkers
+            map={map}
+            isLoaded={isLoaded}
+            hostLocation={hostLocation}
+            renterDetails={renterDetails}
+          />
+        )}
 
         {handoverStatus?.shouldShowSheet && (
           <HandoverSheet
