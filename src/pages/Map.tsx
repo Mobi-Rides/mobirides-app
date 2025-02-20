@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -96,6 +95,28 @@ const MapPage = () => {
       isMapLoaded: !!map
     });
   }, []);
+
+  useEffect(() => {
+    if (map && isLoaded) {
+      // Small delay to let the sheet animation complete
+      setTimeout(() => {
+        map.resize();
+        
+        // Recenter map if we have markers
+        if (hostLocation && renterDetails.startLocation.coordinates) {
+          const bounds = new mapboxgl.LngLatBounds()
+            .extend([hostLocation.lng, hostLocation.lat])
+            .extend([renterDetails.startLocation.coordinates.lng, renterDetails.startLocation.coordinates.lat])
+            .extend([renterDetails.destination.coordinates.lng, renterDetails.destination.coordinates.lat]);
+
+          map.fitBounds(bounds, {
+            padding: 100,
+            maxZoom: 15
+          });
+        }
+      }, 300);
+    }
+  }, [isHandoverSheetOpen, map, isLoaded]);
 
   useEffect(() => {
     console.log("Checking conditions for host subscription:", {
