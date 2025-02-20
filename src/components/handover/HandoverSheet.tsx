@@ -33,14 +33,7 @@ export const HandoverSheet = ({
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="h-[85vh] z-50"
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          overflowY: 'auto'
-        }}
+        className="h-[85vh] z-10"
       >
         <SheetHeader>
           <SheetTitle>Car Handover Details</SheetTitle>

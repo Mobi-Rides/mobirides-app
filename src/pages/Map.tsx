@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -148,17 +149,17 @@ const MapPage = () => {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-background relative">
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-background">
       <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         onFiltersChange={handleFiltersChange}
       />
       
-      <div className="flex-1 relative w-full" style={{ height: 'calc(100vh - 130px)' }}>
+      <main className="flex-1 relative w-full" style={{ height: 'calc(100% - 64px)' }}>
         <div 
           ref={mapContainer} 
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full z-0"
         />
 
         <MapMarkers
@@ -167,21 +168,21 @@ const MapPage = () => {
           hostLocation={hostLocation}
           renterDetails={renterDetails}
         />
-      </div>
 
-      {handoverStatus?.shouldShowSheet && (
-        <HandoverSheet
-          isOpen={true}
-          onClose={() => navigate(-1)}
-          bookingDetails={{
-            renterName: handoverStatus.booking.renter.full_name,
-            renterAvatar: handoverStatus.booking.renter.avatar_url || "/placeholder.svg",
-            startLocation: renterDetails.startLocation,
-            destination: renterDetails.destination
-          }}
-          isRenterSharingLocation={isRenterSharingLocation}
-        />
-      )}
+        {handoverStatus?.shouldShowSheet && (
+          <HandoverSheet
+            isOpen={true}
+            onClose={() => navigate(-1)}
+            bookingDetails={{
+              renterName: handoverStatus.booking.renter.full_name,
+              renterAvatar: handoverStatus.booking.renter.avatar_url || "/placeholder.svg",
+              startLocation: renterDetails.startLocation,
+              destination: renterDetails.destination
+            }}
+            isRenterSharingLocation={isRenterSharingLocation}
+          />
+        )}
+      </main>
 
       <Navigation />
     </div>
