@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -19,6 +20,14 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<SearchFilters>({
+    startDate: undefined,
+    endDate: undefined,
+    vehicleType: undefined,
+    location: "",
+    sortBy: "price",
+    sortOrder: "asc",
+  });
   const [hostLocation, setHostLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(true);
   const [renterDetails, setRenterDetails] = useState({
