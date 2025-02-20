@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Header } from "@/components/Header";
@@ -18,7 +18,9 @@ import type { SearchFilters } from "@/components/SearchFilters";
 const MapPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
+
+  // State declarations
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [filters, setFilters] = useState<SearchFilters>({
     startDate: undefined,
     endDate: undefined,
@@ -28,7 +30,23 @@ const MapPage = () => {
     sortOrder: "asc",
   });
 
-  const [renterDetails, setRenterDetails] = useState({
+  // Handler functions defined using useCallback to prevent unnecessary re-renders
+  const handleSearchChange = useCallback((query: string) => {
+    console.log("Search query updated:", query);
+    setSearchQuery(query);
+  }, []);
+
+  const handleFiltersChange = useCallback((newFilters: SearchFilters) => {
+    try {
+      const serializedFilters = JSON.parse(JSON.stringify(newFilters));
+      console.log("Filters updated:", serializedFilters);
+      setFilters(serializedFilters);
+    } catch (error) {
+      console.error("Error serializing filters:", error);
+    }
+  }, []);
+
+  const [renterDetails] = useState({
     renterName: "John Doe",
     renterAvatar: "/placeholder.svg",
     startLocation: {
@@ -40,7 +58,7 @@ const MapPage = () => {
       coordinates: { lat: -24.6627, lng: 25.9188 }
     }
   });
-  const [isRenterSharingLocation, setIsRenterSharingLocation] = useState(false);
+  const [isRenterSharingLocation] = useState(false);
 
   const bookingId = searchParams.get('bookingId');
   const hostId = searchParams.get('hostId');
@@ -89,21 +107,6 @@ const MapPage = () => {
     enabled: !!bookingId
   });
 
-  const handleSearchChange = (query: string) => {
-    console.log("Search query updated:", query);
-    setSearchQuery(query);
-  };
-
-  const handleFiltersChange = (newFilters: SearchFilters) => {
-    try {
-      const serializedFilters = JSON.parse(JSON.stringify(newFilters));
-      console.log("Filters updated:", serializedFilters);
-      setFilters(serializedFilters);
-    } catch (error) {
-      console.error("Error serializing filters:", error);
-    }
-  };
-
   const { mapContainer, map, isLoaded, error } = useMap({
     onMapClick: (e) => {
       try {
@@ -123,18 +126,16 @@ const MapPage = () => {
 
   // Handle sheet state changes
   useEffect(() => {
-    if (map && isLoaded) {
-      // Delay resize to ensure DOM is ready
-      const timeoutId = setTimeout(() => {
-        if (map) {
-          map.resize();
-          // Force a re-render of the map
-          map.triggerRepaint();
-        }
-      }, 100);
+    if (!map || !isLoaded) return;
 
-      return () => clearTimeout(timeoutId);
-    }
+    const timeoutId = setTimeout(() => {
+      if (map) {
+        map.resize();
+        map.triggerRepaint();
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [handoverStatus?.shouldShowSheet, map, isLoaded]);
 
   if (error) {
