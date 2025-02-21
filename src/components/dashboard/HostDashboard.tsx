@@ -8,26 +8,24 @@ import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+
 export const HostDashboard = () => {
   const navigate = useNavigate();
-  const {
-    data: hostData,
-    isLoading
-  } = useQuery({
+  const { data: hostData, isLoading } = useQuery({
     queryKey: ["host-dashboard"],
     queryFn: async () => {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
+      
       console.log("Fetching host data");
-      const [carsResponse, bookingsResponse] = await Promise.all([supabase.from("cars").select("*").eq("owner_id", user.id), supabase.from("bookings").select(`
+      const [carsResponse, bookingsResponse] = await Promise.all([
+        supabase.from("cars").select("*").eq("owner_id", user.id),
+        supabase.from("bookings").select(`
           id,
           start_date,
           end_date,
           status,
+          renter_id,
           cars (
             brand,
             model,
@@ -38,33 +36,59 @@ export const HostDashboard = () => {
             full_name,
             avatar_url
           )
-        `).eq("cars.owner_id", user.id).order("start_date", {
-        ascending: true
-      })]);
+        `).eq("cars.owner_id", user.id).order("start_date", { ascending: true })
+      ]);
+
       if (carsResponse.error) throw carsResponse.error;
       if (bookingsResponse.error) throw bookingsResponse.error;
-      console.log("Host bookings:", bookingsResponse.data);
+
+      const bookingsWithRenterNames = await Promise.all(
+        bookingsResponse.data.map(async (booking) => {
+          if (!booking.renter?.full_name && booking.renter_id) {
+            const { data: renterData, error: renterError } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', booking.renter_id)
+              .single();
+
+            if (!renterError && renterData) {
+              return {
+                ...booking,
+                renter: {
+                  ...booking.renter,
+                  full_name: renterData.full_name
+                }
+              };
+            }
+          }
+          return booking;
+        })
+      );
+
+      console.log("Host bookings with updated renter names:", bookingsWithRenterNames);
+
       return {
         cars: carsResponse.data,
-        bookings: bookingsResponse.data
+        bookings: bookingsWithRenterNames
       };
     }
   });
+
   const initiateHandover = async (bookingId: string, renterId: string) => {
     try {
-      const {
-        error: notificationError
-      } = await supabase.from('notifications').insert({
+      const { error: notificationError } = await supabase.from('notifications').insert({
         user_id: renterId,
         content: 'Your host is requesting your location for vehicle handover.',
         type: 'booking_request',
         related_booking_id: bookingId,
         is_read: false
       });
+
       if (notificationError) {
         console.error("Error creating notification:", notificationError);
         throw notificationError;
       }
+
       toast.success("Handover request sent to renter");
       navigate(`/map?bookingId=${bookingId}&renterId=${renterId}&mode=handover`);
     } catch (error) {
@@ -72,15 +96,18 @@ export const HostDashboard = () => {
       toast.error("Failed to send handover request");
     }
   };
+
   if (isLoading) {
     return <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>;
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-32 w-full" />
+    </div>;
   }
+
   const activeBookings = hostData?.bookings.filter(b => b.status === "confirmed" && new Date(b.end_date) >= new Date());
   const pendingRequests = hostData?.bookings.filter(b => b.status === "pending");
   const returnedBookings = hostData?.bookings.filter(b => b.status === "completed");
+
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Your Cars</h2>
