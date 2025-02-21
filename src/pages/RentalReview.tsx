@@ -21,7 +21,10 @@ export const RentalReview = () => {
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bookings").select(`
+      // First get the booking data
+      const { data: bookingData, error: bookingError } = await supabase
+        .from("bookings")
+        .select(`
           *,
           cars (
             brand,
@@ -30,9 +33,33 @@ export const RentalReview = () => {
           renter:profiles!renter_id (
             full_name
           )
-        `).eq("id", bookingId).single();
-      if (error) throw error;
-      return data;
+        `)
+        .eq("id", bookingId)
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      // If renter's name is not available, fetch it separately
+      if (!bookingData.renter?.full_name && bookingData.renter_id) {
+        const { data: renterData, error: renterError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', bookingData.renter_id)
+          .single();
+
+        if (renterError) {
+          console.error("Error fetching renter data:", renterError);
+        } else if (renterData) {
+          // Update the renter object with the fetched name
+          bookingData.renter = {
+            ...bookingData.renter,
+            full_name: renterData.full_name
+          };
+        }
+      }
+
+      console.log("Booking data with renter:", bookingData);
+      return bookingData;
     }
   });
 
@@ -58,7 +85,7 @@ export const RentalReview = () => {
         return filePath;
       }));
 
-      // Create the review - only include properties defined in the schema
+      // Create the review
       const { error: reviewError } = await supabase.from('reviews').insert({
         booking_id: bookingId,
         reviewer_id: user.id,
@@ -69,6 +96,7 @@ export const RentalReview = () => {
         updated_at: new Date().toISOString()
       });
       if (reviewError) throw reviewError;
+      
       toast.success("Review submitted successfully");
       navigate(-1);
     } catch (error) {
@@ -83,7 +111,8 @@ export const RentalReview = () => {
     return <div>Loading...</div>;
   }
 
-  return <div className="container max-w-2xl py-8">
+  return (
+    <div className="container max-w-2xl py-8">
       <Button variant="ghost" onClick={() => navigate(-1)} className="">
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
@@ -101,7 +130,7 @@ export const RentalReview = () => {
             <div className="space-y-2 text-sm text-muted-foreground">
               <p className="text-left">
                 <span className="font-medium text-foreground">Renter: </span>
-                {booking?.renter.full_name}
+                {booking?.renter?.full_name || "Not specified"}
               </p>
             </div>
           </div>
@@ -109,29 +138,49 @@ export const RentalReview = () => {
           <div className="space-y-2 text-left">
             <h4 className="font-medium">Rate the Renter</h4>
             <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map(value => <Button key={value} variant="ghost" size="sm" className={value <= rating ? "text-yellow-500" : ""} onClick={() => setRating(value)}>
+              {[1, 2, 3, 4, 5].map(value => (
+                <Button
+                  key={value}
+                  variant="ghost"
+                  size="sm"
+                  className={value <= rating ? "text-yellow-500" : ""}
+                  onClick={() => setRating(value)}
+                >
                   <Star className="h-5 w-5" fill={value <= rating ? "currentColor" : "none"} />
-                </Button>)}
+                </Button>
+              ))}
             </div>
           </div>
 
           <div className="space-y-2 text-left">
             <h4 className="font-medium">Upload Return Photos</h4>
             <ImageUpload onImageChange={handleImageChange} />
-            {images.length > 0 && <p className="text-sm text-muted-foreground">
+            {images.length > 0 && (
+              <p className="text-sm text-muted-foreground">
                 {images.length} photo(s) selected
-              </p>}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 text-left">
             <h4 className="font-medium">Comments</h4>
-            <Textarea placeholder="Share your experience with this renter..." value={comment} onChange={e => setComment(e.target.value)} className="min-h-[100px]" />
+            <Textarea
+              placeholder="Share your experience with this renter..."
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              className="min-h-[100px]"
+            />
           </div>
 
-          <Button onClick={handleSubmitReview} disabled={rating === 0 || isSubmitting} className="w-full">
+          <Button
+            onClick={handleSubmitReview}
+            disabled={rating === 0 || isSubmitting}
+            className="w-full"
+          >
             {isSubmitting ? "Submitting..." : "Submit Review"}
           </Button>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
