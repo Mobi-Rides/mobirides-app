@@ -22,7 +22,10 @@ export const HostDashboard = () => {
       const [carsResponse, bookingsResponse] = await Promise.all([
         supabase.from("cars").select("*").eq("owner_id", user.id),
         supabase.from("bookings").select(`
-          *,
+          id,
+          start_date,
+          end_date,
+          status,
           cars (
             brand,
             model,
@@ -39,7 +42,6 @@ export const HostDashboard = () => {
       if (carsResponse.error) throw carsResponse.error;
       if (bookingsResponse.error) throw bookingsResponse.error;
 
-      console.log("Host cars:", carsResponse.data);
       console.log("Host bookings:", bookingsResponse.data);
 
       return {
@@ -131,25 +133,26 @@ export const HostDashboard = () => {
 
         <TabsContent value="active">
           <div className="grid gap-4">
-            {activeBookings?.map(booking => <Card key={booking.id}>
+            {activeBookings?.map(booking => (
+              <Card key={booking.id}>
                 <CardHeader>
-                  <CardTitle className="text-lg text-left">
+                  <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <p className="text-sm text-left">
-                      <span className="font-medium">Renter: </span>
-                      {booking.renter.full_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Renter:</span>
+                      <span className="text-sm">{booking.renter?.full_name || 'Not specified'}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
                       Location: {booking.cars.location}
                     </p>
-                    <p className="text-sm text-left">
+                    <p className="text-sm">
                       Pickup: {format(new Date(booking.start_date), "PPP")}
                     </p>
-                    <p className="text-sm text-left">
+                    <p className="text-sm">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
                     <div className="flex justify-between items-center pt-2">
@@ -177,13 +180,15 @@ export const HostDashboard = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </TabsContent>
 
         <TabsContent value="requests">
           <div className="grid gap-4">
-            {pendingRequests?.map(booking => <Card key={booking.id}>
+            {pendingRequests?.map(booking => (
+              <Card key={booking.id}>
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -191,10 +196,10 @@ export const HostDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <p className="text-sm">
-                      <span className="font-medium">Renter: </span>
-                      {booking.renter.full_name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Renter:</span>
+                      <span className="text-sm">{booking.renter?.full_name || 'Not specified'}</span>
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       Location: {booking.cars.location}
                     </p>
@@ -211,7 +216,8 @@ export const HostDashboard = () => {
                     </Link>
                   </div>
                 </CardContent>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </TabsContent>
 
