@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,8 +29,8 @@ export const HostDashboard = () => {
             location
           ),
           renter:profiles!renter_id (
+            id,
             full_name,
-            email,
             avatar_url
           )
         `).eq("cars.owner_id", user.id).order("start_date", { ascending: true })
@@ -142,12 +143,6 @@ export const HostDashboard = () => {
                       <span className="font-medium">Renter: </span>
                       {booking.renter.full_name}
                     </p>
-                    {booking.renter.email && (
-                      <p className="text-sm text-left">
-                        <span className="font-medium">Email: </span>
-                        {booking.renter.email}
-                      </p>
-                    )}
                     <p className="text-sm text-muted-foreground text-left">
                       Location: {booking.cars.location}
                     </p>
