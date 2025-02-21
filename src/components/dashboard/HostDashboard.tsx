@@ -46,31 +46,12 @@ export const HostDashboard = () => {
       if (carsResponse.error) throw carsResponse.error;
       if (bookingsResponse.error) throw bookingsResponse.error;
 
-      // Add test data for returned booking
-      const testReturnedBooking = {
-        id: "test-returned-123",
-        start_date: "2024-02-01",
-        end_date: "2024-02-05",
-        status: "completed",
-        cars: {
-          brand: "Toyota",
-          model: "Corolla",
-          location: "Gaborone Main Mall"
-        },
-        renter: {
-          full_name: "John Test",
-          id: "test-renter-123"
-        }
-      };
-
-      const bookingsWithTestData = [...bookingsResponse.data, testReturnedBooking];
-
       console.log("Host cars:", carsResponse.data);
-      console.log("Host bookings with test data:", bookingsWithTestData);
+      console.log("Host bookings:", bookingsResponse.data);
 
       return {
         cars: carsResponse.data,
-        bookings: bookingsWithTestData
+        bookings: bookingsResponse.data
       };
     }
   });
