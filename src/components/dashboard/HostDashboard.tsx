@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -170,11 +171,18 @@ export const HostDashboard = () => {
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
                     <div className="flex justify-between items-center pt-2">
-                      <Link to={`/booking-requests/${booking.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </Link>
+                      <div className="flex gap-2">
+                        <Link to={`/booking-requests/${booking.id}`}>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </Link>
+                        <Link to={`/rental-review/${booking.id}`}>
+                          <Button variant="default" size="sm">
+                            Review
+                          </Button>
+                        </Link>
+                      </div>
                       <Button 
                         variant="default"
                         size="sm"
