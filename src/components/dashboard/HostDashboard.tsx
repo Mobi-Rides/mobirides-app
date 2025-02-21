@@ -8,45 +8,46 @@ import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+
 export const HostDashboard = () => {
   const navigate = useNavigate();
-  const {
-    data: hostData,
-    isLoading
-  } = useQuery({
+  const { data: hostData, isLoading } = useQuery({
     queryKey: ["host-dashboard"],
     queryFn: async () => {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
+      
       console.log("Fetching host data");
-      const [carsResponse, bookingsResponse] = await Promise.all([supabase.from("cars").select("*").eq("owner_id", user.id), supabase.from("bookings").select(`
-            *,
-            cars (
-              brand,
-              model,
-              location
-            ),
-            renter:profiles!renter_id (
-              full_name,
-              id
-            )
-          `).eq("cars.owner_id", user.id).order("start_date", {
-        ascending: true
-      })]);
+      const [carsResponse, bookingsResponse] = await Promise.all([
+        supabase.from("cars").select("*").eq("owner_id", user.id),
+        supabase.from("bookings").select(`
+          *,
+          cars (
+            brand,
+            model,
+            location
+          ),
+          renter:profiles!renter_id (
+            full_name,
+            email,
+            avatar_url
+          )
+        `).eq("cars.owner_id", user.id).order("start_date", { ascending: true })
+      ]);
+
       if (carsResponse.error) throw carsResponse.error;
       if (bookingsResponse.error) throw bookingsResponse.error;
+
       console.log("Host cars:", carsResponse.data);
       console.log("Host bookings:", bookingsResponse.data);
+
       return {
         cars: carsResponse.data,
         bookings: bookingsResponse.data
       };
     }
   });
+
   const initiateHandover = async (bookingId: string, renterId: string) => {
     try {
       const {
@@ -69,15 +70,18 @@ export const HostDashboard = () => {
       toast.error("Failed to send handover request");
     }
   };
+
   if (isLoading) {
     return <div className="space-y-4">
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>;
   }
+
   const activeBookings = hostData?.bookings.filter(b => b.status === "confirmed" && new Date(b.end_date) >= new Date());
   const pendingRequests = hostData?.bookings.filter(b => b.status === "pending");
   const returnedBookings = hostData?.bookings.filter(b => b.status === "completed");
+
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Your Cars</h2>
@@ -135,8 +139,15 @@ export const HostDashboard = () => {
                 <CardContent>
                   <div className="space-y-2">
                     <p className="text-sm text-left">
-                      Renter: {booking.renter.full_name}
+                      <span className="font-medium">Renter: </span>
+                      {booking.renter.full_name}
                     </p>
+                    {booking.renter.email && (
+                      <p className="text-sm text-left">
+                        <span className="font-medium">Email: </span>
+                        {booking.renter.email}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground text-left">
                       Location: {booking.cars.location}
                     </p>
@@ -159,7 +170,13 @@ export const HostDashboard = () => {
                           </Button>
                         </Link>
                       </div>
-                      <Button variant="default" size="sm" className={`${isToday(parseISO(booking.start_date)) ? "bg-primary hover:bg-primary/90" : "bg-secondary hover:bg-secondary/80"}`} disabled={!isToday(parseISO(booking.start_date))} onClick={() => initiateHandover(booking.id, booking.renter.id)}>
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        className={`${isToday(parseISO(booking.start_date)) ? "bg-primary hover:bg-primary/90" : "bg-secondary hover:bg-secondary/80"}`}
+                        disabled={!isToday(parseISO(booking.start_date))}
+                        onClick={() => initiateHandover(booking.id, booking.renter.id)}
+                      >
                         Initiate Handover
                       </Button>
                     </div>
@@ -180,7 +197,8 @@ export const HostDashboard = () => {
                 <CardContent>
                   <div className="space-y-2">
                     <p className="text-sm">
-                      Renter: {booking.renter.full_name}
+                      <span className="font-medium">Renter: </span>
+                      {booking.renter.full_name}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Location: {booking.cars.location}
@@ -213,7 +231,8 @@ export const HostDashboard = () => {
                 <CardContent>
                   <div className="space-y-2">
                     <p className="text-sm">
-                      Renter: {booking.renter.full_name}
+                      <span className="font-medium">Renter: </span>
+                      {booking.renter.full_name}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Location: {booking.cars.location}
