@@ -27,9 +27,13 @@ export const RentalReview = () => {
           *,
           cars (
             brand,
-            model
+            model,
+            owner_id
           ),
           renter:profiles!renter_id (
+            full_name
+          ),
+          owner:profiles!cars (
             full_name
           )
         `)
@@ -38,7 +42,23 @@ export const RentalReview = () => {
 
       if (bookingError) throw bookingError;
 
-      if (!bookingData.renter?.full_name && bookingData.renter_id) {
+      const { data: { user } } = await supabase.auth.getUser();
+      const isRenter = user?.id === bookingData.renter_id;
+
+      // Make sure we have the reviewer's name
+      if (isRenter && !bookingData.owner?.full_name) {
+        const { data: ownerData, error: ownerError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', bookingData.cars.owner_id)
+          .single();
+
+        if (!ownerError && ownerData) {
+          bookingData.owner = {
+            full_name: ownerData.full_name
+          };
+        }
+      } else if (!isRenter && !bookingData.renter?.full_name) {
         const { data: renterData, error: renterError } = await supabase
           .from('profiles')
           .select('full_name')
@@ -47,13 +67,12 @@ export const RentalReview = () => {
 
         if (!renterError && renterData) {
           bookingData.renter = {
-            ...bookingData.renter,
             full_name: renterData.full_name
           };
         }
       }
 
-      console.log("Booking data with renter:", bookingData);
+      console.log("Booking data:", bookingData);
       return bookingData;
     }
   });
@@ -70,6 +89,9 @@ export const RentalReview = () => {
       setIsSubmitting(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
+
+      const isRenter = user.id === booking?.renter_id;
+      const revieweeId = isRenter ? booking?.cars.owner_id : booking?.renter_id;
 
       // Upload all images and collect their URLs
       const uploadPromises = images.map(async (file) => {
@@ -91,11 +113,11 @@ export const RentalReview = () => {
       const { error: reviewError } = await supabase.from('reviews').insert({
         booking_id: bookingId,
         reviewer_id: user.id,
-        reviewee_id: booking?.renter_id,
+        reviewee_id: revieweeId,
         rating,
         comment,
         images: imageUrls,
-        review_type: 'renter',
+        review_type: isRenter ? 'host' : 'renter',
         updated_at: new Date().toISOString()
       });
 
@@ -123,6 +145,9 @@ export const RentalReview = () => {
     return <div>Loading...</div>;
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const isRenter = user?.id === booking?.renter_id;
+
   return (
     <div className="container max-w-2xl py-8">
       <Button variant="ghost" onClick={() => navigate(-1)} className="">
@@ -132,7 +157,7 @@ export const RentalReview = () => {
 
       <Card>
         <CardHeader className="text-left">
-          <CardTitle>Review Renter</CardTitle>
+          <CardTitle>{isRenter ? "Review Host" : "Review Renter"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
@@ -141,14 +166,17 @@ export const RentalReview = () => {
             </h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p className="text-left">
-                <span className="font-medium text-foreground">Renter: </span>
-                {booking?.renter?.full_name || "Not specified"}
+                <span className="font-medium text-foreground">
+                  {isRenter ? "Host" : "Renter"}: 
+                </span>
+                {" "}
+                {isRenter ? booking?.owner?.full_name : booking?.renter?.full_name || "Not specified"}
               </p>
             </div>
           </div>
 
           <div className="space-y-2 text-left">
-            <h4 className="font-medium">Rate the Renter</h4>
+            <h4 className="font-medium">Rate the {isRenter ? "Host" : "Renter"}</h4>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map(value => (
                 <Button
@@ -177,7 +205,7 @@ export const RentalReview = () => {
           <div className="space-y-2 text-left">
             <h4 className="font-medium">Comments</h4>
             <Textarea
-              placeholder="Share your experience with this renter..."
+              placeholder={`Share your experience with this ${isRenter ? "host" : "renter"}...`}
               value={comment}
               onChange={e => setComment(e.target.value)}
               className="min-h-[100px]"
