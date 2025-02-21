@@ -68,7 +68,7 @@ export const RentalReview = () => {
         })
       );
 
-      // Create the review
+      // Create the review - only include properties defined in the schema
       const { error: reviewError } = await supabase
         .from('reviews')
         .insert({
@@ -78,7 +78,7 @@ export const RentalReview = () => {
           rating,
           comment,
           review_type: 'renter',
-          return_photos: imageUrls
+          updated_at: new Date().toISOString()
         });
 
       if (reviewError) throw reviewError;
