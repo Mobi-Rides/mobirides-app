@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +24,9 @@ export const RenterDashboard = () => {
             model,
             location,
             image_url
+          ),
+          reviews!reviews_booking_id_fkey (
+            id
           )
         `)
         .eq("renter_id", user.id)
@@ -47,22 +49,32 @@ export const RenterDashboard = () => {
 
   const today = new Date();
   
-  const activeBookings = bookings?.filter(b => 
-    b.status === "confirmed" && 
-    new Date(b.start_date) <= today && 
-    new Date(b.end_date) >= today
-  );
+  const activeBookings = bookings?.filter(b => {
+    const endDate = new Date(b.end_date);
+    const hasReview = b.reviews && b.reviews.length > 0;
+    
+    return (
+      b.status === "confirmed" && 
+      new Date(b.start_date) <= today && 
+      (endDate >= today || !hasReview)
+    );
+  });
   
   const upcomingBookings = bookings?.filter(b => 
     (b.status === "pending" || b.status === "confirmed") && 
     new Date(b.start_date) > today
   );
   
-  const pastBookings = bookings?.filter(b => 
-    b.status === "completed" || 
-    b.status === "cancelled" ||
-    new Date(b.end_date) < today
-  );
+  const pastBookings = bookings?.filter(b => {
+    const endDate = new Date(b.end_date);
+    const hasReview = b.reviews && b.reviews.length > 0;
+    
+    return (
+      b.status === "completed" || 
+      b.status === "cancelled" ||
+      (endDate < today && hasReview)
+    );
+  });
 
   return (
     <div className="space-y-6">
