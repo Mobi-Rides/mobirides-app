@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +58,6 @@ export const HostDashboard = () => {
 
   const initiateHandover = async (bookingId: string, renterId: string) => {
     try {
-      // Create a notification for the renter
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
@@ -74,8 +74,6 @@ export const HostDashboard = () => {
       }
 
       toast.success("Handover request sent to renter");
-      
-      // Navigate to map page with booking ID and renter ID as query parameters
       navigate(`/map?bookingId=${bookingId}&renterId=${renterId}&mode=handover`);
     } catch (error) {
       console.error("Error initiating handover:", error);
@@ -96,6 +94,9 @@ export const HostDashboard = () => {
     b.status === "confirmed" && new Date(b.end_date) >= new Date()
   );
   const pendingRequests = hostData?.bookings.filter(b => b.status === "pending");
+  const returnedBookings = hostData?.bookings.filter(b =>
+    b.status === "completed"
+  );
 
   return (
     <div className="space-y-6">
@@ -114,6 +115,7 @@ export const HostDashboard = () => {
           <TabsTrigger value="cars">Listed Cars</TabsTrigger>
           <TabsTrigger value="active">Active Rentals</TabsTrigger>
           <TabsTrigger value="requests">Requests</TabsTrigger>
+          <TabsTrigger value="returned">Returned</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cars">
@@ -217,6 +219,41 @@ export const HostDashboard = () => {
                     <Link to={`/booking-requests/${booking.id}`}>
                       <Button variant="outline" size="sm">
                         View Request
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="returned">
+          <div className="grid gap-4">
+            {returnedBookings?.map((booking) => (
+              <Card key={booking.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    {booking.cars.brand} {booking.cars.model}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      Renter: {booking.renter.full_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Location: {booking.cars.location}
+                    </p>
+                    <p className="text-sm">
+                      Pickup: {format(new Date(booking.start_date), "PPP")}
+                    </p>
+                    <p className="text-sm">
+                      Return: {format(new Date(booking.end_date), "PPP")}
+                    </p>
+                    <Link to={`/booking-requests/${booking.id}`}>
+                      <Button variant="outline" size="sm">
+                        View Details
                       </Button>
                     </Link>
                   </div>
