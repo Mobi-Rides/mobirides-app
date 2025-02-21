@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export const RenterDashboard = () => {
   const { data: bookings, isLoading } = useQuery({
@@ -94,6 +96,13 @@ export const RenterDashboard = () => {
                     <p className="text-sm">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
+                    <div className="flex gap-2 pt-2">
+                      <Link to={`/rental-review/${booking.id}`}>
+                        <Button variant="default" size="sm">
+                          Review
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
