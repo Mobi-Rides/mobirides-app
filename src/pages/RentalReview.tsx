@@ -77,14 +77,12 @@ export const RentalReview = () => {
   useEffect(() => {
     const checkUserRole = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (booking) {
-        setIsRenter(user?.id === booking.renter_id);
+      if (booking && user) {
+        setIsRenter(user.id === booking.renter_id);
       }
     };
     
-    if (booking) {
-      checkUserRole();
-    }
+    checkUserRole();
   }, [booking]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
