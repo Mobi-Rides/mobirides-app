@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,9 +43,24 @@ export const RenterDashboard = () => {
     );
   }
 
-  const activeBookings = bookings?.filter(b => b.status === "confirmed" && new Date(b.end_date) >= new Date());
-  const upcomingBookings = bookings?.filter(b => b.status === "pending");
-  const pastBookings = bookings?.filter(b => b.status === "completed" || new Date(b.end_date) < new Date());
+  const today = new Date();
+  
+  const activeBookings = bookings?.filter(b => 
+    b.status === "confirmed" && 
+    new Date(b.start_date) <= today && 
+    new Date(b.end_date) >= today
+  );
+  
+  const upcomingBookings = bookings?.filter(b => 
+    (b.status === "pending" || b.status === "confirmed") && 
+    new Date(b.start_date) > today
+  );
+  
+  const pastBookings = bookings?.filter(b => 
+    b.status === "completed" || 
+    b.status === "cancelled" ||
+    new Date(b.end_date) < today
+  );
 
   return (
     <div className="space-y-6">
@@ -57,6 +73,9 @@ export const RenterDashboard = () => {
 
         <TabsContent value="active">
           <div className="grid gap-4">
+            {activeBookings?.length === 0 && (
+              <p className="text-muted-foreground text-center py-4">No active rentals</p>
+            )}
             {activeBookings?.map((booking) => (
               <Card key={booking.id}>
                 <CardHeader>
@@ -84,6 +103,9 @@ export const RenterDashboard = () => {
 
         <TabsContent value="upcoming">
           <div className="grid gap-4">
+            {upcomingBookings?.length === 0 && (
+              <p className="text-muted-foreground text-center py-4">No upcoming rentals</p>
+            )}
             {upcomingBookings?.map((booking) => (
               <Card key={booking.id}>
                 <CardHeader>
@@ -112,6 +134,9 @@ export const RenterDashboard = () => {
 
         <TabsContent value="past">
           <div className="grid gap-4">
+            {pastBookings?.length === 0 && (
+              <p className="text-muted-foreground text-center py-4">No past rentals</p>
+            )}
             {pastBookings?.map((booking) => (
               <Card key={booking.id}>
                 <CardHeader>
