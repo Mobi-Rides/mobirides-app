@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,17 @@ export const RentalReview = () => {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [isRenter, setIsRenter] = useState(false);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (booking) {
+        setIsRenter(user?.id === booking.renter_id);
+      }
+    };
+    checkUserRole();
+  }, [booking]);
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
@@ -30,10 +41,10 @@ export const RentalReview = () => {
             model,
             owner_id
           ),
-          renter:profiles!renter_id (
+          renter:profiles!renter_id(
             full_name
           ),
-          owner:profiles!cars (
+          owner:profiles(
             full_name
           )
         `)
@@ -43,10 +54,10 @@ export const RentalReview = () => {
       if (bookingError) throw bookingError;
 
       const { data: { user } } = await supabase.auth.getUser();
-      const isRenter = user?.id === bookingData.renter_id;
+      const userIsRenter = user?.id === bookingData.renter_id;
 
       // Make sure we have the reviewer's name
-      if (isRenter && !bookingData.owner?.full_name) {
+      if (userIsRenter && (!bookingData.owner || !bookingData.owner.full_name)) {
         const { data: ownerData, error: ownerError } = await supabase
           .from('profiles')
           .select('full_name')
@@ -54,11 +65,9 @@ export const RentalReview = () => {
           .single();
 
         if (!ownerError && ownerData) {
-          bookingData.owner = {
-            full_name: ownerData.full_name
-          };
+          bookingData.owner = ownerData;
         }
-      } else if (!isRenter && !bookingData.renter?.full_name) {
+      } else if (!userIsRenter && (!bookingData.renter || !bookingData.renter.full_name)) {
         const { data: renterData, error: renterError } = await supabase
           .from('profiles')
           .select('full_name')
@@ -66,9 +75,7 @@ export const RentalReview = () => {
           .single();
 
         if (!renterError && renterData) {
-          bookingData.renter = {
-            full_name: renterData.full_name
-          };
+          bookingData.renter = renterData;
         }
       }
 
@@ -90,7 +97,6 @@ export const RentalReview = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
-      const isRenter = user.id === booking?.renter_id;
       const revieweeId = isRenter ? booking?.cars.owner_id : booking?.renter_id;
 
       // Upload all images and collect their URLs
@@ -117,7 +123,7 @@ export const RentalReview = () => {
         rating,
         comment,
         images: imageUrls,
-        review_type: isRenter ? 'host' : 'renter',
+        review_type: 'renter', // Always use 'renter' as per the database enum
         updated_at: new Date().toISOString()
       });
 
@@ -144,9 +150,6 @@ export const RentalReview = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
-
-  const { data: { user } } = await supabase.auth.getUser();
-  const isRenter = user?.id === booking?.renter_id;
 
   return (
     <div className="container max-w-2xl py-8">
