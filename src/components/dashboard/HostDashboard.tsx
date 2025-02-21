@@ -30,11 +30,6 @@ export const HostDashboard = () => {
             brand,
             model,
             location
-          ),
-          renter:profiles!renter_id (
-            id,
-            full_name,
-            avatar_url
           )
         `).eq("cars.owner_id", user.id).order("start_date", { ascending: true })
       ]);
@@ -42,34 +37,31 @@ export const HostDashboard = () => {
       if (carsResponse.error) throw carsResponse.error;
       if (bookingsResponse.error) throw bookingsResponse.error;
 
-      const bookingsWithRenterNames = await Promise.all(
-        bookingsResponse.data.map(async (booking) => {
-          if (!booking.renter?.full_name && booking.renter_id) {
-            const { data: renterData, error: renterError } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', booking.renter_id)
-              .single();
+      // Get all unique renter IDs
+      const renterIds = [...new Set(bookingsResponse.data.map(booking => booking.renter_id))];
+      
+      // Fetch all renters' data in a single query
+      const { data: rentersData, error: rentersError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', renterIds);
 
-            if (!renterError && renterData) {
-              return {
-                ...booking,
-                renter: {
-                  ...booking.renter,
-                  full_name: renterData.full_name
-                }
-              };
-            }
-          }
-          return booking;
-        })
-      );
+      if (rentersError) throw rentersError;
 
-      console.log("Host bookings with updated renter names:", bookingsWithRenterNames);
+      // Create a map of renter data for quick lookup
+      const rentersMap = new Map(rentersData.map(renter => [renter.id, renter]));
+
+      // Merge renter data with bookings
+      const bookingsWithRenters = bookingsResponse.data.map(booking => ({
+        ...booking,
+        renter: rentersMap.get(booking.renter_id) || { id: booking.renter_id, full_name: 'Not specified' }
+      }));
+
+      console.log("Bookings with renter data:", bookingsWithRenters);
 
       return {
         cars: carsResponse.data,
-        bookings: bookingsWithRenterNames
+        bookings: bookingsWithRenters
       };
     }
   });
