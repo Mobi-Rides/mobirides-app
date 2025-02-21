@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -8,71 +9,57 @@ import { ArrowLeft, Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { toast } from "sonner";
+
 export const RentalReview = () => {
-  const {
-    bookingId
-  } = useParams();
+  const { bookingId } = useParams();
   const navigate = useNavigate();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
-  const {
-    data: booking,
-    isLoading
-  } = useQuery({
+
+  const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("bookings").select(`
+      const { data, error } = await supabase.from("bookings").select(`
           *,
           cars (
             brand,
             model
           ),
           renter:profiles!renter_id (
-            full_name,
-            email,
-            phone_number
+            full_name
           )
         `).eq("id", bookingId).single();
       if (error) throw error;
       return data;
     }
   });
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const fileList = Array.from(e.target.files);
       setImages(prev => [...prev, ...fileList]);
     }
   };
+
   const handleSubmitReview = async () => {
     try {
       setIsSubmitting(true);
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
       // Upload images first
       const imageUrls = await Promise.all(images.map(async file => {
         const fileExt = file.name.split('.').pop();
         const filePath = `${Math.random()}.${fileExt}`;
-        const {
-          error: uploadError
-        } = await supabase.storage.from('return-photos').upload(filePath, file);
+        const { error: uploadError } = await supabase.storage.from('return-photos').upload(filePath, file);
         if (uploadError) throw uploadError;
         return filePath;
       }));
 
       // Create the review - only include properties defined in the schema
-      const {
-        error: reviewError
-      } = await supabase.from('reviews').insert({
+      const { error: reviewError } = await supabase.from('reviews').insert({
         booking_id: bookingId,
         reviewer_id: user.id,
         reviewee_id: booking?.renter_id,
@@ -91,9 +78,11 @@ export const RentalReview = () => {
       setIsSubmitting(false);
     }
   };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
+
   return <div className="container max-w-2xl py-8">
       <Button variant="ghost" onClick={() => navigate(-1)} className="">
         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -114,14 +103,6 @@ export const RentalReview = () => {
                 <span className="font-medium text-foreground">Renter: </span>
                 {booking?.renter.full_name}
               </p>
-              {booking?.renter.email && <p>
-                  <span className="font-medium text-foreground">Email: </span>
-                  {booking?.renter.email}
-                </p>}
-              {booking?.renter.phone_number && <p>
-                  <span className="font-medium text-foreground">Phone: </span>
-                  {booking?.renter.phone_number}
-                </p>}
             </div>
           </div>
 
