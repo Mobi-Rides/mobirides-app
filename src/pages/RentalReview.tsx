@@ -21,7 +21,6 @@ export const RentalReview = () => {
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
     queryFn: async () => {
-      // First get the booking data
       const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
         .select(`
@@ -39,7 +38,6 @@ export const RentalReview = () => {
 
       if (bookingError) throw bookingError;
 
-      // If renter's name is not available, fetch it separately
       if (!bookingData.renter?.full_name && bookingData.renter_id) {
         const { data: renterData, error: renterError } = await supabase
           .from('profiles')
@@ -47,10 +45,7 @@ export const RentalReview = () => {
           .eq('id', bookingData.renter_id)
           .single();
 
-        if (renterError) {
-          console.error("Error fetching renter data:", renterError);
-        } else if (renterData) {
-          // Update the renter object with the fetched name
+        if (!renterError && renterData) {
           bookingData.renter = {
             ...bookingData.renter,
             full_name: renterData.full_name
@@ -66,7 +61,7 @@ export const RentalReview = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const fileList = Array.from(e.target.files);
-      setImages(prev => [...prev, ...fileList]);
+      setImages(fileList);
     }
   };
 
@@ -76,29 +71,46 @@ export const RentalReview = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
-      // Upload images first
-      const imageUrls = await Promise.all(images.map(async file => {
+      // Upload all images and collect their URLs
+      const uploadPromises = images.map(async (file) => {
         const fileExt = file.name.split('.').pop();
-        const filePath = `${Math.random()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('return-photos').upload(filePath, file);
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${booking?.id}/${fileName}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+          .from('return-photos')
+          .upload(filePath, file);
+
         if (uploadError) throw uploadError;
         return filePath;
-      }));
+      });
 
-      // Create the review
+      const imageUrls = await Promise.all(uploadPromises);
+
+      // Create the review with image URLs
       const { error: reviewError } = await supabase.from('reviews').insert({
         booking_id: bookingId,
         reviewer_id: user.id,
         reviewee_id: booking?.renter_id,
         rating,
         comment,
+        images: imageUrls,
         review_type: 'renter',
         updated_at: new Date().toISOString()
       });
+
       if (reviewError) throw reviewError;
       
+      // Update booking status to completed
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('id', bookingId);
+
+      if (bookingError) throw bookingError;
+      
       toast.success("Review submitted successfully");
-      navigate(-1);
+      navigate('/dashboard');
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
