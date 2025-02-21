@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -14,6 +15,7 @@ export const ImageUpload = ({ onImageChange }: ImageUploadProps) => {
         type="file"
         accept="image/*"
         onChange={onImageChange}
+        multiple
       />
     </div>
   );
