@@ -1,17 +1,18 @@
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { toast } from "sonner";
 
 export const RentalReview = () => {
   const { bookingId } = useParams();
+  const navigate = useNavigate();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +30,9 @@ export const RentalReview = () => {
             model
           ),
           renter:profiles!renter_id (
-            full_name
+            full_name,
+            email,
+            phone_number
           )
         `)
         .eq("id", bookingId)
@@ -84,6 +87,7 @@ export const RentalReview = () => {
       if (reviewError) throw reviewError;
 
       toast.success("Review submitted successfully");
+      navigate(-1);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
@@ -98,21 +102,45 @@ export const RentalReview = () => {
 
   return (
     <div className="container max-w-2xl py-8">
+      <Button 
+        variant="ghost" 
+        className="mb-4 pl-0 text-muted-foreground"
+        onClick={() => navigate(-1)}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
+
       <Card>
-        <CardHeader>
-          <CardTitle>Review Rental</CardTitle>
+        <CardHeader className="text-left">
+          <CardTitle>Review Renter</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-medium mb-2">
+            <h3 className="font-medium mb-4">
               {booking?.cars.brand} {booking?.cars.model}
             </h3>
-            <p className="text-sm text-muted-foreground">
-              Renter: {booking?.renter.full_name}
-            </p>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                <span className="font-medium text-foreground">Renter: </span>
+                {booking?.renter.full_name}
+              </p>
+              {booking?.renter.email && (
+                <p>
+                  <span className="font-medium text-foreground">Email: </span>
+                  {booking?.renter.email}
+                </p>
+              )}
+              {booking?.renter.phone_number && (
+                <p>
+                  <span className="font-medium text-foreground">Phone: </span>
+                  {booking?.renter.phone_number}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 text-left">
             <h4 className="font-medium">Rate the Renter</h4>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((value) => (
@@ -129,7 +157,7 @@ export const RentalReview = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 text-left">
             <h4 className="font-medium">Upload Return Photos</h4>
             <ImageUpload onImageChange={handleImageChange} />
             {images.length > 0 && (
@@ -139,7 +167,7 @@ export const RentalReview = () => {
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 text-left">
             <h4 className="font-medium">Comments</h4>
             <Textarea
               placeholder="Share your experience with this renter..."
