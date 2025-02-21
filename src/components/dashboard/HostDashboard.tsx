@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,19 +105,19 @@ export const HostDashboard = () => {
   const today = new Date();
   const activeBookings = hostData?.bookings.filter(b => 
     b.status === "confirmed" && 
-    b.cars && // Check if cars data exists
+    b.cars !== null && // Explicitly check for null
     new Date(b.end_date) >= today
-  );
+  ) || [];
   
   const pendingRequests = hostData?.bookings.filter(b => 
     b.status === "pending" && 
-    b.cars // Check if cars data exists
-  );
+    b.cars !== null // Explicitly check for null
+  ) || [];
   
   const returnedBookings = hostData?.bookings.filter(b => 
     b.status === "completed" && 
-    b.cars // Check if cars data exists
-  );
+    b.cars !== null // Explicitly check for null
+  ) || [];
 
   return <div className="space-y-6">
       <div className="flex justify-between items-center">

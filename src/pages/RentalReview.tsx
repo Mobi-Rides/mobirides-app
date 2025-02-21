@@ -19,16 +19,6 @@ export const RentalReview = () => {
   const [images, setImages] = useState<File[]>([]);
   const [isRenter, setIsRenter] = useState(false);
 
-  useEffect(() => {
-    const checkUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (booking) {
-        setIsRenter(user?.id === booking.renter_id);
-      }
-    };
-    checkUserRole();
-  }, [booking]);
-
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
     queryFn: async () => {
@@ -84,6 +74,19 @@ export const RentalReview = () => {
     }
   });
 
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (booking) {
+        setIsRenter(user?.id === booking.renter_id);
+      }
+    };
+    
+    if (booking) {
+      checkUserRole();
+    }
+  }, [booking]);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const fileList = Array.from(e.target.files);
@@ -97,7 +100,8 @@ export const RentalReview = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
-      const revieweeId = isRenter ? booking?.cars.owner_id : booking?.renter_id;
+      const revieweeId = isRenter ? booking?.cars?.owner_id : booking?.renter_id;
+      if (!revieweeId) throw new Error("No reviewee found");
 
       // Upload all images and collect their URLs
       const uploadPromises = images.map(async (file) => {
@@ -151,6 +155,23 @@ export const RentalReview = () => {
     return <div>Loading...</div>;
   }
 
+  if (!booking || !booking.cars) {
+    return <div className="container max-w-2xl py-8">
+      <Button variant="ghost" onClick={() => navigate(-1)} className="">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
+      <Card>
+        <CardHeader className="text-left">
+          <CardTitle>Booking Not Found</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>This booking doesn't exist or has been removed.</p>
+        </CardContent>
+      </Card>
+    </div>;
+  }
+
   return (
     <div className="container max-w-2xl py-8">
       <Button variant="ghost" onClick={() => navigate(-1)} className="">
@@ -165,7 +186,7 @@ export const RentalReview = () => {
         <CardContent className="space-y-6">
           <div>
             <h3 className="font-medium mb-4 text-left">
-              {booking?.cars.brand} {booking?.cars.model}
+              {booking.cars.brand} {booking.cars.model}
             </h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p className="text-left">
@@ -173,7 +194,7 @@ export const RentalReview = () => {
                   {isRenter ? "Host" : "Renter"}: 
                 </span>
                 {" "}
-                {isRenter ? booking?.owner?.full_name : booking?.renter?.full_name || "Not specified"}
+                {isRenter ? booking.owner?.full_name : booking.renter?.full_name || "Not specified"}
               </p>
             </div>
           </div>
