@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,19 +8,22 @@ import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, parseISO } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-
 export const HostDashboard = () => {
   const navigate = useNavigate();
-  const { data: hostData, isLoading } = useQuery({
+  const {
+    data: hostData,
+    isLoading
+  } = useQuery({
     queryKey: ["host-dashboard"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
-      
       console.log("Fetching host data");
-      const [carsResponse, bookingsResponse] = await Promise.all([
-        supabase.from("cars").select("*").eq("owner_id", user.id),
-        supabase.from("bookings").select(`
+      const [carsResponse, bookingsResponse] = await Promise.all([supabase.from("cars").select("*").eq("owner_id", user.id), supabase.from("bookings").select(`
           id,
           start_date,
           end_date,
@@ -36,21 +38,18 @@ export const HostDashboard = () => {
             full_name,
             avatar_url
           )
-        `).eq("cars.owner_id", user.id).order("start_date", { ascending: true })
-      ]);
-
+        `).eq("cars.owner_id", user.id).order("start_date", {
+        ascending: true
+      })]);
       if (carsResponse.error) throw carsResponse.error;
       if (bookingsResponse.error) throw bookingsResponse.error;
-
       console.log("Host bookings:", bookingsResponse.data);
-
       return {
         cars: carsResponse.data,
         bookings: bookingsResponse.data
       };
     }
   });
-
   const initiateHandover = async (bookingId: string, renterId: string) => {
     try {
       const {
@@ -73,18 +72,15 @@ export const HostDashboard = () => {
       toast.error("Failed to send handover request");
     }
   };
-
   if (isLoading) {
     return <div className="space-y-4">
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>;
   }
-
   const activeBookings = hostData?.bookings.filter(b => b.status === "confirmed" && new Date(b.end_date) >= new Date());
   const pendingRequests = hostData?.bookings.filter(b => b.status === "pending");
   const returnedBookings = hostData?.bookings.filter(b => b.status === "completed");
-
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Your Cars</h2>
@@ -133,8 +129,7 @@ export const HostDashboard = () => {
 
         <TabsContent value="active">
           <div className="grid gap-4">
-            {activeBookings?.map(booking => (
-              <Card key={booking.id}>
+            {activeBookings?.map(booking => <Card key={booking.id}>
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -146,13 +141,13 @@ export const HostDashboard = () => {
                       <span className="text-sm font-medium">Renter:</span>
                       <span className="text-sm">{booking.renter?.full_name || 'Not specified'}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground text-left">
                       Location: {booking.cars.location}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-left">
                       Pickup: {format(new Date(booking.start_date), "PPP")}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-left">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
                     <div className="flex justify-between items-center pt-2">
@@ -168,27 +163,19 @@ export const HostDashboard = () => {
                           </Button>
                         </Link>
                       </div>
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        className={`${isToday(parseISO(booking.start_date)) ? "bg-primary hover:bg-primary/90" : "bg-secondary hover:bg-secondary/80"}`}
-                        disabled={!isToday(parseISO(booking.start_date))}
-                        onClick={() => initiateHandover(booking.id, booking.renter.id)}
-                      >
+                      <Button variant="default" size="sm" className={`${isToday(parseISO(booking.start_date)) ? "bg-primary hover:bg-primary/90" : "bg-secondary hover:bg-secondary/80"}`} disabled={!isToday(parseISO(booking.start_date))} onClick={() => initiateHandover(booking.id, booking.renter.id)}>
                         Initiate Handover
                       </Button>
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </TabsContent>
 
         <TabsContent value="requests">
           <div className="grid gap-4">
-            {pendingRequests?.map(booking => (
-              <Card key={booking.id}>
+            {pendingRequests?.map(booking => <Card key={booking.id}>
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -216,8 +203,7 @@ export const HostDashboard = () => {
                     </Link>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </TabsContent>
 
