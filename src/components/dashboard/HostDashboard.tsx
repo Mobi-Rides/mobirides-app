@@ -128,22 +128,22 @@ export const HostDashboard = () => {
           <div className="grid gap-4">
             {activeBookings?.map(booking => <Card key={booking.id}>
                 <CardHeader>
-                  <CardTitle className="text-lg">
+                  <CardTitle className="text-lg text-left">
                     {booking.cars.brand} {booking.cars.model}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <p className="text-sm">
+                    <p className="text-sm text-left">
                       Renter: {booking.renter.full_name}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground text-left">
                       Location: {booking.cars.location}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-left">
                       Pickup: {format(new Date(booking.start_date), "PPP")}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-left">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
                     <div className="flex justify-between items-center pt-2">
