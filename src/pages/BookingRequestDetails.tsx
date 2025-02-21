@@ -146,8 +146,8 @@ const BookingRequestDetails = () => {
               <div className="flex gap-4">
                 <img src={booking.car.image_url || "/placeholder.svg"} alt={`${booking.car.brand} ${booking.car.model}`} className="w-32 h-24 object-cover rounded-lg" />
                 <div>
-                  <p className="font-medium">{booking.car.brand} {booking.car.model}</p>
-                  <p className="text-sm text-gray-600">{booking.car.location}</p>
+                  <p className="font-medium text-left">{booking.car.brand} {booking.car.model}</p>
+                  <p className="text-sm text-gray-600 text-left">{booking.car.location}</p>
                   <p className="text-sm font-medium">BWP {booking.car.price_per_day} per day</p>
                 </div>
               </div>
