@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
@@ -15,10 +15,11 @@ import BookingRequestDetails from "@/pages/BookingRequestDetails";
 import Dashboard from "@/pages/Dashboard";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import "./App.css";
+import { RentalReview } from "./pages/RentalReview";
 
 const App = () => {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
@@ -48,8 +49,9 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/rental-review/:bookingId" element={<RentalReview />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 };
 
