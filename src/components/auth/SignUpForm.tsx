@@ -104,10 +104,14 @@ export const SignUpForm = () => {
       
       // Format the phone number to E.164 format
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
-      console.log("Formatted phone number:", formattedPhoneNumber);
+      console.log("Signup attempt with:", {
+        email,
+        phone_number: formattedPhoneNumber,
+        display_name: username
+      });
 
       // First create the user account
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -118,16 +122,21 @@ export const SignUpForm = () => {
         }
       });
 
+      console.log("Signup response:", {
+        user: data.user,
+        error: signUpError
+      });
+
       if (signUpError) throw signUpError;
 
-      if (user) {
-        console.log("User created successfully:", user.id);
+      if (data.user) {
+        console.log("User metadata after creation:", data.user.user_metadata);
         
         // Create profile entry
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
-            id: user.id,
+            id: data.user.id,
             full_name: username,
             phone_number: formattedPhoneNumber,
             role: 'renter',
@@ -140,6 +149,8 @@ export const SignUpForm = () => {
           console.error("Profile creation error:", profileError);
           throw profileError;
         }
+
+        console.log("Profile created successfully");
 
         toast({
           title: "Success",
