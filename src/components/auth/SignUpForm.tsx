@@ -96,19 +96,24 @@ export const SignUpForm = () => {
     try {
       setLoading(true);
       
-      // First create the user
+      const formattedPhoneNumber = `${countryCode}${phoneNumber}`;
+
+      // Create user with metadata
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            phone: formattedPhoneNumber,
+            display_name: username
+          }
+        }
       });
 
       if (signUpError) throw signUpError;
 
       if (user) {
         console.log("User created successfully:", user.id);
-        
-        // Format the phone number with country code
-        const formattedPhoneNumber = `${countryCode}${phoneNumber}`;
         
         // Create profile entry
         const { error: profileError } = await supabase
