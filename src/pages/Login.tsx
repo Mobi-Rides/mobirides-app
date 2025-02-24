@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -7,12 +7,86 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [profileData, setProfileData] = useState({
+    full_name: "",
+    phone_number: "",
+  });
+
+  const checkUserProfile = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, unverified_phone')
+        .eq('id', userId)
+        .single();
+
+      // Show prompt if either full_name or phone is missing
+      if (!profile?.full_name || !profile?.unverified_phone) {
+        setShowProfilePrompt(true);
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+    }
+  };
+
+  const handleProfileUpdate = async () => {
+    try {
+      setIsUpdating(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user found");
+      }
+
+      // Update profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profileData.full_name,
+          unverified_phone: profileData.phone_number,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      // Update user metadata
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          unverified_phone: profileData.phone_number
+        }
+      });
+
+      if (metadataError) throw metadataError;
+
+      toast.success("Profile updated successfully");
+      setShowProfilePrompt(false);
+      
+      // Navigate to the intended destination
+      const from = location.state?.from?.pathname || "/";
+      navigate(from);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   useEffect(() => {
     console.log("Login: Checking session");
@@ -21,9 +95,8 @@ const Login = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event);
       if (event === "SIGNED_IN" && session) {
-        console.log("User signed in, redirecting to home");
-        const from = location.state?.from?.pathname || "/";
-        navigate(from);
+        console.log("User signed in, checking profile");
+        checkUserProfile(session.user.id);
       }
 
       if (event === "SIGNED_OUT") {
@@ -47,9 +120,8 @@ const Login = () => {
       }
 
       if (session) {
-        console.log("Active session found, redirecting to home");
-        const from = location.state?.from?.pathname || "/";
-        navigate(from);
+        console.log("Active session found, checking profile");
+        await checkUserProfile(session.user.id);
       }
     } catch (error) {
       console.error("Error in checkSession:", error);
@@ -109,7 +181,6 @@ const Login = () => {
                   variables: {
                     sign_up: {
                       link_text: "",
-                      // This removes the "Don't have an account? Sign up" text under "Forgot your password"
                     }
                   }
                 }}
@@ -127,6 +198,42 @@ const Login = () => {
           )}
         </div>
       </div>
+
+      <Dialog open={showProfilePrompt} onOpenChange={setShowProfilePrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete Your Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                placeholder="Enter your full name"
+                value={profileData.full_name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Enter your phone number"
+                value={profileData.phone_number}
+                onChange={(e) => setProfileData(prev => ({ ...prev, phone_number: e.target.value }))}
+              />
+            </div>
+            <Button 
+              className="w-full" 
+              onClick={handleProfileUpdate}
+              disabled={isUpdating || !profileData.full_name || !profileData.phone_number}
+            >
+              {isUpdating ? "Updating..." : "Save Profile"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
