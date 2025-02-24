@@ -27,13 +27,23 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
   // Fetch phone number when component mounts
   useEffect(() => {
     const fetchPhoneNumber = async () => {
+      console.log("Fetching phone number...");
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Session:", session);
+      
       if (session?.user) {
-        // Get the phone number from user metadata instead of profiles table
+        // Get the phone number from user metadata
         const { data: { user } } = await supabase.auth.getUser();
+        console.log("User metadata:", user?.user_metadata);
+        
         if (user?.user_metadata?.unverified_phone) {
+          console.log("Found phone number:", user.user_metadata.unverified_phone);
           setPhoneNumber(user.user_metadata.unverified_phone);
+        } else {
+          console.log("No phone number found in metadata");
         }
+      } else {
+        console.log("No session found");
       }
     };
     
