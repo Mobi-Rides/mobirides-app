@@ -6,6 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Common country codes with flags
+const countryCodes = [
+  { code: "+1", country: "US 🇺🇸" },
+  { code: "+44", country: "UK 🇬🇧" },
+  { code: "+91", country: "IN 🇮🇳" },
+  { code: "+61", country: "AU 🇦🇺" },
+  { code: "+86", country: "CN 🇨🇳" },
+  { code: "+33", country: "FR 🇫🇷" },
+  { code: "+49", country: "DE 🇩🇪" },
+  { code: "+81", country: "JP 🇯🇵" },
+  { code: "+52", country: "MX 🇲🇽" },
+  { code: "+55", country: "BR 🇧🇷" },
+];
 
 export const SignUpForm = () => {
   const [loading, setLoading] = useState(false);
@@ -13,6 +34,7 @@ export const SignUpForm = () => {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("+1");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,12 +51,13 @@ export const SignUpForm = () => {
       if (signUpError) throw signUpError;
 
       if (user) {
-        // Create profile with additional fields
+        // Create profile with additional fields including formatted phone number
+        const formattedPhoneNumber = `${countryCode}${phoneNumber}`;
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
             full_name: username,
-            phone_number: phoneNumber,
+            phone_number: formattedPhoneNumber,
           })
           .eq('id', user.id);
 
@@ -87,15 +110,34 @@ export const SignUpForm = () => {
 
       <div>
         <Label htmlFor="phoneNumber">Phone Number</Label>
-        <Input
-          id="phoneNumber"
-          type="tel"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          required
-          disabled={loading}
-          placeholder="Enter your phone number"
-        />
+        <div className="flex gap-2">
+          <Select
+            value={countryCode}
+            onValueChange={setCountryCode}
+            disabled={loading}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Country" />
+            </SelectTrigger>
+            <SelectContent>
+              {countryCodes.map(({ code, country }) => (
+                <SelectItem key={code} value={code}>
+                  {country} ({code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            id="phoneNumber"
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            required
+            disabled={loading}
+            placeholder="Enter phone number"
+            className="flex-1"
+          />
+        </div>
       </div>
 
       <div>
