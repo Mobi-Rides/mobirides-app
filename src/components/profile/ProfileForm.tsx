@@ -32,15 +32,35 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
       console.log("Session:", session);
       
       if (session?.user) {
-        // Get the phone number from user metadata
+        // First try to get from user metadata
         const { data: { user } } = await supabase.auth.getUser();
         console.log("User metadata:", user?.user_metadata);
         
         if (user?.user_metadata?.unverified_phone) {
-          console.log("Found phone number:", user.user_metadata.unverified_phone);
+          console.log("Found phone number in metadata:", user.user_metadata.unverified_phone);
           setPhoneNumber(user.user_metadata.unverified_phone);
+          return;
+        }
+
+        // If not in metadata, try to get from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('phone_number')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!profileError && profile?.phone_number) {
+          console.log("Found phone number in profiles:", profile.phone_number);
+          setPhoneNumber(profile.phone_number);
+          
+          // Update metadata to sync it
+          await supabase.auth.updateUser({
+            data: {
+              unverified_phone: profile.phone_number
+            }
+          });
         } else {
-          console.log("No phone number found in metadata");
+          console.log("No phone number found in either location");
         }
       } else {
         console.log("No session found");
