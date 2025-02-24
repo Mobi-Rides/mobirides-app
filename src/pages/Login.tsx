@@ -105,6 +105,14 @@ const Login = () => {
                 }}
                 theme="light"
                 providers={[]}
+                localization={{
+                  variables: {
+                    sign_up: {
+                      link_text: "",
+                      // This removes the "Don't have an account? Sign up" text under "Forgot your password"
+                    }
+                  }
+                }}
               />
               <p className="mt-4 text-center text-sm text-gray-600">
                 Don't have an account?{" "}
