@@ -91,20 +91,28 @@ export const SignUpForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const formatPhoneNumber = (number: string) => {
+    // Remove any non-digit characters except plus sign
+    const cleaned = number.replace(/[^\d+]/g, '');
+    return cleaned;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
       
-      const formattedPhoneNumber = `${countryCode}${phoneNumber}`;
+      // Format the phone number to E.164 format
+      const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
+      console.log("Formatted phone number:", formattedPhoneNumber);
 
-      // Create user with metadata
+      // First create the user account
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            phone_number: formattedPhoneNumber, // Changed from 'phone' to 'phone_number'
+            phone_number: formattedPhoneNumber,
             display_name: username
           }
         }
@@ -125,7 +133,7 @@ export const SignUpForm = () => {
             role: 'renter',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            avatar_url: null // Include null for optional fields
+            avatar_url: null
           });
 
         if (profileError) {
@@ -203,7 +211,7 @@ export const SignUpForm = () => {
             id="phoneNumber"
             type="tel"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
             required
             disabled={loading}
             placeholder="Enter phone number"
