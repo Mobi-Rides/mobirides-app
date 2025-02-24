@@ -271,7 +271,7 @@ const Login = () => {
       </div>
 
       <Dialog open={showProfilePrompt} onOpenChange={setShowProfilePrompt}>
-        <DialogContent>
+        <DialogContent className="mx-4 rounded-2xl px-10">
           <DialogHeader>
             <DialogTitle>Complete Your Profile</DialogTitle>
           </DialogHeader>
