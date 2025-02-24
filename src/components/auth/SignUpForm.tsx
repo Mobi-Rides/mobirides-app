@@ -110,13 +110,13 @@ export const SignUpForm = () => {
         display_name: username
       });
 
-      // First create the user account
+      // First create the user account with metadata
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            phone_number: formattedPhoneNumber,
+            unverified_phone: formattedPhoneNumber,  // Store in metadata
             display_name: username
           }
         }
@@ -151,6 +151,21 @@ export const SignUpForm = () => {
         }
 
         console.log("Profile created successfully");
+
+        // Update the user's metadata to include the phone number
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: {
+            unverified_phone: formattedPhoneNumber,
+            display_name: username
+          }
+        });
+
+        if (updateError) {
+          console.error("Error updating user metadata:", updateError);
+          throw updateError;
+        }
+
+        console.log("User metadata updated successfully");
 
         toast({
           title: "Success",
