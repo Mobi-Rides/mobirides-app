@@ -96,6 +96,7 @@ export const SignUpForm = () => {
     try {
       setLoading(true);
       
+      // First create the user
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -104,25 +105,34 @@ export const SignUpForm = () => {
       if (signUpError) throw signUpError;
 
       if (user) {
-        // Create profile with additional fields including formatted phone number
+        console.log("User created successfully:", user.id);
+        
+        // Format the phone number with country code
         const formattedPhoneNumber = `${countryCode}${phoneNumber}`;
+        
+        // Create profile entry
         const { error: profileError } = await supabase
           .from('profiles')
-          .upsert({
+          .insert({
             id: user.id,
             full_name: username,
             phone_number: formattedPhoneNumber,
-            role: 'renter' // Set default role
+            role: 'renter',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            avatar_url: null // Include null for optional fields
           });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw profileError;
+        }
 
         toast({
           title: "Success",
           description: "Account created successfully!",
         });
 
-        // Optionally navigate to another page after successful signup
         navigate('/');
       }
     } catch (error) {
