@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
@@ -23,60 +22,58 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Common country codes with flags including African countries
 const countryCodes = [
-  // African Countries
-  { code: "+267", country: "BW 🇧🇼" }, // Botswana first as it's most relevant
-  { code: "+213", country: "DZ 🇩🇿" }, // Algeria
-  { code: "+244", country: "AO 🇦🇴" }, // Angola
-  { code: "+226", country: "BF 🇧🇫" }, // Burkina Faso
-  { code: "+257", country: "BI 🇧🇮" }, // Burundi
-  { code: "+237", country: "CM 🇨🇲" }, // Cameroon
-  { code: "+238", country: "CV 🇨🇻" }, // Cape Verde
-  { code: "+236", country: "CF 🇨🇫" }, // Central African Republic
-  { code: "+235", country: "TD 🇹🇩" }, // Chad
-  { code: "+269", country: "KM 🇰🇲" }, // Comoros
-  { code: "+242", country: "CG 🇨🇬" }, // Congo
-  { code: "+243", country: "CD 🇨🇩" }, // DR Congo
-  { code: "+253", country: "DJ 🇩🇯" }, // Djibouti
-  { code: "+20", country: "EG 🇪🇬" },  // Egypt
-  { code: "+240", country: "GQ 🇬🇶" }, // Equatorial Guinea
-  { code: "+291", country: "ER 🇪🇷" }, // Eritrea
-  { code: "+251", country: "ET 🇪🇹" }, // Ethiopia
-  { code: "+241", country: "GA 🇬🇦" }, // Gabon
-  { code: "+220", country: "GM 🇬🇲" }, // Gambia
-  { code: "+233", country: "GH 🇬🇭" }, // Ghana
-  { code: "+224", country: "GN 🇬🇳" }, // Guinea
-  { code: "+245", country: "GW 🇬🇼" }, // Guinea-Bissau
-  { code: "+254", country: "KE 🇰🇪" }, // Kenya
-  { code: "+266", country: "LS 🇱🇸" }, // Lesotho
-  { code: "+231", country: "LR 🇱🇷" }, // Liberia
-  { code: "+218", country: "LY 🇱🇾" }, // Libya
-  { code: "+261", country: "MG 🇲🇬" }, // Madagascar
-  { code: "+265", country: "MW 🇲🇼" }, // Malawi
-  { code: "+223", country: "ML 🇲🇱" }, // Mali
-  { code: "+222", country: "MR 🇲🇷" }, // Mauritania
-  { code: "+230", country: "MU 🇲🇺" }, // Mauritius
-  { code: "+212", country: "MA 🇲🇦" }, // Morocco
-  { code: "+258", country: "MZ 🇲🇿" }, // Mozambique
-  { code: "+264", country: "NA 🇳🇦" }, // Namibia
-  { code: "+227", country: "NE 🇳🇪" }, // Niger
-  { code: "+234", country: "NG 🇳🇬" }, // Nigeria
-  { code: "+250", country: "RW 🇷🇼" }, // Rwanda
-  { code: "+239", country: "ST 🇸🇹" }, // São Tomé and Príncipe
-  { code: "+221", country: "SN 🇸🇳" }, // Senegal
-  { code: "+232", country: "SL 🇸🇱" }, // Sierra Leone
-  { code: "+252", country: "SO 🇸🇴" }, // Somalia
-  { code: "+27", country: "ZA 🇿🇦" },  // South Africa
-  { code: "+211", country: "SS 🇸🇸" }, // South Sudan
-  { code: "+249", country: "SD 🇸🇩" }, // Sudan
-  { code: "+268", country: "SZ 🇸🇿" }, // Swaziland
-  { code: "+255", country: "TZ 🇹🇿" }, // Tanzania
-  { code: "+228", country: "TG 🇹🇬" }, // Togo
-  { code: "+216", country: "TN 🇹🇳" }, // Tunisia
-  { code: "+256", country: "UG 🇺🇬" }, // Uganda
-  { code: "+260", country: "ZM 🇿🇲" }, // Zambia
-  { code: "+263", country: "ZW 🇿🇼" }, // Zimbabwe
+  { code: "+267", country: "BW 🇧🇼" },
+  { code: "+213", country: "DZ 🇩🇿" },
+  { code: "+244", country: "AO 🇦🇴" },
+  { code: "+226", country: "BF 🇧🇫" },
+  { code: "+257", country: "BI 🇧🇮" },
+  { code: "+237", country: "CM 🇨🇲" },
+  { code: "+238", country: "CV 🇨🇻" },
+  { code: "+236", country: "CF 🇨🇫" },
+  { code: "+235", country: "TD 🇹🇩" },
+  { code: "+269", country: "KM 🇰🇲" },
+  { code: "+242", country: "CG 🇨🇬" },
+  { code: "+243", country: "CD 🇨🇩" },
+  { code: "+253", country: "DJ 🇩🇯" },
+  { code: "+20", country: "EG 🇪🇬" },
+  { code: "+240", country: "GQ 🇬🇶" },
+  { code: "+291", country: "ER 🇪🇷" },
+  { code: "+251", country: "ET 🇪🇹" },
+  { code: "+241", country: "GA 🇬🇦" },
+  { code: "+220", country: "GM 🇬🇲" },
+  { code: "+233", country: "GH 🇬🇭" },
+  { code: "+224", country: "GN 🇬🇳" },
+  { code: "+245", country: "GW 🇬🇼" },
+  { code: "+254", country: "KE 🇰🇪" },
+  { code: "+266", country: "LS 🇱🇸" },
+  { code: "+231", country: "LR 🇱🇷" },
+  { code: "+218", country: "LY 🇱🇾" },
+  { code: "+261", country: "MG 🇲🇬" },
+  { code: "+265", country: "MW 🇲🇼" },
+  { code: "+223", country: "ML 🇲🇱" },
+  { code: "+222", country: "MR 🇲🇷" },
+  { code: "+230", country: "MU 🇲🇺" },
+  { code: "+212", country: "MA 🇲🇦" },
+  { code: "+258", country: "MZ 🇲🇿" },
+  { code: "+264", country: "NA 🇳🇦" },
+  { code: "+227", country: "NE 🇳🇪" },
+  { code: "+234", country: "NG 🇳🇬" },
+  { code: "+250", country: "RW 🇷🇼" },
+  { code: "+239", country: "ST 🇸🇹" },
+  { code: "+221", country: "SN 🇸🇳" },
+  { code: "+232", country: "SL 🇸🇱" },
+  { code: "+252", country: "SO 🇸🇴" },
+  { code: "+27", country: "ZA 🇿🇦" },
+  { code: "+211", country: "SS 🇸🇸" },
+  { code: "+249", country: "SD 🇸🇩" },
+  { code: "+268", country: "SZ 🇸🇿" },
+  { code: "+255", country: "TZ 🇹🇿" },
+  { code: "+228", country: "TG 🇹🇬" },
+  { code: "+216", country: "TN 🇹🇳" },
+  { code: "+256", country: "UG 🇺🇬" },
+  { code: "+260", country: "ZM 🇿🇲" },
+  { code: "+263", country: "ZW 🇿🇼" },
 ];
 
 const Login = () => {
@@ -88,11 +85,10 @@ const Login = () => {
   const [profileData, setProfileData] = useState({
     full_name: "",
     phone_number: "",
-    country_code: "+267" // Default to Botswana
+    country_code: "+267"
   });
 
   const formatPhoneNumber = (number: string) => {
-    // Remove any non-digit characters except plus sign
     return number.replace(/[^\d+]/g, '');
   };
 
@@ -104,7 +100,6 @@ const Login = () => {
         .eq('id', userId)
         .single();
 
-      // Show prompt if either full_name or phone is missing
       if (!profile?.full_name || !profile?.unverified_phone) {
         setShowProfilePrompt(true);
       }
@@ -124,7 +119,6 @@ const Login = () => {
 
       const formattedPhoneNumber = formatPhoneNumber(`${profileData.country_code}${profileData.phone_number}`);
 
-      // Update profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -136,7 +130,6 @@ const Login = () => {
 
       if (profileError) throw profileError;
 
-      // Update user metadata
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
           unverified_phone: formattedPhoneNumber
@@ -148,9 +141,7 @@ const Login = () => {
       toast.success("Profile updated successfully");
       setShowProfilePrompt(false);
       
-      // Navigate to the intended destination
-      const from = location.state?.from?.pathname || "/";
-      navigate(from);
+      navigate('/');
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
@@ -271,7 +262,7 @@ const Login = () => {
       </div>
 
       <Dialog open={showProfilePrompt} onOpenChange={setShowProfilePrompt}>
-        <DialogContent>
+        <DialogContent className="mx-4 rounded-2xl flex-1 max-w-3xl">
           <DialogHeader>
             <DialogTitle>Complete Your Profile</DialogTitle>
           </DialogHeader>
