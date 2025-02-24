@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,11 +108,12 @@ export const SignUpForm = () => {
         const formattedPhoneNumber = `${countryCode}${phoneNumber}`;
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({
+          .upsert({
+            id: user.id,
             full_name: username,
             phone_number: formattedPhoneNumber,
-          })
-          .eq('id', user.id);
+            role: 'renter' // Set default role
+          });
 
         if (profileError) throw profileError;
 
@@ -119,6 +121,9 @@ export const SignUpForm = () => {
           title: "Success",
           description: "Account created successfully!",
         });
+
+        // Optionally navigate to another page after successful signup
+        navigate('/');
       }
     } catch (error) {
       console.error("Error during signup:", error);
