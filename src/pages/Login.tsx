@@ -5,10 +5,14 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SignUpForm } from "@/components/auth/SignUpForm";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
     console.log("Login: Checking session");
@@ -24,7 +28,6 @@ const Login = () => {
 
       if (event === "SIGNED_OUT") {
         console.log("User signed out");
-        // Clear any stored auth data if needed
       }
     });
 
@@ -67,27 +70,53 @@ const Login = () => {
             Welcome to <span className="text-[#7C3AED]">Mobirides</span>
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to start sharing or renting cars
+            {isSignUp ? "Create an account to start sharing or renting cars" : "Sign in to start sharing or renting cars"}
           </p>
         </div>
         
         <div className="mt-8">
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#7C3AED',
-                    brandAccent: '#6D28D9',
+          {isSignUp ? (
+            <>
+              <SignUpForm />
+              <p className="mt-4 text-center text-sm text-gray-600">
+                Already have an account?{" "}
+                <button
+                  onClick={() => setIsSignUp(false)}
+                  className="text-[#7C3AED] hover:text-[#6D28D9]"
+                >
+                  Sign in
+                </button>
+              </p>
+            </>
+          ) : (
+            <>
+              <Auth
+                supabaseClient={supabase}
+                appearance={{
+                  theme: ThemeSupa,
+                  variables: {
+                    default: {
+                      colors: {
+                        brand: '#7C3AED',
+                        brandAccent: '#6D28D9',
+                      },
+                    },
                   },
-                },
-              },
-            }}
-            theme="light"
-            providers={[]}
-          />
+                }}
+                theme="light"
+                providers={[]}
+              />
+              <p className="mt-4 text-center text-sm text-gray-600">
+                Don't have an account?{" "}
+                <button
+                  onClick={() => setIsSignUp(true)}
+                  className="text-[#7C3AED] hover:text-[#6D28D9]"
+                >
+                  Sign up
+                </button>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
