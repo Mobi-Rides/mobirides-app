@@ -96,11 +96,11 @@ const Login = () => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, unverified_phone')
+        .select('full_name, phone_number')
         .eq('id', userId)
         .single();
 
-      if (!profile?.full_name || !profile?.unverified_phone) {
+      if (!profile?.full_name || !profile?.phone_number) {
         setShowProfilePrompt(true);
       }
     } catch (error) {
@@ -123,7 +123,7 @@ const Login = () => {
         .from('profiles')
         .update({
           full_name: profileData.full_name,
-          unverified_phone: formattedPhoneNumber,
+          phone_number: formattedPhoneNumber,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -132,7 +132,7 @@ const Login = () => {
 
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
-          unverified_phone: formattedPhoneNumber
+          phone_number: formattedPhoneNumber
         }
       });
 
