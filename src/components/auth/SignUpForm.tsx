@@ -104,7 +104,7 @@ export const SignUpForm = () => {
         password,
         options: {
           data: {
-            phone: formattedPhoneNumber,
+            phone_number: formattedPhoneNumber, // Changed from 'phone' to 'phone_number'
             display_name: username
           }
         }
