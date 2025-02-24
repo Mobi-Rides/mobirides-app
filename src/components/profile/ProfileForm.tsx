@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Phone } from "lucide-react";
 
 interface ProfileFormValues {
@@ -25,18 +25,14 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
   });
 
   // Fetch phone number when component mounts
-  useState(() => {
+  useEffect(() => {
     const fetchPhoneNumber = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('phone_number')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (!error && data) {
-          setPhoneNumber(data.phone_number);
+        // Get the phone number from user metadata instead of profiles table
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.unverified_phone) {
+          setPhoneNumber(user.user_metadata.unverified_phone);
         }
       }
     };
