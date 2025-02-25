@@ -79,8 +79,8 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      <ProfileHeader />
       <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
+      <ProfileHeader />
       <ProfileForm initialValues={initialFormValues} />
       <OnlineStatusToggle />
       <NotificationsSection />
