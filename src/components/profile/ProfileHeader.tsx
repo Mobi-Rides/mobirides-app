@@ -9,7 +9,7 @@ export const ProfileHeader = () => {
       <div className="flex items-center justify-end">
         <div className="flex gap-2">
           <Link to="/bookings">
-            <Button variant="outline" className="gap-2">
+            <Button className="gap-2">
               <CalendarDays className="h-4 w-4" />
               My Bookings
             </Button>
