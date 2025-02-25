@@ -1,6 +1,14 @@
 
 # Technical Optimizations
 
+## Current Type Issues
+- [ ] Fix TypeScript errors in ProfileForm.tsx and Login.tsx
+  - Issue: Missing 'phone_number' column in profiles table
+  - Temporary workaround needed: Update types or disable type checking
+  - Priority: High
+  - Impact: Build failing
+  - Root cause: Database schema and TypeScript types mismatch
+
 ## Performance Improvements
 - [ ] Implement lazy loading for images
 - [ ] Add request caching strategy
@@ -14,6 +22,10 @@
 - [ ] Standardize form handling across the application
 - [ ] Create unified API client
 - [ ] Improve TypeScript type coverage
+- [ ] Synchronize database schema with TypeScript types
+  - Add proper type generation workflow
+  - Handle schema migrations
+  - Document type generation process
 
 ## Technical Debt
 - [ ] Update deprecated dependencies
@@ -28,6 +40,10 @@
 - [ ] Add database caching layer
 - [ ] Review and optimize table relationships
 - [ ] Implement proper backup strategy
+- [ ] Manage schema migrations properly
+  - Track schema changes
+  - Automate type generation
+  - Version control for schema
 
 ## Build and Deployment
 - [ ] Set up automated testing pipeline
@@ -58,4 +74,3 @@ For each optimization item:
 - Dependencies
 - Current status
 - Implementation notes
-
