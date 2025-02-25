@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
@@ -262,7 +263,7 @@ const Login = () => {
       </div>
 
       <Dialog open={showProfilePrompt} onOpenChange={setShowProfilePrompt}>
-        <DialogContent className="mx-4 rounded-2xl flex-1 max-w-3xl">
+        <DialogContent className="max-w-3xl rounded-2xl">
           <DialogHeader>
             <DialogTitle>Complete Your Profile</DialogTitle>
           </DialogHeader>
