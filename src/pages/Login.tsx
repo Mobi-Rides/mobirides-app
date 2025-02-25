@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
@@ -77,6 +76,11 @@ const countryCodes = [
   { code: "+263", country: "ZW 🇿🇼" },
 ];
 
+interface ExtendedProfile {
+  full_name?: string;
+  phone_number?: string;
+}
+
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -96,9 +100,9 @@ const Login = () => {
   const checkUserProfile = async (userId: string) => {
     try {
       console.log("Checking profile for user:", userId);
-      const { data: profile, error: profileError } = await supabase
+      const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('full_name, phone_number')
+        .select('*')
         .eq('id', userId)
         .single();
 
@@ -107,7 +111,9 @@ const Login = () => {
         return;
       }
 
+      const profile = data as ExtendedProfile | null;
       console.log("Profile data:", profile);
+      
       if (!profile?.full_name || !profile?.phone_number) {
         setShowProfilePrompt(true);
       } else {
@@ -142,13 +148,15 @@ const Login = () => {
       
       const formattedPhoneNumber = formatPhoneNumber(`${profileData.country_code}${profileData.phone_number}`);
 
+      const updateData: ExtendedProfile & { updated_at: string } = {
+        full_name: profileData.full_name,
+        phone_number: formattedPhoneNumber,
+        updated_at: new Date().toISOString(),
+      };
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          full_name: profileData.full_name,
-          phone_number: formattedPhoneNumber,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', userId);
 
       if (profileError) {
