@@ -95,14 +95,23 @@ const Login = () => {
 
   const checkUserProfile = async (userId: string) => {
     try {
-      const { data: profile } = await supabase
+      console.log("Checking profile for user:", userId);
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, phone_number')
         .eq('id', userId)
         .single();
 
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        return;
+      }
+
+      console.log("Profile data:", profile);
       if (!profile?.full_name || !profile?.phone_number) {
         setShowProfilePrompt(true);
+      } else {
+        navigate('/');
       }
     } catch (error) {
       console.error("Error checking profile:", error);
@@ -112,12 +121,25 @@ const Login = () => {
   const handleProfileUpdate = async () => {
     try {
       setIsUpdating(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Starting profile update...");
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (!user) {
-        throw new Error("No authenticated user found");
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        toast.error("Authentication error. Please try signing in again.");
+        return;
       }
 
+      if (!sessionData.session) {
+        console.error("No active session found");
+        toast.error("No active session. Please sign in again.");
+        return;
+      }
+
+      const userId = sessionData.session.user.id;
+      console.log("Updating profile for user:", userId);
+      
       const formattedPhoneNumber = formatPhoneNumber(`${profileData.country_code}${profileData.phone_number}`);
 
       const { error: profileError } = await supabase
@@ -127,9 +149,13 @@ const Login = () => {
           phone_number: formattedPhoneNumber,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq('id', userId);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+        toast.error("Failed to update profile");
+        return;
+      }
 
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
@@ -137,15 +163,19 @@ const Login = () => {
         }
       });
 
-      if (metadataError) throw metadataError;
+      if (metadataError) {
+        console.error("Metadata update error:", metadataError);
+        toast.error("Failed to update user metadata");
+        return;
+      }
 
+      console.log("Profile update successful");
       toast.success("Profile updated successfully");
       setShowProfilePrompt(false);
-      
       navigate('/');
     } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      console.error("Error in profile update:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsUpdating(false);
     }
