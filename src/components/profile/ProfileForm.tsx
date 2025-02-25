@@ -11,8 +11,13 @@ import { Phone } from "lucide-react";
 // Extend the base Profile type to include phone_number
 interface ProfileFormValues {
   full_name: string;
-  // @ts-ignore - Temporary workaround until database schema is updated
   phone_number?: string;
+}
+
+// Temporary type for profile data
+interface ExtendedProfile {
+  phone_number?: string;
+  full_name?: string;
 }
 
 interface ProfileFormProps {
@@ -45,12 +50,13 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
         }
 
         // If not in metadata, try to get from profiles table
-        // @ts-ignore - Temporary workaround until database schema is updated
-        const { data: profile, error: profileError } = await supabase
+        const { data, error: profileError } = await supabase
           .from('profiles')
-          .select('phone_number')
+          .select('*')
           .eq('id', session.user.id)
           .single();
+
+        const profile = data as ExtendedProfile | null;
 
         if (!profileError && profile?.phone_number) {
           console.log("Found phone number in profiles:", profile.phone_number);
@@ -81,10 +87,14 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
         throw new Error('No authenticated user found');
       }
 
-      // @ts-ignore - Temporary workaround until database schema is updated
+      const updateData = {
+        full_name: values.full_name,
+        updated_at: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({ full_name: values.full_name })
+        .update(updateData)
         .eq('id', session.user.id);
 
       if (error) throw error;
