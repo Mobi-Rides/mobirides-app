@@ -7,8 +7,8 @@ const generateTypes = () => {
   try {
     console.log('🔄 Generating Supabase types...');
     
-    // Run Supabase type generation
-    execSync('npx supabase gen types typescript --project-id your-project-id > src/integrations/supabase/types.ts', {
+    // Run Supabase type generation with the actual project ID
+    execSync('npx supabase gen types typescript --project-id putjowciegpzdheideaf > src/integrations/supabase/types.ts', {
       stdio: 'inherit',
     });
 
