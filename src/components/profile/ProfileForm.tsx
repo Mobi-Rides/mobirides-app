@@ -45,18 +45,18 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
         // If not in metadata, try to get from profiles table
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('unverified_phone')
+          .select('phone_number')
           .eq('id', session.user.id)
           .single();
 
-        if (!profileError && profile?.unverified_phone) {
-          console.log("Found phone number in profiles:", profile.unverified_phone);
-          setPhoneNumber(profile.unverified_phone);
+        if (!profileError && profile?.phone_number) {
+          console.log("Found phone number in profiles:", profile.phone_number);
+          setPhoneNumber(profile.phone_number);
           
           // Update metadata to sync it
           await supabase.auth.updateUser({
             data: {
-              unverified_phone: profile.unverified_phone
+              unverified_phone: profile.phone_number
             }
           });
         } else {
