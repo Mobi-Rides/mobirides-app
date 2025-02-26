@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 interface TokenState {
   status: 'uninitialized' | 'valid' | 'error' | 'loading';
   token: string | null;
@@ -68,7 +70,7 @@ class MapboxTokenManager {
     return Date.now() - this.tokenState.lastValidated > this.TOKEN_VALIDATION_INTERVAL;
   }
 
-  private async validateAndSetToken(token: string): Promise<boolean> {
+  async validateAndSetToken(token: string): Promise<boolean> {
     const validation = this.validateToken(token);
     if (!validation.isValid) {
       console.error('Token validation failed:', validation.error);
@@ -127,6 +129,7 @@ class MapboxTokenManager {
       if (envToken) {
         console.log('Found token in environment');
         if (await this.validateAndSetToken(envToken)) {
+          this.isInitializing = false;
           return envToken;
         }
       }
@@ -137,21 +140,26 @@ class MapboxTokenManager {
         const token = this.decryptToken(encryptedToken);
         console.log('Found token in localStorage');
         if (await this.validateAndSetToken(token)) {
+          this.isInitializing = false;
           return token;
         }
       }
 
       // Try to get from Supabase
       try {
+        console.log('Attempting to fetch token from Supabase...');
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         if (!error && data?.token) {
           console.log('Found token from Supabase');
           if (await this.validateAndSetToken(data.token)) {
+            this.isInitializing = false;
             return data.token;
           }
+        } else if (error) {
+          console.warn('Failed to get token from Supabase:', error);
         }
       } catch (e) {
-        console.warn('Failed to get token from Supabase:', e);
+        console.warn('Error accessing Supabase function:', e);
       }
 
       this.tokenState.status = 'error';

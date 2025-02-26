@@ -53,9 +53,6 @@ export const MapContainer = ({
       console.log('[MapContainer] Token retrieved successfully');
       setHasToken(true);
 
-      console.log('[MapContainer] Setting Mapbox access token');
-      mapboxgl.accessToken = token;
-
       if (map.current) {
         console.log('[MapContainer] Removing existing map instance');
         map.current.remove();
@@ -94,7 +91,6 @@ export const MapContainer = ({
       });
       newMap.addControl(geolocateControl, 'top-right');
 
-      // Ensure map is fully loaded before calling onMapLoad
       newMap.once('load', () => {
         console.log('[MapContainer] Map loaded successfully');
         setIsLoaded(true);

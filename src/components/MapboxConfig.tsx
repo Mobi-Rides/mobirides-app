@@ -71,18 +71,19 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
       // Clear any existing token first
       mapboxTokenManager.clearToken();
       
-      // Set new token (this will validate and encrypt it)
-      mapboxTokenManager.setToken(token);
+      // Validate and set new token
+      const isValid = await mapboxTokenManager.validateAndSetToken(token);
+      
+      if (!isValid) {
+        const state = mapboxTokenManager.getTokenState();
+        setValidationError(state.error || "Invalid token format");
+        toast.error(state.error || "Invalid token format");
+        return;
+      }
       
       // Get updated state
       const newState = mapboxTokenManager.getTokenState();
       setTokenState(newState);
-      
-      if (newState.status === 'error') {
-        setValidationError(newState.error || "Invalid token format");
-        toast.error(newState.error || "Invalid token format");
-        return;
-      }
       
       // Attempt to save to Supabase as backup
       try {
