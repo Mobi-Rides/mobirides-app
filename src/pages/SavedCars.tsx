@@ -64,6 +64,7 @@ const SavedCars = () => {
           error={error}
           loadMoreRef={() => {}}
           isFetchingNextPage={false}
+          isAuthenticated={true}
         />
       </main>
 
