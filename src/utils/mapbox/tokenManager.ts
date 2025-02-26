@@ -1,10 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { TokenState } from './types';
 import { TokenValidator } from './tokenValidator';
 import { MapboxInstanceManager } from './instanceManager';
 
-class MapboxTokenManager {
+export class MapboxTokenManager {
   private static instance: MapboxTokenManager;
   private tokenState: TokenState = {
     status: 'uninitialized',
@@ -172,5 +171,3 @@ export const mapboxTokenManager = MapboxTokenManager.getInstance();
 export const getMapboxToken = async () => {
   return await mapboxTokenManager.getToken();
 };
-
-export { MapboxTokenManager };
