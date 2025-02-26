@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -10,10 +11,11 @@ export const getMapboxToken = async () => {
     // First try to get from local manager
     const token = await mapboxTokenManager.getToken();
     if (token) {
+      console.log('Found valid token in local storage');
       return token;
     }
 
-    // If not in local manager, try to get from Supabase
+    console.log('No valid token in local storage, fetching from Supabase...');
     const { data, error } = await supabase.functions.invoke('get-mapbox-token');
     
     if (error || !data?.token) {
@@ -21,9 +23,16 @@ export const getMapboxToken = async () => {
       return null;
     }
 
-    // Store the token in the manager
+    console.log('Got token from Supabase, validating and storing...');
     mapboxTokenManager.setToken(data.token);
-    return data.token;
+    const validatedToken = await mapboxTokenManager.getToken();
+    
+    if (!validatedToken) {
+      console.error('Token validation failed after Supabase fetch');
+      return null;
+    }
+
+    return validatedToken;
   } catch (error) {
     console.error('Error in getMapboxToken:', error);
     return null;
@@ -38,8 +47,10 @@ export const MapboxConfig = () => {
   useEffect(() => {
     const checkExistingToken = async () => {
       try {
-        await mapboxTokenManager.getToken();
-        setTokenState(mapboxTokenManager.getTokenState());
+        const token = await getMapboxToken();
+        if (token) {
+          setTokenState(mapboxTokenManager.getTokenState());
+        }
       } catch (error) {
         console.error('Error checking existing token:', error);
       }
@@ -80,13 +91,11 @@ export const MapboxConfig = () => {
 
         if (error) {
           console.warn("Supabase backup storage failed:", error);
-          // Continue since we have localStorage
         } else {
           console.log('Token backup saved to Supabase');
         }
       } catch (e) {
         console.warn("Supabase backup attempt failed:", e);
-        // Continue since we have localStorage
       }
 
       toast.success("Mapbox token saved successfully");
