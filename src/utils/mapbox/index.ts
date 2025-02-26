@@ -1,6 +1,8 @@
 
-// Re-export everything from the module
+// Export interfaces and types
 export * from './types';
-export * from './tokenManager';
-export * from './tokenValidator';
-export * from './instanceManager';
+
+// Export core functionality
+export { MapboxTokenManager, mapboxTokenManager, getMapboxToken } from './tokenManager';
+export { TokenValidator } from './tokenValidator';
+export { MapboxInstanceManager } from './instanceManager';
