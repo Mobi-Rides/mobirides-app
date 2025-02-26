@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ export const MapContainer = ({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [reinitializeKey, setReinitializeKey] = useState(0);
 
   const initializeMap = useCallback(async () => {
@@ -38,6 +40,7 @@ export const MapContainer = ({
     }
 
     try {
+      setIsInitializing(true);
       console.log('[MapContainer] Attempting to get Mapbox token...');
       const token = await getMapboxToken();
       
@@ -115,6 +118,8 @@ export const MapContainer = ({
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize map';
       onMapError?.(new Error(errorMessage));
       toast.error(errorMessage);
+    } finally {
+      setIsInitializing(false);
     }
   }, [initialLatitude, initialLongitude, isMobile, onMapLoad, onMapError]);
 
@@ -151,7 +156,7 @@ export const MapContainer = ({
   return (
     <div className={`relative rounded-lg overflow-hidden ${height} ${className}`}>
       <div ref={mapContainer} className="absolute inset-0" />
-      {!isLoaded && (
+      {(!isLoaded || isInitializing) && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm">
           <Skeleton className="w-full h-full" />
         </div>
