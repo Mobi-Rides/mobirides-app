@@ -3,6 +3,24 @@ export class MapboxInstanceManager {
   private static readonly MAX_RETRIES = 3;
   private retryCount = 0;
   private mapboxModule: typeof import('mapbox-gl') | null = null;
+  private isModuleReady = false;
+
+  async getMapboxModule(): Promise<typeof import('mapbox-gl') | null> {
+    if (this.mapboxModule) {
+      return this.mapboxModule;
+    }
+
+    try {
+      console.log('Loading mapbox-gl module...');
+      this.mapboxModule = await import('mapbox-gl');
+      await import('mapbox-gl/dist/mapbox-gl.css');
+      this.isModuleReady = true;
+      return this.mapboxModule;
+    } catch (error) {
+      console.error('Error loading mapbox-gl module:', error);
+      return null;
+    }
+  }
 
   async setTokenWithRetry(token: string): Promise<boolean> {
     if (this.retryCount >= MapboxInstanceManager.MAX_RETRIES) {
@@ -12,15 +30,14 @@ export class MapboxInstanceManager {
 
     try {
       // Ensure mapbox-gl is loaded
-      if (!this.mapboxModule) {
-        console.log('Loading mapbox-gl module...');
-        this.mapboxModule = await import('mapbox-gl');
-        await import('mapbox-gl/dist/mapbox-gl.css');
+      const module = await this.getMapboxModule();
+      if (!module) {
+        throw new Error('Failed to load mapbox-gl module');
       }
 
       if (!window.mapboxgl) {
         console.log('Setting mapboxgl on window object');
-        window.mapboxgl = this.mapboxModule;
+        window.mapboxgl = module;
       }
 
       if (window.mapboxgl) {
@@ -49,10 +66,16 @@ export class MapboxInstanceManager {
     }
   }
 
+  isReady(): boolean {
+    return this.isModuleReady && !!this.mapboxModule;
+  }
+
   clearGlobalInstance() {
     if (typeof window !== 'undefined' && window.mapboxgl) {
       window.mapboxgl.accessToken = null;
     }
     this.mapboxModule = null;
+    this.isModuleReady = false;
   }
 }
+

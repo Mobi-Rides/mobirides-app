@@ -5,6 +5,7 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { useMapboxToken } from "@/contexts/MapboxTokenContext";
+import { mapboxTokenManager } from '@/utils/mapbox';
 
 interface MapContainerProps {
   initialLatitude?: number;
@@ -28,7 +29,7 @@ export const MapContainer = ({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isLoaded, setIsLoaded] = useState(false);
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
-  const mapboxgl = useRef<typeof import('mapbox-gl')>();
+  const [isModuleLoading, setIsModuleLoading] = useState(true);
 
   const initializeMap = useCallback(async () => {
     if (!mapContainer.current || !token) {
@@ -37,11 +38,17 @@ export const MapContainer = ({
     }
 
     try {
-      // Dynamic import of mapbox-gl to avoid preload issues
-      if (!mapboxgl.current) {
-        console.log('[MapContainer] Loading mapbox-gl...');
-        mapboxgl.current = await import('mapbox-gl');
-        await import('mapbox-gl/dist/mapbox-gl.css');
+      console.log('[MapContainer] Verifying mapbox-gl module status...');
+      setIsModuleLoading(true);
+
+      // Use the instance manager's shared module
+      const instanceManager = new mapboxTokenManager.getInstanceManager();
+      if (!instanceManager.isReady()) {
+        await instanceManager.getMapboxModule();
+      }
+
+      if (!window.mapboxgl) {
+        throw new Error('Mapbox GL JS module not properly initialized');
       }
 
       if (map.current) {
@@ -56,7 +63,7 @@ export const MapContainer = ({
         mobile: isMobile
       });
 
-      const newMap = new mapboxgl.current.Map({
+      const newMap = new window.mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: [initialLongitude, initialLatitude],
@@ -69,11 +76,11 @@ export const MapContainer = ({
 
       if (!isMobile) {
         console.log('[MapContainer] Adding navigation controls (desktop mode)');
-        newMap.addControl(new mapboxgl.current.NavigationControl(), 'top-right');
+        newMap.addControl(new window.mapboxgl.NavigationControl(), 'top-right');
       }
 
       console.log('[MapContainer] Adding geolocation control');
-      const geolocateControl = new mapboxgl.current.GeolocateControl({
+      const geolocateControl = new window.mapboxgl.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true
         },
@@ -105,6 +112,8 @@ export const MapContainer = ({
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize map';
       onMapError?.(new Error(errorMessage));
       toast.error(errorMessage);
+    } finally {
+      setIsModuleLoading(false);
     }
   }, [initialLatitude, initialLongitude, isMobile, onMapLoad, onMapError, token]);
 
@@ -124,7 +133,7 @@ export const MapContainer = ({
     };
   }, [initializeMap, token]);
 
-  if (isTokenLoading) {
+  if (isTokenLoading || isModuleLoading) {
     return (
       <div className={`relative rounded-lg overflow-hidden ${height} ${className}`}>
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm">
@@ -150,3 +159,4 @@ export const MapContainer = ({
     </div>
   );
 };
+
