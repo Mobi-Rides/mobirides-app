@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMapboxToken } from "@/components/MapboxConfig";
+import { mapboxTokenManager, getMapboxToken } from "@/utils/mapboxTokenManager";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import "mapbox-gl/dist/mapbox-gl.css";
 

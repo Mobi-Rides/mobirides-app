@@ -1,3 +1,4 @@
+
 interface TokenState {
   status: 'uninitialized' | 'valid' | 'error' | 'loading';
   token: string | null;
@@ -63,6 +64,59 @@ class MapboxTokenManager {
     return Date.now() - this.tokenState.lastValidated > this.TOKEN_VALIDATION_INTERVAL;
   }
 
+  async getToken(): Promise<string | null> {
+    try {
+      console.log('Getting token...');
+      
+      // First check environment variable
+      const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
+      if (envToken && this.validateToken(envToken).isValid) {
+        console.log('Using Mapbox token from environment');
+        this.setToken(envToken);
+        return envToken;
+      }
+
+      // Return cached valid token if not stale
+      if (this.tokenState.token && !this.isTokenStale()) {
+        console.log('Using cached Mapbox token');
+        return this.tokenState.token;
+      }
+
+      // Try to get from localStorage
+      const encryptedToken = localStorage.getItem('mapbox_token');
+      if (encryptedToken) {
+        const token = this.decryptToken(encryptedToken);
+        const validation = this.validateToken(token);
+        if (validation.isValid) {
+          console.log('Using validated token from localStorage');
+          this.setToken(token);
+          return token;
+        }
+      }
+
+      // Try to get from Supabase
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (!error && data?.token) {
+          const validation = this.validateToken(data.token);
+          if (validation.isValid) {
+            console.log('Using token from Supabase');
+            this.setToken(data.token);
+            return data.token;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to get token from Supabase:', e);
+      }
+
+      console.log('No valid token found');
+      return null;
+    } catch (error) {
+      console.error('Error in getToken:', error);
+      return null;
+    }
+  }
+
   setToken(token: string) {
     console.log('Setting new token');
     const validation = this.validateToken(token);
@@ -97,43 +151,6 @@ class MapboxTokenManager {
     console.log('Token successfully set and encrypted');
   }
 
-  async getToken(): Promise<string | null> {
-    // First check environment variable
-    const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
-    if (envToken && this.validateToken(envToken).isValid) {
-      console.log('Using Mapbox token from environment');
-      this.setToken(envToken);
-      return envToken;
-    }
-
-    // Return cached valid token if not stale
-    if (this.tokenState.token && !this.isTokenStale()) {
-      console.log('Using cached Mapbox token');
-      return this.tokenState.token;
-    }
-
-    // Try to get from localStorage
-    const encryptedToken = localStorage.getItem('mapbox_token');
-    if (encryptedToken) {
-      try {
-        const token = this.decryptToken(encryptedToken);
-        const validation = this.validateToken(token);
-        if (validation.isValid) {
-          console.log('Using validated token from localStorage');
-          this.setToken(token); // This will also set it globally
-          return token;
-        } else {
-          console.warn('Invalid token in localStorage:', validation.error);
-        }
-      } catch (error) {
-        console.error('Error decrypting token:', error);
-      }
-    }
-
-    console.log('No valid token found');
-    return null;
-  }
-
   getTokenState(): TokenState {
     return { ...this.tokenState };
   }
@@ -150,3 +167,8 @@ class MapboxTokenManager {
 }
 
 export const mapboxTokenManager = MapboxTokenManager.getInstance();
+
+// Export a standalone function for getting the token
+export const getMapboxToken = async () => {
+  return await mapboxTokenManager.getToken();
+};

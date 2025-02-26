@@ -7,58 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 import { Alert, AlertDescription } from "./ui/alert";
 
-export const getMapboxToken = async () => {
-  try {
-    console.log('Attempting to get token from local storage...');
-    const token = await mapboxTokenManager.getToken();
-    if (token) {
-      console.log('Found valid token in local storage');
-      
-      // Attempt Supabase backup in background without blocking
-      try {
-        console.log('Attempting background Supabase backup...');
-        supabase.functions.invoke('set-mapbox-token', {
-          body: { token }
-        }).then(() => {
-          console.log('Background Supabase backup successful');
-        }).catch((error) => {
-          console.warn('Background Supabase backup failed:', error);
-        });
-      } catch (e) {
-        console.warn('Background Supabase backup attempt failed:', e);
-      }
-      
-      return token;
-    }
-
-    console.log('No valid token in local storage, fetching from Supabase...');
-    const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-    
-    if (error) {
-      console.warn('Error fetching token from Supabase:', error);
-      return null;
-    }
-
-    if (!data?.token) {
-      console.log('No token found in Supabase');
-      return null;
-    }
-
-    console.log('Got token from Supabase, validating and storing...');
-    const validationResult = mapboxTokenManager.validateToken(data.token);
-    if (!validationResult.isValid) {
-      console.error('Token validation failed:', validationResult.error);
-      return null;
-    }
-
-    mapboxTokenManager.setToken(data.token);
-    return data.token;
-  } catch (error) {
-    console.error('Error in getMapboxToken:', error);
-    return null;
-  }
-};
-
 interface MapboxConfigProps {
   onTokenSaved?: () => void;
 }
@@ -75,7 +23,7 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
       setValidationError(null);
       
       try {
-        const token = await getMapboxToken();
+        const token = await mapboxTokenManager.getToken();
         if (token) {
           setTokenState(mapboxTokenManager.getTokenState());
           onTokenSaved?.();
@@ -136,7 +84,7 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
         return;
       }
       
-      // Attempt to save to Supabase as backup (non-blocking)
+      // Attempt to save to Supabase as backup
       try {
         console.log('Attempting Supabase backup...');
         const { error } = await supabase.functions.invoke('set-mapbox-token', {
@@ -145,13 +93,11 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
 
         if (error) {
           console.warn("Supabase backup storage failed:", error);
-          // Don't block on Supabase failure
         } else {
           console.log('Token backup saved to Supabase');
         }
       } catch (e) {
         console.warn("Supabase backup attempt failed:", e);
-        // Continue even if Supabase backup fails
       }
 
       toast.success("Mapbox token saved successfully");
