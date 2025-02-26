@@ -47,17 +47,25 @@ export const CarGrid = ({
   useEffect(() => {
     const isIndexPage = window.location.pathname === "/";
     
-    if (!Array.isArray(cars) || cars.length === 0) {
+    // Separate login request toast
+    if (isIndexPage && !isAuthenticated) {
+      toast({
+        title: "Welcome to Mobirides",
+        description: "Please sign in to view available cars. Click 'Profile' in the navigation bar to sign in.",
+      });
+      return;
+    }
+
+    // Only show no cars found toast if user is authenticated
+    if (isAuthenticated && (!Array.isArray(cars) || cars.length === 0)) {
       toast({
         title: "No Cars Found",
         description: isIndexPage 
-          ? !isAuthenticated
-            ? "Please sign in to view available cars. Click 'Profile' in the navigation bar to sign in."
-            : "The car/s you are searching for cannot be found"
+          ? "The car/s you are searching for cannot be found"
           : "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars.",
       });
     }
-  }, [cars, isAuthenticated]);
+  }, [cars, isAuthenticated, toast]);
 
   if (isLoading) {
     return (
