@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -7,7 +6,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 
 export const getMapboxToken = async () => {
-  return mapboxTokenManager.getToken();
+  try {
+    // First try to get from local manager
+    const token = await mapboxTokenManager.getToken();
+    if (token) {
+      return token;
+    }
+
+    // If not in local manager, try to get from Supabase
+    const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+    
+    if (error || !data?.token) {
+      console.error('Error fetching token from Supabase:', error);
+      return null;
+    }
+
+    // Store the token in the manager
+    mapboxTokenManager.setToken(data.token);
+    return data.token;
+  } catch (error) {
+    console.error('Error in getMapboxToken:', error);
+    return null;
+  }
 };
 
 export const MapboxConfig = () => {
