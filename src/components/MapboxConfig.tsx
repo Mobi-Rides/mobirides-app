@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
@@ -13,15 +13,24 @@ export const getMapboxToken = async () => {
 export const MapboxConfig = () => {
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [tokenState, setTokenState] = useState(mapboxTokenManager.getTokenState());
+
+  useEffect(() => {
+    const checkExistingToken = async () => {
+      try {
+        await mapboxTokenManager.getToken();
+        setTokenState(mapboxTokenManager.getTokenState());
+      } catch (error) {
+        console.error('Error checking existing token:', error);
+      }
+    };
+    
+    checkExistingToken();
+  }, []);
 
   const handleSaveToken = async () => {
     if (!token) {
       toast.error("Please enter a Mapbox token");
-      return;
-    }
-
-    if (!token.startsWith('pk.')) {
-      toast.error("Invalid Mapbox token format. Public tokens should start with 'pk.'");
       return;
     }
 
@@ -30,9 +39,17 @@ export const MapboxConfig = () => {
       // Clear any existing token first
       mapboxTokenManager.clearToken();
       
-      // Store in localStorage
-      localStorage.setItem('mapbox_token', token);
-      console.log('Token saved to localStorage');
+      // Set new token (this will validate and encrypt it)
+      mapboxTokenManager.setToken(token);
+      
+      // Get updated state
+      const newState = mapboxTokenManager.getTokenState();
+      setTokenState(newState);
+      
+      if (newState.status === 'error') {
+        toast.error(newState.error || "Invalid token format");
+        return;
+      }
       
       // Attempt to save to Supabase as backup
       try {
@@ -53,9 +70,6 @@ export const MapboxConfig = () => {
       }
 
       toast.success("Mapbox token saved successfully");
-      
-      // Instead of reloading, trigger a re-render through state
-      mapboxTokenManager.setToken(token);
     } catch (error) {
       console.error("Error saving token:", error);
       toast.error("Failed to save token. Please try again.");
@@ -81,6 +95,9 @@ export const MapboxConfig = () => {
               Mapbox Access Tokens
             </a>
           </p>
+          {tokenState.status === 'error' && (
+            <p className="text-sm text-destructive">{tokenState.error}</p>
+          )}
         </div>
         <div className="flex gap-2">
           <Input
@@ -89,12 +106,20 @@ export const MapboxConfig = () => {
             value={token}
             onChange={(e) => setToken(e.target.value)}
             className="flex-1"
-            disabled={isLoading}
+            disabled={isLoading || tokenState.status === 'loading'}
           />
-          <Button onClick={handleSaveToken} disabled={isLoading}>
+          <Button 
+            onClick={handleSaveToken} 
+            disabled={isLoading || tokenState.status === 'loading'}
+          >
             {isLoading ? "Saving..." : "Save Token"}
           </Button>
         </div>
+        {tokenState.status === 'loading' && (
+          <p className="text-sm text-muted-foreground">
+            Validating token...
+          </p>
+        )}
       </div>
     </div>
   );
