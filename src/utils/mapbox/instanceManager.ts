@@ -2,6 +2,7 @@
 export class MapboxInstanceManager {
   private static readonly MAX_RETRIES = 3;
   private retryCount = 0;
+  private mapboxModule: typeof import('mapbox-gl') | null = null;
 
   async setTokenWithRetry(token: string): Promise<boolean> {
     if (this.retryCount >= MapboxInstanceManager.MAX_RETRIES) {
@@ -10,11 +11,16 @@ export class MapboxInstanceManager {
     }
 
     try {
-      if (!this.ensureMapboxGlobal()) {
-        console.log('Mapboxgl not available, retrying...');
-        this.retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 100));
-        return this.setTokenWithRetry(token);
+      // Ensure mapbox-gl is loaded
+      if (!this.mapboxModule) {
+        console.log('Loading mapbox-gl module...');
+        this.mapboxModule = await import('mapbox-gl');
+        await import('mapbox-gl/dist/mapbox-gl.css');
+      }
+
+      if (!window.mapboxgl) {
+        console.log('Setting mapboxgl on window object');
+        window.mapboxgl = this.mapboxModule;
       }
 
       if (window.mapboxgl) {
@@ -43,25 +49,10 @@ export class MapboxInstanceManager {
     }
   }
 
-  private ensureMapboxGlobal(): boolean {
-    if (typeof window === 'undefined') return false;
-
-    try {
-      const mapboxgl = require('mapbox-gl');
-      if (!window.mapboxgl && mapboxgl) {
-        console.log('Setting mapboxgl on window object');
-        window.mapboxgl = mapboxgl;
-      }
-      return true;
-    } catch (error) {
-      console.error('Error ensuring mapboxgl global:', error);
-      return false;
-    }
-  }
-
   clearGlobalInstance() {
     if (typeof window !== 'undefined' && window.mapboxgl) {
       window.mapboxgl.accessToken = null;
     }
+    this.mapboxModule = null;
   }
 }
