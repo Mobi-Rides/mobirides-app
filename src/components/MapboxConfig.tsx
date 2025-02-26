@@ -39,7 +39,11 @@ export const getMapboxToken = async () => {
   }
 };
 
-export const MapboxConfig = () => {
+interface MapboxConfigProps {
+  onTokenSaved?: () => void;
+}
+
+export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [tokenState, setTokenState] = useState(mapboxTokenManager.getTokenState());
@@ -50,6 +54,7 @@ export const MapboxConfig = () => {
         const token = await getMapboxToken();
         if (token) {
           setTokenState(mapboxTokenManager.getTokenState());
+          onTokenSaved?.();
         }
       } catch (error) {
         console.error('Error checking existing token:', error);
@@ -57,7 +62,7 @@ export const MapboxConfig = () => {
     };
     
     checkExistingToken();
-  }, []);
+  }, [onTokenSaved]);
 
   const handleSaveToken = async () => {
     if (!token) {
@@ -99,6 +104,7 @@ export const MapboxConfig = () => {
       }
 
       toast.success("Mapbox token saved successfully");
+      onTokenSaved?.();
     } catch (error) {
       console.error("Error saving token:", error);
       toast.error("Failed to save token. Please try again.");
