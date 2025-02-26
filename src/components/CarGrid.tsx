@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CarCard } from "@/components/CarCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import type { Car } from "@/types/car";
 
@@ -24,6 +24,7 @@ export const CarGrid = ({
   isAuthenticated,
 }: CarGridProps) => {
   const [showAll, setShowAll] = useState(false);
+  const { toast } = useToast();
   
   const CarSkeleton = () => (
     <div className="space-y-3">
@@ -33,13 +34,30 @@ export const CarGrid = ({
     </div>
   );
 
-  if (error) {
-    return (
-      <div className="text-center py-8 text-red-500">
-        Error loading cars. Please try again later.
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error loading cars. Please try again later.",
+      });
+    }
+  }, [error, toast]);
+
+  useEffect(() => {
+    const isIndexPage = window.location.pathname === "/";
+    
+    if (!Array.isArray(cars) || cars.length === 0) {
+      toast({
+        title: "No Cars Found",
+        description: isIndexPage 
+          ? !isAuthenticated
+            ? "Please sign in to view available cars. Click 'Profile' in the navigation bar to sign in."
+            : "The car/s you are searching for cannot be found"
+          : "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars.",
+      });
+    }
+  }, [cars, isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -52,20 +70,7 @@ export const CarGrid = ({
   }
 
   if (!Array.isArray(cars) || cars.length === 0) {
-    const isIndexPage = window.location.pathname === "/";
-    
-    return (
-      <Alert className="my-8">
-        <AlertDescription>
-          {isIndexPage 
-            ? !isAuthenticated
-              ? "Please sign in to view available cars. Click 'Profile' in the navigation bar to sign in."
-              : "The car/s you are searching for cannot be found"
-            : "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars."
-          }
-        </AlertDescription>
-      </Alert>
-    );
+    return null;
   }
 
   const visibleCars = showAll ? cars : cars.slice(0, 6);
