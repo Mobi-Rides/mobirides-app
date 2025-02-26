@@ -5,10 +5,10 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
+import { Alert, AlertDescription } from "./ui/alert";
 
 export const getMapboxToken = async () => {
   try {
-    // First try to get from local manager
     console.log('Attempting to get token from local storage...');
     const token = await mapboxTokenManager.getToken();
     if (token) {
@@ -45,15 +45,14 @@ export const getMapboxToken = async () => {
     }
 
     console.log('Got token from Supabase, validating and storing...');
-    mapboxTokenManager.setToken(data.token);
-    const validatedToken = await mapboxTokenManager.getToken();
-    
-    if (!validatedToken) {
-      console.error('Token validation failed after Supabase fetch');
+    const validationResult = mapboxTokenManager.validateToken(data.token);
+    if (!validationResult.isValid) {
+      console.error('Token validation failed:', validationResult.error);
       return null;
     }
 
-    return validatedToken;
+    mapboxTokenManager.setToken(data.token);
+    return data.token;
   } catch (error) {
     console.error('Error in getMapboxToken:', error);
     return null;
@@ -67,11 +66,14 @@ interface MapboxConfigProps {
 export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [tokenState, setTokenState] = useState(mapboxTokenManager.getTokenState());
 
   useEffect(() => {
     const checkExistingToken = async () => {
       setIsLoading(true);
+      setValidationError(null);
+      
       try {
         const token = await getMapboxToken();
         if (token) {
@@ -80,6 +82,7 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
         }
       } catch (error) {
         console.error('Error checking existing token:', error);
+        setValidationError("Failed to validate existing token");
         toast.error("Failed to validate existing token");
       } finally {
         setIsLoading(false);
@@ -89,9 +92,29 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
     checkExistingToken();
   }, [onTokenSaved]);
 
-  const handleSaveToken = async () => {
+  const validateInputToken = (token: string) => {
     if (!token) {
-      toast.error("Please enter a Mapbox token");
+      return { isValid: false, error: "Please enter a Mapbox token" };
+    }
+    if (!token.startsWith('pk.')) {
+      return { isValid: false, error: "Token must start with 'pk.'" };
+    }
+    if (token.length < 50) {
+      return { isValid: false, error: "Token is too short" };
+    }
+    if (token.length > 500) {
+      return { isValid: false, error: "Token is too long" };
+    }
+    return { isValid: true };
+  };
+
+  const handleSaveToken = async () => {
+    setValidationError(null);
+    const validation = validateInputToken(token);
+    
+    if (!validation.isValid) {
+      setValidationError(validation.error);
+      toast.error(validation.error);
       return;
     }
 
@@ -108,6 +131,7 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
       setTokenState(newState);
       
       if (newState.status === 'error') {
+        setValidationError(newState.error || "Invalid token format");
         toast.error(newState.error || "Invalid token format");
         return;
       }
@@ -134,6 +158,7 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
       onTokenSaved?.();
     } catch (error) {
       console.error("Error saving token:", error);
+      setValidationError("Failed to save token. Please try again.");
       toast.error("Failed to save token. Please try again.");
     } finally {
       setIsLoading(false);
@@ -170,10 +195,23 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
               Mapbox Access Tokens
             </a>
           </p>
-          {tokenState.status === 'error' && (
-            <p className="text-sm text-destructive">{tokenState.error}</p>
+          
+          {validationError && (
+            <Alert variant="destructive">
+              <AlertDescription>{validationError}</AlertDescription>
+            </Alert>
           )}
+
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>Your token must:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Start with 'pk.'</li>
+              <li>Be a public access token</li>
+              <li>Be between 50 and 500 characters</li>
+            </ul>
+          </div>
         </div>
+        
         <div className="flex gap-2">
           <Input
             type="text"
@@ -190,11 +228,6 @@ export const MapboxConfig = ({ onTokenSaved }: MapboxConfigProps) => {
             {isLoading ? "Saving..." : "Save Token"}
           </Button>
         </div>
-        {tokenState.status === 'loading' && (
-          <p className="text-sm text-muted-foreground">
-            Validating token...
-          </p>
-        )}
       </div>
     </div>
   );

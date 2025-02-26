@@ -6,6 +6,11 @@ interface TokenState {
   error?: string;
 }
 
+interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
 class MapboxTokenManager {
   private static instance: MapboxTokenManager;
   private tokenState: TokenState = {
@@ -27,11 +32,18 @@ class MapboxTokenManager {
     return MapboxTokenManager.instance;
   }
 
-  private validateToken(token: string): boolean {
-    if (!token) return false;
-    if (!this.TOKEN_FORMAT_REGEX.test(token)) return false;
-    if (token.length < 50 || token.length > 500) return false;
-    return true;
+  validateToken(token: string): ValidationResult {
+    if (!token) return { isValid: false, error: 'Token is required' };
+    if (!this.TOKEN_FORMAT_REGEX.test(token)) {
+      return { isValid: false, error: "Token must start with 'pk.'" };
+    }
+    if (token.length < 50) {
+      return { isValid: false, error: 'Token is too short' };
+    }
+    if (token.length > 500) {
+      return { isValid: false, error: 'Token is too long' };
+    }
+    return { isValid: true };
   }
 
   private encryptToken(token: string): string {
@@ -48,12 +60,13 @@ class MapboxTokenManager {
 
   setToken(token: string) {
     console.log('Setting new token');
-    if (!this.validateToken(token)) {
-      console.error('Invalid token format');
+    const validation = this.validateToken(token);
+    if (!validation.isValid) {
+      console.error('Invalid token format:', validation.error);
       this.tokenState = {
         status: 'error',
         token: null,
-        error: 'Invalid token format',
+        error: validation.error,
         lastValidated: Date.now()
       };
       return;
@@ -83,7 +96,8 @@ class MapboxTokenManager {
     if (encryptedToken) {
       try {
         const token = this.decryptToken(encryptedToken);
-        if (this.validateToken(token)) {
+        const validation = this.validateToken(token);
+        if (validation.isValid) {
           console.log('Using validated token from localStorage');
           this.tokenState = {
             status: 'valid',
@@ -91,6 +105,8 @@ class MapboxTokenManager {
             lastValidated: Date.now()
           };
           return token;
+        } else {
+          console.warn('Invalid token in localStorage:', validation.error);
         }
       } catch (error) {
         console.error('Error decrypting token:', error);
