@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -11,6 +12,7 @@ import { useHostLocation } from "@/hooks/useHostLocation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMapboxToken } from "@/components/MapboxConfig";
+import { toast } from "sonner";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { SearchFilters } from "@/components/SearchFilters";
@@ -20,11 +22,20 @@ const MapPage = () => {
   const [searchParams] = useSearchParams();
   const [hasToken, setHasToken] = useState<boolean>(false);
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [isTokenLoading, setIsTokenLoading] = useState(true);
 
   useEffect(() => {
     const checkToken = async () => {
-      const token = await getMapboxToken();
-      setHasToken(!!token);
+      try {
+        setIsTokenLoading(true);
+        const token = await getMapboxToken();
+        setHasToken(!!token);
+      } catch (error) {
+        console.error('Error checking token:', error);
+        toast.error("Failed to initialize map configuration");
+      } finally {
+        setIsTokenLoading(false);
+      }
     };
     checkToken();
   }, []);
@@ -132,35 +143,25 @@ const MapPage = () => {
   const hostLocation = useHostLocation(map, mode, hostId, bookingId);
 
   useEffect(() => {
-    if (!map || !isLoaded) return;
-
-    const initializeMap = () => {
+    if (map && isLoaded && !mapInitialized) {
       try {
-        console.log("Initializing map with resize");
+        console.log("Initializing map");
         map.resize();
         setMapInitialized(true);
       } catch (error) {
         console.error("Error during map initialization:", error);
+        toast.error("Error initializing map display");
       }
-    };
-
-    const timeoutId = setTimeout(initializeMap, 100);
-
-    window.addEventListener('resize', initializeMap);
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', initializeMap);
-      setMapInitialized(false);
-    };
-  }, [map, isLoaded]);
-
-  useEffect(() => {
-    if (map && isLoaded && mapInitialized) {
-      console.log("Handling sheet visibility change");
-      map.resize();
     }
-  }, [map, isLoaded, mapInitialized, handoverStatus?.shouldShowSheet]);
+  }, [map, isLoaded, mapInitialized]);
+
+  if (isTokenLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!hasToken || error) {
     return <MapboxConfig />;
@@ -174,10 +175,10 @@ const MapPage = () => {
         onFiltersChange={handleFiltersChange}
       />
       
-      <main className="flex-1 relative w-full" style={{ height: 'calc(100% - 64px)' }}>
+      <main className="flex-1 relative w-full min-h-0" style={{ height: 'calc(100% - 64px)' }}>
         <div 
           ref={mapContainer} 
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full bg-muted"
           style={{
             opacity: isLoaded && mapInitialized ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out'
@@ -191,6 +192,12 @@ const MapPage = () => {
             hostLocation={hostLocation}
             renterDetails={renterDetails}
           />
+        )}
+
+        {!isLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
         )}
 
         {handoverStatus?.shouldShowSheet && (

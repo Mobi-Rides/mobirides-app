@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -26,35 +27,35 @@ export const MapboxConfig = () => {
 
     setIsLoading(true);
     try {
-      // Always store in localStorage first as primary storage
+      // Clear any existing token first
+      mapboxTokenManager.clearToken();
+      
+      // Store in localStorage
       localStorage.setItem('mapbox_token', token);
       console.log('Token saved to localStorage');
       
-      // Attempt to save to Supabase as backup, but don't block on it
+      // Attempt to save to Supabase as backup
       try {
-        console.log('Attempting to save token to Supabase...');
+        console.log('Saving token to Supabase...');
         const { error } = await supabase.functions.invoke('set-mapbox-token', {
           body: { token }
         });
 
         if (error) {
-          console.warn("Supabase function error (using localStorage):", error);
+          console.warn("Supabase backup storage failed:", error);
+          // Continue since we have localStorage
         } else {
-          console.log('Token also saved to Supabase successfully');
+          console.log('Token backup saved to Supabase');
         }
       } catch (e) {
-        console.warn("Supabase function unavailable (using localStorage):", e);
+        console.warn("Supabase backup attempt failed:", e);
+        // Continue since we have localStorage
       }
 
-      // Clear the cached token to force a fresh fetch
-      mapboxTokenManager.clearToken();
-      
       toast.success("Mapbox token saved successfully");
       
-      // Reload after a short delay to ensure the token is available
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Instead of reloading, trigger a re-render through state
+      mapboxTokenManager.setToken(token);
     } catch (error) {
       console.error("Error saving token:", error);
       toast.error("Failed to save token. Please try again.");
@@ -64,10 +65,10 @@ export const MapboxConfig = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm p-4 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-4">
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-card p-6 rounded-lg shadow-lg space-y-4">
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Mapbox Configuration Required</h2>
+          <h2 className="text-xl font-semibold">Mapbox Configuration Required</h2>
           <p className="text-sm text-muted-foreground">
             Please enter your Mapbox public token to enable map functionality.
             You can find your token at{" "}
