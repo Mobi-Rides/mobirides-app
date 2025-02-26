@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { toast } from "sonner";
@@ -57,6 +56,7 @@ export const MapContainer = ({
       if (map.current) {
         console.log('[MapContainer] Removing existing map instance');
         map.current.remove();
+        map.current = null;
       }
 
       console.log('[MapContainer] Initializing map with config:', {
@@ -65,7 +65,6 @@ export const MapContainer = ({
         mobile: isMobile
       });
 
-      // Initialize map with mobile-optimized settings
       const newMap = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
@@ -77,14 +76,12 @@ export const MapContainer = ({
         preserveDrawingBuffer: true
       });
 
-      // Add navigation controls (desktop only)
       if (!isMobile) {
         console.log('[MapContainer] Adding navigation controls (desktop mode)');
         newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
       }
 
       console.log('[MapContainer] Adding geolocation control');
-      // Add geolocate control for both desktop and mobile
       const geolocateControl = new mapboxgl.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true
@@ -94,9 +91,11 @@ export const MapContainer = ({
       });
       newMap.addControl(geolocateControl, 'top-right');
 
-      newMap.on('load', () => {
+      // Ensure map is fully loaded before calling onMapLoad
+      newMap.once('load', () => {
         console.log('[MapContainer] Map loaded successfully');
         setIsLoaded(true);
+        map.current = newMap;
         onMapLoad?.(newMap);
       });
 
@@ -111,23 +110,8 @@ export const MapContainer = ({
         toast.error(error.message);
       });
 
-      map.current = newMap;
-
-      // Add debug listeners
-      newMap.on('movestart', () => console.log('[MapContainer] Map move started'));
-      newMap.on('moveend', () => console.log('[MapContainer] Map move ended'));
-      newMap.on('zoomstart', () => console.log('[MapContainer] Map zoom started'));
-      newMap.on('zoomend', () => console.log('[MapContainer] Map zoom ended'));
-      newMap.on('dragstart', () => console.log('[MapContainer] Map drag started'));
-      newMap.on('dragend', () => console.log('[MapContainer] Map drag ended'));
-
     } catch (error) {
-      console.error('[MapContainer] Error initializing map:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      });
+      console.error('[MapContainer] Error initializing map:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize map';
       onMapError?.(new Error(errorMessage));
       toast.error(errorMessage);

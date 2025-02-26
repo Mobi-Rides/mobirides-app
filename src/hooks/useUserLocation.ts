@@ -17,29 +17,8 @@ export const useUserLocation = (map: mapboxgl.Map | null) => {
   const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("useUserLocation effect running, map:", !!map);
+    console.log("[useUserLocation] Starting location tracking", { hasMap: !!map });
     
-    // Don't proceed if map isn't ready
-    if (!map) {
-      console.log("Map not ready, skipping location initialization");
-      return;
-    }
-
-    // Wait for map to be loaded
-    if (!map.loaded()) {
-      console.log("Map not loaded yet, waiting for load event");
-      const onLoad = () => {
-        console.log("Map loaded, initializing location tracking");
-        initializeLocationTracking();
-      };
-      map.once('load', onLoad);
-      return () => {
-        map.off('load', onLoad);
-      };
-    } else {
-      initializeLocationTracking();
-    }
-
     function initializeLocationTracking() {
       if (!navigator.geolocation) {
         const errorMsg = "Geolocation is not supported by your browser";
@@ -61,36 +40,26 @@ export const useUserLocation = (map: mapboxgl.Map | null) => {
 
         const handleSuccess = (position: GeolocationPosition) => {
           const { latitude, longitude, accuracy } = position.coords;
-          console.log("User location updated:", { latitude, longitude, accuracy });
+          console.log("[useUserLocation] Position updated:", { latitude, longitude, accuracy });
 
           setUserLocation({ latitude, longitude, accuracy });
-          setError(null); // Clear any previous errors
+          setError(null);
 
-          // Remove existing marker if it exists
-          if (markerRef.current) {
-            markerRef.current.remove();
-          }
-
-          try {
-            // Create a marker for user location
-            const el = createMarkerElement(accuracy);
-            
-            markerRef.current = new mapboxgl.Marker({ element: el })
-              .setLngLat([longitude, latitude]);
-
-            // Only add to map if map is valid
-            if (map && map.loaded()) {
-              markerRef.current.addTo(map);
-              
-              // Fly to the location with smooth animation
-              map.flyTo({
-                center: [longitude, latitude],
-                zoom: 14,
-                essential: true
-              });
+          // Only update marker if map is available
+          if (map && map.loaded()) {
+            // Remove existing marker if it exists
+            if (markerRef.current) {
+              markerRef.current.remove();
             }
-          } catch (err) {
-            console.error("Error creating location marker:", err);
+
+            try {
+              const el = createMarkerElement(accuracy);
+              markerRef.current = new mapboxgl.Marker({ element: el })
+                .setLngLat([longitude, latitude])
+                .addTo(map);
+            } catch (err) {
+              console.error("[useUserLocation] Error creating location marker:", err);
+            }
           }
         };
 
@@ -111,27 +80,33 @@ export const useUserLocation = (map: mapboxgl.Map | null) => {
               errorMessage += "An unknown error occurred.";
           }
           
-          console.error("Geolocation error:", { code: error.code, message: error.message });
+          console.error("[useUserLocation] Geolocation error:", { 
+            code: error.code, 
+            message: error.message 
+          });
           setError(errorMessage);
           toast.error(errorMessage);
         };
 
-        // Start watching position with improved options
         watchIdRef.current = navigator.geolocation.watchPosition(
           handleSuccess,
           handleError,
           {
             enableHighAccuracy: true,
-            timeout: 10000, // Increased timeout
-            maximumAge: 5000 // Allow slightly older positions
+            timeout: 10000,
+            maximumAge: 5000
           }
         );
       });
     }
 
-    // Cleanup function
+    // Only start tracking if we have a map instance
+    if (map) {
+      initializeLocationTracking();
+    }
+
     return () => {
-      console.log("Cleaning up user location tracking");
+      console.log("[useUserLocation] Cleaning up location tracking");
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
