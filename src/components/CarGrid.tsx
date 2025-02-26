@@ -12,6 +12,7 @@ interface CarGridProps {
   error: Error | null;
   loadMoreRef: (node?: Element | null) => void;
   isFetchingNextPage: boolean;
+  isAuthenticated: boolean;
 }
 
 export const CarGrid = ({
@@ -20,6 +21,7 @@ export const CarGrid = ({
   error,
   loadMoreRef,
   isFetchingNextPage,
+  isAuthenticated,
 }: CarGridProps) => {
   const [showAll, setShowAll] = useState(false);
   
@@ -56,7 +58,9 @@ export const CarGrid = ({
       <Alert className="my-8">
         <AlertDescription>
           {isIndexPage 
-            ? "The car/s you are searching for cannot be found"
+            ? !isAuthenticated
+              ? "Please sign in to view available cars. Click 'Profile' in the navigation bar to sign in."
+              : "The car/s you are searching for cannot be found"
             : "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars."
           }
         </AlertDescription>

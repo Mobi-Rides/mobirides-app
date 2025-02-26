@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
@@ -20,6 +19,7 @@ const Index = () => {
   const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     startDate: undefined,
     endDate: undefined,
@@ -28,6 +28,21 @@ const Index = () => {
     sortBy: "price",
     sortOrder: "asc",
   });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { ref: loadMoreRef, inView } = useInView();
 
@@ -220,6 +235,7 @@ const Index = () => {
             error={userRole === 'host' ? hostCarsError : carsError}
             loadMoreRef={loadMoreRef}
             isFetchingNextPage={isFetchingNextPage}
+            isAuthenticated={isAuthenticated}
           />
         </div>
       </main>
