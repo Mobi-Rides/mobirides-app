@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
@@ -44,7 +45,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   const handleAuthError = async (message: string = "Your session has expired. Please sign in again.") => {
     console.log("Handling auth error:", message);
-    // Clear any stored session data
     await supabase.auth.signOut();
     localStorage.removeItem('supabase.auth.token');
     setAuthenticated(false);
@@ -69,7 +69,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Verify token is still valid
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError) {
@@ -107,5 +106,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <MapboxTokenProvider>
+      {children}
+    </MapboxTokenProvider>
+  );
 };
