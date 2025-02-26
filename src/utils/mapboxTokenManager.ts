@@ -1,4 +1,11 @@
 
+interface TokenState {
+  status: 'uninitialized' | 'valid' | 'error' | 'loading';
+  token: string | null;
+  lastValidated: number;
+  error?: string;
+}
+
 class MapboxTokenManager {
   private static instance: MapboxTokenManager;
   private tokenState: TokenState = {
