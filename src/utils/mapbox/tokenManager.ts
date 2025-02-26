@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { TokenState } from './types';
 import { TokenValidator } from './tokenValidator';
@@ -166,8 +167,10 @@ export class MapboxTokenManager {
   }
 }
 
+// Create and export the singleton instance
 export const mapboxTokenManager = MapboxTokenManager.getInstance();
 
+// Export the getToken helper function
 export const getMapboxToken = async () => {
   return await mapboxTokenManager.getToken();
 };

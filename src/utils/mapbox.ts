@@ -1,4 +1,13 @@
-import { supabase } from "@/integrations/supabase/client";
+
+export { 
+  MapboxTokenManager,
+  mapboxTokenManager,
+  getMapboxToken,
+  TokenValidator,
+  MapboxInstanceManager
+} from './mapbox/index';
+
+export type { TokenState, ValidationResult } from './mapbox/types';
 
 export const getMapboxToken = async () => {
   try {
