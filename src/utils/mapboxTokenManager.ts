@@ -23,6 +23,8 @@ class MapboxTokenManager {
   private readonly TOKEN_FORMAT_REGEX = /^pk\./;
   private readonly TOKEN_VALIDATION_INTERVAL = 1800000; // 30 minutes
   private isInitializing = false;
+  private readonly MAX_RETRIES = 3;
+  private retryCount = 0;
 
   private constructor() {
     console.log('MapboxTokenManager initialized');
@@ -44,7 +46,7 @@ class MapboxTokenManager {
     return MapboxTokenManager.instance;
   }
 
-  validateToken(token: string): ValidationResult {
+  private validateToken(token: string): ValidationResult {
     if (!token) return { isValid: false, error: 'Token is required' };
     if (!this.TOKEN_FORMAT_REGEX.test(token)) {
       return { isValid: false, error: "Token must start with 'pk.'" };
@@ -70,6 +72,63 @@ class MapboxTokenManager {
     return Date.now() - this.tokenState.lastValidated > this.TOKEN_VALIDATION_INTERVAL;
   }
 
+  private ensureMapboxGlobal(): boolean {
+    if (typeof window === 'undefined') return false;
+
+    try {
+      // If mapboxgl is not on window but exists as a module, set it
+      const mapboxgl = require('mapbox-gl');
+      if (!window.mapboxgl && mapboxgl) {
+        console.log('Setting mapboxgl on window object');
+        window.mapboxgl = mapboxgl;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error ensuring mapboxgl global:', error);
+      return false;
+    }
+  }
+
+  private async setTokenWithRetry(token: string): Promise<boolean> {
+    if (this.retryCount >= this.MAX_RETRIES) {
+      console.error('Max retry attempts reached for setting token');
+      return false;
+    }
+
+    try {
+      if (!this.ensureMapboxGlobal()) {
+        console.log('Mapboxgl not available, retrying...');
+        this.retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return this.setTokenWithRetry(token);
+      }
+
+      if (window.mapboxgl) {
+        console.log('Setting token on mapboxgl instance');
+        window.mapboxgl.accessToken = token;
+        // Verify token was set correctly
+        if (window.mapboxgl.accessToken === token) {
+          console.log('Token successfully set and verified');
+          this.retryCount = 0;
+          return true;
+        }
+      }
+
+      console.log('Token setting failed, retrying...');
+      this.retryCount++;
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return this.setTokenWithRetry(token);
+    } catch (error) {
+      console.error('Error in setTokenWithRetry:', error);
+      this.retryCount++;
+      if (this.retryCount < this.MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return this.setTokenWithRetry(token);
+      }
+      return false;
+    }
+  }
+
   async validateAndSetToken(token: string): Promise<boolean> {
     const validation = this.validateToken(token);
     if (!validation.isValid) {
@@ -84,12 +143,9 @@ class MapboxTokenManager {
     }
 
     try {
-      // Set the token directly on the mapboxgl instance
-      if (typeof window !== 'undefined' && (window as any).mapboxgl) {
-        console.log('Setting token on mapboxgl instance');
-        (window as any).mapboxgl.accessToken = token;
-      } else {
-        console.log('mapboxgl instance not found, will set on next initialization');
+      const tokenSet = await this.setTokenWithRetry(token);
+      if (!tokenSet) {
+        throw new Error('Failed to set token after multiple attempts');
       }
 
       const encryptedToken = this.encryptToken(token);
@@ -123,9 +179,7 @@ class MapboxTokenManager {
       if (this.tokenState.token && !this.isTokenStale()) {
         console.log('Using cached valid token');
         // Ensure token is set on mapboxgl instance
-        if (typeof window !== 'undefined' && (window as any).mapboxgl) {
-          (window as any).mapboxgl.accessToken = this.tokenState.token;
-        }
+        await this.setTokenWithRetry(this.tokenState.token);
         return this.tokenState.token;
       }
 
@@ -196,8 +250,8 @@ class MapboxTokenManager {
   clearToken() {
     console.log('Clearing cached Mapbox token');
     localStorage.removeItem('mapbox_token');
-    if (typeof window !== 'undefined' && (window as any).mapboxgl) {
-      (window as any).mapboxgl.accessToken = null;
+    if (typeof window !== 'undefined' && window.mapboxgl) {
+      window.mapboxgl.accessToken = null;
     }
     this.tokenState = {
       status: 'uninitialized',
@@ -212,3 +266,9 @@ export const mapboxTokenManager = MapboxTokenManager.getInstance();
 export const getMapboxToken = async () => {
   return await mapboxTokenManager.getToken();
 };
+
+declare global {
+  interface Window {
+    mapboxgl?: any;
+  }
+}
