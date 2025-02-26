@@ -1,4 +1,3 @@
-
 interface TokenState {
   status: 'uninitialized' | 'valid' | 'error' | 'loading';
   token: string | null;
@@ -23,6 +22,12 @@ class MapboxTokenManager {
 
   private constructor() {
     console.log('MapboxTokenManager initialized');
+    // Check for environment variable on initialization
+    const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (envToken && this.validateToken(envToken).isValid) {
+      console.log('Using Mapbox token from environment');
+      this.setToken(envToken);
+    }
   }
 
   static getInstance(): MapboxTokenManager {
@@ -72,6 +77,14 @@ class MapboxTokenManager {
       return;
     }
 
+    // Set the token globally for mapboxgl
+    if (typeof window !== 'undefined') {
+      (window as any).mapboxgl = {
+        ...(window as any).mapboxgl,
+        accessToken: token
+      };
+    }
+
     const encryptedToken = this.encryptToken(token);
     localStorage.setItem('mapbox_token', encryptedToken);
     
@@ -85,6 +98,14 @@ class MapboxTokenManager {
   }
 
   async getToken(): Promise<string | null> {
+    // First check environment variable
+    const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (envToken && this.validateToken(envToken).isValid) {
+      console.log('Using Mapbox token from environment');
+      this.setToken(envToken);
+      return envToken;
+    }
+
     // Return cached valid token if not stale
     if (this.tokenState.token && !this.isTokenStale()) {
       console.log('Using cached Mapbox token');
@@ -99,11 +120,7 @@ class MapboxTokenManager {
         const validation = this.validateToken(token);
         if (validation.isValid) {
           console.log('Using validated token from localStorage');
-          this.tokenState = {
-            status: 'valid',
-            token,
-            lastValidated: Date.now()
-          };
+          this.setToken(token); // This will also set it globally
           return token;
         } else {
           console.warn('Invalid token in localStorage:', validation.error);
@@ -113,7 +130,7 @@ class MapboxTokenManager {
       }
     }
 
-    console.log('No valid token found in local storage');
+    console.log('No valid token found');
     return null;
   }
 
