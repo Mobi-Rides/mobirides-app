@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { mapboxTokenManager } from '@/utils/mapboxTokenManager';
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 interface UseMapProps {
   initialLatitude?: number;
@@ -20,28 +20,22 @@ export const useMap = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const observerRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => {
-    console.log('useMap effect starting, initialization status:', isInitializing);
+    console.log('useMap effect starting');
     let isMounted = true;
-    let initializationAttempts = 0;
-    const MAX_ATTEMPTS = 3;
+    let initializationTimeout: NodeJS.Timeout;
 
     const initializeMap = async () => {
       try {
-        if (isInitializing) {
-          console.log('Map initialization already in progress');
-          return;
-        }
-
         if (!mapContainer.current) {
           throw new Error('Map container is not available');
         }
 
-        // Verify container dimensions
-        const { offsetWidth, offsetHeight } = mapContainer.current;
-        if (offsetWidth === 0 || offsetHeight === 0) {
-          throw new Error(`Invalid container dimensions: ${offsetWidth}x${offsetHeight}`);
+        if (isInitializing) {
+          console.log('Map initialization already in progress');
+          return;
         }
 
         setIsInitializing(true);
@@ -53,11 +47,19 @@ export const useMap = ({
         }
 
         if (!isMounted) {
-          throw new Error('Component unmounted during initialization');
+          console.log('Component unmounted during initialization');
+          return;
         }
 
         console.log('Creating map instance...');
         mapboxgl.accessToken = token;
+
+        // Clear any existing map instance
+        if (map.current) {
+          console.log('Removing existing map instance');
+          map.current.remove();
+          map.current = null;
+        }
 
         const newMap = new mapboxgl.Map({
           container: mapContainer.current,
@@ -70,8 +72,8 @@ export const useMap = ({
 
         // Set up event listeners
         newMap.on('load', () => {
-          console.log('Map loaded successfully');
           if (isMounted) {
+            console.log('Map loaded successfully');
             setIsLoaded(true);
             setIsInitializing(false);
           }
@@ -87,83 +89,62 @@ export const useMap = ({
           }
         });
 
-        // Handle click events if callback provided
-        if (onMapClick) {
-          newMap.on('click', (e) => {
-            try {
-              console.log('Map clicked:', e.lngLat);
-              onMapClick(e.lngLat);
-            } catch (error) {
-              console.error('Error in map click handler:', error);
-              toast.error('Failed to handle map click');
-            }
-          });
-        }
-
-        // Add navigation controls with error handling
+        // Add navigation controls
         try {
           newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
         } catch (error) {
           console.warn('Failed to add navigation controls:', error);
         }
 
-        map.current = newMap;
-
-        // Add resize handler
-        const handleResize = () => {
-          if (map.current && map.current.loaded()) {
+        // Handle click events if callback provided
+        if (onMapClick) {
+          newMap.on('click', (e) => {
             try {
-              map.current.resize();
+              onMapClick(e.lngLat);
             } catch (error) {
-              console.error('Error resizing map:', error);
+              console.error('Error in map click handler:', error);
             }
-          }
-        };
+          });
+        }
 
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        map.current = newMap;
 
       } catch (error) {
         console.error('Error in map initialization:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to initialize map';
-        setError(errorMessage);
-        toast.error(errorMessage);
-        setIsInitializing(false);
-
-        // Retry initialization if under max attempts
-        if (initializationAttempts < MAX_ATTEMPTS) {
-          initializationAttempts++;
-          console.log(`Retrying map initialization (attempt ${initializationAttempts})`);
-          setTimeout(initializeMap, 1000 * initializationAttempts);
+        if (isMounted) {
+          setError(errorMessage);
+          toast.error(errorMessage);
+          setIsInitializing(false);
         }
       }
     };
 
-    // Use ResizeObserver to wait for container to have dimensions
-    const observer = new ResizeObserver((entries) => {
-      try {
+    // Set up ResizeObserver
+    if (mapContainer.current && !observerRef.current) {
+      observerRef.current = new ResizeObserver((entries) => {
         const entry = entries[0];
         if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-          console.log('Container dimensions ready:', entry.contentRect);
-          observer.disconnect();
-          initializeMap();
-        } else {
-          console.log('Container still has no dimensions:', entry.contentRect);
+          console.log('Container has dimensions:', entry.contentRect);
+          clearTimeout(initializationTimeout);
+          initializationTimeout = setTimeout(() => {
+            initializeMap();
+          }, 100); // Debounce initialization
         }
-      } catch (error) {
-        console.error('Error in ResizeObserver:', error);
-      }
-    });
-
-    if (mapContainer.current) {
-      observer.observe(mapContainer.current);
+      });
+      observerRef.current.observe(mapContainer.current);
     }
 
     return () => {
       console.log('Cleaning up map instance...');
       isMounted = false;
-      observer.disconnect();
+      clearTimeout(initializationTimeout);
       
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+
       if (map.current) {
         try {
           map.current.remove();
