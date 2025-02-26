@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { TokenState } from './types';
 import { TokenValidator } from './tokenValidator';
@@ -34,6 +33,10 @@ export class MapboxTokenManager {
       MapboxTokenManager.instance = new MapboxTokenManager();
     }
     return MapboxTokenManager.instance;
+  }
+
+  getInstanceManager(): MapboxInstanceManager {
+    return this.instanceManager;
   }
 
   private isTokenStale(): boolean {

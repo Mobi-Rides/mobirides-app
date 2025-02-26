@@ -48,8 +48,8 @@ export const MapContainer = ({
       console.log('[MapContainer] Verifying mapbox-gl module status...');
       setIsModuleLoading(true);
 
-      // Use the instance manager directly from mapboxTokenManager
-      const instanceManager = new MapboxInstanceManager();
+      // Get the instance manager from tokenManager
+      const instanceManager = mapboxTokenManager.getInstanceManager();
       if (!instanceManager.isReady()) {
         await instanceManager.getMapboxModule();
       }
