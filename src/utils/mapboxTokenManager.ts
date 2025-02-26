@@ -83,25 +83,36 @@ class MapboxTokenManager {
       return false;
     }
 
-    // Set the token globally for mapboxgl
-    if (typeof window !== 'undefined') {
-      (window as any).mapboxgl = {
-        ...(window as any).mapboxgl,
-        accessToken: token
-      };
-    }
+    try {
+      // Set the token directly on the mapboxgl instance
+      if (typeof window !== 'undefined' && (window as any).mapboxgl) {
+        console.log('Setting token on mapboxgl instance');
+        (window as any).mapboxgl.accessToken = token;
+      } else {
+        console.log('mapboxgl instance not found, will set on next initialization');
+      }
 
-    const encryptedToken = this.encryptToken(token);
-    localStorage.setItem('mapbox_token', encryptedToken);
-    
-    this.tokenState = {
-      status: 'valid',
-      token,
-      lastValidated: Date.now()
-    };
-    
-    console.log('Token successfully validated and set');
-    return true;
+      const encryptedToken = this.encryptToken(token);
+      localStorage.setItem('mapbox_token', encryptedToken);
+      
+      this.tokenState = {
+        status: 'valid',
+        token,
+        lastValidated: Date.now()
+      };
+      
+      console.log('Token successfully validated and set on mapboxgl instance');
+      return true;
+    } catch (error) {
+      console.error('Error setting token:', error);
+      this.tokenState = {
+        status: 'error',
+        token: null,
+        error: 'Failed to set token',
+        lastValidated: Date.now()
+      };
+      return false;
+    }
   }
 
   async getToken(): Promise<string | null> {
@@ -111,6 +122,10 @@ class MapboxTokenManager {
       // Return cached valid token if not stale
       if (this.tokenState.token && !this.isTokenStale()) {
         console.log('Using cached valid token');
+        // Ensure token is set on mapboxgl instance
+        if (typeof window !== 'undefined' && (window as any).mapboxgl) {
+          (window as any).mapboxgl.accessToken = this.tokenState.token;
+        }
         return this.tokenState.token;
       }
 
@@ -181,6 +196,9 @@ class MapboxTokenManager {
   clearToken() {
     console.log('Clearing cached Mapbox token');
     localStorage.removeItem('mapbox_token');
+    if (typeof window !== 'undefined' && (window as any).mapboxgl) {
+      (window as any).mapboxgl.accessToken = null;
+    }
     this.tokenState = {
       status: 'uninitialized',
       token: null,
