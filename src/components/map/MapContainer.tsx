@@ -29,6 +29,7 @@ export const MapContainer = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isModuleLoading, setIsModuleLoading] = useState(true);
   const [tokenState, setTokenState] = useState(mapboxTokenManager.getTokenState());
+  const [isDomReady, setIsDomReady] = useState(false);
 
   useEffect(() => {
     const initToken = async () => {
@@ -38,19 +39,30 @@ export const MapContainer = ({
     initToken();
   }, []);
 
+  // New effect to track DOM readiness
+  useEffect(() => {
+    if (mapContainer.current) {
+      console.log('[MapContainer] DOM element is ready');
+      setIsDomReady(true);
+    }
+  }, []);
+
   const initializeMap = useCallback(async () => {
     if (!mapContainer.current || !tokenState.token) {
-      console.log('[MapContainer] No container ref or token available, skipping initialization');
+      console.log('[MapContainer] Initialization requirements not met:', {
+        hasContainer: !!mapContainer.current,
+        hasToken: !!tokenState.token
+      });
       return;
     }
 
     try {
-      console.log('[MapContainer] Verifying mapbox-gl module status...');
+      console.log('[MapContainer] Starting map initialization...');
       setIsModuleLoading(true);
 
-      // Get the instance manager from tokenManager
       const instanceManager = mapboxTokenManager.getInstanceManager();
       if (!instanceManager.isReady()) {
+        console.log('[MapContainer] Loading Mapbox module...');
         await instanceManager.getMapboxModule();
       }
 
@@ -59,12 +71,12 @@ export const MapContainer = ({
       }
 
       if (map.current) {
-        console.log('[MapContainer] Removing existing map instance');
+        console.log('[MapContainer] Cleaning up existing map instance');
         map.current.remove();
         map.current = null;
       }
 
-      console.log('[MapContainer] Initializing map with config:', {
+      console.log('[MapContainer] Creating new map instance:', {
         center: [initialLongitude, initialLatitude],
         zoom: isMobile ? 13 : 12,
         mobile: isMobile
@@ -124,21 +136,26 @@ export const MapContainer = ({
     }
   }, [initialLatitude, initialLongitude, isMobile, onMapLoad, onMapError, tokenState.token]);
 
+  // Updated initialization effect to consider DOM readiness
   useEffect(() => {
-    if (tokenState.token) {
-      console.log('[MapContainer] Token available, initializing map...');
+    if (tokenState.token && isDomReady) {
+      console.log('[MapContainer] All prerequisites met, initializing map...');
       initializeMap();
+    } else {
+      console.log('[MapContainer] Waiting for prerequisites:', {
+        hasToken: !!tokenState.token,
+        isDomReady
+      });
     }
 
     return () => {
-      console.log('[MapContainer] Cleaning up...');
       if (map.current) {
-        console.log('[MapContainer] Removing map instance');
+        console.log('[MapContainer] Cleaning up map instance');
         map.current.remove();
         map.current = null;
       }
     };
-  }, [initializeMap, tokenState.token]);
+  }, [initializeMap, tokenState.token, isDomReady]);
 
   if (tokenState.status === 'loading' || isModuleLoading) {
     return (
@@ -166,4 +183,3 @@ export const MapContainer = ({
     </div>
   );
 };
-
