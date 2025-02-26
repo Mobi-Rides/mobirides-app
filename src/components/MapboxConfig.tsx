@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
+import { mapboxTokenManager } from "@/utils/mapbox";
 import { Alert, AlertDescription } from "./ui/alert";
 
 interface MapboxConfigProps {

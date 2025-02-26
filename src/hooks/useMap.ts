@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { mapboxTokenManager } from '@/utils/mapboxTokenManager';
+import { mapboxTokenManager } from '@/utils/mapbox';
 import { toast } from "sonner";
 
 interface UseMapProps {

@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { mapboxTokenManager } from '@/utils/mapboxTokenManager';
+import { mapboxTokenManager } from '@/utils/mapbox';
 import { toast } from 'sonner';
 
 interface MapboxTokenContextType {
