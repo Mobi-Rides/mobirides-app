@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapboxConfig } from "@/components/MapboxConfig";
-import { useMapboxToken } from "@/contexts/MapboxTokenContext";
 import { mapboxTokenManager } from '@/utils/mapbox';
 
 interface MapContainerProps {
@@ -28,11 +27,19 @@ export const MapContainer = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isLoaded, setIsLoaded] = useState(false);
-  const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
   const [isModuleLoading, setIsModuleLoading] = useState(true);
+  const [tokenState, setTokenState] = useState(mapboxTokenManager.getTokenState());
+
+  useEffect(() => {
+    const initToken = async () => {
+      const token = await mapboxTokenManager.getToken();
+      setTokenState(mapboxTokenManager.getTokenState());
+    };
+    initToken();
+  }, []);
 
   const initializeMap = useCallback(async () => {
-    if (!mapContainer.current || !token) {
+    if (!mapContainer.current || !tokenState.token) {
       console.log('[MapContainer] No container ref or token available, skipping initialization');
       return;
     }
@@ -41,8 +48,8 @@ export const MapContainer = ({
       console.log('[MapContainer] Verifying mapbox-gl module status...');
       setIsModuleLoading(true);
 
-      // Use the instance manager's shared module
-      const instanceManager = new mapboxTokenManager.getInstanceManager();
+      // Use the instance manager directly from mapboxTokenManager
+      const instanceManager = new MapboxInstanceManager();
       if (!instanceManager.isReady()) {
         await instanceManager.getMapboxModule();
       }
@@ -115,10 +122,10 @@ export const MapContainer = ({
     } finally {
       setIsModuleLoading(false);
     }
-  }, [initialLatitude, initialLongitude, isMobile, onMapLoad, onMapError, token]);
+  }, [initialLatitude, initialLongitude, isMobile, onMapLoad, onMapError, tokenState.token]);
 
   useEffect(() => {
-    if (token) {
+    if (tokenState.token) {
       console.log('[MapContainer] Token available, initializing map...');
       initializeMap();
     }
@@ -131,9 +138,9 @@ export const MapContainer = ({
         map.current = null;
       }
     };
-  }, [initializeMap, token]);
+  }, [initializeMap, tokenState.token]);
 
-  if (isTokenLoading || isModuleLoading) {
+  if (tokenState.status === 'loading' || isModuleLoading) {
     return (
       <div className={`relative rounded-lg overflow-hidden ${height} ${className}`}>
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm">
@@ -143,7 +150,7 @@ export const MapContainer = ({
     );
   }
 
-  if (tokenError || !token) {
+  if (tokenState.status === 'error' || !tokenState.token) {
     console.log('[MapContainer] No token available, rendering MapboxConfig');
     return <MapboxConfig />;
   }
