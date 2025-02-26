@@ -1,12 +1,10 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { useMapboxToken } from "@/contexts/MapboxTokenContext";
-import "mapbox-gl/dist/mapbox-gl.css";
 
 interface MapContainerProps {
   initialLatitude?: number;
@@ -30,6 +28,7 @@ export const MapContainer = ({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isLoaded, setIsLoaded] = useState(false);
   const { token, isLoading: isTokenLoading, error: tokenError } = useMapboxToken();
+  const mapboxgl = useRef<typeof import('mapbox-gl')>();
 
   const initializeMap = useCallback(async () => {
     if (!mapContainer.current || !token) {
@@ -38,6 +37,13 @@ export const MapContainer = ({
     }
 
     try {
+      // Dynamic import of mapbox-gl to avoid preload issues
+      if (!mapboxgl.current) {
+        console.log('[MapContainer] Loading mapbox-gl...');
+        mapboxgl.current = await import('mapbox-gl');
+        await import('mapbox-gl/dist/mapbox-gl.css');
+      }
+
       if (map.current) {
         console.log('[MapContainer] Removing existing map instance');
         map.current.remove();
@@ -50,7 +56,7 @@ export const MapContainer = ({
         mobile: isMobile
       });
 
-      const newMap = new mapboxgl.Map({
+      const newMap = new mapboxgl.current.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: [initialLongitude, initialLatitude],
@@ -63,11 +69,11 @@ export const MapContainer = ({
 
       if (!isMobile) {
         console.log('[MapContainer] Adding navigation controls (desktop mode)');
-        newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        newMap.addControl(new mapboxgl.current.NavigationControl(), 'top-right');
       }
 
       console.log('[MapContainer] Adding geolocation control');
-      const geolocateControl = new mapboxgl.GeolocateControl({
+      const geolocateControl = new mapboxgl.current.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true
         },
