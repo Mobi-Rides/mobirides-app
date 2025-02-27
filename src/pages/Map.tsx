@@ -22,7 +22,7 @@ const Map = () => {
       // Initialize map with default settings
       const success = await mapCore.initialize(mapContainer.current, {
         style: 'mapbox://styles/mapbox/streets-v12',
-        center: [-24.6282, 25.9692],
+        center: [-24.6282, 25.9692] as [number, number],
         zoom: 12,
         pitchWithRotate: true,
         dragRotate: true,

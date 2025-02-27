@@ -3,7 +3,7 @@ import { Resource, ResourceType, ResourceState, ResourceStatus } from './types';
 import { eventBus } from '../eventBus';
 
 export abstract class ResourceBase implements Resource {
-  protected state: ResourceState = {
+  public state: ResourceState = {
     status: 'pending',
     timestamp: Date.now()
   };

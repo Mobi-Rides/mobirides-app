@@ -16,7 +16,7 @@ export class MapCore {
     return MapCore.instance;
   }
 
-  async initialize(container: HTMLElement, options: mapboxgl.MapOptions): Promise<boolean> {
+  async initialize(container: HTMLElement, options: Omit<mapboxgl.MapOptions, 'container'>): Promise<boolean> {
     try {
       // Ensure resources are ready
       const tokenReady = await resourceManager.acquireResource('token');

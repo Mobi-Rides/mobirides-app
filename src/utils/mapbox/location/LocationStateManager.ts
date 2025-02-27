@@ -41,7 +41,7 @@ class LocationStateManager {
     switch (state) {
       case 'granted':
         if (this.state === 'enabled') {
-          this.startTracking();
+          locationManager.startTracking();
         }
         break;
       case 'denied':
@@ -49,7 +49,7 @@ class LocationStateManager {
         toast.error("Location permission was denied. Please enable location services to use this feature.");
         break;
       case 'prompt':
-        // Will handle during next startTracking attempt
+        // Will handle during next enableTracking attempt
         break;
     }
   }
