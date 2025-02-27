@@ -1,10 +1,27 @@
 
 import { ResourceBase } from './ResourceBase';
 import { mapboxTokenManager } from '../../tokenManager';
+import { ResourceConfigs, ResourceType } from './resourceTypes';
 
 export class ModuleResource extends ResourceBase {
+  private config: ResourceConfigs['module'] | null = null;
+
   constructor() {
     super('module');
+  }
+
+  async configure<T extends ResourceType>(config: ResourceConfigs[T]): Promise<boolean> {
+    if (this.type !== 'module') return false;
+    
+    try {
+      const moduleConfig = config as ResourceConfigs['module'];
+      this.config = moduleConfig;
+      this.setState('ready');
+      return true;
+    } catch (error) {
+      this.setState('error', error instanceof Error ? error.message : 'Configuration failed');
+      return false;
+    }
   }
 
   async acquire(): Promise<boolean> {
@@ -16,6 +33,14 @@ export class ModuleResource extends ResourceBase {
         this.setState('error', 'Failed to load Mapbox module');
         return false;
       }
+
+      if (this.config?.validateInstance) {
+        if (!instanceManager.isReady()) {
+          this.setState('error', 'Module instance validation failed');
+          return false;
+        }
+      }
+
       this.setState('ready');
       return true;
     } catch (error) {

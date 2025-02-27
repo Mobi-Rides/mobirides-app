@@ -3,13 +3,34 @@ import { ResourceBase } from './ResourceBase';
 import { mapboxTokenManager } from '../../tokenManager';
 import { TokenValidator } from '../../tokenValidator';
 import { eventBus } from '../eventBus';
+import { ResourceConfigs, ResourceType } from './resourceTypes';
 
 export class TokenResource extends ResourceBase {
   private validationTimeout: number = 1800000; // 30 minutes
   private lastValidation: number = 0;
+  private config: ResourceConfigs['token'] | null = null;
 
   constructor() {
     super('token');
+  }
+
+  async configure<T extends ResourceType>(config: ResourceConfigs[T]): Promise<boolean> {
+    if (this.type !== 'token') return false;
+
+    try {
+      const tokenConfig = config as ResourceConfigs['token'];
+      this.config = tokenConfig;
+
+      if (tokenConfig.refreshInterval) {
+        this.validationTimeout = tokenConfig.refreshInterval;
+      }
+
+      this.setState('ready');
+      return true;
+    } catch (error) {
+      this.setState('error', error instanceof Error ? error.message : 'Configuration failed');
+      return false;
+    }
   }
 
   async acquire(): Promise<boolean> {
@@ -73,8 +94,10 @@ export class TokenResource extends ResourceBase {
         return false;
       }
 
-      // Check if we need to revalidate
-      if (Date.now() - this.lastValidation < this.validationTimeout && this.state.status === 'ready') {
+      // Check if we need to revalidate based on configuration
+      if (!this.config?.validateOnRefresh && 
+          Date.now() - this.lastValidation < this.validationTimeout && 
+          this.state.status === 'ready') {
         console.log('[TokenResource] Using cached validation');
         return true;
       }
