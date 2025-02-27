@@ -1,4 +1,6 @@
 
+import { Location } from '../location/LocationManager';
+
 export type MapInitializationState = 
   | 'uninitialized'
   | 'prerequisites_checking'
@@ -15,7 +17,7 @@ export type MapResourceState = {
 };
 
 export type MapStateEvent = {
-  type: 'stateChange' | 'resourceUpdate' | 'error';
+  type: 'stateChange' | 'resourceUpdate' | 'error' | 'locationUpdate';
   payload: any;
 };
 
@@ -26,4 +28,3 @@ export interface StateSubscriber {
 export interface EventSubscriber {
   onEvent: (event: MapStateEvent) => void;
 }
-

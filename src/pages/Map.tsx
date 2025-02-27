@@ -1,52 +1,65 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Navigation } from "@/components/Navigation";
-import { MapContainer } from "@/components/map/MapContainer";
-import { useUserLocation } from "@/hooks/useUserLocation";
+import { mapCore } from "@/utils/mapbox/core/MapCore";
+import { locationManager } from "@/utils/mapbox/location/LocationManager";
+import { resourceManager } from "@/utils/mapbox/core/resource/ResourceManager";
 import { toast } from "sonner";
+import { eventBus } from "@/utils/mapbox/core/eventBus";
+import { MapStateEvent } from "@/utils/mapbox/core/types";
 
 const Map = () => {
-  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
-  const { userLocation } = useUserLocation(mapInstance);
+  const mapContainer = useRef<HTMLDivElement>(null);
 
-  // Default coordinates for initial map render
-  const defaultCoords = {
-    latitude: -24.6282,
-    longitude: 25.9692
-  };
-
-  const handleMapLoad = (map: mapboxgl.Map) => {
-    console.log('[Map] Map loaded, setting map instance');
-    setMapInstance(map);
-  };
-
-  const handleMapError = (error: Error) => {
-    console.error('[Map] Map error:', error);
-    toast.error(error.message);
-  };
-
-  // Effect to update map center when user location is available
   useEffect(() => {
-    if (mapInstance && userLocation) {
-      console.log('[Map] User location available, updating map center');
-      mapInstance.flyTo({
-        center: [userLocation.longitude, userLocation.latitude],
-        zoom: 14,
-        essential: true
+    const initializeMap = async () => {
+      if (!mapContainer.current) return;
+
+      // Set DOM container resource
+      resourceManager.getResource('dom')?.setContainer(mapContainer.current);
+
+      // Initialize map with default settings
+      const success = await mapCore.initialize(mapContainer.current, {
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [-24.6282, 25.9692],
+        zoom: 12,
+        pitchWithRotate: true,
+        dragRotate: true,
+        attributionControl: true,
+        preserveDrawingBuffer: true
       });
-    }
-  }, [mapInstance, userLocation]);
+
+      if (success) {
+        // Start location tracking
+        locationManager.startTracking();
+      }
+    };
+
+    initializeMap();
+
+    // Subscribe to events
+    const handleEvent = (event: MapStateEvent) => {
+      if (event.type === 'error') {
+        toast.error(event.payload);
+      }
+    };
+
+    eventBus.subscribe({ onEvent: handleEvent });
+
+    // Cleanup
+    return () => {
+      locationManager.stopTracking();
+      mapCore.cleanup();
+      eventBus.unsubscribe({ onEvent: handleEvent });
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <main className="pb-16">
-        <MapContainer
-          initialLatitude={defaultCoords.latitude}
-          initialLongitude={defaultCoords.longitude}
-          height="h-[calc(100vh-4rem)]"
-          onMapLoad={handleMapLoad}
-          onMapError={handleMapError}
-        />
+        <div className="h-[calc(100vh-4rem)]">
+          <div ref={mapContainer} className="w-full h-full rounded-lg overflow-hidden" />
+        </div>
       </main>
       <Navigation />
     </div>
