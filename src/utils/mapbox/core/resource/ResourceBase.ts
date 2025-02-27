@@ -3,9 +3,10 @@ import { Resource, ResourceType, ResourceState, ResourceStatus, ResourceConfigs,
 import { eventBus } from '../eventBus';
 
 export abstract class ResourceBase implements Resource {
-  public state: ResourceState = {
+  protected state: ResourceState = {
     status: 'pending',
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    retryCount: 0
   };
 
   protected metrics: ResourceMetrics = {
@@ -13,8 +14,12 @@ export abstract class ResourceBase implements Resource {
     validationTime: 0,
     errorCount: 0,
     lastValidated: 0,
-    dependencyValidationTime: 0
+    retryCount: 0,
+    averageValidationTime: 0
   };
+
+  protected maxRetries: number = 3;
+  protected retryDelay: number = 1000;
 
   constructor(public readonly type: ResourceType) {}
 
@@ -22,18 +27,24 @@ export abstract class ResourceBase implements Resource {
     const previousState = this.state.status;
     
     if (!this.isValidStateTransition(previousState, status)) {
-      console.warn(`Invalid state transition from ${previousState} to ${status}`);
+      console.warn(`[ResourceBase] Invalid state transition from ${previousState} to ${status}`);
       return;
     }
 
     const timestamp = Date.now();
-    this.state = { status, error, timestamp };
+    this.state = { 
+      ...this.state,
+      status, 
+      error, 
+      timestamp,
+      retryCount: status === 'error' ? (this.state.retryCount || 0) + 1 : this.state.retryCount
+    };
 
     if (status === 'error') {
       this.metrics.errorCount++;
     }
     if (status === 'ready') {
-      this.metrics.loadTime = timestamp - this.metrics.lastValidated;
+      this.metrics.loadTime = timestamp - (this.metrics.lastValidated || timestamp);
     }
 
     eventBus.emit({
@@ -52,13 +63,39 @@ export abstract class ResourceBase implements Resource {
   abstract validate(): Promise<boolean>;
   abstract configure(config: ResourceConfigs[ResourceType]): Promise<boolean>;
 
+  protected async withRetry<T>(
+    operation: () => Promise<T>,
+    errorMessage: string
+  ): Promise<T> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(errorMessage);
+        console.warn(`[ResourceBase] Attempt ${attempt}/${this.maxRetries} failed:`, lastError.message);
+        
+        if (attempt < this.maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
+        }
+      }
+    }
+
+    throw lastError || new Error(errorMessage);
+  }
+
   protected async validateWithMetrics(): Promise<ResourceValidationResult> {
     const start = Date.now();
     try {
       const isValid = await this.validate();
       const validationTime = Date.now() - start;
+      
       this.metrics.validationTime = validationTime;
       this.metrics.lastValidated = Date.now();
+      this.metrics.averageValidationTime = (
+        this.metrics.averageValidationTime * this.metrics.retryCount + validationTime
+      ) / (this.metrics.retryCount + 1);
 
       return {
         isValid,
@@ -72,7 +109,8 @@ export abstract class ResourceBase implements Resource {
         isValid: false,
         error: error instanceof Error ? error.message : 'Validation failed',
         metrics: {
-          validationTime: Date.now() - start
+          validationTime: Date.now() - start,
+          lastValidated: this.metrics.lastValidated
         }
       };
     }
@@ -86,7 +124,7 @@ export abstract class ResourceBase implements Resource {
     return { ...this.metrics };
   }
 
-  private isValidStateTransition(from: ResourceStatus, to: ResourceStatus): boolean {
+  protected isValidStateTransition(from: ResourceStatus, to: ResourceStatus): boolean {
     const validTransitions: Record<ResourceStatus, ResourceStatus[]> = {
       'pending': ['loading', 'error'],
       'loading': ['ready', 'error'],
@@ -95,5 +133,13 @@ export abstract class ResourceBase implements Resource {
     };
 
     return validTransitions[from]?.includes(to) ?? false;
+  }
+
+  protected canRetry(): boolean {
+    return (this.state.retryCount || 0) < this.maxRetries;
+  }
+
+  protected resetRetryCount(): void {
+    this.state.retryCount = 0;
   }
 }

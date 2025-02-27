@@ -32,18 +32,24 @@ export class MapCore {
           validateSize: true,
           minWidth: 100,
           minHeight: 100
-        }
+        },
+        maxRetries: 3,
+        retryDelay: 1000
       };
 
       const moduleConfig: ConfigForResource<'module'> = {
         validateInstance: true,
-        validateDependencies: true
+        validateDependencies: true,
+        maxRetries: 3,
+        retryDelay: 1000
       };
 
       const tokenConfig: ConfigForResource<'token'> = {
         refreshInterval: 1800000,
         validateOnRefresh: true,
-        validateDependencies: true
+        validateDependencies: true,
+        maxRetries: 3,
+        retryDelay: 1000
       };
 
       // Configure resources

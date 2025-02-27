@@ -10,11 +10,15 @@ export interface ResourceState {
   status: ResourceStatus;
   error?: string;
   timestamp: number;
+  retryCount?: number;
+  lastValidated?: number;
 }
 
 // Generic resource configuration
 export interface ResourceConfigBase {
   validateDependencies?: boolean;
+  maxRetries?: number;
+  retryDelay?: number;
 }
 
 // Specific resource configurations
@@ -61,24 +65,21 @@ export const resourceDependencies = {
   'dom': [] as ResourceType[],
 } as const;
 
-export type ResourceError = {
-  type: ResourceType;
-  code: string;
-  message: string;
-  timestamp: number;
-  metadata?: Record<string, unknown>;
-};
+export interface ResourceValidationResult {
+  isValid: boolean;
+  error?: string;
+  metrics?: {
+    validationTime: number;
+    lastValidated: number;
+    dependencyValidationTime?: number;
+  };
+}
 
 export interface ResourceMetrics {
   loadTime: number;
   validationTime: number;
   errorCount: number;
   lastValidated: number;
-  dependencyValidationTime?: number;
-}
-
-export interface ResourceValidationResult {
-  isValid: boolean;
-  error?: string;
-  metrics?: Partial<ResourceMetrics>;
+  retryCount: number;
+  averageValidationTime: number;
 }
