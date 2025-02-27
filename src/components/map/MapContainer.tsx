@@ -5,6 +5,9 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapboxConfig } from "@/components/MapboxConfig";
 import { mapboxTokenManager } from '@/utils/mapbox';
+import { stateManager } from '@/utils/mapbox/core/stateManager';
+import { eventBus } from '@/utils/mapbox/core/eventBus';
+import { MapInitializationState, StateSubscriber, EventSubscriber, MapStateEvent } from '@/utils/mapbox/core/types';
 
 interface MapContainerProps {
   initialLatitude?: number;
@@ -27,63 +30,83 @@ export const MapContainer = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isModuleLoading, setIsModuleLoading] = useState(true);
-  const [tokenState, setTokenState] = useState(mapboxTokenManager.getTokenState());
-  const [isDomReady, setIsDomReady] = useState(false);
+  const [currentState, setCurrentState] = useState<MapInitializationState>(stateManager.getCurrentState());
+
+  useEffect(() => {
+    const stateSubscriber: StateSubscriber = {
+      onStateChange: (newState) => {
+        setCurrentState(newState);
+      }
+    };
+
+    const eventSubscriber: EventSubscriber = {
+      onEvent: (event: MapStateEvent) => {
+        if (event.type === 'error') {
+          onMapError?.(new Error(event.payload));
+          toast.error(event.payload);
+        }
+      }
+    };
+
+    stateManager.subscribe(stateSubscriber);
+    eventBus.subscribe(eventSubscriber);
+
+    return () => {
+      stateManager.unsubscribe(stateSubscriber);
+      eventBus.unsubscribe(eventSubscriber);
+    };
+  }, [onMapError]);
+
+  useEffect(() => {
+    if (mapContainer.current) {
+      stateManager.updateResourceState({ dom: true });
+    }
+  }, []);
 
   useEffect(() => {
     const initToken = async () => {
-      const token = await mapboxTokenManager.getToken();
-      setTokenState(mapboxTokenManager.getTokenState());
+      try {
+        await stateManager.transition('prerequisites_checking');
+        const token = await mapboxTokenManager.getToken();
+        if (token) {
+          stateManager.updateResourceState({ token: true });
+          await stateManager.transition('resources_acquiring');
+        } else {
+          throw new Error('No token available');
+        }
+      } catch (error) {
+        await stateManager.transition('error');
+        eventBus.emit({
+          type: 'error',
+          payload: error instanceof Error ? error.message : 'Failed to initialize token'
+        });
+      }
     };
-    initToken();
-  }, []);
 
-  // New effect to track DOM readiness
-  useEffect(() => {
-    if (mapContainer.current) {
-      console.log('[MapContainer] DOM element is ready');
-      setIsDomReady(true);
+    if (currentState === 'uninitialized') {
+      initToken();
     }
-  }, []);
+  }, [currentState]);
 
   const initializeMap = useCallback(async () => {
-    if (!mapContainer.current || !tokenState.token) {
-      console.log('[MapContainer] Initialization requirements not met:', {
-        hasContainer: !!mapContainer.current,
-        hasToken: !!tokenState.token
-      });
-      return;
-    }
-
     try {
-      console.log('[MapContainer] Starting map initialization...');
-      setIsModuleLoading(true);
-
       const instanceManager = mapboxTokenManager.getInstanceManager();
       if (!instanceManager.isReady()) {
-        console.log('[MapContainer] Loading Mapbox module...');
         await instanceManager.getMapboxModule();
       }
+      stateManager.updateResourceState({ module: true });
 
       if (!window.mapboxgl) {
         throw new Error('Mapbox GL JS module not properly initialized');
       }
 
       if (map.current) {
-        console.log('[MapContainer] Cleaning up existing map instance');
         map.current.remove();
         map.current = null;
       }
 
-      console.log('[MapContainer] Creating new map instance:', {
-        center: [initialLongitude, initialLatitude],
-        zoom: isMobile ? 13 : 12,
-        mobile: isMobile
-      });
-
       const newMap = new window.mapboxgl.Map({
-        container: mapContainer.current,
+        container: mapContainer.current!,
         style: 'mapbox://styles/mapbox/streets-v12',
         center: [initialLongitude, initialLatitude],
         zoom: isMobile ? 13 : 12,
@@ -94,11 +117,9 @@ export const MapContainer = ({
       });
 
       if (!isMobile) {
-        console.log('[MapContainer] Adding navigation controls (desktop mode)');
         newMap.addControl(new window.mapboxgl.NavigationControl(), 'top-right');
       }
 
-      console.log('[MapContainer] Adding geolocation control');
       const geolocateControl = new window.mapboxgl.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true
@@ -108,56 +129,52 @@ export const MapContainer = ({
       });
       newMap.addControl(geolocateControl, 'top-right');
 
-      newMap.once('load', () => {
-        console.log('[MapContainer] Map loaded successfully');
+      newMap.once('load', async () => {
         setIsLoaded(true);
         map.current = newMap;
         onMapLoad?.(newMap);
+        await stateManager.transition('features_activating');
+        await stateManager.transition('ready');
       });
 
-      newMap.on('error', (e) => {
-        console.error('[MapContainer] Map error:', {
-          error: e.error,
-          message: e.error ? e.error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
+      newMap.on('error', async (e) => {
+        const errorMessage = e.error ? e.error.message : 'Error loading map';
+        await stateManager.transition('error');
+        eventBus.emit({
+          type: 'error',
+          payload: errorMessage
         });
-        const error = new Error(e.error ? e.error.message : 'Error loading map');
-        onMapError?.(error);
-        toast.error(error.message);
       });
 
     } catch (error) {
-      console.error('[MapContainer] Error initializing map:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize map';
-      onMapError?.(new Error(errorMessage));
-      toast.error(errorMessage);
-    } finally {
-      setIsModuleLoading(false);
-    }
-  }, [initialLatitude, initialLongitude, isMobile, onMapLoad, onMapError, tokenState.token]);
-
-  // Updated initialization effect to consider DOM readiness
-  useEffect(() => {
-    if (tokenState.token && isDomReady) {
-      console.log('[MapContainer] All prerequisites met, initializing map...');
-      initializeMap();
-    } else {
-      console.log('[MapContainer] Waiting for prerequisites:', {
-        hasToken: !!tokenState.token,
-        isDomReady
+      await stateManager.transition('error');
+      eventBus.emit({
+        type: 'error',
+        payload: error instanceof Error ? error.message : 'Failed to initialize map'
       });
     }
+  }, [initialLatitude, initialLongitude, isMobile, onMapLoad]);
 
+  useEffect(() => {
+    if (currentState === 'core_initializing') {
+      initializeMap();
+    }
+  }, [currentState, initializeMap]);
+
+  useEffect(() => {
     return () => {
       if (map.current) {
-        console.log('[MapContainer] Cleaning up map instance');
         map.current.remove();
         map.current = null;
       }
     };
-  }, [initializeMap, tokenState.token, isDomReady]);
+  }, []);
 
-  if (tokenState.status === 'loading' || isModuleLoading) {
+  if (currentState === 'error' || !mapboxTokenManager.getTokenState().token) {
+    return <MapboxConfig />;
+  }
+
+  if (currentState !== 'ready' && !isLoaded) {
     return (
       <div className={`relative rounded-lg overflow-hidden ${height} ${className}`}>
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm">
@@ -165,11 +182,6 @@ export const MapContainer = ({
         </div>
       </div>
     );
-  }
-
-  if (tokenState.status === 'error' || !tokenState.token) {
-    console.log('[MapContainer] No token available, rendering MapboxConfig');
-    return <MapboxConfig />;
   }
 
   return (
@@ -183,3 +195,4 @@ export const MapContainer = ({
     </div>
   );
 };
+
