@@ -12,12 +12,13 @@ export interface ResourceState {
   timestamp: number;
 }
 
-export interface ResourceConfig<T = unknown> {
-  type: ResourceType;
-  config: T;
+// Generic resource configuration
+export interface ResourceConfigBase {
+  validateDependencies?: boolean;
 }
 
-export interface DOMResourceConfig {
+// Specific resource configurations
+export interface DOMResourceConfig extends ResourceConfigBase {
   container: HTMLElement;
   options?: {
     validateSize?: boolean;
@@ -26,22 +27,24 @@ export interface DOMResourceConfig {
   }
 }
 
-export interface ModuleResourceConfig {
+export interface ModuleResourceConfig extends ResourceConfigBase {
   validateInstance?: boolean;
-  validateDependencies?: boolean;
 }
 
-export interface TokenResourceConfig {
+export interface TokenResourceConfig extends ResourceConfigBase {
   refreshInterval?: number;
   validateOnRefresh?: boolean;
-  validateDependencies?: boolean;
 }
 
+// Type-safe configuration mapping
 export type ResourceConfigs = {
   'dom': DOMResourceConfig;
   'module': ModuleResourceConfig;
   'token': TokenResourceConfig;
 }
+
+// Type helper for configuration
+export type ConfigForResource<T extends ResourceType> = ResourceConfigs[T];
 
 export interface Resource {
   type: ResourceType;
@@ -49,7 +52,7 @@ export interface Resource {
   acquire: () => Promise<boolean>;
   release: () => Promise<void>;
   validate: () => Promise<boolean>;
-  configure: (config: ResourceConfigs[ResourceType]) => Promise<boolean>;
+  configure: <T extends ResourceType>(config: ConfigForResource<T>) => Promise<boolean>;
 }
 
 export const resourceDependencies = {

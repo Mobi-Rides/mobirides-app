@@ -4,6 +4,7 @@ import { eventBus } from './eventBus';
 import { resourceManager } from './resource/ResourceManager';
 import { stateManager } from './stateManager';
 import { viewportManager } from '../viewport/ViewportManager';
+import { ConfigForResource } from './resource/resourceTypes';
 
 export class MapCore {
   private static instance: MapCore;
@@ -24,8 +25,8 @@ export class MapCore {
       console.log('[MapCore] Starting map initialization');
       await stateManager.transition('prerequisites_checking');
 
-      // Configure and acquire resources in correct order
-      const domConfig = {
+      // Configure resources with type-safe configurations
+      const domConfig: ConfigForResource<'dom'> = {
         container,
         options: {
           validateSize: true,
@@ -34,13 +35,15 @@ export class MapCore {
         }
       };
 
-      const moduleConfig = {
-        validateInstance: true
+      const moduleConfig: ConfigForResource<'module'> = {
+        validateInstance: true,
+        validateDependencies: true
       };
 
-      const tokenConfig = {
-        refreshInterval: 1800000, // 30 minutes
-        validateOnRefresh: true
+      const tokenConfig: ConfigForResource<'token'> = {
+        refreshInterval: 1800000,
+        validateOnRefresh: true,
+        validateDependencies: true
       };
 
       // Configure resources
@@ -166,14 +169,10 @@ export class MapCore {
     this.isStyleLoaded = false;
 
     // Release resources in reverse dependency order
-    await resourceManager.releaseResource('module');
-    await resourceManager.releaseResource('token');
-    await resourceManager.releaseResource('dom');
-
+    await resourceManager.releaseAll();
     await stateManager.transition('uninitialized');
     console.log('[MapCore] Cleanup complete');
   }
 }
 
 export const mapCore = MapCore.getInstance();
-
