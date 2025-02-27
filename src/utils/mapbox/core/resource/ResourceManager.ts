@@ -1,10 +1,15 @@
 
-import { ResourceType, ResourceState, ResourceManagerState } from './types';
+import { ResourceType, ResourceState, Resource } from './resourceTypes';
+import { ResourceBase } from './ResourceBase';
 import { TokenResource } from './TokenResource';
 import { ModuleResource } from './ModuleResource';
 import { DOMResource } from './DOMResource';
 import { eventBus } from '../eventBus';
 import { stateManager } from '../stateManager';
+
+export interface ResourceManagerState {
+  [key: string]: ResourceState;
+}
 
 export class ResourceManager {
   private static instance: ResourceManager;

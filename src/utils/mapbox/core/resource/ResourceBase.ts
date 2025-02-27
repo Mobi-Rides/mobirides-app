@@ -1,5 +1,5 @@
 
-import { Resource, ResourceType, ResourceState, ResourceStatus } from './types';
+import { Resource, ResourceType, ResourceState, ResourceStatus } from './resourceTypes';
 import { eventBus } from '../eventBus';
 
 export abstract class ResourceBase implements Resource {
