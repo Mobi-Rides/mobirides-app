@@ -1,4 +1,3 @@
-
 import { 
   ResourceType, 
   ResourceState, 
@@ -57,6 +56,26 @@ export class ResourceManager {
     return true;
   }
 
+  async configureResource(
+    type: ResourceType,
+    config: ResourceConfigs[typeof type]
+  ): Promise<boolean> {
+    const resource = this.resources.get(type);
+    if (!resource) {
+      throw new Error(`Resource ${type} not found`);
+    }
+
+    try {
+      return await resource.configure(config);
+    } catch (error) {
+      eventBus.emit({
+        type: 'error',
+        payload: `Failed to configure resource ${type}: ${error}`
+      });
+      return false;
+    }
+  }
+
   async acquireResource(type: ResourceType): Promise<boolean> {
     const resource = this.resources.get(type);
     if (!resource) {
@@ -64,7 +83,6 @@ export class ResourceManager {
     }
 
     try {
-      // Check dependencies first
       const dependenciesReady = await this.validateDependencies(type);
       if (!dependenciesReady) {
         eventBus.emit({
@@ -86,26 +104,6 @@ export class ResourceManager {
       eventBus.emit({
         type: 'error',
         payload: `Failed to acquire resource ${type}: ${error}`
-      });
-      return false;
-    }
-  }
-
-  async configureResource<T extends ResourceType>(
-    type: T,
-    config: ResourceConfigs[T]
-  ): Promise<boolean> {
-    const resource = this.resources.get(type);
-    if (!resource) {
-      throw new Error(`Resource ${type} not found`);
-    }
-
-    try {
-      return await resource.configure(config);
-    } catch (error) {
-      eventBus.emit({
-        type: 'error',
-        payload: `Failed to configure resource ${type}: ${error}`
       });
       return false;
     }

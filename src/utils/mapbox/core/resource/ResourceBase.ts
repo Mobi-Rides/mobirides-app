@@ -2,9 +2,6 @@
 import { Resource, ResourceType, ResourceState, ResourceStatus, ResourceConfigs } from './resourceTypes';
 import { eventBus } from '../eventBus';
 
-/**
- * Base class for all resource implementations with type-safe configuration
- */
 export abstract class ResourceBase implements Resource {
   public state: ResourceState = {
     status: 'pending',
@@ -29,13 +26,8 @@ export abstract class ResourceBase implements Resource {
     }
 
     const timestamp = Date.now();
-    this.state = {
-      status,
-      error,
-      timestamp
-    };
+    this.state = { status, error, timestamp };
 
-    // Track metrics
     if (status === 'error') {
       this.metrics.errorCount++;
     }
@@ -57,7 +49,7 @@ export abstract class ResourceBase implements Resource {
   abstract acquire(): Promise<boolean>;
   abstract release(): Promise<void>;
   abstract validate(): Promise<boolean>;
-  abstract configure<T extends ResourceType>(config: ResourceConfigs[T]): Promise<boolean>;
+  abstract configure(config: ResourceConfigs[ResourceType]): Promise<boolean>;
 
   getState(): ResourceState {
     return { ...this.state };
@@ -86,4 +78,3 @@ export abstract class ResourceBase implements Resource {
     return validTransitions[from]?.includes(to) ?? false;
   }
 }
-
