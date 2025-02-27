@@ -7,6 +7,7 @@ import { resourceManager } from "@/utils/mapbox/core/resource/ResourceManager";
 import { toast } from "sonner";
 import { eventBus } from "@/utils/mapbox/core/eventBus";
 import { MapStateEvent } from "@/utils/mapbox/core/types";
+import { locationStateManager } from "@/utils/mapbox/location/LocationStateManager";
 
 const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -29,8 +30,8 @@ const Map = () => {
         preserveDrawingBuffer: true
       });
 
-      if (success) {
-        // Start location tracking
+      if (success && locationStateManager.getCurrentState() === 'enabled') {
+        // Only start tracking if it's enabled in the state manager
         locationManager.startTracking();
       }
     };

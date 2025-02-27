@@ -4,6 +4,7 @@ import { mapCore } from '../core/MapCore';
 import { viewportManager } from '../viewport/ViewportManager';
 import { createMarkerElement } from '@/utils/domUtils';
 import { eventBus } from '../core/eventBus';
+import { toast } from "sonner";
 
 export interface Location {
   latitude: number;
@@ -31,6 +32,11 @@ export class LocationManager {
         type: 'error',
         payload: 'Geolocation is not supported by your browser'
       });
+      return;
+    }
+
+    if (this.watchId !== null) {
+      // Already tracking
       return;
     }
 
@@ -75,15 +81,19 @@ export class LocationManager {
     switch (error.code) {
       case error.PERMISSION_DENIED:
         message += 'Location permission denied';
+        toast.error(message);
         break;
       case error.POSITION_UNAVAILABLE:
         message += 'Location information unavailable';
+        toast.error(message);
         break;
       case error.TIMEOUT:
         message += 'Location request timed out';
+        toast.error(message);
         break;
       default:
         message += 'Unknown error occurred';
+        toast.error(message);
     }
     eventBus.emit({
       type: 'error',
