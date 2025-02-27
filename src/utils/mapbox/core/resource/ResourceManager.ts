@@ -1,5 +1,11 @@
 
-import { ResourceType, ResourceState, Resource } from './resourceTypes';
+import { 
+  ResourceType, 
+  ResourceState, 
+  Resource, 
+  ResourceConfigs,
+  resourceDependencies
+} from './resourceTypes';
 import { ResourceBase } from './ResourceBase';
 import { TokenResource } from './TokenResource';
 import { ModuleResource } from './ModuleResource';
@@ -32,10 +38,23 @@ export class ResourceManager {
     this.resources.set('module', new ModuleResource());
     this.resources.set('dom', new DOMResource());
 
-    // Initialize state for each resource
     this.resources.forEach((resource, type) => {
       this.state[type] = resource.getState();
     });
+  }
+
+  private async validateDependencies(type: ResourceType): Promise<boolean> {
+    const dependencies = resourceDependencies[type];
+    
+    for (const dep of dependencies) {
+      const resource = this.resources.get(dep);
+      if (!resource || resource.state.status !== 'ready') {
+        console.error(`Dependency ${dep} not ready for resource ${type}`);
+        return false;
+      }
+    }
+    
+    return true;
   }
 
   async acquireResource(type: ResourceType): Promise<boolean> {
@@ -45,6 +64,16 @@ export class ResourceManager {
     }
 
     try {
+      // Check dependencies first
+      const dependenciesReady = await this.validateDependencies(type);
+      if (!dependenciesReady) {
+        eventBus.emit({
+          type: 'error',
+          payload: `Dependencies not ready for resource ${type}`
+        });
+        return false;
+      }
+
       const success = await resource.acquire();
       this.state[type] = resource.getState();
       
@@ -57,6 +86,26 @@ export class ResourceManager {
       eventBus.emit({
         type: 'error',
         payload: `Failed to acquire resource ${type}: ${error}`
+      });
+      return false;
+    }
+  }
+
+  async configureResource<T extends ResourceType>(
+    type: T,
+    config: ResourceConfigs[T]
+  ): Promise<boolean> {
+    const resource = this.resources.get(type);
+    if (!resource) {
+      throw new Error(`Resource ${type} not found`);
+    }
+
+    try {
+      return await resource.configure(config);
+    } catch (error) {
+      eventBus.emit({
+        type: 'error',
+        payload: `Failed to configure resource ${type}: ${error}`
       });
       return false;
     }
@@ -99,8 +148,8 @@ export class ResourceManager {
     }
   }
 
-  getResource<T extends ResourceBase>(type: ResourceType): T | undefined {
-    return this.resources.get(type) as T | undefined;
+  getResource<T extends ResourceType>(type: T): ResourceBase | undefined {
+    return this.resources.get(type);
   }
 
   getResourceState(type: ResourceType): ResourceState {
@@ -112,9 +161,32 @@ export class ResourceManager {
   }
 
   async releaseAll(): Promise<void> {
-    for (const [type] of this.resources) {
+    // Release in reverse dependency order
+    const types = Array.from(this.resources.keys());
+    const reversedTypes = this.sortByDependencies(types).reverse();
+    
+    for (const type of reversedTypes) {
       await this.releaseResource(type);
     }
+  }
+
+  private sortByDependencies(types: ResourceType[]): ResourceType[] {
+    const visited = new Set<ResourceType>();
+    const sorted: ResourceType[] = [];
+
+    const visit = (type: ResourceType) => {
+      if (visited.has(type)) return;
+      visited.add(type);
+
+      for (const dep of resourceDependencies[type]) {
+        visit(dep);
+      }
+
+      sorted.push(type);
+    };
+
+    types.forEach(visit);
+    return sorted;
   }
 }
 

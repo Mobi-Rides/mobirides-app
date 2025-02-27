@@ -16,8 +16,15 @@ const Map = () => {
     const initializeMap = async () => {
       if (!mapContainer.current) return;
 
-      // Set DOM container resource
-      resourceManager.getResource('dom')?.setContainer(mapContainer.current);
+      // Configure DOM resource first
+      await resourceManager.configureResource('dom', {
+        container: mapContainer.current,
+        options: {
+          validateSize: true,
+          minWidth: 100,
+          minHeight: 100
+        }
+      });
 
       // Initialize map with default settings
       const success = await mapCore.initialize(mapContainer.current, {

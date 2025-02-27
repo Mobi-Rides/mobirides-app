@@ -1,5 +1,5 @@
 
-import { Resource, ResourceType, ResourceState, ResourceStatus } from './resourceTypes';
+import { Resource, ResourceType, ResourceState, ResourceStatus, ResourceConfigs } from './resourceTypes';
 import { eventBus } from '../eventBus';
 
 export abstract class ResourceBase implements Resource {
@@ -11,6 +11,14 @@ export abstract class ResourceBase implements Resource {
   constructor(public readonly type: ResourceType) {}
 
   protected setState(status: ResourceStatus, error?: string) {
+    const previousState = this.state.status;
+    
+    // Validate state transition
+    if (!this.isValidStateTransition(previousState, status)) {
+      console.warn(`Invalid state transition from ${previousState} to ${status}`);
+      return;
+    }
+
     this.state = {
       status,
       error,
@@ -21,7 +29,8 @@ export abstract class ResourceBase implements Resource {
       type: 'resourceUpdate',
       payload: {
         type: this.type,
-        state: this.state
+        state: this.state,
+        previousState
       }
     });
   }
@@ -29,8 +38,20 @@ export abstract class ResourceBase implements Resource {
   abstract acquire(): Promise<boolean>;
   abstract release(): Promise<void>;
   abstract validate(): Promise<boolean>;
+  abstract configure<T extends ResourceType>(config: ResourceConfigs[T]): Promise<boolean>;
 
   getState(): ResourceState {
     return { ...this.state };
+  }
+
+  private isValidStateTransition(from: ResourceStatus, to: ResourceStatus): boolean {
+    const validTransitions: Record<ResourceStatus, ResourceStatus[]> = {
+      'pending': ['loading', 'error'],
+      'loading': ['ready', 'error'],
+      'ready': ['loading', 'error', 'pending'],
+      'error': ['loading', 'pending']
+    };
+
+    return validTransitions[from]?.includes(to) ?? false;
   }
 }
