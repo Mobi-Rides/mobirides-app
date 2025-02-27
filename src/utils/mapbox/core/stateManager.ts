@@ -10,6 +10,7 @@ export class StateManager {
     dom: false
   };
   private subscribers: StateSubscriber[] = [];
+  private transitionInProgress: boolean = false;
 
   private constructor() {}
 
@@ -43,18 +44,40 @@ export class StateManager {
   }
 
   async transition(newState: MapInitializationState) {
-    console.log(`[StateManager] Transitioning from ${this.currentState} to ${newState}`);
-    
-    // Validate state transition
-    if (!this.isValidTransition(this.currentState, newState)) {
-      throw new Error(`Invalid state transition from ${this.currentState} to ${newState}`);
+    if (this.transitionInProgress) {
+      console.warn(`[StateManager] State transition already in progress: ${this.currentState} -> ${newState}`);
+      return;
     }
 
-    this.currentState = newState;
-    this.notifySubscribers();
+    this.transitionInProgress = true;
+    console.log(`[StateManager] Starting transition from ${this.currentState} to ${newState}`);
+    
+    try {
+      // Validate state transition
+      if (!this.isValidTransition(this.currentState, newState)) {
+        throw new Error(`Invalid state transition from ${this.currentState} to ${newState}`);
+      }
+
+      // Handle special state transitions
+      if (newState === 'core_initializing' && !this.areResourcesReady()) {
+        throw new Error('Cannot transition to core_initializing: resources not ready');
+      }
+
+      this.currentState = newState;
+      this.notifySubscribers();
+      console.log(`[StateManager] Successfully transitioned to ${newState}`);
+    } catch (error) {
+      console.error('[StateManager] Transition error:', error);
+      // Force transition to error state on failure
+      this.currentState = 'error';
+      this.notifySubscribers();
+    } finally {
+      this.transitionInProgress = false;
+    }
   }
 
   updateResourceState(updates: Partial<MapResourceState>) {
+    console.log('[StateManager] Updating resource state:', updates);
     this.resourceState = {
       ...this.resourceState,
       ...updates
@@ -62,6 +85,7 @@ export class StateManager {
 
     // Check if all resources are ready
     if (this.areResourcesReady() && this.currentState === 'resources_acquiring') {
+      console.log('[StateManager] All resources ready, transitioning to core_initializing');
       this.transition('core_initializing');
     }
   }
@@ -86,4 +110,3 @@ export class StateManager {
 }
 
 export const stateManager = StateManager.getInstance();
-

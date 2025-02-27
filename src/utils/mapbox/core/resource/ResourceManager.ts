@@ -1,9 +1,11 @@
+
 import { 
   ResourceType, 
   ResourceState, 
   Resource, 
   ResourceConfigs,
-  resourceDependencies
+  resourceDependencies,
+  ResourceValidationResult
 } from './resourceTypes';
 import { ResourceBase } from './ResourceBase';
 import { TokenResource } from './TokenResource';
@@ -20,6 +22,7 @@ export class ResourceManager {
   private static instance: ResourceManager;
   private resources: Map<ResourceType, ResourceBase> = new Map();
   private state: ResourceManagerState = {};
+  private validationInProgress: boolean = false;
 
   private constructor() {
     this.initializeResources();
@@ -42,24 +45,47 @@ export class ResourceManager {
     });
   }
 
-  private async validateDependencies(type: ResourceType): Promise<boolean> {
+  private async validateDependencies(type: ResourceType): Promise<ResourceValidationResult> {
     const dependencies = resourceDependencies[type];
+    const start = Date.now();
     
     for (const dep of dependencies) {
       const resource = this.resources.get(dep);
-      if (!resource || resource.state.status !== 'ready') {
-        console.error(`Dependency ${dep} not ready for resource ${type}`);
-        return false;
+      if (!resource) {
+        return {
+          isValid: false,
+          error: `Dependency ${dep} not found for resource ${type}`,
+          metrics: {
+            dependencyValidationTime: Date.now() - start
+          }
+        };
+      }
+
+      const validation = await resource.validate();
+      if (!validation) {
+        return {
+          isValid: false,
+          error: `Dependency ${dep} validation failed for resource ${type}`,
+          metrics: {
+            dependencyValidationTime: Date.now() - start
+          }
+        };
       }
     }
     
-    return true;
+    return {
+      isValid: true,
+      metrics: {
+        dependencyValidationTime: Date.now() - start
+      }
+    };
   }
 
   async configureResource(
     type: ResourceType,
     config: ResourceConfigs[typeof type]
   ): Promise<boolean> {
+    console.log(`[ResourceManager] Configuring resource: ${type}`);
     const resource = this.resources.get(type);
     if (!resource) {
       throw new Error(`Resource ${type} not found`);
@@ -68,6 +94,7 @@ export class ResourceManager {
     try {
       return await resource.configure(config);
     } catch (error) {
+      console.error(`[ResourceManager] Failed to configure resource ${type}:`, error);
       eventBus.emit({
         type: 'error',
         payload: `Failed to configure resource ${type}: ${error}`
@@ -77,17 +104,19 @@ export class ResourceManager {
   }
 
   async acquireResource(type: ResourceType): Promise<boolean> {
+    console.log(`[ResourceManager] Acquiring resource: ${type}`);
     const resource = this.resources.get(type);
     if (!resource) {
       throw new Error(`Resource ${type} not found`);
     }
 
     try {
-      const dependenciesReady = await this.validateDependencies(type);
-      if (!dependenciesReady) {
+      const dependencyValidation = await this.validateDependencies(type);
+      if (!dependencyValidation.isValid) {
+        console.error(`[ResourceManager] Dependencies not valid for ${type}:`, dependencyValidation.error);
         eventBus.emit({
           type: 'error',
-          payload: `Dependencies not ready for resource ${type}`
+          payload: dependencyValidation.error || `Dependencies not valid for resource ${type}`
         });
         return false;
       }
@@ -97,10 +126,12 @@ export class ResourceManager {
       
       if (success) {
         stateManager.updateResourceState({ [type]: true });
+        console.log(`[ResourceManager] Successfully acquired resource: ${type}`);
       }
 
       return success;
     } catch (error) {
+      console.error(`[ResourceManager] Failed to acquire resource ${type}:`, error);
       eventBus.emit({
         type: 'error',
         payload: `Failed to acquire resource ${type}: ${error}`
@@ -110,6 +141,7 @@ export class ResourceManager {
   }
 
   async releaseResource(type: ResourceType): Promise<void> {
+    console.log(`[ResourceManager] Releasing resource: ${type}`);
     const resource = this.resources.get(type);
     if (!resource) {
       throw new Error(`Resource ${type} not found`);
@@ -119,7 +151,9 @@ export class ResourceManager {
       await resource.release();
       this.state[type] = resource.getState();
       stateManager.updateResourceState({ [type]: false });
+      console.log(`[ResourceManager] Successfully released resource: ${type}`);
     } catch (error) {
+      console.error(`[ResourceManager] Failed to release resource ${type}:`, error);
       eventBus.emit({
         type: 'error',
         payload: `Failed to release resource ${type}: ${error}`
@@ -128,21 +162,39 @@ export class ResourceManager {
   }
 
   async validateResource(type: ResourceType): Promise<boolean> {
-    const resource = this.resources.get(type);
-    if (!resource) {
-      throw new Error(`Resource ${type} not found`);
+    if (this.validationInProgress) {
+      console.log(`[ResourceManager] Validation already in progress for ${type}`);
+      return false;
     }
 
+    this.validationInProgress = true;
+    console.log(`[ResourceManager] Validating resource: ${type}`);
+
     try {
+      const resource = this.resources.get(type);
+      if (!resource) {
+        throw new Error(`Resource ${type} not found`);
+      }
+
+      const dependencyValidation = await this.validateDependencies(type);
+      if (!dependencyValidation.isValid) {
+        console.error(`[ResourceManager] Dependency validation failed for ${type}:`, dependencyValidation.error);
+        return false;
+      }
+
       const isValid = await resource.validate();
       this.state[type] = resource.getState();
+      console.log(`[ResourceManager] Resource validation result for ${type}:`, isValid);
       return isValid;
     } catch (error) {
+      console.error(`[ResourceManager] Failed to validate resource ${type}:`, error);
       eventBus.emit({
         type: 'error',
         payload: `Failed to validate resource ${type}: ${error}`
       });
       return false;
+    } finally {
+      this.validationInProgress = false;
     }
   }
 
@@ -159,13 +211,14 @@ export class ResourceManager {
   }
 
   async releaseAll(): Promise<void> {
-    // Release in reverse dependency order
+    console.log('[ResourceManager] Starting release of all resources');
     const types = Array.from(this.resources.keys());
     const reversedTypes = this.sortByDependencies(types).reverse();
     
     for (const type of reversedTypes) {
       await this.releaseResource(type);
     }
+    console.log('[ResourceManager] Completed release of all resources');
   }
 
   private sortByDependencies(types: ResourceType[]): ResourceType[] {

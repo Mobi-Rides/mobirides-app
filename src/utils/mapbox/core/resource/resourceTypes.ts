@@ -28,11 +28,13 @@ export interface DOMResourceConfig {
 
 export interface ModuleResourceConfig {
   validateInstance?: boolean;
+  validateDependencies?: boolean;
 }
 
 export interface TokenResourceConfig {
   refreshInterval?: number;
   validateOnRefresh?: boolean;
+  validateDependencies?: boolean;
 }
 
 export type ResourceConfigs = {
@@ -69,4 +71,11 @@ export interface ResourceMetrics {
   validationTime: number;
   errorCount: number;
   lastValidated: number;
+  dependencyValidationTime?: number;
+}
+
+export interface ResourceValidationResult {
+  isValid: boolean;
+  error?: string;
+  metrics?: Partial<ResourceMetrics>;
 }

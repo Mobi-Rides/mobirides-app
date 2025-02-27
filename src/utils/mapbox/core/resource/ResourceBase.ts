@@ -1,5 +1,5 @@
 
-import { Resource, ResourceType, ResourceState, ResourceStatus, ResourceConfigs } from './resourceTypes';
+import { Resource, ResourceType, ResourceState, ResourceStatus, ResourceConfigs, ResourceMetrics, ResourceValidationResult } from './resourceTypes';
 import { eventBus } from '../eventBus';
 
 export abstract class ResourceBase implements Resource {
@@ -8,11 +8,12 @@ export abstract class ResourceBase implements Resource {
     timestamp: Date.now()
   };
 
-  private metrics = {
+  protected metrics: ResourceMetrics = {
     loadTime: 0,
     validationTime: 0,
     errorCount: 0,
-    lastValidated: 0
+    lastValidated: 0,
+    dependencyValidationTime: 0
   };
 
   constructor(public readonly type: ResourceType) {}
@@ -51,20 +52,38 @@ export abstract class ResourceBase implements Resource {
   abstract validate(): Promise<boolean>;
   abstract configure(config: ResourceConfigs[ResourceType]): Promise<boolean>;
 
+  protected async validateWithMetrics(): Promise<ResourceValidationResult> {
+    const start = Date.now();
+    try {
+      const isValid = await this.validate();
+      const validationTime = Date.now() - start;
+      this.metrics.validationTime = validationTime;
+      this.metrics.lastValidated = Date.now();
+
+      return {
+        isValid,
+        metrics: {
+          validationTime,
+          lastValidated: this.metrics.lastValidated
+        }
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        error: error instanceof Error ? error.message : 'Validation failed',
+        metrics: {
+          validationTime: Date.now() - start
+        }
+      };
+    }
+  }
+
   getState(): ResourceState {
     return { ...this.state };
   }
 
-  getMetrics() {
+  getMetrics(): ResourceMetrics {
     return { ...this.metrics };
-  }
-
-  protected async validateWithMetrics(): Promise<boolean> {
-    const start = Date.now();
-    const isValid = await this.validate();
-    this.metrics.validationTime = Date.now() - start;
-    this.metrics.lastValidated = Date.now();
-    return isValid;
   }
 
   private isValidStateTransition(from: ResourceStatus, to: ResourceStatus): boolean {
