@@ -1,4 +1,6 @@
 
+import { ResourceBase } from './ResourceBase';
+
 export type ResourceType = 'token' | 'module' | 'dom';
 
 export type ResourceStatus = 'pending' | 'loading' | 'ready' | 'error';
