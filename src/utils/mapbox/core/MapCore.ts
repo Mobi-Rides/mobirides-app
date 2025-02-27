@@ -1,8 +1,10 @@
+
 import mapboxgl from 'mapbox-gl';
 import { eventBus } from './eventBus';
 import { resourceManager } from './resource/ResourceManager';
 import { stateManager } from './stateManager';
 import { viewportManager } from '../viewport/ViewportManager';
+import { rollbackManager } from './rollback/RollbackManager';
 
 export class MapCore {
   private static instance: MapCore;
@@ -22,6 +24,9 @@ export class MapCore {
     try {
       console.log('[MapCore] Starting map initialization');
       await stateManager.transition('prerequisites_checking');
+
+      // Create initial checkpoint
+      rollbackManager.createCheckpoint();
 
       // Configure resources with type-safe methods
       console.log('[MapCore] Configuring resources');
@@ -46,6 +51,9 @@ export class MapCore {
       });
 
       await stateManager.transition('resources_acquiring');
+      
+      // Create checkpoint after resource configuration
+      rollbackManager.createCheckpoint();
 
       // Acquire resources in dependency order
       console.log('[MapCore] Acquiring resources');
@@ -54,10 +62,17 @@ export class MapCore {
       const domReady = await resourceManager.acquireResource('dom');
       
       if (!tokenReady || !moduleReady || !domReady) {
+        const checkpoint = rollbackManager.getLatestCheckpoint();
+        if (checkpoint) {
+          await rollbackManager.recoverToCheckpoint(checkpoint);
+        }
         throw new Error('Failed to acquire required resources');
       }
 
       await stateManager.transition('core_initializing');
+
+      // Create checkpoint before map initialization
+      rollbackManager.createCheckpoint();
 
       // Initialize map
       console.log('[MapCore] Creating map instance');
@@ -70,6 +85,9 @@ export class MapCore {
       this.setupEventHandlers();
 
       await stateManager.transition('features_activating');
+
+      // Create checkpoint after map initialization
+      rollbackManager.createCheckpoint();
 
       // Wait for style to load
       await new Promise<void>((resolve, reject) => {
@@ -87,6 +105,10 @@ export class MapCore {
           // Add timeout for style loading
           setTimeout(() => {
             if (!this.isStyleLoaded) {
+              const checkpoint = rollbackManager.getLatestCheckpoint();
+              if (checkpoint) {
+                rollbackManager.recoverToCheckpoint(checkpoint);
+              }
               reject(new Error('Style loading timeout'));
             }
           }, 10000);
@@ -94,6 +116,10 @@ export class MapCore {
       });
 
       await stateManager.transition('ready');
+      
+      // Create final checkpoint
+      rollbackManager.createCheckpoint();
+      
       console.log('[MapCore] Map initialization complete');
       return true;
 
@@ -103,7 +129,18 @@ export class MapCore {
         type: 'error',
         payload: error instanceof Error ? error.message : 'Failed to initialize map'
       });
-      await stateManager.transition('error');
+
+      // Attempt recovery using latest checkpoint
+      const checkpoint = rollbackManager.getLatestCheckpoint();
+      if (checkpoint) {
+        const recovery = await rollbackManager.recoverToCheckpoint(checkpoint);
+        if (!recovery.success) {
+          await stateManager.transition('error');
+        }
+      } else {
+        await stateManager.transition('error');
+      }
+      
       return false;
     }
   }
@@ -118,6 +155,12 @@ export class MapCore {
         type: 'error',
         payload: e.error ? e.error.message : 'Map error occurred'
       });
+
+      // Attempt recovery on map errors
+      const checkpoint = rollbackManager.getLatestCheckpoint();
+      if (checkpoint) {
+        rollbackManager.recoverToCheckpoint(checkpoint);
+      }
     });
 
     // Style loading events
@@ -128,6 +171,7 @@ export class MapCore {
         type: 'stateChange',
         payload: { state: 'style_loaded' }
       });
+      rollbackManager.createCheckpoint();
     });
 
     // Viewport change events
@@ -143,6 +187,10 @@ export class MapCore {
 
   getMap(): mapboxgl.Map | null {
     return this.map;
+  }
+
+  isStyleLoaded(): boolean {
+    return this.isStyleLoaded;
   }
 
   async cleanup(): Promise<void> {
@@ -164,6 +212,10 @@ export class MapCore {
     // Release resources in reverse dependency order
     await resourceManager.releaseAll();
     await stateManager.transition('uninitialized');
+    
+    // Clear rollback checkpoints
+    rollbackManager.clearCheckpoints();
+    
     console.log('[MapCore] Cleanup complete');
   }
 }
