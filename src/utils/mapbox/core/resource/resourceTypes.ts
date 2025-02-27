@@ -12,7 +12,7 @@ export interface ResourceState {
   timestamp: number;
 }
 
-// Base configuration shared by all resources
+// Generic resource configuration
 export interface ResourceConfigBase {
   validateDependencies?: boolean;
 }
@@ -36,14 +36,15 @@ export interface TokenResourceConfig extends ResourceConfigBase {
   validateOnRefresh?: boolean;
 }
 
-// Resource management interfaces
-export interface ResourceConfigs {
-  configureDOMResource(config: DOMResourceConfig): Promise<boolean>;
-  configureModuleResource(config: ModuleResourceConfig): Promise<boolean>;
-  configureTokenResource(config: TokenResourceConfig): Promise<boolean>;
-  acquireResource(type: ResourceType): Promise<boolean>;
-  releaseResource(type: ResourceType): Promise<void>;
+// Type-safe configuration mapping
+export type ResourceConfigs = {
+  'dom': DOMResourceConfig;
+  'module': ModuleResourceConfig;
+  'token': TokenResourceConfig;
 }
+
+// Type helper for configuration
+export type ConfigForResource<T extends ResourceType> = ResourceConfigs[T];
 
 export interface Resource {
   type: ResourceType;
@@ -51,7 +52,7 @@ export interface Resource {
   acquire: () => Promise<boolean>;
   release: () => Promise<void>;
   validate: () => Promise<boolean>;
-  configure: (config: ResourceConfigBase) => Promise<boolean>;
+  configure: <T extends ResourceType>(config: ConfigForResource<T>) => Promise<boolean>;
 }
 
 export const resourceDependencies = {
@@ -59,6 +60,14 @@ export const resourceDependencies = {
   'module': ['token'] as ResourceType[],
   'dom': [] as ResourceType[],
 } as const;
+
+export type ResourceError = {
+  type: ResourceType;
+  code: string;
+  message: string;
+  timestamp: number;
+  metadata?: Record<string, unknown>;
+};
 
 export interface ResourceMetrics {
   loadTime: number;
