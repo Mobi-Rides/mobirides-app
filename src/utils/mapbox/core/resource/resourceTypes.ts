@@ -10,15 +10,11 @@ export interface ResourceState {
   status: ResourceStatus;
   error?: string;
   timestamp: number;
-  retryCount?: number;
-  lastValidated?: number;
 }
 
-// Generic resource configuration
+// Base configuration shared by all resources
 export interface ResourceConfigBase {
   validateDependencies?: boolean;
-  maxRetries?: number;
-  retryDelay?: number;
 }
 
 // Specific resource configurations
@@ -40,15 +36,14 @@ export interface TokenResourceConfig extends ResourceConfigBase {
   validateOnRefresh?: boolean;
 }
 
-// Type-safe configuration mapping
-export type ResourceConfigs = {
-  'dom': DOMResourceConfig;
-  'module': ModuleResourceConfig;
-  'token': TokenResourceConfig;
+// Resource management interfaces
+export interface ResourceConfigs {
+  configureDOMResource(config: DOMResourceConfig): Promise<boolean>;
+  configureModuleResource(config: ModuleResourceConfig): Promise<boolean>;
+  configureTokenResource(config: TokenResourceConfig): Promise<boolean>;
+  acquireResource(type: ResourceType): Promise<boolean>;
+  releaseResource(type: ResourceType): Promise<void>;
 }
-
-// Type helper for configuration
-export type ConfigForResource<T extends ResourceType> = ResourceConfigs[T];
 
 export interface Resource {
   type: ResourceType;
@@ -56,7 +51,7 @@ export interface Resource {
   acquire: () => Promise<boolean>;
   release: () => Promise<void>;
   validate: () => Promise<boolean>;
-  configure: <T extends ResourceType>(config: ConfigForResource<T>) => Promise<boolean>;
+  configure: (config: ResourceConfigBase) => Promise<boolean>;
 }
 
 export const resourceDependencies = {
@@ -65,21 +60,16 @@ export const resourceDependencies = {
   'dom': [] as ResourceType[],
 } as const;
 
-export interface ResourceValidationResult {
-  isValid: boolean;
-  error?: string;
-  metrics?: {
-    validationTime: number;
-    lastValidated: number;
-    dependencyValidationTime?: number;
-  };
-}
-
 export interface ResourceMetrics {
   loadTime: number;
   validationTime: number;
   errorCount: number;
   lastValidated: number;
-  retryCount: number;
-  averageValidationTime: number;
+  dependencyValidationTime?: number;
+}
+
+export interface ResourceValidationResult {
+  isValid: boolean;
+  error?: string;
+  metrics?: Partial<ResourceMetrics>;
 }
