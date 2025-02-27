@@ -176,3 +176,4 @@ export class MapCore {
 }
 
 export const mapCore = MapCore.getInstance();
+
