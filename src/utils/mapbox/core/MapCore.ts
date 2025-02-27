@@ -1,10 +1,8 @@
-
 import mapboxgl from 'mapbox-gl';
 import { eventBus } from './eventBus';
 import { resourceManager } from './resource/ResourceManager';
 import { stateManager } from './stateManager';
 import { viewportManager } from '../viewport/ViewportManager';
-import { ConfigForResource } from './resource/resourceTypes';
 
 export class MapCore {
   private static instance: MapCore;
@@ -25,32 +23,27 @@ export class MapCore {
       console.log('[MapCore] Starting map initialization');
       await stateManager.transition('prerequisites_checking');
 
-      // Configure resources with type-safe configurations
-      const domConfig: ConfigForResource<'dom'> = {
+      // Configure resources with type-safe methods
+      console.log('[MapCore] Configuring resources');
+      await resourceManager.configureDOMResource({
         container,
         options: {
           validateSize: true,
           minWidth: 100,
           minHeight: 100
         }
-      };
+      });
 
-      const moduleConfig: ConfigForResource<'module'> = {
+      await resourceManager.configureModuleResource({
         validateInstance: true,
         validateDependencies: true
-      };
+      });
 
-      const tokenConfig: ConfigForResource<'token'> = {
+      await resourceManager.configureTokenResource({
         refreshInterval: 1800000,
         validateOnRefresh: true,
         validateDependencies: true
-      };
-
-      // Configure resources
-      console.log('[MapCore] Configuring resources');
-      await resourceManager.configureResource('dom', domConfig);
-      await resourceManager.configureResource('token', tokenConfig);
-      await resourceManager.configureResource('module', moduleConfig);
+      });
 
       await stateManager.transition('resources_acquiring');
 

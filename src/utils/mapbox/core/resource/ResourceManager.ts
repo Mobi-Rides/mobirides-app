@@ -1,11 +1,14 @@
 
 import { 
   ResourceType, 
-  ResourceState, 
-  Resource, 
+  ResourceState,
+  Resource,
   ResourceConfigs,
   resourceDependencies,
-  ResourceValidationResult
+  ResourceValidationResult,
+  DOMResourceConfig,
+  ModuleResourceConfig,
+  TokenResourceConfig
 } from './resourceTypes';
 import { ResourceBase } from './ResourceBase';
 import { TokenResource } from './TokenResource';
@@ -14,14 +17,10 @@ import { DOMResource } from './DOMResource';
 import { eventBus } from '../eventBus';
 import { stateManager } from '../stateManager';
 
-export interface ResourceManagerState {
-  [key: string]: ResourceState;
-}
-
-export class ResourceManager {
+export class ResourceManager implements ResourceConfigs {
   private static instance: ResourceManager;
   private resources: Map<ResourceType, ResourceBase> = new Map();
-  private state: ResourceManagerState = {};
+  private state: Record<ResourceType, ResourceState> = {} as Record<ResourceType, ResourceState>;
   private validationInProgress: boolean = false;
 
   private constructor() {
@@ -45,45 +44,22 @@ export class ResourceManager {
     });
   }
 
-  private async validateDependencies(type: ResourceType): Promise<ResourceValidationResult> {
-    const dependencies = resourceDependencies[type];
-    const start = Date.now();
-    
-    for (const dep of dependencies) {
-      const resource = this.resources.get(dep);
-      if (!resource) {
-        return {
-          isValid: false,
-          error: `Dependency ${dep} not found for resource ${type}`,
-          metrics: {
-            dependencyValidationTime: Date.now() - start
-          }
-        };
-      }
-
-      const validation = await resource.validate();
-      if (!validation) {
-        return {
-          isValid: false,
-          error: `Dependency ${dep} validation failed for resource ${type}`,
-          metrics: {
-            dependencyValidationTime: Date.now() - start
-          }
-        };
-      }
-    }
-    
-    return {
-      isValid: true,
-      metrics: {
-        dependencyValidationTime: Date.now() - start
-      }
-    };
+  // Type-safe configuration methods
+  async configureDOMResource(config: DOMResourceConfig): Promise<boolean> {
+    return this.configureTypedResource('dom', config);
   }
 
-  async configureResource(
-    type: ResourceType,
-    config: ResourceConfigs[typeof type]
+  async configureModuleResource(config: ModuleResourceConfig): Promise<boolean> {
+    return this.configureTypedResource('module', config);
+  }
+
+  async configureTokenResource(config: TokenResourceConfig): Promise<boolean> {
+    return this.configureTypedResource('token', config);
+  }
+
+  private async configureTypedResource<T extends ResourceType>(
+    type: T, 
+    config: ResourceConfigBase
   ): Promise<boolean> {
     console.log(`[ResourceManager] Configuring resource: ${type}`);
     const resource = this.resources.get(type);
@@ -103,6 +79,7 @@ export class ResourceManager {
     }
   }
 
+  // Resource lifecycle methods
   async acquireResource(type: ResourceType): Promise<boolean> {
     console.log(`[ResourceManager] Acquiring resource: ${type}`);
     const resource = this.resources.get(type);
@@ -161,53 +138,40 @@ export class ResourceManager {
     }
   }
 
-  async validateResource(type: ResourceType): Promise<boolean> {
-    if (this.validationInProgress) {
-      console.log(`[ResourceManager] Validation already in progress for ${type}`);
-      return false;
-    }
-
-    this.validationInProgress = true;
-    console.log(`[ResourceManager] Validating resource: ${type}`);
-
-    try {
-      const resource = this.resources.get(type);
+  private async validateDependencies(type: ResourceType): Promise<ResourceValidationResult> {
+    const dependencies = resourceDependencies[type];
+    const start = Date.now();
+    
+    for (const dep of dependencies) {
+      const resource = this.resources.get(dep);
       if (!resource) {
-        throw new Error(`Resource ${type} not found`);
+        return {
+          isValid: false,
+          error: `Dependency ${dep} not found for resource ${type}`,
+          metrics: {
+            dependencyValidationTime: Date.now() - start
+          }
+        };
       }
 
-      const dependencyValidation = await this.validateDependencies(type);
-      if (!dependencyValidation.isValid) {
-        console.error(`[ResourceManager] Dependency validation failed for ${type}:`, dependencyValidation.error);
-        return false;
+      const validation = await resource.validate();
+      if (!validation) {
+        return {
+          isValid: false,
+          error: `Dependency ${dep} validation failed for resource ${type}`,
+          metrics: {
+            dependencyValidationTime: Date.now() - start
+          }
+        };
       }
-
-      const isValid = await resource.validate();
-      this.state[type] = resource.getState();
-      console.log(`[ResourceManager] Resource validation result for ${type}:`, isValid);
-      return isValid;
-    } catch (error) {
-      console.error(`[ResourceManager] Failed to validate resource ${type}:`, error);
-      eventBus.emit({
-        type: 'error',
-        payload: `Failed to validate resource ${type}: ${error}`
-      });
-      return false;
-    } finally {
-      this.validationInProgress = false;
     }
-  }
-
-  getResource<T extends ResourceType>(type: T): ResourceBase | undefined {
-    return this.resources.get(type);
-  }
-
-  getResourceState(type: ResourceType): ResourceState {
-    return this.state[type];
-  }
-
-  getAllResourceStates(): ResourceManagerState {
-    return { ...this.state };
+    
+    return {
+      isValid: true,
+      metrics: {
+        dependencyValidationTime: Date.now() - start
+      }
+    };
   }
 
   async releaseAll(): Promise<void> {
@@ -238,6 +202,19 @@ export class ResourceManager {
 
     types.forEach(visit);
     return sorted;
+  }
+
+  // State access methods
+  getResource(type: ResourceType): ResourceBase | undefined {
+    return this.resources.get(type);
+  }
+
+  getResourceState(type: ResourceType): ResourceState {
+    return this.state[type];
+  }
+
+  getAllResourceStates(): Record<ResourceType, ResourceState> {
+    return { ...this.state };
   }
 }
 
