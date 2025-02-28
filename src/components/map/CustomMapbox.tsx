@@ -1,16 +1,19 @@
 import React, { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useUserLocation } from "@/hooks/useUserLocation";
+
+interface Location {
+  lat: number;
+  lng: number;
+  label?: string;
+}
 
 interface CustomMapboxProps {
   mapbox_token: string;
-  longitude: number;
-  latitude: number;
-  location?: {
-    lat: number;
-    lng: number;
-    label?: string;
-  };
+  longitude?: number;
+  latitude?: number;
+  locations?: Location[];
   zoom?: number;
   style?: string;
 }
@@ -19,13 +22,14 @@ const CustomMapbox = ({
   mapbox_token,
   longitude,
   latitude,
-  location,
+  locations = [],
   zoom = 13,
   style = "mapbox://styles/mapbox/streets-v12",
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const marker = useRef<mapboxgl.Marker | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
+  const { userLocation } = useUserLocation(map.current);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -37,45 +41,71 @@ const CustomMapbox = ({
       style: style,
       center: [longitude, latitude],
       zoom: zoom,
+      pitchWithRotate: true,
+      dragRotate: true,
       attributionControl: true,
+      preserveDrawingBuffer: true,
     });
 
     return () => {
-      if (marker.current) {
-        marker.current.remove();
-      }
+      markers.current.forEach((marker) => marker.remove());
       map.current?.remove();
     };
   }, [mapbox_token, longitude, latitude, zoom, style]);
 
   useEffect(() => {
-    if (!map.current || !location) return;
+    if (!map.current) return;
 
-    // Remove existing marker
-    if (marker.current) {
-      marker.current.remove();
-    }
+    // Remove existing markers
+    markers.current.forEach((marker) => marker.remove());
+    markers.current = [];
 
-    // Create new marker
-    marker.current = new mapboxgl.Marker().setLngLat([
-      location.lng,
-      location.lat,
-    ]);
+    // Create new markers for locations
+    locations.forEach((location) => {
+      const marker = new mapboxgl.Marker().setLngLat([
+        location.lng,
+        location.lat,
+      ]);
 
-    if (location.label) {
-      marker.current.setPopup(
-        new mapboxgl.Popup({ offset: 25 }).setHTML(`<p>${location.label}</p>`)
+      if (location.label) {
+        marker.setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(`<p>${location.label}</p>`)
+        );
+      }
+
+      marker.addTo(map.current);
+      markers.current.push(marker);
+    });
+
+    // Optionally, adjust the map view to fit all markers
+    if (locations.length > 0) {
+      const bounds = new mapboxgl.LngLatBounds();
+      locations.forEach((location) =>
+        bounds.extend([location.lng, location.lat])
       );
+      map.current.fitBounds(bounds, { padding: 50 });
     }
+  }, [locations]);
 
-    marker.current.addTo(map.current);
+  useEffect(() => {
+    if (!map.current || !userLocation) return;
 
-    // Center map on marker
+    // Create a marker for the user's location
+    const userMarker = new mapboxgl.Marker({ color: "blue" })
+      .setLngLat([userLocation.longitude, userLocation.latitude])
+      .addTo(map.current);
+
+    // Center map on user's location
     map.current.flyTo({
-      center: [location.lng, location.lat],
+      center: [userLocation.longitude, userLocation.latitude],
       essential: true,
     });
-  }, [location]);
+
+    // Clean up the user marker on unmount
+    return () => {
+      userMarker.remove();
+    };
+  }, [userLocation]);
 
   return (
     <div
