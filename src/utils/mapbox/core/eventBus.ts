@@ -1,5 +1,4 @@
-
-import { MapStateEvent, EventSubscriber } from './types';
+import { MapStateEvent, EventSubscriber } from "./types";
 
 export class EventBus {
   private static instance: EventBus;
@@ -19,16 +18,16 @@ export class EventBus {
   }
 
   unsubscribe(subscriber: EventSubscriber) {
-    this.subscribers = this.subscribers.filter(s => s !== subscriber);
+    this.subscribers = this.subscribers.filter((s) => s !== subscriber);
   }
 
   emit(event: MapStateEvent) {
     console.log(`[EventBus] Emitting event:`, event);
-    this.subscribers.forEach(subscriber => {
+    this.subscribers.forEach((subscriber) => {
       subscriber.onEvent(event);
+      return event;
     });
   }
 }
 
 export const eventBus = EventBus.getInstance();
-

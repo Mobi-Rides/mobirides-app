@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { locationStateManager } from "@/utils/mapbox/location/LocationStateManager";
 
 interface Location {
   lat: number;
@@ -30,8 +31,27 @@ const CustomMapbox = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const { userLocation } = useUserLocation(map.current);
+  const [isTracking, setIsTracking] = useState(false);
+
+  const toggleLocationTracking = async () => {
+    if (isTracking) {
+      locationStateManager.disableTracking();
+      setIsTracking(false);
+    } else {
+      const success = await locationStateManager.enableTracking();
+      if (success) {
+        setIsTracking(true);
+      }
+    }
+  };
 
   useEffect(() => {
+    if (!locationStateManager.enableTracking) {
+      locationStateManager.enableTracking();
+    }
+
+    locationStateManager.enableTracking();
+
     if (!mapContainer.current || map.current) return;
 
     mapboxgl.accessToken = mapbox_token;
@@ -88,6 +108,7 @@ const CustomMapbox = ({
   }, [locations]);
 
   useEffect(() => {
+    console.log("User location updated:", userLocation);
     if (!map.current || !userLocation) return;
 
     // Create a marker for the user's location
@@ -108,11 +129,56 @@ const CustomMapbox = ({
   }, [userLocation]);
 
   return (
-    <div
-      ref={mapContainer}
-      className="w-full h-full overflow-hidden"
-      style={{ minHeight: "400px" }}
-    />
+    <div className="relative w-full h-full">
+      <div
+        ref={mapContainer}
+        className="w-full h-full overflow-hidden"
+        style={{ minHeight: "400px" }}
+      />
+      <button
+      
+        onClick={toggleLocationTracking}
+        className="absolute bottom-6 right-6 bg-white p-2 rounded-full shadow-lg z-10"
+      >
+        {isTracking ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+        )}
+      </button>
+    </div>
   );
 };
 
