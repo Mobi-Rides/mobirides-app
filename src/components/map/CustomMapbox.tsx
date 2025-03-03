@@ -67,6 +67,10 @@ const CustomMapbox = ({
       preserveDrawingBuffer: true,
     });
 
+    // Add zoom and rotation controls to the map.
+    const nav = new mapboxgl.NavigationControl();
+    map.current.addControl(nav, "top-right");
+
     return () => {
       markers.current.forEach((marker) => marker.remove());
       map.current?.remove();
@@ -136,7 +140,6 @@ const CustomMapbox = ({
         style={{ minHeight: "400px" }}
       />
       <button
-      
         onClick={toggleLocationTracking}
         className="absolute bottom-6 right-6 bg-white p-2 rounded-full shadow-lg z-10"
       >
