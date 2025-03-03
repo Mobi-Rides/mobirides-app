@@ -132,6 +132,26 @@ const CustomMapbox = ({
     };
   }, [userLocation]);
 
+  const panMap = (direction: "left" | "up" | "right" | "down") => {
+    if (!map.current) return;
+
+    const distance = 100; // Distance to pan in pixels
+    switch (direction) {
+      case "left":
+        map.current.panBy([-distance, 0]);
+        break;
+      case "up":
+        map.current.panBy([0, -distance]);
+        break;
+      case "right":
+        map.current.panBy([distance, 0]);
+        break;
+      case "down":
+        map.current.panBy([0, distance]);
+        break;
+    }
+  };
+
   return (
     <div className="relative w-full h-full">
       <div
@@ -139,11 +159,8 @@ const CustomMapbox = ({
         className="w-full h-full overflow-hidden"
         style={{ minHeight: "400px" }}
       />
-      <button
-        onClick={toggleLocationTracking}
-        className="absolute bottom-6 right-6 bg-white p-2 rounded-full shadow-lg z-10"
-      >
-        {isTracking ? (
+      <div className="absolute bottom-6 right-6 bg-white p-2 rounded-full shadow-lg z-10 flex flex-col items-center">
+        <button onClick={() => panMap("up")} className="p-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-6 w-6"
@@ -155,10 +172,87 @@ const CustomMapbox = ({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
+              d="M12 4l-8 8h16l-8-8z"
             />
           </svg>
-        ) : (
+        </button>
+        <div className="flex">
+          <button onClick={() => panMap("left")} className="p-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 12l8-8v16l-8-8z"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={toggleLocationTracking}
+            className="bg-white p-2 rounded-full shadow-lg z-10"
+          >
+            {isTracking ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            )}
+          </button>
+          <button onClick={() => panMap("right")} className="p-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 12l-8 8V4l8 8z"
+              />
+            </svg>
+          </button>
+        </div>
+        <button onClick={() => panMap("down")} className="p-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-6 w-6"
@@ -170,17 +264,11 @@ const CustomMapbox = ({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              d="M12 20l8-8H4l8 8z"
             />
           </svg>
-        )}
-      </button>
+        </button>
+      </div>
     </div>
   );
 };
