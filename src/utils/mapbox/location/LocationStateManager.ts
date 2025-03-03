@@ -87,7 +87,7 @@ class LocationStateManager {
       toast.error("Failed to enable location tracking");
       return false;
     }
-  }
+  }   
 
   disableTracking() {
     locationManager.stopTracking();
