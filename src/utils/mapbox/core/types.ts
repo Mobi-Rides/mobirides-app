@@ -17,7 +17,7 @@ export type MapResourceState = {
 };
 
 export type MapStateEvent = {
-  type: 'stateChange' | 'resourceUpdate' | 'error' | 'locationUpdate';
+  type: 'stateChange' | 'resourceUpdate' | 'error' | 'locationUpdate' | 'realtimeLocationUpdate';
   payload: any;
 };
 

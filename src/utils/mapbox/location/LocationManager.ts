@@ -5,6 +5,8 @@ import { viewportManager } from '../viewport/ViewportManager';
 import { createMarkerElement } from '@/utils/domUtils';
 import { eventBus } from '../core/eventBus';
 import { toast } from "sonner";
+import { broadcastLocationUpdate } from '@/services/locationSubscription';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Location {
   latitude: number;
@@ -16,6 +18,9 @@ export class LocationManager {
   private static instance: LocationManager;
   private watchId: number | null = null;
   private userMarker: mapboxgl.Marker | null = null;
+  private carId: string | null = null;
+  private lastBroadcast: number = 0;
+  private broadcastInterval: number = 5000; // 5 seconds between broadcasts
 
   private constructor() {}
 
@@ -40,6 +45,9 @@ export class LocationManager {
       return;
     }
 
+    // Try to get the user's car ID for broadcasting
+    this.getUserCar();
+
     this.watchId = navigator.geolocation.watchPosition(
       this.handleLocationUpdate.bind(this),
       this.handleLocationError.bind(this),
@@ -60,6 +68,26 @@ export class LocationManager {
       this.userMarker.remove();
       this.userMarker = null;
     }
+    this.carId = null;
+  }
+
+  private async getUserCar() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: cars } = await supabase
+        .from("cars")
+        .select("id")
+        .eq("owner_id", user.id);
+      
+      if (cars && cars.length > 0) {
+        this.carId = cars[0].id;
+        console.log(`Set active car ID for location broadcasting: ${this.carId}`);
+      }
+    } catch (error) {
+      console.error('Error fetching user car:', error);
+    }
   }
 
   private handleLocationUpdate(position: GeolocationPosition): void {
@@ -70,10 +98,19 @@ export class LocationManager {
     };
 
     this.updateMarker(location);
+    
+    // Emit standard location update event
     eventBus.emit({
       type: 'locationUpdate',
       payload: location
     });
+    
+    // Broadcast location update at regulated intervals
+    const now = Date.now();
+    if (this.carId && now - this.lastBroadcast > this.broadcastInterval) {
+      broadcastLocationUpdate(location, this.carId);
+      this.lastBroadcast = now;
+    }
   }
 
   private handleLocationError(error: GeolocationPositionError): void {
