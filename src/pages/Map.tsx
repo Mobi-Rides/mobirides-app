@@ -8,6 +8,8 @@ const Map = () => {
   const [mapToken, setMapToken] = useState<string>("");
 
   useEffect(() => {
+    //subscribe to the map token
+    
     const fetchToken = async () => {
       try {
         const token = await getMapboxToken();

@@ -55,7 +55,6 @@ const CustomMapbox = ({
     if (isTracking) {
       locationStateManager.disableTracking();
       setIsTracking(false);
-      setIsSharing(false);
     } else {
       const success = await locationStateManager.enableTracking();
       if (success) {
@@ -72,12 +71,6 @@ const CustomMapbox = ({
   };
 
   useEffect(() => {
-    if (!locationStateManager.enableTracking) {
-      locationStateManager.enableTracking();
-    }
-
-    locationStateManager.enableTracking();
-
     if (!mapContainer.current || map.current) return;
 
     mapboxgl.accessToken = mapbox_token;
@@ -150,10 +143,13 @@ const CustomMapbox = ({
       .addTo(map.current);
 
     // Center map on user's location
-    map.current.flyTo({
-      center: [userLocation.longitude, userLocation.latitude],
-      essential: true,
-    });
+
+    if (isTracking) {
+      map.current.easeTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        essential: true,
+      });
+    }
 
     // Fetch and filter online hosts
     const fetchAndFilterHosts = async () => {
