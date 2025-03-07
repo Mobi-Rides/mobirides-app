@@ -1,23 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
-import { mapCore } from "@/utils/mapbox/core/MapCore";
-import { locationManager } from "@/utils/mapbox/location/LocationManager";
-import { resourceManager } from "@/utils/mapbox/core/resource/ResourceManager";
-import { toast } from "sonner";
-import { eventBus } from "@/utils/mapbox/core/eventBus";
-import { MapStateEvent } from "@/utils/mapbox/core/types";
-import { locationStateManager } from "@/utils/mapbox/location/LocationStateManager";
-import { stateManager } from "@/utils/mapbox/core/stateManager";
 import CustomMapbox from "@/components/map/CustomMapbox";
 import { getMapboxToken } from "../utils/mapbox";
+import { toast } from "sonner";
 
 const Map = () => {
   const [mapToken, setMapToken] = useState<string>("");
 
   useEffect(() => {
     const fetchToken = async () => {
-      const token = await getMapboxToken();
-      setMapToken(token);
+      try {
+        const token = await getMapboxToken();
+        if (!token) {
+          toast.error("Failed to get the map token");
+          console.error("Failed to get the map token");
+          return;
+        }
+        setMapToken(token);
+      } catch (error) {
+        console.error("Error getting the map token:", error);
+        toast.error("Failed to get the map token");
+      }
     };
     fetchToken();
   }, []);
@@ -26,7 +29,7 @@ const Map = () => {
     <div className="min-h-screen bg-background">
       <main className="pb-16">
         <div className="h-[calc(100vh-4rem)]">
-          {mapToken.length !== 0 ? (
+          {mapToken ? (
             <CustomMapbox
               mapbox_token={mapToken}
               longitude={25.90859}

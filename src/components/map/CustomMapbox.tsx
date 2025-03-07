@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -6,6 +5,8 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { locationStateManager } from "@/utils/mapbox/location/LocationStateManager";
 import { Button } from "@/components/ui/button";
 import { eventBus } from "@/utils/mapbox/core/eventBus";
+import { calculateDistance } from "@/utils/distance";
+import { fetchOnlineHosts } from "@/services/hostService"; // Assume this service fetches online hosts
 
 interface Location {
   lat: number;
@@ -48,6 +49,7 @@ const CustomMapbox = ({
   const { userLocation } = useUserLocation(map.current);
   const [isTracking, setIsTracking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [onlineHosts, setOnlineHosts] = useState<Location[]>([]);
 
   const toggleLocationTracking = async () => {
     if (isTracking) {
@@ -64,9 +66,9 @@ const CustomMapbox = ({
 
   const toggleLocationSharing = () => {
     const currentScope = locationStateManager.getSharingScope();
-    const newScope = currentScope !== 'none' ? 'none' : 'all';
+    const newScope = currentScope !== "none" ? "none" : "all";
     locationStateManager.setSharingScope(newScope);
-    setIsSharing(newScope !== 'none');
+    setIsSharing(newScope !== "none");
   };
 
   useEffect(() => {
@@ -97,7 +99,9 @@ const CustomMapbox = ({
 
     return () => {
       markers.current.forEach((marker) => marker.remove());
-      Object.values(realtimeMarkers.current).forEach(marker => marker.remove());
+      Object.values(realtimeMarkers.current).forEach((marker) =>
+        marker.remove()
+      );
       map.current?.remove();
     };
   }, [mapbox_token, longitude, latitude, zoom, style]);
@@ -151,6 +155,23 @@ const CustomMapbox = ({
       essential: true,
     });
 
+    // Fetch and filter online hosts
+    const fetchAndFilterHosts = async () => {
+      const hosts = await fetchOnlineHosts();
+      const filteredHosts = hosts.filter(
+        (host: Location) =>
+          calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            host.lat,
+            host.lng
+          ) <= 10
+      );
+      setOnlineHosts(filteredHosts);
+    };
+
+    fetchAndFilterHosts();
+
     // Clean up the user marker on unmount
     return () => {
       userMarker.remove();
@@ -160,44 +181,80 @@ const CustomMapbox = ({
   // Subscribe to real-time location updates
   useEffect(() => {
     const handleRealtimeUpdate = (event: any) => {
-      if (event.type === 'realtimeLocationUpdate' && map.current) {
+      if (event.type === "realtimeLocationUpdate" && map.current) {
         const update = event.payload as RealtimeLocation;
-        console.log('Real-time location update received:', update);
-        
+        console.log("Real-time location update received:", update);
+
         // If we already have a marker for this car, update its position
         if (realtimeMarkers.current[update.carId]) {
           realtimeMarkers.current[update.carId].setLngLat([
             update.location.longitude,
-            update.location.latitude
+            update.location.latitude,
           ]);
-          console.log('Updated existing marker position');
+          console.log("Updated existing marker position");
         } else {
           // Create a new marker for this car
           const carMarker = new mapboxgl.Marker({ color: "green" })
             .setLngLat([update.location.longitude, update.location.latitude])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(
-              `<p>Car ID: ${update.carId}</p>
-               <p>Updated: ${new Date(update.timestamp).toLocaleTimeString()}</p>`
-            ))
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 }).setHTML(
+                `<p>Car ID: ${update.carId}</p>
+               <p>Updated: ${new Date(
+                 update.timestamp
+               ).toLocaleTimeString()}</p>`
+              )
+            )
             .addTo(map.current);
-            
+
           realtimeMarkers.current[update.carId] = carMarker;
-          console.log('Created new real-time marker');
+          console.log("Created new real-time marker");
         }
       }
     };
 
     // Subscribe to real-time location events
     const subscriber = {
-      onEvent: handleRealtimeUpdate
+      onEvent: handleRealtimeUpdate,
     };
-    
+
     eventBus.subscribe(subscriber);
-    
+
     return () => {
       eventBus.unsubscribe(subscriber);
     };
   }, []);
+
+  useEffect(() => {
+    if (!map.current) return;
+
+    // Remove existing host markers
+    markers.current.forEach((marker) => marker.remove());
+    markers.current = [];
+
+    // Create new markers for online hosts
+    onlineHosts.forEach((host) => {
+      const marker = new mapboxgl.Marker({ color: "red" }).setLngLat([
+        host.lng,
+        host.lat,
+      ]);
+
+      if (host.label) {
+        marker.setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(`<p>${host.label}</p>`)
+        );
+      }
+
+      marker.addTo(map.current);
+      markers.current.push(marker);
+    });
+
+    // Optionally, adjust the map view to fit all markers
+    if (onlineHosts.length > 0) {
+      const bounds = new mapboxgl.LngLatBounds();
+      onlineHosts.forEach((host) => bounds.extend([host.lng, host.lat]));
+      map.current.fitBounds(bounds, { padding: 50 });
+    }
+  }, [onlineHosts]);
 
   const panMap = (direction: "left" | "up" | "right" | "down") => {
     if (!map.current) return;
@@ -226,10 +283,10 @@ const CustomMapbox = ({
         className="w-full h-full overflow-hidden"
         style={{ minHeight: "400px" }}
       />
-      
+
       {/* Location controls */}
       <div className="absolute bottom-6 left-6 bg-white p-2 rounded-lg shadow-lg z-10 flex flex-col gap-2">
-        <Button 
+        <Button
           onClick={toggleLocationTracking}
           variant={isTracking ? "outline" : "default"}
           className="flex items-center gap-2"
@@ -278,9 +335,9 @@ const CustomMapbox = ({
             </>
           )}
         </Button>
-        
+
         {isTracking && (
-          <Button 
+          <Button
             onClick={toggleLocationSharing}
             variant={isSharing ? "outline" : "default"}
             className="flex items-center gap-2"
@@ -325,7 +382,7 @@ const CustomMapbox = ({
           </Button>
         )}
       </div>
-      
+
       {/* Map navigation controls */}
       <div className="absolute bottom-6 right-6 bg-white p-2 rounded-full shadow-lg z-10 flex flex-col items-center">
         <button onClick={() => panMap("up")} className="p-2">
