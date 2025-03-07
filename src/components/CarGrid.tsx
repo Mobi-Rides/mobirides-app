@@ -28,9 +28,9 @@ export const CarGrid = ({
   
   const CarSkeleton = () => (
     <div className="space-y-3">
-      <Skeleton className="h-48 w-full" />
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-4 w-1/2" />
+      <Skeleton className="h-48 w-full bg-gray-200" />
+      <Skeleton className="h-4 w-3/4 bg-gray-200" />
+      <Skeleton className="h-4 w-1/2 bg-gray-200" />
     </div>
   );
 
@@ -70,7 +70,7 @@ export const CarGrid = ({
   if (isLoading) {
     return (
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <CarSkeleton key={i} />
         ))}
       </div>
