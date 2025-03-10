@@ -86,6 +86,14 @@ const CustomMapbox = ({
       preserveDrawingBuffer: true,
     });
 
+    map.current.on("load", () => {
+      console.log("Map loaded successfully");
+    });
+
+    map.current.on("error", (e) => {
+      console.error("Map error:", e);
+    });
+
     // Add zoom and rotation controls to the map.
     const nav = new mapboxgl.NavigationControl();
     map.current.addControl(nav, "top-right");
@@ -436,7 +444,7 @@ const CustomMapbox = ({
             xmlns="http://www.w3.org/2000/svg"
             className="h-6 w-6"
             fill="none"
-            viewBox="0 0 24 24"
+            viewBox="0 24 24"
             stroke="currentColor"
           >
             <path

@@ -27,6 +27,10 @@ const Map = () => {
     fetchToken();
   }, []);
 
+  //ge active host & carlocation
+  
+
+
   return (
     <div className="min-h-screen bg-background">
       <main className="pb-16">

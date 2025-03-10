@@ -13,7 +13,7 @@ export const getMapboxToken = async (): Promise<string> => {
   try {
     // This would normally call the Supabase function, but for simplicity
     // we'll return the token directly
-    return "pk.eyJ1IjoibW9iaXJpZGVzIiwiYSI6ImNscXgzaHcwdzE2MnQyanBqNXQ5NjM4YnIifQ.gJR_2LHxtcX8_bOOYJdF3Q";
+    return "pk.eyJ1IjoibWFwaGFueWFuZSIsImEiOiJjbTdtMHp1OHUwaDhxMmlxdG5za3QzNTNzIn0.naTWJv5M3LuvUvB18-5RSQ";
   } catch (error) {
     console.error("Error getting Mapbox token:", error);
     return "";
