@@ -5,13 +5,17 @@ import { viewportManager } from '../viewport/ViewportManager';
 import { createMarkerElement } from '@/utils/domUtils';
 import { eventBus } from '../core/eventBus';
 import { toast } from "sonner";
-import { broadcastLocationUpdate } from '@/services/locationSubscription';
 import { supabase } from '@/integrations/supabase/client';
+import { saveLocation } from '@/services/locationService';
 
 export interface Location {
   latitude: number;
   longitude: number;
-  accuracy: number;
+  accuracy?: number;
+  heading?: number;
+  speed?: number;
+  altitude?: number;
+  altitudeAccuracy?: number;
 }
 
 export class LocationManager {
@@ -19,8 +23,9 @@ export class LocationManager {
   private watchId: number | null = null;
   private userMarker: mapboxgl.Marker | null = null;
   private carId: string | null = null;
-  private lastBroadcast: number = 0;
-  private broadcastInterval: number = 5000; // 5 seconds between broadcasts
+  private lastSave: number = 0;
+  private saveInterval: number = 5000; // 5 seconds between location saves
+  private sharingScope: 'none' | 'trip_only' | 'all' = 'none';
 
   private constructor() {}
 
@@ -45,7 +50,7 @@ export class LocationManager {
       return;
     }
 
-    // Try to get the user's car ID for broadcasting
+    // Try to get the user's car ID for tracking
     this.getUserCar();
 
     this.watchId = navigator.geolocation.watchPosition(
@@ -69,6 +74,12 @@ export class LocationManager {
       this.userMarker = null;
     }
     this.carId = null;
+    this.sharingScope = 'none';
+  }
+
+  setSharingScope(scope: 'none' | 'trip_only' | 'all'): void {
+    this.sharingScope = scope;
+    console.log(`Location sharing scope set to: ${scope}`);
   }
 
   private async getUserCar() {
@@ -78,12 +89,16 @@ export class LocationManager {
 
       const { data: cars } = await supabase
         .from("cars")
-        .select("id")
+        .select("id, location_sharing_scope")
         .eq("owner_id", user.id);
       
       if (cars && cars.length > 0) {
         this.carId = cars[0].id;
-        console.log(`Set active car ID for location broadcasting: ${this.carId}`);
+        if (cars[0].location_sharing_scope) {
+          this.sharingScope = cars[0].location_sharing_scope as 'none' | 'trip_only' | 'all';
+        }
+        console.log(`Set active car ID for location tracking: ${this.carId}`);
+        console.log(`Sharing scope: ${this.sharingScope}`);
       }
     } catch (error) {
       console.error('Error fetching user car:', error);
@@ -94,7 +109,11 @@ export class LocationManager {
     const location: Location = {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
-      accuracy: position.coords.accuracy
+      accuracy: position.coords.accuracy,
+      heading: position.coords.heading || undefined,
+      speed: position.coords.speed || undefined,
+      altitude: position.coords.altitude || undefined,
+      altitudeAccuracy: position.coords.altitudeAccuracy || undefined
     };
 
     this.updateMarker(location);
@@ -105,11 +124,32 @@ export class LocationManager {
       payload: location
     });
     
-    // Broadcast location update at regulated intervals
+    // Save location to database at regulated intervals
     const now = Date.now();
-    if (this.carId && now - this.lastBroadcast > this.broadcastInterval) {
-      broadcastLocationUpdate(location, this.carId);
-      this.lastBroadcast = now;
+    if (now - this.lastSave > this.saveInterval) {
+      this.saveLocationToDatabase(location);
+      this.lastSave = now;
+    }
+  }
+
+  private async saveLocationToDatabase(location: Location) {
+    if (this.sharingScope === 'none') return;
+    
+    const saved = await saveLocation(location, this.carId, this.sharingScope);
+    if (saved && this.carId) {
+      // Also update the car's location
+      try {
+        await supabase
+          .from('cars')
+          .update({
+            latitude: location.latitude,
+            longitude: location.longitude,
+            last_location_update: new Date().toISOString(),
+          })
+          .eq('id', this.carId);
+      } catch (error) {
+        console.error('Error updating car location:', error);
+      }
     }
   }
 
@@ -146,7 +186,7 @@ export class LocationManager {
       this.userMarker.remove();
     }
 
-    const el = createMarkerElement(location.accuracy);
+    const el = createMarkerElement(location.accuracy || 0);
     this.userMarker = new mapboxgl.Marker({ element: el })
       .setLngLat([location.longitude, location.latitude])
       .addTo(map);

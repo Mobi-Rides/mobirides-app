@@ -31,7 +31,7 @@ export const OnlineStatusToggle = () => {
       // Check if we have any location sharing setting
       const { data: locationSettings } = await supabase
         .from("cars")
-        .select("is_sharing_location, location_sharing_scope")
+        .select("*")
         .eq("owner_id", user.id)
         .single();
         
