@@ -208,7 +208,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
             placeholder="Search cars..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full h-12 md:h-14 pl-10 pr-4 py-2  rounded-2xl border border-gray-200 focus:outline-none focus:border-primary text-xs md:text-sm lg:text-base placeholder:text-xs md:placeholder:text-sm lg:placeholder:text-base"
+            className="w-full h-12 md:h-14 pl-10 pr-4 py-2 rounded-2xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:border-primary dark:focus:border-primary text-xs md:text-sm lg:text-base placeholder:text-xs md:placeholder:text-sm lg:placeholder:text-base dark:placeholder:text-gray-400"
           />
         </div>
         <Sheet>
