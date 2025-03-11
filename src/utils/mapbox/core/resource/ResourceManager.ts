@@ -8,7 +8,8 @@ import {
   ResourceValidationResult,
   DOMResourceConfig,
   ModuleResourceConfig,
-  TokenResourceConfig
+  TokenResourceConfig,
+  ResourceConfigBase
 } from './resourceTypes';
 import { ResourceBase } from './ResourceBase';
 import { TokenResource } from './TokenResource';
@@ -216,6 +217,11 @@ export class ResourceManager implements ResourceConfigs {
   getAllResourceStates(): Record<ResourceType, ResourceState> {
     return { ...this.state };
   }
+
+  // Implement the interface properties for resource configs
+  dom!: DOMResourceConfig;
+  module!: ModuleResourceConfig;
+  token!: TokenResourceConfig;
 }
 
 export const resourceManager = ResourceManager.getInstance();

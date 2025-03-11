@@ -43,6 +43,11 @@ export interface ResourceConfigs {
   configureTokenResource(config: TokenResourceConfig): Promise<boolean>;
   acquireResource(type: ResourceType): Promise<boolean>;
   releaseResource(type: ResourceType): Promise<void>;
+  
+  // Adding indexed access for the resource-specific config types
+  dom: DOMResourceConfig;
+  module: ModuleResourceConfig;
+  token: TokenResourceConfig;
 }
 
 export interface Resource {

@@ -1,5 +1,5 @@
 
-import { MapInitializationState } from '../types';
+import { MapInitializationState, MapResourceState } from '../types';
 import { RollbackCheckpoint, RecoveryAction, RecoveryResult, RecoveryLevel } from './types';
 import { resourceManager } from '../resource/ResourceManager';
 import { mapCore } from '../MapCore';
@@ -150,10 +150,16 @@ export class RollbackManager {
 
   private async recoverMapInstance(): Promise<void> {
     await mapCore.cleanup();
-    const container = resourceManager.getResource('dom')?.getState();
+    const domResource = resourceManager.getResource('dom');
+    if (!domResource) throw new Error('DOM resource not available');
+    
+    const container = domResource.getState().status === 'ready' ? 
+      (resourceManager as any).resources.get('dom').container : 
+      null;
+    
     if (!container) throw new Error('DOM container not available');
     
-    await mapCore.initialize(container as any, {
+    await mapCore.initialize(container, {
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [-24.6282, 25.9692],
       zoom: 12
@@ -171,7 +177,7 @@ export class RollbackManager {
 
     // Reacquire resources
     for (const resource of currentResources) {
-      if (!stateManager.getResourceState()[resource as keyof MapResourceState]) {
+      if (!stateManager.getResourceState()[resource as keyof typeof stateManager.getResourceState()]) {
         await resourceManager.acquireResource(resource as any);
       }
     }

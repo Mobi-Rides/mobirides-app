@@ -9,7 +9,7 @@ import { rollbackManager } from './rollback/RollbackManager';
 export class MapCore {
   private static instance: MapCore;
   private map: mapboxgl.Map | null = null;
-  private isStyleLoaded = false;
+  private styleLoaded = false;
 
   private constructor() {}
 
@@ -94,17 +94,17 @@ export class MapCore {
         if (!this.map) return reject(new Error('Map not initialized'));
         
         if (this.map.isStyleLoaded()) {
-          this.isStyleLoaded = true;
+          this.styleLoaded = true;
           resolve();
         } else {
           this.map.once('style.load', () => {
-            this.isStyleLoaded = true;
+            this.styleLoaded = true;
             resolve();
           });
 
           // Add timeout for style loading
           setTimeout(() => {
-            if (!this.isStyleLoaded) {
+            if (!this.styleLoaded) {
               const checkpoint = rollbackManager.getLatestCheckpoint();
               if (checkpoint) {
                 rollbackManager.recoverToCheckpoint(checkpoint);
@@ -166,7 +166,7 @@ export class MapCore {
     // Style loading events
     this.map.on('style.load', () => {
       console.log('[MapCore] Map style loaded');
-      this.isStyleLoaded = true;
+      this.styleLoaded = true;
       eventBus.emit({
         type: 'stateChange',
         payload: { state: 'style_loaded' }
@@ -190,7 +190,7 @@ export class MapCore {
   }
 
   isStyleLoaded(): boolean {
-    return this.isStyleLoaded;
+    return this.styleLoaded;
   }
 
   async cleanup(): Promise<void> {
@@ -207,7 +207,7 @@ export class MapCore {
       this.map = null;
     }
 
-    this.isStyleLoaded = false;
+    this.styleLoaded = false;
 
     // Release resources in reverse dependency order
     await resourceManager.releaseAll();

@@ -1,4 +1,6 @@
 
+import { MapInitializationState } from '../types';
+
 export type RecoveryLevel = 1 | 2 | 3 | 4;
 
 export interface RollbackCheckpoint {
