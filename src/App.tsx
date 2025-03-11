@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
@@ -14,12 +15,43 @@ import NotificationDetails from "@/pages/NotificationDetails";
 import BookingRequestDetails from "@/pages/BookingRequestDetails";
 import Dashboard from "@/pages/Dashboard";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { BarLoader } from "react-spinners";
 import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
 
-const App = () => {
+// Page transition loader component
+const PageTransitionLoader = () => {
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  useEffect(() => {
+    // Show loader when location changes
+    setIsLoading(true);
+    
+    // Hide loader after a short delay
+    // This simulates the time it takes to load the page
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800); // Adjust time as needed
+    
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+  
+  if (!isLoading) return null;
+  
   return (
-    <Router>
+    <div className="fixed top-0 left-0 w-full z-50 bg-background/80">
+      <div className="flex flex-col items-center justify-center py-3">
+        <BarLoader color="#7c3aed" width={150} />
+      </div>
+    </div>
+  );
+};
+
+const AppRoutes = () => {
+  return (
+    <>
+      <PageTransitionLoader />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
@@ -51,6 +83,14 @@ const App = () => {
         />
         <Route path="/rental-review/:bookingId" element={<RentalReview />} />
       </Routes>
+    </>
+  );
+};
+
+const App = () => {
+  return (
+    <Router>
+      <AppRoutes />
     </Router>
   );
 };

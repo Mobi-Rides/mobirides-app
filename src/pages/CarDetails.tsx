@@ -11,6 +11,7 @@ import { CarDescription } from "@/components/car-details/CarDescription";
 import { CarImageCarousel } from "@/components/car-details/CarImageCarousel";
 import { CarReviews } from "@/components/car-details/CarReviews";
 import { CarLocation } from "@/components/car-details/CarLocation";
+import { BarLoader } from "react-spinners";
 import type { Car } from "@/types/car";
 
 const CarDetails = () => {
@@ -61,7 +62,15 @@ const CarDetails = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="space-y-4 p-4">
+        <div className="flex flex-col items-center justify-center min-h-[200px] w-full p-4">
+          <p className="text-sm text-muted-foreground mb-3">
+            Loading car details...
+          </p>
+          <BarLoader color="#7c3aed" width={100} />
+        </div>
+        
+        {/* Keep some skeleton UI to show page structure */}
+        <div className="space-y-4 p-4 mt-4">
           <Skeleton className="h-64 w-full" />
           <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-4 w-1/2" />

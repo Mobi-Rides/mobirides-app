@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { CarCard } from "@/components/CarCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import type { Car } from "@/types/car";
+import { BarLoader } from "react-spinners"; // Add this import
 
 interface CarGridProps {
   cars: Car[];
@@ -117,9 +117,15 @@ export const CarGrid = ({
         </div>
       )}
 
-      <div ref={loadMoreRef} className="h-10 flex items-center justify-center mt-4">
+      <div
+        ref={loadMoreRef}
+        className="h-10 flex flex-col items-center justify-center mt-4 gap-2"
+      >
         {isFetchingNextPage && (
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          <>
+            <p className="text-sm text-muted-foreground mb-1">Fetching more cars...</p>
+            <BarLoader color="#7c3aed" width={100} />
+          </>
         )}
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Car } from "@/types/car";
 import { Separator } from "./ui/separator";
+import { BarLoader } from "react-spinners";
 
 interface CarCardProps {
   id: string;
@@ -43,7 +43,7 @@ export const CarCard = ({
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const navigate = useNavigate();
 
-  const { data: carDetails } = useQuery({
+  const { data: carDetails, isLoading: isLoadingCarDetails } = useQuery({
     queryKey: ['car', id],
     queryFn: async () => {
       console.log("Fetching complete car details for booking");
