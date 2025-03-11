@@ -88,7 +88,9 @@ export const RenterDashboard = () => {
         <TabsContent value="active">
           <div className="grid gap-4">
             {activeBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">No active rentals</p>
+              <p className="text-muted-foreground text-center py-4">
+                No active rentals
+              </p>
             )}
             {activeBookings?.map((booking) => (
               <Card key={booking.id}>
@@ -108,10 +110,14 @@ export const RenterDashboard = () => {
                     <p className="text-sm">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex justify-end gap-2 pt-2">
                       <Link to={`/rental-review/${booking.id}`}>
-                        <Button variant="default" size="sm">
-                          Review
+                        <Button
+                          variant="default"
+                          size="lg"
+                          className="rounded-2xl border-[#8459FB] text-white"
+                        >
+                          Add Review
                         </Button>
                       </Link>
                     </div>
@@ -125,7 +131,9 @@ export const RenterDashboard = () => {
         <TabsContent value="upcoming">
           <div className="grid gap-4">
             {upcomingBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">No upcoming rentals</p>
+              <p className="text-muted-foreground text-center py-4">
+                No upcoming rentals
+              </p>
             )}
             {upcomingBookings?.map((booking) => (
               <Card key={booking.id}>
@@ -145,7 +153,9 @@ export const RenterDashboard = () => {
                     <p className="text-sm">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
-                    <p className="text-sm font-medium">Status: {booking.status}</p>
+                    <p className="text-sm font-medium">
+                      Status: {booking.status}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -156,7 +166,9 @@ export const RenterDashboard = () => {
         <TabsContent value="past">
           <div className="grid gap-4">
             {pastBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">No past rentals</p>
+              <p className="text-muted-foreground text-center py-4">
+                No past rentals
+              </p>
             )}
             {pastBookings?.map((booking) => (
               <Card key={booking.id}>

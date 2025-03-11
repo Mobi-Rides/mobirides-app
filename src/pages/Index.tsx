@@ -11,7 +11,8 @@ import { Header } from "@/components/Header";
 import { CarGrid } from "@/components/CarGrid";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
+import { ArrowUpAZ, ArrowDownAZ, LogIn } from "lucide-react";
+import { BarLoader } from "react-spinners";
 
 const Index = () => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -195,49 +196,91 @@ const Index = () => {
     setSortOrder(prev => prev === "asc" ? "desc" : "asc");
   };
 
+  const navigateToSignIn = () => {
+    window.location.href = "/login";
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header 
+      <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onFiltersChange={setFilters}
       />
       <main className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
-          <BrandFilter
-            selectedBrand={selectedBrand}
-            onSelectBrand={setSelectedBrand}
-          />
-          <div className="flex justify-end">
-            <Button
-              variant={sortOrder ? "secondary" : "outline"}
-              onClick={toggleSortOrder}
-              className={`flex items-center gap-2 transition-colors ${
-                sortOrder ? "bg-accent text-accent-foreground" : ""
-              }`}
-            >
-              {sortOrder === "asc" ? (
-                <>
-                  Price: Low to High
-                  <ArrowUpAZ className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Price: High to Low
-                  <ArrowDownAZ className="h-4 w-4" />
-                </>
-              )}
-            </Button>
+        {isLoadingRole ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] w-full">
+            <p className="text-sm text-muted-foreground mb-3">
+              Loading your profile...
+            </p>
+            <BarLoader color="#7c3aed" width={100} />
           </div>
-          <CarGrid
-            cars={userRole === 'host' ? hostCars : allAvailableCars}
-            isLoading={userRole === 'host' ? hostCarsLoading : isLoadingCars}
-            error={userRole === 'host' ? hostCarsError : carsError}
-            loadMoreRef={loadMoreRef}
-            isFetchingNextPage={isFetchingNextPage}
-            isAuthenticated={isAuthenticated}
-          />
-        </div>
+        ) : !isAuthenticated ? (
+          <div className="flex flex-col items-center justify-center gap-4 min-h-[400px] text-center max-w-md mx-auto">
+            <div className=" p-8 rounded-lg ">
+              <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-600">
+                Welcome to Mobirides{" "}
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Please sign in to browse our collection of cars for rent, save
+                your favorites, and book your next ride!
+              </p>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-2xl border-primary md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 mx-auto"
+                onClick={navigateToSignIn}
+              >
+                {/* <Plus className="h-4 w-4 text-[#581CFA]" /> */}
+                <LogIn className="h-4 w-4 text-primary" />
+
+                <span className="hidden md:inline-block">
+                  <p className="text-primary text-xs md:text-sm lg:text-base font-semibold">
+                    Sign in
+                  </p>
+                </span>
+              </Button>
+
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <BrandFilter
+              selectedBrand={selectedBrand}
+              onSelectBrand={setSelectedBrand}
+            />
+            <div className="flex justify-end">
+              <Button
+                variant={sortOrder ? "secondary" : "outline"}
+                onClick={toggleSortOrder}
+                className={`flex items-center gap-2 transition-colors ${
+                  sortOrder ? "bg-accent text-accent-foreground" : ""
+                }`}
+              >
+                {sortOrder === "asc" ? (
+                  <>
+                    Price: Low to High
+                    <ArrowUpAZ className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Price: High to Low
+                    <ArrowDownAZ className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+            <CarGrid
+              cars={userRole === "host" ? hostCars : allAvailableCars}
+              isLoading={userRole === "host" ? hostCarsLoading : isLoadingCars}
+              error={userRole === "host" ? hostCarsError : carsError}
+              loadMoreRef={loadMoreRef}
+              isFetchingNextPage={isFetchingNextPage}
+              isAuthenticated={isAuthenticated}
+            />
+          </div>
+        )}
       </main>
       <Navigation />
     </div>
