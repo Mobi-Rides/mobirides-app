@@ -1,4 +1,3 @@
-
 import { MapInitializationState, MapResourceState } from '../types';
 import { RollbackCheckpoint, RecoveryAction, RecoveryResult, RecoveryLevel } from './types';
 import { resourceManager } from '../resource/ResourceManager';
@@ -42,38 +41,32 @@ export class RollbackManager {
 
   async recoverToCheckpoint(checkpoint: RollbackCheckpoint): Promise<RecoveryResult> {
     try {
-      // Determine recovery level based on current state and checkpoint
       const action = this.determineRecoveryAction(checkpoint);
       
-      // Check recovery attempts
       const attempts = this.recoveryAttempts.get(action.level) || 0;
       if (attempts >= action.maxAttempts) {
         throw new Error(`Maximum recovery attempts reached for level ${action.level}`);
       }
 
-      // Increment recovery attempts
       this.recoveryAttempts.set(action.level, attempts + 1);
 
-      // Execute recovery based on level
       switch (action.level) {
-        case 1: // Style Loading
+        case 1:
           await this.recoverStyleLoading();
           break;
-        case 2: // Map Instance
+        case 2:
           await this.recoverMapInstance();
           break;
-        case 3: // Resource Level
+        case 3:
           await this.recoverResources(action.retainResources);
           break;
-        case 4: // Complete Reset
+        case 4:
           await this.performCompleteReset();
           break;
       }
 
-      // Update state after recovery
       await stateManager.transition(action.target);
 
-      // Reset recovery attempts for this level on success
       this.recoveryAttempts.delete(action.level);
 
       return {
@@ -94,7 +87,6 @@ export class RollbackManager {
   private determineRecoveryAction(checkpoint: RollbackCheckpoint): RecoveryAction {
     const currentState = stateManager.getCurrentState();
     
-    // Determine recovery level based on state difference
     if (currentState === 'error') {
       return {
         level: 4,
@@ -167,7 +159,6 @@ export class RollbackManager {
   }
 
   private async recoverResources(retainResources: string[]): Promise<void> {
-    // Release non-retained resources
     const currentResources = Object.keys(stateManager.getResourceState());
     for (const resource of currentResources) {
       if (!retainResources.includes(resource)) {
@@ -175,9 +166,11 @@ export class RollbackManager {
       }
     }
 
-    // Reacquire resources
     for (const resource of currentResources) {
-      if (!stateManager.getResourceState()[resource as keyof typeof stateManager.getResourceState()]) {
+      const resourceState = stateManager.getResourceState();
+      const resourceKey = resource as keyof MapResourceState;
+      
+      if (!resourceState[resourceKey]) {
         await resourceManager.acquireResource(resource as any);
       }
     }
