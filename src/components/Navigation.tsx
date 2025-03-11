@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, MapPin, Bookmark, CalendarClock, User } from "lucide-react";
@@ -32,24 +31,28 @@ export const Navigation = () => {
   }, [location.pathname]);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 h-16 flex items-center justify-between px-6 z-50">
-      {items.map((item) => (
-        <Link
-          key={item.path}
-          to={item.path}
-          className={cn(
-            "flex flex-col items-center px-2 py-1 rounded-lg transition-colors",
-            activeIndex === item.activeIndex
-              ? "text-primary dark:text-primary"
-              : "text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary"
-          )}
-          onClick={() => setActiveIndex(item.activeIndex)}
-        >
-          {item.icon}
-          <span className="text-xs mt-1">{item.label}</span>
-        </Link>
-      ))}
-      <div className="absolute top-0 right-4 transform -translate-y-1/2 bg-white dark:bg-gray-900 p-2 rounded-full border border-gray-200 dark:border-gray-800">
+    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
+      <nav className="container max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 h-16">
+        <div className="grid grid-cols-5 h-full w-full">
+          {items.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center justify-center h-full transition-colors px-1",
+                activeIndex === item.activeIndex
+                  ? "text-primary dark:text-primary"
+                  : "text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary"
+              )}
+              onClick={() => setActiveIndex(item.activeIndex)}
+            >
+              {item.icon}
+              <span className="text-xs mt-1">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+      <div className="absolute -top-3 right-8 bg-white dark:bg-gray-900 p-2 rounded-full border border-gray-200 dark:border-gray-800 shadow-md">
         <ThemeToggle />
       </div>
     </div>

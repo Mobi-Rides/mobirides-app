@@ -14,30 +14,42 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 interface BrandFilterProps {
   selectedBrand: string | null;
   onSelectBrand: (brand: string | null) => void;
+  carsCount?: number;
 }
 
 export const BrandFilter = ({
   selectedBrand,
-  onSelectBrand
+  onSelectBrand,
+  carsCount = 0
 }: BrandFilterProps) => {
-  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  // Initialize state based on the incoming selectedBrand prop
+  const [activeSelection, setActiveSelection] = useState<string | null>(selectedBrand);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [showNoCarsMessage, setShowNoCarsMessage] = useState(false);
 
-  const toggleBrand = (brandName: string) => {
-    const newSelectedBrands = new Set(selectedBrands);
-    if (newSelectedBrands.has(brandName)) {
-      newSelectedBrands.delete(brandName);
-    } else {
-      newSelectedBrands.add(brandName);
+  // Update state when prop changes
+  useEffect(() => {
+    setActiveSelection(selectedBrand);
+  }, [selectedBrand]);
+
+  // Check if we need to show the no cars message
+  useEffect(() => {
+    // Only show message if a brand is selected and there are no cars
+    setShowNoCarsMessage(!!activeSelection && carsCount === 0);
+  }, [activeSelection, carsCount]);
+
+  const handleBrandClick = (brandName: string) => {
+    // If clicking the already selected brand, clear the selection
+    if (activeSelection === brandName) {
+      setActiveSelection(null);
+      onSelectBrand(null);
+    } 
+    // Otherwise, select the new brand
+    else {
+      setActiveSelection(brandName);
+      onSelectBrand(brandName);
     }
-    setSelectedBrands(newSelectedBrands);
-    
-    // If no brands are selected, pass null to show all results
-    // Otherwise, pass the first selected brand (maintaining backward compatibility)
-    onSelectBrand(newSelectedBrands.size > 0 ? Array.from(newSelectedBrands)[0] : null);
   };
-
-  const isBrandSelected = (brandName: string) => selectedBrands.has(brandName);
 
   return (
     <div className="space-y-4">
@@ -45,22 +57,25 @@ export const BrandFilter = ({
         <Carousel className="w-full">
           <CarouselContent>
             {defaultBrands.map(brand => (
-              <CarouselItem key={brand.id} className="basis-1/3 pl-2">
+              <CarouselItem key={brand.id} className="basis-1/4 pl-2">
                 <button 
-                  onClick={() => toggleBrand(brand.name)} 
+                  onClick={() => handleBrandClick(brand.name)} 
                   className={cn(
-                    "flex flex-col items-center p-4 rounded-lg transition-all w-full",
-                    isBrandSelected(brand.name) 
-                      ? "bg-primary text-white" 
-                      : "bg-secondary hover:bg-accent"
+                    "flex items-center justify-center aspect-square rounded-full transition-all w-20 h-20 mx-auto",
+                    activeSelection === brand.name
+                      ? "border-2 border-primary shadow-sm" 
+                      : "border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                   )}
+                  title={brand.name}
                 >
                   <img 
                     src={brand.logo_url} 
                     alt={`${brand.name} logo`} 
-                    className="w-12 h-12 object-contain"
+                    className={cn(
+                      "w-12 h-12 object-contain",
+                      activeSelection === brand.name ? "opacity-100" : "opacity-70 hover:opacity-100"
+                    )}
                   />
-                  <span className="text-xs mt-2 font-medium">{brand.name}</span>
                 </button>
               </CarouselItem>
             ))}
@@ -69,26 +84,48 @@ export const BrandFilter = ({
           <CarouselNext className="hidden md:flex" />
         </Carousel>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
           {defaultBrands.map(brand => (
             <button
               key={brand.id}
-              onClick={() => toggleBrand(brand.name)}
+              onClick={() => handleBrandClick(brand.name)}
               className={cn(
-                "flex flex-col items-center min-w-[144px] p-6 rounded-lg transition-all",
-                isBrandSelected(brand.name)
-                  ? "bg-primary text-white"
-                  : "bg-secondary hover:bg-accent"
+                "flex items-center justify-center aspect-square rounded-full transition-all w-24 h-24",
+                activeSelection === brand.name
+                  ? "border-2 border-primary shadow-sm" 
+                  : "border-2 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
               )}
+              title={brand.name}
             >
               <img
                 src={brand.logo_url}
                 alt={`${brand.name} logo`}
-                className="w-16 h-16 object-contain"
+                className={cn(
+                  "w-14 h-14 object-contain",
+                  activeSelection === brand.name ? "opacity-100" : "opacity-70 hover:opacity-100"
+                )}
               />
-              <span className="text-sm mt-3 font-medium">{brand.name}</span>
             </button>
           ))}
+        </div>
+      )}
+      
+      {showNoCarsMessage && (
+        <div className="w-full py-8 px-4 text-center rounded-lg bg-muted/30 dark:bg-gray-800/50">
+          <p className="text-muted-foreground dark:text-gray-400">
+            No cars available for {activeSelection}. Try another brand or clear the filter.
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setActiveSelection(null);
+              onSelectBrand(null);
+            }}
+            className="mt-2"
+          >
+            Clear Filter
+          </Button>
         </div>
       )}
     </div>

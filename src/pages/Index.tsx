@@ -142,6 +142,11 @@ const Index = () => {
     }))
   ) || [];
 
+  // Get the count of cars for the current view
+  const currentCarsCount = userRole === "host" 
+    ? hostCars.length 
+    : allAvailableCars.length;
+
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
@@ -232,9 +237,7 @@ const Index = () => {
                 className="rounded-2xl border-primary md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 mx-auto"
                 onClick={navigateToSignIn}
               >
-                {/* <Plus className="h-4 w-4 text-[#581CFA]" /> */}
                 <LogIn className="h-4 w-4 text-primary" />
-
                 <span className="hidden md:inline-block">
                   <p className="text-primary text-xs md:text-sm lg:text-base font-semibold">
                     Sign in
@@ -249,6 +252,7 @@ const Index = () => {
             <BrandFilter
               selectedBrand={selectedBrand}
               onSelectBrand={setSelectedBrand}
+              carsCount={currentCarsCount}
             />
             <div className="flex justify-end">
               <Button
