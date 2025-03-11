@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -89,7 +90,7 @@ export const CarCard = ({
   return (
     <>
       <Card
-        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[22rem]"
+        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[22rem] dark:bg-gray-800 dark:border-gray-700"
         onClick={handleCardClick}
       >
         <div className="relative h-48">
@@ -101,47 +102,42 @@ export const CarCard = ({
           {onSaveToggle && (
             <button
               onClick={handleSaveClick}
-              className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+              className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               {isSaved ? "❤️" : "🤍"}
             </button>
           )}
         </div>
         <div className="p-4 flex flex-col h-[calc(28rem-12rem)]">
-          <span className="px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] text-[#7C3AED] w-fit mb-2">
+          <span className="px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8] w-fit mb-2">
             {getCarType(seats)}
           </span>
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
-              <h3 className="font-semibold text-left break-words line-clamp-2 text-sm md:text-base">{brand} {model}</h3>
-              {/* <p className="text-sm text-gray-400 text-left">{year}</p> */}
+              <h3 className="font-semibold text-left break-words line-clamp-2 text-sm md:text-base dark:text-white">{brand} {model}</h3>
             </div>
             <div className="text-right ml-2">
               <div className="flex items-center gap-1 justify-end">
-                <p className="font-semibold whitespace-nowrap text-primary">BWP {price_per_day}</p>
-                <p className="text-xs text-gray-400">/day</p>
+                <p className="font-semibold whitespace-nowrap text-primary dark:text-primary-foreground">BWP {price_per_day}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">/day</p>
               </div>
             </div>
           </div>
-          <Separator className="w-full my-3 " />
+          <Separator className="w-full my-3 dark:bg-gray-700" />
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="flex items-center justify-left gap-1 text-sm text-gray-400">
-              <GaugeCircle className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-left gap-1 text-sm text-gray-400 dark:text-gray-300">
+              <GaugeCircle className="w-4 h-4 text-primary dark:text-primary-foreground" />
               {transmission}
             </div>
-            <div className="flex items-center justify-left gap-1 text-sm text-gray-400">
-              <Fuel className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-left gap-1 text-sm text-gray-400 dark:text-gray-300">
+              <Fuel className="w-4 h-4 text-primary dark:text-primary-foreground" />
               {fuel}
             </div>
-            <div className="flex items-center justify-left gap-1 text-sm text-gray-400">
-              <Users className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-left gap-1 text-sm text-gray-400 dark:text-gray-300">
+              <Users className="w-4 h-4 text-primary dark:text-primary-foreground" />
               {seats} Seats
             </div>
           </div>
-          {/* <div className="mt-auto flex justify-between items-center">
-            <Badge variant="secondary" className="truncate max-w-[150px]">{location}</Badge>
-            <Button onClick={handleBookNow}>Book now</Button>
-          </div> */}
         </div>
       </Card>
 

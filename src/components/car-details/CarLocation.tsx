@@ -1,170 +1,96 @@
 
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "../ui/button";
+import { useEffect, useRef, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { useMapLocation } from "@/hooks/useMapLocation";
-import { updateCarLocation } from "@/services/carLocation";
-import { useUserLocation } from "@/hooks/useUserLocation";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
-import { Car } from "lucide-react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface CarLocationProps {
-  latitude: number | null;
-  longitude: number | null;
+  latitude: number;
+  longitude: number;
   location: string;
+  mapStyle?: string;
 }
 
-export const CarLocation = ({ latitude, longitude, location }: CarLocationProps) => {
-  const [isAdjusting, setIsAdjusting] = useState(false);
-  const [hostMarker, setHostMarker] = useState<mapboxgl.Marker | null>(null);
-  const { id: carId } = useParams();
-  const queryClient = useQueryClient();
-  const { token, isLoading: isTokenLoading } = useMapboxToken();
+export const CarLocation = ({ 
+  latitude, 
+  longitude, 
+  location,
+  mapStyle = "mapbox://styles/mapbox/streets-v12"
+}: CarLocationProps) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+  const { token: mapboxToken } = useMapboxToken();
+  const [mapInitialized, setMapInitialized] = useState(false);
 
-  const { 
-    mapContainer, 
-    map, 
-    newCoordinates, 
-    setNewCoordinates,
-    isMapLoaded 
-  } = useMapLocation({
-    initialLatitude: latitude || 0,
-    initialLongitude: longitude || 0,
-    mapboxToken: token,
-    isAdjusting
-  });
-
-  // Initialize user location tracking
-  const { userLocation } = useUserLocation(map?.current);
-
-  // Update host marker when user location changes
   useEffect(() => {
-    if (!map?.current || !userLocation) return;
+    if (!mapboxToken || !mapContainer.current || mapInitialized) return;
 
-    // Remove existing host marker if it exists
-    if (hostMarker) {
-      hostMarker.remove();
-    }
+    // Initialize mapbox
+    mapboxgl.accessToken = mapboxToken;
 
-    // Create a custom marker element
-    const el = document.createElement('div');
-    el.className = 'bg-primary text-white p-2 rounded-full';
-    el.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>';
-
-    // Create and add the new marker
-    const newMarker = new mapboxgl.Marker({
-      element: el,
-      anchor: 'center'
-    })
-      .setLngLat([userLocation.longitude, userLocation.latitude])
-      .addTo(map.current);
-
-    setHostMarker(newMarker);
-
-    // Update map bounds to show both car and host locations
-    if (latitude && longitude) {
-      const bounds = new mapboxgl.LngLatBounds()
-        .extend([longitude, latitude])
-        .extend([userLocation.longitude, userLocation.latitude]);
-
-      map.current.fitBounds(bounds, {
-        padding: 100
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: mapStyle,
+        center: [longitude, latitude],
+        zoom: 13,
+        interactive: false, // Make the map non-interactive
       });
+
+      map.current.on("load", () => {
+        // Add marker
+        marker.current = new mapboxgl.Marker({ color: "#7C3AED" })
+          .setLngLat([longitude, latitude])
+          .addTo(map.current!);
+
+        setMapInitialized(true);
+      });
+
+      map.current.on("error", (e) => {
+        console.error("Map error:", e);
+        toast.error("Error loading location map");
+      });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Could not initialize location map");
     }
-  }, [map?.current, userLocation, latitude, longitude]);
 
-  const handleAdjustLocation = () => {
-    setIsAdjusting(true);
-    toast.info("Click anywhere on the map to adjust the location. Click 'Save Location' when done.");
-  };
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        marker.current = null;
+        setMapInitialized(false);
+      }
+    };
+  }, [latitude, longitude, mapboxToken, mapStyle, mapInitialized]);
 
-  const handleSaveLocation = async () => {
-    if (!newCoordinates || !carId) {
-      console.log("Missing required data for location update:", { newCoordinates, carId });
-      toast.error("Please select a new location first");
-      return;
+  // Update map style when mapStyle prop changes
+  useEffect(() => {
+    if (map.current && mapInitialized) {
+      map.current.setStyle(mapStyle);
     }
-
-    console.log("Saving new location:", newCoordinates);
-    
-    const success = await updateCarLocation(
-      carId,
-      newCoordinates.lat,
-      newCoordinates.lng
-    );
-
-    if (success) {
-      console.log("Location update successful, invalidating queries");
-      await queryClient.invalidateQueries({ queryKey: ['car', carId] });
-      setIsAdjusting(false);
-      setNewCoordinates(null);
-    }
-  };
-
-  // Show loading state while token is being fetched
-  if (isTokenLoading) {
-    console.log("Loading token state:", { isTokenLoading, token });
-    return <div>Loading map configuration...</div>;
-  }
-
-  // Don't show MapboxConfig overlay, just show a message if there's no token
-  if (!token) {
-    console.log("Token state check:", { token, isTokenLoading });
-    return <div className="text-muted-foreground">Map configuration required</div>;
-  }
-
-  if (!latitude || !longitude) {
-    return (
-      <div>
-        <h2 className="font-semibold mb-2">Location</h2>
-        <p className="text-muted-foreground">{location}</p>
-      </div>
-    );
-  }
+  }, [mapStyle, mapInitialized]);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">Location</h2>
-        <div className="space-x-2">
-          {!isAdjusting ? (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleAdjustLocation}
-            >
-              Adjust Location
-            </Button>
-          ) : (
-            <Button 
-              variant="default" 
-              size="sm"
-              onClick={handleSaveLocation}
-            >
-              Save Location
-            </Button>
-          )}
-        </div>
-      </div>
-      <p className="text-muted-foreground mb-2">{location}</p>
-      <div className="relative w-full h-[300px] rounded-lg overflow-hidden">
-        <div ref={mapContainer} className="absolute inset-0" />
-        {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <div className="animate-pulse text-primary">Loading map...</div>
-          </div>
-        )}
-      </div>
-      <div className="space-y-1 text-xs text-muted-foreground">
-        <p>Current coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}</p>
-        {newCoordinates && (
-          <p>New coordinates: {newCoordinates.lat.toFixed(6)}, {newCoordinates.lng.toFixed(6)}</p>
-        )}
-      </div>
-    </div>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2 dark:text-white">
+          <MapPin className="h-5 w-5 text-primary dark:text-primary-foreground" />
+          Location
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm mb-3 dark:text-gray-300">{location}</p>
+        <div 
+          ref={mapContainer} 
+          className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700"
+        />
+      </CardContent>
+    </Card>
   );
 };

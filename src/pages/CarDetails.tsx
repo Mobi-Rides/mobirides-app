@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,9 +14,11 @@ import { CarReviews } from "@/components/car-details/CarReviews";
 import { CarLocation } from "@/components/car-details/CarLocation";
 import { BarLoader } from "react-spinners";
 import type { Car } from "@/types/car";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const CarDetails = () => {
   const { id } = useParams();
+  const { theme } = useTheme();
 
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", id],
@@ -61,9 +64,9 @@ const CarDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background dark:bg-gray-900">
         <div className="flex flex-col items-center justify-center min-h-[200px] w-full p-4">
-          <p className="text-sm text-muted-foreground mb-3">
+          <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">
             Loading car details...
           </p>
           <BarLoader color="#7c3aed" width={100} />
@@ -71,13 +74,13 @@ const CarDetails = () => {
         
         {/* Keep some skeleton UI to show page structure */}
         <div className="space-y-4 p-4 mt-4">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-64 w-full bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-8 w-3/4 bg-gray-200 dark:bg-gray-700" />
+          <Skeleton className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700" />
           <div className="grid grid-cols-3 gap-4">
-            <Skeleton className="h-20" />
-            <Skeleton className="h-20" />
-            <Skeleton className="h-20" />
+            <Skeleton className="h-20 bg-gray-200 dark:bg-gray-700" />
+            <Skeleton className="h-20 bg-gray-200 dark:bg-gray-700" />
+            <Skeleton className="h-20 bg-gray-200 dark:bg-gray-700" />
           </div>
         </div>
         <Navigation />
@@ -87,10 +90,10 @@ const CarDetails = () => {
 
   if (error || !car) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background dark:bg-gray-900">
         <div className="p-4 text-center">
           <h2 className="text-xl font-semibold text-red-500">Error loading car details</h2>
-          <p className="text-muted-foreground">Please try again later</p>
+          <p className="text-muted-foreground dark:text-gray-400">Please try again later</p>
         </div>
         <Navigation />
       </div>
@@ -103,7 +106,7 @@ const CarDetails = () => {
     : "/placeholder.svg";
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
       <div className="space-y-4 p-4">
         <CarImageCarousel carId={car.id} mainImageUrl={car.image_url} />
         <CarHeader
@@ -122,6 +125,7 @@ const CarDetails = () => {
           latitude={car.latitude} 
           longitude={car.longitude}
           location={car.location}
+          mapStyle={theme === "dark" ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11"}
         />
         <CarOwner
           ownerName={car.profiles?.full_name || "Car Owner"}

@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { CarCard } from "@/components/CarCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import type { Car } from "@/types/car";
-import { BarLoader } from "react-spinners"; // Add this import
+import { BarLoader } from "react-spinners";
 
 interface CarGridProps {
   cars: Car[];
@@ -28,9 +29,9 @@ export const CarGrid = ({
   
   const CarSkeleton = () => (
     <div className="space-y-3">
-      <Skeleton className="h-48 w-full bg-gray-200" />
-      <Skeleton className="h-4 w-3/4 bg-gray-200" />
-      <Skeleton className="h-4 w-1/2 bg-gray-200" />
+      <Skeleton className="h-48 w-full bg-gray-200 dark:bg-gray-700" />
+      <Skeleton className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700" />
+      <Skeleton className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700" />
     </div>
   );
 
@@ -110,7 +111,7 @@ export const CarGrid = ({
           <Button
             variant="ghost"
             onClick={() => setShowAll(!showAll)}
-            className="text-primary hover:text-primary/80"
+            className="text-primary dark:text-primary-foreground hover:text-primary/80 dark:hover:text-primary-foreground/80"
           >
             {showAll ? "Show Less" : "See All"}
           </Button>
@@ -123,7 +124,7 @@ export const CarGrid = ({
       >
         {isFetchingNextPage && (
           <>
-            <p className="text-sm text-muted-foreground mb-1">Fetching more cars...</p>
+            <p className="text-sm text-muted-foreground mb-1 dark:text-gray-400">Fetching more cars...</p>
             <BarLoader color="#7c3aed" width={100} />
           </>
         )}

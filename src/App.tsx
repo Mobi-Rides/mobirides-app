@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Index from "@/pages/Index";
@@ -16,6 +17,7 @@ import BookingRequestDetails from "@/pages/BookingRequestDetails";
 import Dashboard from "@/pages/Dashboard";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BarLoader } from "react-spinners";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
 
@@ -89,9 +91,11 @@ const AppRoutes = () => {
 
 const App = () => {
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </ThemeProvider>
   );
 };
 

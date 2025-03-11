@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -27,10 +28,12 @@ export default {
         primary: {
           DEFAULT: "#7C3AED",
           foreground: "#FFFFFF",
+          dark: "#6D28D9", // Darker shade for dark mode
         },
         secondary: {
           DEFAULT: "#F3F4F6",
           foreground: "#1F2937",
+          dark: "#374151", // Darker shade for dark mode
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -43,6 +46,7 @@ export default {
         accent: {
           DEFAULT: "#EDE9FE",
           foreground: "#7C3AED",
+          dark: "#5B21B6", // Darker shade for dark mode
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
