@@ -1,10 +1,8 @@
 import { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { mapCore } from "@/utils/mapbox/core/MapCore";
 import { toast } from "sonner";
 import Dpad from "./Dpad";
-import { Button } from "../ui/button";
 
 interface CustomMapboxProps {
   mapbox_token: string;

@@ -18,7 +18,6 @@ export const fetchOnlineHosts = async (): Promise<Location[]> => {
     const { data, error } = await supabase
       .from("cars")
       .select("id, latitude, longitude, owner_id")
-      .eq("is_online", true)
       .eq("is_sharing_location", true)
       .not("latitude", "is", null)
       .not("longitude", "is", null);
