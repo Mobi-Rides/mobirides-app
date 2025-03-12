@@ -1,9 +1,10 @@
-
 import { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { mapCore } from "@/utils/mapbox/core/MapCore";
 import { toast } from "sonner";
+import Dpad from "./Dpad";
+import { Button } from "../ui/button";
 
 interface CustomMapboxProps {
   mapbox_token: string;
@@ -16,7 +17,7 @@ const CustomMapbox = ({
   mapbox_token,
   longitude,
   latitude,
-  mapStyle = "mapbox://styles/mapbox/streets-v12"
+  mapStyle = "mapbox://styles/mapbox/streets-v12",
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -83,25 +84,50 @@ const CustomMapbox = ({
     }
   }, [mapStyle, mapInit]);
 
+  // dpad controls
+  const onUp = () => {
+    if (map.current) {
+      map.current.panBy([0, -100], { duration: 500 });
+    }
+  };
+
+  const onDown = () => {
+    if (map.current) {
+      map.current.panBy([0, 100], { duration: 500 });
+    }
+  };
+
+  const onLeft = () => {
+    if (map.current) {
+      map.current.panBy([-100, 0], { duration: 500 });
+    }
+  };
+
+  const onRight = () => {
+    if (map.current) {
+      map.current.panBy([100, 0], { duration: 500 });
+    }
+  };
+
   return (
-    <div className="relative w-full h-full bottom-9">
+    <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
       <div ref={mapContainer} className="w-full h-full" />
-      <div className="absolute bottom-4 right-4 z-10 bg-white dark:bg-gray-800 shadow-md rounded-md p-2">
-        <button 
-          className="text-xs text-gray-700 dark:text-gray-300" 
-          onClick={() => {
-            if (map.current) {
-              map.current.flyTo({
-                center: [longitude, latitude],
-                zoom: 14,
-                essential: true
-              });
-            }
-          }}
-        >
-          Reset View
-        </button>
-      </div>
+      <div className="absolute bottom-10 right-4 z-10 bg-white dark:bg-gray-800 shadow-md rounded-md p-2"></div>
+      <Dpad
+        onUp={onUp}
+        onDown={onDown}
+        onLeft={onLeft}
+        onRight={onRight}
+        onReset={() => {
+          if (map.current) {
+            map.current.flyTo({
+              center: [longitude, latitude],
+              zoom: 14,
+              essential: true,
+            });
+          }
+        }}
+      />
     </div>
   );
 };
