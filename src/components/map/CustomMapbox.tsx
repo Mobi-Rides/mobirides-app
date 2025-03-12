@@ -281,7 +281,7 @@ const CustomMapbox = ({
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full bottom-2">
       <div
         ref={mapContainer}
         className="w-full h-full overflow-hidden"
@@ -289,7 +289,7 @@ const CustomMapbox = ({
       />
 
       {/* Location controls */}
-      <div className="absolute bottom-6 left-6 bg-white p-2 rounded-lg shadow-lg z-10 flex flex-col gap-2">
+      <div className="absolute bottom-10 left-6 bg-white p-2 rounded-lg shadow-lg z-10 flex flex-col gap-2">
         <Button
           onClick={toggleLocationTracking}
           variant={isTracking ? "outline" : "default"}
@@ -388,7 +388,7 @@ const CustomMapbox = ({
       </div>
 
       {/* Map navigation controls */}
-      <div className="absolute bottom-6 right-6 bg-white p-2 rounded-full shadow-lg z-10 flex flex-col items-center">
+      <div className="absolute bottom-10 right-6 bg-white p-2 rounded-full shadow-lg z-10 flex flex-col items-center">
         <button onClick={() => panMap("up")} className="p-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
