@@ -84,7 +84,7 @@ const CustomMapbox = ({
   }, [mapStyle, mapInit]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full bottom-9">
       <div ref={mapContainer} className="w-full h-full" />
       <div className="absolute bottom-4 right-4 z-10 bg-white dark:bg-gray-800 shadow-md rounded-md p-2">
         <button 
