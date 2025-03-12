@@ -11,12 +11,14 @@ interface CustomMapboxProps {
   longitude: number;
   latitude: number;
   mapStyle?: string;
+  onlineHosts?: Location[];
 }
 
 const CustomMapbox = ({
   mapbox_token,
   longitude,
   latitude,
+  onlineHosts,
   mapStyle = "mapbox://styles/mapbox/streets-v12",
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
