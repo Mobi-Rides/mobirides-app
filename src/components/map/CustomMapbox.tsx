@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { toast } from "sonner";
 import Dpad from "./Dpad";
+import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 
 interface CustomMapboxProps {
   mapbox_token: string;
@@ -21,7 +22,9 @@ const CustomMapbox = ({
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const geolocateControlRef = useRef<mapboxgl.GeolocateControl | null>(null);
   const [mapInit, setMapInit] = useState<boolean>(false);
+  const [userLocation, setUserLocation] = useState({ latitude, longitude });
 
   useEffect(() => {
     if (mapbox_token) {
@@ -49,10 +52,17 @@ const CustomMapbox = ({
       });
 
       map.current.addControl(geolocateControl, "top-right");
+      geolocateControlRef.current = geolocateControl;
 
       map.current.on("load", () => {
         console.log("Map loaded successfully");
         setMapInit(true);
+        geolocateControlRef.current.on("geolocate", (e) => {
+          setUserLocation({
+            longitude: e.coords.longitude,
+            latitude: e.coords.latitude,
+          });
+        });
 
         if (location.pathname === "/map") {
           // Trigger geolocation on map page
@@ -109,24 +119,27 @@ const CustomMapbox = ({
     }
   };
 
+  const onReset = () => {
+    if (map.current) {
+      map.current.flyTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 20,
+        essential: true,
+      });
+    }
+  };
+
   return (
     <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
       <div ref={mapContainer} className="w-full h-full" />
+      <OnlineStatusToggle />
       <div className="absolute bottom-10 right-4 z-10 bg-white dark:bg-gray-800 shadow-md rounded-md p-2"></div>
       <Dpad
         onUp={onUp}
         onDown={onDown}
         onLeft={onLeft}
         onRight={onRight}
-        onReset={() => {
-          if (map.current) {
-            map.current.flyTo({
-              center: [longitude, latitude],
-              zoom: 14,
-              essential: true,
-            });
-          }
-        }}
+        onReset={onReset}
       />
     </div>
   );

@@ -1,13 +1,4 @@
-import {
-  Feather,
-  FeatherIcon,
-  ArrowLeft,
-  ArrowDown,
-  ArrowRight,
-  ArrowUp,
-  RotateCcw,
-} from "lucide-react";
-import React from "react";
+import { ArrowLeft, ArrowDown, ArrowRight, ArrowUp, Send } from "lucide-react";
 import { Button } from "../ui/button";
 
 export type DpadProps = {
@@ -36,7 +27,7 @@ export default function Dpad({
           <ArrowLeft name="arrow-left" size={24} color="white" />
         </Button>
         <Button variant="default" onClick={onReset}>
-          <RotateCcw name="arrow-left" size={24} color="white" />
+          <Send name="arrow-left" size={24} color="white" />
         </Button>
         <Button variant="default" onClick={onRight} style={{ width: 20 }}>
           <ArrowRight name="arrow-right" size={24} color="white" />

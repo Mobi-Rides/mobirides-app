@@ -44,6 +44,8 @@ const Map = () => {
       toast.info("No hosts are currently online");
     }
 
+    console.log("Host locations", onlineHosts);
+
     setOnlineHosts(onlineHosts);
   };
 
