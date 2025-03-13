@@ -1,6 +1,5 @@
 
-// Fix the part on line 180
-import { MapInitializationState, MapResourceState } from '../types';
+import { MapInitializationState } from '../types';
 import { RollbackCheckpoint, RecoveryAction, RecoveryResult, RecoveryLevel } from './types';
 import { resourceManager } from '../resource/ResourceManager';
 import { mapCore } from '../MapCore';

@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // Define a simple Host type to avoid deep type instantiation errors
-interface Host {
+export interface Host {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
@@ -14,6 +14,24 @@ interface Host {
 // Fetch all online hosts (users who are sharing their location)
 export const fetchOnlineHosts = async (): Promise<Host[]> => {
   try {
+    // First check if the required columns exist
+    const { data: columnCheck, error: columnError } = await supabase
+      .from("profiles")
+      .select("*")
+      .limit(1);
+    
+    // Check if columns exist in returned data
+    const hasLocationFields = columnCheck && 
+      columnCheck.length > 0 && 
+      'latitude' in columnCheck[0] && 
+      'longitude' in columnCheck[0] &&
+      'is_sharing_location' in columnCheck[0];
+    
+    if (columnError || !hasLocationFields) {
+      console.error("Required columns don't exist:", columnError);
+      return [];
+    }
+
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, latitude, longitude, updated_at")
@@ -26,7 +44,8 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
-    return data as Host[] || [];
+    // Type assertion is safer here since we've checked the columns exist
+    return (data || []) as Host[];
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
@@ -36,6 +55,23 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
 // Fetch a specific host by ID
 export const fetchHostById = async (hostId: string): Promise<Host | null> => {
   try {
+    // First check if the required columns exist
+    const { data: columnCheck, error: columnError } = await supabase
+      .from("profiles")
+      .select("*")
+      .limit(1);
+    
+    // Check if columns exist in returned data
+    const hasLocationFields = columnCheck && 
+      columnCheck.length > 0 && 
+      'latitude' in columnCheck[0] && 
+      'longitude' in columnCheck[0];
+    
+    if (columnError || !hasLocationFields) {
+      console.error("Required columns don't exist:", columnError);
+      return null;
+    }
+
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, latitude, longitude, updated_at")
@@ -47,6 +83,7 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
+    // Type assertion is safer here since we've checked the columns exist
     return data as Host;
   } catch (error) {
     console.error("Error in fetchHostById:", error);
