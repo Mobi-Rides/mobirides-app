@@ -26,6 +26,7 @@ const CustomMapbox = ({
   const geolocateControlRef = useRef<mapboxgl.GeolocateControl | null>(null);
   const [mapInit, setMapInit] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState({ latitude, longitude });
+  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     if (mapbox_token) {
@@ -96,6 +97,41 @@ const CustomMapbox = ({
       map.current.setStyle(mapStyle);
     }
   }, [mapStyle, mapInit]);
+
+  // Display host markers when onlineHosts change
+  useEffect(() => {
+    if (!map.current || !mapInit || !onlineHosts?.length) return;
+
+    // Remove existing markers
+    markers.forEach(marker => marker.remove());
+    setMarkers([]);
+
+    // Add new markers
+    const newMarkers = onlineHosts.map(host => {
+      if (!host.latitude || !host.longitude) return null;
+
+      const el = document.createElement('div');
+      el.className = 'host-marker';
+      el.style.width = '20px';
+      el.style.height = '20px';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = '#4ade80';
+      el.style.border = '2px solid white';
+      el.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)';
+
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([host.longitude, host.latitude])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 })
+            .setHTML(`<p class="font-medium">${host.full_name || 'Host'}</p>`)
+        )
+        .addTo(map.current!);
+      
+      return marker;
+    }).filter(Boolean) as mapboxgl.Marker[];
+
+    setMarkers(newMarkers);
+  }, [onlineHosts, mapInit]);
 
   // dpad controls
   const onUp = () => {

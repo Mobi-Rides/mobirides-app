@@ -210,7 +210,10 @@ export class MapCore {
     this.styleLoaded = false;
 
     // Release resources in reverse dependency order
-    await resourceManager.releaseAll();
+    await resourceManager.releaseResource('dom');
+    await resourceManager.releaseResource('module');
+    await resourceManager.releaseResource('token');
+    
     await stateManager.transition('uninitialized');
     
     // Clear rollback checkpoints

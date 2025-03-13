@@ -1,3 +1,5 @@
+
+// Fix the part on line 180
 import { MapInitializationState, MapResourceState } from '../types';
 import { RollbackCheckpoint, RecoveryAction, RecoveryResult, RecoveryLevel } from './types';
 import { resourceManager } from '../resource/ResourceManager';
@@ -159,6 +161,7 @@ export class RollbackManager {
   }
 
   private async recoverResources(retainResources: string[]): Promise<void> {
+    // Release non-retained resources
     const currentResources = Object.keys(stateManager.getResourceState());
     for (const resource of currentResources) {
       if (!retainResources.includes(resource)) {
@@ -166,9 +169,10 @@ export class RollbackManager {
       }
     }
 
+    // Reacquire resources
     for (const resource of currentResources) {
       const resourceState = stateManager.getResourceState();
-      const resourceKey = resource as keyof MapResourceState;
+      const resourceKey = resource as keyof typeof resourceState;
       
       if (!resourceState[resourceKey]) {
         await resourceManager.acquireResource(resource as any);

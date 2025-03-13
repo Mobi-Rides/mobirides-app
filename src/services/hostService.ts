@@ -26,7 +26,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
-    return data || [];
+    return data as Host[] || [];
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
@@ -47,7 +47,7 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
-    return data;
+    return data as Host;
   } catch (error) {
     console.error("Error in fetchHostById:", error);
     return null;

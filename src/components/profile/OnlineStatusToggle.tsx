@@ -22,6 +22,23 @@ export function OnlineStatusToggle() {
         const { data: session } = await supabase.auth.getSession();
         if (!session.session) return;
 
+        // First check if the column exists
+        const { data: columnExists, error: columnError } = await supabase
+          .rpc('check_column_exists', { 
+            table_name: 'profiles', 
+            column_name: 'is_sharing_location' 
+          });
+
+        if (columnError) {
+          console.error("Error checking column existence:", columnError);
+          return;
+        }
+
+        if (!columnExists) {
+          console.log("Location sharing columns don't exist yet");
+          return;
+        }
+
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("is_sharing_location, location_sharing_scope")
@@ -56,12 +73,24 @@ export function OnlineStatusToggle() {
         return;
       }
 
+      // First check if the column exists
+      const { data: columnExists, error: columnError } = await supabase
+        .rpc('check_column_exists', { 
+          table_name: 'profiles', 
+          column_name: 'is_sharing_location' 
+        });
+
+      if (columnError || !columnExists) {
+        toast.error("Location sharing is not available right now");
+        return;
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
           is_sharing_location: isSharing,
           location_sharing_scope: locationScope,
-        })
+        } as any)
         .eq("id", session.session.user.id);
 
       if (error) {
@@ -93,11 +122,23 @@ export function OnlineStatusToggle() {
         return;
       }
 
+      // First check if the column exists
+      const { data: columnExists, error: columnError } = await supabase
+        .rpc('check_column_exists', { 
+          table_name: 'profiles', 
+          column_name: 'location_sharing_scope' 
+        });
+
+      if (columnError || !columnExists) {
+        toast.error("Location sharing scope is not available right now");
+        return;
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
           location_sharing_scope: scope,
-        })
+        } as any)
         .eq("id", session.session.user.id);
 
       if (error) {
