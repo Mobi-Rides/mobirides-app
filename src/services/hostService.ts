@@ -1,23 +1,22 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
-interface Location {
-  lat: number;
-  lng: number;
-  label?: string;
-  hostId?: string; // Added hostId property
-  carId?: string; // Added carId property
+// Define a simple Host type to avoid deep type instantiation errors
+interface Host {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  updated_at: string | null;
 }
 
-/**
- * Fetches hosts who are currently online and sharing their location
- * @returns Array of host locations with coordinates and labels
- */
-export const fetchOnlineHosts = async (): Promise<Location[]> => {
+// Fetch all online hosts (users who are sharing their location)
+export const fetchOnlineHosts = async (): Promise<Host[]> => {
   try {
-    // Query the database for hosts who are online and sharing location
     const { data, error } = await supabase
-      .from("cars")
-      .select("id, latitude, longitude, owner_id")
+      .from("profiles")
+      .select("id, full_name, avatar_url, latitude, longitude, updated_at")
       .eq("is_sharing_location", true)
       .not("latitude", "is", null)
       .not("longitude", "is", null);
@@ -27,61 +26,30 @@ export const fetchOnlineHosts = async (): Promise<Location[]> => {
       return [];
     }
 
-    if (!data || !data.length) {
-      return [];
-    }
-
-    // Transform the data to the Location interface format
-    return data.map((car) => ({
-      lat: car.latitude,
-      lng: car.longitude,
-      label: `Car #${car.id}`,
-      hostId: car.owner_id,
-      carId: car.id,
-    }));
+    return data || [];
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
   }
 };
 
-/**
- * Fetches a specific host's location by their ID
- * @param hostId The ID of the host
- * @returns The host's location or null if not found
- */
-export const fetchHostLocation = async (
-  hostId: string
-): Promise<Location | null> => {
+// Fetch a specific host by ID
+export const fetchHostById = async (hostId: string): Promise<Host | null> => {
   try {
     const { data, error } = await supabase
-      .from("cars")
-      .select(
-        `
-        id,
-        latitude,
-        longitude,
-        owner_id
-      `
-      )
-      .eq("owner_id", hostId)
-      .eq("is_sharing_location", true)
+      .from("profiles")
+      .select("id, full_name, avatar_url, latitude, longitude, updated_at")
+      .eq("id", hostId)
       .single();
 
-    if (error || !data) {
-      console.error("Error fetching host location:", error);
+    if (error) {
+      console.error("Error fetching host:", error);
       return null;
     }
 
-    return {
-      lat: data.latitude,
-      lng: data.longitude,
-      label: `Host #${hostId}`,
-      hostId: hostId,
-      carId: data.id,
-    };
+    return data;
   } catch (error) {
-    console.error("Error in fetchHostLocation:", error);
+    console.error("Error in fetchHostById:", error);
     return null;
   }
 };

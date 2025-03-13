@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import CustomMapbox from "@/components/map/CustomMapbox";
@@ -6,7 +7,6 @@ import { toast } from "sonner";
 import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
 import { fetchOnlineHosts } from "@/services/hostService";
-import { set } from "date-fns";
 
 const Map = () => {
   const [mapToken, setMapToken] = useState<string>("");
@@ -16,7 +16,6 @@ const Map = () => {
 
   useEffect(() => {
     //subscribe to the map token
-
     const fetchToken = async () => {
       setIsLoading(true);
       try {
@@ -39,19 +38,31 @@ const Map = () => {
 
   // get host locations
   const fetchHostLocations = async () => {
-    const onlineHosts = await fetchOnlineHosts();
-    if (!onlineHosts.length) {
-      toast.info("No hosts are currently online");
+    try {
+      const onlineHosts = await fetchOnlineHosts();
+      if (!onlineHosts.length) {
+        toast.info("No hosts are currently online");
+      }
+
+      console.log("Host locations", onlineHosts);
+      setOnlineHosts(onlineHosts);
+    } catch (error) {
+      console.error("Error fetching host locations:", error);
+      toast.error("Failed to fetch host locations");
     }
-
-    console.log("Host locations", onlineHosts);
-
-    setOnlineHosts(onlineHosts);
   };
 
   useEffect(() => {
     fetchHostLocations();
   }, []);
+
+  // Map style based on theme
+  const getMapStyle = () => {
+    if (theme === "dark") {
+      return "mapbox://styles/mapbox/navigation-night-v1";
+    }
+    return "mapbox://styles/mapbox/navigation-day-v1";
+  };
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900">
@@ -70,11 +81,7 @@ const Map = () => {
               longitude={25.90859}
               latitude={-24.65451}
               onlineHosts={onlineHosts}
-              mapStyle={
-                theme === "dark"
-                  ? "mapbox://styles/mapbox/dark-v11"
-                  : "mapbox://styles/mapbox/light-v11"
-              }
+              mapStyle={getMapStyle()}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full w-full bg-muted/20 dark:bg-gray-800/20">

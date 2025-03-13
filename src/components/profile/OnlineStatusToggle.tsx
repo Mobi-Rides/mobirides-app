@@ -1,241 +1,179 @@
+
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
-type LocationSharingScope = "none" | "trip_only" | "all";
+type LocationSharingScope = "all" | "renters" | "none";
 
-export const OnlineStatusToggle = () => {
-  const [isOnline, setIsOnline] = useState(false);
-  const [sharingScope, setSharingScope] =
-    useState<LocationSharingScope>("none");
+export function OnlineStatusToggle() {
+  const [isSharingLocation, setIsSharingLocation] = useState(false);
+  const [locationScope, setLocationScope] = useState<LocationSharingScope>("all");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadOnlineStatus = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Check if car has location data (indicating online status)
-      const { data: cars } = await supabase
-        .from("cars")
-        .select("latitude, longitude")
-        .eq("owner_id", user.id)
-        .not("latitude", "is", null);
-
-      if (cars && cars.length > 0) {
-        setIsOnline(true);
-      }
-
-      // Since is_sharing_location column might not exist yet,
-      // we'll use a safer approach to check if the column exists first
+    const fetchUserStatus = async () => {
       try {
-        // First check if the column exists
-        const { error: columnCheckError } = await supabase.rpc(
-          "check_column_exists",
-          {
-            table_name: "cars",
-            column_name: "is_sharing_location",
-          }
-        );
+        setIsLoading(true);
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session) return;
 
-        if (!columnCheckError) {
-          const { data: locationSettings } = await supabase
-            .from("cars")
-            .select("is_sharing_location, location_sharing_scope")
-            .eq("owner_id", user.id)
-            .single();
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("is_sharing_location, location_sharing_scope")
+          .eq("id", session.session.user.id)
+          .single();
 
-          if (locationSettings?.is_sharing_location) {
-            const scope = locationSettings.location_sharing_scope || "all";
-            setSharingScope(scope as LocationSharingScope);
-          }
-        } else {
-          console.log("Location sharing columns not available yet");
+        if (profileError) {
+          console.error("Error fetching location sharing status:", profileError);
+          return;
+        }
+
+        if (profileData) {
+          setIsSharingLocation(profileData.is_sharing_location || false);
+          setLocationScope(profileData.location_sharing_scope as LocationSharingScope || "all");
         }
       } catch (error) {
-        console.log("Could not retrieve location sharing settings:", error);
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    loadOnlineStatus();
-
-    // Create function to check column existence for Supabase
-    const createColumnCheckFunction = async () => {
-      const { error } = await supabase.rpc("create_check_column_function");
-      if (error) console.error("Error creating column check function:", error);
-    };
-
-    createColumnCheckFunction();
+    fetchUserStatus();
   }, []);
 
-  const handleToggle = async () => {
+  const updateLocationSharing = async (isSharing: boolean) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const newStatus = !isOnline;
-
-      if (newStatus) {
-        // Enable tracking
-        setIsOnline(true);
-        toast.success("Location tracking enabled");
-      } else {
-        setSharingScope("none");
-        // Clear location data from cars
-        const { data: cars } = await supabase
-          .from("cars")
-          .select("id")
-          .eq("owner_id", user.id);
-
-        if (cars) {
-          for (const car of cars) {
-            const updateData: any = {
-              latitude: null,
-              longitude: null,
-              updated_at: new Date().toISOString(),
-            };
-
-            // Check if we have location sharing columns
-            try {
-              const { error: columnCheckError } = await supabase.rpc(
-                "check_column_exists",
-                {
-                  table_name: "cars",
-                  column_name: "is_sharing_location",
-                }
-              );
-
-              if (!columnCheckError) {
-                updateData.is_sharing_location = false;
-                updateData.location_sharing_scope = "none";
-              }
-            } catch (error) {
-              console.log(
-                "Could not check for location sharing columns:",
-                error
-              );
-            }
-
-            await supabase.from("cars").update(updateData).eq("id", car.id);
-          }
-        }
-        setIsOnline(false);
-        toast.success("Location tracking disabled");
+      setIsLoading(true);
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        toast.error("You must be logged in to change location sharing settings");
+        return;
       }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          is_sharing_location: isSharing,
+          location_sharing_scope: locationScope,
+        })
+        .eq("id", session.session.user.id);
+
+      if (error) {
+        console.error("Error updating location sharing:", error);
+        toast.error("Failed to update location sharing settings");
+        return;
+      }
+
+      setIsSharingLocation(isSharing);
+      toast.success(
+        isSharing
+          ? "Your location is now being shared"
+          : "Your location is no longer being shared"
+      );
     } catch (error) {
-      console.error("Error updating online status:", error);
-      toast.error("Failed to update tracking status");
+      console.error("Error:", error);
+      toast.error("An error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSharingChange = async (value: string) => {
+  const updateSharingScope = async (scope: LocationSharingScope) => {
     try {
-      const newScope = value as LocationSharingScope;
-      setSharingScope(newScope);
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Check if we have location sharing columns before updating
-      try {
-        const { error: columnCheckError } = await supabase.rpc(
-          "check_column_exists",
-          {
-            table_name: "cars",
-            column_name: "is_sharing_location",
-          }
-        );
-
-        if (!columnCheckError) {
-          // Update cars table with sharing settings
-          const { data: cars } = await supabase
-            .from("cars")
-            .select("id")
-            .eq("owner_id", user.id);
-
-          if (cars) {
-            for (const car of cars) {
-              await supabase
-                .from("cars")
-                .update({
-                  is_sharing_location: newScope !== "none",
-                  location_sharing_scope: newScope,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", car.id);
-            }
-          }
-
-          toast.success(`Location sharing set to: ${newScope}`);
-        } else {
-          toast.info("Location sharing feature not available yet");
-        }
-      } catch (error) {
-        console.error("Error updating location sharing:", error);
-        toast.error("Could not update sharing settings");
+      setIsLoading(true);
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        toast.error("You must be logged in to change location sharing settings");
+        return;
       }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          location_sharing_scope: scope,
+        })
+        .eq("id", session.session.user.id);
+
+      if (error) {
+        console.error("Error updating location scope:", error);
+        toast.error("Failed to update location sharing scope");
+        return;
+      }
+
+      setLocationScope(scope);
+      toast.success("Location sharing scope updated");
     } catch (error) {
-      console.error("Error updating sharing scope:", error);
-      toast.error("Failed to update sharing settings");
+      console.error("Error:", error);
+      toast.error("An error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div
-      className="space-y-4 py-4"
-      style={{ position: "absolute", backgroundColor: "red", zIndex: 10 }}
-    >
-      <div className="flex items-center space-x-4">
-        <Switch
-          id="online-mode"
-          checked={isOnline}
-          onCheckedChange={handleToggle}
-        />
-        <Label htmlFor="online-mode">
-          {isOnline
-            ? "Online - Location tracking enabled"
-            : "Offline - Location tracking disabled"}
-        </Label>
-      </div>
-
-      {isOnline && (
-        <div className="border rounded-md p-4 bg-muted/20">
-          <div className="mb-2">
-            <Label htmlFor="sharing-scope">Location sharing settings</Label>
+    <div className="absolute top-4 right-4 z-10">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={isSharingLocation ? "default" : "outline"}
+            size="sm"
+            className="h-9 px-3 bg-white dark:bg-gray-800 shadow-md rounded-md"
+          >
+            {isSharingLocation ? "Online" : "Offline"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-4 bg-white dark:bg-gray-800 shadow-md rounded-md" align="end">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="location-sharing" className="font-medium text-sm">
+                Share your location
+              </Label>
+              <Switch
+                id="location-sharing"
+                checked={isSharingLocation}
+                onCheckedChange={updateLocationSharing}
+                disabled={isLoading}
+              />
+            </div>
+            {isSharingLocation && (
+              <div className="space-y-2">
+                <Label className="font-medium text-sm">Visible to</Label>
+                <RadioGroup
+                  value={locationScope}
+                  onValueChange={(value) => updateSharingScope(value as LocationSharingScope)}
+                  className="space-y-1"
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="all" id="all" />
+                    <Label htmlFor="all" className="text-sm font-normal">
+                      Everyone
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="renters" id="renters" />
+                    <Label htmlFor="renters" className="text-sm font-normal">
+                      Renters only
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="none" id="none" />
+                    <Label htmlFor="none" className="text-sm font-normal">
+                      No one
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           </div>
-          <Select value={sharingScope} onValueChange={handleSharingChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select sharing settings" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Don't share my location</SelectItem>
-              <SelectItem value="trip_only">Share only during trips</SelectItem>
-              <SelectItem value="all">Share my location always</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground mt-2">
-            {sharingScope === "none"
-              ? "Your location will not be shared with anyone."
-              : sharingScope === "trip_only"
-              ? "Your location will only be shared with renters during active trips."
-              : "Your location will be publicly visible to all app users."}
-          </p>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
-};
+}

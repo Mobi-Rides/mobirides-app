@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -10,7 +11,7 @@ interface CustomMapboxProps {
   longitude: number;
   latitude: number;
   mapStyle?: string;
-  onlineHosts?: Location[];
+  onlineHosts?: any[];
 }
 
 const CustomMapbox = ({
@@ -57,12 +58,14 @@ const CustomMapbox = ({
       map.current.on("load", () => {
         console.log("Map loaded successfully");
         setMapInit(true);
-        geolocateControlRef.current.on("geolocate", (e) => {
-          setUserLocation({
-            longitude: e.coords.longitude,
-            latitude: e.coords.latitude,
+        if (geolocateControlRef.current) {
+          geolocateControlRef.current.on("geolocate", (e: any) => {
+            setUserLocation({
+              longitude: e.coords.longitude,
+              latitude: e.coords.latitude,
+            });
           });
-        });
+        }
 
         if (location.pathname === "/map") {
           // Trigger geolocation on map page
