@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -177,34 +176,38 @@ export const OnlineStatusToggle = () => {
     return (
       <div className="flex items-center space-x-2 opacity-50">
         <Switch disabled />
-        <Label>Share Location</Label>
+        <Label className="text-sm whitespace-nowrap">Share Location</Label>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
       <div className="flex items-center space-x-2">
         <Switch
           checked={isSharingLocation}
           onCheckedChange={handleToggle}
           disabled={isLoading}
         />
-        <Label>Share My Location</Label>
+        <Label className="text-sm whitespace-nowrap">Share My Location</Label>
       </div>
 
       {isSharingLocation && (
-        <div className="ml-8 space-y-2">
-          <Label className="text-sm text-muted-foreground">Share with:</Label>
-          <Select value={sharingScope} onValueChange={handleScopeChange} disabled={isLoading}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Who can see your location" />
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">Visible to:</Label>
+          <Select 
+            value={sharingScope} 
+            onValueChange={handleScopeChange} 
+            disabled={isLoading}
+          >
+            <SelectTrigger className="h-8 w-[130px] text-xs">
+              <SelectValue placeholder="Who can see you" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Everyone</SelectItem>
               <SelectItem value="hosts">Hosts Only</SelectItem>
               <SelectItem value="renters">Renters Only</SelectItem>
-              <SelectItem value="none">No One (Disabled)</SelectItem>
+              <SelectItem value="none">No One</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -171,8 +171,14 @@ const CustomMapbox = ({
   return (
     <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
       <div ref={mapContainer} className="w-full h-full" />
-      <OnlineStatusToggle />
-      <div className="absolute bottom-10 right-4 z-10 bg-white dark:bg-gray-800 shadow-md rounded-md p-2"></div>
+      
+      {/* Floating location sharing control */}
+      <div className="absolute top-4 left-0 right-0 z-10 mx-auto px-4">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-3 max-w-md mx-auto flex items-center transition-all duration-300 border border-gray-200 dark:border-gray-700">
+          <OnlineStatusToggle />
+        </div>
+      </div>
+      
       <Dpad
         onUp={onUp}
         onDown={onDown}
