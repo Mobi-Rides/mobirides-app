@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { ExtendedProfile, hasLocationFields, createLocationUpdatePayload } from "@/utils/profileTypes";
 
 export const OnlineStatusToggle = () => {
   const user = useUser();
@@ -28,22 +29,13 @@ export const OnlineStatusToggle = () => {
 
         if (error) throw error;
 
-        // Check if the is_sharing_location column exists
-        const { data: columnExists } = await supabase
-          .from("profiles")
-          .select("*")
-          .limit(1);
+        // Cast to our extended profile type
+        const profile = data as ExtendedProfile;
 
-        // Verify if the column exists in the returned data
-        const hasLocationFields = columnExists && 
-          columnExists.length > 0 && 
-          'is_sharing_location' in columnExists[0] &&
-          'location_sharing_scope' in columnExists[0];
-
-        if (hasLocationFields && data) {
-          // Use optional chaining and nullish coalescing to avoid errors
-          setIsSharingLocation(data.is_sharing_location ?? false);
-          setSharingScope(data.location_sharing_scope ?? "all");
+        // Check if location fields exist using our utility
+        if (hasLocationFields(profile)) {
+          setIsSharingLocation(profile.is_sharing_location ?? false);
+          setSharingScope(profile.location_sharing_scope ?? "all");
         } else {
           console.warn("Location sharing fields may not exist in profiles table");
           setIsSharingLocation(false);
@@ -65,28 +57,23 @@ export const OnlineStatusToggle = () => {
 
     setIsLoading(true);
     try {
-      // Check if the is_sharing_location column exists
+      // First check if fields exist in the table
       const { data: columnExists } = await supabase
         .from("profiles")
         .select("*")
         .limit(1);
 
-      // Verify if the column exists in the returned data
-      const hasLocationField = columnExists && 
-        columnExists.length > 0 && 
-        'is_sharing_location' in columnExists[0];
-
-      if (!hasLocationField) {
+      if (!hasLocationFields(columnExists?.[0])) {
         toast.error("Location sharing is not supported in this database");
         return;
       }
 
-      // Update the profile with the new is_sharing_location value
+      // Update sharing status
       const { error } = await supabase
         .from("profiles")
         .update({
           is_sharing_location: checked,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         })
         .eq("id", user.id);
 
@@ -101,13 +88,11 @@ export const OnlineStatusToggle = () => {
           async (position) => {
             const { latitude, longitude } = position.coords;
             try {
+              const payload = createLocationUpdatePayload(true, { latitude, longitude });
+              
               const { error } = await supabase
                 .from("profiles")
-                .update({
-                  latitude,
-                  longitude,
-                  updated_at: new Date()
-                })
+                .update(payload)
                 .eq("id", user.id);
 
               if (error) throw error;
@@ -141,12 +126,7 @@ export const OnlineStatusToggle = () => {
         .select("*")
         .limit(1);
 
-      // Verify if the column exists in the returned data
-      const hasScopeField = columnExists && 
-        columnExists.length > 0 && 
-        'location_sharing_scope' in columnExists[0];
-
-      if (!hasScopeField) {
+      if (!hasLocationFields(columnExists?.[0])) {
         toast.error("Location sharing scope is not supported in this database");
         return;
       }
@@ -156,7 +136,7 @@ export const OnlineStatusToggle = () => {
         .from("profiles")
         .update({
           location_sharing_scope: value,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         })
         .eq("id", user.id);
 

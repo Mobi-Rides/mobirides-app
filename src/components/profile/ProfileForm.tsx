@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -7,17 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { Phone } from "lucide-react";
+import { ExtendedProfile } from "@/utils/profileTypes";
 
-// Extend the base Profile type to include phone_number
+// Form values interface
 interface ProfileFormValues {
   full_name: string;
   phone_number?: string;
-}
-
-// Temporary type for profile data
-interface ExtendedProfile {
-  phone_number?: string;
-  full_name?: string;
 }
 
 interface ProfileFormProps {

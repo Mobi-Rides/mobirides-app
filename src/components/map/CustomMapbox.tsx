@@ -1,17 +1,17 @@
-
 import { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { toast } from "sonner";
 import Dpad from "./Dpad";
 import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
+import { ExtendedProfile } from "@/utils/profileTypes";
 
 interface CustomMapboxProps {
   mapbox_token: string;
   longitude: number;
   latitude: number;
   mapStyle?: string;
-  onlineHosts?: any[];
+  onlineHosts?: ExtendedProfile[];
 }
 
 const CustomMapbox = ({
@@ -33,7 +33,6 @@ const CustomMapbox = ({
       mapboxgl.accessToken = mapbox_token;
     }
 
-    // Initialize map only if it hasn't been initialized
     if (!map.current && mapContainer.current && mapbox_token) {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -42,10 +41,8 @@ const CustomMapbox = ({
         zoom: 14,
       });
 
-      // Add navigation control (zoom in/out)
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      // Add geolocate control
       const geolocateControl = new mapboxgl.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true,
@@ -69,7 +66,6 @@ const CustomMapbox = ({
         }
 
         if (location.pathname === "/map") {
-          // Trigger geolocation on map page
           setTimeout(() => {
             geolocateControl.trigger();
           }, 1000);
@@ -82,7 +78,6 @@ const CustomMapbox = ({
       });
     }
 
-    // Cleanup function to remove map on unmount
     return () => {
       if (map.current) {
         map.current.remove();
@@ -91,22 +86,18 @@ const CustomMapbox = ({
     };
   }, [mapbox_token, longitude, latitude, mapStyle]);
 
-  // Update map style when mapStyle prop changes
   useEffect(() => {
     if (map.current && mapInit) {
       map.current.setStyle(mapStyle);
     }
   }, [mapStyle, mapInit]);
 
-  // Display host markers when onlineHosts change
   useEffect(() => {
     if (!map.current || !mapInit || !onlineHosts?.length) return;
 
-    // Remove existing markers
     markers.forEach(marker => marker.remove());
     setMarkers([]);
 
-    // Add new markers
     const newMarkers = onlineHosts.map(host => {
       if (!host.latitude || !host.longitude) return null;
 
@@ -133,7 +124,6 @@ const CustomMapbox = ({
     setMarkers(newMarkers);
   }, [onlineHosts, mapInit]);
 
-  // dpad controls
   const onUp = () => {
     if (map.current) {
       map.current.panBy([0, -100], { duration: 500 });
@@ -172,7 +162,6 @@ const CustomMapbox = ({
     <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
       <div ref={mapContainer} className="w-full h-full" />
       
-      {/* Floating location sharing control */}
       <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
                       max-w-xs w-auto pointer-events-auto transition-all duration-300 
