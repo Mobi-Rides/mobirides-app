@@ -173,8 +173,10 @@ const CustomMapbox = ({
       <div ref={mapContainer} className="w-full h-full" />
       
       {/* Floating location sharing control */}
-      <div className="absolute top-4 left-0 right-0 z-10 mx-auto px-4">
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-3 max-w-md mx-auto flex items-center transition-all duration-300 border border-gray-200 dark:border-gray-700">
+      <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
+                      max-w-xs w-auto pointer-events-auto transition-all duration-300 
+                      border border-gray-200 dark:border-gray-700">
           <OnlineStatusToggle />
         </div>
       </div>

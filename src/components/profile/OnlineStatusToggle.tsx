@@ -182,25 +182,26 @@ export const OnlineStatusToggle = () => {
   }
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
+    <div className="flex flex-row items-center justify-between w-full gap-2">
       <div className="flex items-center space-x-2">
         <Switch
           checked={isSharingLocation}
           onCheckedChange={handleToggle}
           disabled={isLoading}
+          className="data-[state=checked]:bg-primary"
         />
-        <Label className="text-sm whitespace-nowrap">Share My Location</Label>
+        <Label className="text-sm whitespace-nowrap font-medium">Share Location</Label>
       </div>
 
       {isSharingLocation && (
-        <div className="flex items-center gap-2">
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Visible to:</Label>
+        <div className="flex items-center gap-1.5">
+          <Label className="text-xs text-muted-foreground whitespace-nowrap">To:</Label>
           <Select 
             value={sharingScope} 
             onValueChange={handleScopeChange} 
             disabled={isLoading}
           >
-            <SelectTrigger className="h-8 w-[130px] text-xs">
+            <SelectTrigger className="h-7 w-[100px] text-xs">
               <SelectValue placeholder="Who can see you" />
             </SelectTrigger>
             <SelectContent>
