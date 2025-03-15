@@ -202,7 +202,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         <div className="flex-1">
           <div className="flex items-center justify-center gap-1 text-center">
             <Navigation className="text-white h-4 w-4 flex-shrink-0" />
-            <h3 className="text-xs md:text-sm lg:text-base font-normal text-white truncate">
+            <h3 className="text-xs md:text-sm lg:text-base font-normal text-gray-500 dark:text-white truncate">
               {locationDisplay}
             </h3>
           </div>
