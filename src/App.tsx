@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Index from "@/pages/Index";
@@ -15,6 +14,7 @@ import SavedCars from "@/pages/SavedCars";
 import NotificationDetails from "@/pages/NotificationDetails";
 import BookingRequestDetails from "@/pages/BookingRequestDetails";
 import Dashboard from "@/pages/Dashboard";
+import Notifications from "@/pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BarLoader } from "react-spinners";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -22,21 +22,15 @@ import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
 import RentalDetails from "./pages/RentalDetails";
 
-// Page transition loader component
 const PageTransitionLoader = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
-    // Show loader when location changes
     setIsLoading(true);
-    
-    // Hide loader after a short delay
-    // This simulates the time it takes to load the page
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 800); // Adjust time as needed
-    
+    }, 800);
     return () => clearTimeout(timer);
   }, [location.pathname]);
   
@@ -67,6 +61,7 @@ const AppRoutes = () => {
         <Route path="/driver-license" element={<ProtectedRoute><DriverLicense /></ProtectedRoute>} />
         <Route path="/edit-car/:id" element={<ProtectedRoute><EditCar /></ProtectedRoute>} />
         <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/saved-cars" element={<ProtectedRoute><SavedCars /></ProtectedRoute>} />
         <Route
           path="/notifications/:id"

@@ -6,7 +6,6 @@ import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { RoleSection } from "@/components/profile/RoleSection";
-import { NotificationsSection } from "@/components/profile/NotificationsSection";
 import { OnlineStatusToggle } from "@/components/profile/OnlineStatusToggle";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
@@ -91,8 +90,8 @@ const Profile = () => {
       <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
       <ProfileHeader />
       <ProfileForm initialValues={initialFormValues} />
-      <NotificationsSection />
       <RoleSection />
+      <OnlineStatusToggle />
       <Navigation />
     </div>
   );
