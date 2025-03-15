@@ -1,5 +1,4 @@
 
-import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -11,8 +10,8 @@ import { SharingScope } from "@/components/profile/location/SharingScope";
 import { PermissionStatus } from "@/components/profile/location/PermissionStatus";
 
 export const OnlineStatusToggle = () => {
-  const user = useUser();
   const { 
+    userId,
     isSharingLocation, 
     sharingScope, 
     isLoading, 
@@ -21,7 +20,7 @@ export const OnlineStatusToggle = () => {
   } = useLocationSharing();
 
   const handleToggle = async (checked: boolean) => {
-    if (!user) {
+    if (!userId) {
       toast.error("You need to be logged in to share your location");
       return;
     }
@@ -56,7 +55,7 @@ export const OnlineStatusToggle = () => {
           is_sharing_location: checked,
           updated_at: new Date().toISOString()
         })
-        .eq("id", user.id);
+        .eq("id", userId);
 
       if (error) {
         console.error("Error updating location sharing:", error);
@@ -68,7 +67,7 @@ export const OnlineStatusToggle = () => {
 
       // If enabling, also update user's coordinates
       if (checked) {
-        await updateUserLocation(user.id);
+        await updateUserLocation(userId);
       }
     } catch (error) {
       console.error("Error toggling location sharing:", error);
@@ -87,7 +86,7 @@ export const OnlineStatusToggle = () => {
   }
 
   // If no user is found, show disabled toggle with login message
-  if (!user) {
+  if (!userId) {
     return (
       <div className="flex flex-row items-center justify-between w-full gap-2">
         <div className="flex items-center space-x-2">

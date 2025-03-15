@@ -1,40 +1,78 @@
 
 import { useState, useEffect } from "react";
-import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { hasLocationFields, ExtendedProfile } from "@/utils/profileTypes";
 
 export const useLocationSharing = () => {
-  const user = useUser();
+  const [userId, setUserId] = useState<string | null>(null);
   const [isSharingLocation, setIsSharingLocation] = useState(false);
   const [sharingScope, setSharingScope] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set a timeout to handle the case where user session might be loading
-    const timeoutId = setTimeout(() => {
-      if (!user && isLoading) {
-        console.log("No user found after timeout, might be on Map page without auth");
+    console.log("useLocationSharing: Initializing hook");
+    checkUserSession();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Location sharing auth state changed:", event);
+      if (event === 'SIGNED_IN' && session) {
+        console.log("User signed in, fetching location status");
+        setUserId(session.user.id);
+        fetchUserStatus(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out, resetting location sharing state");
+        setUserId(null);
+        setIsSharingLocation(false);
+        setSharingScope("all");
         setIsLoading(false);
       }
-    }, 2000);
+    });
 
-    // Only run fetch if we have a user
-    if (user) {
-      console.log("User found, fetching location status:", user.id);
-      fetchUserStatus(user.id);
-    } else if (user === null) {
-      // User is definitely not logged in (not just loading)
-      console.log("User is definitely not logged in");
+    return () => {
+      console.log("useLocationSharing: Cleaning up subscription");
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const checkUserSession = async () => {
+    try {
+      console.log("useLocationSharing: Checking user session");
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error checking session:", error);
+        setErrorMessage("Session check failed");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!session) {
+        console.log("No active session found");
+        setUserId(null);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("Active session found, user ID:", session.user.id);
+      setUserId(session.user.id);
+      fetchUserStatus(session.user.id);
+    } catch (error) {
+      console.error("Error in checkUserSession:", error);
+      setErrorMessage("Session check error");
       setIsLoading(false);
     }
+  };
 
-    return () => clearTimeout(timeoutId);
-  }, [user]);
+  const fetchUserStatus = async (uid: string) => {
+    if (!uid) {
+      console.log("No user ID provided to fetchUserStatus");
+      setIsLoading(false);
+      return;
+    }
 
-  const fetchUserStatus = async (userId: string) => {
     try {
       console.log("Fetching user profile for location status...");
       setIsLoading(true);
@@ -70,7 +108,7 @@ export const useLocationSharing = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", userId)
+        .eq("id", uid)
         .single();
 
       if (error) {
@@ -109,11 +147,12 @@ export const useLocationSharing = () => {
   };
 
   return {
+    userId,
     isSharingLocation,
     sharingScope,
     isLoading,
     errorMessage,
     setIsSharingLocation,
-    fetchUserStatus: user ? () => fetchUserStatus(user.id) : null
+    fetchUserStatus: userId ? () => fetchUserStatus(userId) : null
   };
 };

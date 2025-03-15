@@ -14,21 +14,33 @@ export interface Host {
 // Fetch all online hosts (users who are sharing their location)
 export const fetchOnlineHosts = async (): Promise<Host[]> => {
   try {
+    console.log("Fetching online hosts...");
+    
     // First check if the required columns exist
     const { data: columnCheck, error: columnError } = await supabase
       .from("profiles")
       .select("is_sharing_location, latitude, longitude")
       .limit(1);
     
-    // Check if columns exist in returned data
-    const hasLocationFields = columnCheck && 
-      columnCheck.length > 0 && 
-      'latitude' in columnCheck[0] && 
-      'longitude' in columnCheck[0] &&
-      'is_sharing_location' in columnCheck[0];
+    if (columnError) {
+      console.error("Error checking columns:", columnError);
+      return [];
+    }
     
-    if (columnError || !hasLocationFields) {
-      console.error("Required columns don't exist:", columnError);
+    // Check if columns exist in returned data
+    if (!columnCheck || columnCheck.length === 0) {
+      console.error("No profiles found to check columns");
+      return [];
+    }
+    
+    const firstRow = columnCheck[0];
+    const hasLocationFields = firstRow && 
+      'latitude' in firstRow && 
+      'longitude' in firstRow &&
+      'is_sharing_location' in firstRow;
+    
+    if (!hasLocationFields) {
+      console.error("Required location columns don't exist in profiles table");
       return [];
     }
 
@@ -44,15 +56,19 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
-    if (!data) {
+    if (!data || !Array.isArray(data)) {
+      console.error("Expected array of hosts but got:", data);
       return [];
     }
+    
+    console.log(`Found ${data.length} online hosts`);
 
-    // Filter out any non-object entries and ensure they match our Host interface
+    // Filter out any entries that don't match our Host interface
     return data.filter((item): item is Host => {
       return item !== null && 
         typeof item === 'object' && 
         'id' in item && 
+        typeof item.id === 'string' &&
         'latitude' in item && 
         'longitude' in item;
     });
@@ -65,20 +81,32 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
 // Fetch a specific host by ID
 export const fetchHostById = async (hostId: string): Promise<Host | null> => {
   try {
+    console.log("Fetching host by ID:", hostId);
+    
     // First check if the required columns exist
     const { data: columnCheck, error: columnError } = await supabase
       .from("profiles")
       .select("latitude, longitude")
       .limit(1);
     
-    // Check if columns exist in returned data
-    const hasLocationFields = columnCheck && 
-      columnCheck.length > 0 && 
-      'latitude' in columnCheck[0] && 
-      'longitude' in columnCheck[0];
+    if (columnError) {
+      console.error("Error checking columns:", columnError);
+      return null;
+    }
     
-    if (columnError || !hasLocationFields) {
-      console.error("Required columns don't exist:", columnError);
+    // Check if columns exist in returned data
+    if (!columnCheck || columnCheck.length === 0) {
+      console.error("No profiles found to check columns");
+      return null;
+    }
+    
+    const firstRow = columnCheck[0];
+    const hasLocationFields = firstRow && 
+      'latitude' in firstRow && 
+      'longitude' in firstRow;
+    
+    if (!hasLocationFields) {
+      console.error("Required location columns don't exist in profiles table");
       return null;
     }
 
@@ -94,18 +122,21 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
     }
 
     if (!data) {
+      console.error("No host found with ID:", hostId);
       return null;
     }
 
-    // Verify that the data has the properties we expect
+    // Verify that the data has the required properties
     if (data && 
         typeof data === 'object' &&
         'id' in data &&
+        typeof data.id === 'string' &&
         'latitude' in data &&
         'longitude' in data) {
       return data as Host;
     }
     
+    console.error("Host data doesn't match expected structure:", data);
     return null;
   } catch (error) {
     console.error("Error in fetchHostById:", error);
