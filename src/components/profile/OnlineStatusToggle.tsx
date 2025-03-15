@@ -17,8 +17,8 @@ export const OnlineStatusToggle = () => {
 
   useEffect(() => {
     if (!user) {
-      console.log("No user found - please log in to use location sharing");
-      setErrorMessage("Please log in to use location sharing");
+      // Removed the "Please log in to use location sharing" message
+      console.log("No user found");
       setIsLoading(false);
       return;
     }

@@ -44,8 +44,8 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
-    // Safe type assertion after we've verified the columns exist
-    return (data || []) as Host[];
+    // Handle potential type mismatch with safe conversion
+    return (Array.isArray(data) ? data : []) as Host[];
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
@@ -83,8 +83,8 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
-    // Safe type assertion after we've verified the columns exist
-    return data as Host;
+    // Handle potential type mismatch with safe conversion
+    return data ? data as Host : null;
   } catch (error) {
     console.error("Error in fetchHostById:", error);
     return null;

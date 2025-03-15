@@ -48,10 +48,14 @@ export class MapEvents {
   removeEventHandlers(map: mapboxgl.Map | null): void {
     if (!map) return;
     
-    // Fix: Add proper event name and handler reference to off() method
-    map.off('error', () => {});
-    map.off('style.load', () => {});
-    map.off('moveend', () => {});
+    // Fixed: Add proper handler functions to the off() method
+    const errorHandler = () => {};
+    const styleLoadHandler = () => {};
+    const moveEndHandler = () => {};
+    
+    map.off('error', errorHandler);
+    map.off('style.load', styleLoadHandler);
+    map.off('moveend', moveEndHandler);
   }
 }
 

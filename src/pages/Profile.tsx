@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -90,6 +91,7 @@ const Profile = () => {
       <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
       <ProfileHeader />
       <ProfileForm initialValues={initialFormValues} />
+      <OnlineStatusToggle />
       <NotificationsSection />
       <RoleSection />
       <Navigation />
