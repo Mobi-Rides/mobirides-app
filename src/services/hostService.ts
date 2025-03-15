@@ -62,13 +62,18 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current session user's id - simplified to fix type instantiation issue
+// Get current session user's id - completely restructured to avoid type issues
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Using the most direct approach to completely avoid deep type nesting
-    const { data } = await supabase.auth.getSession();
-    if (data.session && data.session.user) {
-      return data.session.user.id;
+    // Using a completely different approach with any type to avoid TypeScript depth issues
+    const result: any = await supabase.auth.getSession();
+    
+    if (result && 
+        result.data && 
+        result.data.session && 
+        result.data.session.user && 
+        result.data.session.user.id) {
+      return result.data.session.user.id;
     }
     return null;
   } catch (error) {
