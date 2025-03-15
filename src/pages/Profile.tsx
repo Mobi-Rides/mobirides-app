@@ -91,7 +91,6 @@ const Profile = () => {
       <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
       <ProfileHeader />
       <ProfileForm initialValues={initialFormValues} />
-      <OnlineStatusToggle />
       <NotificationsSection />
       <RoleSection />
       <Navigation />
