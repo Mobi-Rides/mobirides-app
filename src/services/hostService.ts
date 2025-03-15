@@ -39,10 +39,12 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
     
-    // Check if the required columns exist in the database
-    if (!('latitude' in firstRow) || 
-        !('longitude' in firstRow) || 
-        !('is_sharing_location' in firstRow)) {
+    const hasLocationFields = firstRow && 
+      'latitude' in firstRow && 
+      'longitude' in firstRow &&
+      'is_sharing_location' in firstRow;
+    
+    if (!hasLocationFields) {
       console.error("Required location columns don't exist in profiles table");
       return [];
     }
@@ -66,28 +68,16 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
     
     console.log(`Found ${data.length} online hosts`);
 
-    // Convert data to Host[] with explicit type safety
-    const hosts: Host[] = [];
-    
-    for (const item of data) {
-      if (item && 
-          typeof item === 'object' && 
-          'id' in item && 
-          typeof item.id === 'string' &&
-          'latitude' in item && 
-          'longitude' in item) {
-        hosts.push({
-          id: item.id,
-          full_name: item.full_name !== undefined ? item.full_name : null,
-          avatar_url: item.avatar_url !== undefined ? item.avatar_url : null,
-          latitude: item.latitude !== undefined ? item.latitude : null,
-          longitude: item.longitude !== undefined ? item.longitude : null,
-          updated_at: item.updated_at !== undefined ? item.updated_at : null
-        });
-      }
-    }
-    
-    return hosts;
+    // Filter out any entries that don't match our Host interface
+    return data.filter((item): item is Host => {
+      if (!item) return false;
+      
+      return typeof item === 'object' && 
+        'id' in item && 
+        typeof item.id === 'string' &&
+        'latitude' in item && 
+        'longitude' in item;
+    });
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
@@ -122,8 +112,11 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
     
-    // Check if the required columns exist in the database
-    if (!('latitude' in firstRow) || !('longitude' in firstRow)) {
+    const hasLocationFields = 
+      'latitude' in firstRow && 
+      'longitude' in firstRow;
+    
+    if (!hasLocationFields) {
       console.error("Required location columns don't exist in profiles table");
       return null;
     }
@@ -144,19 +137,14 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
-    // Verify that the data has the required properties and construct a valid Host object
+    // Verify that the data has the required properties
     if (data && 
         typeof data === 'object' &&
         'id' in data &&
-        typeof data.id === 'string') {
-      return {
-        id: data.id,
-        full_name: data.full_name !== undefined ? data.full_name : null,
-        avatar_url: data.avatar_url !== undefined ? data.avatar_url : null,
-        latitude: data.latitude !== undefined ? data.latitude : null,
-        longitude: data.longitude !== undefined ? data.longitude : null,
-        updated_at: data.updated_at !== undefined ? data.updated_at : null
-      };
+        typeof data.id === 'string' &&
+        'latitude' in data &&
+        'longitude' in data) {
+      return data as Host;
     }
     
     console.error("Host data doesn't match expected structure:", data);
