@@ -1,175 +1,77 @@
 
-import { useState, useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
-import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { hasLocationFields } from "@/utils/profileTypes";
+import { useLocationSharing } from "@/hooks/useLocationSharing";
+import { updateUserLocation } from "@/components/profile/location/GeolocationHandler";
+import { SharingScope } from "@/components/profile/location/SharingScope";
+import { PermissionStatus } from "@/components/profile/location/PermissionStatus";
 
 export const OnlineStatusToggle = () => {
-  const user = useUser();
-  const [isSharingLocation, setIsSharingLocation] = useState(false);
-  const [sharingScope, setSharingScope] = useState<string>("all");
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchUserStatus = async () => {
-      setIsLoading(true);
-      try {
-        // Get the profile for the current user
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        if (error) throw error;
-
-        // Check if the is_sharing_location column exists
-        const { data: columnExists } = await supabase
-          .from("profiles")
-          .select("*")
-          .limit(1);
-
-        // Verify if the column exists in the returned data
-        const hasLocationFields = columnExists && 
-          columnExists.length > 0 && 
-          'is_sharing_location' in columnExists[0] &&
-          'location_sharing_scope' in columnExists[0];
-
-        if (hasLocationFields && data) {
-          // Use optional chaining and nullish coalescing to avoid errors
-          setIsSharingLocation(data.is_sharing_location ?? false);
-          setSharingScope(data.location_sharing_scope ?? "all");
-        } else {
-          console.warn("Location sharing fields may not exist in profiles table");
-          setIsSharingLocation(false);
-          setSharingScope("all");
-        }
-      } catch (error) {
-        console.error("Error fetching user status:", error);
-        toast.error("Could not load location sharing status");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserStatus();
-  }, [user]);
+  const { 
+    userId,
+    isSharingLocation, 
+    sharingScope, 
+    isLoading, 
+    errorMessage, 
+    setIsSharingLocation 
+  } = useLocationSharing();
 
   const handleToggle = async (checked: boolean) => {
-    if (!user) return;
+    if (!userId) {
+      toast.error("You need to be logged in to share your location");
+      return;
+    }
 
-    setIsLoading(true);
     try {
-      // Check if the is_sharing_location column exists
-      const { data: columnExists } = await supabase
+      console.log("Attempting to toggle location sharing to:", checked);
+      
+      // First check if fields exist in the table - make sure to select both required fields
+      const { data: columnExists, error: columnError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("is_sharing_location, location_sharing_scope")
         .limit(1);
 
-      // Verify if the column exists in the returned data
-      const hasLocationField = columnExists && 
-        columnExists.length > 0 && 
-        'is_sharing_location' in columnExists[0];
+      if (columnError) {
+        console.error("Error checking columns:", columnError);
+        toast.error("Could not verify table structure");
+        throw columnError;
+      }
 
-      if (!hasLocationField) {
+      console.log("Column check result:", columnExists);
+      
+      if (!columnExists || !columnExists[0] || !hasLocationFields(columnExists[0])) {
+        console.error("Location fields not found in database");
         toast.error("Location sharing is not supported in this database");
         return;
       }
 
-      // Update the profile with the new is_sharing_location value
+      // Update sharing status
       const { error } = await supabase
         .from("profiles")
         .update({
           is_sharing_location: checked,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         })
-        .eq("id", user.id);
+        .eq("id", userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating location sharing:", error);
+        throw error;
+      }
 
       setIsSharingLocation(checked);
       toast.success(checked ? "Location sharing enabled" : "Location sharing disabled");
 
       // If enabling, also update user's coordinates
       if (checked) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords;
-            try {
-              const { error } = await supabase
-                .from("profiles")
-                .update({
-                  latitude,
-                  longitude,
-                  updated_at: new Date()
-                })
-                .eq("id", user.id);
-
-              if (error) throw error;
-            } catch (error) {
-              console.error("Error updating location:", error);
-              toast.error("Could not update your location");
-            }
-          },
-          (error) => {
-            console.error("Geolocation error:", error);
-            toast.error("Could not get your location. Please check your browser permissions.");
-          }
-        );
+        await updateUserLocation(userId);
       }
     } catch (error) {
       console.error("Error toggling location sharing:", error);
       toast.error("Could not update location sharing status");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleScopeChange = async (value: string) => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      // Check if the location_sharing_scope column exists
-      const { data: columnExists } = await supabase
-        .from("profiles")
-        .select("*")
-        .limit(1);
-
-      // Verify if the column exists in the returned data
-      const hasScopeField = columnExists && 
-        columnExists.length > 0 && 
-        'location_sharing_scope' in columnExists[0];
-
-      if (!hasScopeField) {
-        toast.error("Location sharing scope is not supported in this database");
-        return;
-      }
-
-      // Update the profile with the new scope value
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          location_sharing_scope: value,
-          updated_at: new Date()
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      setSharingScope(value);
-      toast.success(`Location sharing scope set to ${value}`);
-    } catch (error) {
-      console.error("Error updating sharing scope:", error);
-      toast.error("Could not update sharing scope");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -177,37 +79,51 @@ export const OnlineStatusToggle = () => {
     return (
       <div className="flex items-center space-x-2 opacity-50">
         <Switch disabled />
-        <Label>Share Location</Label>
+        <Label className="text-sm whitespace-nowrap">Share Location</Label>
+        <span className="text-xs text-muted-foreground">(Loading...)</span>
+      </div>
+    );
+  }
+
+  // If no user is found, show disabled toggle with login message
+  if (!userId) {
+    return (
+      <div className="flex flex-row items-center justify-between w-full gap-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={false}
+            disabled={true}
+            className="data-[state=checked]:bg-primary/50"
+          />
+          <Label className="text-sm whitespace-nowrap font-medium">
+            Share Location
+            <span className="ml-2 text-xs text-amber-500">Login required</span>
+          </Label>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-row items-center justify-between w-full gap-2">
       <div className="flex items-center space-x-2">
         <Switch
           checked={isSharingLocation}
           onCheckedChange={handleToggle}
-          disabled={isLoading}
+          disabled={isLoading || !!errorMessage}
+          className="data-[state=checked]:bg-primary"
         />
-        <Label>Share My Location</Label>
+        <Label className="text-sm whitespace-nowrap font-medium">
+          Share Location
+          <PermissionStatus errorMessage={errorMessage} />
+        </Label>
       </div>
 
       {isSharingLocation && (
-        <div className="ml-8 space-y-2">
-          <Label className="text-sm text-muted-foreground">Share with:</Label>
-          <Select value={sharingScope} onValueChange={handleScopeChange} disabled={isLoading}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Who can see your location" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Everyone</SelectItem>
-              <SelectItem value="hosts">Hosts Only</SelectItem>
-              <SelectItem value="renters">Renters Only</SelectItem>
-              <SelectItem value="none">No One (Disabled)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <SharingScope 
+          initialScope={sharingScope}
+          isLoading={isLoading}
+        />
       )}
     </div>
   );
