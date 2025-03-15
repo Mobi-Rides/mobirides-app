@@ -67,7 +67,7 @@ const createSafeHost = (item: any): Host | null => {
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
     const { data } = await supabase.auth.getSession();
-    return data.session?.user?.id || null;
+    return data?.session?.user?.id || null;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
