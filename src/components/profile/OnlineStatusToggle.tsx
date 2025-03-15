@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -9,14 +8,19 @@ import { updateUserLocation } from "@/components/profile/location/GeolocationHan
 import { SharingScope } from "@/components/profile/location/SharingScope";
 import { PermissionStatus } from "@/components/profile/location/PermissionStatus";
 
-export const OnlineStatusToggle = () => {
-  const { 
+export type OnlineStatusToggleProps = {
+  lat: number;
+  long: number;
+};
+
+export const OnlineStatusToggle = ({ lat, long }: OnlineStatusToggleProps) => {
+  const {
     userId,
-    isSharingLocation, 
-    sharingScope, 
-    isLoading, 
-    errorMessage, 
-    setIsSharingLocation 
+    isSharingLocation,
+    sharingScope,
+    isLoading,
+    errorMessage,
+    setIsSharingLocation,
   } = useLocationSharing();
 
   const handleToggle = async (checked: boolean) => {
@@ -27,7 +31,7 @@ export const OnlineStatusToggle = () => {
 
     try {
       console.log("Attempting to toggle location sharing to:", checked);
-      
+
       // First check if fields exist in the table - make sure to select both required fields
       const { data: columnExists, error: columnError } = await supabase
         .from("profiles")
@@ -41,8 +45,12 @@ export const OnlineStatusToggle = () => {
       }
 
       console.log("Column check result:", columnExists);
-      
-      if (!columnExists || !columnExists[0] || !hasLocationFields(columnExists[0])) {
+
+      if (
+        !columnExists ||
+        !columnExists[0] ||
+        !hasLocationFields(columnExists[0])
+      ) {
         console.error("Location fields not found in database");
         toast.error("Location sharing is not supported in this database");
         return;
@@ -53,7 +61,7 @@ export const OnlineStatusToggle = () => {
         .from("profiles")
         .update({
           is_sharing_location: checked,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
 
@@ -63,11 +71,13 @@ export const OnlineStatusToggle = () => {
       }
 
       setIsSharingLocation(checked);
-      toast.success(checked ? "Location sharing enabled" : "Location sharing disabled");
+      toast.success(
+        checked ? "Location sharing enabled" : "Location sharing disabled"
+      );
 
       // If enabling, also update user's coordinates
       if (checked) {
-        await updateUserLocation(userId);
+        await updateUserLocation({ userId, lat, long });
       }
     } catch (error) {
       console.error("Error toggling location sharing:", error);
@@ -75,7 +85,7 @@ export const OnlineStatusToggle = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || lat === 0 || long === 0) {
     return (
       <div className="flex items-center space-x-2 opacity-50">
         <Switch disabled />
@@ -120,10 +130,7 @@ export const OnlineStatusToggle = () => {
       </div>
 
       {isSharingLocation && (
-        <SharingScope 
-          initialScope={sharingScope}
-          isLoading={isLoading}
-        />
+        <SharingScope initialScope={sharingScope} isLoading={isLoading} />
       )}
     </div>
   );
