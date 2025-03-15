@@ -9,6 +9,9 @@ interface BookingTableProps {
 }
 
 export const BookingTable = ({ bookings, onCancelBooking }: BookingTableProps) => {
+  // Add additional debugging for bookings
+  console.log("BookingTable received bookings:", bookings);
+  
   if (!bookings?.length) {
     return (
       <div className="text-center py-8 border rounded-md">
