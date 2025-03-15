@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createLocationUpdatePayload } from "@/utils/profileTypes";
@@ -29,8 +30,18 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
     }
 
     return new Promise((resolve) => {
+      // Create a timeout handler to avoid hanging indefinitely
+      const timeoutId = setTimeout(() => {
+        console.warn("Geolocation request timed out manually");
+        toast.error("Location request timed out. Please try again later.");
+        resolve(false);
+      }, 20000); // 20 second backup timeout
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
+          // Clear the backup timeout
+          clearTimeout(timeoutId);
+          
           const { latitude, longitude } = position.coords;
           try {
             console.log("Got coordinates:", latitude, longitude);
@@ -46,10 +57,13 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
 
             if (error) {
               console.error("Error updating location:", error);
-              throw error;
+              toast.error("Could not update your location in the database");
+              resolve(false);
+              return;
             }
 
             console.log("Location coordinates updated successfully");
+            toast.success("Location updated successfully");
             resolve(true);
           } catch (error) {
             console.error("Error updating location:", error);
@@ -58,6 +72,9 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
           }
         },
         (error) => {
+          // Clear the backup timeout
+          clearTimeout(timeoutId);
+          
           console.error("Geolocation error:", error);
           let errorMsg = "Could not get your location. ";
 
@@ -71,7 +88,7 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
               break;
             case error.TIMEOUT:
               errorMsg +=
-                "Request timed out. Please try again or move to an area with better GPS signal.";
+                "Request timed out. Please try again or check your device location settings.";
               break;
             default:
               errorMsg += "Unknown error occurred.";
@@ -81,14 +98,15 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
           resolve(false);
         },
         {
-          enableHighAccuracy: true,
-          timeout: 30000, // Increased timeout value to 30 seconds
-          maximumAge: 0,
+          enableHighAccuracy: false, // Set to false for faster less accurate results
+          timeout: 15000, // Reduced timeout value to 15 seconds
+          maximumAge: 60000, // Allow cached positions up to 1 minute old
         }
       );
     });
   } catch (error) {
     console.error("Error in updateUserLocation:", error);
+    toast.error("An unexpected error occurred while updating your location");
     return false;
   }
 };

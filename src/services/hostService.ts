@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Define a simple Host type to avoid deep type instantiation errors
+// Define a simple Host type for user profiles with location data
 export interface Host {
   id: string;
   full_name: string | null;
@@ -11,40 +11,58 @@ export interface Host {
   updated_at: string | null;
 }
 
+// Check if required location columns exist in the profiles table
+const checkLocationColumns = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("is_sharing_location, latitude, longitude")
+      .limit(1);
+    
+    if (error) {
+      console.error("Error checking location columns:", error);
+      return false;
+    }
+    
+    if (!data || data.length === 0) {
+      console.error("No profiles found to check columns");
+      return false;
+    }
+    
+    const hasFields = data[0] && 
+      'latitude' in data[0] && 
+      'longitude' in data[0] &&
+      'is_sharing_location' in data[0];
+    
+    return !!hasFields;
+  } catch (error) {
+    console.error("Error in checkLocationColumns:", error);
+    return false;
+  }
+};
+
+// Safely create a Host object from database data
+const createSafeHost = (item: any): Host | null => {
+  if (!item || typeof item !== 'object') return null;
+  
+  return {
+    id: typeof item.id === 'string' ? item.id : '',
+    full_name: item.full_name || null,
+    avatar_url: item.avatar_url || null,
+    latitude: typeof item.latitude === 'number' ? item.latitude : null,
+    longitude: typeof item.longitude === 'number' ? item.longitude : null,
+    updated_at: item.updated_at || null
+  };
+};
+
 // Fetch all online hosts (users who are sharing their location)
 export const fetchOnlineHosts = async (): Promise<Host[]> => {
   try {
     console.log("Fetching online hosts...");
     
     // First check if the required columns exist
-    const { data: columnCheck, error: columnError } = await supabase
-      .from("profiles")
-      .select("is_sharing_location, latitude, longitude")
-      .limit(1);
-    
-    if (columnError) {
-      console.error("Error checking columns:", columnError);
-      return [];
-    }
-    
-    // Check if columns exist in returned data
-    if (!columnCheck || columnCheck.length === 0) {
-      console.error("No profiles found to check columns");
-      return [];
-    }
-    
-    const firstRow = columnCheck[0];
-    if (!firstRow) {
-      console.error("No row data in column check");
-      return [];
-    }
-    
-    const hasLocationFields = firstRow && 
-      'latitude' in firstRow && 
-      'longitude' in firstRow &&
-      'is_sharing_location' in firstRow;
-    
-    if (!hasLocationFields) {
+    const columnsExist = await checkLocationColumns();
+    if (!columnsExist) {
       console.error("Required location columns don't exist in profiles table");
       return [];
     }
@@ -68,19 +86,14 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
     
     console.log(`Found ${data.length} online hosts`);
 
-    // Cast the data as unknown first and then to Host[] to handle potential type mismatches
-    const safeData = data as unknown as Record<string, any>[];
+    // Create typed Host objects from the data
+    const hosts: Host[] = [];
+    for (const item of data) {
+      const host = createSafeHost(item);
+      if (host) hosts.push(host);
+    }
     
-    // Filter out any entries that don't match our Host interface
-    return safeData.filter((item): item is Host => {
-      if (!item) return false;
-      
-      return typeof item === 'object' && 
-        'id' in item && 
-        typeof item.id === 'string' &&
-        'latitude' in item && 
-        'longitude' in item;
-    }) as Host[];
+    return hosts;
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
@@ -93,33 +106,8 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
     console.log("Fetching host by ID:", hostId);
     
     // First check if the required columns exist
-    const { data: columnCheck, error: columnError } = await supabase
-      .from("profiles")
-      .select("latitude, longitude")
-      .limit(1);
-    
-    if (columnError) {
-      console.error("Error checking columns:", columnError);
-      return null;
-    }
-    
-    // Check if columns exist in returned data
-    if (!columnCheck || columnCheck.length === 0) {
-      console.error("No profiles found to check columns");
-      return null;
-    }
-    
-    const firstRow = columnCheck[0];
-    if (!firstRow) {
-      console.error("No row data in column check");
-      return null;
-    }
-    
-    const hasLocationFields = 
-      'latitude' in firstRow && 
-      'longitude' in firstRow;
-    
-    if (!hasLocationFields) {
+    const columnsExist = await checkLocationColumns();
+    if (!columnsExist) {
       console.error("Required location columns don't exist in profiles table");
       return null;
     }
@@ -140,18 +128,8 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
-    // Verify that the data has the required properties
-    if (data && 
-        typeof data === 'object' &&
-        'id' in data &&
-        typeof data.id === 'string' &&
-        'latitude' in data &&
-        'longitude' in data) {
-      return data as Host;
-    }
-    
-    console.error("Host data doesn't match expected structure:", data);
-    return null;
+    // Create a typed Host object from the data
+    return createSafeHost(data);
   } catch (error) {
     console.error("Error in fetchHostById:", error);
     return null;
