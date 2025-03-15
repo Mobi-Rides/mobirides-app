@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,6 +120,10 @@ export const HostDashboard = () => {
     b.cars !== null // Explicitly check for null
   ) || [];
 
+  const navigateToRentalDetails = (bookingId: string) => {
+    navigate(`/rental-details/${bookingId}`);
+  };
+
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Your Cars</h2>
@@ -168,7 +173,11 @@ export const HostDashboard = () => {
         <TabsContent value="active">
           <div className="grid gap-4">
             {activeBookings?.map(booking => booking.cars && (
-              <Card key={booking.id}>
+              <Card 
+                key={booking.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigateToRentalDetails(booking.id)}
+              >
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -191,23 +200,36 @@ export const HostDashboard = () => {
                     </p>
                     <div className="flex justify-between items-center pt-2">
                       <div className="flex gap-2">
-                        <Link to={`/booking-requests/${booking.id}`}>
-                          <Button variant="outline" size="sm">
-                            View Details
-                          </Button>
-                        </Link>
-                        <Link to={`/rental-review/${booking.id}`}>
-                          <Button variant="default" size="sm">
-                            Review
-                          </Button>
-                        </Link>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/booking-requests/${booking.id}`);
+                          }}
+                        >
+                          View Details
+                        </Button>
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/rental-review/${booking.id}`);
+                          }}
+                        >
+                          Review
+                        </Button>
                       </div>
                       <Button 
                         variant="default" 
                         size="sm" 
                         className={`${isToday(parseISO(booking.start_date)) ? "bg-primary hover:bg-primary/90" : "bg-secondary hover:bg-secondary/80"}`} 
                         disabled={!isToday(parseISO(booking.start_date))} 
-                        onClick={() => booking.renter && initiateHandover(booking.id, booking.renter.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          booking.renter && initiateHandover(booking.id, booking.renter.id);
+                        }}
                       >
                         Initiate Handover
                       </Button>
@@ -222,7 +244,11 @@ export const HostDashboard = () => {
         <TabsContent value="requests">
           <div className="grid gap-4">
             {pendingRequests?.map(booking => booking.cars && (
-              <Card key={booking.id}>
+              <Card 
+                key={booking.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigateToRentalDetails(booking.id)}
+              >
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -243,11 +269,16 @@ export const HostDashboard = () => {
                     <p className="text-sm">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
-                    <Link to={`/booking-requests/${booking.id}`}>
-                      <Button variant="outline" size="sm">
-                        View Request
-                      </Button>
-                    </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/booking-requests/${booking.id}`);
+                      }}
+                    >
+                      View Request
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -258,7 +289,11 @@ export const HostDashboard = () => {
         <TabsContent value="returned">
           <div className="grid gap-4">
             {returnedBookings?.map(booking => booking.cars && (
-              <Card key={booking.id}>
+              <Card 
+                key={booking.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigateToRentalDetails(booking.id)}
+              >
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -280,16 +315,26 @@ export const HostDashboard = () => {
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
                     <div className="flex gap-2">
-                      <Link to={`/booking-requests/${booking.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </Link>
-                      <Link to={`/rental-review/${booking.id}`}>
-                        <Button variant="default" size="sm">
-                          Review
-                        </Button>
-                      </Link>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/booking-requests/${booking.id}`);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/rental-review/${booking.id}`);
+                        }}
+                      >
+                        Review
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

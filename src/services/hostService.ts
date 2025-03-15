@@ -1,3 +1,4 @@
+
 import { useLocationSharing } from "@/hooks/useLocationSharing";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,13 +30,15 @@ const checkLocationColumns = async (): Promise<boolean> => {
       return false;
     }
 
-    const hasFields =
-      data[0] &&
-      "latitude" in data[0] &&
-      "longitude" in data[0] &&
-      "is_sharing_location" in data[0];
-
-    return !!hasFields;
+    // Check if the needed columns exist in the first row of data
+    const profile = data[0];
+    return (
+      profile !== null &&
+      typeof profile === 'object' &&
+      'latitude' in profile &&
+      'longitude' in profile &&
+      'is_sharing_location' in profile
+    );
   } catch (error) {
     console.error("Error in checkLocationColumns:", error);
     return false;
@@ -44,17 +47,18 @@ const checkLocationColumns = async (): Promise<boolean> => {
 
 // Safely create a Host object from database data
 const createSafeHost = (item: any): Host | null => {
-  if (!item || typeof item !== "object") return null;
+  if (!item || typeof item !== 'object') return null;
 
   return {
-    id: typeof item.id === "string" ? item.id : "",
+    id: typeof item.id === 'string' ? item.id : '',
     full_name: item.full_name || null,
     avatar_url: item.avatar_url || null,
-    latitude: typeof item.latitude === "number" ? item.latitude : null,
-    longitude: typeof item.longitude === "number" ? item.longitude : null,
+    latitude: typeof item.latitude === 'number' ? item.latitude : null,
+    longitude: typeof item.longitude === 'number' ? item.longitude : null,
     updated_at: item.updated_at || null,
   };
 };
+
 // Get current session user's id
 export const getCurrentUserId = (): string | null => {
   const { userId, isLoading } = useLocationSharing();

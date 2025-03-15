@@ -20,6 +20,7 @@ import { BarLoader } from "react-spinners";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
+import RentalDetails from "./pages/RentalDetails";
 
 // Page transition loader component
 const PageTransitionLoader = () => {
@@ -84,6 +85,7 @@ const AppRoutes = () => {
           }
         />
         <Route path="/rental-review/:bookingId" element={<RentalReview />} />
+        <Route path="/rental-details/:id" element={<ProtectedRoute><RentalDetails /></ProtectedRoute>} />
       </Routes>
     </>
   );
