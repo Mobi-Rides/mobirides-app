@@ -16,16 +16,18 @@ export const useLocationPermission = () => {
         const permission = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
         setPermissionState(permission.state);
         
-        permission.addEventListener('change', () => {
+        const handlePermissionChange = () => {
           setPermissionState(permission.state);
           
           if (permission.state === 'denied') {
             toast.error("Location permission was denied. Please enable location services.");
           }
-        });
+        };
+        
+        permission.addEventListener('change', handlePermissionChange);
         
         return () => {
-          permission.removeEventListener('change', () => {});
+          permission.removeEventListener('change', handlePermissionChange);
         };
       } catch (error) {
         console.error("Error checking location permission:", error);

@@ -21,7 +21,10 @@ export const OnlineStatusToggle = () => {
   } = useLocationSharing();
 
   const handleToggle = async (checked: boolean) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("You need to be logged in to share your location");
+      return;
+    }
 
     try {
       console.log("Attempting to toggle location sharing to:", checked);
@@ -78,6 +81,25 @@ export const OnlineStatusToggle = () => {
       <div className="flex items-center space-x-2 opacity-50">
         <Switch disabled />
         <Label className="text-sm whitespace-nowrap">Share Location</Label>
+      </div>
+    );
+  }
+
+  // If no user is found, show disabled toggle with login message
+  if (!user) {
+    return (
+      <div className="flex flex-row items-center justify-between w-full gap-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={false}
+            disabled={true}
+            className="data-[state=checked]:bg-primary/50"
+          />
+          <Label className="text-sm whitespace-nowrap font-medium">
+            Share Location
+            <span className="ml-2 text-xs text-amber-500">Login required</span>
+          </Label>
+        </div>
       </div>
     );
   }
