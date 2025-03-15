@@ -28,10 +28,10 @@ export const OnlineStatusToggle = () => {
     try {
       console.log("Attempting to toggle location sharing to:", checked);
       
-      // First check if fields exist in the table
+      // First check if fields exist in the table - make sure to select both required fields
       const { data: columnExists, error: columnError } = await supabase
         .from("profiles")
-        .select("is_sharing_location")
+        .select("is_sharing_location, location_sharing_scope")
         .limit(1);
 
       if (columnError) {
