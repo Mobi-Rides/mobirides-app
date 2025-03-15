@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -13,13 +12,20 @@ export const OnlineStatusToggle = () => {
   const [isSharingLocation, setIsSharingLocation] = useState(false);
   const [sharingScope, setSharingScope] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      console.log("No user found - please log in to use location sharing");
+      setErrorMessage("Please log in to use location sharing");
+      setIsLoading(false);
+      return;
+    }
 
     const fetchUserStatus = async () => {
       setIsLoading(true);
       try {
+        console.log("Fetching user profile for location status...");
         // Get the profile for the current user
         const { data, error } = await supabase
           .from("profiles")
@@ -27,17 +33,26 @@ export const OnlineStatusToggle = () => {
           .eq("id", user.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching profile:", error);
+          setErrorMessage("Could not fetch profile");
+          throw error;
+        }
+
+        console.log("Profile data received:", data);
 
         // Cast to our extended profile type
         const profile = data as ExtendedProfile;
 
         // Check if location fields exist using our utility
         if (hasLocationFields(profile)) {
+          console.log("Location fields exist, setting state based on profile");
           setIsSharingLocation(profile.is_sharing_location ?? false);
           setSharingScope(profile.location_sharing_scope ?? "all");
+          setErrorMessage(null);
         } else {
           console.warn("Location sharing fields may not exist in profiles table");
+          setErrorMessage("Location sharing fields not available");
           setIsSharingLocation(false);
           setSharingScope("all");
         }
@@ -57,14 +72,26 @@ export const OnlineStatusToggle = () => {
 
     setIsLoading(true);
     try {
+      console.log("Attempting to toggle location sharing to:", checked);
+      
       // First check if fields exist in the table
-      const { data: columnExists } = await supabase
+      const { data: columnExists, error: columnError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("is_sharing_location")
         .limit(1);
 
+      if (columnError) {
+        console.error("Error checking columns:", columnError);
+        toast.error("Could not verify table structure");
+        throw columnError;
+      }
+
+      console.log("Column check result:", columnExists);
+      
       if (!hasLocationFields(columnExists?.[0])) {
+        console.error("Location fields not found in database");
         toast.error("Location sharing is not supported in this database");
+        setErrorMessage("Location sharing is not supported in this database");
         return;
       }
 
@@ -77,17 +104,42 @@ export const OnlineStatusToggle = () => {
         })
         .eq("id", user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating location sharing:", error);
+        throw error;
+      }
 
       setIsSharingLocation(checked);
       toast.success(checked ? "Location sharing enabled" : "Location sharing disabled");
+      setErrorMessage(null);
 
       // If enabling, also update user's coordinates
       if (checked) {
+        // Check if browser supports geolocation
+        if (!navigator.geolocation) {
+          console.error("Geolocation not supported");
+          toast.error("Your browser doesn't support geolocation");
+          return;
+        }
+
+        // Check permission state if possible
+        try {
+          const permission = await navigator.permissions.query({ name: 'geolocation' });
+          console.log("Geolocation permission status:", permission.state);
+          if (permission.state === 'denied') {
+            toast.error("Location permission denied. Please check your browser settings.");
+            return;
+          }
+        } catch (permError) {
+          console.log("Could not check permission status:", permError);
+          // Continue anyway, as the next step will trigger permission prompt
+        }
+
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
             try {
+              console.log("Got coordinates:", latitude, longitude);
               const payload = createLocationUpdatePayload(true, { latitude, longitude });
               
               const { error } = await supabase
@@ -95,7 +147,12 @@ export const OnlineStatusToggle = () => {
                 .update(payload)
                 .eq("id", user.id);
 
-              if (error) throw error;
+              if (error) {
+                console.error("Error updating location:", error);
+                throw error;
+              }
+              
+              console.log("Location coordinates updated successfully");
             } catch (error) {
               console.error("Error updating location:", error);
               toast.error("Could not update your location");
@@ -103,7 +160,29 @@ export const OnlineStatusToggle = () => {
           },
           (error) => {
             console.error("Geolocation error:", error);
-            toast.error("Could not get your location. Please check your browser permissions.");
+            let errorMsg = "Could not get your location. ";
+            
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMsg += "Permission denied. Please check your browser permissions.";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMsg += "Location information unavailable.";
+                break;
+              case error.TIMEOUT:
+                errorMsg += "Request timed out.";
+                break;
+              default:
+                errorMsg += "Unknown error occurred.";
+            }
+            
+            toast.error(errorMsg);
+            setErrorMessage(errorMsg);
+          },
+          { 
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
           }
         );
       }
@@ -167,10 +246,15 @@ export const OnlineStatusToggle = () => {
         <Switch
           checked={isSharingLocation}
           onCheckedChange={handleToggle}
-          disabled={isLoading}
+          disabled={isLoading || !!errorMessage}
           className="data-[state=checked]:bg-primary"
         />
-        <Label className="text-sm whitespace-nowrap font-medium">Share Location</Label>
+        <Label className="text-sm whitespace-nowrap font-medium">
+          Share Location
+          {errorMessage && (
+            <span className="ml-2 text-xs text-red-500">{errorMessage}</span>
+          )}
+        </Label>
       </div>
 
       {isSharingLocation && (
