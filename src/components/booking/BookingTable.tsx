@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookingRow } from "./BookingRow";
 import { Booking } from "@/types/booking";
@@ -8,8 +9,16 @@ interface BookingTableProps {
 }
 
 export const BookingTable = ({ bookings, onCancelBooking }: BookingTableProps) => {
+  if (!bookings?.length) {
+    return (
+      <div className="text-center py-8 border rounded-md">
+        <p className="text-muted-foreground">You don't have any bookings yet.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -17,11 +26,11 @@ export const BookingTable = ({ bookings, onCancelBooking }: BookingTableProps) =
             <TableHead>Dates</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Price</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {bookings?.map((booking) => (
+          {bookings.map((booking) => (
             <BookingRow 
               key={booking.id} 
               booking={booking} 

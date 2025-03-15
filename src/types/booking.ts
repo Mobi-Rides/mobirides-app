@@ -1,4 +1,3 @@
-import { Car } from "./car";
 
 // Type for the minimal car data we're selecting in the bookings query
 type BookingCar = {
@@ -6,6 +5,19 @@ type BookingCar = {
   model: string;
   image_url: string | null;
   owner_id: string;
+  location: string;
+  price_per_day: number;
+};
+
+// Type for host data
+type BookingHost = {
+  full_name: string | null;
+  avatar_url: string | null;
+};
+
+// Type for review data
+type BookingReview = {
+  id: string;
 };
 
 export interface Booking {
@@ -19,4 +31,6 @@ export interface Booking {
   created_at: string;
   updated_at: string;
   cars: BookingCar;
+  host?: BookingHost;
+  reviews?: BookingReview[];
 }

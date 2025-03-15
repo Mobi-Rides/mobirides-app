@@ -1,7 +1,11 @@
+
 import { format } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Booking } from "@/types/booking";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Check, X, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface BookingRowProps {
   booking: Booking;
@@ -9,8 +13,38 @@ interface BookingRowProps {
 }
 
 export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
+  const navigate = useNavigate();
+
+  const handleRowClick = () => {
+    navigate(`/rental-details/${booking.id}`);
+  };
+
+  // Prevent propagation when clicking cancel button
+  const handleCancelClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCancelBooking(booking.id);
+  };
+
+  const getStatusBadge = () => {
+    switch (booking.status) {
+      case "pending":
+        return <Badge variant="outline" className="flex items-center gap-1"><Clock className="h-3 w-3" /> Pending</Badge>;
+      case "confirmed":
+        return <Badge variant="success" className="bg-green-100 text-green-800 flex items-center gap-1"><Check className="h-3 w-3" /> Confirmed</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive" className="flex items-center gap-1"><X className="h-3 w-3" /> Cancelled</Badge>;
+      case "completed":
+        return <Badge variant="default" className="flex items-center gap-1"><Check className="h-3 w-3" /> Completed</Badge>;
+      default:
+        return <Badge>{booking.status}</Badge>;
+    }
+  };
+
   return (
-    <TableRow>
+    <TableRow 
+      className="cursor-pointer hover:bg-muted/80 transition-colors" 
+      onClick={handleRowClick}
+    >
       <TableCell>
         <div className="flex items-center gap-2">
           <img
@@ -22,28 +56,43 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
             <p className="font-medium">
               {booking.cars.brand} {booking.cars.model}
             </p>
+            <p className="text-xs text-muted-foreground">
+              {booking.cars.location}
+            </p>
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <p>{format(new Date(booking.start_date), "PPP")}</p>
-        <p className="text-muted-foreground">
-          to {format(new Date(booking.end_date), "PPP")}
-        </p>
+        <div className="space-y-1">
+          <p className="text-sm font-medium">
+            {format(new Date(booking.start_date), "PPP")}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            to {format(new Date(booking.end_date), "PPP")}
+          </p>
+        </div>
       </TableCell>
       <TableCell>
-        <span className="capitalize">{booking.status}</span>
+        {getStatusBadge()}
       </TableCell>
-      <TableCell>BWP {booking.total_price}</TableCell>
       <TableCell>
-        {booking.status === "pending" && (
-          <Button
-            variant="outline"
-            onClick={() => onCancelBooking(booking.id)}
-          >
-            Cancel
+        <p className="font-medium">BWP {booking.total_price}</p>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {booking.status === "pending" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelClick}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="ml-auto">
+            <ArrowRight className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </TableCell>
     </TableRow>
   );
