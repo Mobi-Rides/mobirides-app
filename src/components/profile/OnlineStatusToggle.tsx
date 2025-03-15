@@ -43,7 +43,7 @@ export const OnlineStatusToggle = () => {
 
       console.log("Column check result:", columnExists);
       
-      if (!hasLocationFields(columnExists?.[0])) {
+      if (!columnExists || !columnExists[0] || !hasLocationFields(columnExists[0])) {
         console.error("Location fields not found in database");
         toast.error("Location sharing is not supported in this database");
         return;
@@ -81,6 +81,7 @@ export const OnlineStatusToggle = () => {
       <div className="flex items-center space-x-2 opacity-50">
         <Switch disabled />
         <Label className="text-sm whitespace-nowrap">Share Location</Label>
+        <span className="text-xs text-muted-foreground">(Loading...)</span>
       </div>
     );
   }

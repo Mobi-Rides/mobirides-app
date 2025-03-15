@@ -48,21 +48,14 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
-    // Use explicit type checking and conversion
-    if (!Array.isArray(data)) {
-      console.error("Expected array of hosts but got:", typeof data);
-      return [];
-    }
-
     // Filter out any non-object entries and ensure they match our Host interface
-    return data
-      .filter((item): item is Host => 
+    return data.filter((item): item is Host => {
+      return item !== null && 
         typeof item === 'object' && 
-        item !== null && 
-        'id' in item &&
-        'latitude' in item &&
-        'longitude' in item
-      );
+        'id' in item && 
+        'latitude' in item && 
+        'longitude' in item;
+    });
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
@@ -105,12 +98,11 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
     }
 
     // Verify that the data has the properties we expect
-    if (
-      typeof data === 'object' &&
-      'id' in data &&
-      'latitude' in data &&
-      'longitude' in data
-    ) {
+    if (data && 
+        typeof data === 'object' &&
+        'id' in data &&
+        'latitude' in data &&
+        'longitude' in data) {
       return data as Host;
     }
     
