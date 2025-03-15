@@ -62,16 +62,21 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current session user's id - simplified to avoid TypeScript depth issues
+// Get current session user's id - avoiding TypeScript depth issues with a simpler approach
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Manual approach avoiding complex typing
-    const response = await supabase.auth.getSession();
-    const session = response?.data?.session;
-    if (session && session.user && session.user.id) {
-      return session.user.id;
-    }
-    return null;
+    // Using a non-typed approach to avoid TypeScript recursion
+    const auth = supabase.auth;
+    const sessionResponse = await auth.getSession();
+    
+    // Access properties carefully to avoid type depth issues
+    if (!sessionResponse) return null;
+    
+    const session = sessionResponse.data?.session;
+    if (!session) return null;
+    
+    const userId = session.user?.id;
+    return userId || null;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
