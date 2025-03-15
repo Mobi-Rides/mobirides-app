@@ -1,5 +1,5 @@
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,13 @@ import { format, differenceInDays } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useEffect } from "react";
 
 const RentalDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const shouldPrint = location.search.includes('print=true');
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ['rental-details', id],
@@ -40,7 +43,32 @@ const RentalDetails = () => {
     }
   });
 
-  if (isLoading) {
+  // Auto-print when print parameter is present
+  useEffect(() => {
+    if (shouldPrint && booking && !isLoading) {
+      const timer = setTimeout(() => {
+        window.print();
+        // Remove the print parameter after printing
+        navigate(`/rental-details/${id}`, { replace: true });
+      }, 500); // Short delay to ensure content is rendered
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldPrint, booking, isLoading, id, navigate]);
+
+  // Checking if the current user is the renter
+  const { data: currentUser, isLoading: isUserLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+  });
+
+  const isRenter = booking && currentUser && booking.renter_id === currentUser.id;
+  const isOwner = booking && currentUser && booking.car.owner_id === currentUser.id;
+
+  if (isLoading || isUserLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-4">
@@ -110,45 +138,49 @@ const RentalDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Renter Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Renter Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <img 
-                src={booking.renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl : "/placeholder.svg"} 
-                alt={booking.renter.full_name} 
-                className="w-16 h-16 rounded-full object-cover" 
-              />
-              <div>
-                <p className="font-medium">{booking.renter.full_name}</p>
-                {/* Additional renter info could go here */}
+        {/* Renter Card - Show only to host */}
+        {isOwner && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Renter Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <img 
+                  src={booking.renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl : "/placeholder.svg"} 
+                  alt={booking.renter.full_name} 
+                  className="w-16 h-16 rounded-full object-cover" 
+                />
+                <div>
+                  <p className="font-medium">{booking.renter.full_name}</p>
+                  {/* Additional renter info could go here */}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Host Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Host Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <img 
-                src={booking.car.owner.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.car.owner.avatar_url).data.publicUrl : "/placeholder.svg"} 
-                alt={booking.car.owner.full_name} 
-                className="w-16 h-16 rounded-full object-cover" 
-              />
-              <div>
-                <p className="font-medium">{booking.car.owner.full_name}</p>
-                {/* Additional host info could go here */}
+        {/* Host Card - Show only to renter */}
+        {isRenter && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Host Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <img 
+                  src={booking.car.owner.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.car.owner.avatar_url).data.publicUrl : "/placeholder.svg"} 
+                  alt={booking.car.owner.full_name} 
+                  className="w-16 h-16 rounded-full object-cover" 
+                />
+                <div>
+                  <p className="font-medium">{booking.car.owner.full_name}</p>
+                  {/* Additional host info could go here */}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Rental Details Card */}
         <Card>
