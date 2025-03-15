@@ -1,4 +1,4 @@
-
+import { useLocationSharing } from "@/hooks/useLocationSharing";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define a simple Host type for user profiles with location data
@@ -18,22 +18,23 @@ const checkLocationColumns = async (): Promise<boolean> => {
       .from("profiles")
       .select("is_sharing_location, latitude, longitude")
       .limit(1);
-    
+
     if (error) {
       console.error("Error checking location columns:", error);
       return false;
     }
-    
+
     if (!data || data.length === 0) {
       console.error("No profiles found to check columns");
       return false;
     }
-    
-    const hasFields = data[0] && 
-      'latitude' in data[0] && 
-      'longitude' in data[0] &&
-      'is_sharing_location' in data[0];
-    
+
+    const hasFields =
+      data[0] &&
+      "latitude" in data[0] &&
+      "longitude" in data[0] &&
+      "is_sharing_location" in data[0];
+
     return !!hasFields;
   } catch (error) {
     console.error("Error in checkLocationColumns:", error);
@@ -43,23 +44,29 @@ const checkLocationColumns = async (): Promise<boolean> => {
 
 // Safely create a Host object from database data
 const createSafeHost = (item: any): Host | null => {
-  if (!item || typeof item !== 'object') return null;
-  
+  if (!item || typeof item !== "object") return null;
+
   return {
-    id: typeof item.id === 'string' ? item.id : '',
+    id: typeof item.id === "string" ? item.id : "",
     full_name: item.full_name || null,
     avatar_url: item.avatar_url || null,
-    latitude: typeof item.latitude === 'number' ? item.latitude : null,
-    longitude: typeof item.longitude === 'number' ? item.longitude : null,
-    updated_at: item.updated_at || null
+    latitude: typeof item.latitude === "number" ? item.latitude : null,
+    longitude: typeof item.longitude === "number" ? item.longitude : null,
+    updated_at: item.updated_at || null,
   };
+};
+// Get current session user's id
+export const getCurrentUserId = (): string | null => {
+  const { userId, isLoading } = useLocationSharing();
+  if (isLoading) return null;
+  return userId;
 };
 
 // Fetch all online hosts (users who are sharing their location)
 export const fetchOnlineHosts = async (): Promise<Host[]> => {
   try {
     console.log("Fetching online hosts...");
-    
+
     // First check if the required columns exist
     const columnsExist = await checkLocationColumns();
     if (!columnsExist) {
@@ -83,7 +90,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       console.error("Expected array of hosts but got:", data);
       return [];
     }
-    
+
     console.log(`Found ${data.length} online hosts`);
 
     // Create typed Host objects from the data
@@ -92,7 +99,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       const host = createSafeHost(item);
       if (host) hosts.push(host);
     }
-    
+
     return hosts;
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
@@ -104,7 +111,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
 export const fetchHostById = async (hostId: string): Promise<Host | null> => {
   try {
     console.log("Fetching host by ID:", hostId);
-    
+
     // First check if the required columns exist
     const columnsExist = await checkLocationColumns();
     if (!columnsExist) {

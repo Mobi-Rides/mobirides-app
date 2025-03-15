@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import CustomMapbox from "@/components/map/CustomMapbox";
@@ -38,6 +37,7 @@ const Map = () => {
 
   // get host locations
   const fetchHostLocations = async () => {
+    console.log("Fetching host locations...");
     try {
       const onlineHosts = await fetchOnlineHosts();
       if (!onlineHosts.length) {
@@ -55,6 +55,9 @@ const Map = () => {
   useEffect(() => {
     fetchHostLocations();
   }, []);
+
+  //get current user id
+  useEffect(() => {}, []);
 
   // Map style based on theme
   const getMapStyle = () => {
