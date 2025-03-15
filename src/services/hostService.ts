@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Define a simple Host type for user profiles with location data
@@ -64,8 +65,10 @@ const createSafeHost = (item: any): Host | null => {
 // Get current session user's id - simplified to fix type instantiation issue
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    const session = await supabase.auth.getSession();
-    return session.data.session?.user?.id || null;
+    // Using a more direct approach to avoid deep type nesting
+    const response = await supabase.auth.getSession();
+    const user = response.data.session?.user;
+    return user ? user.id : null;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
