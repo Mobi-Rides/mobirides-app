@@ -17,7 +17,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
     // First check if the required columns exist
     const { data: columnCheck, error: columnError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("is_sharing_location, latitude, longitude")
       .limit(1);
     
     // Check if columns exist in returned data
@@ -44,7 +44,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
-    // Type assertion is safer here since we've checked the columns exist
+    // Safe type assertion after we've verified the columns exist
     return (data || []) as Host[];
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
@@ -58,7 +58,7 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
     // First check if the required columns exist
     const { data: columnCheck, error: columnError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("latitude, longitude")
       .limit(1);
     
     // Check if columns exist in returned data
@@ -83,7 +83,7 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
-    // Type assertion is safer here since we've checked the columns exist
+    // Safe type assertion after we've verified the columns exist
     return data as Host;
   } catch (error) {
     console.error("Error in fetchHostById:", error);

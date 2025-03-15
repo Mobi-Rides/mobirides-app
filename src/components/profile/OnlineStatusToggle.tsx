@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -26,6 +27,32 @@ export const OnlineStatusToggle = () => {
       setIsLoading(true);
       try {
         console.log("Fetching user profile for location status...");
+        // Check if the location columns exist in the profiles table
+        const { data: columnCheck, error: columnCheckError } = await supabase
+          .from("profiles")
+          .select("is_sharing_location, location_sharing_scope, latitude, longitude")
+          .limit(1);
+        
+        if (columnCheckError) {
+          console.error("Error checking for columns:", columnCheckError);
+          setErrorMessage("Could not verify location columns");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Verify columns exist
+        const columnsExist = columnCheck && 
+          columnCheck.length > 0 &&
+          'is_sharing_location' in columnCheck[0] &&
+          'location_sharing_scope' in columnCheck[0];
+          
+        if (!columnsExist) {
+          console.error("Required location columns don't exist in the profiles table");
+          setErrorMessage("Location sharing is not supported");
+          setIsLoading(false);
+          return;
+        }
+
         // Get the profile for the current user
         const { data, error } = await supabase
           .from("profiles")
