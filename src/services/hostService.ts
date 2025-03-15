@@ -73,14 +73,16 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       if (item && 
           typeof item === 'object' && 
           'id' in item && 
-          typeof item.id === 'string') {
+          typeof item.id === 'string' &&
+          'latitude' in item && 
+          'longitude' in item) {
         hosts.push({
           id: item.id,
-          full_name: 'full_name' in item ? item.full_name : null,
-          avatar_url: 'avatar_url' in item ? item.avatar_url : null,
-          latitude: 'latitude' in item ? item.latitude : null,
-          longitude: 'longitude' in item ? item.longitude : null,
-          updated_at: 'updated_at' in item ? item.updated_at : null
+          full_name: item.full_name !== undefined ? item.full_name : null,
+          avatar_url: item.avatar_url !== undefined ? item.avatar_url : null,
+          latitude: item.latitude !== undefined ? item.latitude : null,
+          longitude: item.longitude !== undefined ? item.longitude : null,
+          updated_at: item.updated_at !== undefined ? item.updated_at : null
         });
       }
     }
@@ -142,15 +144,18 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
-    // Create a valid Host object with safe property access
-    if (typeof data === 'object' && 'id' in data && typeof data.id === 'string') {
+    // Verify that the data has the required properties and construct a valid Host object
+    if (data && 
+        typeof data === 'object' &&
+        'id' in data &&
+        typeof data.id === 'string') {
       return {
         id: data.id,
-        full_name: 'full_name' in data ? data.full_name : null,
-        avatar_url: 'avatar_url' in data ? data.avatar_url : null,
-        latitude: 'latitude' in data ? data.latitude : null,
-        longitude: 'longitude' in data ? data.longitude : null,
-        updated_at: 'updated_at' in data ? data.updated_at : null
+        full_name: data.full_name !== undefined ? data.full_name : null,
+        avatar_url: data.avatar_url !== undefined ? data.avatar_url : null,
+        latitude: data.latitude !== undefined ? data.latitude : null,
+        longitude: data.longitude !== undefined ? data.longitude : null,
+        updated_at: data.updated_at !== undefined ? data.updated_at : null
       };
     }
     
