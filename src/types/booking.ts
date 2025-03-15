@@ -31,6 +31,7 @@ export interface Booking {
   created_at: string;
   updated_at: string;
   cars: BookingCar;
-  host?: BookingHost;
+  // Making host an optional array to match the Supabase query return type
+  host?: BookingHost[];
   reviews?: BookingReview[];
 }

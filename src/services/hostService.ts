@@ -31,6 +31,7 @@ const checkLocationColumns = async (): Promise<boolean> => {
 
     // Check if the needed columns exist in the first row of data
     const profile = data[0];
+    // Add null checks before accessing properties
     return (
       profile !== null &&
       typeof profile === 'object' &&
@@ -58,7 +59,7 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current session user's id
+// Get current session user's id - simplified to fix type instantiation issue
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
     const { data } = await supabase.auth.getSession();

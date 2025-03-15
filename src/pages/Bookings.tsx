@@ -44,7 +44,8 @@ const Bookings = () => {
       }
 
       console.log("Bookings fetched:", data);
-      return data as Booking[];
+      // Cast to Booking[] to match our interface
+      return data as unknown as Booking[];
     },
   });
 
