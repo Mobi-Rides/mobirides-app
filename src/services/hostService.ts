@@ -1,5 +1,4 @@
 
-import { useLocationSharing } from "@/hooks/useLocationSharing";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define a simple Host type for user profiles with location data
@@ -59,11 +58,15 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current session user's id
-export const getCurrentUserId = (): string | null => {
-  const { userId, isLoading } = useLocationSharing();
-  if (isLoading) return null;
-  return userId;
+// Get current session user's id - removing useLocationSharing hook use
+export const getCurrentUserId = async (): Promise<string | null> => {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.user?.id || null;
+  } catch (error) {
+    console.error("Error getting current user ID:", error);
+    return null;
+  }
 };
 
 // Fetch all online hosts (users who are sharing their location)
