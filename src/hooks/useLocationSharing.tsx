@@ -13,7 +13,25 @@ export const useLocationSharing = () => {
 
   useEffect(() => {
     console.log("useLocationSharing: Initializing hook");
-    checkUserSession();
+    
+    const checkUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log("No active session found");
+        setUserId(null);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("Active session found, user ID:", session.user.id);
+      setUserId(session.user.id);
+      fetchUserStatus(session.user.id);
+    };
+
+    checkUser();
 
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -36,35 +54,6 @@ export const useLocationSharing = () => {
       subscription.unsubscribe();
     };
   }, []);
-
-  const checkUserSession = async () => {
-    try {
-      console.log("useLocationSharing: Checking user session");
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error("Error checking session:", error);
-        setErrorMessage("Session check failed");
-        setIsLoading(false);
-        return;
-      }
-      
-      if (!session) {
-        console.log("No active session found");
-        setUserId(null);
-        setIsLoading(false);
-        return;
-      }
-      
-      console.log("Active session found, user ID:", session.user.id);
-      setUserId(session.user.id);
-      fetchUserStatus(session.user.id);
-    } catch (error) {
-      console.error("Error in checkUserSession:", error);
-      setErrorMessage("Session check error");
-      setIsLoading(false);
-    }
-  };
 
   const fetchUserStatus = async (uid: string) => {
     if (!uid) {
