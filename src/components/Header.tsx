@@ -33,12 +33,32 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
   });
 
   useEffect(() => {
-    const fetchLocation = async () => {
-      if (!("geolocation" in navigator)) {
-        setLocation(prev => ({ ...prev, loading: false, error: "Geolocation not supported" }));
-        return;
+    const checkPermissionAndFetchLocation = async () => {
+      try {
+        // Check if permission is already granted
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        
+        if (permissionStatus.state === 'granted') {
+          // Permission already granted, get location
+          await fetchUserLocation();
+        } else if (permissionStatus.state === 'denied') {
+          // User previously denied, use IP-based fallback without prompting
+          await fetchLocationByIP();
+        } else {
+          // Permission is in 'prompt' state - use IP method or show custom UI first
+          await fetchLocationByIP();
+        }
+      } catch (error) {
+        // Permissions API not supported, fall back to try-catch with geolocation
+        try {
+          await fetchUserLocation();
+        } catch {
+          await fetchLocationByIP();
+        }
       }
+    };
 
+    const fetchUserLocation = async () => {
       try {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -78,7 +98,35 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
       }
     };
 
-    fetchLocation();
+    const fetchLocationByIP = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch location data');
+        }
+
+        const data = await response.json();
+        
+        setLocation({
+          city: data.city || "Gaborone",
+          country: data.country_name || "Botswana",
+          loading: false,
+          error: null
+        });
+      } catch (error) {
+        console.error("IP Location error:", error);
+        setLocation(prev => ({
+          ...prev,
+          loading: false,
+          error: null,
+          city: "Gaborone",
+          country: "Botswana"
+        }));
+      }
+    };
+
+    checkPermissionAndFetchLocation();
   }, []);
 
   const { data: profile } = useQuery({
@@ -142,7 +190,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
     : `${location.city}, ${location.country}`;
 
   return (
-    <header className="bg-[#581CFA]  sticky top-0 z-10 shadow-sm p-6 md:p-8 rounded-b-3xl">
+    <header className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-900 sticky top-0 z-10 shadow-sm p-6 md:p-8 rounded-b-3xl">
       <div className="flex items-center justify-between gap-4 mb-4">
         <img
           src="/lovable-uploads/9bb8c367-3153-4561-870a-faadfe15b30c.png"
@@ -151,6 +199,15 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
           onClick={() => navigate("/")}
         />
 
+        <div className="flex-1">
+          <div className="flex items-center justify-center gap-1 text-center">
+            <Navigation className="text-white h-4 w-4 flex-shrink-0" />
+            <h3 className="text-xs md:text-sm lg:text-base font-normal text-white truncate">
+              {locationDisplay}
+            </h3>
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -158,9 +215,9 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
             className="rounded-2xl  md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
             onClick={() => navigate("/add-car")}
           >
-            <Plus className="h-4 w-4 text-[#581CFA]" />
+            <Plus className="h-4 w-4 text-[#581CFA] dark:text-white" />
             <span className="hidden md:inline-block">
-              <p className="text-[#581CFA] text-xs md:text-sm lg:text-base font-semibold">
+              <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
                 Add A Car
               </p>
             </span>
@@ -192,14 +249,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
           </div>
         </div>
       </div>
-      <div className="flex-1">
-        <div className="flex items-center justify-center gap-1 text-center">
-          <Navigation className="text-white h-4 w-4 flex-shrink-0" />
-          <h3 className="text-xs md:text-sm lg:text-base font-normal text-white truncate">
-            {locationDisplay}
-          </h3>
-        </div>
-      </div>
+
       <div className="flex gap-2 mt-8">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#581CFA] h-4 w-4 md:h-5 md:w-5  lg:h-6 lg:w-6" />

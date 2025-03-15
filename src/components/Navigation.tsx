@@ -52,7 +52,7 @@ export const Navigation = () => {
           ))}
         </div>
       </nav>
-      <div className="absolute -top-3 right-8 bg-white dark:bg-gray-900 p-2 rounded-full border border-gray-200 dark:border-gray-800 shadow-md">
+      <div className="absolute -top-12 sm:-top-1 right-8 bg-white dark:bg-gray-900 p-2 rounded-full border border-gray-200 dark:border-gray-800 shadow-md">
         <ThemeToggle />
       </div>
     </div>
