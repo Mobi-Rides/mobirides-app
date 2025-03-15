@@ -68,8 +68,11 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
     
     console.log(`Found ${data.length} online hosts`);
 
+    // Cast the data as unknown first and then to Host[] to handle potential type mismatches
+    const safeData = data as unknown as Record<string, any>[];
+    
     // Filter out any entries that don't match our Host interface
-    return data.filter((item): item is Host => {
+    return safeData.filter((item): item is Host => {
       if (!item) return false;
       
       return typeof item === 'object' && 
@@ -77,7 +80,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
         typeof item.id === 'string' &&
         'latitude' in item && 
         'longitude' in item;
-    });
+    }) as Host[];
   } catch (error) {
     console.error("Error in fetchOnlineHosts:", error);
     return [];
