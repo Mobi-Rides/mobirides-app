@@ -31,9 +31,13 @@ const checkLocationColumns = async (): Promise<boolean> => {
 
     // Check if the needed columns exist in the first row of data
     const profile = data[0];
-    // Add null checks before accessing properties
+    
+    // Make sure profile is not null before accessing properties
+    if (!profile) {
+      return false;
+    }
+    
     return (
-      profile !== null &&
       typeof profile === 'object' &&
       'latitude' in profile &&
       'longitude' in profile &&
