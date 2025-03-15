@@ -34,6 +34,11 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
     }
     
     const firstRow = columnCheck[0];
+    if (!firstRow) {
+      console.error("No row data in column check");
+      return [];
+    }
+    
     const hasLocationFields = firstRow && 
       'latitude' in firstRow && 
       'longitude' in firstRow &&
@@ -65,8 +70,9 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
 
     // Filter out any entries that don't match our Host interface
     return data.filter((item): item is Host => {
-      return item !== null && 
-        typeof item === 'object' && 
+      if (!item) return false;
+      
+      return typeof item === 'object' && 
         'id' in item && 
         typeof item.id === 'string' &&
         'latitude' in item && 
@@ -101,7 +107,12 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
     }
     
     const firstRow = columnCheck[0];
-    const hasLocationFields = firstRow && 
+    if (!firstRow) {
+      console.error("No row data in column check");
+      return null;
+    }
+    
+    const hasLocationFields = 
       'latitude' in firstRow && 
       'longitude' in firstRow;
     
