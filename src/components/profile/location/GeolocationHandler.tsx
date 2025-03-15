@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createLocationUpdatePayload } from "@/utils/profileTypes";
@@ -14,10 +13,14 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
 
     // Check permission state if possible
     try {
-      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      const permission = await navigator.permissions.query({
+        name: "geolocation",
+      });
       console.log("Geolocation permission status:", permission.state);
-      if (permission.state === 'denied') {
-        toast.error("Location permission denied. Please check your browser settings.");
+      if (permission.state === "denied") {
+        toast.error(
+          "Location permission denied. Please check your browser settings."
+        );
         return false;
       }
     } catch (permError) {
@@ -31,8 +34,11 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
           const { latitude, longitude } = position.coords;
           try {
             console.log("Got coordinates:", latitude, longitude);
-            const payload = createLocationUpdatePayload(true, { latitude, longitude });
-            
+            const payload = createLocationUpdatePayload(true, {
+              latitude,
+              longitude,
+            });
+
             const { error } = await supabase
               .from("profiles")
               .update(payload)
@@ -42,7 +48,7 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
               console.error("Error updating location:", error);
               throw error;
             }
-            
+
             console.log("Location coordinates updated successfully");
             resolve(true);
           } catch (error) {
@@ -54,28 +60,30 @@ export const updateUserLocation = async (userId: string): Promise<boolean> => {
         (error) => {
           console.error("Geolocation error:", error);
           let errorMsg = "Could not get your location. ";
-          
+
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMsg += "Permission denied. Please check your browser permissions.";
+              errorMsg +=
+                "Permission denied. Please check your browser permissions.";
               break;
             case error.POSITION_UNAVAILABLE:
               errorMsg += "Location information unavailable.";
               break;
             case error.TIMEOUT:
-              errorMsg += "Request timed out.";
+              errorMsg +=
+                "Request timed out. Please try again or move to an area with better GPS signal.";
               break;
             default:
               errorMsg += "Unknown error occurred.";
           }
-          
+
           toast.error(errorMsg);
           resolve(false);
         },
-        { 
+        {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+          timeout: 30000, // Increased timeout value to 30 seconds
+          maximumAge: 0,
         }
       );
     });
