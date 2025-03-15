@@ -58,7 +58,7 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current session user's id - removing useLocationSharing hook use
+// Get current session user's id
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
     const { data } = await supabase.auth.getSession();
