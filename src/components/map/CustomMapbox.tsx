@@ -95,31 +95,34 @@ const CustomMapbox = ({
   useEffect(() => {
     if (!map.current || !mapInit || !onlineHosts?.length) return;
 
-    markers.forEach(marker => marker.remove());
+    markers.forEach((marker) => marker.remove());
     setMarkers([]);
 
-    const newMarkers = onlineHosts.map(host => {
-      if (!host.latitude || !host.longitude) return null;
+    const newMarkers = onlineHosts
+      .map((host) => {
+        if (!host.latitude || !host.longitude) return null;
 
-      const el = document.createElement('div');
-      el.className = 'host-marker';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#4ade80';
-      el.style.border = '2px solid white';
-      el.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)';
+        const el = document.createElement("div");
+        el.className = "host-marker";
+        el.style.width = "20px";
+        el.style.height = "20px";
+        el.style.borderRadius = "50%";
+        el.style.backgroundColor = "#4ade80";
+        el.style.border = "2px solid white";
+        el.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
 
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([host.longitude, host.latitude])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 })
-            .setHTML(`<p class="font-medium">${host.full_name || 'Host'}</p>`)
-        )
-        .addTo(map.current!);
-      
-      return marker;
-    }).filter(Boolean) as mapboxgl.Marker[];
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([host.longitude, host.latitude])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 25 }).setHTML(
+              `<p class="font-medium">${host.full_name || "Host"}</p>`
+            )
+          )
+          .addTo(map.current!);
+
+        return marker;
+      })
+      .filter(Boolean) as mapboxgl.Marker[];
 
     setMarkers(newMarkers);
   }, [onlineHosts, mapInit]);
@@ -161,15 +164,20 @@ const CustomMapbox = ({
   return (
     <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
       <div ref={mapContainer} className="w-full h-full" />
-      
+
       <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
-        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
+        <div
+          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
                       max-w-xs w-auto pointer-events-auto transition-all duration-300 
-                      border border-gray-200 dark:border-gray-700">
-          <OnlineStatusToggle />
+                      border border-gray-200 dark:border-gray-700"
+        >
+          <OnlineStatusToggle
+            lat={userLocation.latitude}
+            long={userLocation.longitude}
+          />
         </div>
       </div>
-      
+
       <Dpad
         onUp={onUp}
         onDown={onDown}
