@@ -4,7 +4,6 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SignUpForm } from "@/components/auth/SignUpForm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,59 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const countryCodes = [
-  { code: "+267", country: "BW 🇧🇼" },
-  { code: "+213", country: "DZ 🇩🇿" },
-  { code: "+244", country: "AO 🇦🇴" },
-  { code: "+226", country: "BF 🇧🇫" },
-  { code: "+257", country: "BI 🇧🇮" },
-  { code: "+237", country: "CM 🇨🇲" },
-  { code: "+238", country: "CV 🇨🇻" },
-  { code: "+236", country: "CF 🇨🇫" },
-  { code: "+235", country: "TD 🇹🇩" },
-  { code: "+269", country: "KM 🇰🇲" },
-  { code: "+242", country: "CG 🇨🇬" },
-  { code: "+243", country: "CD 🇨🇩" },
-  { code: "+253", country: "DJ 🇩🇯" },
-  { code: "+20", country: "EG 🇪🇬" },
-  { code: "+240", country: "GQ 🇬🇶" },
-  { code: "+291", country: "ER 🇪🇷" },
-  { code: "+251", country: "ET 🇪🇹" },
-  { code: "+241", country: "GA 🇬🇦" },
-  { code: "+220", country: "GM 🇬🇲" },
-  { code: "+233", country: "GH 🇬🇭" },
-  { code: "+224", country: "GN 🇬🇳" },
-  { code: "+245", country: "GW 🇬🇼" },
-  { code: "+254", country: "KE 🇰🇪" },
-  { code: "+266", country: "LS 🇱🇸" },
-  { code: "+231", country: "LR 🇱🇷" },
-  { code: "+218", country: "LY 🇱🇾" },
-  { code: "+261", country: "MG 🇲🇬" },
-  { code: "+265", country: "MW 🇲🇼" },
-  { code: "+223", country: "ML 🇲🇱" },
-  { code: "+222", country: "MR 🇲🇷" },
-  { code: "+230", country: "MU 🇲🇺" },
-  { code: "+212", country: "MA 🇲🇦" },
-  { code: "+258", country: "MZ 🇲🇿" },
-  { code: "+264", country: "NA 🇳🇦" },
-  { code: "+227", country: "NE 🇳🇪" },
-  { code: "+234", country: "NG 🇳🇬" },
-  { code: "+250", country: "RW 🇷🇼" },
-  { code: "+239", country: "ST 🇸🇹" },
-  { code: "+221", country: "SN 🇸🇳" },
-  { code: "+232", country: "SL 🇸🇱" },
-  { code: "+252", country: "SO 🇸🇴" },
-  { code: "+27", country: "ZA 🇿🇦" },
-  { code: "+211", country: "SS 🇸🇸" },
-  { code: "+249", country: "SD 🇸🇩" },
-  { code: "+268", country: "SZ 🇸🇿" },
-  { code: "+255", country: "TZ 🇹🇿" },
-  { code: "+228", country: "TG 🇹🇬" },
-  { code: "+216", country: "TN 🇹🇳" },
-  { code: "+256", country: "UG 🇺🇬" },
-  { code: "+260", country: "ZM 🇿🇲" },
-  { code: "+263", country: "ZW 🇿🇼" },
-];
+// Import country codes from constants
+import countryCodes from "@/constants/Countries";
 
 interface ExtendedProfile {
   full_name?: string;
@@ -84,26 +32,25 @@ interface ExtendedProfile {
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSignUp, setIsSignUp] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [profileData, setProfileData] = useState({
     full_name: "",
     phone_number: "",
-    country_code: "+267"
+    country_code: "+267",
   });
 
   const formatPhoneNumber = (number: string) => {
-    return number.replace(/[^\d+]/g, '');
+    return number.replace(/[^\d+]/g, "");
   };
 
   const checkUserProfile = async (userId: string) => {
     try {
       console.log("Checking profile for user:", userId);
       const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (profileError) {
@@ -113,11 +60,11 @@ const Login = () => {
 
       const profile = data as ExtendedProfile | null;
       console.log("Profile data:", profile);
-      
+
       if (!profile?.full_name || !profile?.phone_number) {
         setShowProfilePrompt(true);
       } else {
-        navigate('/');
+        navigate("/");
       }
     } catch (error) {
       console.error("Error checking profile:", error);
@@ -129,8 +76,9 @@ const Login = () => {
       setIsUpdating(true);
       console.log("Starting profile update...");
 
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
       if (sessionError) {
         console.error("Session error:", sessionError);
         toast.error("Authentication error. Please try signing in again.");
@@ -145,8 +93,10 @@ const Login = () => {
 
       const userId = sessionData.session.user.id;
       console.log("Updating profile for user:", userId);
-      
-      const formattedPhoneNumber = formatPhoneNumber(`${profileData.country_code}${profileData.phone_number}`);
+
+      const formattedPhoneNumber = formatPhoneNumber(
+        `${profileData.country_code}${profileData.phone_number}`
+      );
 
       const updateData: ExtendedProfile & { updated_at: string } = {
         full_name: profileData.full_name,
@@ -155,9 +105,9 @@ const Login = () => {
       };
 
       const { error: profileError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update(updateData)
-        .eq('id', userId);
+        .eq("id", userId);
 
       if (profileError) {
         console.error("Profile update error:", profileError);
@@ -167,8 +117,8 @@ const Login = () => {
 
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
-          phone_number: formattedPhoneNumber
-        }
+          phone_number: formattedPhoneNumber,
+        },
       });
 
       if (metadataError) {
@@ -180,7 +130,7 @@ const Login = () => {
       console.log("Profile update successful");
       toast.success("Profile updated successfully");
       setShowProfilePrompt(false);
-      navigate('/');
+      navigate("/");
     } catch (error) {
       console.error("Error in profile update:", error);
       toast.error("An unexpected error occurred");
@@ -193,7 +143,9 @@ const Login = () => {
     console.log("Login: Checking session");
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event);
       if (event === "SIGNED_IN" && session) {
         console.log("User signed in, checking profile");
@@ -212,8 +164,11 @@ const Login = () => {
 
   const checkSession = async () => {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
       if (error) {
         console.error("Error checking session:", error);
         toast.error("There was an error checking your session");
@@ -243,60 +198,43 @@ const Login = () => {
             Welcome to <span className="text-[#7C3AED]">Mobirides</span>
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {isSignUp ? "Create an account to start sharing or renting cars" : "Sign in to start sharing or renting cars"}
+            Sign in to start sharing or renting cars
           </p>
         </div>
-        
+
         <div className="mt-8">
-          {isSignUp ? (
-            <>
-              <SignUpForm />
-              <p className="mt-4 text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <button
-                  onClick={() => setIsSignUp(false)}
-                  className="text-[#7C3AED] hover:text-[#6D28D9]"
-                >
-                  Sign in
-                </button>
-              </p>
-            </>
-          ) : (
-            <>
-              <Auth
-                supabaseClient={supabase}
-                appearance={{
-                  theme: ThemeSupa,
-                  variables: {
-                    default: {
-                      colors: {
-                        brand: '#7C3AED',
-                        brandAccent: '#6D28D9',
-                      },
-                    },
+          <Auth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: "#7C3AED",
+                    brandAccent: "#6D28D9",
                   },
-                }}
-                theme="light"
-                providers={[]}
-                localization={{
-                  variables: {
-                    sign_up: {
-                      link_text: "",
-                    }
-                  }
-                }}
-              />
-              <p className="mt-4 text-center text-sm text-gray-600">
-                Don't have an account?{" "}
-                <button
-                  onClick={() => setIsSignUp(true)}
-                  className="text-[#7C3AED] hover:text-[#6D28D9]"
-                >
-                  Sign up
-                </button>
-              </p>
-            </>
-          )}
+                },
+              },
+            }}
+            theme="light"
+            providers={[]}
+            localization={{
+              variables: {
+                sign_up: {
+                  link_text: "",
+                },
+              },
+            }}
+          />
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Don't have an account?{" "}
+            <button
+              onClick={() => navigate("/signup")}
+              className="text-[#7C3AED] hover:text-[#6D28D9]"
+            >
+              Sign up
+            </button>
+          </p>
         </div>
       </div>
 
@@ -312,7 +250,12 @@ const Login = () => {
                 id="full_name"
                 placeholder="Enter your full name"
                 value={profileData.full_name}
-                onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
+                onChange={(e) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    full_name: e.target.value,
+                  }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -320,7 +263,9 @@ const Login = () => {
               <div className="flex gap-2">
                 <Select
                   value={profileData.country_code}
-                  onValueChange={(value) => setProfileData(prev => ({ ...prev, country_code: value }))}
+                  onValueChange={(value) =>
+                    setProfileData((prev) => ({ ...prev, country_code: value }))
+                  }
                 >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Country" />
@@ -338,15 +283,24 @@ const Login = () => {
                   type="tel"
                   placeholder="Enter phone number"
                   value={profileData.phone_number}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, phone_number: formatPhoneNumber(e.target.value) }))}
+                  onChange={(e) =>
+                    setProfileData((prev) => ({
+                      ...prev,
+                      phone_number: formatPhoneNumber(e.target.value),
+                    }))
+                  }
                   className="flex-1"
                 />
               </div>
             </div>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={handleProfileUpdate}
-              disabled={isUpdating || !profileData.full_name || !profileData.phone_number}
+              disabled={
+                isUpdating ||
+                !profileData.full_name ||
+                !profileData.phone_number
+              }
             >
               {isUpdating ? "Updating..." : "Save Profile"}
             </Button>

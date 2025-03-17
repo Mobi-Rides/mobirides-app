@@ -21,6 +21,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
 import RentalDetails from "./pages/RentalDetails";
+import Signup from "./pages/signup";
 
 const PageTransitionLoader = () => {
   const location = useLocation();
@@ -51,6 +52,7 @@ const AppRoutes = () => {
       <PageTransitionLoader />
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
