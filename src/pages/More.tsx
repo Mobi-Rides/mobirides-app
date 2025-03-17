@@ -1,4 +1,5 @@
-import { Settings, Info, HelpCircle, Shield, Bell, LogOut } from "lucide-react";
+
+import { Settings, Info, HelpCircle, Shield, Bell, LogOut, User } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,14 +21,20 @@ const More = () => {
 
   const menuItems = [
     {
+      icon: User,
+      label: "My Profile",
+      onClick: () => navigate("/profile"),
+      className: "text-primary",
+    },
+    {
       icon: Settings,
       label: "App Settings",
       onClick: () => toast.info("App Settings coming soon"),
     },
     {
       icon: Bell,
-      label: "Notifications",
-      onClick: () => toast.info("Notifications coming soon"),
+      label: "Notification Preferences",
+      onClick: () => toast.info("Notification settings coming soon"),
     },
     {
       icon: Shield,
@@ -54,7 +61,7 @@ const More = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="bg-white p-4 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white dark:bg-gray-900 p-4 sticky top-0 z-10 shadow-sm">
         <h1 className="text-xl font-semibold">More</h1>
       </header>
 
@@ -64,8 +71,8 @@ const More = () => {
             <button
               key={index}
               onClick={item.onClick}
-              className={`w-full flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm ${
-                item.className || "text-gray-700"
+              className={`w-full flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm ${
+                item.className || "text-gray-700 dark:text-gray-200"
               }`}
             >
               <item.icon className="w-5 h-5" />

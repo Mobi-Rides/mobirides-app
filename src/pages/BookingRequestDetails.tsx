@@ -103,106 +103,106 @@ const BookingRequestDetails = () => {
   };
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-        </div>
-      </div>;
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      </div>
+    </div>;
   }
   if (!booking) {
     return <div className="container mx-auto px-4 py-8">
-        <p className="text-gray-600">Booking request not found</p>
-      </div>;
+      <p className="text-gray-600 dark:text-gray-300">Booking request not found</p>
+    </div>;
   }
   return <div className="container mx-auto px-4 py-8 pb-20">
-      <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
+    <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+      <ArrowLeft className="mr-2 h-4 w-4" />
+      Back
+    </Button>
 
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-semibold mb-6 text-left">Booking Request Details</h1>
-          
-          <div className="space-y-6">
-            {/* Renter Information */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4 text-left">Renter Information</h2>
-              <div className="flex items-center gap-4">
-                <img src={booking.renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl : "/placeholder.svg"} alt={booking.renter.full_name} className="w-16 h-16 rounded-full object-cover" />
-                <div>
-                  <p className="font-medium">{booking.renter.full_name}</p>
-                  {typeof renterRating === 'number' && <div className="flex items-center gap-1 text-yellow-500">
-                      <Star className="h-4 w-4 fill-current" />
-                      <span>{renterRating.toFixed(1)}</span>
-                    </div>}
-                </div>
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+        <h1 className="text-2xl font-semibold mb-6 text-left dark:text-white">Booking Request Details</h1>
+        
+        <div className="space-y-6">
+          {/* Renter Information */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-left dark:text-gray-100">Renter Information</h2>
+            <div className="flex items-center gap-4">
+              <img src={booking.renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl : "/placeholder.svg"} alt={booking.renter.full_name} className="w-16 h-16 rounded-full object-cover" />
+              <div>
+                <p className="font-medium dark:text-white">{booking.renter.full_name}</p>
+                {typeof renterRating === 'number' && <div className="flex items-center gap-1 text-yellow-500">
+                  <Star className="h-4 w-4 fill-current" />
+                  <span>{renterRating.toFixed(1)}</span>
+                </div>}
               </div>
             </div>
-
-            {/* Car Information */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4 text-left">Requested Car</h2>
-              <div className="flex gap-4">
-                <img src={booking.car.image_url || "/placeholder.svg"} alt={`${booking.car.brand} ${booking.car.model}`} className="w-32 h-24 object-cover rounded-lg" />
-                <div>
-                  <p className="font-medium text-left">{booking.car.brand} {booking.car.model}</p>
-                  <p className="text-sm text-gray-600 text-left">{booking.car.location}</p>
-                  <p className="text-sm font-medium">BWP {booking.car.price_per_day} per day</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Booking Dates */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4 text-left">Booking Dates</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600 text-left">Start Date</p>
-                  <p className="font-medium text-left">
-                    {format(new Date(booking.start_date), 'PPP')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 text-left">End Date</p>
-                  <p className="font-medium text-left">
-                    {format(new Date(booking.end_date), 'PPP')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Total Price */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold">Total Price</p>
-                <p className="text-xl font-bold">BWP {booking.total_price}</p>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            {booking.status === 'pending' && <div className="flex gap-4 justify-end border-t pt-6">
-                <Button variant="outline" className="flex items-center gap-2" onClick={handleCancel} disabled={updateBookingStatus.isPending}>
-                  <XCircle className="h-4 w-4" />
-                  Cancel Request
-                </Button>
-                <Button className="flex items-center gap-2" onClick={handleApprove} disabled={updateBookingStatus.isPending}>
-                  <CheckCircle className="h-4 w-4" />
-                  Approve Request
-                </Button>
-              </div>}
-
-            {/* Status Badge */}
-            {booking.status !== 'pending' && <div className="border-t pt-4">
-                <p className="text-sm font-medium">
-                  Status: <span className="capitalize">{booking.status}</span>
-                </p>
-              </div>}
           </div>
+
+          {/* Car Information */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-left dark:text-gray-100">Requested Car</h2>
+            <div className="flex gap-4">
+              <img src={booking.car.image_url || "/placeholder.svg"} alt={`${booking.car.brand} ${booking.car.model}`} className="w-32 h-24 object-cover rounded-lg" />
+              <div>
+                <p className="font-medium text-left dark:text-white">{booking.car.brand} {booking.car.model}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-left">{booking.car.location}</p>
+                <p className="text-sm font-medium dark:text-gray-200">BWP {booking.car.price_per_day} per day</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Booking Dates */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-left dark:text-gray-100">Booking Dates</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-left">Start Date</p>
+                <p className="font-medium text-left dark:text-white">
+                  {format(new Date(booking.start_date), 'PPP')}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-left">End Date</p>
+                <p className="font-medium text-left dark:text-white">
+                  {format(new Date(booking.end_date), 'PPP')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Total Price */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex justify-between items-center">
+              <p className="font-semibold dark:text-white">Total Price</p>
+              <p className="text-xl font-bold dark:text-white">BWP {booking.total_price}</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          {booking.status === 'pending' && <div className="flex gap-4 justify-end border-t border-gray-200 dark:border-gray-700 pt-6">
+            <Button variant="outline" className="flex items-center gap-2" onClick={handleCancel} disabled={updateBookingStatus.isPending}>
+              <XCircle className="h-4 w-4" />
+              Cancel Request
+            </Button>
+            <Button className="flex items-center gap-2" onClick={handleApprove} disabled={updateBookingStatus.isPending}>
+              <CheckCircle className="h-4 w-4" />
+              Approve Request
+            </Button>
+          </div>}
+
+          {/* Status Badge */}
+          {booking.status !== 'pending' && <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <p className="text-sm font-medium dark:text-gray-300">
+              Status: <span className="capitalize">{booking.status}</span>
+            </p>
+          </div>}
         </div>
       </div>
+    </div>
 
-      <Navigation />
-    </div>;
+    <Navigation />
+  </div>;
 };
 export default BookingRequestDetails;

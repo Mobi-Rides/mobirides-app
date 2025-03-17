@@ -6,11 +6,11 @@ import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { RoleSection } from "@/components/profile/RoleSection";
-import { NotificationsSection } from "@/components/profile/NotificationsSection";
 import { OnlineStatusToggle } from "@/components/profile/OnlineStatusToggle";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
 import { Navigation } from "@/components/Navigation";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,7 @@ const Profile = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initialFormValues, setInitialFormValues] = useState({ full_name: "" });
   const navigate = useNavigate();
+  const { userLocation } = useUserLocation(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -86,13 +87,17 @@ const Profile = () => {
   if (loading) return <ProfileLoading />;
   if (error) return <ProfileError error={error} />;
 
+  // Default coordinates if userLocation is not available
+  const latitude = userLocation?.latitude || 0;
+  const longitude = userLocation?.longitude || 0;
+
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
       <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
       <ProfileHeader />
       <ProfileForm initialValues={initialFormValues} />
-      <NotificationsSection />
       <RoleSection />
+      <OnlineStatusToggle lat={latitude} long={longitude} />
       <Navigation />
     </div>
   );

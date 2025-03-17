@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,9 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { FileText, Star } from "lucide-react";
 
 export const RenterDashboard = () => {
+  const navigate = useNavigate();
+  
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["renter-bookings"],
     queryFn: async () => {
@@ -76,6 +80,10 @@ export const RenterDashboard = () => {
     );
   });
 
+  const handleCardClick = (bookingId: string) => {
+    navigate(`/rental-details/${bookingId}`);
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="active">
@@ -93,7 +101,11 @@ export const RenterDashboard = () => {
               </p>
             )}
             {activeBookings?.map((booking) => (
-              <Card key={booking.id}>
+              <Card 
+                key={booking.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleCardClick(booking.id)}
+              >
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -111,15 +123,18 @@ export const RenterDashboard = () => {
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
                     <div className="flex justify-end gap-2 pt-2">
-                      <Link to={`/rental-review/${booking.id}`}>
-                        <Button
-                          variant="default"
-                          size="lg"
-                          className="rounded-2xl border-[#8459FB] text-white"
-                        >
-                          Add Review
-                        </Button>
-                      </Link>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="rounded-2xl border-[#8459FB] text-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/rental-review/${booking.id}`);
+                        }}
+                      >
+                        <Star className="mr-2 h-4 w-4" />
+                        Review
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -136,7 +151,11 @@ export const RenterDashboard = () => {
               </p>
             )}
             {upcomingBookings?.map((booking) => (
-              <Card key={booking.id}>
+              <Card 
+                key={booking.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleCardClick(booking.id)}
+              >
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -154,7 +173,7 @@ export const RenterDashboard = () => {
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
                     <p className="text-sm font-medium">
-                      Status: {booking.status}
+                      Status: <span className="capitalize">{booking.status}</span>
                     </p>
                   </div>
                 </CardContent>
@@ -171,7 +190,11 @@ export const RenterDashboard = () => {
               </p>
             )}
             {pastBookings?.map((booking) => (
-              <Card key={booking.id}>
+              <Card 
+                key={booking.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleCardClick(booking.id)}
+              >
                 <CardHeader>
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
@@ -188,6 +211,36 @@ export const RenterDashboard = () => {
                     <p className="text-sm">
                       Return: {format(new Date(booking.end_date), "PPP")}
                     </p>
+                    <div className="flex justify-end gap-2 pt-2">
+                      {booking.status === "completed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Print functionality will be handled in the details page
+                            navigate(`/rental-details/${booking.id}?print=true`);
+                          }}
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          Receipt
+                        </Button>
+                      )}
+                      {!booking.reviews?.length && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="rounded-2xl border-[#8459FB] text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/rental-review/${booking.id}`);
+                          }}
+                        >
+                          <Star className="mr-2 h-4 w-4" />
+                          Review
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

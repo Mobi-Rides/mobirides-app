@@ -1,4 +1,4 @@
-import { useLocationSharing } from "@/hooks/useLocationSharing";
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Define a simple Host type for user profiles with location data
@@ -29,13 +29,19 @@ const checkLocationColumns = async (): Promise<boolean> => {
       return false;
     }
 
-    const hasFields =
-      data[0] &&
-      "latitude" in data[0] &&
-      "longitude" in data[0] &&
-      "is_sharing_location" in data[0];
-
-    return !!hasFields;
+    // Check if the needed columns exist in the first row of data
+    const profile = data[0];
+    
+    // Make sure profile is not null before accessing properties
+    if (!profile) {
+      return false;
+    }
+    
+    return (
+      'latitude' in profile &&
+      'longitude' in profile &&
+      'is_sharing_location' in profile
+    );
   } catch (error) {
     console.error("Error in checkLocationColumns:", error);
     return false;
@@ -44,22 +50,37 @@ const checkLocationColumns = async (): Promise<boolean> => {
 
 // Safely create a Host object from database data
 const createSafeHost = (item: any): Host | null => {
-  if (!item || typeof item !== "object") return null;
+  if (!item || typeof item !== 'object') return null;
 
   return {
-    id: typeof item.id === "string" ? item.id : "",
+    id: typeof item.id === 'string' ? item.id : '',
     full_name: item.full_name || null,
     avatar_url: item.avatar_url || null,
-    latitude: typeof item.latitude === "number" ? item.latitude : null,
-    longitude: typeof item.longitude === "number" ? item.longitude : null,
+    latitude: typeof item.latitude === 'number' ? item.latitude : null,
+    longitude: typeof item.longitude === 'number' ? item.longitude : null,
     updated_at: item.updated_at || null,
   };
 };
-// Get current session user's id
-export const getCurrentUserId = (): string | null => {
-  const { userId, isLoading } = useLocationSharing();
-  if (isLoading) return null;
-  return userId;
+
+// Get current user's ID using a type assertion to avoid excessive type recursion
+export const getCurrentUserId = async (): Promise<string | null> => {
+  try {
+    // Using type assertion to avoid TypeScript recursion issues
+    const response = await supabase.auth.getSession() as {
+      data: {
+        session: {
+          user?: {
+            id: string;
+          } | null;
+        } | null;
+      };
+    };
+    
+    return response.data?.session?.user?.id || null;
+  } catch (error) {
+    console.error("Error getting current user ID:", error);
+    return null;
+  }
 };
 
 // Fetch all online hosts (users who are sharing their location)
