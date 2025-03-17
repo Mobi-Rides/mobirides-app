@@ -9,12 +9,6 @@ type BookingCar = {
   price_per_day: number;
 };
 
-// Type for host data
-type BookingHost = {
-  full_name: string | null;
-  avatar_url: string | null;
-};
-
 // Type for review data
 type BookingReview = {
   id: string;
@@ -31,7 +25,5 @@ export interface Booking {
   created_at: string;
   updated_at: string;
   cars: BookingCar;
-  // Making host an optional array to match the Supabase query return type
-  host?: BookingHost[];
   reviews?: BookingReview[];
 }

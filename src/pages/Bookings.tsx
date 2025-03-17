@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -50,12 +49,9 @@ const Bookings = () => {
           ),
           reviews!reviews_booking_id_fkey (
             id
-          ),
-          host:profiles!cars_owner_id_fkey (
-            full_name,
-            avatar_url
           )
         `)
+        .eq("renter_id", sessionData.session.user.id)
         .order("created_at", { ascending: false });
 
       if (error) {

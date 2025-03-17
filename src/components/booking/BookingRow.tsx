@@ -40,14 +40,6 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
     }
   };
 
-  // Get host name if available
-  const getHostName = () => {
-    if (booking.host && booking.host.length > 0 && booking.host[0].full_name) {
-      return booking.host[0].full_name;
-    }
-    return "Unknown Host";
-  };
-
   return (
     <TableRow 
       className="cursor-pointer hover:bg-muted/80 transition-colors" 
