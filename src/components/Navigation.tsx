@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, MapPin, Bookmark, CalendarClock, Bell } from "lucide-react";
@@ -105,13 +104,15 @@ export const Navigation = () => {
               )}
               onClick={() => setActiveIndex(item.activeIndex)}
             >
-              {item.icon}
+              <div className="relative">
+                {item.icon}
+                {item.badge && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center p-0 text-xs">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </Badge>
+                )}
+              </div>
               <span className="text-xs mt-1">{item.label}</span>
-              {item.badge && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 min-w-5 h-5 flex items-center justify-center p-0 text-xs">
-                  {item.badge > 99 ? '99+' : item.badge}
-                </Badge>
-              )}
             </Link>
           ))}
         </div>
