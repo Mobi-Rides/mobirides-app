@@ -54,16 +54,22 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold text-primary">
-        Your Fleet
-      </h1>
-      
-      <BrandFilter
+      <div className="text-left flex items-center ">
+        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
+          Your Fleet
+        </h3>
+
+        <span className="ml-2 px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8]">
+          Host Mode
+        </span>
+      </div>
+
+      {/* <BrandFilter
         selectedBrand={selectedBrand}
         onSelectBrand={setSelectedBrand}
         carsCount={hostCars.length}
-      />
-      
+      /> */}
+
       <div className="flex justify-end">
         <Button
           variant={sortOrder ? "secondary" : "outline"}
@@ -85,7 +91,7 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
           )}
         </Button>
       </div>
-      
+
       <CarGrid
         cars={hostCars}
         isLoading={hostCarsLoading}
