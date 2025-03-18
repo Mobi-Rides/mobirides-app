@@ -1,125 +1,135 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Heart, Calendar } from "lucide-react";
 import { BookingDialog } from "@/components/booking/BookingDialog";
-import { useToast } from "@/components/ui/use-toast";
-import { Edit } from "lucide-react";
-import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { saveCar, unsaveCar, isCarSaved } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface CarActionsProps {
   car: Car;
 }
 
 export const CarActions = ({ car }: CarActionsProps) => {
-  const navigate = useNavigate();
-  const user = useUser();
-  const { userRole } = useAuthStatus();
-  const [isOwner, setIsOwner] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
+  // Check if user is authenticated
   useEffect(() => {
-    const checkOwnership = async () => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Check if car is saved
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!isAuthenticated) return;
+      
       try {
-        setIsLoading(true);
-        
-        // First check if user is logged in
-        if (!user) {
-          console.log("User not logged in, not owner");
-          setIsOwner(false);
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log("Checking ownership for user:", user.id, "car owner:", car.owner_id);
-        // Direct comparison first
-        const initialOwnerCheck = user.id === car.owner_id;
-        console.log("Initial owner check:", initialOwnerCheck);
-        
-        // Always double-check with the database for security
-        if (user.id) {
-          const { data, error } = await supabase
-            .from("cars")
-            .select("owner_id")
-            .eq("id", car.id)
-            .single();
-            
-          if (!error && data) {
-            const databaseOwnerMatch = user.id === data.owner_id;
-            console.log("Database owner check:", databaseOwnerMatch, "DB owner_id:", data.owner_id);
-            setIsOwner(databaseOwnerMatch);
-          } else {
-            console.error("Error checking car ownership from DB:", error);
-            // Fallback to initial check if DB query fails
-            setIsOwner(initialOwnerCheck);
-          }
-        }
+        const saved = await isCarSaved(car.id);
+        setIsSaved(saved);
       } catch (error) {
-        console.error("Error checking car ownership:", error);
-        // On error, assume not owner for security
-        setIsOwner(false);
-      } finally {
-        setIsLoading(false);
+        console.error("Failed to check if car is saved:", error);
       }
     };
     
-    checkOwnership();
-  }, [user, car.id, car.owner_id]);
+    checkIfSaved();
+  }, [car.id, isAuthenticated]);
 
-  const handleEditCar = () => {
-    navigate(`/cars/${car.id}/edit`);
-    toast({
-      title: "Edit mode",
-      description: "You can now edit your car details",
-    });
+  const handleBookNow = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    setIsBookingOpen(true);
   };
 
-  // Debug info
-  console.log("CarActions rendering with:", {
-    userId: user?.id,
-    carOwnerId: car.owner_id,
-    isOwner,
-    userRole,
-    isLoading
-  });
+  const handleSaveToggle = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    
+    if (isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      if (isSaved) {
+        const success = await unsaveCar(car.id);
+        if (success) {
+          setIsSaved(false);
+          // Invalidate saved cars queries
+          queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
+          queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
+        }
+      } else {
+        const success = await saveCar(car.id);
+        if (success) {
+          setIsSaved(true);
+          // Invalidate saved cars queries
+          queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
+          queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
+        }
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Determine if current user is the car owner
+  const isOwner = car.owner_id === (supabase.auth.getUser() as any)?.data?.user?.id;
 
   return (
-    <div className="w-full p-4 bg-background/80 backdrop-blur-sm border-t">
-      <div className="max-w-2xl mx-auto flex gap-4">
-        {isLoading ? (
-          <Button className="w-full" disabled variant="outline">
-            Loading...
-          </Button>
-        ) : isOwner ? (
-          <Button 
-            className="w-full" 
-            variant="outline"
-            onClick={handleEditCar}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Car
-          </Button>
-        ) : (
-          <>
-            <Button 
-              className="w-full" 
-              onClick={() => setIsBookingOpen(true)}
-            >
-              Book Now
-            </Button>
-            <BookingDialog 
-              car={car} 
-              isOpen={isBookingOpen} 
-              onClose={() => setIsBookingOpen(false)} 
-            />
-          </>
-        )}
+    <div className="sticky bottom-[72px] bg-background dark:bg-gray-800 p-4 rounded-t-lg border-t border-gray-200 dark:border-gray-700 shadow-lg">
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          className="w-12 flex-shrink-0"
+          onClick={handleSaveToggle}
+          disabled={isSaving || isOwner}
+        >
+          <Heart
+            className={`${
+              isSaved ? "fill-red-500 text-red-500" : "text-gray-600 dark:text-gray-400"
+            }`}
+          />
+        </Button>
+        
+        <Button
+          className="flex-1 flex items-center justify-center gap-2"
+          onClick={handleBookNow}
+          disabled={isOwner}
+        >
+          <Calendar className="w-5 h-5" />
+          Book Now
+        </Button>
       </div>
+      
+      {isBookingOpen && (
+        <BookingDialog
+          car={car}
+          isOpen={isBookingOpen}
+          onClose={() => setIsBookingOpen(false)}
+        />
+      )}
     </div>
   );
 };
