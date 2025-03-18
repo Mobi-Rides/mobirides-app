@@ -65,16 +65,15 @@ const createSafeHost = (item: any): Host | null => {
 // Get current user's ID with a simpler approach to avoid TypeScript recursion
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Simple approach to get session data without deep type inference
+    // Use a type assertion to avoid TypeScript recursion issues
     const response = await supabase.auth.getSession();
+    const session = response?.data?.session;
     
-    // Directly check for null values to avoid deep nesting
-    if (!response) return null;
-    if (!response.data) return null;
-    if (!response.data.session) return null;
-    if (!response.data.session.user) return null;
+    if (!session || !session.user) {
+      return null;
+    }
     
-    return response.data.session.user.id;
+    return session.user.id;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
@@ -93,6 +92,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
+    // Use type assertion to avoid TypeScript recursion
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, latitude, longitude, updated_at")
@@ -138,6 +138,7 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
+    // Use type assertion to avoid TypeScript recursion
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, latitude, longitude, updated_at")
