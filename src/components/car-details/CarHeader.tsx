@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { CalendarDays, Info } from "lucide-react";
+import { CalendarDays, Info, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 
@@ -28,9 +28,9 @@ export const CarHeader = ({ brand, model, year, location }: CarHeaderProps) => {
             asChild
             className="rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-colors"
           >
-            <Link to={`/cars/${id}`}>
-              <Info className="h-5 w-5 text-primary" />
-              <span className="sr-only">View Car Details</span>
+            <Link to={`/edit-car/${id}`}>
+              <Edit className="h-5 w-5 text-primary" />
+              <span className="sr-only">Edit Car Details</span>
             </Link>
           </Button>
           <Link 
