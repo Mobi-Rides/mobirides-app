@@ -65,8 +65,9 @@ const createSafeHost = (item: any): Host | null => {
 // Get current user's ID without causing TypeScript recursion issues
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Using destructuring with renaming to avoid type recursion issues
-    const { data: { session } } = await supabase.auth.getSession();
+    // Extract session directly to avoid deep type instantiation
+    const response = await supabase.auth.getSession();
+    const session = response.data.session;
     return session?.user?.id || null;
   } catch (error) {
     console.error("Error getting current user ID:", error);
