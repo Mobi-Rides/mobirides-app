@@ -70,7 +70,7 @@ export const Navigation = () => {
   const items: NavigationItem[] = [
     { path: "/", label: "Home", icon: <Home className="w-5 h-5" />, activeIndex: 0 },
     { path: "/map", label: "Map", icon: <MapPin className="w-5 h-5" />, activeIndex: 1 },
-    { path: "/saved-cars", label: "Saved", icon: <Bookmark className="w-5 h-5" />, activeIndex: 2 },
+    { path: "/saved-cars", label: "Wishlist", icon: <Bookmark className="w-5 h-5" />, activeIndex: 2 },
     { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 3 },
     { 
       path: "/notifications", 
