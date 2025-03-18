@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -90,10 +89,10 @@ export const CarCard = ({
   return (
     <>
       <Card
-        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[22rem] dark:bg-gray-800 dark:border-gray-700"
+        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-auto min-h-[20rem] sm:h-[24rem] dark:bg-gray-800 dark:border-gray-700"
         onClick={handleCardClick}
       >
-        <div className="relative h-48">
+        <div className="relative h-40 sm:h-48">
           <img
             src={image_url}
             alt={`${brand} ${model}`}
@@ -108,11 +107,11 @@ export const CarCard = ({
             </button>
           )}
         </div>
-        <div className="p-4 flex flex-col h-[calc(28rem-12rem)]">
+        <div className="p-3 sm:p-4 flex flex-col flex-1">
           <span className="px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8] w-fit mb-2">
             {getCarType(seats)}
           </span>
-          <div className="flex justify-between items-start mb-2">
+          <div className="flex justify-between items-start mb-2 min-h-[3rem]">
             <div className="flex-1">
               <h3 className="font-semibold text-left break-words line-clamp-2 text-sm md:text-base dark:text-white">{brand} {model}</h3>
             </div>
@@ -123,8 +122,8 @@ export const CarCard = ({
               </div>
             </div>
           </div>
-          <Separator className="w-full my-3 dark:bg-gray-700" />
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          <Separator className="w-full my-2 sm:my-3 dark:bg-gray-700" />
+          <div className="grid grid-cols-3 gap-1 sm:gap-2 mb-3 sm:mb-4 text-[0.7rem] sm:text-sm">
             <div className="flex items-center justify-left gap-1 text-sm text-gray-400 dark:text-gray-300">
               <GaugeCircle className="w-4 h-4 text-primary dark:text-primary-foreground" />
               {transmission}
