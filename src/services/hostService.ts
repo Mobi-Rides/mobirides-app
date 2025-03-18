@@ -61,18 +61,11 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current user's ID avoiding TypeScript recursion issues
+// Get current user's ID without complex type instantiation
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error("Error getting session:", error);
-      return null;
-    }
-    
-    // Explicitly access the user ID with proper type narrowing
-    const userId = data.session?.user?.id;
+    const session = await supabase.auth.getSession();
+    const userId = session?.data?.session?.user?.id;
     return userId || null;
   } catch (error) {
     console.error("Error getting current user ID:", error);
