@@ -1,6 +1,7 @@
 
 import { toast as sonnerToast } from "sonner";
 import { toast as shadcnToast } from "@/hooks/use-toast";
+import { ToastActionElement } from "@/components/ui/toast";
 
 /**
  * A unified toast utility that supports both sonner and shadcn/ui toast systems
@@ -46,7 +47,7 @@ export const toast = {
     title?: string;
     description?: string;
     variant?: "default" | "destructive";
-    action?: React.ReactNode;
+    action?: ToastActionElement;
   }) => {
     // Use shadcn toast for more complex toasts
     return shadcnToast({
