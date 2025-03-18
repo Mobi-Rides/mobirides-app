@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import type { Car } from "@/types/car";
 import { BarLoader } from "react-spinners";
+import { AlertCircle } from "lucide-react";
 
 interface CarGridProps {
   cars: Car[];
@@ -37,6 +38,7 @@ export const CarGrid = ({
 
   useEffect(() => {
     if (error) {
+      console.error("Error in CarGrid:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -47,8 +49,9 @@ export const CarGrid = ({
 
   useEffect(() => {
     const isIndexPage = window.location.pathname === "/";
+    const isSavedCarsPage = window.location.pathname === "/saved-cars";
     
-    // Separate login request toast
+    // Separate login request toast for index page
     if (isIndexPage && !isAuthenticated) {
       toast({
         title: "Welcome to Mobirides",
@@ -57,16 +60,16 @@ export const CarGrid = ({
       return;
     }
 
-    // Only show no cars found toast if user is authenticated
-    if (isAuthenticated && (!Array.isArray(cars) || cars.length === 0)) {
+    // Only show no cars found toast if user is authenticated and we have loaded the data
+    if (isAuthenticated && !isLoading && Array.isArray(cars) && cars.length === 0) {
       toast({
         title: "No Cars Found",
-        description: isIndexPage 
-          ? "The car/s you are searching for cannot be found"
-          : "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars.",
+        description: isSavedCarsPage 
+          ? "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorite cars."
+          : "The car/s you are searching for cannot be found",
       });
     }
-  }, [cars, isAuthenticated, toast]);
+  }, [cars, isAuthenticated, isLoading, toast]);
 
   if (isLoading) {
     return (
@@ -78,8 +81,29 @@ export const CarGrid = ({
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Failed to load cars</h3>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          There was an error loading the cars. Please try again later.
+        </p>
+      </div>
+    );
+  }
+
   if (!Array.isArray(cars) || cars.length === 0) {
-    return null;
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No cars found</h3>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          {window.location.pathname === "/saved-cars" 
+            ? "You haven't saved any cars yet. Browse our collection and click the heart icon to save your favorites."
+            : "No cars match your current criteria. Try adjusting your filters."}
+        </p>
+      </div>
+    );
   }
 
   const visibleCars = showAll ? cars : cars.slice(0, 6);
