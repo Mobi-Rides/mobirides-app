@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { BrandFilter } from "@/components/BrandFilter";
@@ -249,6 +250,11 @@ const Index = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Add the conditional header label based on user role */}
+            <h1 className="text-2xl md:text-3xl font-bold text-primary">
+              {userRole === "host" ? "Your Fleet" : "Cars for Rent"}
+            </h1>
+            
             <BrandFilter
               selectedBrand={selectedBrand}
               onSelectBrand={setSelectedBrand}
