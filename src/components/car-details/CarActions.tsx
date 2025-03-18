@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -29,14 +28,15 @@ export const CarActions = ({ car }: CarActionsProps) => {
         // First check if user is logged in
         if (!user) {
           setIsOwner(false);
+          setIsLoading(false);
           return;
         }
         
-        // Directly compare user ID with car owner ID
-        setIsOwner(user.id === car.owner_id);
+        // Initial direct comparison
+        const initialOwnerCheck = user.id === car.owner_id;
         
-        // If that doesn't match, double-check with the database
-        if (!isOwner && user.id) {
+        // Always double-check with the database for security
+        if (user.id) {
           const { data, error } = await supabase
             .from("cars")
             .select("owner_id")
@@ -45,17 +45,23 @@ export const CarActions = ({ car }: CarActionsProps) => {
             
           if (!error && data) {
             setIsOwner(user.id === data.owner_id);
+          } else {
+            // Fallback to initial check if DB query fails
+            setIsOwner(initialOwnerCheck);
           }
         }
       } catch (error) {
         console.error("Error checking car ownership:", error);
+        // On error, assume not owner for security
+        setIsOwner(false);
       } finally {
         setIsLoading(false);
       }
     };
     
     checkOwnership();
-  }, [user, car.id, car.owner_id, isOwner]);
+    // Remove isOwner from dependencies to prevent loops
+  }, [user, car.id, car.owner_id]);
 
   const handleEditCar = () => {
     navigate(`/cars/${car.id}/edit`);
