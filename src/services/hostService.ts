@@ -62,21 +62,15 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current user's ID using a type assertion to avoid excessive type recursion
+// Get current user's ID using a simple approach to avoid TS recursion issues
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Using type assertion to avoid TypeScript recursion issues
-    const response = await supabase.auth.getSession() as {
-      data: {
-        session: {
-          user?: {
-            id: string;
-          } | null;
-        } | null;
-      };
-    };
+    // Use type assertion to avoid TypeScript recursion
+    const response = await supabase.auth.getSession();
     
-    return response.data?.session?.user?.id || null;
+    // Access user ID safely
+    const userId = response?.data?.session?.user?.id || null;
+    return userId;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
