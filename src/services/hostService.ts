@@ -62,15 +62,19 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current user's ID without causing TypeScript recursion issues
+// Get current user's ID with a simpler approach to avoid TypeScript recursion
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Use a simpler approach that avoids deep type nesting
-    const sessionResponse = await supabase.auth.getSession();
+    // Simple approach to get session data without deep type inference
+    const response = await supabase.auth.getSession();
     
-    // Access properties with optional chaining to avoid type recursion
-    const user = sessionResponse?.data?.session?.user;
-    return user ? user.id : null;
+    // Directly check for null values to avoid deep nesting
+    if (!response) return null;
+    if (!response.data) return null;
+    if (!response.data.session) return null;
+    if (!response.data.session.user) return null;
+    
+    return response.data.session.user.id;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
