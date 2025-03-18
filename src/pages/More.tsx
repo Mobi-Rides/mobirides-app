@@ -3,7 +3,7 @@ import { Settings, Info, HelpCircle, Shield, Bell, LogOut, User } from "lucide-r
 import { Navigation } from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast-utils";
 
 const More = () => {
   const navigate = useNavigate();

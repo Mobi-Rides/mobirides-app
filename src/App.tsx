@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Index from "@/pages/Index";
@@ -22,6 +23,8 @@ import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
 import RentalDetails from "./pages/RentalDetails";
 import Signup from "./pages/signup";
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 
 const PageTransitionLoader = () => {
   const location = useLocation();
@@ -93,6 +96,8 @@ const App = () => {
     <ThemeProvider>
       <Router>
         <AppRoutes />
+        <ShadcnToaster />
+        <SonnerToaster position="top-center" />
       </Router>
     </ThemeProvider>
   );

@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import CustomMapbox from "@/components/map/CustomMapbox";
 import { getMapboxToken } from "../utils/mapbox";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast-utils";
 import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
 import { fetchOnlineHosts } from "@/services/hostService";

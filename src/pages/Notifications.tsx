@@ -129,7 +129,7 @@ const Notifications = () => {
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              Alerts
+              Notifications
               {unreadNotifications > 0 && (
                 <Badge variant="destructive" className="ml-2">
                   {unreadNotifications}

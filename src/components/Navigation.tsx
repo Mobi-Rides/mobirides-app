@@ -74,7 +74,7 @@ export const Navigation = () => {
     { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 3 },
     { 
       path: "/notifications", 
-      label: "Alerts", 
+      label: "Inbox", 
       icon: <Bell className="w-5 h-5" />, 
       activeIndex: 4,
       badge: totalUnreadCount > 0 ? totalUnreadCount : undefined

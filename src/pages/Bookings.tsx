@@ -114,6 +114,7 @@ const Bookings = () => {
       toast({
         title: "Success",
         description: "Booking cancelled successfully",
+        variant: 'default',
       });
     } catch (error) {
       console.error("Error cancelling booking:", error);
