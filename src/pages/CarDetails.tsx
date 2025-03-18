@@ -13,12 +13,14 @@ import { CarImageCarousel } from "@/components/car-details/CarImageCarousel";
 import { CarReviews } from "@/components/car-details/CarReviews";
 import { CarLocation } from "@/components/car-details/CarLocation";
 import { BarLoader } from "react-spinners";
+import { useUser } from "@supabase/auth-helpers-react";
 import type { Car } from "@/types/car";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const CarDetails = () => {
   const { id } = useParams();
   const { theme } = useTheme();
+  const user = useUser();
 
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", id],
@@ -58,6 +60,14 @@ const CarDetails = () => {
       }
 
       console.log("Car details fetched:", data);
+      
+      // Debug ownership
+      if (user) {
+        console.log("Current user ID:", user.id);
+        console.log("Car owner ID:", data.owner_id);
+        console.log("Is owner check:", user.id === data.owner_id);
+      }
+      
       return data as Car & { profiles: { full_name: string; avatar_url: string | null } };
     },
   });

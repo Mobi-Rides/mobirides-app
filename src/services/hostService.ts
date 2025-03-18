@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Define a simple Host type for user profiles with location data
@@ -61,13 +62,18 @@ const createSafeHost = (item: any): Host | null => {
   };
 };
 
-// Get current user's ID without causing TypeScript recursion issues
+// Get current user's ID with a simpler approach to avoid TypeScript recursion
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Using a more direct approach to access the session data
-    const result = await supabase.auth.getSession();
-    // Access the user ID directly from the result object
-    return result.data.session?.user?.id || null;
+    // Use a type assertion to avoid TypeScript recursion issues
+    const response = await supabase.auth.getSession();
+    const session = response?.data?.session;
+    
+    if (!session || !session.user) {
+      return null;
+    }
+    
+    return session.user.id;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
@@ -86,6 +92,7 @@ export const fetchOnlineHosts = async (): Promise<Host[]> => {
       return [];
     }
 
+    // Use type assertion to avoid TypeScript recursion
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, latitude, longitude, updated_at")
@@ -131,6 +138,7 @@ export const fetchHostById = async (hostId: string): Promise<Host | null> => {
       return null;
     }
 
+    // Use type assertion to avoid TypeScript recursion
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, latitude, longitude, updated_at")

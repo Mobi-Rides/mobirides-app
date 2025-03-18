@@ -12,6 +12,7 @@ import { CarDescription } from "@/components/add-car/CarDescription";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { DocumentUpload } from "@/components/add-car/DocumentUpload";
 import { ArrowLeft } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
@@ -20,6 +21,7 @@ const EditCar = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [documents, setDocuments] = useState<{
@@ -166,11 +168,11 @@ const EditCar = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="max-w-2xl mx-auto p-4">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-muted rounded w-1/2"></div>
+            <div className="h-64 bg-muted rounded"></div>
           </div>
         </div>
         <Navigation />
@@ -179,7 +181,7 @@ const EditCar = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="max-w-2xl mx-auto p-4">
         <div className="flex items-center gap-4 mb-6">
           <Button
@@ -213,7 +215,11 @@ const EditCar = () => {
 
           <ImageUpload onImageChange={handleImageChange} />
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "Updating Car..." : "Update Car"}
           </Button>
         </form>
