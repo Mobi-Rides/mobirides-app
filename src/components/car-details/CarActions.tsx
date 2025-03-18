@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BookingDialog } from "@/components/booking/BookingDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Edit } from "lucide-react";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
 import type { Car } from "@/types/car";
 
 interface CarActionsProps {
@@ -15,6 +17,7 @@ interface CarActionsProps {
 export const CarActions = ({ car }: CarActionsProps) => {
   const navigate = useNavigate();
   const user = useUser();
+  const { userRole } = useAuthStatus();
   const [isOwner, setIsOwner] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,13 +30,16 @@ export const CarActions = ({ car }: CarActionsProps) => {
         
         // First check if user is logged in
         if (!user) {
+          console.log("User not logged in, not owner");
           setIsOwner(false);
           setIsLoading(false);
           return;
         }
         
-        // Initial direct comparison
+        console.log("Checking ownership for user:", user.id, "car owner:", car.owner_id);
+        // Direct comparison first
         const initialOwnerCheck = user.id === car.owner_id;
+        console.log("Initial owner check:", initialOwnerCheck);
         
         // Always double-check with the database for security
         if (user.id) {
@@ -44,8 +50,11 @@ export const CarActions = ({ car }: CarActionsProps) => {
             .single();
             
           if (!error && data) {
-            setIsOwner(user.id === data.owner_id);
+            const databaseOwnerMatch = user.id === data.owner_id;
+            console.log("Database owner check:", databaseOwnerMatch, "DB owner_id:", data.owner_id);
+            setIsOwner(databaseOwnerMatch);
           } else {
+            console.error("Error checking car ownership from DB:", error);
             // Fallback to initial check if DB query fails
             setIsOwner(initialOwnerCheck);
           }
@@ -60,7 +69,6 @@ export const CarActions = ({ car }: CarActionsProps) => {
     };
     
     checkOwnership();
-    // Remove isOwner from dependencies to prevent loops
   }, [user, car.id, car.owner_id]);
 
   const handleEditCar = () => {
@@ -70,6 +78,15 @@ export const CarActions = ({ car }: CarActionsProps) => {
       description: "You can now edit your car details",
     });
   };
+
+  // Debug info
+  console.log("CarActions rendering with:", {
+    userId: user?.id,
+    carOwnerId: car.owner_id,
+    isOwner,
+    userRole,
+    isLoading
+  });
 
   return (
     <div className="w-full p-4 bg-background/80 backdrop-blur-sm border-t">
