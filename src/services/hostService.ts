@@ -65,11 +65,17 @@ const createSafeHost = (item: any): Host | null => {
 // Get current user's ID without causing TypeScript recursion issues
 export const getCurrentUserId = async (): Promise<string | null> => {
   try {
-    // Use any to bypass TypeScript's type checking for this complex object
-    const sessionResponse = await supabase.auth.getSession();
-    // Access the user ID directly without letting TypeScript infer complex types
-    const userId = (sessionResponse as any).data?.session?.user?.id || null;
-    return userId;
+    // Simplify the approach to avoid deep type issues altogether
+    const response = await supabase.auth.getSession();
+    
+    // Use type assertions and explicit null checks to avoid deep type instantiation
+    if (!response || !response.data) return null;
+    
+    // Handle each property access separately with explicit type checks
+    const session = response.data.session;
+    if (!session) return null;
+    
+    return session.user?.id || null;
   } catch (error) {
     console.error("Error getting current user ID:", error);
     return null;
