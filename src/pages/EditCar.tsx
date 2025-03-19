@@ -11,6 +11,7 @@ import { CarDetails } from "@/components/add-car/CarDetails";
 import { CarDescription } from "@/components/add-car/CarDescription";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { DocumentUpload } from "@/components/add-car/DocumentUpload";
+import { CarFeatures } from "@/components/add-car/CarFeatures";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
@@ -29,6 +30,7 @@ const EditCar = () => {
     insurance?: File;
     additional?: FileList;
   }>({});
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
   const { data: car, isLoading } = useQuery({
     queryKey: ["car", id],
@@ -71,6 +73,9 @@ const EditCar = () => {
         seats: car.seats.toString(),
         description: car.description || "",
       });
+      
+      // Initialize the features from the car data
+      setSelectedFeatures(car.features || []);
     }
   }, [car]);
 
@@ -143,6 +148,7 @@ const EditCar = () => {
           transmission: formData.transmission,
           fuel: formData.fuel,
           description: formData.description,
+          features: selectedFeatures,
         })
         .eq("id", id);
 
@@ -206,6 +212,11 @@ const EditCar = () => {
             formData={formData}
             onInputChange={handleInputChange}
             onSelectChange={handleSelectChange}
+          />
+          
+          <CarFeatures
+            selectedFeatures={selectedFeatures}
+            onChange={setSelectedFeatures}
           />
 
           <CarDescription
