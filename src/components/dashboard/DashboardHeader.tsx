@@ -7,16 +7,15 @@ export const DashboardHeader = () => {
 
   return (
     <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-        >
+      <div className="px-4 py-4 mb-4 flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-xl md:text-2xl text-left font-semibold">
+          Dashboard
+        </h1>
       </div>
+
     </div>
   );
 };

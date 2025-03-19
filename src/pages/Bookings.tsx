@@ -7,8 +7,12 @@ import { BookingTable } from "@/components/booking/BookingTable";
 import { format } from "date-fns";
 import { Booking } from "@/types/booking";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Bookings = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -166,8 +170,18 @@ const Bookings = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-4 space-y-4">
-        <h1 className="text-2xl font-bold">My Bookings</h1>
-        <BookingTable bookings={bookings} onCancelBooking={handleCancelBooking} />
+        <div className="px-4 py-4 mb-4 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-xl md:text-2xl text-left font-semibold">
+            My Booking
+          </h1>
+        </div>
+        <BookingTable
+          bookings={bookings}
+          onCancelBooking={handleCancelBooking}
+        />
       </div>
       <Navigation />
     </div>

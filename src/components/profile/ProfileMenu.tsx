@@ -2,12 +2,13 @@
 import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
-  LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark
+  LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark,
+  ArrowRightLeft
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Toggle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -92,59 +93,61 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
 
   return (
     <>
-      <div className="flex flex-col items-center mb-8">
-        <Avatar className="h-20 w-20 mb-4">
-          <AvatarImage 
-            src={avatarPublicUrl || undefined}
-            alt="Profile Avatar" 
-          />
-          <AvatarFallback>👤</AvatarFallback>
-        </Avatar>
-        <h1 className="text-xl font-semibold">{fullName || "Your Profile"}</h1>
-      </div>
-
       {/* Floating Role Switch Button */}
-      <div className="fixed bottom-[72px] left-0 right-0 z-50 flex justify-center">
+      <div className="fixed bottom-[96px] left-0 right-0 z-50 flex justify-center">
         <Button 
+          type="button"
           onClick={() => setActiveView('role')}
-          className="shadow-md rounded-full px-6 bg-primary hover:bg-primary/90"
+          className="shadow-md rounded-full px-6 bg-primary hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
           size="lg"
+          aria-label={switchRoleText}
         >
-          {switchRoleText}
+          <div className="flex items-center gap-2">
+            <ArrowRightLeft className="h-5 w-5" />
+            {switchRoleText}
+          </div>
         </Button>
       </div>
 
+      <div className="w-full px-4 pb-20">
+        <div className="w-full mb-6">
+          <h1 className="text-xl sm:text-2xl text-left font-semibold text-foreground">Profile Settings</h1>
+        </div>
+
+      <button
+        type="button"
+        onClick={() => setActiveView('profile')}
+        className="w-full flex items-center gap-3 p-3 hover:bg-accent/70 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring mb-6 transition-colors"
+        aria-label="View and edit profile"
+      >
+        <Avatar className="h-10 w-10 bg-[#2B2B2B] text-white">
+          <AvatarImage 
+            src={avatarPublicUrl || undefined}
+            alt="Profile" 
+          />
+          <AvatarFallback className="text-sm font-medium">
+            {fullName?.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col items-start gap-0.5">
+          <span className="text-[15px] font-medium">{fullName?.split(' ')[0]}</span>
+          <span className="text-[13px] text-muted-foreground">Show profile</span>
+        </div>
+      </button>
+
       <Card className="mb-6">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Account</CardTitle>
-          <CardDescription>Manage your profile and preferences</CardDescription>
+          <CardTitle className="text-lg text-left">Vehicle & Bookings</CardTitle>
+          <CardDescription className="text-left">Manage your saved vehicles and booking activities</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          <button
-            onClick={() => setActiveView('profile')}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent text-primary"
-          >
-            <div className="flex items-center gap-3">
-              <UserRound className="h-5 w-5" />
-              <span>Show Profile</span>
-            </div>
-            <div className="flex items-center">
-              <Avatar className="h-6 w-6 mr-2">
-                <AvatarImage 
-                  src={avatarPublicUrl || undefined}
-                  alt="Profile" 
-                />
-                <AvatarFallback>👤</AvatarFallback>
-              </Avatar>
-              <span className="text-sm">{fullName}</span>
-            </div>
-          </button>
-
           {menuItems.slice(1, 4).map((item, idx) => (
             <button
               key={idx}
+              type="button"
               onClick={item.onClick}
-              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent ${item.color || "text-foreground"}`}
+              aria-label={item.label}
+              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
             >
               <div className="flex items-center gap-3">
                 <item.icon className="h-5 w-5" />
@@ -157,29 +160,57 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
 
       <Card className="mb-6">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Settings & Preferences</CardTitle>
-          <CardDescription>Configure your app experience</CardDescription>
+          <CardTitle className="text-lg text-left">Account Settings</CardTitle>
+          <CardDescription className="text-left">Manage your preferences and account security</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          <div className="w-full flex items-center justify-between p-3 rounded-lg">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+            onClick={toggleTheme}
+            aria-label={`Toggle dark mode, currently ${theme === 'dark' ? 'on' : 'off'}`}
+          >
             <div className="flex items-center gap-3">
               {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               <span>Dark Mode</span>
             </div>
-            <Toggle 
-              pressed={theme === 'dark'} 
-              onPressedChange={toggleTheme}
+            <Switch
+              checked={theme === 'dark'}
+              onCheckedChange={toggleTheme}
               aria-label="Toggle dark mode"
-            >
-              {theme === 'dark' ? 'On' : 'Off'}
-            </Toggle>
-          </div>
+            />
+          </button>
 
-          {menuItems.slice(4, 8).map((item, idx) => (
+          {menuItems.slice(4, 7).map((item, idx) => (
             <button
               key={idx}
+              type="button"
               onClick={item.onClick}
-              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent ${item.color || "text-foreground"}`}
+              aria-label={item.label}
+              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </div>
+            </button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg text-left">Help & Support</CardTitle>
+          <CardDescription className="text-left">Get assistance and learn more about MobiRides</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 pt-0">
+          {menuItems.slice(7, 8).map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={item.onClick}
+              aria-label={item.label}
+              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
             >
               <div className="flex items-center gap-3">
                 <item.icon className="h-5 w-5" />
@@ -191,14 +222,17 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
       </Card>
 
       <button
+        type="button"
         onClick={menuItems[8].onClick}
-        className={`w-full flex items-center justify-between p-3 my-6 rounded-lg hover:bg-accent ${menuItems[8].color}`}
+        aria-label={menuItems[8].label}
+        className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${menuItems[8].color}`}
       >
         <div className="flex items-center gap-3">
           <LogOut className="h-5 w-5" />
           <span>{menuItems[8].label}</span>
         </div>
       </button>
+      </div>
     </>
   );
 };
