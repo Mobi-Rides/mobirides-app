@@ -94,7 +94,7 @@ export const CarForm = ({
     <form onSubmit={handleSubmit} className="space-y-8">
       <FormSection 
         title="Basic Information" 
-        description="Enter the fundamental details about your vehicle"
+        description="Enter the fundamental details about your car"
       >
         <CarBasicInfo 
           formData={formData}
