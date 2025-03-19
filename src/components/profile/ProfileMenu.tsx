@@ -101,17 +101,17 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           <AvatarFallback>👤</AvatarFallback>
         </Avatar>
         <h1 className="text-xl font-semibold">{fullName || "Your Profile"}</h1>
-        
-        {/* Centered change role button */}
-        <div className="w-full flex justify-center mt-6">
-          <Button 
-            onClick={() => setActiveView('role')}
-            className="shadow-md rounded-full px-6"
-            size="lg"
-          >
-            {switchRoleText}
-          </Button>
-        </div>
+      </div>
+
+      {/* Floating Role Switch Button */}
+      <div className="fixed bottom-[72px] left-0 right-0 z-50 flex justify-center">
+        <Button 
+          onClick={() => setActiveView('role')}
+          className="shadow-md rounded-full px-6 bg-primary hover:bg-primary/90"
+          size="lg"
+        >
+          {switchRoleText}
+        </Button>
       </div>
 
       <Card className="mb-6">
@@ -120,7 +120,27 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           <CardDescription>Manage your profile and preferences</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          {menuItems.slice(0, 4).map((item, idx) => (
+          <button
+            onClick={() => setActiveView('profile')}
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent text-primary"
+          >
+            <div className="flex items-center gap-3">
+              <UserRound className="h-5 w-5" />
+              <span>Show Profile</span>
+            </div>
+            <div className="flex items-center">
+              <Avatar className="h-6 w-6 mr-2">
+                <AvatarImage 
+                  src={avatarPublicUrl || undefined}
+                  alt="Profile" 
+                />
+                <AvatarFallback>👤</AvatarFallback>
+              </Avatar>
+              <span className="text-sm">{fullName}</span>
+            </div>
+          </button>
+
+          {menuItems.slice(1, 4).map((item, idx) => (
             <button
               key={idx}
               onClick={item.onClick}
