@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import {
   Command,
@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Define the list of default brands locally instead of importing from types
+// Define the list of default brands
 const defaultBrands = [
   "Toyota",
   "Honda",
@@ -38,55 +38,78 @@ const defaultBrands = [
 ];
 
 interface BrandFilterProps {
-  brands?: string[];
-  onChange?: (brands: string[]) => void;
+  // For multi-select mode
+  selectedBrands?: string[];
+  onBrandsChange?: (brands: string[]) => void;
+  
+  // For single-select mode
   selectedBrand?: string | null;
   onSelectBrand?: (brand: string | null) => void;
+  
+  // Additional props
   carsCount?: number;
 }
 
 const BrandFilter = ({ 
-  brands = [], 
-  onChange,
+  selectedBrands = [],
+  onBrandsChange,
   selectedBrand,
   onSelectBrand,
   carsCount
 }: BrandFilterProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedBrands, setSelectedBrands] = useState(brands);
+  const [localSelectedBrands, setLocalSelectedBrands] = useState<string[]>(selectedBrands);
+  
+  // Determine if we're in single or multi-select mode
+  const isSingleSelectMode = !!onSelectBrand;
+  
+  // Update local state when props change
+  useEffect(() => {
+    if (!isSingleSelectMode) {
+      setLocalSelectedBrands(selectedBrands);
+    }
+  }, [selectedBrands, isSingleSelectMode]);
 
-  // Handle selection based on the component's mode (multi-select or single-select)
+  // Handle selection based on the component's mode
   const handleBrandSelect = (brand: string) => {
-    if (onSelectBrand) {
+    if (isSingleSelectMode) {
       // Single select mode
-      onSelectBrand(selectedBrand === brand ? null : brand);
+      onSelectBrand?.(selectedBrand === brand ? null : brand);
       setOpen(false);
-    } else if (onChange) {
+    } else {
       // Multi-select mode
-      const isSelected = selectedBrands.includes(brand);
-      if (isSelected) {
-        setSelectedBrands(selectedBrands.filter((b) => b !== brand));
-      } else {
-        setSelectedBrands([...selectedBrands, brand]);
-      }
+      const isSelected = localSelectedBrands.includes(brand);
+      const updatedBrands = isSelected 
+        ? localSelectedBrands.filter((b) => b !== brand)
+        : [...localSelectedBrands, brand];
+        
+      setLocalSelectedBrands(updatedBrands);
     }
   };
 
+  // Apply filters in multi-select mode
   const applyFilters = () => {
-    if (onChange) {
-      onChange(selectedBrands);
+    if (onBrandsChange) {
+      onBrandsChange(localSelectedBrands);
     }
     setOpen(false);
   };
 
   // Display text based on mode
   const displayText = () => {
-    if (onSelectBrand && selectedBrand) {
+    if (isSingleSelectMode && selectedBrand) {
       return selectedBrand;
-    } else if (onChange && selectedBrands.length > 0) {
-      return selectedBrands.join(", ");
+    } else if (!isSingleSelectMode && localSelectedBrands.length > 0) {
+      return `${localSelectedBrands.length} brand${localSelectedBrands.length > 1 ? 's' : ''} selected`;
     }
     return "Select Brand";
+  };
+
+  // Check if a brand is selected based on the current mode
+  const isBrandSelected = (brand: string) => {
+    return isSingleSelectMode
+      ? selectedBrand === brand
+      : localSelectedBrands.includes(brand);
   };
 
   return (
@@ -118,16 +141,14 @@ const BrandFilter = ({
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          (onSelectBrand ? selectedBrand === brand : selectedBrands.includes(brand))
-                            ? "opacity-100"
-                            : "opacity-0"
+                          isBrandSelected(brand) ? "opacity-100" : "opacity-0"
                         )}
                       />
                       {brand}
                     </CommandItem>
                   ))}
                 </CommandGroup>
-                {onChange && (
+                {!isSingleSelectMode && (
                   <>
                     <CommandSeparator />
                     <CommandGroup>
