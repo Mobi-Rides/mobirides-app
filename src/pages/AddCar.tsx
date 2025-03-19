@@ -5,12 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
-import { CarBasicInfo } from "@/components/add-car/CarBasicInfo";
-import { CarDetails } from "@/components/add-car/CarDetails";
-import { CarDescription } from "@/components/add-car/CarDescription";
-import { ImageUpload } from "@/components/add-car/ImageUpload";
-import { DocumentUpload } from "@/components/add-car/DocumentUpload";
-import { CarFeatures } from "@/components/add-car/CarFeatures";
+import { CarForm } from "@/components/add-car/CarForm";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
@@ -22,16 +17,10 @@ const AddCar = () => {
   const { toast } = useToast();
   const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [documents, setDocuments] = useState<{
-    registration?: File;
-    insurance?: File;
-    additional?: FileList;
-  }>({});
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     brand: "",
     model: "",
     year: new Date().getFullYear(),
@@ -42,7 +31,7 @@ const AddCar = () => {
     fuel: "",
     seats: "",
     description: "",
-  });
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -55,37 +44,6 @@ const AddCar = () => {
     };
     checkUser();
   }, [navigate]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    if (name === 'vehicle_type') {
-      setFormData((prev) => ({ ...prev, [name]: value as VehicleType }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-    }
-  };
-
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
-    if (e.target.files) {
-      if (type === 'additional') {
-        setDocuments(prev => ({ ...prev, [type]: e.target.files }));
-      } else {
-        setDocuments(prev => ({ ...prev, [type]: e.target.files[0] }));
-      }
-    }
-  };
 
   const uploadDocument = async (file: File, path: string): Promise<string | null> => {
     console.log(`Attempting to upload document to ${path}`);
@@ -115,8 +73,7 @@ const AddCar = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: any, imageFile: File | null, documents: any, features: string[]) => {
     console.log("Starting car submission process...");
     
     if (!userId) {
@@ -171,7 +128,7 @@ const AddCar = () => {
         transmission: formData.transmission,
         fuel: formData.fuel,
         description: formData.description,
-        features: selectedFeatures,
+        features: features,
         is_available: true,
       });
 
@@ -214,37 +171,13 @@ const AddCar = () => {
           <h1 className="text-2xl font-semibold">List Your Car</h1>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <CarBasicInfo 
-            formData={formData}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
-          />
-
-          <CarDetails
-            formData={formData}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
-          />
-
-          <CarFeatures
-            selectedFeatures={selectedFeatures}
-            onChange={setSelectedFeatures}
-          />
-
-          <CarDescription
-            description={formData.description}
-            onChange={handleInputChange}
-          />
-
-          <ImageUpload onImageChange={handleImageChange} />
-          
-          <DocumentUpload onDocumentChange={handleDocumentChange} />
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Adding Car..." : "Add Car"}
-          </Button>
-        </form>
+        <CarForm
+          initialData={initialFormData}
+          selectedFeatures={selectedFeatures}
+          onFeaturesChange={setSelectedFeatures}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+        />
       </div>
       <Navigation />
     </div>
