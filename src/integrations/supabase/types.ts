@@ -175,6 +175,73 @@ export type Database = {
           },
         ]
       }
+      handover_sessions: {
+        Row: {
+          id: string
+          booking_id: string
+          host_id: string
+          renter_id: string
+          host_ready: boolean
+          renter_ready: boolean
+          host_location: Json | null
+          renter_location: Json | null
+          handover_completed: boolean
+          handover_type: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          booking_id: string
+          host_id: string
+          renter_id: string
+          host_ready?: boolean
+          renter_ready?: boolean
+          host_location?: Json | null
+          renter_location?: Json | null
+          handover_completed?: boolean
+          handover_type?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          booking_id?: string
+          host_id?: string
+          renter_id?: string
+          host_ready?: boolean
+          renter_ready?: boolean
+          host_location?: Json | null
+          renter_location?: Json | null
+          handover_completed?: boolean
+          handover_type?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_sessions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handover_sessions_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handover_sessions_renter_id_fkey"
+            columns: ["renter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       messages: {
         Row: {
           content: string

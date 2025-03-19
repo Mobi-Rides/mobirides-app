@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import Dpad from "./Dpad";
 import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 import { ExtendedProfile } from "@/utils/profileTypes";
+import { useHandover } from "@/contexts/HandoverContext";
+import { HandoverLocation } from "@/services/handoverService";
 
 interface CustomMapboxProps {
   mapbox_token: string;
@@ -12,6 +14,8 @@ interface CustomMapboxProps {
   latitude: number;
   mapStyle?: string;
   onlineHosts?: ExtendedProfile[];
+  isHandoverMode?: boolean;
+  bookingId?: string | null;
 }
 
 const CustomMapbox = ({
@@ -20,6 +24,8 @@ const CustomMapbox = ({
   latitude,
   onlineHosts,
   mapStyle = "mapbox://styles/mapbox/streets-v12",
+  isHandoverMode = false,
+  bookingId,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -27,6 +33,10 @@ const CustomMapbox = ({
   const [mapInit, setMapInit] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState({ latitude, longitude });
   const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
+  const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
+
+  // Get handover context if in handover mode
+  const handover = isHandoverMode ? useHandover() : null;
 
   useEffect(() => {
     if (mapbox_token) {
@@ -58,18 +68,36 @@ const CustomMapbox = ({
         setMapInit(true);
         if (geolocateControlRef.current) {
           geolocateControlRef.current.on("geolocate", (e: any) => {
-            setUserLocation({
+            const newLocation = {
               longitude: e.coords.longitude,
               latitude: e.coords.latitude,
-            });
+            };
+
+            setUserLocation(newLocation);
+
+            // Update location in handover context if in handover mode
+            if (isHandoverMode && handover) {
+              // Get address using reverse geocoding
+              fetchAddressFromCoordinates(
+                newLocation.latitude,
+                newLocation.longitude
+              ).then((address) => {
+                handover.updateLocation({
+                  latitude: newLocation.latitude,
+                  longitude: newLocation.longitude,
+                  address: address || "Unknown location",
+                });
+              });
+            }
           });
         }
 
-        if (location.pathname === "/map") {
-          setTimeout(() => {
-            geolocateControl.trigger();
-          }, 1000);
-        }
+        // Trigger geolocation immediately
+        setTimeout(() => {
+          if (geolocateControlRef.current) {
+            geolocateControlRef.current.trigger();
+          }
+        }, 1000);
       });
 
       map.current.on("error", (e) => {
@@ -84,7 +112,28 @@ const CustomMapbox = ({
         map.current = null;
       }
     };
-  }, [mapbox_token, longitude, latitude, mapStyle]);
+  }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover]);
+
+  // Fetch address from coordinates using Mapbox Geocoding API
+  const fetchAddressFromCoordinates = async (
+    lat: number,
+    lng: number
+  ): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapbox_token}`
+      );
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        return data.features[0].place_name;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (map.current && mapInit) {
@@ -92,8 +141,10 @@ const CustomMapbox = ({
     }
   }, [mapStyle, mapInit]);
 
+  // Handle regular host markers
   useEffect(() => {
-    if (!map.current || !mapInit || !onlineHosts?.length) return;
+    if (!map.current || !mapInit || !onlineHosts?.length || isHandoverMode)
+      return;
 
     markers.forEach((marker) => marker.remove());
     setMarkers([]);
@@ -125,7 +176,89 @@ const CustomMapbox = ({
       .filter(Boolean) as mapboxgl.Marker[];
 
     setMarkers(newMarkers);
-  }, [onlineHosts, mapInit]);
+  }, [onlineHosts, mapInit, isHandoverMode]);
+
+  // Handle handover markers
+  useEffect(() => {
+    if (
+      !map.current ||
+      !mapInit ||
+      !isHandoverMode ||
+      !handover?.handoverStatus
+    )
+      return;
+
+    // Clear existing handover markers
+    handoverMarkers.forEach((marker) => marker.remove());
+    setHandoverMarkers([]);
+
+    const newHandoverMarkers: mapboxgl.Marker[] = [];
+
+    // Add host marker if location exists
+    if (handover.handoverStatus.host_location) {
+      const hostLocation = handover.handoverStatus.host_location;
+      const hostEl = document.createElement("div");
+      hostEl.className = "host-handover-marker";
+      hostEl.style.width = "24px";
+      hostEl.style.height = "24px";
+      hostEl.style.borderRadius = "50%";
+      hostEl.style.backgroundColor = "#3b82f6"; // Blue
+      hostEl.style.border = "3px solid white";
+      hostEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+
+      const hostMarker = new mapboxgl.Marker(hostEl)
+        .setLngLat([hostLocation.longitude, hostLocation.latitude])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(
+            `<p class="font-medium">Host Location</p>
+             <p class="text-xs">${hostLocation.address}</p>`
+          )
+        )
+        .addTo(map.current!);
+
+      newHandoverMarkers.push(hostMarker);
+    }
+
+    // Add renter marker if location exists
+    if (handover.handoverStatus.renter_location) {
+      const renterLocation = handover.handoverStatus.renter_location;
+      const renterEl = document.createElement("div");
+      renterEl.className = "renter-handover-marker";
+      renterEl.style.width = "24px";
+      renterEl.style.height = "24px";
+      renterEl.style.borderRadius = "50%";
+      renterEl.style.backgroundColor = "#ec4899"; // Pink
+      renterEl.style.border = "3px solid white";
+      renterEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+
+      const renterMarker = new mapboxgl.Marker(renterEl)
+        .setLngLat([renterLocation.longitude, renterLocation.latitude])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(
+            `<p class="font-medium">Renter Location</p>
+             <p class="text-xs">${renterLocation.address}</p>`
+          )
+        )
+        .addTo(map.current!);
+
+      newHandoverMarkers.push(renterMarker);
+    }
+
+    // Fit bounds to include both markers if both exist
+    if (newHandoverMarkers.length === 2 && map.current) {
+      const bounds = new mapboxgl.LngLatBounds();
+      newHandoverMarkers.forEach((marker) => {
+        bounds.extend(marker.getLngLat());
+      });
+
+      map.current.fitBounds(bounds, {
+        padding: 100,
+        maxZoom: 15,
+      });
+    }
+
+    setHandoverMarkers(newHandoverMarkers);
+  }, [handover?.handoverStatus, mapInit, isHandoverMode]);
 
   const onUp = () => {
     if (map.current) {
@@ -165,18 +298,42 @@ const CustomMapbox = ({
     <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
       <div ref={mapContainer} className="w-full h-full" />
 
-      <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
-        <div
-          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
-                      max-w-xs w-auto pointer-events-auto transition-all duration-300 
-                      border border-gray-200 dark:border-gray-700"
-        >
-          <OnlineStatusToggle
-            lat={userLocation.latitude}
-            long={userLocation.longitude}
-          />
+      {!isHandoverMode && (
+        <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
+          <div
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
+                        max-w-xs w-auto pointer-events-auto transition-all duration-300 
+                        border border-gray-200 dark:border-gray-700"
+          >
+            <OnlineStatusToggle
+              lat={userLocation.latitude}
+              long={userLocation.longitude}
+            />
+          </div>
         </div>
-      </div>
+      )}
+
+      {isHandoverMode && handover?.handoverStatus && (
+        <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
+          <div
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
+                        max-w-xs w-auto pointer-events-auto transition-all duration-300 
+                        border border-gray-200 dark:border-gray-700"
+          >
+            <div className="text-center">
+              <p className="text-sm font-medium">
+                {handover.isHost ? "Host" : "Renter"} Mode
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {handover.handoverStatus.host_location &&
+                handover.handoverStatus.renter_location
+                  ? "Both locations shared"
+                  : "Waiting for location..."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Dpad
         onUp={onUp}
