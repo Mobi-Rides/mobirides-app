@@ -10,6 +10,7 @@ import { CarDescription } from "@/components/add-car/CarDescription";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { DocumentUpload } from "@/components/add-car/DocumentUpload";
 import { CarFeatures } from "@/components/add-car/CarFeatures";
+import { FormSection } from "@/components/add-car/FormSection";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
@@ -90,33 +91,63 @@ export const CarForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <CarBasicInfo 
-        formData={formData}
-        onInputChange={handleInputChange}
-        onSelectChange={handleSelectChange}
-      />
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <FormSection 
+        title="Basic Information" 
+        description="Enter the fundamental details about your vehicle"
+      >
+        <CarBasicInfo 
+          formData={formData}
+          onInputChange={handleInputChange}
+          onSelectChange={handleSelectChange}
+        />
+      </FormSection>
 
-      <CarDetails
-        formData={formData}
-        onInputChange={handleInputChange}
-        onSelectChange={handleSelectChange}
-      />
+      <FormSection 
+        title="Vehicle Specifications" 
+        description="Provide technical details and pricing information"
+      >
+        <CarDetails
+          formData={formData}
+          onInputChange={handleInputChange}
+          onSelectChange={handleSelectChange}
+        />
+      </FormSection>
       
-      <CarFeatures
-        selectedFeatures={selectedFeatures}
-        onChange={onFeaturesChange}
-      />
+      <FormSection 
+        title="Features & Amenities" 
+        description="Select the features available in your vehicle"
+      >
+        <CarFeatures
+          selectedFeatures={selectedFeatures}
+          onChange={onFeaturesChange}
+        />
+      </FormSection>
 
-      <CarDescription
-        description={formData.description}
-        onChange={handleInputChange}
-      />
+      <FormSection 
+        title="Vehicle Description" 
+        description="Add a detailed description to highlight your vehicle's unique aspects"
+      >
+        <CarDescription
+          description={formData.description}
+          onChange={handleInputChange}
+        />
+      </FormSection>
 
-      <ImageUpload onImageChange={handleImageChange} />
+      <FormSection 
+        title="Vehicle Images" 
+        description="Upload photos that showcase your vehicle clearly"
+      >
+        <ImageUpload onImageChange={handleImageChange} />
+      </FormSection>
       
       {!isEdit && (
-        <DocumentUpload onDocumentChange={handleDocumentChange} />
+        <FormSection 
+          title="Documentation" 
+          description="Upload required vehicle documentation for verification"
+        >
+          <DocumentUpload onDocumentChange={handleDocumentChange} />
+        </FormSection>
       )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
