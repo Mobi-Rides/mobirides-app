@@ -1,5 +1,5 @@
 
-import { CheckSquare, Bluetooth, Thermometer, Navigation, AirVent, Compass, Camera, Shield, KeyRound, Power, Radio, Sofa, MapPin, Smartphone, Android, FolderTree, Webcam, Umbrella, Baby, Gauge } from "lucide-react";
+import { CheckSquare, Bluetooth, Thermometer, Navigation, AirVent, Compass, Camera, Shield, KeyRound, Power, Radio, Sofa, MapPin, Smartphone, FolderTree, Webcam, Umbrella, Baby, Gauge } from "lucide-react";
 
 interface CarSpecsProps {
   pricePerDay: number;
@@ -28,7 +28,7 @@ export const CarSpecs = ({ pricePerDay, transmission, seats, features = [] }: Ca
       case "Blind Spot Monitor": return <Shield className="h-5 w-5" />;
       case "360 Degree Camera": return <Camera className="h-5 w-5" />;
       case "Apple CarPlay": return <Smartphone className="h-5 w-5" />;
-      case "Android Auto": return <Android className="h-5 w-5" />;
+      case "Android Auto": return <Smartphone className="h-5 w-5" />; // Changed from Android to Smartphone
       case "Roof Rack": return <FolderTree className="h-5 w-5" />;
       case "Child Seat Anchor": return <Baby className="h-5 w-5" />;
       case "Autonomous Driving": return <Gauge className="h-5 w-5" />;
