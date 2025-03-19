@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, MapPin, CalendarClock, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./ThemeToggle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "./ui/badge";
@@ -123,9 +122,6 @@ export const Navigation = () => {
           ))}
         </div>
       </nav>
-      <div className="absolute -top-12 sm:-top-1 right-8 bg-white dark:bg-gray-900 p-2 rounded-full border border-gray-200 dark:border-gray-800 shadow-md">
-        <ThemeToggle />
-      </div>
     </div>
   );
 };

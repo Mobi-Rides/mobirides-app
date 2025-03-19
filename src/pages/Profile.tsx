@@ -10,13 +10,16 @@ import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
 import { Navigation } from "@/components/Navigation";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useTheme } from "@/contexts/ThemeContext";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
-  LayoutDashboard, LogOut, UserRound, Bookmark
+  LayoutDashboard, LogOut, UserRound, Bookmark, Moon, Sun, UserCog
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
+import { FormSection } from "@/components/add-car/FormSection";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -26,6 +29,7 @@ const Profile = () => {
   const [activeView, setActiveView] = useState<'menu' | 'profile' | 'role'>('menu');
   const navigate = useNavigate();
   const { userLocation } = useUserLocation(null);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -117,6 +121,12 @@ const Profile = () => {
       color: "text-primary",
     },
     {
+      icon: UserCog,
+      label: "Change Role",
+      onClick: () => setActiveView('role'),
+      color: "text-primary",
+    },
+    {
       icon: Bookmark,
       label: "Saved Cars",
       onClick: () => navigate("/saved-cars"),
@@ -176,7 +186,7 @@ const Profile = () => {
               <CardDescription>Manage your profile and preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
-              {menuItems.slice(0, 4).map((item, idx) => (
+              {menuItems.slice(0, 5).map((item, idx) => (
                 <button
                   key={idx}
                   onClick={item.onClick}
@@ -197,7 +207,21 @@ const Profile = () => {
               <CardDescription>Configure your app experience</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
-              {menuItems.slice(4, 8).map((item, idx) => (
+              <div className="w-full flex items-center justify-between p-3 rounded-lg">
+                <div className="flex items-center gap-3">
+                  {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  <span>Dark Mode</span>
+                </div>
+                <Toggle 
+                  pressed={theme === 'dark'} 
+                  onPressedChange={toggleTheme}
+                  aria-label="Toggle dark mode"
+                >
+                  {theme === 'dark' ? 'On' : 'Off'}
+                </Toggle>
+              </div>
+
+              {menuItems.slice(5, 9).map((item, idx) => (
                 <button
                   key={idx}
                   onClick={item.onClick}
@@ -213,12 +237,12 @@ const Profile = () => {
           </Card>
 
           <button
-            onClick={menuItems[8].onClick}
-            className={`w-full flex items-center justify-between p-3 my-6 rounded-lg hover:bg-accent ${menuItems[8].color}`}
+            onClick={menuItems[9].onClick}
+            className={`w-full flex items-center justify-between p-3 my-6 rounded-lg hover:bg-accent ${menuItems[9].color}`}
           >
             <div className="flex items-center gap-3">
               <LogOut className="h-5 w-5" />
-              <span>{menuItems[8].label}</span>
+              <span>{menuItems[9].label}</span>
             </div>
           </button>
         </>
@@ -234,20 +258,15 @@ const Profile = () => {
           
           <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
           <ProfileForm initialValues={initialFormValues} />
-          <div className="mt-6">
-            <Button variant="outline" onClick={() => setActiveView('role')}>
-              Change Role
-            </Button>
-          </div>
         </>
       ) : (
         <>
           <Button 
             variant="ghost"
-            onClick={() => setActiveView('profile')}
+            onClick={() => setActiveView('menu')}
             className="mb-6"
           >
-            ← Back to Profile
+            ← Back to Settings
           </Button>
           
           <RoleSection />
