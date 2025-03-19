@@ -28,7 +28,7 @@ export const ImageUpload = ({ onImageChange }: ImageUploadProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center">
+      <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6">
         {previewUrl ? (
           <div className="space-y-4 w-full">
             <div className="relative aspect-video mx-auto max-w-sm overflow-hidden rounded-lg">
@@ -50,8 +50,8 @@ export const ImageUpload = ({ onImageChange }: ImageUploadProps) => {
         ) : (
           <>
             <ImageIcon className="h-12 w-12 text-muted-foreground mb-3" />
-            <h3 className="text-lg font-medium">Upload car image</h3>
-            <p className="text-sm text-muted-foreground mb-3">
+            <h3 className="text-lg font-medium text-center">Upload car image</h3>
+            <p className="text-sm text-muted-foreground mb-3 text-center">
               Upload a clear photo of your vehicle. Front or 3/4 view recommended.
             </p>
             <Label 

@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -8,7 +9,7 @@ interface CarDescriptionProps {
 
 export const CarDescription = ({ description, onChange }: CarDescriptionProps) => {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-left">
       <Label htmlFor="description">Description</Label>
       <Textarea
         id="description"

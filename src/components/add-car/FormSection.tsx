@@ -10,7 +10,7 @@ interface FormSectionProps {
 export const FormSection = ({ title, description, children }: FormSectionProps) => {
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-card">
-      <div className="space-y-1">
+      <div className="space-y-1 text-left">
         <h3 className="text-lg font-semibold">{title}</h3>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
