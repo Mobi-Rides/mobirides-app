@@ -26,7 +26,11 @@ export const ProfileEditView = ({
         ← Back to Settings
       </Button>
       
-      <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4">Profile Picture</h2>
+        <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
+      </div>
+      
       <ProfileForm initialValues={initialFormValues} />
     </>
   );

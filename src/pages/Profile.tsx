@@ -1,8 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
@@ -87,23 +85,17 @@ const Profile = () => {
   if (loading) return <ProfileLoading />;
   if (error) return <ProfileError error={error} />;
 
-  // Default coordinates if userLocation is not available
   const latitude = userLocation?.latitude || 0;
   const longitude = userLocation?.longitude || 0;
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
       {activeView === 'menu' && (
-        <>
-          <div className="mb-4">
-            <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
-          </div>
-          <ProfileMenu 
-            fullName={initialFormValues.full_name} 
-            avatarUrl={avatarUrl} 
-            setActiveView={setActiveView}
-          />
-        </>
+        <ProfileMenu 
+          fullName={initialFormValues.full_name} 
+          avatarUrl={avatarUrl} 
+          setActiveView={setActiveView}
+        />
       )}
 
       {activeView === 'profile' && (

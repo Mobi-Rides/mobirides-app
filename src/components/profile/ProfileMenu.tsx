@@ -2,13 +2,15 @@
 import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
-  LayoutDashboard, LogOut, UserRound, Moon, Sun, UserCog, Bookmark
+  LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Toggle } from "@/components/ui/toggle";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ProfileMenuProps {
   fullName: string;
@@ -31,17 +33,15 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuP
     }
   };
 
+  const avatarPublicUrl = avatarUrl 
+    ? supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl 
+    : null;
+
   const menuItems = [
     {
       icon: UserRound,
       label: "Edit Profile",
       onClick: () => setActiveView('profile'),
-      color: "text-primary",
-    },
-    {
-      icon: UserCog,
-      label: "Change Role",
-      onClick: () => setActiveView('role'),
       color: "text-primary",
     },
     {
@@ -90,7 +90,23 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuP
   return (
     <>
       <div className="flex flex-col items-center mb-8">
-        <h1 className="text-xl font-semibold mt-2">{fullName || "Your Profile"}</h1>
+        <Avatar className="h-20 w-20 mb-4">
+          <AvatarImage 
+            src={avatarPublicUrl || undefined}
+            alt="Profile Avatar" 
+          />
+          <AvatarFallback>👤</AvatarFallback>
+        </Avatar>
+        <h1 className="text-xl font-semibold">{fullName || "Your Profile"}</h1>
+        
+        {/* Floating change role button */}
+        <Button 
+          onClick={() => setActiveView('role')}
+          className="fixed bottom-20 right-4 z-10 shadow-lg rounded-full px-6"
+          size="lg"
+        >
+          Change Role
+        </Button>
       </div>
 
       <Card className="mb-6">
@@ -99,7 +115,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuP
           <CardDescription>Manage your profile and preferences</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          {menuItems.slice(0, 5).map((item, idx) => (
+          {menuItems.slice(0, 4).map((item, idx) => (
             <button
               key={idx}
               onClick={item.onClick}
@@ -134,7 +150,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuP
             </Toggle>
           </div>
 
-          {menuItems.slice(5, 9).map((item, idx) => (
+          {menuItems.slice(4, 8).map((item, idx) => (
             <button
               key={idx}
               onClick={item.onClick}
@@ -150,12 +166,12 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuP
       </Card>
 
       <button
-        onClick={menuItems[9].onClick}
-        className={`w-full flex items-center justify-between p-3 my-6 rounded-lg hover:bg-accent ${menuItems[9].color}`}
+        onClick={menuItems[8].onClick}
+        className={`w-full flex items-center justify-between p-3 my-6 rounded-lg hover:bg-accent ${menuItems[8].color}`}
       >
         <div className="flex items-center gap-3">
           <LogOut className="h-5 w-5" />
-          <span>{menuItems[9].label}</span>
+          <span>{menuItems[8].label}</span>
         </div>
       </button>
     </>
