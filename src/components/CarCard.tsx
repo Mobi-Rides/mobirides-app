@@ -1,12 +1,14 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Fuel, GaugeCircle, Users } from "lucide-react";
+import { Fuel, GaugeCircle, Users, Heart } from "lucide-react";
 import { BookingDialog } from "@/components/booking/BookingDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { saveCar, unsaveCar } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
 import { Separator } from "./ui/separator";
 import { BarLoader } from "react-spinners";
@@ -22,7 +24,6 @@ interface CarCardProps {
   seats: number;
   location: string;
   year: number;
-  onSaveToggle?: () => void;
   isSaved?: boolean;
 }
 
@@ -37,11 +38,13 @@ export const CarCard = ({
   seats,
   location,
   year,
-  onSaveToggle,
-  isSaved,
+  isSaved: initialIsSaved = false,
 }: CarCardProps) => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(initialIsSaved);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: carDetails, isLoading: isLoadingCarDetails } = useQuery({
     queryKey: ['car', id],
@@ -73,9 +76,33 @@ export const CarCard = ({
     setIsBookingOpen(true);
   };
 
-  const handleSaveClick = (e: React.MouseEvent) => {
+  const handleSaveClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    onSaveToggle?.();
+    
+    if (isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      if (isSaved) {
+        const success = await unsaveCar(id);
+        if (success) {
+          setIsSaved(false);
+          // Invalidate saved cars queries
+          queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
+          queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
+        }
+      } else {
+        const success = await saveCar(id);
+        if (success) {
+          setIsSaved(true);
+          // Invalidate saved cars queries
+          queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
+          queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
+        }
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Determine car type based on seats
@@ -98,14 +125,17 @@ export const CarCard = ({
             alt={`${brand} ${model}`}
             className="w-full h-full object-cover"
           />
-          {onSaveToggle && (
-            <button
-              onClick={handleSaveClick}
-              className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              {isSaved ? "❤️" : "🤍"}
-            </button>
-          )}
+          <button
+            onClick={handleSaveClick}
+            className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            disabled={isSaving}
+          >
+            <Heart
+              className={`w-5 h-5 ${
+                isSaving ? "text-gray-400" : isSaved ? "fill-red-500 text-red-500" : "text-gray-600"
+              }`}
+            />
+          </button>
         </div>
         <div className="p-3 sm:p-4 flex flex-col flex-1">
           <span className="px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8] w-fit mb-2">
