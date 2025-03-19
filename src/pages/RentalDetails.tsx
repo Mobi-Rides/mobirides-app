@@ -1,27 +1,40 @@
-
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, FileText, Calendar, MapPin, Car, CreditCard } from "lucide-react";
+import {
+  ArrowLeft,
+  Star,
+  FileText,
+  Calendar,
+  MapPin,
+  Car,
+  CreditCard,
+  KeyRound,
+} from "lucide-react";
 import { Navigation } from "@/components/Navigation";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, isWithinInterval, addDays } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createHandoverSession } from "@/services/handoverService";
+import { toast } from "sonner";
 
 const RentalDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const shouldPrint = location.search.includes('print=true');
+  const shouldPrint = location.search.includes("print=true");
 
   const { data: booking, isLoading } = useQuery({
-    queryKey: ['rental-details', id],
+    queryKey: ["rental-details", id],
     queryFn: async () => {
-      console.log('Fetching rental details for ID:', id);
-      const { data, error } = await supabase.from('bookings').select(`
+      console.log("Fetching rental details for ID:", id);
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(
+          `
           *,
           renter:profiles!renter_id (
             id,
@@ -36,11 +49,14 @@ const RentalDetails = () => {
               avatar_url
             )
           )
-        `).eq('id', id).single();
-      
+        `
+        )
+        .eq("id", id)
+        .single();
+
       if (error) throw error;
       return data;
-    }
+    },
   });
 
   // Auto-print when print parameter is present
@@ -51,22 +67,87 @@ const RentalDetails = () => {
         // Remove the print parameter after printing
         navigate(`/rental-details/${id}`, { replace: true });
       }, 500); // Short delay to ensure content is rendered
-      
+
       return () => clearTimeout(timer);
     }
   }, [shouldPrint, booking, isLoading, id, navigate]);
 
   // Checking if the current user is the renter
   const { data: currentUser, isLoading: isUserLoading } = useQuery({
-    queryKey: ['current-user'],
+    queryKey: ["current-user"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       return user;
-    }
+    },
   });
 
-  const isRenter = booking && currentUser && booking.renter_id === currentUser.id;
-  const isOwner = booking && currentUser && booking.car.owner_id === currentUser.id;
+  const isRenter =
+    booking && currentUser && booking.renter_id === currentUser.id;
+  const isOwner =
+    booking && currentUser && booking.car.owner_id === currentUser.id;
+
+  // Check if the rental is active (within the rental period)
+  const isActiveRental =
+    booking &&
+    booking.status === "confirmed" &&
+    isWithinInterval(new Date(), {
+      start: new Date(booking.start_date),
+      end: addDays(new Date(booking.end_date), 1), // Include the end date
+    });
+
+  const isCompletedRental = booking && booking.status === "completed";
+
+  // Check if handover is possible (on start or end date)
+  const today = new Date();
+  const startDate = booking ? new Date(booking.start_date) : null;
+  const endDate = booking ? new Date(booking.end_date) : null;
+
+  const isStartHandoverDay =
+    startDate &&
+    today.getDate() === startDate.getDate() &&
+    today.getMonth() === startDate.getMonth() &&
+    today.getFullYear() === startDate.getFullYear();
+
+  const isEndHandoverDay =
+    endDate &&
+    today.getDate() === endDate.getDate() &&
+    today.getMonth() === endDate.getMonth() &&
+    today.getFullYear() === endDate.getFullYear();
+
+  const canHandover =
+    booking &&
+    booking.status === "confirmed" &&
+    (isStartHandoverDay || isEndHandoverDay);
+  const handoverType = isStartHandoverDay ? "pickup" : "return";
+
+  const [isInitiatingHandover, setIsInitiatingHandover] = useState(false);
+
+  const handleInitiateHandover = async () => {
+    if (!booking || !currentUser) return;
+
+    setIsInitiatingHandover(true);
+    try {
+      // Create or get existing handover session
+      const session = await createHandoverSession(
+        booking.id,
+        booking.car.owner_id,
+        booking.renter_id
+      );
+
+      if (session) {
+        // Navigate to map with handover mode
+        const role = isRenter ? "renter" : "host";
+        navigate(`/map?handover=true&bookingId=${booking.id}&role=${role}`);
+      }
+    } catch (error) {
+      console.error("Error initiating handover:", error);
+      toast.error("Failed to initiate handover process");
+    } finally {
+      setIsInitiatingHandover(false);
+    }
+  };
 
   if (isLoading || isUserLoading) {
     return (
@@ -93,13 +174,9 @@ const RentalDetails = () => {
     );
   }
 
-  const rentalDurationDays = differenceInDays(
-    new Date(booking.end_date),
-    new Date(booking.start_date)
-  ) + 1; // Include the first day
-
-  const isCompletedRental = booking.status === "completed";
-  const isActiveRental = booking.status === "confirmed" && new Date(booking.end_date) >= new Date();
+  const rentalDurationDays =
+    differenceInDays(new Date(booking.end_date), new Date(booking.start_date)) +
+    1; // Include the first day
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
@@ -121,13 +198,15 @@ const RentalDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-4">
-              <img 
-                src={booking.car.image_url || "/placeholder.svg"} 
+              <img
+                src={booking.car.image_url || "/placeholder.svg"}
                 alt={`${booking.car.brand} ${booking.car.model}`}
                 className="w-32 h-24 object-cover rounded-lg"
               />
               <div>
-                <h3 className="font-semibold text-lg">{booking.car.brand} {booking.car.model}</h3>
+                <h3 className="font-semibold text-lg">
+                  {booking.car.brand} {booking.car.model}
+                </h3>
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
                   <span>{booking.car.location}</span>
@@ -146,10 +225,17 @@ const RentalDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <img 
-                  src={booking.renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl : "/placeholder.svg"} 
-                  alt={booking.renter.full_name} 
-                  className="w-16 h-16 rounded-full object-cover" 
+                <img
+                  src={
+                    booking.renter.avatar_url
+                      ? supabase.storage
+                          .from("avatars")
+                          .getPublicUrl(booking.renter.avatar_url).data
+                          .publicUrl
+                      : "/placeholder.svg"
+                  }
+                  alt={booking.renter.full_name}
+                  className="w-16 h-16 rounded-full object-cover"
                 />
                 <div>
                   <p className="font-medium">{booking.renter.full_name}</p>
@@ -168,10 +254,17 @@ const RentalDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <img 
-                  src={booking.car.owner.avatar_url ? supabase.storage.from('avatars').getPublicUrl(booking.car.owner.avatar_url).data.publicUrl : "/placeholder.svg"} 
-                  alt={booking.car.owner.full_name} 
-                  className="w-16 h-16 rounded-full object-cover" 
+                <img
+                  src={
+                    booking.car.owner.avatar_url
+                      ? supabase.storage
+                          .from("avatars")
+                          .getPublicUrl(booking.car.owner.avatar_url).data
+                          .publicUrl
+                      : "/placeholder.svg"
+                  }
+                  alt={booking.car.owner.full_name}
+                  className="w-16 h-16 rounded-full object-cover"
                 />
                 <div>
                   <p className="font-medium">{booking.car.owner.full_name}</p>
@@ -195,19 +288,21 @@ const RentalDetails = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Start Date</p>
                 <p className="font-medium">
-                  {format(new Date(booking.start_date), 'PPP')}
+                  {format(new Date(booking.start_date), "PPP")}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">End Date</p>
                 <p className="font-medium">
-                  {format(new Date(booking.end_date), 'PPP')}
+                  {format(new Date(booking.end_date), "PPP")}
                 </p>
               </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Duration</p>
-              <p className="font-medium">{rentalDurationDays} day{rentalDurationDays !== 1 ? 's' : ''}</p>
+              <p className="font-medium">
+                {rentalDurationDays} day{rentalDurationDays !== 1 ? "s" : ""}
+              </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Status</p>
@@ -231,17 +326,19 @@ const RentalDetails = () => {
             </div>
             <div className="flex justify-between">
               <p>Duration</p>
-              <p>{rentalDurationDays} day{rentalDurationDays !== 1 ? 's' : ''}</p>
+              <p>
+                {rentalDurationDays} day{rentalDurationDays !== 1 ? "s" : ""}
+              </p>
             </div>
             <Separator />
             <div className="flex justify-between font-bold">
               <p>Total</p>
               <p>BWP {booking.total_price}</p>
             </div>
-            
+
             {isCompletedRental && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full mt-4 flex items-center gap-2"
                 onClick={() => window.print()}
               >
@@ -253,9 +350,9 @@ const RentalDetails = () => {
         </Card>
 
         {/* Actions */}
-        <div className="flex gap-4 justify-end pt-4">
+        <div className="flex gap-4 justify-end pt-4 flex-wrap">
           {(isCompletedRental || isActiveRental) && (
-            <Button 
+            <Button
               className="flex items-center gap-2"
               onClick={() => navigate(`/rental-review/${booking.id}`)}
             >
@@ -263,14 +360,35 @@ const RentalDetails = () => {
               Write Review
             </Button>
           )}
-          
-          {isActiveRental && booking.renter && (
-            <Button 
+
+          {canHandover && (
+            <Button
               className="flex items-center gap-2"
-              onClick={() => navigate(`/map?bookingId=${booking.id}&renterId=${booking.renter.id}&mode=handover`)}
+              variant="default"
+              onClick={handleInitiateHandover}
+              disabled={isInitiatingHandover}
+            >
+              <KeyRound className="h-4 w-4" />
+              {isInitiatingHandover
+                ? "Initiating..."
+                : `Initiate ${handoverType === "pickup" ? "Pickup" : "Return"}`}
+            </Button>
+          )}
+
+          {isActiveRental && !canHandover && (
+            <Button
+              className="flex items-center gap-2"
+              variant="outline"
+              onClick={() =>
+                navigate(
+                  `/map?handover=true&bookingId=${booking.id}&role=${
+                    isRenter ? "renter" : "host"
+                  }`
+                )
+              }
             >
               <MapPin className="h-4 w-4" />
-              Track Location
+              View Handover Status
             </Button>
           )}
         </div>
