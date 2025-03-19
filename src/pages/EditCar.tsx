@@ -6,11 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
-import { CarBasicInfo } from "@/components/add-car/CarBasicInfo";
-import { CarDetails } from "@/components/add-car/CarDetails";
-import { CarDescription } from "@/components/add-car/CarDescription";
-import { ImageUpload } from "@/components/add-car/ImageUpload";
-import { DocumentUpload } from "@/components/add-car/DocumentUpload";
+import { CarForm } from "@/components/add-car/CarForm";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
@@ -23,12 +19,20 @@ const EditCar = () => {
   const { toast } = useToast();
   const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [documents, setDocuments] = useState<{
-    registration?: File;
-    insurance?: File;
-    additional?: FileList;
-  }>({});
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+
+  const initialFormData = {
+    brand: "",
+    model: "",
+    year: new Date().getFullYear(),
+    vehicle_type: "" as VehicleType,
+    price_per_day: "",
+    location: "",
+    transmission: "",
+    fuel: "",
+    seats: "",
+    description: "",
+  };
 
   const { data: car, isLoading } = useQuery({
     queryKey: ["car", id],
@@ -44,69 +48,13 @@ const EditCar = () => {
     },
   });
 
-  const [formData, setFormData] = useState({
-    brand: "",
-    model: "",
-    year: new Date().getFullYear(),
-    vehicle_type: "" as VehicleType,
-    price_per_day: "",
-    location: "",
-    transmission: "",
-    fuel: "",
-    seats: "",
-    description: "",
-  });
-
   useEffect(() => {
     if (car) {
-      setFormData({
-        brand: car.brand,
-        model: car.model,
-        year: car.year,
-        vehicle_type: car.vehicle_type,
-        price_per_day: car.price_per_day.toString(),
-        location: car.location,
-        transmission: car.transmission,
-        fuel: car.fuel,
-        seats: car.seats.toString(),
-        description: car.description || "",
-      });
+      setSelectedFeatures(car.features || []);
     }
   }, [car]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    if (name === 'vehicle_type') {
-      setFormData((prev) => ({ ...prev, [name]: value as VehicleType }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-    }
-  };
-
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
-    if (e.target.files) {
-      if (type === 'additional') {
-        setDocuments(prev => ({ ...prev, [type]: e.target.files }));
-      } else {
-        setDocuments(prev => ({ ...prev, [type]: e.target.files[0] }));
-      }
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: any, imageFile: File | null) => {
     setIsSubmitting(true);
 
     try {
@@ -143,6 +91,7 @@ const EditCar = () => {
           transmission: formData.transmission,
           fuel: formData.fuel,
           description: formData.description,
+          features: selectedFeatures,
         })
         .eq("id", id);
 
@@ -180,6 +129,19 @@ const EditCar = () => {
     );
   }
 
+  const formData = car ? {
+    brand: car.brand,
+    model: car.model,
+    year: car.year,
+    vehicle_type: car.vehicle_type,
+    price_per_day: car.price_per_day.toString(),
+    location: car.location,
+    transmission: car.transmission,
+    fuel: car.fuel,
+    seats: car.seats.toString(),
+    description: car.description || "",
+  } : initialFormData;
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="max-w-2xl mx-auto p-4">
@@ -195,34 +157,15 @@ const EditCar = () => {
           <h1 className="text-2xl font-semibold">Edit Car</h1>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <CarBasicInfo 
-            formData={formData}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
-          />
-
-          <CarDetails
-            formData={formData}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
-          />
-
-          <CarDescription
-            description={formData.description}
-            onChange={handleInputChange}
-          />
-
-          <ImageUpload onImageChange={handleImageChange} />
-
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Updating Car..." : "Update Car"}
-          </Button>
-        </form>
+        <CarForm
+          initialData={formData}
+          selectedFeatures={selectedFeatures}
+          onFeaturesChange={setSelectedFeatures}
+          isEdit={true}
+          carId={id}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+        />
       </div>
       <Navigation />
     </div>

@@ -4,7 +4,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
 import { CarGrid } from "@/components/CarGrid";
-import { BrandFilter } from "@/components/BrandFilter";
+import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,12 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
       sortOrder: sortOrder
     });
   }, [sortOrder, filters, onFiltersChange]);
+
+  // Update filters when brand selection changes
+  const handleBrandSelect = (brand: string | null) => {
+    console.log("Brand selected:", brand);
+    setSelectedBrand(brand);
+  };
 
   const { 
     data: availableCars,
@@ -105,7 +111,7 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
 
       <BrandFilter
         selectedBrand={selectedBrand}
-        onSelectBrand={setSelectedBrand}
+        onSelectBrand={handleBrandSelect}
         carsCount={allAvailableCars.length}
       />
 

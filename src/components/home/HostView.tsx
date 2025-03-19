@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
-import { BrandFilter } from "@/components/BrandFilter";
+import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import type { Car } from "@/types/car";
@@ -21,9 +21,9 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
     isLoading: hostCarsLoading,
     error: hostCarsError
   } = useQuery({
-    queryKey: ['host-cars', searchQuery, sortOrder],
+    queryKey: ['host-cars', searchQuery, sortOrder, selectedBrand],
     queryFn: async () => {
-      console.log("Fetching host cars with search:", searchQuery);
+      console.log("Fetching host cars with search:", searchQuery, "brand:", selectedBrand);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return [];
       
@@ -34,6 +34,10 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
 
       if (searchQuery) {
         query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
+      }
+      
+      if (selectedBrand) {
+        query = query.eq('brand', selectedBrand);
       }
 
       query = query.order('price_per_day', { ascending: sortOrder === 'asc' });
@@ -47,6 +51,11 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
   });
 
   const hostCars = hostCarsData || [];
+  
+  const handleBrandSelect = (brand: string | null) => {
+    console.log("Host view brand selected:", brand);
+    setSelectedBrand(brand);
+  };
   
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === "asc" ? "desc" : "asc");
@@ -64,11 +73,11 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
         </span>
       </div>
 
-      {/* <BrandFilter
+      <BrandFilter
         selectedBrand={selectedBrand}
-        onSelectBrand={setSelectedBrand}
+        onSelectBrand={handleBrandSelect}
         carsCount={hostCars.length}
-      /> */}
+      />
 
       <div className="flex justify-end">
         <Button

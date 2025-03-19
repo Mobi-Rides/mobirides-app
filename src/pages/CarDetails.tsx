@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,6 +128,7 @@ const CarDetails = () => {
           pricePerDay={car.price_per_day}
           transmission={car.transmission}
           seats={car.seats}
+          features={car.features}
         />
         <CarDescription description={car.description} />
         <CarLocation 

@@ -1,15 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
-import { CarBasicInfo } from "@/components/add-car/CarBasicInfo";
-import { CarDetails } from "@/components/add-car/CarDetails";
-import { CarDescription } from "@/components/add-car/CarDescription";
-import { ImageUpload } from "@/components/add-car/ImageUpload";
-import { DocumentUpload } from "@/components/add-car/DocumentUpload";
+import { CarForm } from "@/components/add-car/CarForm";
 import { ArrowLeft } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
@@ -17,16 +15,12 @@ type VehicleType = Database['public']['Enums']['vehicle_type'];
 const AddCar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [documents, setDocuments] = useState<{
-    registration?: File;
-    insurance?: File;
-    additional?: FileList;
-  }>({});
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     brand: "",
     model: "",
     year: new Date().getFullYear(),
@@ -37,7 +31,7 @@ const AddCar = () => {
     fuel: "",
     seats: "",
     description: "",
-  });
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -50,37 +44,6 @@ const AddCar = () => {
     };
     checkUser();
   }, [navigate]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    if (name === 'vehicle_type') {
-      setFormData((prev) => ({ ...prev, [name]: value as VehicleType }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-    }
-  };
-
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
-    if (e.target.files) {
-      if (type === 'additional') {
-        setDocuments(prev => ({ ...prev, [type]: e.target.files }));
-      } else {
-        setDocuments(prev => ({ ...prev, [type]: e.target.files[0] }));
-      }
-    }
-  };
 
   const uploadDocument = async (file: File, path: string): Promise<string | null> => {
     console.log(`Attempting to upload document to ${path}`);
@@ -110,9 +73,9 @@ const AddCar = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: any, imageFile: File | null, documents: any, features: string[]) => {
     console.log("Starting car submission process...");
+    console.log("Selected features:", features);
     
     if (!userId) {
       toast({
@@ -153,6 +116,8 @@ const AddCar = () => {
       }
 
       console.log("Inserting car data into database...");
+      console.log("Features to insert:", features);
+      
       const { error: insertError } = await supabase.from("cars").insert({
         owner_id: userId,
         image_url,
@@ -166,6 +131,7 @@ const AddCar = () => {
         transmission: formData.transmission,
         fuel: formData.fuel,
         description: formData.description,
+        features: features || [],
         is_available: true,
       });
 
@@ -193,47 +159,33 @@ const AddCar = () => {
     }
   };
 
+  const handleFeaturesChange = (newFeatures: string[]) => {
+    console.log("Features changed in AddCar:", newFeatures);
+    setSelectedFeatures(newFeatures);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="max-w-2xl mx-auto p-4">
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="hover:bg-gray-100"
+            className="shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-semibold">List Your Car</h1>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <CarBasicInfo 
-            formData={formData}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
-          />
-
-          <CarDetails
-            formData={formData}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
-          />
-
-          <CarDescription
-            description={formData.description}
-            onChange={handleInputChange}
-          />
-
-          <ImageUpload onImageChange={handleImageChange} />
-          
-          <DocumentUpload onDocumentChange={handleDocumentChange} />
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Adding Car..." : "Add Car"}
-          </Button>
-        </form>
+        <CarForm
+          initialData={initialFormData}
+          selectedFeatures={selectedFeatures}
+          onFeaturesChange={handleFeaturesChange}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+        />
       </div>
       <Navigation />
     </div>

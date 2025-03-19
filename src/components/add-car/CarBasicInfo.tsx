@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,7 +26,7 @@ interface CarBasicInfoProps {
 export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBasicInfoProps) => {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="brand">Brand</Label>
         <Input
           id="brand"
@@ -36,7 +37,7 @@ export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBas
         />
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="model">Model</Label>
         <Input
           id="model"
@@ -47,7 +48,7 @@ export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBas
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="year">Year</Label>
         <Input
           id="year"
@@ -59,7 +60,7 @@ export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBas
         />
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="vehicle_type">Vehicle Type</Label>
         <Select
           value={formData.vehicle_type}

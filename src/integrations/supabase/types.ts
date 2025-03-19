@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_super_admin: boolean | null
+          last_sign_in_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          is_super_admin?: boolean | null
+          last_sign_in_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_super_admin?: boolean | null
+          last_sign_in_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           car_id: string
@@ -100,6 +130,7 @@ export type Database = {
           brand: string
           created_at: string
           description: string | null
+          features: string[] | null
           fuel: string
           id: string
           image_url: string | null
@@ -110,9 +141,6 @@ export type Database = {
           model: string
           owner_id: string
           price_per_day: number
-          registration_url: string | null
-          insurance_url: string | null
-          additional_docs_urls: string[] | null
           seats: number
           transmission: string
           updated_at: string
@@ -123,6 +151,7 @@ export type Database = {
           brand: string
           created_at?: string
           description?: string | null
+          features?: string[] | null
           fuel: string
           id?: string
           image_url?: string | null
@@ -133,9 +162,6 @@ export type Database = {
           model: string
           owner_id: string
           price_per_day: number
-          registration_url?: string | null
-          insurance_url?: string | null
-          additional_docs_urls?: string[] | null
           seats: number
           transmission: string
           updated_at?: string
@@ -146,6 +172,7 @@ export type Database = {
           brand?: string
           created_at?: string
           description?: string | null
+          features?: string[] | null
           fuel?: string
           id?: string
           image_url?: string | null
@@ -156,9 +183,6 @@ export type Database = {
           model?: string
           owner_id?: string
           price_per_day?: number
-          registration_url?: string | null
-          insurance_url?: string | null
-          additional_docs_urls?: string[] | null
           seats?: number
           transmission?: string
           updated_at?: string
@@ -177,52 +201,49 @@ export type Database = {
       }
       handover_sessions: {
         Row: {
-          id: string
           booking_id: string
+          created_at: string | null
+          handover_completed: boolean | null
           host_id: string
-          renter_id: string
-          host_ready: boolean
-          renter_ready: boolean
           host_location: Json | null
+          host_ready: boolean | null
+          id: string
+          renter_id: string
           renter_location: Json | null
-          handover_completed: boolean
-          handover_type: string | null
-          created_at: string
-          updated_at: string
+          renter_ready: boolean | null
+          updated_at: string | null
         }
         Insert: {
-          id?: string
           booking_id: string
+          created_at?: string | null
+          handover_completed?: boolean | null
           host_id: string
-          renter_id: string
-          host_ready?: boolean
-          renter_ready?: boolean
           host_location?: Json | null
+          host_ready?: boolean | null
+          id?: string
+          renter_id: string
           renter_location?: Json | null
-          handover_completed?: boolean
-          handover_type?: string | null
-          created_at?: string
-          updated_at?: string
+          renter_ready?: boolean | null
+          updated_at?: string | null
         }
         Update: {
-          id?: string
           booking_id?: string
+          created_at?: string | null
+          handover_completed?: boolean | null
           host_id?: string
-          renter_id?: string
-          host_ready?: boolean
-          renter_ready?: boolean
           host_location?: Json | null
+          host_ready?: boolean | null
+          id?: string
+          renter_id?: string
           renter_location?: Json | null
-          handover_completed?: boolean
-          handover_type?: string | null
-          created_at?: string
-          updated_at?: string
+          renter_ready?: boolean | null
+          updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "handover_sessions_booking_id_fkey"
             columns: ["booking_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
@@ -239,8 +260,85 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
+      }
+      license_verifications: {
+        Row: {
+          back_image_path: string | null
+          country_of_issue: string | null
+          created_at: string
+          date_of_birth: string | null
+          expiry_date: string | null
+          front_image_path: string | null
+          id: string
+          license_number: string | null
+          rejection_reason: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          back_image_path?: string | null
+          country_of_issue?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          expiry_date?: string | null
+          front_image_path?: string | null
+          id?: string
+          license_number?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          back_image_path?: string | null
+          country_of_issue?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          expiry_date?: string | null
+          front_image_path?: string | null
+          id?: string
+          license_number?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          created_at: string
+          id: string
+          latitude: string | null
+          longitude: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          latitude?: string | null
+          longitude?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          latitude?: string | null
+          longitude?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -361,6 +459,11 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          is_sharing_location: boolean | null
+          latitude: number | null
+          location_sharing_scope: string | null
+          longitude: number | null
+          phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -369,6 +472,11 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          is_sharing_location?: boolean | null
+          latitude?: number | null
+          location_sharing_scope?: string | null
+          longitude?: number | null
+          phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -377,6 +485,11 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_sharing_location?: boolean | null
+          latitude?: number | null
+          location_sharing_scope?: string | null
+          longitude?: number | null
+          phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -405,7 +518,7 @@ export type Database = {
           review_type: Database["public"]["Enums"]["review_type"]
           reviewee_id: string
           reviewer_id: string
-          updated_at: string
+          updated_at?: string
         }
         Update: {
           booking_id?: string | null
@@ -529,83 +642,99 @@ export type Database = {
   }
 }
 
-export interface Brand {
-  id: string;
-  name: string;
-  logo_url: string;
-  created_at: string;
-  updated_at: string;
-}
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
-export const defaultBrands: Brand[] = [
-  {
-    id: "1",
-    name: "Mercedes",
-    logo_url: "/lovable-uploads/20b26fd6-f9f4-41a4-92ad-fa89b23d550a.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "2", 
-    name: "Range Rover",
-    logo_url: "/lovable-uploads/5d0fc73a-ec2c-49fd-9df9-c3830953bff2.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "3",
-    name: "BMW",
-    logo_url: "/lovable-uploads/48a404b4-eb67-41a1-a871-1aac9e63b593.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "4",
-    name: "Ford",
-    logo_url: "/lovable-uploads/ae1ca97d-b526-4528-aee1-ded897ae8104.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "5",
-    name: "Toyota",
-    logo_url: "/lovable-uploads/a4381118-18b6-449d-b488-361109d8fe18.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "6",
-    name: "Mazda",
-    logo_url: "/lovable-uploads/58c1573d-83c6-4203-a665-c5d46b8babd8.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "7",
-    name: "Nissan",
-    logo_url: "/lovable-uploads/33445c94-40ae-4ebd-94e7-8946c1f0fea7.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "8",
-    name: "Volkswagen",
-    logo_url: "/lovable-uploads/4c2133f4-1dcb-40ba-93ad-942445cfb8c7.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "9",
-    name: "Honda",
-    logo_url: "/lovable-uploads/68572b00-e59e-40d5-b244-51d908224722.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "10",
-    name: "Audi",
-    logo_url: "/lovable-uploads/574a84d0-4eb3-4bf9-bc39-d352211f4e36.png",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
   }
-];
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
