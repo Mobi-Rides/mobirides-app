@@ -75,6 +75,7 @@ const AddCar = () => {
 
   const handleSubmit = async (formData: any, imageFile: File | null, documents: any, features: string[]) => {
     console.log("Starting car submission process...");
+    console.log("Selected features:", features);
     
     if (!userId) {
       toast({
@@ -115,6 +116,8 @@ const AddCar = () => {
       }
 
       console.log("Inserting car data into database...");
+      console.log("Features to insert:", features);
+      
       const { error: insertError } = await supabase.from("cars").insert({
         owner_id: userId,
         image_url,
@@ -128,7 +131,7 @@ const AddCar = () => {
         transmission: formData.transmission,
         fuel: formData.fuel,
         description: formData.description,
-        features: features,
+        features: features || [],
         is_available: true,
       });
 
@@ -156,6 +159,11 @@ const AddCar = () => {
     }
   };
 
+  const handleFeaturesChange = (newFeatures: string[]) => {
+    console.log("Features changed in AddCar:", newFeatures);
+    setSelectedFeatures(newFeatures);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="max-w-2xl mx-auto p-4">
@@ -174,7 +182,7 @@ const AddCar = () => {
         <CarForm
           initialData={initialFormData}
           selectedFeatures={selectedFeatures}
-          onFeaturesChange={setSelectedFeatures}
+          onFeaturesChange={handleFeaturesChange}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />

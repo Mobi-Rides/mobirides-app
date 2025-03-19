@@ -1,8 +1,6 @@
 
 import React from "react";
-import { Toggle } from "@/components/ui/toggle";
 import { Separator } from "@/components/ui/separator";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -40,10 +38,19 @@ export const CarFeatures: React.FC<CarFeaturesProps> = ({
   onChange
 }) => {
   const handleToggleFeature = (feature: string) => {
-    const newFeatures = selectedFeatures.includes(feature)
-      ? selectedFeatures.filter(f => f !== feature)
-      : [...selectedFeatures, feature];
-    onChange(newFeatures);
+    try {
+      console.log("Feature toggled:", feature);
+      console.log("Current selected features:", selectedFeatures);
+      
+      const newFeatures = selectedFeatures.includes(feature)
+        ? selectedFeatures.filter(f => f !== feature)
+        : [...selectedFeatures, feature];
+      
+      console.log("New selected features:", newFeatures);
+      onChange(newFeatures);
+    } catch (error) {
+      console.error("Error toggling feature:", error);
+    }
   };
 
   return (
@@ -51,7 +58,7 @@ export const CarFeatures: React.FC<CarFeaturesProps> = ({
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Car Features</h3>
         <p className="text-sm text-muted-foreground">
-          Selected: {selectedFeatures.length}
+          Selected: {selectedFeatures?.length || 0}
         </p>
       </div>
       <Separator />
@@ -60,16 +67,19 @@ export const CarFeatures: React.FC<CarFeaturesProps> = ({
           <div 
             key={feature} 
             className="flex items-center space-x-2 p-2 rounded-md border cursor-pointer hover:bg-accent/30 transition-colors"
-            onClick={() => handleToggleFeature(feature)}
           >
             <Checkbox 
               id={`feature-${feature}`}
-              checked={selectedFeatures.includes(feature)}
+              checked={selectedFeatures?.includes(feature)}
               onCheckedChange={() => handleToggleFeature(feature)}
             />
             <Label 
               htmlFor={`feature-${feature}`}
               className="cursor-pointer text-sm"
+              onClick={(e) => {
+                e.preventDefault();
+                handleToggleFeature(feature);
+              }}
             >
               {feature}
             </Label>
