@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ const Profile = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initialFormValues, setInitialFormValues] = useState({ full_name: "" });
   const [activeView, setActiveView] = useState<'menu' | 'profile' | 'role'>('menu');
+  const [userRole, setUserRole] = useState<string>('renter');
   const navigate = useNavigate();
   const { userLocation } = useUserLocation(null);
 
@@ -44,7 +46,7 @@ const Profile = () => {
         console.log("Loading profile data...");
         const { data, error } = await supabase
           .from("profiles")
-          .select("avatar_url, full_name")
+          .select("avatar_url, full_name, role")
           .eq("id", session.user.id)
           .single();
 
@@ -54,9 +56,11 @@ const Profile = () => {
           console.log("Profile data loaded:", {
             avatarUrl: data.avatar_url,
             fullName: data.full_name,
+            role: data.role
           });
           setAvatarUrl(data.avatar_url);
           setInitialFormValues({ full_name: data.full_name || "" });
+          setUserRole(data.role || 'renter');
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -95,6 +99,7 @@ const Profile = () => {
           fullName={initialFormValues.full_name} 
           avatarUrl={avatarUrl} 
           setActiveView={setActiveView}
+          role={userRole}
         />
       )}
 

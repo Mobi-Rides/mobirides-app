@@ -16,9 +16,10 @@ interface ProfileMenuProps {
   fullName: string;
   avatarUrl: string | null;
   setActiveView: (view: 'menu' | 'profile' | 'role') => void;
+  role?: string;
 }
 
-export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuProps) => {
+export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter' }: ProfileMenuProps) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
@@ -87,6 +88,8 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuP
     },
   ];
 
+  const switchRoleText = role === 'host' ? 'Switch to Renter' : 'Switch to Host';
+
   return (
     <>
       <div className="flex flex-col items-center mb-8">
@@ -99,14 +102,16 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView }: ProfileMenuP
         </Avatar>
         <h1 className="text-xl font-semibold">{fullName || "Your Profile"}</h1>
         
-        {/* Floating change role button */}
-        <Button 
-          onClick={() => setActiveView('role')}
-          className="fixed bottom-20 right-4 z-10 shadow-lg rounded-full px-6"
-          size="lg"
-        >
-          Change Role
-        </Button>
+        {/* Centered change role button */}
+        <div className="w-full flex justify-center mt-6">
+          <Button 
+            onClick={() => setActiveView('role')}
+            className="shadow-md rounded-full px-6"
+            size="lg"
+          >
+            {switchRoleText}
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
