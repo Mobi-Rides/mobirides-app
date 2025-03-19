@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
-import { BrandFilter } from "@/components/BrandFilter";
+import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import type { Car } from "@/types/car";

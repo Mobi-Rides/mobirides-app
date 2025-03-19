@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
 import { CarGrid } from "@/components/CarGrid";
-import { BrandFilter } from "@/components/BrandFilter";
+import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
