@@ -22,6 +22,7 @@ export interface HandoverStatus {
   renter_location?: HandoverLocation | null;
   handover_completed: boolean;
   handover_type?: string | null;
+  status?: string;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +35,19 @@ export const createHandoverSession = async (
   handoverType?: string
 ) => {
   try {
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUserId = userData?.user?.id;
+
+    if (!currentUserId) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check if user is either host or renter
+    if (currentUserId !== hostId && currentUserId !== renterId) {
+      throw new Error("Only the host or renter can create a handover session");
+    }
+
     const { data, error } = await supabase
       .from("handover_sessions")
       .insert({
@@ -47,11 +61,26 @@ export const createHandoverSession = async (
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === "42501") {
+        console.error("RLS policy violation:", error);
+        toast.error(
+          "Permission denied: You don't have access to create a handover session"
+        );
+      } else {
+        throw error;
+      }
+      return null;
+    }
+
     return data;
   } catch (error) {
     console.error("Error creating handover session:", error);
-    toast.error("Failed to create handover session");
+    toast.error(
+      `Failed to create handover session: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
     return null;
   }
 };

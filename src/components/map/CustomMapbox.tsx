@@ -63,6 +63,21 @@ const CustomMapbox = ({
       map.current.addControl(geolocateControl, "top-right");
       geolocateControlRef.current = geolocateControl;
 
+      // Add error handling for geolocation
+      geolocateControl.on("error", (e: any) => {
+        console.error("Geolocation error:", e);
+        toast.error(
+          "Unable to access your location. Please check your browser permissions."
+        );
+
+        // Notify the handover context about the error if in handover mode
+        if (isHandoverMode && handover) {
+          toast.error(
+            "Location sharing is required for the handover process. Please enable location access."
+          );
+        }
+      });
+
       map.current.on("load", () => {
         console.log("Map loaded successfully");
         setMapInit(true);
