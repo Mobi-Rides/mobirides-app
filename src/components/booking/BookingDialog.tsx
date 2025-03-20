@@ -2,7 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,17 +26,27 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const createNotification = async (userId: string, type: 'booking_request', content: string, carId: string, bookingId: string) => {
-    console.log("Creating notification:", { userId, type, content, carId, bookingId });
-    const { error } = await supabase
-      .from("notifications")
-      .insert({
-        user_id: userId,
-        type,
-        content,
-        related_car_id: carId,
-        related_booking_id: bookingId
-      });
+  const createNotification = async (
+    userId: string,
+    type: "booking_request",
+    content: string,
+    carId: string,
+    bookingId: string
+  ) => {
+    console.log("Creating notification:", {
+      userId,
+      type,
+      content,
+      carId,
+      bookingId,
+    });
+    const { error } = await supabase.from("notifications").insert({
+      user_id: userId,
+      type,
+      content,
+      related_car_id: carId,
+      related_booking_id: bookingId,
+    });
 
     if (error) {
       console.error("Error creating notification:", error);
@@ -54,7 +69,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.user) throw new Error("No authenticated user");
 
-      const numberOfDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const numberOfDays = Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
       const totalPrice = numberOfDays * car.price_per_day;
 
       // Create the booking
@@ -75,8 +92,11 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       // Create notification for renter
       await createNotification(
         session.session.user.id,
-        'booking_request',
-        `Your booking request for ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")} has been submitted.`,
+        "booking_request",
+        `Your booking request for ${car.brand} ${car.model} from ${format(
+          startDate,
+          "PPP"
+        )} to ${format(endDate, "PPP")} has been submitted.`,
         car.id,
         booking.id
       );
@@ -84,8 +104,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       // Create notification for host
       await createNotification(
         car.owner_id,
-        'booking_request',
-        `New booking request received for your ${car.brand} ${car.model} from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
+        "booking_request",
+        `New booking request received for your ${car.brand} ${
+          car.model
+        } from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
         car.id,
         booking.id
       );
@@ -94,7 +116,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         title: "Success",
         description: "Your booking request has been submitted!",
       });
-      
+
       onClose();
       navigate("/bookings");
     } catch (error) {
@@ -113,7 +135,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Book {car.brand} {car.model}</DialogTitle>
+          <DialogTitle>
+            Book {car.brand} {car.model}
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
@@ -129,7 +153,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 setEndDate(range?.to);
               }}
               numberOfMonths={1}
-              disabled={(date) => date < new Date()}
+              disabled={(date) => {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate());
+                tomorrow.setHours(0, 0, 0, 0);
+                return date < tomorrow;
+              }}
             />
           </div>
           {startDate && endDate && (
@@ -139,7 +168,11 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 <p>Start date: {format(startDate, "PPP")}</p>
                 <p>End date: {format(endDate, "PPP")}</p>
                 <p className="font-medium">
-                  Total: BWP {Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) * car.price_per_day}
+                  Total: BWP{" "}
+                  {Math.ceil(
+                    (endDate.getTime() - startDate.getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  ) * car.price_per_day}
                 </p>
               </div>
             </div>
@@ -149,7 +182,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleBooking} disabled={!startDate || !endDate || isLoading}>
+          <Button
+            onClick={handleBooking}
+            disabled={!startDate || !endDate || isLoading}
+          >
             {isLoading ? "Booking..." : "Confirm"}
           </Button>
         </div>
