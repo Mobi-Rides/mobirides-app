@@ -139,7 +139,7 @@ const RentalDetails = () => {
       if (session) {
         // Navigate to map with handover mode
         const role = isRenter ? "renter" : "host";
-        navigate(`/map?handover=true&bookingId=${booking.id}&role=${role}`);
+        navigate(`/map?bookingId=${booking.id}&mode=handover&role=${role}`);
       }
     } catch (error) {
       console.error("Error initiating handover:", error);
