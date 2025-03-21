@@ -73,6 +73,53 @@ export const createHandoverSession = async (
       return null;
     }
 
+    // If the current user is the host, send a notification to the renter
+    if (currentUserId === hostId) {
+      try {
+        // Get host name for the notification
+        const { data: hostData } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", hostId)
+          .single();
+
+        const hostName = hostData?.full_name || "The host";
+
+        // Get car details for the notification
+        const { data: bookingData } = await supabase
+          .from("bookings")
+          .select("car_id")
+          .eq("id", bookingId)
+          .single();
+
+        const carId = bookingData?.car_id;
+
+        if (carId) {
+          // Create notification for the renter
+          const notificationContent = `${hostName} is requesting your location for car handover. Please share your location to proceed with the handover process.`;
+
+          const { error: notificationError } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: renterId,
+              type: "message_received",
+              content: notificationContent,
+              related_car_id: carId,
+              related_booking_id: bookingId,
+            });
+
+          if (notificationError) {
+            console.error("Error creating notification:", notificationError);
+          } else {
+            console.log("Location request notification sent to renter");
+          }
+        }
+      } catch (notificationError) {
+        console.error("Error sending notification:", notificationError);
+        // Don't throw here, we still want to return the handover session
+      }
+    }
+
     return data;
   } catch (error) {
     console.error("Error creating handover session:", error);

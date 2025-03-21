@@ -12,13 +12,14 @@ const NotificationDetails = () => {
   const navigate = useNavigate();
 
   const { data: notification, isLoading } = useQuery({
-    queryKey: ['notification', id],
+    queryKey: ["notification", id],
     queryFn: async () => {
-      console.log('Fetching notification details for ID:', id);
+      console.log("Fetching notification details for ID:", id);
       try {
         const { data, error } = await supabase
-          .from('notifications')
-          .select(`
+          .from("notifications")
+          .select(
+            `
             *,
             booking:bookings!related_booking_id (
               id,
@@ -26,35 +27,36 @@ const NotificationDetails = () => {
                 owner_id
               )
             )
-          `)
-          .eq('id', id)
+          `
+          )
+          .eq("id", id)
           .single();
 
         if (error) {
-          console.error('Error fetching notification:', error);
+          console.error("Error fetching notification:", error);
           throw error;
         }
-        
+
         // Mark notification as read
         await supabase
-          .from('notifications')
+          .from("notifications")
           .update({ is_read: true })
-          .eq('id', id);
+          .eq("id", id);
 
         return data;
       } catch (error) {
-        console.error('Error in notification query:', error);
-        toast.error('Failed to load notification details');
+        console.error("Error in notification query:", error);
+        toast.error("Failed to load notification details");
         throw error;
       }
-    }
+    },
   });
 
   const handleLocationRequest = async () => {
-    console.log('Location request initiated');
-    
+    console.log("Location request initiated");
+
     if (!notification?.booking?.id || !notification?.booking?.cars?.owner_id) {
-      console.error('Missing booking information:', { notification });
+      console.error("Missing booking information:", { notification });
       toast.error("Booking information not found");
       return;
     }
@@ -62,7 +64,7 @@ const NotificationDetails = () => {
     try {
       // Request location permission
       if (!navigator.geolocation) {
-        console.error('Geolocation not supported');
+        console.error("Geolocation not supported");
         toast.error("Geolocation is not supported by your browser");
         return;
       }
@@ -70,89 +72,87 @@ const NotificationDetails = () => {
       // Start watching position
       const watchId = navigator.geolocation.watchPosition(
         async (position) => {
-          console.log('Position received:', {
+          console.log("Position received:", {
             lat: position.coords.latitude,
-            lng: position.coords.longitude
+            lng: position.coords.longitude,
           });
 
           try {
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            const {
+              data: { user },
+              error: authError,
+            } = await supabase.auth.getUser();
             if (authError) {
-              throw new Error('Authentication error: ' + authError.message);
+              throw new Error("Authentication error: " + authError.message);
             }
-            
+
             if (!user) {
-              throw new Error('User not authenticated');
+              throw new Error("User not authenticated");
             }
 
-            // Update user's location in the database
-            const { data: cars, error: carsError } = await supabase
-              .from('cars')
-              .select('id')
-              .eq('owner_id', user.id);
+            // // Get car ID from booking
+            // const carId = notification.booking?.cars?.id;
+            // if (!carId) {
+            //   throw new Error("Host not found in the booking");
+            // }
 
-            if (carsError) {
-              throw new Error('Error fetching cars: ' + carsError.message);
-            }
+            // // Update car location
+            // const success = await updateCarLocation(
+            //   carId,
+            //   position.coords.latitude,
+            //   position.coords.longitude
+            // );
 
-            if (!cars || cars.length === 0) {
-              throw new Error('No cars found for user');
-            }
-
-            console.log('Updating location for cars:', cars);
-
-            for (const car of cars) {
-              const success = await updateCarLocation(
-                car.id,
-                position.coords.latitude,
-                position.coords.longitude
-              );
-              
-              if (!success) {
-                console.error('Failed to update location for car:', car.id);
-              }
-            }
+            // if (!success) {
+            //   throw new Error("Failed to update car location");
+            // }
 
             // Navigate to map page to see host's location
-            navigate(`/map?bookingId=${notification.booking.id}&hostId=${notification.booking.cars.owner_id}&mode=handover`);
+            navigate(
+              `/map?bookingId=${notification.booking.id}&hostId=${notification.booking.cars.owner_id}&mode=handover`
+            );
           } catch (error) {
-            console.error('Error processing location update:', error);
-            toast.error(error instanceof Error ? error.message : 'Failed to process location update');
-            
+            console.error("Error processing location update:", error);
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Failed to process location update"
+            );
+
             // Clear the watch if we encounter an error
             navigator.geolocation.clearWatch(watchId);
-            localStorage.removeItem('locationWatchId');
+            localStorage.removeItem("locationWatchId");
           }
         },
         (error) => {
           console.error("Geolocation error:", error);
-          let errorMessage = 'Failed to get your location';
-          
+          let errorMessage = "Failed to get your location";
+
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = 'Location permission denied. Please enable location services.';
+              errorMessage =
+                "Location permission denied. Please enable location services.";
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Location information is unavailable.';
+              errorMessage = "Location information is unavailable.";
               break;
             case error.TIMEOUT:
-              errorMessage = 'Location request timed out.';
+              errorMessage = "Location request timed out.";
               break;
           }
-          
+
           toast.error(errorMessage);
         },
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 0
+          maximumAge: 0,
         }
       );
 
       // Store watchId in localStorage to clear it later if needed
-      localStorage.setItem('locationWatchId', watchId.toString());
-      console.log('Location watch started with ID:', watchId);
-
+      localStorage.setItem("locationWatchId", watchId.toString());
+      console.log("Location watch started with ID:", watchId);
     } catch (error) {
       console.error("Error in location request handler:", error);
       toast.error("Failed to process location request. Please try again.");
@@ -172,37 +172,73 @@ const NotificationDetails = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      <Button
-        variant="ghost"
-        className="mb-6"
-        onClick={() => navigate(-1)}
-      >
+      <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-semibold mb-4 dark:text-white">Notification Details</h1>
-        
+        <h1 className="text-2xl font-semibold mb-4 dark:text-white">
+          Notification Details
+        </h1>
+
         {notification ? (
           <div className="space-y-4">
-            <p className="text-gray-600 dark:text-gray-300">{notification.content}</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">
-              Received on: {new Date(notification.created_at).toLocaleDateString()}
+            <p className="text-gray-600 dark:text-gray-300">
+              {notification.content}
             </p>
-            
-            {notification.type === 'booking_request' && notification.related_booking_id && (
-              <div className="space-y-2">
-                <Button 
-                  className="w-full"
-                  onClick={() => navigate(`/booking-requests/${notification.related_booking_id}`)}
-                >
-                  View Booking Request
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Received on:{" "}
+              {new Date(notification.created_at).toLocaleDateString()}
+            </p>
 
-                {notification.content.includes("requesting your location") && (
-                  <Button 
+            {notification.type === "booking_request" &&
+              notification.related_booking_id && (
+                <div className="space-y-2">
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      navigate(
+                        `/booking-requests/${notification.related_booking_id}`
+                      )
+                    }
+                  >
+                    View Booking Request
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+
+                  {notification.content.includes(
+                    "requesting your location"
+                  ) && (
+                    <Button
+                      variant="default"
+                      className="w-full bg-primary hover:bg-primary/90"
+                      onClick={handleLocationRequest}
+                    >
+                      Share Location & View Host
+                      <MapPin className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+            {notification.type === "message_received" &&
+              notification.related_booking_id &&
+              notification.content.includes("requesting your location") && (
+                <div className="space-y-2">
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      navigate(
+                        `/rental-details/${notification.related_booking_id}`
+                      )
+                    }
+                  >
+                    View Booking
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+
+                  <Button
                     variant="default"
                     className="w-full bg-primary hover:bg-primary/90"
                     onClick={handleLocationRequest}
@@ -210,12 +246,13 @@ const NotificationDetails = () => {
                     Share Location & View Host
                     <MapPin className="ml-2 h-4 w-4" />
                   </Button>
-                )}
-              </div>
-            )}
+                </div>
+              )}
           </div>
         ) : (
-          <p className="text-gray-600 dark:text-gray-300">Notification not found</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            Notification not found
+          </p>
         )}
       </div>
 
