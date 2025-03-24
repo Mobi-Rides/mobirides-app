@@ -22,6 +22,7 @@ export interface HandoverStatus {
   renter_location?: HandoverLocation | null;
   handover_completed: boolean;
   handover_type?: string | null;
+  status?: string;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +35,19 @@ export const createHandoverSession = async (
   handoverType?: string
 ) => {
   try {
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUserId = userData?.user?.id;
+
+    if (!currentUserId) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check if user is either host or renter
+    if (currentUserId !== hostId && currentUserId !== renterId) {
+      throw new Error("Only the host or renter can create a handover session");
+    }
+
     const { data, error } = await supabase
       .from("handover_sessions")
       .insert({
@@ -47,11 +61,73 @@ export const createHandoverSession = async (
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === "42501") {
+        console.error("RLS policy violation:", error);
+        toast.error(
+          "Permission denied: You don't have access to create a handover session"
+        );
+      } else {
+        throw error;
+      }
+      return null;
+    }
+
+    // If the current user is the host, send a notification to the renter
+    if (currentUserId === hostId) {
+      try {
+        // Get host name for the notification
+        const { data: hostData } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", hostId)
+          .single();
+
+        const hostName = hostData?.full_name || "The host";
+
+        // Get car details for the notification
+        const { data: bookingData } = await supabase
+          .from("bookings")
+          .select("car_id")
+          .eq("id", bookingId)
+          .single();
+
+        const carId = bookingData?.car_id;
+
+        if (carId) {
+          // Create notification for the renter
+          const notificationContent = `${hostName} is requesting your location for car handover. Please share your location to proceed with the handover process.`;
+
+          const { error: notificationError } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: renterId,
+              type: "message_received",
+              content: notificationContent,
+              related_car_id: carId,
+              related_booking_id: bookingId,
+            });
+
+          if (notificationError) {
+            console.error("Error creating notification:", notificationError);
+          } else {
+            console.log("Location request notification sent to renter");
+          }
+        }
+      } catch (notificationError) {
+        console.error("Error sending notification:", notificationError);
+        // Don't throw here, we still want to return the handover session
+      }
+    }
+
     return data;
   } catch (error) {
     console.error("Error creating handover session:", error);
-    toast.error("Failed to create handover session");
+    toast.error(
+      `Failed to create handover session: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
     return null;
   }
 };

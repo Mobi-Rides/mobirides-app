@@ -23,6 +23,8 @@ export const HandoverSheet = ({ isOpen, onClose }: HandoverSheetProps) => {
     markReady,
     completeHandoverProcess,
     bookingDetails,
+    debugMode,
+    toggleDebugMode,
   } = useHandover();
 
   const [handoverStep, setHandoverStep] = useState(1);
@@ -423,6 +425,62 @@ export const HandoverSheet = ({ isOpen, onClose }: HandoverSheetProps) => {
                     : "You have successfully received the car."}
                 </p>
               </div>
+            )}
+
+            {/* Debug button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-4"
+              onClick={toggleDebugMode}
+            >
+              {debugMode ? "Hide Debug Info" : "Show Debug Info"}
+            </Button>
+
+            {/* Debug information panel */}
+            {debugMode && (
+              <Card className="mt-4 bg-slate-100 dark:bg-slate-900">
+                <CardContent className="pt-6">
+                  <h4 className="font-medium text-sm">Debug Information</h4>
+                  <div className="mt-2 text-xs space-y-1 font-mono">
+                    <p>Handover ID: {handoverStatus?.id || "Not available"}</p>
+                    <p>Host ID: {handoverStatus?.host_id || "Not available"}</p>
+                    <p>
+                      Renter ID: {handoverStatus?.renter_id || "Not available"}
+                    </p>
+                    <p>
+                      Host Location:{" "}
+                      {handoverStatus?.host_location
+                        ? "Available"
+                        : "Not available"}
+                    </p>
+                    <p>
+                      Renter Location:{" "}
+                      {handoverStatus?.renter_location
+                        ? "Available"
+                        : "Not available"}
+                    </p>
+                    <p>
+                      Host Ready: {handoverStatus?.host_ready ? "Yes" : "No"}
+                    </p>
+                    <p>
+                      Renter Ready:{" "}
+                      {handoverStatus?.renter_ready ? "Yes" : "No"}
+                    </p>
+                    <p>
+                      Status:{" "}
+                      {handoverStatus?.handover_completed
+                        ? "Completed"
+                        : handoverStatus?.host_ready && handoverStatus?.renter_ready
+                        ? "Ready for handover"
+                        : "Waiting for participants"}
+                    </p>
+                    <p>
+                      Last Updated: {handoverStatus?.updated_at || "Unknown"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>
