@@ -24,6 +24,7 @@ export const useMap = ({
   const observerRef = useRef<ResizeObserver | null>(null);
   const attemptCount = useRef(0);
   const { token: contextToken, loading: tokenLoading } = useMapboxToken();
+  const hasInitializedRef = useRef(false);
 
   const initializeMap = useCallback(async () => {
     try {
@@ -37,6 +38,11 @@ export const useMap = ({
         return;
       }
 
+      if (hasInitializedRef.current && map.current) {
+        console.log('Map already initialized');
+        return;
+      }
+
       // Check container size
       const rect = mapContainer.current.getBoundingClientRect();
       if (rect.width < 10 || rect.height < 10) {
@@ -46,13 +52,16 @@ export const useMap = ({
 
       if (!contextToken) {
         console.log('No Mapbox token available, cannot initialize map');
+        setError('No Mapbox token available');
         return;
       }
 
       setIsInitializing(true);
       console.log('Using Mapbox token:', contextToken.substring(0, 5) + '...');
       
+      // Set token globally to ensure it's available
       mapboxgl.accessToken = contextToken;
+      console.log('Token set on mapboxgl:', mapboxgl.accessToken ? 'Yes' : 'No');
 
       // Clear any existing map instance
       if (map.current) {
@@ -72,7 +81,7 @@ export const useMap = ({
         style: 'mapbox://styles/mapbox/streets-v12',
         center: [initialLongitude, initialLatitude],
         zoom: 12,
-        failIfMajorPerformanceCaveat: true,
+        failIfMajorPerformanceCaveat: false, // Change to false to be more permissive
         preserveDrawingBuffer: true
       });
 
@@ -81,6 +90,7 @@ export const useMap = ({
         console.log('Map loaded successfully');
         setIsLoaded(true);
         setIsInitializing(false);
+        hasInitializedRef.current = true;
         attemptCount.current = 0;
       });
 
@@ -133,7 +143,14 @@ export const useMap = ({
     console.log('useMap effect starting, token loading:', tokenLoading, 'token:', contextToken ? 'available' : 'not available');
     
     // Don't initialize until we have the token
-    if (tokenLoading || !contextToken) {
+    if (tokenLoading) {
+      console.log('Token still loading, waiting...');
+      return;
+    }
+    
+    if (!contextToken) {
+      console.log('No token available, cannot initialize map');
+      setError('No token available');
       return;
     }
     
@@ -156,7 +173,7 @@ export const useMap = ({
           console.log('Container has dimensions:', entry.contentRect);
           clearTimeout(initializationTimeout);
           initializationTimeout = setTimeout(() => {
-            if (isMounted && !isLoaded && !isInitializing) {
+            if (isMounted && !isLoaded && !isInitializing && !hasInitializedRef.current) {
               initializeMap();
             }
           }, 200); // Debounce initialization
@@ -164,12 +181,13 @@ export const useMap = ({
       });
       observerRef.current.observe(mapContainer.current);
       
-      // Initial initialization attempt
+      // Initial initialization attempt with short delay
       initializationTimeout = setTimeout(() => {
-        if (isMounted && !isLoaded && !isInitializing) {
+        if (isMounted && !isLoaded && !isInitializing && !hasInitializedRef.current) {
+          console.log('Attempting initial map initialization');
           initializeMap();
         }
-      }, 100);
+      }, 300);
     }
 
     return () => {
@@ -192,6 +210,7 @@ export const useMap = ({
       }
       
       setIsInitializing(false);
+      hasInitializedRef.current = false;
     };
   }, [initializeMap, isLoaded, isInitializing, contextToken, tokenLoading]);
 

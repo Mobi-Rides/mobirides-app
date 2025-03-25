@@ -8,7 +8,7 @@ export const handleExpiredBookings = async () => {
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     const { data, error } = await supabase
-      .from("booking_requests")
+      .from("bookings")
       .update({ status: "expired" })
       .eq("status", "pending")
       .lt("created_at", twentyFourHoursAgo.toISOString())

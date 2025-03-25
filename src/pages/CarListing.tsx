@@ -31,7 +31,14 @@ const CarListing = () => {
           />
           
           <div className="mt-6">
-            <CarGrid />
+            <CarGrid 
+              cars={[]} 
+              isLoading={false} 
+              error={null} 
+              loadMoreRef={null}
+              hasMoreItems={false}
+              onLoadMore={() => {}}
+            />
           </div>
         </div>
       </main>

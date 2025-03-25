@@ -18,9 +18,11 @@ export class MapboxInstanceManager {
       this.mapboxModule = mapboxgl;
       
       // Ensure CSS is loaded
-      await import("mapbox-gl/dist/mapbox-gl.css").catch(err => {
+      try {
+        await import("mapbox-gl/dist/mapbox-gl.css");
+      } catch (err) {
         console.warn("Could not load mapbox-gl CSS:", err);
-      });
+      }
       
       this.isModuleReady = true;
       console.log("Mapbox module loaded successfully");
@@ -39,11 +41,8 @@ export class MapboxInstanceManager {
 
     try {
       // Ensure mapbox-gl is loaded
-      const module = await this.getMapboxModule();
-      if (!module) {
-        throw new Error("Failed to load mapbox-gl module");
-      }
-
+      await this.getMapboxModule();
+      
       // Set the token directly on mapboxgl
       mapboxgl.accessToken = token;
       console.log("Setting token on mapboxgl instance:", token.substring(0, 5) + '...');

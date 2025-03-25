@@ -3,9 +3,11 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMap } from "@/hooks/useMap";
-import { MapPin, Locate } from "lucide-react";
+import { Locate } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -19,12 +21,24 @@ export const BookingLocationPicker = ({
   onLocationSelected
 }: BookingLocationPickerProps) => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [marker, setMarker] = useState<mapboxgl.Marker | null>(null);
   
   const { mapContainer, map, isLoaded, resizeMap } = useMap({
     initialLatitude: -24.6282,
     initialLongitude: 25.9692,
     onMapClick: (lngLat) => {
       setSelectedLocation({ lat: lngLat.lat, lng: lngLat.lng });
+      
+      // Update marker position
+      if (map && marker) {
+        marker.setLngLat([lngLat.lng, lngLat.lat]);
+      } else if (map) {
+        // Create a new marker if it doesn't exist
+        const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
+          .setLngLat([lngLat.lng, lngLat.lat])
+          .addTo(map);
+        setMarker(newMarker);
+      }
     }
   });
 
@@ -42,6 +56,16 @@ export const BookingLocationPicker = ({
               center: [longitude, latitude],
               zoom: 14
             });
+            
+            // Update or create marker
+            if (marker) {
+              marker.setLngLat([longitude, latitude]);
+            } else {
+              const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
+                .setLngLat([longitude, latitude])
+                .addTo(map);
+              setMarker(newMarker);
+            }
           }
           
           toast.success("Location found!");
@@ -54,7 +78,7 @@ export const BookingLocationPicker = ({
     } else {
       toast.error("Geolocation is not supported by your browser");
     }
-  }, [map]);
+  }, [map, marker]);
 
   const confirmLocation = () => {
     if (selectedLocation) {
@@ -69,18 +93,23 @@ export const BookingLocationPicker = ({
     // Reset selected location when dialog opens
     if (isOpen) {
       setSelectedLocation(null);
+      if (marker) {
+        marker.remove();
+        setMarker(null);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, marker]);
 
   // Resize map when the dialog is open
   useEffect(() => {
     if (isOpen) {
       console.log('Dialog opened, resizing map');
       
-      // Give some time for the dialog to be fully rendered
+      // Give time for the dialog to render
       const timer = setTimeout(() => {
         resizeMap();
-      }, 300);
+        console.log('Map resize triggered');
+      }, 500);
       
       return () => clearTimeout(timer);
     }
@@ -100,7 +129,7 @@ export const BookingLocationPicker = ({
         
         <ScrollArea className="flex-1 overflow-auto px-6 py-2">
           <div className="relative w-full rounded-md overflow-hidden border border-border mb-4" 
-               style={{ height: "calc(65vh - 180px)", minHeight: "300px" }}>
+               style={{ height: "400px", minHeight: "300px" }}>
             {!isLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted/20 z-10">
                 <p className="text-sm text-muted-foreground">Loading map...</p>
@@ -146,7 +175,6 @@ export const BookingLocationPicker = ({
             onClick={confirmLocation}
             disabled={!selectedLocation}
           >
-            <MapPin className="h-4 w-4 mr-2" />
             Confirm Location
           </Button>
         </div>

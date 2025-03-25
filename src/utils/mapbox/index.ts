@@ -30,9 +30,12 @@ export const getMapboxToken = async (): Promise<string> => {
       throw new Error("No Mapbox token available");
     }
     
-    // Set the token in the global context if mapboxgl is available
-    if (window.mapboxgl) {
+    // Set the token on the global context if mapboxgl is available
+    if (typeof window !== 'undefined' && window.mapboxgl) {
+      console.log("Setting token on mapboxgl instance:", token.substring(0, 10) + "...");
       window.mapboxgl.accessToken = token;
+    } else {
+      console.log("mapboxgl not available yet, token will be set later");
     }
     
     // Cache the token
