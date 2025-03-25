@@ -7,6 +7,7 @@ import { useMapboxToken } from "@/contexts/MapboxTokenContext";
 import { MapPin, Locate } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -20,7 +21,6 @@ export const BookingLocationPicker = ({
   onLocationSelected
 }: BookingLocationPickerProps) => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const { token } = useMapboxToken();
   
   const { mapContainer, map, isLoaded } = useMap({
     initialLatitude: -24.6282,
