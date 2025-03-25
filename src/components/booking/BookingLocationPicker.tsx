@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMap } from "@/hooks/useMap";
@@ -21,7 +21,8 @@ export const BookingLocationPicker = ({
   onLocationSelected
 }: BookingLocationPickerProps) => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [marker, setMarker] = useState<mapboxgl.Marker | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { mapContainer, map, isLoaded, resizeMap } = useMap({
     initialLatitude: -24.6282,
@@ -30,14 +31,14 @@ export const BookingLocationPicker = ({
       setSelectedLocation({ lat: lngLat.lat, lng: lngLat.lng });
       
       // Update marker position
-      if (map && marker) {
-        marker.setLngLat([lngLat.lng, lngLat.lat]);
+      if (map && markerRef.current) {
+        markerRef.current.setLngLat([lngLat.lng, lngLat.lat]);
       } else if (map) {
         // Create a new marker if it doesn't exist
         const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
           .setLngLat([lngLat.lng, lngLat.lat])
           .addTo(map);
-        setMarker(newMarker);
+        markerRef.current = newMarker;
       }
     }
   });
@@ -58,13 +59,13 @@ export const BookingLocationPicker = ({
             });
             
             // Update or create marker
-            if (marker) {
-              marker.setLngLat([longitude, latitude]);
+            if (markerRef.current) {
+              markerRef.current.setLngLat([longitude, latitude]);
             } else {
               const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
                 .setLngLat([longitude, latitude])
                 .addTo(map);
-              setMarker(newMarker);
+              markerRef.current = newMarker;
             }
           }
           
@@ -78,7 +79,7 @@ export const BookingLocationPicker = ({
     } else {
       toast.error("Geolocation is not supported by your browser");
     }
-  }, [map, marker]);
+  }, [map]);
 
   const confirmLocation = () => {
     if (selectedLocation) {
@@ -89,31 +90,55 @@ export const BookingLocationPicker = ({
     }
   };
 
+  // Reset when dialog opens/closes
   useEffect(() => {
-    // Reset selected location when dialog opens
     if (isOpen) {
       setSelectedLocation(null);
-      if (marker) {
-        marker.remove();
-        setMarker(null);
+      if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
       }
     }
-  }, [isOpen, marker]);
+  }, [isOpen]);
 
   // Resize map when the dialog is open
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isLoaded) {
       console.log('Dialog opened, resizing map');
       
       // Give time for the dialog to render
-      const timer = setTimeout(() => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      
+      timerRef.current = setTimeout(() => {
         resizeMap();
         console.log('Map resize triggered');
       }, 500);
-      
-      return () => clearTimeout(timer);
     }
-  }, [isOpen, resizeMap]);
+    
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isOpen, isLoaded, resizeMap]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
+      }
+      
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {

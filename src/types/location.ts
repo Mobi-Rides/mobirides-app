@@ -40,7 +40,7 @@ export interface CarFormData {
 }
 
 export interface ProfileEditViewProps {
-  profileData: {
+  profileData?: {
     full_name?: string;
     avatar_url?: string;
     bio?: string;

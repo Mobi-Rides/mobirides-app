@@ -2,7 +2,8 @@
 import { Navigation } from "@/components/Navigation";
 import { CarGrid } from "@/components/CarGrid";
 import { SearchFilters } from "@/components/SearchFilters";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Car } from "@/types/car";
 
 // Define the proper interface based on what the components expect
 interface FilterParams {
@@ -19,6 +20,7 @@ const CarListing = () => {
     minPrice: "",
     maxPrice: "",
   });
+  const [cars, setCars] = useState<Car[]>([]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,7 +34,7 @@ const CarListing = () => {
           
           <div className="mt-6">
             <CarGrid 
-              cars={[]} 
+              cars={cars} 
               isLoading={false} 
               error={null} 
               loadMoreRef={null}

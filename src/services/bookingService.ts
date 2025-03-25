@@ -9,7 +9,7 @@ export const handleExpiredBookings = async () => {
 
     const { data, error } = await supabase
       .from("bookings")
-      .update({ status: "expired" })
+      .update({ status: "cancelled" }) // Use a valid enum value instead of "expired"
       .eq("status", "pending")
       .lt("created_at", twentyFourHoursAgo.toISOString())
       .select();
@@ -20,7 +20,7 @@ export const handleExpiredBookings = async () => {
     }
 
     if (data && data.length > 0) {
-      console.log(`${data.length} expired booking requests updated`);
+      console.log(`${data.length} expired booking requests updated to cancelled`);
     }
 
     return { success: true, data };

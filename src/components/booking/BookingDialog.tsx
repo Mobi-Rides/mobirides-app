@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,7 +18,6 @@ import { AlertCircle, MapPin } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { handleExpiredBookings } from "@/services/bookingService";
 import { BookingLocationPicker } from "./BookingLocationPicker";
-import { LocationType } from "@/types/booking";
 
 interface BookingDialogProps {
   car: Car;
@@ -37,6 +36,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const mountedRef = useRef(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -45,6 +45,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       const currentUserId = data.session?.user?.id;
+      
+      if (!mountedRef.current) return;
+      
       setUserId(currentUserId);
       
       if (currentUserId && car.owner_id === currentUserId) {
@@ -57,9 +60,15 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   // Check for expired booking requests when the dialog opens
   useEffect(() => {
+    let isMounted = true;
+    
     if (isOpen) {
       handleExpiredBookings().catch(console.error);
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [isOpen]);
 
   // Set default pickup location from car's location
@@ -71,6 +80,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       });
     }
   }, [car]);
+  
+  // Clean up resources on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const createNotification = async (
     userId: string,
@@ -149,7 +165,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           end_date: format(endDate, "yyyy-MM-dd"),
           total_price: totalPrice,
           pickup_latitude: pickupLocation.latitude,
-          pickup_longitude: pickupLocation.longitude
+          pickup_longitude: pickupLocation.longitude,
+          status: "pending" // Explicitly set status to a valid enum value
         })
         .select()
         .single();
@@ -179,6 +196,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         booking.id
       );
 
+      if (!mountedRef.current) return;
+      
       toast({
         title: "Success",
         description: "Your booking request has been submitted!",
@@ -187,6 +206,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       onClose();
       navigate("/bookings");
     } catch (error) {
+      if (!mountedRef.current) return;
+      
       console.error("Booking error:", error);
       toast({
         title: "Error",
@@ -194,7 +215,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
