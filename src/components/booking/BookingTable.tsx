@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookingRow } from "./BookingRow";
 import { Booking } from "@/types/booking";
@@ -9,7 +8,6 @@ interface BookingTableProps {
 }
 
 export const BookingTable = ({ bookings, onCancelBooking }: BookingTableProps) => {
-  // Add additional debugging for bookings
   console.log("BookingTable received bookings:", bookings);
   
   if (!bookings?.length) {

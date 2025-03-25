@@ -16,7 +16,6 @@ const Bookings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Add useEffect to check current user
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
@@ -31,7 +30,6 @@ const Bookings = () => {
     queryFn: async () => {
       console.log("Fetching user bookings");
       
-      // Debug current user session
       const { data: sessionData } = await supabase.auth.getSession();
       console.log("Current user session:", sessionData.session);
       
@@ -64,10 +62,8 @@ const Bookings = () => {
       }
 
       console.log("Bookings fetched:", data);
-      // Cast to Booking[] to match our interface
       return data as unknown as Booking[];
     },
-    // Add retry for better reliability
     retry: 2
   });
 
@@ -98,7 +94,6 @@ const Bookings = () => {
       const bookingToCancel = bookings?.find(b => b.id === bookingId);
       if (!bookingToCancel) return;
 
-      // Update in Supabase first
       const { error: updateError } = await supabase
         .from("bookings")
         .update({ status: "cancelled" })
@@ -109,10 +104,8 @@ const Bookings = () => {
         throw updateError;
       }
 
-      // Create notifications about the cancellation
       await createCancellationNotifications(bookingToCancel);
 
-      // Invalidate the query to refetch fresh data
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
 
       toast({
@@ -127,12 +120,10 @@ const Bookings = () => {
         description: "Failed to cancel booking",
         variant: "destructive",
       });
-      // Refetch to ensure UI shows correct state
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     }
   };
 
-  // Handle query error
   useEffect(() => {
     if (error) {
       console.error("Booking query error:", error);
@@ -144,7 +135,6 @@ const Bookings = () => {
     }
   }, [error, toast]);
 
-  // Check if we have empty bookings but aren't loading
   useEffect(() => {
     if (!isLoading && (!bookings || bookings.length === 0)) {
       console.log("No bookings found in the query result");

@@ -80,3 +80,24 @@
 [data-radix-popper-close-button] {
   display: none !important;
 }
+
+/* Add extra small breakpoint */
+@layer utilities {
+  @variants responsive {
+    .xs\:max-h-\[120px\] {
+      max-height: 120px;
+    }
+    .xs\:grid-cols-\[120px_1fr\] {
+      grid-template-columns: 120px 1fr;
+    }
+  }
+  
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
