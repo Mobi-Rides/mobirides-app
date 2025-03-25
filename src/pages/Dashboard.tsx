@@ -34,16 +34,18 @@ const Dashboard = () => {
 
   if (!userRole) {
     return (
-      <div className="container mx-auto px-4 py-8 bg-background dark:bg-background">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
+      <div className="min-h-screen bg-background dark:bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <Skeleton className="h-8 w-48 mb-6" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
           </div>
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
         </div>
         <Navigation />
       </div>
@@ -51,12 +53,14 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 pb-20 bg-background min-h-screen">
-      <DashboardHeader />
-      <div className="mt-2">
-        {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}
+    <div className="min-h-screen bg-background dark:bg-background">
+      <div className="container mx-auto px-4 py-4 pb-20">
+        <DashboardHeader />
+        <div className="mt-2">
+          {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}
+        </div>
+        <Navigation />
       </div>
-      <Navigation />
     </div>
   );
 };
