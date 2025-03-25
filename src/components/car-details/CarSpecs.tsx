@@ -1,5 +1,6 @@
 
-import { CheckSquare, Bluetooth, Thermometer, Navigation, AirVent, Compass, Camera, Shield, KeyRound, Power, Radio, Sofa, MapPin, Smartphone, FolderTree, Webcam, Umbrella, Baby, Gauge } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckSquare, Bluetooth, Thermometer, Navigation, AirVent, Compass, Camera, Shield, KeyRound, Power, Radio, Sofa, MapPin, Smartphone, FolderTree, Webcam, Umbrella, Baby, Gauge, Cog } from "lucide-react";
 
 interface CarSpecsProps {
   pricePerDay: number;
@@ -28,7 +29,7 @@ export const CarSpecs = ({ pricePerDay, transmission, seats, features = [] }: Ca
       case "Blind Spot Monitor": return <Shield className="h-5 w-5" />;
       case "360 Degree Camera": return <Camera className="h-5 w-5" />;
       case "Apple CarPlay": return <Smartphone className="h-5 w-5" />;
-      case "Android Auto": return <Smartphone className="h-5 w-5" />; // Changed from Android to Smartphone
+      case "Android Auto": return <Smartphone className="h-5 w-5" />; 
       case "Roof Rack": return <FolderTree className="h-5 w-5" />;
       case "Child Seat Anchor": return <Baby className="h-5 w-5" />;
       case "Autonomous Driving": return <Gauge className="h-5 w-5" />;
@@ -37,35 +38,43 @@ export const CarSpecs = ({ pricePerDay, transmission, seats, features = [] }: Ca
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4 text-sm">
-        <div className="p-4 bg-muted rounded-lg text-center">
-          <p className="font-semibold">BWP {pricePerDay}</p>
-          <p className="text-muted-foreground">per day</p>
-        </div>
-        <div className="p-4 bg-muted rounded-lg text-center">
-          <p className="font-semibold">{transmission}</p>
-          <p className="text-muted-foreground">transmission</p>
-        </div>
-        <div className="p-4 bg-muted rounded-lg text-center">
-          <p className="font-semibold">{seats}</p>
-          <p className="text-muted-foreground">seats</p>
-        </div>
-      </div>
-
-      {features && features.length > 0 && (
-        <>
-          <h3 className="text-lg font-medium mt-6">Features</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {features.map((feature) => (
-              <div key={feature} className="flex items-center space-x-2 p-2 rounded-md border bg-muted/30">
-                <span className="text-primary">{getFeatureIcon(feature)}</span>
-                <span className="text-sm">{feature}</span>
-              </div>
-            ))}
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2 dark:text-white">
+          <Cog className="h-5 w-5 text-primary dark:text-primary-foreground" />
+          Vehicle Specifications
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-4 text-sm mb-6">
+          <div className="p-4 bg-muted rounded-lg text-center">
+            <p className="font-semibold text-lg md:text-xl">BWP {pricePerDay}</p>
+            <p className="text-muted-foreground">per day</p>
           </div>
-        </>
-      )}
-    </div>
+          <div className="p-4 bg-muted rounded-lg text-center">
+            <p className="font-semibold text-base md:text-lg">{transmission}</p>
+            <p className="text-muted-foreground">transmission</p>
+          </div>
+          <div className="p-4 bg-muted rounded-lg text-center">
+            <p className="font-semibold text-lg md:text-xl">{seats}</p>
+            <p className="text-muted-foreground">seats</p>
+          </div>
+        </div>
+
+        {features && features.length > 0 && (
+          <>
+            <h3 className="text-lg font-medium mb-3">Features</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {features.map((feature) => (
+                <div key={feature} className="flex items-center space-x-2 p-2 rounded-md border bg-muted/30">
+                  <span className="text-primary">{getFeatureIcon(feature)}</span>
+                  <span className="text-sm">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };

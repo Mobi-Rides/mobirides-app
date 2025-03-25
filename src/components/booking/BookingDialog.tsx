@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -7,11 +8,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/types/car";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { handleExpiredBookings } from "@/services/bookingService";
 
 interface BookingDialogProps {
   car: Car;
@@ -23,8 +28,32 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [isLoading, setIsLoading] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check if the current user is the car owner
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      const currentUserId = data.session?.user?.id;
+      setUserId(currentUserId);
+      
+      if (currentUserId && car.owner_id === currentUserId) {
+        setIsOwner(true);
+      }
+    };
+    
+    checkAuth();
+  }, [car.owner_id]);
+
+  // Check for expired booking requests when the dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      handleExpiredBookings().catch(console.error);
+    }
+  }, [isOpen]);
 
   const createNotification = async (
     userId: string,
@@ -55,6 +84,16 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   };
 
   const handleBooking = async () => {
+    // Prevent car owners from booking their own cars
+    if (isOwner) {
+      toast({
+        title: "Not allowed",
+        description: "You cannot book your own car",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!startDate || !endDate) {
       toast({
         title: "Error",
@@ -138,7 +177,21 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           <DialogTitle>
             Book {car.brand} {car.model}
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Select your rental dates below
+          </DialogDescription>
         </DialogHeader>
+        
+        {isOwner && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Not allowed</AlertTitle>
+            <AlertDescription>
+              You cannot book your own car. This is for other renters only.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <h4 className="font-medium">Select dates</h4>
@@ -164,27 +217,30 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           {startDate && endDate && (
             <div className="space-y-2">
               <h4 className="font-medium">Summary</h4>
-              <div className="text-sm space-y-1">
+              <div className="text-sm space-y-1 p-4 bg-primary/5 rounded-md">
                 <p>Start date: {format(startDate, "PPP")}</p>
                 <p>End date: {format(endDate, "PPP")}</p>
-                <p className="font-medium">
-                  Total: BWP{" "}
-                  {Math.ceil(
-                    (endDate.getTime() - startDate.getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  ) * car.price_per_day}
-                </p>
+                <div className="border-t border-border pt-2 mt-2">
+                  <p className="font-medium text-primary">
+                    Total: BWP{" "}
+                    {Math.ceil(
+                      (endDate.getTime() - startDate.getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    ) * car.price_per_day}
+                  </p>
+                </div>
               </div>
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button
             onClick={handleBooking}
-            disabled={!startDate || !endDate || isLoading}
+            disabled={!startDate || !endDate || isLoading || isOwner}
+            className="w-full sm:w-auto"
           >
             {isLoading ? "Booking..." : "Confirm"}
           </Button>

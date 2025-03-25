@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -10,6 +11,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Bookings = () => {
   const navigate = useNavigate();
@@ -145,11 +147,30 @@ const Bookings = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="container py-4 space-y-4">
-          <h1 className="text-2xl font-bold">My Bookings</h1>
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+          <div className="px-4 py-4 mb-4 flex items-center gap-4">
+            <Button variant="ghost" size="icon" disabled>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-xl md:text-2xl text-left font-semibold">
+              My Booking
+            </h1>
+          </div>
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           </div>
         </div>
         <Navigation />
@@ -168,10 +189,12 @@ const Bookings = () => {
             My Booking
           </h1>
         </div>
-        <BookingTable
-          bookings={bookings}
-          onCancelBooking={handleCancelBooking}
-        />
+        <div className="px-4">
+          <BookingTable
+            bookings={bookings}
+            onCancelBooking={handleCancelBooking}
+          />
+        </div>
       </div>
       <Navigation />
     </div>

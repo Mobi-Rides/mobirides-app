@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Star, StarHalf } from "lucide-react";
+import { Star, StarHalf, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -13,6 +14,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Car } from "@/types/car";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
 
 interface CarReviewsProps {
   car: Car;
@@ -119,77 +122,60 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
     }
   };
 
-  if (isLoading) {
-    return <div>Loading reviews...</div>;
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">Reviews</h2>
-        {/* <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline">Write a Review</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Write a Review</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <Button
-                    key={value}
-                    variant="ghost"
-                    size="sm"
-                    className={value <= rating ? "text-yellow-500" : ""}
-                    onClick={() => setRating(value)}
-                  >
-                    <Star className="h-5 w-5" />
-                  </Button>
-                ))}
-              </div>
-              <Textarea
-                placeholder="Share your experience..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
-              <Button 
-                onClick={handleSubmitReview}
-                disabled={rating === 0}
-              >
-                Submit Review
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog> */}
-      </div>
-      
-      <div className="space-y-4">
-        {reviews?.map((review) => (
-          <div key={review.id} className="border rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex gap-0.5">
-                {Array.from({ length: review.rating }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 text-yellow-500" fill="currentColor" />
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                by {review.reviewer.full_name}
-              </span>
-            </div>
-            {review.comment && (
-              <p className="text-sm text-muted-foreground">{review.comment}</p>
-            )}
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center justify-between dark:text-white">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary dark:text-primary-foreground" />
+            Reviews
           </div>
-        ))}
-        
-        {reviews?.length === 0 && (
-          <p className="text-center text-muted-foreground">
-            No reviews yet
-          </p>
-        )}
-      </div>
-    </div>
+          <span className="text-sm font-normal text-muted-foreground">
+            {reviews?.length || 0} {reviews?.length === 1 ? 'review' : 'reviews'}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {reviews?.length === 0 && (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground">
+                No reviews yet
+              </p>
+            </div>
+          )}
+          
+          {reviews?.map((review) => (
+            <div key={review.id} className="border rounded-lg p-4 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={review.reviewer.avatar_url 
+                      ? supabase.storage.from('avatars').getPublicUrl(review.reviewer.avatar_url).data.publicUrl
+                      : "/placeholder.svg"} 
+                    alt={review.reviewer.full_name}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  <span className="font-medium">{review.reviewer.full_name}</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="flex gap-0.5 mr-2">
+                    {Array.from({ length: review.rating }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 text-yellow-500" fill="currentColor" />
+                    ))}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {review.created_at ? format(new Date(review.created_at), 'MMM d, yyyy') : ''}
+                  </span>
+                </div>
+              </div>
+              {review.comment && (
+                <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
