@@ -6,9 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { HostStats } from "./HostStats";
 import { HostTabContent } from "./host/HostTabContent";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["host-bookings"],
@@ -96,11 +98,11 @@ export const HostDashboard = () => {
     <div className="space-y-6">
       <HostStats />
       
-      <Tabs defaultValue="active" className="bg-card rounded-lg p-4 shadow-sm dark:border dark:border-border">
-        <TabsList className="mb-4">
-          <TabsTrigger value="active">Active Rentals</TabsTrigger>
-          <TabsTrigger value="pending">Booking Requests</TabsTrigger>
-          <TabsTrigger value="completed">Past Rentals</TabsTrigger>
+      <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
+        <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="pending">Booking Requests</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="completed">Past Rentals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active">

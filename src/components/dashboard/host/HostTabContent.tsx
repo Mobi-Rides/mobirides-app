@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BookingWithRelations } from "@/types/booking";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HostTabContentProps {
   bookings: BookingWithRelations[] | undefined;
@@ -20,6 +21,7 @@ export const HostTabContent = ({
   onCardClick 
 }: HostTabContentProps) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   if (!bookings?.length) {
     return (
@@ -66,8 +68,8 @@ export const HostTabContent = ({
           className="cursor-pointer hover:shadow-md transition-shadow dark:bg-card dark:border-border overflow-hidden"
           onClick={() => onCardClick(booking.id)}
         >
-          <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[180px_1fr]">
-            <div className="h-full">
+          <div className="grid grid-cols-[100px_1fr] xs:grid-cols-[120px_1fr] sm:grid-cols-[180px_1fr]">
+            <div className="h-full max-h-[100px] xs:max-h-[120px] sm:max-h-none">
               <img 
                 src={booking.cars.image_url} 
                 alt={`${booking.cars.brand} ${booking.cars.model}`}
@@ -75,9 +77,9 @@ export const HostTabContent = ({
               />
             </div>
             <div className="flex flex-col">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center justify-between">
-                  <span>{booking.cars.brand} {booking.cars.model}</span>
+              <CardHeader className="pb-1 sm:pb-2 p-2 sm:p-4">
+                <CardTitle className="text-sm sm:text-lg flex items-center justify-between">
+                  <span className="truncate pr-2">{booking.cars.brand} {booking.cars.model}</span>
                   <span className={`text-xs font-normal px-2 py-1 rounded-full ${getTypeColor(tabType)}`}>
                     {tabType === "active" && "Active"}
                     {tabType === "pending" && "Pending"}
@@ -85,44 +87,45 @@ export const HostTabContent = ({
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="p-2 sm:p-4 pt-0">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex justify-between items-center">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Rented by: <span className="text-foreground">{booking.renter?.full_name || "Unknown"}</span>
                     </p>
-                    <p className="text-sm font-medium text-primary">
+                    <p className="text-xs sm:text-sm font-medium text-primary">
                       BWP {booking.total_price}
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <div className="bg-muted/50 rounded-md p-2">
-                      <p className="text-xs text-muted-foreground">From</p>
-                      <p className="text-sm font-medium">
-                        {format(new Date(booking.start_date), "PPP")}
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2 pt-0 sm:pt-1">
+                    <div className="bg-muted/50 rounded-md p-1 sm:p-2">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">From</p>
+                      <p className="text-xs sm:text-sm font-medium">
+                        {format(new Date(booking.start_date), "PP")}
                       </p>
                     </div>
-                    <div className="bg-muted/50 rounded-md p-2">
-                      <p className="text-xs text-muted-foreground">To</p>
-                      <p className="text-sm font-medium">
-                        {format(new Date(booking.end_date), "PPP")}
+                    <div className="bg-muted/50 rounded-md p-1 sm:p-2">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">To</p>
+                      <p className="text-xs sm:text-sm font-medium">
+                        {format(new Date(booking.end_date), "PP")}
                       </p>
                     </div>
                   </div>
                   
                   {tabType === "completed" && booking.status === "completed" && (
-                    <div className="flex justify-end pt-2">
+                    <div className="flex justify-end pt-1">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={isMobile ? "sm" : "default"}
+                        className="text-xs sm:text-sm h-7 sm:h-9"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/rental-details/${booking.id}?print=true`);
                         }}
                       >
-                        <FileText className="mr-2 h-4 w-4" />
-                        Receipt
+                        <FileText className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="text-xs sm:text-sm">Receipt</span>
                       </Button>
                     </div>
                   )}

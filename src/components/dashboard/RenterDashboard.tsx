@@ -6,9 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { RenterStats } from "./RenterStats";
 import { RenterTabContent } from "./renter/RenterTabContent";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const RenterDashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["renter-bookings"],
@@ -93,11 +95,11 @@ export const RenterDashboard = () => {
     <div className="space-y-6">
       <RenterStats />
       
-      <Tabs defaultValue="active" className="bg-card rounded-lg p-4 shadow-sm dark:border dark:border-border">
-        <TabsList className="mb-4">
-          <TabsTrigger value="active">Active Rentals</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="past">Past Rentals</TabsTrigger>
+      <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
+        <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="past">Past Rentals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active">
