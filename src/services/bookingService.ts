@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isAfter, isBefore, startOfDay, subDays } from "date-fns";
+import { BookingNotificationType } from "@/types/booking";
 
 /**
  * Checks for expired booking requests and changes their status to 'cancelled'
@@ -68,7 +69,7 @@ export const createBookingReminders = async () => {
         // Notify the car owner
         await supabase.from('notifications').insert({
           user_id: booking.car.owner_id,
-          type: 'booking_reminder',
+          type: BookingNotificationType.BOOKING_REMINDER,
           content: `Reminder: A booking for your ${booking.car.brand} ${booking.car.model} starts tomorrow.`,
           related_car_id: booking.car_id,
           related_booking_id: booking.id
