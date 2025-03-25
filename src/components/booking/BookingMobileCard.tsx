@@ -4,7 +4,7 @@ import { Booking } from "@/types/booking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Check, X, ArrowRight } from "lucide-react";
+import { Clock, Check, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BookingMobileCardProps {
@@ -45,53 +45,54 @@ export const BookingMobileCard = ({ booking, onCancelBooking }: BookingMobileCar
       onClick={handleCardClick}
     >
       <CardContent className="p-4">
-        <div className="flex gap-3">
-          <img
-            src={booking.cars.image_url || "/placeholder.svg"}
-            alt={`${booking.cars.brand} ${booking.cars.model}`}
-            className="w-20 h-20 object-cover rounded-md flex-shrink-0"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium truncate">
-                  {booking.cars.brand} {booking.cars.model}
-                </h3>
-                <p className="text-xs text-muted-foreground truncate mb-1">
-                  {booking.cars.location}
-                </p>
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-3">
+            <img
+              src={booking.cars.image_url || "/placeholder.svg"}
+              alt={`${booking.cars.brand} ${booking.cars.model}`}
+              className="w-20 h-20 object-cover rounded-md flex-shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium truncate">
+                    {booking.cars.brand} {booking.cars.model}
+                  </h3>
+                  <p className="text-xs text-muted-foreground truncate mb-1">
+                    {booking.cars.location}
+                  </p>
+                </div>
+                <div className="ml-2">
+                  {getStatusBadge()}
+                </div>
               </div>
-              <div className="ml-2">
-                {getStatusBadge()}
-              </div>
-            </div>
-            
-            <div className="mt-2 text-sm">
-              <div className="flex justify-between">
-                <p>Dates:</p>
-                <p className="text-right">{format(new Date(booking.start_date), "PP")} - {format(new Date(booking.end_date), "PP")}</p>
-              </div>
-              <div className="flex justify-between mt-1">
-                <p>Price:</p>
-                <p className="font-medium">BWP {booking.total_price}</p>
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2 mt-3">
-              {booking.status === "pending" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCancelClick}
-                >
-                  Cancel
-                </Button>
-              )}
-              <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                Details <ArrowRight className="h-3 w-3" />
-              </Button>
             </div>
           </div>
+          
+          <div className="text-sm space-y-2">
+            <div className="flex flex-col">
+              <span className="text-muted-foreground">Dates:</span>
+              <span className="font-medium">
+                {format(new Date(booking.start_date), "PP")} - {format(new Date(booking.end_date), "PP")}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Price:</span>
+              <span className="font-medium">BWP {booking.total_price}</span>
+            </div>
+          </div>
+          
+          {booking.status === "pending" && (
+            <div className="flex justify-end mt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelClick}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
