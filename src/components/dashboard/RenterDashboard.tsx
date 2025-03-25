@@ -25,7 +25,9 @@ export const RenterDashboard = () => {
             brand,
             model,
             location,
-            image_url
+            image_url,
+            owner_id,
+            price_per_day
           ),
           reviews!reviews_booking_id_fkey (
             id
@@ -91,7 +93,7 @@ export const RenterDashboard = () => {
     <div className="space-y-6">
       <RenterStats />
       
-      <Tabs defaultValue="active" className="bg-background rounded-lg p-4 shadow-sm dark:border dark:border-border">
+      <Tabs defaultValue="active" className="bg-card rounded-lg p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4">
           <TabsTrigger value="active">Active Rentals</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>

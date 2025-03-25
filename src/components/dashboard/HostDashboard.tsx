@@ -35,7 +35,9 @@ export const HostDashboard = () => {
             brand,
             model,
             location,
-            image_url
+            image_url,
+            owner_id,
+            price_per_day
           ),
           renter:profiles!renter_id (
             full_name
@@ -94,7 +96,7 @@ export const HostDashboard = () => {
     <div className="space-y-6">
       <HostStats />
       
-      <Tabs defaultValue="active" className="bg-background rounded-lg p-4 shadow-sm dark:border dark:border-border">
+      <Tabs defaultValue="active" className="bg-card rounded-lg p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4">
           <TabsTrigger value="active">Active Rentals</TabsTrigger>
           <TabsTrigger value="pending">Booking Requests</TabsTrigger>

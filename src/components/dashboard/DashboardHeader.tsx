@@ -13,7 +13,7 @@ export const DashboardHeader = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-xl md:text-2xl font-semibold">
+        <h1 className="text-xl md:text-2xl font-semibold text-foreground">
           Dashboard
         </h1>
       </div>

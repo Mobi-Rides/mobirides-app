@@ -51,7 +51,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 pb-20 bg-gray-50 dark:bg-background min-h-screen">
+    <div className="container mx-auto px-4 py-4 pb-20 bg-background min-h-screen">
       <DashboardHeader />
       <div className="mt-2">
         {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}

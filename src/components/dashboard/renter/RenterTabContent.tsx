@@ -37,28 +37,43 @@ export const RenterTabContent = ({
           className="cursor-pointer hover:shadow-md transition-shadow dark:bg-card dark:border-border"
           onClick={() => onCardClick(booking.id)}
         >
-          <CardHeader className={tabType === "active" ? "pb-2" : undefined}>
-            <CardTitle className="text-lg">
-              {booking.cars.brand} {booking.cars.model}
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center justify-between">
+              <span>{booking.cars.brand} {booking.cars.model}</span>
+              <span className="text-sm font-normal px-2 py-1 bg-muted rounded-full">
+                {tabType === "active" && "Active"}
+                {tabType === "upcoming" && booking.status}
+                {tabType === "past" && booking.status}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Location: {booking.cars.location}
-              </p>
-              <p className="text-sm">
-                Pickup: {format(new Date(booking.start_date), "PPP")}
-              </p>
-              <p className="text-sm">
-                Return: {format(new Date(booking.end_date), "PPP")}
-              </p>
-              {tabType === "upcoming" && (
-                <p className="text-sm font-medium">
-                  Status: <span className="capitalize">{booking.status}</span>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-muted-foreground">
+                  Location: <span className="text-foreground">{booking.cars.location}</span>
                 </p>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
+                <p className="text-sm font-medium text-primary">
+                  BWP {booking.total_price}
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="bg-muted/50 rounded-md p-2">
+                  <p className="text-xs text-muted-foreground">Pickup</p>
+                  <p className="text-sm font-medium">
+                    {format(new Date(booking.start_date), "PPP")}
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-md p-2">
+                  <p className="text-xs text-muted-foreground">Return</p>
+                  <p className="text-sm font-medium">
+                    {format(new Date(booking.end_date), "PPP")}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-1">
                 {tabType === "past" && booking.status === "completed" && (
                   <Button
                     variant="outline"
@@ -72,11 +87,11 @@ export const RenterTabContent = ({
                     Receipt
                   </Button>
                 )}
-                {((tabType === "active") || (tabType === "past" && !booking.reviews?.length)) && (
+                {tabType === "active" && (
                   <Button
                     variant="default"
                     size="sm"
-                    className="rounded-2xl border-[#8459FB] text-white"
+                    className="rounded-md border-[#8459FB] text-white"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/rental-review/${booking.id}`);
