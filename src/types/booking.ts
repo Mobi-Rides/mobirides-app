@@ -7,6 +7,8 @@ export interface BookingWithRelations {
   car_id: string;
   renter_id?: string;
   total_price: number;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
   cars: {
     brand: string;
     model: string;
@@ -34,4 +36,23 @@ export enum BookingNotificationType {
   BOOKING_CONFIRMATION = "booking_confirmation",
   BOOKING_CANCELLATION = "booking_cancellation",
   BOOKING_REMINDER = "booking_reminder"
+}
+
+// Add this enum for handover types
+export enum HandoverType {
+  PICKUP = "pickup",
+  RETURN = "return"
+}
+
+// Add this type for location data
+export enum LocationType {
+  DEFAULT = "default",
+  CUSTOM = "custom",
+  CURRENT = "current"
+}
+
+export interface LocationData {
+  type: LocationType;
+  latitude: number;
+  longitude: number;
 }
