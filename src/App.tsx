@@ -21,7 +21,7 @@ import { BarLoader } from "react-spinners";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
-import RentalDetails from "./pages/RentalDetails";
+import RentalDetailsRefactored from "./pages/RentalDetailsRefactored";
 import Signup from "./pages/signup";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
@@ -85,7 +85,7 @@ const AppRoutes = () => {
           }
         />
         <Route path="/rental-review/:bookingId" element={<RentalReview />} />
-        <Route path="/rental-details/:id" element={<ProtectedRoute><RentalDetails /></ProtectedRoute>} />
+        <Route path="/rental-details/:id" element={<ProtectedRoute><RentalDetailsRefactored /></ProtectedRoute>} />
       </Routes>
     </>
   );
