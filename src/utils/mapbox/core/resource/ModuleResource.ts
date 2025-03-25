@@ -1,6 +1,6 @@
 
 import { ResourceBase } from './ResourceBase';
-import { ResourceType, ResourceLoadingState } from './resourceTypes';
+import { ResourceType, ResourceState } from './resourceTypes';
 import { mapboxTokenManager } from '@/utils/mapbox';
 
 /**
@@ -8,26 +8,25 @@ import { mapboxTokenManager } from '@/utils/mapbox';
  * Responsible for loading the Mapbox GL JS module.
  */
 export class ModuleResource extends ResourceBase {
-  protected resourceType: ResourceType = 'module';
-
   constructor() {
-    super();
+    super('module');
   }
 
-  async load(): Promise<boolean> {
+  async acquire(): Promise<boolean> {
     try {
-      this.setState({ loading: true, error: null });
+      this.setState('loading');
 
       // Check if mapboxgl is already available (loaded via script tag)
       if (window.mapboxgl) {
-        this.setState({ loading: false, loaded: true });
+        this.setState('ready');
         return true;
       }
 
       // Check if token is available before loading
       const tokenState = mapboxTokenManager.getTokenState();
       if (!tokenState.token) {
-        throw new Error('Mapbox token not available');
+        this.setState('error', 'Mapbox token not available');
+        return false;
       }
 
       // Get the instance manager for loading modules
@@ -39,41 +38,43 @@ export class ModuleResource extends ResourceBase {
         
         // Verify the module was loaded correctly
         if (!window.mapboxgl) {
-          throw new Error('Failed to load Mapbox GL JS module');
+          this.setState('error', 'Failed to load Mapbox GL JS module');
+          return false;
         }
         
-        this.setState({ loading: false, loaded: true });
+        this.setState('ready');
         return true;
       } catch (error) {
         console.error('Error loading Mapbox module:', error);
-        this.setState({ 
-          loading: false, 
-          error: error instanceof Error ? error.message : 'Failed to load Mapbox GL JS module'
-        });
+        this.setState('error', error instanceof Error ? error.message : 'Failed to load Mapbox GL JS module');
         return false;
       }
     } catch (error) {
       console.error('Resource load error:', error);
-      this.setState({ 
-        loading: false, 
-        error: error instanceof Error ? error.message : 'Unknown error loading Mapbox GL JS module'
-      });
+      this.setState('error', error instanceof Error ? error.message : 'Unknown error loading Mapbox GL JS module');
       return false;
     }
   }
 
-  async reload(): Promise<boolean> {
-    // Reset state before reloading
-    this.setState({ loading: false, loaded: false, error: null });
-    
-    // For module reloading, we'll leverage the instance manager
-    const instanceManager = mapboxTokenManager.getInstanceManager();
-    await instanceManager.getMapboxModule();
-    
-    return this.load();
+  async release(): Promise<void> {
+    this.setState('pending');
   }
 
-  getState(): ResourceLoadingState {
-    return { ...this.state };
+  async validate(): Promise<boolean> {
+    if (window.mapboxgl) {
+      this.setState('ready');
+      return true;
+    }
+    this.setState('error', 'Mapbox GL JS module not loaded');
+    return false;
+  }
+
+  async configure<T extends ResourceType>(config: any): Promise<boolean> {
+    // No special configuration needed for module resource
+    return true;
+  }
+
+  getState(): ResourceState {
+    return this.status;
   }
 }

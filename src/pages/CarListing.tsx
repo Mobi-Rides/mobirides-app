@@ -3,11 +3,17 @@ import { Navigation } from "@/components/Navigation";
 import { CarGrid } from "@/components/CarGrid";
 import { SearchFilters } from "@/components/SearchFilters";
 import { useState } from "react";
-import type { SearchFiltersProps } from "@/components/SearchFilters";
-import type { CarGridProps } from "@/components/CarGrid";
+
+// Define the search filters interface based on what SearchFilters component expects
+interface SearchParams {
+  query: string;
+  brand: string;
+  minPrice: string;
+  maxPrice: string;
+}
 
 const CarListing = () => {
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<SearchParams>({
     query: "",
     brand: "",
     minPrice: "",
@@ -21,13 +27,13 @@ const CarListing = () => {
           <h1 className="text-2xl font-bold mb-6">Available Cars</h1>
           
           <SearchFilters 
-            onFilterChange={(filters) => setSearchParams(filters as any)}
-            initialFilters={searchParams as any}
+            onFiltersChange={(filters) => setSearchParams(filters as SearchParams)}
+            initialFilters={searchParams}
           />
           
           <div className="mt-6">
             <CarGrid 
-              searchFilters={searchParams as any}
+              filters={searchParams}
             />
           </div>
         </div>
