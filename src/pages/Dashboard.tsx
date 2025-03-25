@@ -59,7 +59,7 @@ const Dashboard = () => {
         <div className="mt-2">
           {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}
         </div>
-        <Navigation />
+        <Navigation />  
       </div>
     </div>
   );

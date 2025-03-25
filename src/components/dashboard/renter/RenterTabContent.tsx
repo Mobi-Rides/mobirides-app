@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, MapPin, Pin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BookingWithRelations } from "@/types/booking";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -88,8 +88,8 @@ export const RenterTabContent = ({
               <CardContent className="p-2 sm:p-4 pt-0">
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex justify-between items-center">
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Location: <span className="text-foreground">{booking.cars.location}</span>
+                    <p className="text-xs sm:text-sm text-red-500 flex items-center gap-1">
+                     <MapPin size={16}/> <span className="text-foreground">{booking.cars.location}</span>
                     </p>
                     <p className="text-xs sm:text-sm font-medium text-primary">
                       BWP {booking.total_price}
