@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/types/car";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { handleExpiredBookings } from "@/services/bookingService";
 
 interface BookingDialogProps {
   car: Car;
@@ -46,6 +47,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     
     checkAuth();
   }, [car.owner_id]);
+
+  // Check for expired booking requests when the dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      handleExpiredBookings().catch(console.error);
+    }
+  }, [isOpen]);
 
   const createNotification = async (
     userId: string,
@@ -225,13 +233,14 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button
             onClick={handleBooking}
             disabled={!startDate || !endDate || isLoading || isOwner}
+            className="w-full sm:w-auto"
           >
             {isLoading ? "Booking..." : "Confirm"}
           </Button>

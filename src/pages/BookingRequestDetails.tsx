@@ -11,6 +11,7 @@ import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const BookingRequestDetails = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userId } = useAuthStatus();
+  const isMobile = useIsMobile();
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ['booking-request', id],
@@ -266,12 +268,12 @@ const BookingRequestDetails = () => {
 
           {/* Action Buttons */}
           {booking.status === 'pending' && (
-            <CardFooter className="border-t bg-card p-6 flex gap-4 justify-end">
+            <CardFooter className="border-t bg-card p-6 flex flex-col sm:flex-row gap-4 justify-end">
               {isCarOwner ? (
                 <>
                   <Button 
                     variant="outline" 
-                    className="flex items-center gap-2" 
+                    className="flex items-center gap-2 w-full sm:w-auto" 
                     onClick={handleCancel} 
                     disabled={updateBookingStatus.isPending}
                   >
@@ -279,7 +281,7 @@ const BookingRequestDetails = () => {
                     Reject Request
                   </Button>
                   <Button 
-                    className="flex items-center gap-2" 
+                    className="flex items-center gap-2 w-full sm:w-auto" 
                     onClick={handleApprove} 
                     disabled={updateBookingStatus.isPending}
                   >
@@ -290,7 +292,7 @@ const BookingRequestDetails = () => {
               ) : isRenter ? (
                 <Button 
                   variant="outline" 
-                  className="flex items-center gap-2" 
+                  className="flex items-center gap-2 w-full sm:w-auto" 
                   onClick={handleCancel} 
                   disabled={updateBookingStatus.isPending}
                 >
