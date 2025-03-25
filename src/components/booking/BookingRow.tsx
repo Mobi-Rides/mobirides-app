@@ -6,6 +6,7 @@ import { Booking } from "@/types/booking";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Check, X, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BookingRowProps {
   booking: Booking;
@@ -50,13 +51,13 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
           <img
             src={booking.cars.image_url || "/placeholder.svg"}
             alt={`${booking.cars.brand} ${booking.cars.model}`}
-            className="w-12 h-12 object-cover rounded"
+            className="w-10 h-10 object-cover rounded"
           />
-          <div>
-            <p className="font-medium">
+          <div className="min-w-0">
+            <p className="font-medium truncate">
               {booking.cars.brand} {booking.cars.model}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground truncate">
               {booking.cars.location}
             </p>
           </div>
@@ -79,7 +80,7 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
         <p className="font-medium">BWP {booking.total_price}</p>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           {booking.status === "pending" && (
             <Button
               variant="outline"
@@ -89,9 +90,18 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
               Cancel
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="ml-auto">
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Details</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </TableCell>
     </TableRow>
