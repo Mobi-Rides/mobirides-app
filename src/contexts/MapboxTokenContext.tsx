@@ -1,53 +1,54 @@
 
-import { createContext, useContext, useState, useEffect } from 'react';
-import { mapboxTokenManager } from '@/utils/mapbox';
-import { toast } from 'sonner';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { mapboxTokenManager } from "@/utils/mapbox/tokenManager";
 
 interface MapboxTokenContextType {
   token: string | null;
-  isLoading: boolean;
-  error: string | null;
+  isValid: boolean;
+  loading: boolean;
 }
 
 const MapboxTokenContext = createContext<MapboxTokenContextType>({
   token: null,
-  isLoading: true,
-  error: null
+  isValid: false,
+  loading: true,
 });
 
 export const useMapboxToken = () => useContext(MapboxTokenContext);
 
-export const MapboxTokenProvider = ({ children }: { children: React.ReactNode }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
+  const [tokenState, setTokenState] = useState<MapboxTokenContextType>({
+    token: null,
+    isValid: false,
+    loading: true,
+  });
 
   useEffect(() => {
-    const initializeToken = async () => {
-      try {
-        console.log('[MapboxTokenProvider] Initializing token...');
-        const newToken = await mapboxTokenManager.getToken();
-        if (newToken) {
-          console.log('[MapboxTokenProvider] Token initialized successfully');
-          setToken(newToken);
-        } else {
-          console.log('[MapboxTokenProvider] No token available');
-          setError('No Mapbox token available');
-        }
-      } catch (err) {
-        console.error('[MapboxTokenProvider] Error initializing token:', err);
-        setError(err instanceof Error ? err.message : 'Failed to initialize Mapbox token');
-        toast.error('Failed to initialize map configuration');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+    console.info('[MapboxTokenProvider] Initializing token...');
     initializeToken();
   }, []);
 
+  const initializeToken = async () => {
+    try {
+      const token = await mapboxTokenManager.getToken();
+      console.info('[MapboxTokenProvider] Token initialized successfully');
+      setTokenState({
+        token,
+        isValid: true,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('[MapboxTokenProvider] Failed to initialize token', error);
+      setTokenState({
+        token: null,
+        isValid: false,
+        loading: false,
+      });
+    }
+  };
+
   return (
-    <MapboxTokenContext.Provider value={{ token, isLoading, error }}>
+    <MapboxTokenContext.Provider value={tokenState}>
       {children}
     </MapboxTokenContext.Provider>
   );

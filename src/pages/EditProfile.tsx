@@ -7,6 +7,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
 
+// Define ProfileData type
+interface ProfileData {
+  id: string;
+  full_name: string;
+  avatar_url: string;
+  phone_number: string;
+  role: "host" | "renter";
+  is_sharing_location: boolean;
+  location_sharing_scope: string;
+  latitude: number;
+  longitude: number;
+  created_at: string;
+  updated_at: string;
+}
+
 const EditProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -27,7 +42,7 @@ const EditProfile = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as ProfileData;
     },
   });
 
@@ -36,7 +51,7 @@ const EditProfile = () => {
   }
 
   if (error || !profile) {
-    return <ProfileError error={error as Error} />;
+    return <ProfileError error={(error as Error)?.message || "Error loading profile"} />;
   }
 
   return (
@@ -44,7 +59,7 @@ const EditProfile = () => {
       <main className="pb-16">
         <div className="container mx-auto max-w-4xl p-4">
           <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
-          <ProfileEditView profile={profile} />
+          <ProfileEditView profileData={profile} />
         </div>
       </main>
       <Navigation />

@@ -3,6 +3,8 @@ import { Navigation } from "@/components/Navigation";
 import { CarGrid } from "@/components/CarGrid";
 import { SearchFilters } from "@/components/SearchFilters";
 import { useState } from "react";
+import type { SearchFiltersProps } from "@/components/SearchFilters";
+import type { CarGridProps } from "@/components/CarGrid";
 
 const CarListing = () => {
   const [searchParams, setSearchParams] = useState({
@@ -19,13 +21,13 @@ const CarListing = () => {
           <h1 className="text-2xl font-bold mb-6">Available Cars</h1>
           
           <SearchFilters 
-            searchParams={searchParams}
-            setSearchParams={setSearchParams}
+            onFilterChange={(filters) => setSearchParams(filters as any)}
+            initialFilters={searchParams as any}
           />
           
           <div className="mt-6">
             <CarGrid 
-              filters={searchParams}
+              searchFilters={searchParams as any}
             />
           </div>
         </div>
