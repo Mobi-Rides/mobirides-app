@@ -99,22 +99,6 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
 
   return (
     <div className="space-y-6">
-      <div className="text-left flex items-center ">
-        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
-          Cars Available for Rent
-        </h3>
-
-        <span className="ml-2 px-3 py-1 rounded-md text-xs md:text-sm font-bold bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8]">
-          Renter Mode
-        </span>
-      </div>
-
-      <BrandFilter
-        selectedBrand={selectedBrand}
-        onSelectBrand={handleBrandSelect}
-        carsCount={allAvailableCars.length}
-      />
-
       <div className="flex justify-end">
         <Button
           variant={sortOrder ? "secondary" : "outline"}
@@ -136,7 +120,11 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
           )}
         </Button>
       </div>
-
+      <div className="text-left flex items-center ">
+        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
+          Available Cars
+        </h3>
+      </div>
       <CarGrid
         cars={allAvailableCars}
         isLoading={isLoadingCars}
