@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -36,6 +37,11 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
         </div>
@@ -45,9 +51,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-20">
+    <div className="container mx-auto px-4 py-4 pb-20 bg-gray-50 min-h-screen">
       <DashboardHeader />
-      {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}
+      <div className="mt-2">
+        {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}
+      </div>
       <Navigation />
     </div>
   );

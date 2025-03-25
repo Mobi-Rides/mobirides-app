@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HostStats } from "./HostStats";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
@@ -56,6 +57,11 @@ export const HostDashboard = () => {
   if (isLoading) {
     return (
       <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>
@@ -85,8 +91,10 @@ export const HostDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="active">
-        <TabsList>
+      <HostStats />
+      
+      <Tabs defaultValue="active" className="bg-white rounded-lg p-4 shadow-sm">
+        <TabsList className="mb-4">
           <TabsTrigger value="active">Active Rentals</TabsTrigger>
           <TabsTrigger value="pending">Booking Requests</TabsTrigger>
           <TabsTrigger value="completed">Past Rentals</TabsTrigger>
@@ -105,7 +113,7 @@ export const HostDashboard = () => {
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => handleCardClick(booking.id)}
               >
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="text-lg">
                     {booking.cars.brand} {booking.cars.model}
                   </CardTitle>

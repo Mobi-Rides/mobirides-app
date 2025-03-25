@@ -45,6 +45,7 @@ export type Database = {
           created_at: string
           end_date: string
           id: string
+          pickup_location: Json | null
           renter_id: string
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -56,6 +57,7 @@ export type Database = {
           created_at?: string
           end_date: string
           id?: string
+          pickup_location?: Json | null
           renter_id: string
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -67,6 +69,7 @@ export type Database = {
           created_at?: string
           end_date?: string
           id?: string
+          pickup_location?: Json | null
           renter_id?: string
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
