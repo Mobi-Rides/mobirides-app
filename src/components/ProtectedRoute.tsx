@@ -108,3 +108,4 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Render the children directly instead of wrapping them in a router component
   return <>{children}</>;
+};
