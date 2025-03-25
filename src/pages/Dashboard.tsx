@@ -34,7 +34,7 @@ const Dashboard = () => {
 
   if (!userRole) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 bg-background dark:bg-background">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -51,7 +51,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 pb-20 bg-gray-50 min-h-screen">
+    <div className="container mx-auto px-4 py-4 pb-20 bg-gray-50 dark:bg-background min-h-screen">
       <DashboardHeader />
       <div className="mt-2">
         {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}

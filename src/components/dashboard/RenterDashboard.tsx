@@ -1,14 +1,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { FileText, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { RenterStats } from "./RenterStats";
+import { RenterTabContent } from "./renter/RenterTabContent";
 
 export const RenterDashboard = () => {
   const navigate = useNavigate();
@@ -94,7 +91,7 @@ export const RenterDashboard = () => {
     <div className="space-y-6">
       <RenterStats />
       
-      <Tabs defaultValue="active" className="bg-white rounded-lg p-4 shadow-sm">
+      <Tabs defaultValue="active" className="bg-background rounded-lg p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4">
           <TabsTrigger value="active">Active Rentals</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
@@ -102,158 +99,30 @@ export const RenterDashboard = () => {
         </TabsList>
 
         <TabsContent value="active">
-          <div className="grid gap-4">
-            {activeBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No active rentals
-              </p>
-            )}
-            {activeBookings?.map((booking) => (
-              <Card 
-                key={booking.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleCardClick(booking.id)}
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                    <div className="flex justify-end gap-2 pt-2">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="rounded-2xl border-[#8459FB] text-white"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/rental-review/${booking.id}`);
-                        }}
-                      >
-                        <Star className="mr-2 h-4 w-4" />
-                        Review
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RenterTabContent 
+            bookings={activeBookings} 
+            tabType="active" 
+            emptyMessage="No active rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
 
         <TabsContent value="upcoming">
-          <div className="grid gap-4">
-            {upcomingBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No upcoming rentals
-              </p>
-            )}
-            {upcomingBookings?.map((booking) => (
-              <Card 
-                key={booking.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleCardClick(booking.id)}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                    <p className="text-sm font-medium">
-                      Status: <span className="capitalize">{booking.status}</span>
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RenterTabContent 
+            bookings={upcomingBookings} 
+            tabType="upcoming" 
+            emptyMessage="No upcoming rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
 
         <TabsContent value="past">
-          <div className="grid gap-4">
-            {pastBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No past rentals
-              </p>
-            )}
-            {pastBookings?.map((booking) => (
-              <Card 
-                key={booking.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleCardClick(booking.id)}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                    <div className="flex justify-end gap-2 pt-2">
-                      {booking.status === "completed" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Print functionality will be handled in the details page
-                            navigate(`/rental-details/${booking.id}?print=true`);
-                          }}
-                        >
-                          <FileText className="mr-2 h-4 w-4" />
-                          Receipt
-                        </Button>
-                      )}
-                      {!booking.reviews?.length && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="rounded-2xl border-[#8459FB] text-white"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/rental-review/${booking.id}`);
-                          }}
-                        >
-                          <Star className="mr-2 h-4 w-4" />
-                          Review
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RenterTabContent 
+            bookings={pastBookings} 
+            tabType="past" 
+            emptyMessage="No past rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
       </Tabs>
     </div>

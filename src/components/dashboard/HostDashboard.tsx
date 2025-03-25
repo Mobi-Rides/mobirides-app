@@ -1,14 +1,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
-import { FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { HostStats } from "./HostStats";
+import { HostTabContent } from "./host/HostTabContent";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
@@ -89,11 +86,15 @@ export const HostDashboard = () => {
     navigate(`/rental-details/${bookingId}`);
   };
 
+  const handlePendingCardClick = (bookingId: string) => {
+    navigate(`/booking-requests/${bookingId}`);
+  };
+
   return (
     <div className="space-y-6">
       <HostStats />
       
-      <Tabs defaultValue="active" className="bg-white rounded-lg p-4 shadow-sm">
+      <Tabs defaultValue="active" className="bg-background rounded-lg p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4">
           <TabsTrigger value="active">Active Rentals</TabsTrigger>
           <TabsTrigger value="pending">Booking Requests</TabsTrigger>
@@ -101,126 +102,30 @@ export const HostDashboard = () => {
         </TabsList>
 
         <TabsContent value="active">
-          <div className="grid gap-4">
-            {activeBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No active rentals
-              </p>
-            )}
-            {activeBookings?.map((booking) => (
-              <Card 
-                key={booking.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleCardClick(booking.id)}
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Rented by: {booking.renter?.full_name || "Unknown"}
-                    </p>
-                    <p className="text-sm">
-                      From: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      To: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <HostTabContent 
+            bookings={activeBookings} 
+            tabType="active" 
+            emptyMessage="No active rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
 
         <TabsContent value="pending">
-          <div className="grid gap-4">
-            {pendingBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No booking requests
-              </p>
-            )}
-            {pendingBookings?.map((booking) => (
-              <Card 
-                key={booking.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/booking-requests/${booking.id}`)}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Requested by: {booking.renter?.full_name || "Unknown"}
-                    </p>
-                    <p className="text-sm">
-                      From: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      To: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <HostTabContent 
+            bookings={pendingBookings} 
+            tabType="pending" 
+            emptyMessage="No booking requests"
+            onCardClick={handlePendingCardClick}
+          />
         </TabsContent>
 
         <TabsContent value="completed">
-          <div className="grid gap-4">
-            {completedBookings?.length === 0 && (
-              <p className="text-muted-foreground text-center py-4">
-                No completed rentals
-              </p>
-            )}
-            {completedBookings?.map((booking) => (
-              <Card 
-                key={booking.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleCardClick(booking.id)}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Rented by: {booking.renter?.full_name || "Unknown"}
-                    </p>
-                    <p className="text-sm">
-                      From: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      To: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                    {booking.status === "completed" && (
-                      <div className="flex justify-end pt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/rental-details/${booking.id}?print=true`);
-                          }}
-                        >
-                          <FileText className="mr-2 h-4 w-4" />
-                          Receipt
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <HostTabContent 
+            bookings={completedBookings} 
+            tabType="completed" 
+            emptyMessage="No completed rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
       </Tabs>
     </div>

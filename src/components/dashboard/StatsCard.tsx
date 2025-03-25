@@ -20,7 +20,10 @@ export const StatsCard = ({
   iconClassName,
 }: StatsCardProps) => {
   return (
-    <div className={cn("rounded-lg border bg-card p-4 shadow-sm", className)}>
+    <div className={cn(
+      "rounded-lg border bg-card p-4 shadow-sm dark:bg-card dark:border-border", 
+      className
+    )}>
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-sm text-muted-foreground">{title}</h3>
         <div className={cn("rounded-full p-2", iconClassName || "bg-primary/10")}>

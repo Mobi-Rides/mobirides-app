@@ -2,6 +2,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const DashboardHeader = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export const DashboardHeader = () => {
           Dashboard
         </h1>
       </div>
+      <ThemeToggle />
     </div>
   );
 };
