@@ -3,11 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMap } from "@/hooks/useMap";
-import { useMapboxToken } from "@/contexts/MapboxTokenContext";
 import { MapPin, Locate } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUserLocation } from "@/hooks/useUserLocation";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -22,7 +20,7 @@ export const BookingLocationPicker = ({
 }: BookingLocationPickerProps) => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   
-  const { mapContainer, map, isLoaded } = useMap({
+  const { mapContainer, map, isLoaded, resizeMap } = useMap({
     initialLatitude: -24.6282,
     initialLongitude: 25.9692,
     onMapClick: (lngLat) => {
@@ -74,39 +72,25 @@ export const BookingLocationPicker = ({
     }
   }, [isOpen]);
 
-  // Resize map when the dialog is open and when map is available
+  // Resize map when the dialog is open
   useEffect(() => {
-    if (isOpen && map && isLoaded) {
+    if (isOpen) {
       console.log('Dialog opened, resizing map');
       
-      // Create a resize observer to ensure the map is properly sized
-      const resizeObserver = new ResizeObserver(() => {
-        console.log('Map container resized');
-        map.resize();
-      });
-      
-      // Observe the map container
-      if (mapContainer.current) {
-        resizeObserver.observe(mapContainer.current);
-      }
-      
-      // Small timeout to ensure the dialog is fully rendered before initial resize
+      // Give some time for the dialog to be fully rendered
       const timer = setTimeout(() => {
-        map.resize();
-      }, 150);
+        resizeMap();
+      }, 300);
       
-      return () => {
-        clearTimeout(timer);
-        resizeObserver.disconnect();
-      };
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, map, isLoaded, mapContainer]);
+  }, [isOpen, resizeMap]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) onClose();
     }}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden p-0">
+      <DialogContent className="sm:max-w-[600px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>Select Pickup Location</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -114,8 +98,9 @@ export const BookingLocationPicker = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden flex flex-col px-6 py-2 h-[calc(90vh-180px)]">
-          <div className="relative w-full h-full min-h-[300px] rounded-md overflow-hidden border border-border mb-2">
+        <ScrollArea className="flex-1 overflow-auto px-6 py-2">
+          <div className="relative w-full rounded-md overflow-hidden border border-border mb-4" 
+               style={{ height: "calc(65vh - 180px)", minHeight: "300px" }}>
             {!isLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted/20 z-10">
                 <p className="text-sm text-muted-foreground">Loading map...</p>
@@ -124,7 +109,6 @@ export const BookingLocationPicker = ({
             <div 
               ref={mapContainer} 
               className="w-full h-full"
-              style={{ minHeight: '300px' }}
             />
             
             {selectedLocation && (
@@ -147,14 +131,14 @@ export const BookingLocationPicker = ({
             </div>
           </div>
           
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 mb-4">
             <p className="text-xs text-muted-foreground">
               {selectedLocation 
                 ? "Location selected. Click confirm to use this location." 
                 : "Click on the map to select a pickup location, or use the button to get your current location."}
             </p>
           </div>
-        </div>
+        </ScrollArea>
         
         <div className="flex justify-end gap-2 p-4 border-t sticky bottom-0 bg-background">
           <Button variant="outline" onClick={onClose}>Cancel</Button>

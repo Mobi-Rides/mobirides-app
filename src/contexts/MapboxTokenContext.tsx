@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -15,7 +16,6 @@ interface MapboxTokenContextType {
   loading: boolean;
   refreshToken: () => Promise<void>;
 }
-const mapBoxToken = await getMapboxToken();
 
 const MapboxTokenContext = createContext<MapboxTokenContextType>({
   token: null,
@@ -40,11 +40,16 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
     setTokenState((prev) => ({ ...prev, loading: true }));
 
     try {
-      const token = await mapBoxToken;
-      console.info("[MapboxTokenProvider] Token initialized successfully");
+      const token = await getMapboxToken();
+      console.info("[MapboxTokenProvider] Token initialized:", token ? "✓" : "✗");
 
       if (!token) {
         throw new Error("No token returned from token manager");
+      }
+
+      // Set the token in the mapboxgl instance
+      if (window.mapboxgl) {
+        window.mapboxgl.accessToken = token;
       }
 
       setTokenState({
@@ -70,7 +75,7 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    console.info("[MapboxTokenProvider] Initializing token...");
+    console.info("[MapboxTokenProvider] Component mounted, initializing token...");
     initializeToken();
   }, []);
 

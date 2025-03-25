@@ -75,6 +75,6 @@ export class ModuleResource extends ResourceBase {
   }
 
   getState(): ResourceState {
-    return this.status;
+    return this.state;
   }
 }

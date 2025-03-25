@@ -1,8 +1,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { mapboxTokenManager } from '@/utils/mapbox';
 import { toast } from "sonner";
+import { useMapboxToken } from '@/contexts/MapboxTokenContext';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface UseMapProps {
@@ -23,6 +23,7 @@ export const useMap = ({
   const [isInitializing, setIsInitializing] = useState(false);
   const observerRef = useRef<ResizeObserver | null>(null);
   const attemptCount = useRef(0);
+  const { token: contextToken, loading: tokenLoading } = useMapboxToken();
 
   const initializeMap = useCallback(async () => {
     try {
@@ -43,16 +44,15 @@ export const useMap = ({
         return;
       }
 
-      setIsInitializing(true);
-      console.log('Fetching Mapbox token...');
-      
-      const token = await mapboxTokenManager.getToken();
-      if (!token) {
-        throw new Error('No Mapbox token available');
+      if (!contextToken) {
+        console.log('No Mapbox token available, cannot initialize map');
+        return;
       }
 
-      console.log('Creating map instance with token:', token.substring(0, 5) + '...');
-      mapboxgl.accessToken = token;
+      setIsInitializing(true);
+      console.log('Using Mapbox token:', contextToken.substring(0, 5) + '...');
+      
+      mapboxgl.accessToken = contextToken;
 
       // Clear any existing map instance
       if (map.current) {
@@ -63,7 +63,8 @@ export const useMap = ({
 
       console.log('Initializing new map in container:', {
         width: rect.width,
-        height: rect.height
+        height: rect.height,
+        center: [initialLongitude, initialLatitude]
       });
 
       const newMap = new mapboxgl.Map({
@@ -126,10 +127,16 @@ export const useMap = ({
         }, 1000);
       }
     }
-  }, [initialLatitude, initialLongitude, onMapClick]);
+  }, [contextToken, initialLatitude, initialLongitude, onMapClick]);
 
   useEffect(() => {
-    console.log('useMap effect starting');
+    console.log('useMap effect starting, token loading:', tokenLoading, 'token:', contextToken ? 'available' : 'not available');
+    
+    // Don't initialize until we have the token
+    if (tokenLoading || !contextToken) {
+      return;
+    }
+    
     let isMounted = true;
     let initializationTimeout: NodeJS.Timeout;
 
@@ -142,6 +149,8 @@ export const useMap = ({
     // Set up ResizeObserver to monitor container size
     if (mapContainer.current) {
       observerRef.current = new ResizeObserver((entries) => {
+        if (!isMounted) return;
+        
         const entry = entries[0];
         if (entry.contentRect.width > 10 && entry.contentRect.height > 10) {
           console.log('Container has dimensions:', entry.contentRect);
@@ -184,7 +193,7 @@ export const useMap = ({
       
       setIsInitializing(false);
     };
-  }, [initializeMap, isLoaded, isInitializing]);
+  }, [initializeMap, isLoaded, isInitializing, contextToken, tokenLoading]);
 
   // Method to manually trigger map resize
   const resizeMap = useCallback(() => {

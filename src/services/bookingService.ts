@@ -1,35 +1,31 @@
+
+import { supabase } from "@/integrations/supabase/client";
+
 export const handleExpiredBookings = async () => {
+  console.log("Checking for expired booking requests...");
   try {
-    console.log("Checking for expired booking requests...");
-    
-    const { data: bookings, error } = await supabase
-      .from("bookings")
-      .select("*")
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+    const { data, error } = await supabase
+      .from("booking_requests")
+      .update({ status: "expired" })
       .eq("status", "pending")
-      .lt("expires_at", new Date().toISOString());
-    
+      .lt("created_at", twentyFourHoursAgo.toISOString())
+      .select();
+
     if (error) {
-      console.error("Error fetching expired bookings:", error);
-      return;
+      console.error("Error updating expired bookings:", error);
+      return { success: false, error };
     }
-    
-    console.log(`Found ${bookings.length} expired booking requests`);
-    
-    // Update each expired booking
-    for (const booking of bookings) {
-      // Using 'cancelled' instead of 'expired' since 'expired' is not a valid status
-      const { error: updateError } = await supabase
-        .from("bookings")
-        .update({ status: "cancelled", updated_at: new Date().toISOString() })
-        .eq("id", booking.id);
-      
-      if (updateError) {
-        console.error(`Error updating booking ${booking.id}:`, updateError);
-      }
+
+    if (data && data.length > 0) {
+      console.log(`${data.length} expired booking requests updated`);
     }
-    
-    console.log(`Successfully processed ${bookings.length} expired bookings`);
+
+    return { success: true, data };
   } catch (error) {
     console.error("Error in handleExpiredBookings:", error);
+    return { success: false, error };
   }
 };
