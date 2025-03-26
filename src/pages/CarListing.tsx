@@ -2,10 +2,11 @@
 import { Navigation } from "@/components/Navigation";
 import { CarGrid } from "@/components/CarGrid";
 import { SearchFilters } from "@/components/SearchFilters";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Car } from "@/types/car";
 
-// Define the search filters interface based on what SearchFilters component expects
-interface SearchParams {
+// Define the proper interface based on what the components expect
+interface FilterParams {
   query: string;
   brand: string;
   minPrice: string;
@@ -13,12 +14,13 @@ interface SearchParams {
 }
 
 const CarListing = () => {
-  const [searchParams, setSearchParams] = useState<SearchParams>({
+  const [searchParams, setSearchParams] = useState<FilterParams>({
     query: "",
     brand: "",
     minPrice: "",
     maxPrice: "",
   });
+  const [cars, setCars] = useState<Car[]>([]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,13 +29,17 @@ const CarListing = () => {
           <h1 className="text-2xl font-bold mb-6">Available Cars</h1>
           
           <SearchFilters 
-            onFiltersChange={(filters) => setSearchParams(filters as SearchParams)}
-            initialFilters={searchParams}
+            onFiltersChange={(filters: any) => setSearchParams(filters as FilterParams)}
           />
           
           <div className="mt-6">
             <CarGrid 
-              filters={searchParams}
+              cars={cars} 
+              isLoading={false} 
+              error={null} 
+              loadMoreRef={null}
+              hasMoreItems={false}
+              onLoadMore={() => {}}
             />
           </div>
         </div>

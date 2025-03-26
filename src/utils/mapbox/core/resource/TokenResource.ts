@@ -101,6 +101,6 @@ export class TokenResource extends ResourceBase {
    * @returns The current state.
    */
   getState(): ResourceState {
-    return this.status;
+    return this.state;
   }
 }

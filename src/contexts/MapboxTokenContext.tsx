@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -5,7 +6,6 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { mapboxTokenManager } from "@/utils/mapbox/tokenManager";
 import { toast } from "sonner";
 import { getMapboxToken } from "../utils/mapbox";
 
@@ -15,7 +15,6 @@ interface MapboxTokenContextType {
   loading: boolean;
   refreshToken: () => Promise<void>;
 }
-const mapBoxToken = await getMapboxToken();
 
 const MapboxTokenContext = createContext<MapboxTokenContextType>({
   token: null,
@@ -40,11 +39,19 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
     setTokenState((prev) => ({ ...prev, loading: true }));
 
     try {
-      const token = await mapBoxToken;
-      console.info("[MapboxTokenProvider] Token initialized successfully");
+      const token = await getMapboxToken();
+      console.info("[MapboxTokenProvider] Token initialized:", token ? "✓" : "✗");
 
       if (!token) {
         throw new Error("No token returned from token manager");
+      }
+
+      // Set the token in the mapboxgl instance
+      if (window.mapboxgl) {
+        console.log("[MapboxTokenProvider] Setting token on mapboxgl:", token.substring(0, 10) + "...");
+        window.mapboxgl.accessToken = token;
+      } else {
+        console.warn("[MapboxTokenProvider] mapboxgl not available yet");
       }
 
       setTokenState({
@@ -65,12 +72,11 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshToken = async () => {
     console.info("[MapboxTokenProvider] Refreshing token...");
-    mapboxTokenManager.clearToken();
     await initializeToken();
   };
 
   useEffect(() => {
-    console.info("[MapboxTokenProvider] Initializing token...");
+    console.info("[MapboxTokenProvider] Component mounted, initializing token...");
     initializeToken();
   }, []);
 
