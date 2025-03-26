@@ -2,7 +2,6 @@
 import { ResourceBase } from './ResourceBase';
 import { ResourceType, ResourceState } from './resourceTypes';
 import { mapboxTokenManager } from '@/utils/mapbox';
-import mapboxgl from 'mapbox-gl';
 
 /**
  * Represents the Mapbox GL JS module resource.
@@ -17,10 +16,8 @@ export class ModuleResource extends ResourceBase {
     try {
       this.setState('loading');
 
-      // Check if mapboxgl is already available (loaded via import)
-      if (mapboxgl) {
-        console.log('Mapbox module already available globally');
-        window.mapboxgl = mapboxgl;
+      // Check if mapboxgl is already available (loaded via script tag)
+      if (window.mapboxgl) {
         this.setState('ready');
         return true;
       }
@@ -41,17 +38,8 @@ export class ModuleResource extends ResourceBase {
         
         // Verify the module was loaded correctly
         if (!window.mapboxgl) {
-          window.mapboxgl = mapboxgl;
-        }
-        
-        if (!window.mapboxgl) {
           this.setState('error', 'Failed to load Mapbox GL JS module');
           return false;
-        }
-        
-        // Set the token on the mapboxgl object
-        if (tokenState.token && window.mapboxgl) {
-          window.mapboxgl.accessToken = tokenState.token;
         }
         
         this.setState('ready');
@@ -73,8 +61,7 @@ export class ModuleResource extends ResourceBase {
   }
 
   async validate(): Promise<boolean> {
-    if (window.mapboxgl || mapboxgl) {
-      window.mapboxgl = window.mapboxgl || mapboxgl;
+    if (window.mapboxgl) {
       this.setState('ready');
       return true;
     }
@@ -88,6 +75,6 @@ export class ModuleResource extends ResourceBase {
   }
 
   getState(): ResourceState {
-    return this.state;
+    return this.status;
   }
 }

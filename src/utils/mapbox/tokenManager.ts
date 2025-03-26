@@ -5,7 +5,6 @@ class MapboxTokenManager {
   private static instance: MapboxTokenManager;
   private token: string | null = null;
   private tokenValid: boolean = false;
-  private tokenPromise: Promise<string> | null = null;
 
   private constructor() {}
 
@@ -17,39 +16,19 @@ class MapboxTokenManager {
   }
 
   async getToken(): Promise<string> {
-    // Return cached token if available
     if (this.token) {
       return this.token;
     }
 
-    // If there's already a pending token request, return that promise
-    if (this.tokenPromise) {
-      return this.tokenPromise;
-    }
-
     try {
-      // Create a new token promise
-      this.tokenPromise = getMapboxToken();
-      
-      // Await the token and store it
-      const token = await this.tokenPromise;
-      
+      const token = await getMapboxToken();
       if (!token) {
         throw new Error('No Mapbox token available');
       }
-      
-      // Store the token and set validity
       this.token = token;
       this.tokenValid = true;
-      
-      // Clear the promise now that it's resolved
-      this.tokenPromise = null;
-      
-      // Return the token
       return token;
     } catch (error) {
-      // Clear the promise on error
-      this.tokenPromise = null;
       console.error('Error getting Mapbox token:', error);
       throw error;
     }
@@ -64,19 +43,9 @@ class MapboxTokenManager {
 
   async validateAndSetToken(token: string): Promise<boolean> {
     try {
-      if (!token || token.trim().length === 0) {
-        return false;
-      }
-      
-      // Store token and mark as valid
+      // Add validation logic if needed
       this.token = token;
       this.tokenValid = true;
-      
-      // Set token on the global mapboxgl object if available
-      if (window.mapboxgl) {
-        window.mapboxgl.accessToken = token;
-      }
-      
       return true;
     } catch (error) {
       console.error('Error validating token:', error);
@@ -99,12 +68,6 @@ class MapboxTokenManager {
   clearToken(): void {
     this.token = null;
     this.tokenValid = false;
-    this.tokenPromise = null;
-    
-    // Clear token from global mapboxgl object if available
-    if (window.mapboxgl) {
-      window.mapboxgl.accessToken = '';
-    }
   }
 }
 

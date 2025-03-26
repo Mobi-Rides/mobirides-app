@@ -1,13 +1,13 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMap } from "@/hooks/useMap";
-import { Locate } from "lucide-react";
+import { useMapboxToken } from "@/contexts/MapboxTokenContext";
+import { MapPin, Locate } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -21,25 +21,12 @@ export const BookingLocationPicker = ({
   onLocationSelected
 }: BookingLocationPickerProps) => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { mapContainer, map, isLoaded, resizeMap } = useMap({
+  const { mapContainer, map, isLoaded } = useMap({
     initialLatitude: -24.6282,
     initialLongitude: 25.9692,
     onMapClick: (lngLat) => {
       setSelectedLocation({ lat: lngLat.lat, lng: lngLat.lng });
-      
-      // Update marker position
-      if (map && markerRef.current) {
-        markerRef.current.setLngLat([lngLat.lng, lngLat.lat]);
-      } else if (map) {
-        // Create a new marker if it doesn't exist
-        const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
-          .setLngLat([lngLat.lng, lngLat.lat])
-          .addTo(map);
-        markerRef.current = newMarker;
-      }
     }
   });
 
@@ -57,16 +44,6 @@ export const BookingLocationPicker = ({
               center: [longitude, latitude],
               zoom: 14
             });
-            
-            // Update or create marker
-            if (markerRef.current) {
-              markerRef.current.setLngLat([longitude, latitude]);
-            } else {
-              const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
-                .setLngLat([longitude, latitude])
-                .addTo(map);
-              markerRef.current = newMarker;
-            }
           }
           
           toast.success("Location found!");
@@ -90,61 +67,46 @@ export const BookingLocationPicker = ({
     }
   };
 
-  // Reset when dialog opens/closes
   useEffect(() => {
+    // Reset selected location when dialog opens
     if (isOpen) {
       setSelectedLocation(null);
-      if (markerRef.current) {
-        markerRef.current.remove();
-        markerRef.current = null;
-      }
     }
   }, [isOpen]);
 
-  // Resize map when the dialog is open
+  // Resize map when the dialog is open and when map is available
   useEffect(() => {
-    if (isOpen && isLoaded) {
+    if (isOpen && map && isLoaded) {
       console.log('Dialog opened, resizing map');
       
-      // Give time for the dialog to render
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
+      // Create a resize observer to ensure the map is properly sized
+      const resizeObserver = new ResizeObserver(() => {
+        console.log('Map container resized');
+        map.resize();
+      });
+      
+      // Observe the map container
+      if (mapContainer.current) {
+        resizeObserver.observe(mapContainer.current);
       }
       
-      timerRef.current = setTimeout(() => {
-        resizeMap();
-        console.log('Map resize triggered');
-      }, 500);
+      // Small timeout to ensure the dialog is fully rendered before initial resize
+      const timer = setTimeout(() => {
+        map.resize();
+      }, 150);
+      
+      return () => {
+        clearTimeout(timer);
+        resizeObserver.disconnect();
+      };
     }
-    
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [isOpen, isLoaded, resizeMap]);
-
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (markerRef.current) {
-        markerRef.current.remove();
-        markerRef.current = null;
-      }
-      
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, []);
+  }, [isOpen, map, isLoaded, mapContainer]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) onClose();
     }}>
-      <DialogContent className="sm:max-w-[600px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>Select Pickup Location</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -152,9 +114,8 @@ export const BookingLocationPicker = ({
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 overflow-auto px-6 py-2">
-          <div className="relative w-full rounded-md overflow-hidden border border-border mb-4" 
-               style={{ height: "400px", minHeight: "300px" }}>
+        <div className="flex-1 overflow-hidden flex flex-col px-6 py-2 h-[calc(90vh-180px)]">
+          <div className="relative w-full h-full min-h-[300px] rounded-md overflow-hidden border border-border mb-2">
             {!isLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted/20 z-10">
                 <p className="text-sm text-muted-foreground">Loading map...</p>
@@ -163,6 +124,7 @@ export const BookingLocationPicker = ({
             <div 
               ref={mapContainer} 
               className="w-full h-full"
+              style={{ minHeight: '300px' }}
             />
             
             {selectedLocation && (
@@ -185,14 +147,14 @@ export const BookingLocationPicker = ({
             </div>
           </div>
           
-          <div className="flex flex-col gap-2 mb-4">
+          <div className="flex flex-col gap-2">
             <p className="text-xs text-muted-foreground">
               {selectedLocation 
                 ? "Location selected. Click confirm to use this location." 
                 : "Click on the map to select a pickup location, or use the button to get your current location."}
             </p>
           </div>
-        </ScrollArea>
+        </div>
         
         <div className="flex justify-end gap-2 p-4 border-t sticky bottom-0 bg-background">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
@@ -200,6 +162,7 @@ export const BookingLocationPicker = ({
             onClick={confirmLocation}
             disabled={!selectedLocation}
           >
+            <MapPin className="h-4 w-4 mr-2" />
             Confirm Location
           </Button>
         </div>
