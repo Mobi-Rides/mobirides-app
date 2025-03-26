@@ -27,6 +27,7 @@ export const CarLocation = ({
   const mapInitializedRef = useRef<boolean>(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const fallbackStyle = "mapbox://styles/mapbox/light-v11";
 
   useEffect(() => {
     const fetchMapboxToken = async () => {
@@ -48,24 +49,39 @@ export const CarLocation = ({
 
   // Initialize map only once when component mounts
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || !mapContainer.current) {
       return;
     }
 
+    // Verify container size
+    const container = mapContainer.current;
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.error("Map container has zero width or height");
+      return;
+    }
+
+    console.log("Initializing map with coordinates:", { longitude, latitude });
+
     if (mapboxToken) {
       mapboxgl.accessToken = mapboxToken;
+    } else {
+      console.error("No Mapbox token available");
+      return;
     }
 
     try {
+      // Use the correct coordinate order for mapbox [lng, lat]
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: mapStyle,
-        center: [longitude, latitude],
+        style: mapStyle || fallbackStyle,
+        center: [longitude, latitude], // Correct order: [longitude, latitude]
         zoom: 13,
         interactive: false, // Make the map non-interactive
       });
 
       map.current.on("load", () => {
+        console.log("Map loaded successfully");
+        
         // Add marker
         marker.current = new mapboxgl.Marker({ color: "#7C3AED" })
           .setLngLat([longitude, latitude])
@@ -74,9 +90,19 @@ export const CarLocation = ({
         mapInitializedRef.current = true;
       });
 
+      map.current.on("style.load", () => {
+        console.log("Map style loaded successfully");
+      });
+
       map.current.on("error", (e) => {
         console.error("Map error:", e);
         toast.error("Error loading location map");
+        
+        // Try to load fallback style if the error was style-related
+        if (e.error && e.error.message.includes("style") && mapStyle !== fallbackStyle) {
+          console.log("Attempting to load fallback style");
+          map.current?.setStyle(fallbackStyle);
+        }
       });
     } catch (error) {
       console.error("Error initializing map:", error);
@@ -104,7 +130,7 @@ export const CarLocation = ({
   // Update map style when mapStyle prop changes
   useEffect(() => {
     if (map.current && mapInitializedRef.current) {
-      map.current.setStyle(mapStyle);
+      map.current.setStyle(mapStyle || fallbackStyle);
     }
   }, [mapStyle]);
 
@@ -126,6 +152,7 @@ export const CarLocation = ({
           <div
             ref={mapContainer}
             className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700"
+            style={{ minHeight: "160px" }}
           />
         )}
       </CardContent>

@@ -38,6 +38,8 @@ export const BookingLocationPicker = ({
   const mapInitializedRef = useRef<boolean>(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const fallbackStyle = "mapbox://styles/mapbox/light-v11";
+  const defaultStyle = "mapbox://styles/mapbox/streets-v12";
 
   useEffect(() => {
     const fetchMapboxToken = async () => {
@@ -47,6 +49,7 @@ export const BookingLocationPicker = ({
           toast.error("Failed to get the map token");
           return;
         }
+        console.log("Mapbox token retrieved successfully");
         setMapboxToken(token);
         setIsLoading(false);
       } catch (error) {
@@ -67,25 +70,44 @@ export const BookingLocationPicker = ({
     )
       return;
 
+    // Verify container size
+    const container = mapContainer.current;
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.error("Map container has zero width or height");
+      return;
+    }
+
+    console.log("Initializing map with token:", mapboxToken ? "Token available" : "No token");
+
     // Initialize mapbox
     mapboxgl.accessToken = mapboxToken;
 
     try {
+      const defaultCenter = [25.9692, -24.6282]; // Default center [lng, lat]
+      console.log("Map initialization with center:", defaultCenter);
+      
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [-24.6282, 25.9692],
+        style: defaultStyle,
+        center: defaultCenter, // Correct order: [longitude, latitude]
         zoom: 13,
       });
 
       map.current.on("load", () => {
+        console.log("Map loaded successfully");
+        
         // Add navigation controls after map loads
         map.current?.addControl(new mapboxgl.NavigationControl(), "top-right");
 
         mapInitializedRef.current = true;
       });
 
+      map.current.on("style.load", () => {
+        console.log("Map style loaded successfully");
+      });
+
       map.current.on("click", (e) => {
+        console.log("Map clicked at:", [e.lngLat.lng, e.lngLat.lat]);
         setSelectedLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
 
         // Update marker position
@@ -105,6 +127,12 @@ export const BookingLocationPicker = ({
       map.current.on("error", (e) => {
         console.error("Map error:", e);
         toast.error("Error loading location map");
+        
+        // Try to load fallback style if the error was style-related
+        if (e.error && e.error.message.includes("style") && defaultStyle !== fallbackStyle) {
+          console.log("Attempting to load fallback style");
+          map.current?.setStyle(fallbackStyle);
+        }
       });
     } catch (error) {
       console.error("Error initializing map:", error);
@@ -122,17 +150,23 @@ export const BookingLocationPicker = ({
   }, [isOpen, mapboxToken]);
 
   const getUserLocation = useCallback(() => {
+    if (!map.current) {
+      console.error("Map not initialized yet");
+      return;
+    }
+    
     if (navigator.geolocation) {
       toast.info("Getting your location...");
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          console.log("User location:", { latitude, longitude });
           setSelectedLocation({ lat: latitude, lng: longitude });
 
           // If map is loaded, pan to user location
           if (map.current) {
             map.current.flyTo({
-              center: [longitude, latitude],
+              center: [longitude, latitude], // Correct order: [longitude, latitude]
               zoom: 14,
             });
 
@@ -159,7 +193,7 @@ export const BookingLocationPicker = ({
     } else {
       toast.error("Geolocation is not supported by your browser");
     }
-  }, [map]);
+  }, []);
 
   const confirmLocation = () => {
     if (selectedLocation) {
@@ -178,12 +212,13 @@ export const BookingLocationPicker = ({
         markerRef.current.remove();
         markerRef.current = null;
       }
+      mapInitializedRef.current = false; // Reset initialization flag to force reinit
     }
   }, [isOpen]);
 
   // Resize map when the dialog is open
   useEffect(() => {
-    if (isOpen && mapInitializedRef.current && map.current) {
+    if (isOpen && map.current) {
       console.log("Dialog opened, resizing map");
 
       // Give time for the dialog to render
@@ -192,8 +227,10 @@ export const BookingLocationPicker = ({
       }
 
       timerRef.current = setTimeout(() => {
-        map.current?.resize();
-        console.log("Map resize triggered");
+        if (map.current) {
+          map.current.resize();
+          console.log("Map resize triggered");
+        }
       }, 500);
     }
 
@@ -203,7 +240,7 @@ export const BookingLocationPicker = ({
         timerRef.current = null;
       }
     };
-  }, [isOpen, mapInitializedRef.current]);
+  }, [isOpen]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -216,6 +253,11 @@ export const BookingLocationPicker = ({
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
+      }
+      
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
       }
     };
   }, []);
@@ -262,7 +304,7 @@ export const BookingLocationPicker = ({
                 variant="secondary"
                 className="h-8 shadow-sm"
                 onClick={getUserLocation}
-                disabled={!mapboxToken || isLoading}
+                disabled={!mapboxToken || isLoading || !map.current}
               >
                 <Locate className="h-4 w-4 mr-1" />
                 Use My Location
