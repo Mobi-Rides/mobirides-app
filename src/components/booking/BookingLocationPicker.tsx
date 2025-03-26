@@ -2,12 +2,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useMap } from "@/hooks/useMap";
 import { Locate } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useMapboxToken } from "@/contexts/MapboxTokenContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -21,27 +22,71 @@ export const BookingLocationPicker = ({
   onLocationSelected
 }: BookingLocationPickerProps) => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const mapContainer = useRef<HTMLDivElement | null>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const mapInitializedRef = useRef<boolean>(false);
   
-  const { mapContainer, map, isLoaded, resizeMap } = useMap({
-    initialLatitude: -24.6282,
-    initialLongitude: 25.9692,
-    onMapClick: (lngLat) => {
-      setSelectedLocation({ lat: lngLat.lat, lng: lngLat.lng });
-      
-      // Update marker position
-      if (map && markerRef.current) {
-        markerRef.current.setLngLat([lngLat.lng, lngLat.lat]);
-      } else if (map) {
-        // Create a new marker if it doesn't exist
-        const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
-          .setLngLat([lngLat.lng, lngLat.lat])
-          .addTo(map);
-        markerRef.current = newMarker;
-      }
+  const { token: mapboxToken, loading, isValid } = useMapboxToken();
+  
+  // Initialize map when component mounts and token is available
+  useEffect(() => {
+    if (!isOpen || !mapContainer.current || !mapboxToken || mapInitializedRef.current) return;
+
+    // Initialize mapbox
+    mapboxgl.accessToken = mapboxToken;
+
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [-24.6282, 25.9692],
+        zoom: 13,
+      });
+
+      map.current.on("load", () => {
+        // Add navigation controls after map loads
+        map.current?.addControl(new mapboxgl.NavigationControl(), "top-right");
+        
+        mapInitializedRef.current = true;
+      });
+
+      map.current.on("click", (e) => {
+        setSelectedLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+        
+        // Update marker position
+        if (map.current) {
+          if (markerRef.current) {
+            markerRef.current.setLngLat([e.lngLat.lng, e.lngLat.lat]);
+          } else {
+            // Create a new marker if it doesn't exist
+            const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
+              .setLngLat([e.lngLat.lng, e.lngLat.lat])
+              .addTo(map.current);
+            markerRef.current = newMarker;
+          }
+        }
+      });
+
+      map.current.on("error", (e) => {
+        console.error("Map error:", e);
+        toast.error("Error loading location map");
+      });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Could not initialize location map");
     }
-  });
+
+    // Cleanup when component unmounts
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+      mapInitializedRef.current = false;
+    };
+  }, [isOpen, mapboxToken]);
 
   const getUserLocation = useCallback(() => {
     if (navigator.geolocation) {
@@ -52,8 +97,8 @@ export const BookingLocationPicker = ({
           setSelectedLocation({ lat: latitude, lng: longitude });
           
           // If map is loaded, pan to user location
-          if (map) {
-            map.flyTo({
+          if (map.current) {
+            map.current.flyTo({
               center: [longitude, latitude],
               zoom: 14
             });
@@ -64,7 +109,7 @@ export const BookingLocationPicker = ({
             } else {
               const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
                 .setLngLat([longitude, latitude])
-                .addTo(map);
+                .addTo(map.current);
               markerRef.current = newMarker;
             }
           }
@@ -103,7 +148,7 @@ export const BookingLocationPicker = ({
 
   // Resize map when the dialog is open
   useEffect(() => {
-    if (isOpen && isLoaded) {
+    if (isOpen && mapInitializedRef.current && map.current) {
       console.log('Dialog opened, resizing map');
       
       // Give time for the dialog to render
@@ -112,7 +157,7 @@ export const BookingLocationPicker = ({
       }
       
       timerRef.current = setTimeout(() => {
-        resizeMap();
+        map.current?.resize();
         console.log('Map resize triggered');
       }, 500);
     }
@@ -123,7 +168,7 @@ export const BookingLocationPicker = ({
         timerRef.current = null;
       }
     };
-  }, [isOpen, isLoaded, resizeMap]);
+  }, [isOpen, mapInitializedRef.current]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -155,11 +200,12 @@ export const BookingLocationPicker = ({
         <ScrollArea className="flex-1 overflow-auto px-6 py-2">
           <div className="relative w-full rounded-md overflow-hidden border border-border mb-4" 
                style={{ height: "400px", minHeight: "300px" }}>
-            {!isLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-muted/20 z-10">
-                <p className="text-sm text-muted-foreground">Loading map...</p>
+            {(loading || !mapboxToken) && (
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm">
+                <Skeleton className="w-full h-full" />
               </div>
             )}
+            
             <div 
               ref={mapContainer} 
               className="w-full h-full"
@@ -178,6 +224,7 @@ export const BookingLocationPicker = ({
                 variant="secondary"
                 className="h-8 shadow-sm"
                 onClick={getUserLocation}
+                disabled={!mapboxToken || loading}
               >
                 <Locate className="h-4 w-4 mr-1" />
                 Use My Location
@@ -187,7 +234,11 @@ export const BookingLocationPicker = ({
           
           <div className="flex flex-col gap-2 mb-4">
             <p className="text-xs text-muted-foreground">
-              {selectedLocation 
+              {loading 
+                ? "Loading map..."
+                : !mapboxToken
+                ? "Map configuration not available"
+                : selectedLocation 
                 ? "Location selected. Click confirm to use this location." 
                 : "Click on the map to select a pickup location, or use the button to get your current location."}
             </p>
