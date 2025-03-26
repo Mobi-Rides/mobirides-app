@@ -1,5 +1,5 @@
 
-import { Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
@@ -49,8 +49,7 @@ const PageTransitionLoader = () => {
   );
 };
 
-// This component contains all the routes for the app
-const App = () => {
+const AppRoutes = () => {
   return (
     <>
       <PageTransitionLoader />
@@ -88,9 +87,19 @@ const App = () => {
         <Route path="/rental-review/:bookingId" element={<RentalReview />} />
         <Route path="/rental-details/:id" element={<ProtectedRoute><RentalDetailsRefactored /></ProtectedRoute>} />
       </Routes>
-      <ShadcnToaster />
-      <SonnerToaster position="top-center" />
     </>
+  );
+};
+
+const App = () => {
+  return (
+    <ThemeProvider>
+      <Router>
+        <AppRoutes />
+        <ShadcnToaster />
+        <SonnerToaster position="top-center" />
+      </Router>
+    </ThemeProvider>
   );
 };
 
