@@ -19,7 +19,6 @@ import Notifications from "@/pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BarLoader } from "react-spinners";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
 import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
 import RentalDetailsRefactored from "./pages/RentalDetailsRefactored";
@@ -95,13 +94,11 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <ThemeProvider>
-      <MapboxTokenProvider>
-        <Router>
-          <AppRoutes />
-          <ShadcnToaster />
-          <SonnerToaster position="top-center" />
-        </Router>
-      </MapboxTokenProvider>
+      <Router>
+        <AppRoutes />
+        <ShadcnToaster />
+        <SonnerToaster position="top-center" />
+      </Router>
     </ThemeProvider>
   );
 };

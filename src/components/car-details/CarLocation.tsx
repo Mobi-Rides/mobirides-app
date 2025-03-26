@@ -1,8 +1,8 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { useMapboxToken } from "@/hooks/useMapboxToken";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { getMapboxToken } from "@/utils/mapbox";
@@ -30,14 +30,18 @@ export const CarLocation = ({
 
   useEffect(() => {
     const fetchMapboxToken = async () => {
-      const token = await getMapboxToken();
-      if (!token) {
-        toast.error("Failed to get the map token");
-        return;
+      try {
+        const token = await getMapboxToken();
+        if (!token) {
+          toast.error("Failed to get the map token");
+          return;
+        }
+        setMapboxToken(token);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error getting Mapbox token:", error);
+        toast.error("Failed to load map configuration");
       }
-      console.log("Mapbox token:", token);
-      setMapboxToken(token);
-      setIsLoading(false);
     };
     fetchMapboxToken();
   }, []);
@@ -50,7 +54,6 @@ export const CarLocation = ({
 
     if (mapboxToken) {
       mapboxgl.accessToken = mapboxToken;
-      console.log("Mapbox token set");
     }
 
     try {

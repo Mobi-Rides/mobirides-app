@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,6 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useMapboxToken } from "@/contexts/MapboxTokenContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMapboxToken } from "@/utils/mapbox";
 
@@ -41,9 +41,18 @@ export const BookingLocationPicker = ({
 
   useEffect(() => {
     const fetchMapboxToken = async () => {
-      const token = await getMapboxToken();
-      setMapboxToken(token);
-      setIsLoading(false);
+      try {
+        const token = await getMapboxToken();
+        if (!token) {
+          toast.error("Failed to get the map token");
+          return;
+        }
+        setMapboxToken(token);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error getting Mapbox token:", error);
+        toast.error("Failed to load map configuration");
+      }
     };
     fetchMapboxToken();
   }, []);
