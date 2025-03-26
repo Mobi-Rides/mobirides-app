@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { getMapboxToken } from "@/utils/mapbox";
+import { Skeleton } from "../ui/skeleton";
 
 interface CarLocationProps {
   latitude: number;
@@ -23,15 +25,33 @@ export const CarLocation = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const mapInitializedRef = useRef<boolean>(false);
-  const { token: mapboxToken } = useMapboxToken();
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      const token = await getMapboxToken();
+      if (!token) {
+        toast.error("Failed to get the map token");
+        return;
+      }
+      console.log("Mapbox token:", token);
+      setMapboxToken(token);
+      setIsLoading(false);
+    };
+    fetchMapboxToken();
+  }, []);
 
   // Initialize map only once when component mounts
   useEffect(() => {
-    if (!mapboxToken || !mapContainer.current || mapInitializedRef.current)
+    if (isLoading) {
       return;
+    }
 
-    // Initialize mapbox
-    mapboxgl.accessToken = mapboxToken;
+    if (mapboxToken) {
+      mapboxgl.accessToken = mapboxToken;
+      console.log("Mapbox token set");
+    }
 
     try {
       map.current = new mapboxgl.Map({
@@ -68,7 +88,7 @@ export const CarLocation = ({
         mapInitializedRef.current = false;
       }
     };
-  }, [latitude, longitude, mapboxToken, mapStyle]);
+  }, [latitude, longitude, mapboxToken, mapStyle, isLoading]);
 
   // Update map center when coordinates change
   useEffect(() => {
@@ -95,10 +115,16 @@ export const CarLocation = ({
       </CardHeader>
       <CardContent>
         <p className="text-sm mb-3 dark:text-gray-300">{location}</p>
-        <div
-          ref={mapContainer}
-          className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700"
-        />
+        {isLoading ? (
+          <div className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700">
+            <Skeleton className="w-full h-full" />
+          </div>
+        ) : (
+          <div
+            ref={mapContainer}
+            className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700"
+          />
+        )}
       </CardContent>
     </Card>
   );

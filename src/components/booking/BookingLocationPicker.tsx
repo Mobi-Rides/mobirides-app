@@ -1,7 +1,12 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Locate } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +14,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapboxToken } from "@/contexts/MapboxTokenContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getMapboxToken } from "@/utils/mapbox";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -19,20 +25,38 @@ interface BookingLocationPickerProps {
 export const BookingLocationPicker = ({
   isOpen,
   onClose,
-  onLocationSelected
+  onLocationSelected,
 }: BookingLocationPickerProps) => {
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mapInitializedRef = useRef<boolean>(false);
-  
-  const { token: mapboxToken, loading, isValid } = useMapboxToken();
-  
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      const token = await getMapboxToken();
+      setMapboxToken(token);
+      setIsLoading(false);
+    };
+    fetchMapboxToken();
+  }, []);
+
   // Initialize map when component mounts and token is available
   useEffect(() => {
-    if (!isOpen || !mapContainer.current || !mapboxToken || mapInitializedRef.current) return;
+    if (
+      !isOpen ||
+      !mapContainer.current ||
+      !mapboxToken ||
+      mapInitializedRef.current
+    )
+      return;
 
     // Initialize mapbox
     mapboxgl.accessToken = mapboxToken;
@@ -40,7 +64,7 @@ export const BookingLocationPicker = ({
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: "mapbox://styles/mapbox/streets-v12",
         center: [-24.6282, 25.9692],
         zoom: 13,
       });
@@ -48,13 +72,13 @@ export const BookingLocationPicker = ({
       map.current.on("load", () => {
         // Add navigation controls after map loads
         map.current?.addControl(new mapboxgl.NavigationControl(), "top-right");
-        
+
         mapInitializedRef.current = true;
       });
 
       map.current.on("click", (e) => {
         setSelectedLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
-        
+
         // Update marker position
         if (map.current) {
           if (markerRef.current) {
@@ -95,14 +119,14 @@ export const BookingLocationPicker = ({
         (position) => {
           const { latitude, longitude } = position.coords;
           setSelectedLocation({ lat: latitude, lng: longitude });
-          
+
           // If map is loaded, pan to user location
           if (map.current) {
             map.current.flyTo({
               center: [longitude, latitude],
-              zoom: 14
+              zoom: 14,
             });
-            
+
             // Update or create marker
             if (markerRef.current) {
               markerRef.current.setLngLat([longitude, latitude]);
@@ -113,12 +137,14 @@ export const BookingLocationPicker = ({
               markerRef.current = newMarker;
             }
           }
-          
+
           toast.success("Location found!");
         },
         (error) => {
           console.error("Error getting location:", error);
-          toast.error("Could not get your location. Please enable location services.");
+          toast.error(
+            "Could not get your location. Please enable location services."
+          );
         }
       );
     } else {
@@ -149,19 +175,19 @@ export const BookingLocationPicker = ({
   // Resize map when the dialog is open
   useEffect(() => {
     if (isOpen && mapInitializedRef.current && map.current) {
-      console.log('Dialog opened, resizing map');
-      
+      console.log("Dialog opened, resizing map");
+
       // Give time for the dialog to render
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
-      
+
       timerRef.current = setTimeout(() => {
         map.current?.resize();
-        console.log('Map resize triggered');
+        console.log("Map resize triggered");
       }, 500);
     }
-    
+
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -177,7 +203,7 @@ export const BookingLocationPicker = ({
         markerRef.current.remove();
         markerRef.current = null;
       }
-      
+
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
@@ -186,71 +212,73 @@ export const BookingLocationPicker = ({
   }, []);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
-    }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[600px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>Select Pickup Location</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Click on the map to select a pickup location or use the button to get your current location.
+            Click on the map to select a pickup location or use the button to
+            get your current location.
           </DialogDescription>
         </DialogHeader>
-        
+
         <ScrollArea className="flex-1 overflow-auto px-6 py-2">
-          <div className="relative w-full rounded-md overflow-hidden border border-border mb-4" 
-               style={{ height: "400px", minHeight: "300px" }}>
-            {(loading || !mapboxToken) && (
+          <div
+            className="relative w-full rounded-md overflow-hidden border border-border mb-4"
+            style={{ height: "400px", minHeight: "300px" }}
+          >
+            {(isLoading || !mapboxToken) && (
               <div className="absolute inset-0 bg-background/80 backdrop-blur-sm">
                 <Skeleton className="w-full h-full" />
               </div>
             )}
-            
-            <div 
-              ref={mapContainer} 
-              className="w-full h-full"
-            />
-            
+
+            <div ref={mapContainer} className="w-full h-full" />
+
             {selectedLocation && (
               <div className="absolute top-2 left-2 bg-background/90 p-2 rounded-md shadow-sm border border-border text-xs">
                 <p>Latitude: {selectedLocation.lat.toFixed(6)}</p>
                 <p>Longitude: {selectedLocation.lng.toFixed(6)}</p>
               </div>
             )}
-            
+
             <div className="absolute top-2 right-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="secondary"
                 className="h-8 shadow-sm"
                 onClick={getUserLocation}
-                disabled={!mapboxToken || loading}
+                disabled={!mapboxToken || isLoading}
               >
                 <Locate className="h-4 w-4 mr-1" />
                 Use My Location
               </Button>
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-2 mb-4">
             <p className="text-xs text-muted-foreground">
-              {loading 
+              {isLoading
                 ? "Loading map..."
                 : !mapboxToken
                 ? "Map configuration not available"
-                : selectedLocation 
-                ? "Location selected. Click confirm to use this location." 
+                : selectedLocation
+                ? "Location selected. Click confirm to use this location."
                 : "Click on the map to select a pickup location, or use the button to get your current location."}
             </p>
           </div>
         </ScrollArea>
-        
+
         <div className="flex justify-end gap-2 p-4 border-t sticky bottom-0 bg-background">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button 
-            onClick={confirmLocation}
-            disabled={!selectedLocation}
-          >
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={confirmLocation} disabled={!selectedLocation}>
             Confirm Location
           </Button>
         </div>
