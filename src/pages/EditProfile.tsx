@@ -59,7 +59,20 @@ const EditProfile = () => {
       <main className="pb-16">
         <div className="container mx-auto max-w-4xl p-4">
           <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
-          <ProfileEditView profileData={profile} />
+          <ProfileEditView profileData={{
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            phone: profile.phone_number,
+            role: profile.role,
+            id: profile.id,
+            phone_number: profile.phone_number,
+            is_sharing_location: profile.is_sharing_location,
+            location_sharing_scope: profile.location_sharing_scope,
+            latitude: profile.latitude,
+            longitude: profile.longitude,
+            created_at: profile.created_at,
+            updated_at: profile.updated_at
+          }} />
         </div>
       </main>
       <Navigation />

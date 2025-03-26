@@ -83,13 +83,14 @@ export const BookingLocationPicker = ({
     mapboxgl.accessToken = mapboxToken;
 
     try {
-      const defaultCenter = [25.9692, -24.6282]; // Default center [lng, lat]
+      // Fix: Define coordinates as a proper tuple
+      const defaultCenter: [number, number] = [25.9692, -24.6282]; // Default center [lng, lat]
       console.log("Map initialization with center:", defaultCenter);
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: defaultStyle,
-        center: defaultCenter, // Correct order: [longitude, latitude]
+        center: defaultCenter, // Using the properly typed tuple
         zoom: 13,
       });
 
@@ -128,8 +129,8 @@ export const BookingLocationPicker = ({
         console.error("Map error:", e);
         toast.error("Error loading location map");
         
-        // Try to load fallback style if the error was style-related
-        if (e.error && e.error.message.includes("style") && defaultStyle !== fallbackStyle) {
+        // Fix: Use string comparison instead of type comparison
+        if (e.error && e.error.message.includes("style") && map.current?.getStyle().sprite !== fallbackStyle) {
           console.log("Attempting to load fallback style");
           map.current?.setStyle(fallbackStyle);
         }
@@ -166,7 +167,7 @@ export const BookingLocationPicker = ({
           // If map is loaded, pan to user location
           if (map.current) {
             map.current.flyTo({
-              center: [longitude, latitude], // Correct order: [longitude, latitude]
+              center: [longitude, latitude] as [number, number], // Fixed: Cast to proper tuple
               zoom: 14,
             });
 
