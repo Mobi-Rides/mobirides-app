@@ -21,6 +21,7 @@ interface CustomMapboxProps {
   dpad?: boolean;
   zoom?: number;
   locationToggle?: boolean;
+  destination?: { latitude: number; longitude: number } | null;
 }
 
 const CustomMapbox = ({
@@ -35,6 +36,7 @@ const CustomMapbox = ({
   interactive,
   dpad,
   locationToggle,
+  destination,
   returnLocation,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);

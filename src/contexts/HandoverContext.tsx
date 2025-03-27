@@ -32,6 +32,7 @@ interface HandoverContextType {
   bookingDetails: any;
   debugMode: boolean;
   toggleDebugMode: () => void;
+  destination: { latitude: number; longitude: number } | null;
 }
 
 const HandoverContext = createContext<HandoverContextType | undefined>(
@@ -59,6 +60,29 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     null
   );
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  const fetchDestination = async () => {
+    if (!bookingId) return;
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(
+        `
+        latitude,
+        longitude
+        `
+      )
+      .eq("id", bookingId)
+      .single();
+
+    if (error) throw error;
+    setDestination(data);
+  };
+
+  useEffect(() => {
+    if (!bookingId) return;
+    fetchDestination();
+  }, [bookingId]);
 
   // Get current user
   useEffect(() => {
@@ -86,7 +110,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
           renter:profiles!renter_id (
             id,
             full_name,
-            avatar_url
+            avatar_url,
           ),
           car:cars (
             *,
@@ -133,6 +157,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
           ? (handoverData.renter_location as unknown as HandoverLocation)
           : null,
       };
+      console.log("Handover data", convertedData);
       setHandoverStatus(convertedData);
     }
   }, [handoverData]);
@@ -222,6 +247,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         bookingDetails,
         debugMode,
         toggleDebugMode,
+        destination,
       }}
     >
       {children}

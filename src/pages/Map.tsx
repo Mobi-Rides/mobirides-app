@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import CustomMapbox from "@/components/map/CustomMapbox";
@@ -21,9 +21,14 @@ const Map = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [onlineHosts, setOnlineHosts] = useState([]);
   const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(false);
+  const [destination, setDestination] = useState({});
   const { theme } = useTheme();
 
   const isHandoverMode = Boolean(mode === "handover" && bookingId);
+
+  const getDestination = useCallback((latitude: number, longitude: number) => {
+    setDestination({ latitude, longitude });
+  }, []);
 
   useEffect(() => {
     // Open handover sheet automatically in handover mode
@@ -74,6 +79,7 @@ const Map = () => {
   useEffect(() => {
     if (!isHandoverMode) {
       fetchHostLocations();
+      console.log("Location", destination);
     }
   }, [isHandoverMode]);
 
@@ -120,7 +126,7 @@ const Map = () => {
         isHandoverMode={isHandoverMode}
         bookingId={bookingId}
         dpad={true}
-        locationToggle={true }
+        locationToggle={true}
       />
     );
   };
@@ -144,6 +150,7 @@ const Map = () => {
           <HandoverSheet
             isOpen={isHandoverSheetOpen}
             onClose={() => setIsHandoverSheetOpen(false)}
+            getDestination={getDestination}
           />
           <Navigation />
         </HandoverProvider>

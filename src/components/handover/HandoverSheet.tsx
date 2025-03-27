@@ -13,9 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 interface HandoverSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  getDestination?: (latitude: number, longitude: number) => void;
 }
 
-export const HandoverSheet = ({ isOpen, onClose }: HandoverSheetProps) => {
+export const HandoverSheet = ({
+  isOpen,
+  onClose,
+  getDestination,
+}: HandoverSheetProps) => {
   const {
     handoverStatus,
     isLoading,
@@ -25,10 +30,19 @@ export const HandoverSheet = ({ isOpen, onClose }: HandoverSheetProps) => {
     bookingDetails,
     debugMode,
     toggleDebugMode,
+    destination,
   } = useHandover();
 
   const [handoverStep, setHandoverStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // set destination
+  useEffect(() => {
+    if (destination) {
+      const { latitude, longitude } = destination;
+      getDestination?.(latitude, longitude);
+    }
+  }, [getDestination, destination]);
 
   // Determine current step based on handover status
   useEffect(() => {
@@ -471,7 +485,8 @@ export const HandoverSheet = ({ isOpen, onClose }: HandoverSheetProps) => {
                       Status:{" "}
                       {handoverStatus?.handover_completed
                         ? "Completed"
-                        : handoverStatus?.host_ready && handoverStatus?.renter_ready
+                        : handoverStatus?.host_ready &&
+                          handoverStatus?.renter_ready
                         ? "Ready for handover"
                         : "Waiting for participants"}
                     </p>
