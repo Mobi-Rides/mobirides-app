@@ -64,7 +64,7 @@ export const CarHeader = ({ brand, model, year, location }: CarHeaderProps) => {
     if (!id) return;
     
     // Create the full URL to the car listing
-    const shareUrl = `${window.location.origin}/car/${id}`;
+    const shareUrl = `${window.location.origin}/cars/${id}`;
     
     try {
       if (navigator.share) {
