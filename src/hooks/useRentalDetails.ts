@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { differenceInDays, isWithinInterval, addDays } from "date-fns";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
-import { BookingStatus } from "@/types/booking";
+import { BookingStatus, HandoverType } from "@/types/booking";
 
 export const useRentalDetails = () => {
   const { id } = useParams();
@@ -100,8 +100,8 @@ export const useRentalDetails = () => {
     booking.status === 'confirmed' && // Use string literal for DB consistency
     (isStartHandoverDay || isEndHandoverDay);
     
-  // Explicitly type handoverType as "pickup" | "return"
-  const handoverType: "pickup" | "return" = isStartHandoverDay ? "pickup" : "return";
+
+  const handoverType: HandoverType = isStartHandoverDay ? HandoverType.PICKUP : HandoverType.RETURN;
 
   // Calculate duration
   const rentalDurationDays = booking

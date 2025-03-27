@@ -6,7 +6,9 @@ import { BookingNotificationType, BookingStatus } from "@/types/booking";
 /**
  * Checks for expired booking requests and changes their status to 'expired'
  */
+
 export const handleExpiredBookings = async () => {
+  console.log("Checking for expired booking requests...");
   try {
     const today = startOfDay(new Date());
     
@@ -31,13 +33,6 @@ export const handleExpiredBookings = async () => {
       
       console.log(`Updated ${expiredBookings.length} expired booking requests`);
     }
-    
-    return { success: true, count: expiredBookings?.length || 0 };
-  } catch (error) {
-    console.error('Error handling expired bookings:', error);
-    return { success: false, error };
-  }
-};
 
 /**
  * Creates notifications for car owners about bookings the day before they start
@@ -79,10 +74,10 @@ export const createBookingReminders = async () => {
       
       console.log(`Created ${upcomingBookings.length} booking reminders`);
     }
-    
-    return { success: true, count: upcomingBookings?.length || 0 };
+
+    return { success: true, data };
   } catch (error) {
-    console.error('Error creating booking reminders:', error);
+    console.error("Error in handleExpiredBookings:", error);
     return { success: false, error };
   }
 };

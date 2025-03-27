@@ -16,6 +16,11 @@ interface CustomMapboxProps {
   onlineHosts?: ExtendedProfile[];
   isHandoverMode?: boolean;
   bookingId?: string | null;
+  returnLocation?: (long: number, lat: number) => void;
+  interactive?: boolean;
+  dpad?: boolean;
+  zoom?: number;
+  locationToggle?: boolean;
 }
 
 const CustomMapbox = ({
@@ -26,6 +31,11 @@ const CustomMapbox = ({
   mapStyle = "mapbox://styles/mapbox/streets-v12",
   isHandoverMode = false,
   bookingId,
+  zoom,
+  interactive,
+  dpad,
+  locationToggle,
+  returnLocation,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -39,6 +49,15 @@ const CustomMapbox = ({
   const handover = isHandoverMode ? useHandover() : null;
 
   useEffect(() => {
+    if (!returnLocation) {
+      return;
+    }
+    const long = userLocation.longitude;
+    const lat = userLocation.latitude;
+    returnLocation(long, lat);
+  }, [userLocation]);
+
+  useEffect(() => {
     if (mapbox_token) {
       mapboxgl.accessToken = mapbox_token;
     }
@@ -48,7 +67,8 @@ const CustomMapbox = ({
         container: mapContainer.current,
         style: mapStyle,
         center: [longitude, latitude],
-        zoom: 14,
+        zoom: zoom ? zoom : 14,
+        interactive: interactive ? interactive : true,
       });
 
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -320,10 +340,12 @@ const CustomMapbox = ({
                         max-w-xs w-auto pointer-events-auto transition-all duration-300 
                         border border-gray-200 dark:border-gray-700"
           >
-            <OnlineStatusToggle
-              lat={userLocation.latitude}
-              long={userLocation.longitude}
-            />
+            {locationToggle && (
+              <OnlineStatusToggle
+                lat={userLocation.latitude}
+                long={userLocation.longitude}
+              />
+            )}
           </div>
         </div>
       )}
@@ -349,14 +371,15 @@ const CustomMapbox = ({
           </div>
         </div>
       )}
-
-      <Dpad
-        onUp={onUp}
-        onDown={onDown}
-        onLeft={onLeft}
-        onRight={onRight}
-        onReset={onReset}
-      />
+      {dpad && (
+        <Dpad
+          onUp={onUp}
+          onDown={onDown}
+          onLeft={onLeft}
+          onRight={onRight}
+          onReset={onReset}
+        />
+      )}
     </div>
   );
 };

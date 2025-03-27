@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -14,11 +13,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/types/car";
-import { AlertCircle, CalendarX } from "lucide-react";
+import { AlertCircle, CalendarX,MapPin } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { handleExpiredBookings } from "@/services/bookingService";
 import { checkCarAvailability, getBookedDates, isDateUnavailable } from "@/services/availabilityService";
 import { BookingStatus } from "@/types/booking";
+import { handleExpiredBookings } from "@/services/bookingService";
+import { BookingLocationPicker } from "./BookingLocationPicker";
 
 interface BookingDialogProps {
   car: Car;
@@ -35,6 +36,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const [pickupLocation, setPickupLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const mountedRef = useRef(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -43,13 +50,16 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       const currentUserId = data.session?.user?.id;
+
+      if (!mountedRef.current) return;
+
       setUserId(currentUserId);
-      
+
       if (currentUserId && car.owner_id === currentUserId) {
         setIsOwner(true);
       }
     };
-    
+
     checkAuth();
   }, [car.owner_id]);
 
@@ -89,6 +99,37 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       setIsAvailable(true);
     }
   }, [startDate, endDate, car.id]);
+      
+ useEffect(() => {
+    let isMounted = true;
+
+    if (isOpen) {
+      handleExpiredBookings().catch(console.error);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+      
+
+  // Set default pickup location from car's location
+  useEffect(() => {
+    if (car.latitude && car.longitude) {
+      setPickupLocation({
+        latitude: car.latitude,
+        longitude: car.longitude,
+      });
+    }
+  }, [car]);
+
+  // Clean up resources on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const createNotification = async (
     userId: string,
@@ -138,12 +179,17 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       return;
     }
 
-    // Double-check availability before proceeding
     const available = await checkCarAvailability(car.id, startDate, endDate);
     if (!available) {
       toast({
         title: "Not available",
         description: "This car is not available for the selected dates. Please choose different dates.",
+      }
+            
+    if (!pickupLocation) {
+      toast({
+        title: "Error",
+        description: "Please select a pickup location",
         variant: "destructive",
       });
       return;
@@ -168,7 +214,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           start_date: format(startDate, "yyyy-MM-dd"),
           end_date: format(endDate, "yyyy-MM-dd"),
           total_price: totalPrice,
-          status: "pending" // Explicitly set to pending
+          latitude: pickupLocation.latitude,
+          longitude: pickupLocation.longitude,
+          status: "pending", // Explicitly set status to a valid enum value
         })
         .select()
         .single();
@@ -198,6 +246,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         booking.id
       );
 
+      if (!mountedRef.current) return;
+
       toast({
         title: "Success",
         description: "Your booking request has been submitted!",
@@ -206,6 +256,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       onClose();
       navigate("/bookings");
     } catch (error) {
+      if (!mountedRef.current) return;
+
       console.error("Booking error:", error);
       toast({
         title: "Error",
@@ -213,8 +265,32 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
     }
+  };
+
+  const handleLocationSelected = (lat: number, lng: number) => {
+    setPickupLocation({
+      latitude: lat,
+      longitude: lng,
+    });
+  };
+
+  const formatLocationDescription = () => {
+    if (!pickupLocation) return "No location selected";
+
+    if (
+      pickupLocation.latitude === car.latitude &&
+      pickupLocation.longitude === car.longitude
+    ) {
+      return `Default: ${car.location}`;
+    }
+
+    return `Custom location (${pickupLocation.latitude.toFixed(
+      4
+    )}, ${pickupLocation.longitude.toFixed(4)})`;
   };
 
   // Determine if a date should be disabled in the calendar
@@ -304,6 +380,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     ) * car.price_per_day}
                   </p>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsLocationPickerOpen(true)}
+                >
+                  Change
+                </Button>
               </div>
             </div>
           )}
@@ -314,13 +397,19 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           </Button>
           <Button
             onClick={handleBooking}
-            disabled={!startDate || !endDate || isLoading || isOwner || isCheckingAvailability || !isAvailable}
+            disabled={!startDate || !endDate || isLoading || isOwner || isCheckingAvailability || !isAvailable || !pickupLocation}
             className="w-full sm:w-auto"
           >
             {isLoading ? "Booking..." : (isCheckingAvailability ? "Checking..." : "Confirm")}
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+        <BookingLocationPicker
+          isOpen={isLocationPickerOpen}
+          onClose={() => setIsLocationPickerOpen(false)}
+          onLocationSelected={handleLocationSelected}
+        />
+    </>
   );
 };

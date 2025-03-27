@@ -119,6 +119,8 @@ const Map = () => {
         mapStyle={getMapStyle()}
         isHandoverMode={isHandoverMode}
         bookingId={bookingId}
+        dpad={true}
+        locationToggle={true }
       />
     );
   };
