@@ -367,6 +367,24 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               }}
             />
           </div>
+          <div className="space-y-2">
+              <h4 className="font-medium">Pickup Location</h4>
+              <div className="flex items-center justify-between p-3 border rounded-md">
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p>{formatLocationDescription()}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsLocationPickerOpen(true)}
+                >
+                  Change
+                </Button>
+              </div>
+            </div>
           {startDate && endDate && (
             <div className="space-y-2">
               <h4 className="font-medium">Summary</h4>
