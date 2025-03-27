@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { differenceInDays, isWithinInterval, addDays } from "date-fns";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
+import { HandoverType } from "@/types/booking";
 
 export const useRentalDetails = () => {
   const { id } = useParams();
@@ -99,7 +100,7 @@ export const useRentalDetails = () => {
     booking.status === "confirmed" &&
     (isStartHandoverDay || isEndHandoverDay);
     
-  const handoverType = isStartHandoverDay ? "pickup" : "return";
+  const handoverType: HandoverType = isStartHandoverDay ? HandoverType.PICKUP : HandoverType.RETURN;
 
   // Calculate duration
   const rentalDurationDays = booking

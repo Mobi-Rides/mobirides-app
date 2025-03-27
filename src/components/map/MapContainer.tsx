@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapboxConfig } from "@/components/MapboxConfig";
+import MapboxConfig from "@/components/MapboxConfig";
 import { mapboxTokenManager } from '@/utils/mapbox';
 import { stateManager } from '@/utils/mapbox/core/stateManager';
 import { eventBus } from '@/utils/mapbox/core/eventBus';
@@ -195,4 +195,3 @@ export const MapContainer = ({
     </div>
   );
 };
-

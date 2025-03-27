@@ -106,9 +106,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return (
-    <MapboxTokenProvider>
-      {children}
-    </MapboxTokenProvider>
-  );
+  // Render the children directly instead of wrapping them in a router component
+  return <>{children}</>;
 };
