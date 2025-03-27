@@ -100,7 +100,8 @@ export const useRentalDetails = () => {
     booking.status === 'confirmed' && // Use string literal for DB consistency
     (isStartHandoverDay || isEndHandoverDay);
     
-  const handoverType = isStartHandoverDay ? "pickup" : "return";
+  // Explicitly type handoverType as "pickup" | "return"
+  const handoverType: "pickup" | "return" = isStartHandoverDay ? "pickup" : "return";
 
   // Calculate duration
   const rentalDurationDays = booking
