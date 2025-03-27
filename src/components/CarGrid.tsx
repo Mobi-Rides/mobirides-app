@@ -5,9 +5,31 @@ import { CarCard } from "@/components/CarCard";
 export interface CarGridProps {
   cars: any[];
   hasMoreItems?: boolean;
+  isLoading?: boolean;
+  error?: Error | null;
+  loadMoreRef?: React.RefObject<HTMLDivElement> | null;
+  onLoadMore?: () => void;
+  isFetchingNextPage?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export const CarGrid = ({ cars, hasMoreItems }: CarGridProps) => {
+export const CarGrid = ({ cars, hasMoreItems, isLoading, error, loadMoreRef, onLoadMore, isFetchingNextPage, isAuthenticated }: CarGridProps) => {
+  if (isLoading) {
+    return (
+      <div className="text-center mt-8">
+        <p className="text-muted-foreground">Loading cars...</p>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="text-center mt-8">
+        <p className="text-red-500">Error loading cars: {error.message}</p>
+      </div>
+    );
+  }
+
   if (cars.length === 0) {
     return (
       <div className="text-center mt-8">
@@ -21,6 +43,11 @@ export const CarGrid = ({ cars, hasMoreItems }: CarGridProps) => {
       {cars.map((car) => (
         <CarCard key={car.id} car={car} />
       ))}
+      {loadMoreRef && (
+        <div ref={loadMoreRef} className="col-span-full h-10 flex items-center justify-center">
+          {isFetchingNextPage && <p className="text-muted-foreground">Loading more...</p>}
+        </div>
+      )}
     </div>
   );
 };

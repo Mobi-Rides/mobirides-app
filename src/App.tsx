@@ -1,7 +1,7 @@
+
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Index from "@/pages/Index";
-import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
 import Map from "@/pages/Map";
 import More from "@/pages/More";
@@ -18,6 +18,7 @@ import Notifications from "@/pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BarLoader } from "react-spinners";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/hooks/useAuth";
 import "./App.css";
 import { RentalReview } from "./pages/RentalReview";
 import RentalDetailsRefactored from "./pages/RentalDetailsRefactored";
@@ -56,7 +57,6 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
@@ -86,6 +86,7 @@ const AppRoutes = () => {
         />
         <Route path="/rental-review/:bookingId" element={<RentalReview />} />
         <Route path="/rental-details/:id" element={<ProtectedRoute><RentalDetailsRefactored /></ProtectedRoute>} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </>
   );
@@ -94,11 +95,13 @@ const AppRoutes = () => {
 function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <AppRoutes />
-        <ShadcnToaster />
-        <SonnerToaster position="top-center" />
-      </Router>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+          <ShadcnToaster />
+          <SonnerToaster position="top-center" />
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

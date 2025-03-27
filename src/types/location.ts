@@ -1,3 +1,4 @@
+
 import mapboxgl from 'mapbox-gl';
 
 export interface LocationState {
@@ -18,18 +19,22 @@ export interface LocationHandlers {
 
 export interface CarGridProps {
   cars: any[];
-  isLoading: boolean;
-  error: Error | null;
-  loadMoreRef: React.RefObject<HTMLDivElement> | null;
-  hasMoreItems: boolean;  // Keep this property
-  onLoadMore: () => void;
+  isLoading?: boolean;
+  error?: Error | null;
+  loadMoreRef?: React.RefObject<HTMLDivElement> | null;
+  hasMoreItems?: boolean;
+  onLoadMore?: () => void;
+  isFetchingNextPage?: boolean;
+  isAuthenticated?: boolean;
 }
+
+export type VehicleType = "Basic" | "Standard" | "Executive" | "4x4" | "SUV" | "Electric" | "Exotic";
 
 export interface CarFormData {
   brand: string;
   model: string;
   year: number;
-  vehicle_type: string;
+  vehicle_type: VehicleType;
   price_per_day: number;
   location: string;
   latitude: number;
