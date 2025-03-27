@@ -35,3 +35,12 @@ export enum BookingNotificationType {
   BOOKING_CANCELLATION = "booking_cancellation",
   BOOKING_REMINDER = "booking_reminder"
 }
+
+// Add this enum for booking statuses
+export enum BookingStatus {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  CANCELLED = "cancelled",
+  COMPLETED = "completed",
+  EXPIRED = "expired"
+}

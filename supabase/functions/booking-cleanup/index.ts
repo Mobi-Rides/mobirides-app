@@ -12,7 +12,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Check for expired booking requests and change their status to 'cancelled'
+// Check for expired booking requests and change their status to 'expired'
 async function handleExpiredBookings() {
   try {
     const today = new Date();
@@ -28,10 +28,10 @@ async function handleExpiredBookings() {
     if (error) throw error;
     
     if (expiredBookings && expiredBookings.length > 0) {
-      // Update status to cancelled for expired bookings
+      // Update status to expired for expired bookings
       const { error: updateError } = await supabase
         .from('bookings')
-        .update({ status: 'cancelled' })
+        .update({ status: 'expired' })
         .in('id', expiredBookings.map(booking => booking.id));
       
       if (updateError) throw updateError;

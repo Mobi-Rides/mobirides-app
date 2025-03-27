@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { HostStats } from "./HostStats";
 import { HostTabContent } from "./host/HostTabContent";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BookingStatus } from "@/types/booking";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
@@ -72,18 +73,22 @@ export const HostDashboard = () => {
   const today = new Date();
   
   const activeBookings = bookings?.filter(b => 
-    b.status === "confirmed" && 
+    b.status === BookingStatus.CONFIRMED && 
     new Date(b.start_date) <= today && 
     new Date(b.end_date) >= today
   );
   
   const pendingBookings = bookings?.filter(b => 
-    b.status === "pending"
+    b.status === BookingStatus.PENDING
+  );
+  
+  const expiredBookings = bookings?.filter(b => 
+    b.status === BookingStatus.EXPIRED
   );
   
   const completedBookings = bookings?.filter(b => 
-    b.status === "completed" || 
-    (b.status === "confirmed" && new Date(b.end_date) < today)
+    b.status === BookingStatus.COMPLETED || 
+    (b.status === BookingStatus.CONFIRMED && new Date(b.end_date) < today)
   );
 
   const handleCardClick = (bookingId: string) => {
@@ -102,6 +107,7 @@ export const HostDashboard = () => {
         <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
           <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
           <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="pending">Booking Requests</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="expired">Expired Requests</TabsTrigger>
           <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="completed">Past Rentals</TabsTrigger>
         </TabsList>
 
@@ -120,6 +126,15 @@ export const HostDashboard = () => {
             tabType="pending" 
             emptyMessage="No booking requests"
             onCardClick={handlePendingCardClick}
+          />
+        </TabsContent>
+
+        <TabsContent value="expired">
+          <HostTabContent 
+            bookings={expiredBookings} 
+            tabType="expired" 
+            emptyMessage="No expired requests"
+            onCardClick={handleCardClick}
           />
         </TabsContent>
 

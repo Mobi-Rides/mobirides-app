@@ -2,14 +2,14 @@
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BookingWithRelations } from "@/types/booking";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HostTabContentProps {
   bookings: BookingWithRelations[] | undefined;
-  tabType: "active" | "pending" | "completed";
+  tabType: "active" | "pending" | "completed" | "expired";
   emptyMessage: string;
   onCardClick: (bookingId: string) => void;
 }
@@ -40,6 +40,8 @@ export const HostTabContent = ({
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
       case "cancelled":
         return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+      case "expired":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400";
       case "completed":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
       default:
@@ -53,6 +55,8 @@ export const HostTabContent = ({
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+      case "expired":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400";
       case "completed":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
       default:
@@ -83,6 +87,7 @@ export const HostTabContent = ({
                   <span className={`text-xs font-normal px-2 py-1 rounded-full ${getTypeColor(tabType)}`}>
                     {tabType === "active" && "Active"}
                     {tabType === "pending" && "Pending"}
+                    {tabType === "expired" && "Expired"}
                     {tabType === "completed" && "Completed"}
                   </span>
                 </CardTitle>
@@ -112,6 +117,13 @@ export const HostTabContent = ({
                       </p>
                     </div>
                   </div>
+                  
+                  {tabType === "expired" && (
+                    <div className="flex items-center text-xs text-gray-500 mt-2">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      <span>Request expired without response</span>
+                    </div>
+                  )}
                   
                   {tabType === "completed" && booking.status === "completed" && (
                     <div className="flex justify-end pt-1">

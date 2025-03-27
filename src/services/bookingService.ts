@@ -1,10 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isAfter, isBefore, startOfDay, subDays } from "date-fns";
-import { BookingNotificationType } from "@/types/booking";
+import { BookingNotificationType, BookingStatus } from "@/types/booking";
 
 /**
- * Checks for expired booking requests and changes their status to 'cancelled'
+ * Checks for expired booking requests and changes their status to 'expired'
  */
 export const handleExpiredBookings = async () => {
   try {
@@ -20,10 +20,10 @@ export const handleExpiredBookings = async () => {
     if (error) throw error;
     
     if (expiredBookings && expiredBookings.length > 0) {
-      // Update status to cancelled for expired bookings
+      // Update status to expired for expired bookings
       const { error: updateError } = await supabase
         .from('bookings')
-        .update({ status: 'cancelled' })
+        .update({ status: BookingStatus.EXPIRED })
         .in('id', expiredBookings.map(booking => booking.id));
       
       if (updateError) throw updateError;
@@ -57,7 +57,7 @@ export const createBookingReminders = async () => {
           owner_id
         )
       `)
-      .eq('status', 'confirmed')
+      .eq('status', BookingStatus.CONFIRMED)
       .gte('start_date', tomorrow.toISOString())
       .lt('start_date', dayAfterTomorrow.toISOString());
     
