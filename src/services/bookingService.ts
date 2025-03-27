@@ -14,7 +14,7 @@ export const handleExpiredBookings = async () => {
     const { data: expiredBookings, error } = await supabase
       .from('bookings')
       .select('*')
-      .eq('status', 'pending')
+      .eq('status', BookingStatus.PENDING)
       .lt('start_date', today.toISOString());
 
     if (error) throw error;
@@ -23,7 +23,7 @@ export const handleExpiredBookings = async () => {
       // Update status to expired for expired bookings
       const { error: updateError } = await supabase
         .from('bookings')
-        .update({ status: BookingStatus.EXPIRED })
+        .update({ status: "expired" })
         .in('id', expiredBookings.map(booking => booking.id));
       
       if (updateError) throw updateError;
@@ -69,7 +69,7 @@ export const createBookingReminders = async () => {
         // Notify the car owner
         await supabase.from('notifications').insert({
           user_id: booking.car.owner_id,
-          type: BookingNotificationType.BOOKING_REMINDER,
+          type: "booking_reminder",
           content: `Reminder: A booking for your ${booking.car.brand} ${booking.car.model} starts tomorrow.`,
           related_car_id: booking.car_id,
           related_booking_id: booking.id

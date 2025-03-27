@@ -117,7 +117,7 @@ const RentalDetailsRefactored = () => {
         <RentalActions 
           bookingId={booking.id}
           canHandover={canHandover}
-          handoverType={handoverType}
+          handoverType={handoverType as "pickup" | "return"}
           isInitiatingHandover={isInitiatingHandover}
           isCompletedRental={isCompletedRental}
           isActiveRental={isActiveRental}

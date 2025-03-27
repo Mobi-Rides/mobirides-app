@@ -17,6 +17,7 @@ import { Car } from "@/types/car";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { handleExpiredBookings } from "@/services/bookingService";
+import { BookingStatus } from "@/types/booking";
 
 interface BookingDialogProps {
   car: Car;

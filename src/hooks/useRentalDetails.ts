@@ -99,7 +99,7 @@ export const useRentalDetails = () => {
     booking.status === "confirmed" &&
     (isStartHandoverDay || isEndHandoverDay);
     
-  const handoverType = isStartHandoverDay ? "pickup" : "return";
+  const handoverType: "pickup" | "return" = isStartHandoverDay ? "pickup" : "return";
 
   // Calculate duration
   const rentalDurationDays = booking
@@ -108,7 +108,7 @@ export const useRentalDetails = () => {
 
   // Handover initiation handler
   const handleInitiateHandover = async () => {
-    if (!booking || !currentUser) return;
+    if (!booking || !currentUser) return null;
 
     setIsInitiatingHandover(true);
     try {
