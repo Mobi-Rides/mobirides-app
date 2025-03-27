@@ -21,12 +21,16 @@ const Map = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [onlineHosts, setOnlineHosts] = useState([]);
   const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(false);
-  const [destination, setDestination] = useState({});
+  const [destination, setDestination] = useState({
+    latitude: null,
+    longitude: null,
+  });
   const { theme } = useTheme();
 
   const isHandoverMode = Boolean(mode === "handover" && bookingId);
 
   const getDestination = useCallback((latitude: number, longitude: number) => {
+    console.log("Setting destination", latitude, longitude);
     setDestination({ latitude, longitude });
   }, []);
 
@@ -127,6 +131,7 @@ const Map = () => {
         bookingId={bookingId}
         dpad={true}
         locationToggle={true}
+        destination={destination}
       />
     );
   };
