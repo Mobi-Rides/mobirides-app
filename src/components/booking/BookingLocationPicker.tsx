@@ -43,7 +43,7 @@ export const BookingLocationPicker = ({
   const [location, setLocation] = useState(initialLocation);
   const { theme } = useTheme();
 
-  const retunLocation = useCallback((long: number, lat: number) => {
+  const returnLocation = useCallback((long: number, lat: number) => {
     setLocation({ long, lat });
   }, []);
 
