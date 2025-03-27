@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,8 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMapboxToken } from "@/utils/mapbox";
+import { useTheme } from "next-themes";
+import CustomMapbox from "../map/CustomMapbox";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -38,8 +39,15 @@ export const BookingLocationPicker = ({
   const mapInitializedRef = useRef<boolean>(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const fallbackStyle = "mapbox://styles/mapbox/light-v11";
-  const defaultStyle = "mapbox://styles/mapbox/streets-v12";
+  const { theme } = useTheme();
+
+  // Map style based on theme
+  const getMapStyle = () => {
+    if (theme === "dark") {
+      return "mapbox://styles/mapbox/navigation-night-v1";
+    }
+    return "mapbox://styles/mapbox/navigation-day-v1";
+  };
 
   useEffect(() => {
     const fetchMapboxToken = async () => {
@@ -77,7 +85,10 @@ export const BookingLocationPicker = ({
       return;
     }
 
-    console.log("Initializing map with token:", mapboxToken ? "Token available" : "No token");
+    console.log(
+      "Initializing map with token:",
+      mapboxToken ? "Token available" : "No token"
+    );
 
     // Initialize mapbox
     mapboxgl.accessToken = mapboxToken;
@@ -86,17 +97,17 @@ export const BookingLocationPicker = ({
       // Fix: Define coordinates as a proper tuple
       const defaultCenter: [number, number] = [25.9692, -24.6282]; // Default center [lng, lat]
       console.log("Map initialization with center:", defaultCenter);
-      
+
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: defaultStyle,
+        style: getMapStyle(),
         center: defaultCenter, // Using the properly typed tuple
         zoom: 13,
       });
 
       map.current.on("load", () => {
         console.log("Map loaded successfully");
-        
+
         // Add navigation controls after map loads
         map.current?.addControl(new mapboxgl.NavigationControl(), "top-right");
 
@@ -128,12 +139,6 @@ export const BookingLocationPicker = ({
       map.current.on("error", (e) => {
         console.error("Map error:", e);
         toast.error("Error loading location map");
-        
-        // Fix: Use string comparison instead of type comparison
-        if (e.error && e.error.message.includes("style") && map.current?.getStyle().sprite !== fallbackStyle) {
-          console.log("Attempting to load fallback style");
-          map.current?.setStyle(fallbackStyle);
-        }
       });
     } catch (error) {
       console.error("Error initializing map:", error);
@@ -155,7 +160,7 @@ export const BookingLocationPicker = ({
       console.error("Map not initialized yet");
       return;
     }
-    
+
     if (navigator.geolocation) {
       toast.info("Getting your location...");
       navigator.geolocation.getCurrentPosition(
@@ -255,7 +260,7 @@ export const BookingLocationPicker = ({
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      
+
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -289,16 +294,19 @@ export const BookingLocationPicker = ({
                 <Skeleton className="w-full h-full" />
               </div>
             )}
-
-            <div ref={mapContainer} className="w-full h-full" />
-
+            <CustomMapbox
+              mapbox_token={mapboxToken}
+              longitude={0}
+              latitude={0}
+              zoom={14}
+              dpad={true}
+            />
             {selectedLocation && (
               <div className="absolute top-2 left-2 bg-background/90 p-2 rounded-md shadow-sm border border-border text-xs">
                 <p>Latitude: {selectedLocation.lat.toFixed(6)}</p>
                 <p>Longitude: {selectedLocation.lng.toFixed(6)}</p>
               </div>
             )}
-
             <div className="absolute top-2 right-2">
               <Button
                 size="sm"

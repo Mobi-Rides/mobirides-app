@@ -16,6 +16,11 @@ interface CustomMapboxProps {
   onlineHosts?: ExtendedProfile[];
   isHandoverMode?: boolean;
   bookingId?: string | null;
+  returnLocation?: ({ log, lat }) => null;
+  interactive?: boolean;
+  dpad?: boolean;
+  zoom?: number;
+  locationToggle?: boolean;
 }
 
 const CustomMapbox = ({
@@ -26,6 +31,10 @@ const CustomMapbox = ({
   mapStyle = "mapbox://styles/mapbox/streets-v12",
   isHandoverMode = false,
   bookingId,
+  zoom,
+  interactive,
+  dpad,
+  locationToggle,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -48,7 +57,8 @@ const CustomMapbox = ({
         container: mapContainer.current,
         style: mapStyle,
         center: [longitude, latitude],
-        zoom: 14,
+        zoom: zoom ? zoom : 14,
+        interactive: interactive ? interactive : true,
       });
 
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -320,10 +330,11 @@ const CustomMapbox = ({
                         max-w-xs w-auto pointer-events-auto transition-all duration-300 
                         border border-gray-200 dark:border-gray-700"
           >
-            <OnlineStatusToggle
+            {locationToggle &&  <OnlineStatusToggle
               lat={userLocation.latitude}
               long={userLocation.longitude}
-            />
+            />}
+           
           </div>
         </div>
       )}
@@ -349,14 +360,15 @@ const CustomMapbox = ({
           </div>
         </div>
       )}
-
-      <Dpad
-        onUp={onUp}
-        onDown={onDown}
-        onLeft={onLeft}
-        onRight={onRight}
-        onReset={onReset}
-      />
+      {dpad && (
+        <Dpad
+          onUp={onUp}
+          onDown={onDown}
+          onLeft={onLeft}
+          onRight={onRight}
+          onReset={onReset}
+        />
+      )}
     </div>
   );
 };
