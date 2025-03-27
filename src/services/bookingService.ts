@@ -86,3 +86,40 @@ export const createBookingReminders = async () => {
     return { success: false, error };
   }
 };
+
+/**
+ * Checks if there are any conflicting bookings for a given date range and car
+ */
+export const checkBookingConflicts = async (
+  carId: string,
+  startDate: string, 
+  endDate: string,
+  excludeBookingId?: string
+) => {
+  try {
+    // Query for any overlapping bookings with status 'confirmed' or 'pending'
+    let query = supabase
+      .from('bookings')
+      .select('id, start_date, end_date, status')
+      .eq('car_id', carId)
+      .in('status', ['confirmed', 'pending'])
+      .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
+    
+    // Exclude the current booking if we're checking conflicts for an update
+    if (excludeBookingId) {
+      query = query.neq('id', excludeBookingId);
+    }
+
+    const { data: conflictingBookings, error } = await query;
+    
+    if (error) throw error;
+    
+    return {
+      hasConflicts: conflictingBookings && conflictingBookings.length > 0,
+      conflicts: conflictingBookings || []
+    };
+  } catch (error) {
+    console.error('Error checking booking conflicts:', error);
+    throw error;
+  }
+};

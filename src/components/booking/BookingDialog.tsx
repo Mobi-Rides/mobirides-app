@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/types/car";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CalendarX } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { handleExpiredBookings } from "@/services/bookingService";
+import { checkCarAvailability, getBookedDates, isDateUnavailable } from "@/services/availabilityService";
 import { BookingStatus } from "@/types/booking";
 
 interface BookingDialogProps {
@@ -31,6 +32,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [bookedDates, setBookedDates] = useState<Date[]>([]);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -49,12 +53,42 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     checkAuth();
   }, [car.owner_id]);
 
-  // Check for expired booking requests when the dialog opens
+  // Fetch booked dates when dialog opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && car.id) {
+      const fetchBookedDates = async () => {
+        const dates = await getBookedDates(car.id);
+        setBookedDates(dates);
+      };
+      
+      fetchBookedDates();
       handleExpiredBookings().catch(console.error);
     }
-  }, [isOpen]);
+  }, [isOpen, car.id]);
+
+  // Check availability whenever date range changes
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (startDate && endDate && car.id) {
+        setIsCheckingAvailability(true);
+        try {
+          const available = await checkCarAvailability(car.id, startDate, endDate);
+          setIsAvailable(available);
+        } catch (error) {
+          console.error("Error checking availability:", error);
+          setIsAvailable(false);
+        } finally {
+          setIsCheckingAvailability(false);
+        }
+      }
+    };
+
+    if (startDate && endDate) {
+      checkAvailability();
+    } else {
+      setIsAvailable(true);
+    }
+  }, [startDate, endDate, car.id]);
 
   const createNotification = async (
     userId: string,
@@ -104,6 +138,17 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       return;
     }
 
+    // Double-check availability before proceeding
+    const available = await checkCarAvailability(car.id, startDate, endDate);
+    if (!available) {
+      toast({
+        title: "Not available",
+        description: "This car is not available for the selected dates. Please choose different dates.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -111,7 +156,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
       const numberOfDays = Math.ceil(
         (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      ) + 1; // Include both start and end days
       const totalPrice = numberOfDays * car.price_per_day;
 
       // Create the booking
@@ -123,6 +168,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           start_date: format(startDate, "yyyy-MM-dd"),
           end_date: format(endDate, "yyyy-MM-dd"),
           total_price: totalPrice,
+          status: "pending" // Explicitly set to pending
         })
         .select()
         .single();
@@ -171,6 +217,19 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     }
   };
 
+  // Determine if a date should be disabled in the calendar
+  const isDateDisabled = (date: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate());
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    // Date is in the past
+    if (date < tomorrow) return true;
+    
+    // Date is already booked
+    return isDateUnavailable(date, bookedDates);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
@@ -193,6 +252,16 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           </Alert>
         )}
         
+        {!isAvailable && startDate && endDate && (
+          <Alert variant="destructive" className="mb-4">
+            <CalendarX className="h-4 w-4" />
+            <AlertTitle>Not available</AlertTitle>
+            <AlertDescription>
+              This car is not available for the selected dates. Please choose different dates.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <h4 className="font-medium">Select dates</h4>
@@ -207,11 +276,16 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 setEndDate(range?.to);
               }}
               numberOfMonths={1}
-              disabled={(date) => {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate());
-                tomorrow.setHours(0, 0, 0, 0);
-                return date < tomorrow;
+              disabled={isDateDisabled}
+              modifiers={{
+                booked: bookedDates
+              }}
+              modifiersStyles={{
+                booked: {
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: 'rgb(239, 68, 68)',
+                  textDecoration: 'line-through'
+                }
               }}
             />
           </div>
@@ -226,7 +300,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     Total: BWP{" "}
                     {Math.ceil(
                       (endDate.getTime() - startDate.getTime()) /
-                        (1000 * 60 * 60 * 24)
+                        (1000 * 60 * 60 * 24) + 1
                     ) * car.price_per_day}
                   </p>
                 </div>
@@ -240,10 +314,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           </Button>
           <Button
             onClick={handleBooking}
-            disabled={!startDate || !endDate || isLoading || isOwner}
+            disabled={!startDate || !endDate || isLoading || isOwner || isCheckingAvailability || !isAvailable}
             className="w-full sm:w-auto"
           >
-            {isLoading ? "Booking..." : "Confirm"}
+            {isLoading ? "Booking..." : (isCheckingAvailability ? "Checking..." : "Confirm")}
           </Button>
         </div>
       </DialogContent>
