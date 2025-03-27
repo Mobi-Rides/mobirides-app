@@ -88,13 +88,15 @@ export const CarLocation = ({
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2 dark:text-white">
-          <MapPin className="h-5 w-5 text-primary dark:text-primary-foreground" />
+        <CardTitle className="text-base text-left text-muted-foreground dark:text-white font-medium">
           Location
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm mb-3 dark:text-gray-300">{location}</p>
+        <div className="flex items-center gap-2 mb-3">
+          <MapPin size={16} className="text-red-500 " />
+          <p className="text-xs md:text-sm text-left text-muted-foreground dark:text-gray-300">{location}</p>
+        </div>
         <div
           ref={mapContainer}
           className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700"

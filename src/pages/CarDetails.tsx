@@ -132,6 +132,7 @@ const CarDetails = () => {
               model={car.model}
               year={car.year}
               location={car.location}
+              pricePerDay={car.price_per_day}
             />
             
             <CarSpecs

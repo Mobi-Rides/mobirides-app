@@ -1,6 +1,5 @@
-
 import { Link } from "react-router-dom";
-import { CalendarDays, Info, Edit, MapPin, Calendar, Share2 } from "lucide-react";
+import { CalendarDays, Info, Edit, MapPin, Calendar, Share2, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -18,9 +17,10 @@ interface CarHeaderProps {
   model: string;
   year: number;
   location: string;
+  pricePerDay: number;
 }
 
-export const CarHeader = ({ brand, model, year, location }: CarHeaderProps) => {
+export const CarHeader = ({ brand, model, year, location, pricePerDay }: CarHeaderProps) => {
   const { id } = useParams<{ id: string }>();
   const [isOwner, setIsOwner] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +71,7 @@ export const CarHeader = ({ brand, model, year, location }: CarHeaderProps) => {
         // Use Web Share API if available (mobile devices)
         await navigator.share({
           title: `${brand} ${model} (${year})`,
-          text: `Check out this ${brand} ${model} on DriveShare`,
+          text: `Let's rent this ${brand} ${model} on Mobi Rides`,
           url: shareUrl,
         });
         toast.success("Shared successfully");
@@ -94,56 +94,87 @@ export const CarHeader = ({ brand, model, year, location }: CarHeaderProps) => {
   
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col md:flex-row justify-between md:items-start">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{brand} {model}</h1>
-          <div className="flex items-center mt-1 text-muted-foreground">
-            <Badge variant="outline" className="mr-2">{year}</Badge>
-            <MapPin className="h-4 w-4 mr-1" />
-            <span>{location}</span>
+          <h1 className="text-2xl md:text-3xl text-left text-gray-700 dark:text-white font-bold">
+            {brand} {model} 
+          </h1>
+          <div className="flex items-center gap-1 mt-1 text-sm md:text-base text-muted-foreground dark:text-white">
+            <CalendarCheck size={16} className="h-4 w-4 mr-1 text-blue-500" />
+                     <span className="text-sm md:text-base text-muted-foreground">
+
+              {year}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1 mt-1 ">
+            <MapPin size={16} className="h-4 w-4 mr-1 text-red-500" />
+            <span className="text-sm md:text-base text-muted-foreground">
+              {location}
+            </span>
+          </div>
+          <div className="mt-8 flex items-center gap-1">
+            <h2 className="font-bold text-lg md:text-xl  text-primary">
+              BWP {pricePerDay}
+            </h2>
+            <p className="text-xs md:text-sm text-muted-foreground dark:text-white">
+              /day
+            </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4 md:mt-0">
           {isOwner && (
-            <Button 
-              variant="outline" 
-              size="sm"
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
               asChild
-              className="rounded-full bg-white/90 backdrop-blur-sm shadow hover:bg-white transition-colors"
             >
               <Link to={`/edit-car/${id}`}>
-                <Edit className="h-4 w-4 text-primary" />
-                <span className="sr-only">Edit Car Details</span>
+                <Edit className="h-4 w-4 text-[#581CFA] dark:text-white" />
+                <span className="hidden md:inline-block">
+                  <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
+                    Edit Car
+                  </p>
+                </span>
               </Link>
             </Button>
           )}
-          
+  
           <Popover open={copied} onOpenChange={setCopied}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-full bg-white/90 backdrop-blur-sm shadow hover:bg-white transition-colors"
+                className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
                 onClick={handleShare}
               >
-                <Share2 className="h-4 w-4 text-primary" />
-                <span className="sr-only">Share</span>
+                <Share2 className="h-4 w-4 text-[#581CFA] dark:text-white" />
+                <span className="hidden md:inline-block">
+                  <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
+                    Share
+                  </p>
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-2 text-sm">
               Link copied!
             </PopoverContent>
           </Popover>
-
+  
           <Button
             variant="outline"
             size="icon"
-            className="rounded-full bg-white/90 backdrop-blur-sm shadow hover:bg-white transition-colors"
+            className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
             asChild
           >
             <Link to="/bookings">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span className="sr-only">View Bookings</span>
+              <Calendar className="h-4 w-4 text-[#581CFA] dark:text-white" />
+              <span className="hidden md:inline-block">
+                <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
+                  Bookings
+                </p>
+              </span>
             </Link>
           </Button>
         </div>
