@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 
 export interface LocationState {
@@ -37,6 +36,9 @@ export interface CarFormData {
   longitude: number;
   description: string;
   features: string[];
+  fuel: string;
+  seats: number;
+  transmission: string;
 }
 
 export interface ProfileEditViewProps {

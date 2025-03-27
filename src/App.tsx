@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Index from "@/pages/Index";
@@ -25,6 +24,7 @@ import RentalDetailsRefactored from "./pages/RentalDetailsRefactored";
 import Signup from "./pages/signup";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
+import ResetPassword from "@/pages/ResetPassword";
 
 const PageTransitionLoader = () => {
   const location = useLocation();
@@ -91,7 +91,7 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => {
+function App() {
   return (
     <ThemeProvider>
       <Router>
@@ -101,6 +101,6 @@ const App = () => {
       </Router>
     </ThemeProvider>
   );
-};
+}
 
 export default App;
