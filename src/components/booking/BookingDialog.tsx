@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -45,27 +44,27 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       const currentUserId = data.session?.user?.id;
-      
+
       if (!mountedRef.current) return;
-      
+
       setUserId(currentUserId);
-      
+
       if (currentUserId && car.owner_id === currentUserId) {
         setIsOwner(true);
       }
     };
-    
+
     checkAuth();
   }, [car.owner_id]);
 
   // Check for expired booking requests when the dialog opens
   useEffect(() => {
     let isMounted = true;
-    
+
     if (isOpen) {
       handleExpiredBookings().catch(console.error);
     }
-    
+
     return () => {
       isMounted = false;
     };
@@ -76,11 +75,11 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     if (car.latitude && car.longitude) {
       setPickupLocation({
         latitude: car.latitude,
-        longitude: car.longitude
+        longitude: car.longitude,
       });
     }
   }, [car]);
-  
+
   // Clean up resources on unmount
   useEffect(() => {
     return () => {
@@ -164,9 +163,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           start_date: format(startDate, "yyyy-MM-dd"),
           end_date: format(endDate, "yyyy-MM-dd"),
           total_price: totalPrice,
-          pickup_latitude: pickupLocation.latitude,
-          pickup_longitude: pickupLocation.longitude,
-          status: "pending" // Explicitly set status to a valid enum value
+          latitude: pickupLocation.latitude,
+          longitude: pickupLocation.longitude,
+          status: "pending", // Explicitly set status to a valid enum value
         })
         .select()
         .single();
@@ -197,7 +196,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       );
 
       if (!mountedRef.current) return;
-      
+
       toast({
         title: "Success",
         description: "Your booking request has been submitted!",
@@ -207,7 +206,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       navigate("/bookings");
     } catch (error) {
       if (!mountedRef.current) return;
-      
+
       console.error("Booking error:", error);
       toast({
         title: "Error",
@@ -224,21 +223,23 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const handleLocationSelected = (lat: number, lng: number) => {
     setPickupLocation({
       latitude: lat,
-      longitude: lng
+      longitude: lng,
     });
   };
 
   const formatLocationDescription = () => {
     if (!pickupLocation) return "No location selected";
-    
+
     if (
-      pickupLocation.latitude === car.latitude && 
+      pickupLocation.latitude === car.latitude &&
       pickupLocation.longitude === car.longitude
     ) {
       return `Default: ${car.location}`;
     }
-    
-    return `Custom location (${pickupLocation.latitude.toFixed(4)}, ${pickupLocation.longitude.toFixed(4)})`;
+
+    return `Custom location (${pickupLocation.latitude.toFixed(
+      4
+    )}, ${pickupLocation.longitude.toFixed(4)})`;
   };
 
   return (
@@ -253,7 +254,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               Select your rental dates and pickup location
             </DialogDescription>
           </DialogHeader>
-          
+
           {isOwner && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -263,7 +264,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               </AlertDescription>
             </Alert>
           )}
-          
+
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <h4 className="font-medium">Select dates</h4>
@@ -286,7 +287,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 }}
               />
             </div>
-            
+
             <div className="space-y-2">
               <h4 className="font-medium">Pickup Location</h4>
               <div className="flex items-center justify-between p-3 border rounded-md">
@@ -296,8 +297,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     <p>{formatLocationDescription()}</p>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => setIsLocationPickerOpen(true)}
                 >
@@ -305,7 +306,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 </Button>
               </div>
             </div>
-            
+
             {startDate && endDate && (
               <div className="space-y-2">
                 <h4 className="font-medium">Summary</h4>
@@ -326,12 +327,22 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             )}
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="w-full sm:w-auto"
+            >
               Cancel
             </Button>
             <Button
               onClick={handleBooking}
-              disabled={!startDate || !endDate || isLoading || isOwner || !pickupLocation}
+              disabled={
+                !startDate ||
+                !endDate ||
+                isLoading ||
+                isOwner ||
+                !pickupLocation
+              }
               className="w-full sm:w-auto"
             >
               {isLoading ? "Booking..." : "Confirm"}
@@ -339,8 +350,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           </div>
         </DialogContent>
       </Dialog>
-      
-      <BookingLocationPicker 
+
+      <BookingLocationPicker
         isOpen={isLocationPickerOpen}
         onClose={() => setIsLocationPickerOpen(false)}
         onLocationSelected={handleLocationSelected}

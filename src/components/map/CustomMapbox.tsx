@@ -16,7 +16,7 @@ interface CustomMapboxProps {
   onlineHosts?: ExtendedProfile[];
   isHandoverMode?: boolean;
   bookingId?: string | null;
-  returnLocation?: ({ log, lat }) => null;
+  returnLocation?: (long: number, lat: number) => void;
   interactive?: boolean;
   dpad?: boolean;
   zoom?: number;
@@ -35,6 +35,7 @@ const CustomMapbox = ({
   interactive,
   dpad,
   locationToggle,
+  returnLocation,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -46,6 +47,15 @@ const CustomMapbox = ({
 
   // Get handover context if in handover mode
   const handover = isHandoverMode ? useHandover() : null;
+
+  useEffect(() => {
+    if (!returnLocation) {
+      return;
+    }
+    const long = userLocation.longitude;
+    const lat = userLocation.latitude;
+    returnLocation(long, lat);
+  }, [userLocation]);
 
   useEffect(() => {
     if (mapbox_token) {
@@ -330,11 +340,12 @@ const CustomMapbox = ({
                         max-w-xs w-auto pointer-events-auto transition-all duration-300 
                         border border-gray-200 dark:border-gray-700"
           >
-            {locationToggle &&  <OnlineStatusToggle
-              lat={userLocation.latitude}
-              long={userLocation.longitude}
-            />}
-           
+            {locationToggle && (
+              <OnlineStatusToggle
+                lat={userLocation.latitude}
+                long={userLocation.longitude}
+              />
+            )}
           </div>
         </div>
       )}

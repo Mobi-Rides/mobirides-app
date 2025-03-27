@@ -39,7 +39,13 @@ export const BookingLocationPicker = ({
   const mapInitializedRef = useRef<boolean>(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initialLocation = { long: 0, lat: 0 };
+  const [location, setLocation] = useState(initialLocation);
   const { theme } = useTheme();
+
+  const retunLocation = useCallback((long: number, lat: number) => {
+    setLocation({ long, lat });
+  }, []);
 
   // Map style based on theme
   const getMapStyle = () => {
@@ -68,146 +74,17 @@ export const BookingLocationPicker = ({
     fetchMapboxToken();
   }, []);
 
-  // Initialize map when component mounts and token is available
-  useEffect(() => {
-    if (
-      !isOpen ||
-      !mapContainer.current ||
-      !mapboxToken ||
-      mapInitializedRef.current
-    )
-      return;
-
-    // Verify container size
-    const container = mapContainer.current;
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      console.error("Map container has zero width or height");
-      return;
-    }
-
-    console.log(
-      "Initializing map with token:",
-      mapboxToken ? "Token available" : "No token"
-    );
-
-    // Initialize mapbox
-    mapboxgl.accessToken = mapboxToken;
-
-    try {
-      // Fix: Define coordinates as a proper tuple
-      const defaultCenter: [number, number] = [25.9692, -24.6282]; // Default center [lng, lat]
-      console.log("Map initialization with center:", defaultCenter);
-
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: getMapStyle(),
-        center: defaultCenter, // Using the properly typed tuple
-        zoom: 13,
-      });
-
-      map.current.on("load", () => {
-        console.log("Map loaded successfully");
-
-        // Add navigation controls after map loads
-        map.current?.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-        mapInitializedRef.current = true;
-      });
-
-      map.current.on("style.load", () => {
-        console.log("Map style loaded successfully");
-      });
-
-      map.current.on("click", (e) => {
-        console.log("Map clicked at:", [e.lngLat.lng, e.lngLat.lat]);
-        setSelectedLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
-
-        // Update marker position
-        if (map.current) {
-          if (markerRef.current) {
-            markerRef.current.setLngLat([e.lngLat.lng, e.lngLat.lat]);
-          } else {
-            // Create a new marker if it doesn't exist
-            const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
-              .setLngLat([e.lngLat.lng, e.lngLat.lat])
-              .addTo(map.current);
-            markerRef.current = newMarker;
-          }
-        }
-      });
-
-      map.current.on("error", (e) => {
-        console.error("Map error:", e);
-        toast.error("Error loading location map");
-      });
-    } catch (error) {
-      console.error("Error initializing map:", error);
-      toast.error("Could not initialize location map");
-    }
-
-    // Cleanup when component unmounts
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-      mapInitializedRef.current = false;
-    };
-  }, [isOpen, mapboxToken]);
-
-  const getUserLocation = useCallback(() => {
-    if (!map.current) {
-      console.error("Map not initialized yet");
-      return;
-    }
-
-    if (navigator.geolocation) {
-      toast.info("Getting your location...");
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          console.log("User location:", { latitude, longitude });
-          setSelectedLocation({ lat: latitude, lng: longitude });
-
-          // If map is loaded, pan to user location
-          if (map.current) {
-            map.current.flyTo({
-              center: [longitude, latitude] as [number, number], // Fixed: Cast to proper tuple
-              zoom: 14,
-            });
-
-            // Update or create marker
-            if (markerRef.current) {
-              markerRef.current.setLngLat([longitude, latitude]);
-            } else {
-              const newMarker = new mapboxgl.Marker({ color: "#7C3AED" })
-                .setLngLat([longitude, latitude])
-                .addTo(map.current);
-              markerRef.current = newMarker;
-            }
-          }
-
-          toast.success("Location found!");
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          toast.error(
-            "Could not get your location. Please enable location services."
-          );
-        }
-      );
-    } else {
-      toast.error("Geolocation is not supported by your browser");
-    }
-  }, []);
-
   const confirmLocation = () => {
-    if (selectedLocation) {
-      onLocationSelected(selectedLocation.lat, selectedLocation.lng);
+    if (location) {
+      onLocationSelected(location.lat, location.long);
       onClose();
     } else {
       toast.error("Please select a location first");
     }
+  };
+
+  const getUserLocation = () => {
+    setSelectedLocation({ lat: location.lat, lng: location.long });
   };
 
   // Reset when dialog opens/closes
@@ -300,6 +177,7 @@ export const BookingLocationPicker = ({
               latitude={0}
               zoom={14}
               dpad={true}
+              returnLocation={retunLocation}
             />
             {selectedLocation && (
               <div className="absolute top-2 left-2 bg-background/90 p-2 rounded-md shadow-sm border border-border text-xs">
@@ -338,7 +216,7 @@ export const BookingLocationPicker = ({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={confirmLocation} disabled={!selectedLocation}>
+          <Button onClick={confirmLocation} disabled={!location}>
             Confirm Location
           </Button>
         </div>
