@@ -23,7 +23,7 @@ export const handleExpiredBookings = async () => {
       // Update status to expired for expired bookings
       const { error: updateError } = await supabase
         .from('bookings')
-        .update({ status: "expired" })
+        .update({ status: BookingStatus.EXPIRED })
         .in('id', expiredBookings.map(booking => booking.id));
       
       if (updateError) throw updateError;
@@ -69,7 +69,7 @@ export const createBookingReminders = async () => {
         // Notify the car owner
         await supabase.from('notifications').insert({
           user_id: booking.car.owner_id,
-          type: "booking_reminder",
+          type: BookingNotificationType.BOOKING_REMINDER,
           content: `Reminder: A booking for your ${booking.car.brand} ${booking.car.model} starts tomorrow.`,
           related_car_id: booking.car_id,
           related_booking_id: booking.id

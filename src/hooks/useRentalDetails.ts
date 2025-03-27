@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { differenceInDays, isWithinInterval, addDays } from "date-fns";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
+import { BookingStatus } from "@/types/booking";
 
 export const useRentalDetails = () => {
   const { id } = useParams();
@@ -72,13 +73,13 @@ export const useRentalDetails = () => {
   const isOwner = booking && currentUser && booking.car.owner_id === currentUser.id;
   
   const isActiveRental = booking && 
-    booking.status === "confirmed" &&
+    booking.status === BookingStatus.CONFIRMED &&
     isWithinInterval(new Date(), {
       start: new Date(booking.start_date),
       end: addDays(new Date(booking.end_date), 1), // Include the end date
     });
   
-  const isCompletedRental = booking && booking.status === "completed";
+  const isCompletedRental = booking && booking.status === BookingStatus.COMPLETED;
 
   // Check if handover is possible
   const today = new Date();
@@ -96,7 +97,7 @@ export const useRentalDetails = () => {
     today.getFullYear() === endDate.getFullYear();
 
   const canHandover = booking &&
-    booking.status === "confirmed" &&
+    booking.status === BookingStatus.CONFIRMED &&
     (isStartHandoverDay || isEndHandoverDay);
     
   const handoverType: "pickup" | "return" = isStartHandoverDay ? "pickup" : "return";

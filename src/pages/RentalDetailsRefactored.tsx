@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -117,7 +116,7 @@ const RentalDetailsRefactored = () => {
         <RentalActions 
           bookingId={booking.id}
           canHandover={canHandover}
-          handoverType={handoverType as "pickup" | "return"}
+          handoverType={handoverType}
           isInitiatingHandover={isInitiatingHandover}
           isCompletedRental={isCompletedRental}
           isActiveRental={isActiveRental}
