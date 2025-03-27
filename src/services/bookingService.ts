@@ -21,9 +21,10 @@ export const handleExpiredBookings = async () => {
     
     if (expiredBookings && expiredBookings.length > 0) {
       // Update status to expired for expired bookings
+      // Convert BookingStatus.EXPIRED to its string value for Supabase
       const { error: updateError } = await supabase
         .from('bookings')
-        .update({ status: BookingStatus.EXPIRED })
+        .update({ status: "expired" }) // Using string literal to match DB enum
         .in('id', expiredBookings.map(booking => booking.id));
       
       if (updateError) throw updateError;
@@ -66,10 +67,10 @@ export const createBookingReminders = async () => {
     if (upcomingBookings && upcomingBookings.length > 0) {
       // Create notifications for each booking
       for (const booking of upcomingBookings) {
-        // Notify the car owner
+        // Notify the car owner - use string literal for Supabase
         await supabase.from('notifications').insert({
           user_id: booking.car.owner_id,
-          type: BookingNotificationType.BOOKING_REMINDER,
+          type: "booking_reminder", // Using string literal to match DB enum
           content: `Reminder: A booking for your ${booking.car.brand} ${booking.car.model} starts tomorrow.`,
           related_car_id: booking.car_id,
           related_booking_id: booking.id
