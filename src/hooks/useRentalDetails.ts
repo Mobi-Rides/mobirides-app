@@ -73,13 +73,13 @@ export const useRentalDetails = () => {
   const isOwner = booking && currentUser && booking.car.owner_id === currentUser.id;
   
   const isActiveRental = booking && 
-    booking.status === BookingStatus.CONFIRMED &&
+    booking.status === 'confirmed' && // Use string literal for DB consistency
     isWithinInterval(new Date(), {
       start: new Date(booking.start_date),
       end: addDays(new Date(booking.end_date), 1), // Include the end date
     });
   
-  const isCompletedRental = booking && booking.status === BookingStatus.COMPLETED;
+  const isCompletedRental = booking && booking.status === 'completed'; // Use string literal for DB consistency
 
   // Check if handover is possible
   const today = new Date();
@@ -97,10 +97,10 @@ export const useRentalDetails = () => {
     today.getFullYear() === endDate.getFullYear();
 
   const canHandover = booking &&
-    booking.status === BookingStatus.CONFIRMED &&
+    booking.status === 'confirmed' && // Use string literal for DB consistency
     (isStartHandoverDay || isEndHandoverDay);
     
-  const handoverType: "pickup" | "return" = isStartHandoverDay ? "pickup" : "return";
+  const handoverType = isStartHandoverDay ? "pickup" : "return";
 
   // Calculate duration
   const rentalDurationDays = booking

@@ -14,14 +14,14 @@ export const handleExpiredBookings = async () => {
     const { data: expiredBookings, error } = await supabase
       .from('bookings')
       .select('*')
-      .eq('status', BookingStatus.PENDING)
+      .eq('status', 'pending') // Using string literal for database query
       .lt('start_date', today.toISOString());
 
     if (error) throw error;
     
     if (expiredBookings && expiredBookings.length > 0) {
       // Update status to expired for expired bookings
-      // Convert BookingStatus.EXPIRED to its string value for Supabase
+      // Use string literal for Supabase database interaction
       const { error: updateError } = await supabase
         .from('bookings')
         .update({ status: "expired" }) // Using string literal to match DB enum
@@ -58,7 +58,7 @@ export const createBookingReminders = async () => {
           owner_id
         )
       `)
-      .eq('status', BookingStatus.CONFIRMED)
+      .eq('status', 'confirmed') // Use string literal for DB query
       .gte('start_date', tomorrow.toISOString())
       .lt('start_date', dayAfterTomorrow.toISOString());
     

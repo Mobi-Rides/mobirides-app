@@ -58,7 +58,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   const createNotification = async (
     userId: string,
-    type: "booking_request",
+    type: "booking_request", // Use string literal for DB compatibility
     content: string,
     carId: string,
     bookingId: string
@@ -72,7 +72,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     });
     const { error } = await supabase.from("notifications").insert({
       user_id: userId,
-      type,
+      type, // This will be a string literal for DB compatibility
       content,
       related_car_id: carId,
       related_booking_id: bookingId,

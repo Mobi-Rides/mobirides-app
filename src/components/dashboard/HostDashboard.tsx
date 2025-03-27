@@ -73,22 +73,22 @@ export const HostDashboard = () => {
   const today = new Date();
   
   const activeBookings = bookings?.filter(b => 
-    b.status === BookingStatus.CONFIRMED && 
+    b.status === 'confirmed' && // Using string literal for consistency with DB
     new Date(b.start_date) <= today && 
     new Date(b.end_date) >= today
   );
   
   const pendingBookings = bookings?.filter(b => 
-    b.status === BookingStatus.PENDING
+    b.status === 'pending' // Using string literal for consistency with DB
   );
   
   const expiredBookings = bookings?.filter(b => 
-    b.status === BookingStatus.EXPIRED
+    b.status === 'expired' // Using string literal for consistency with DB
   );
   
   const completedBookings = bookings?.filter(b => 
-    b.status === BookingStatus.COMPLETED || 
-    (b.status === BookingStatus.CONFIRMED && new Date(b.end_date) < today)
+    b.status === 'completed' || // Using string literal for consistency with DB
+    (b.status === 'confirmed' && new Date(b.end_date) < today)
   );
 
   const handleCardClick = (bookingId: string) => {

@@ -624,13 +624,19 @@ export type Database = {
       }
     }
     Enums: {
-      booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "cancelled"
+        | "completed"
+        | "expired"
       message_status: "sent" | "delivered" | "read"
       notification_type:
         | "booking_cancelled"
         | "booking_confirmed"
         | "booking_request"
         | "message_received"
+        | "booking_reminder"
       review_type: "car" | "renter"
       user_role: "host" | "renter"
       vehicle_type:
