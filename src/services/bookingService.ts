@@ -33,6 +33,10 @@ export const handleExpiredBookings = async () => {
       
       console.log(`Updated ${expiredBookings.length} expired booking requests`);
     }
+  } catch (error) {
+    console.error("Error in handleExpiredBookings:", error);
+  }
+};
 
 /**
  * Creates notifications for car owners about bookings the day before they start
@@ -75,7 +79,7 @@ export const createBookingReminders = async () => {
       console.log(`Created ${upcomingBookings.length} booking reminders`);
     }
 
-    return { success: true, data };
+    return { success: true, data: upcomingBookings };
   } catch (error) {
     console.error("Error in handleExpiredBookings:", error);
     return { success: false, error };
