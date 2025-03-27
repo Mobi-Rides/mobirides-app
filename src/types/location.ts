@@ -21,7 +21,7 @@ export interface CarGridProps {
   cars: any[];
   isLoading?: boolean;
   error?: Error | null;
-  loadMoreRef?: React.RefObject<HTMLDivElement> | null;
+  loadMoreRef?: React.RefObject<HTMLDivElement>;
   hasMoreItems?: boolean;
   onLoadMore?: () => void;
   isFetchingNextPage?: boolean;
@@ -35,7 +35,7 @@ export interface CarFormData {
   model: string;
   year: number;
   vehicle_type: VehicleType;
-  price_per_day: number;
+  price_per_day: string;
   location: string;
   latitude: number;
   longitude: number;

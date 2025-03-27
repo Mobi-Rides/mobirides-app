@@ -1,8 +1,9 @@
+
 import { CarForm } from "@/components/add-car/CarForm";
 import { Navigation } from "@/components/Navigation";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CarFormData } from "@/types/location";
+import { CarFormData, VehicleType } from "@/types/location";
 
 const CreateCar = () => {
   const navigate = useNavigate();
@@ -14,8 +15,8 @@ const CreateCar = () => {
     brand: "",
     model: "",
     year: new Date().getFullYear(),
-    vehicle_type: "",
-    price_per_day: 0,
+    vehicle_type: "Basic" as VehicleType, // Use a specific value from VehicleType
+    price_per_day: "0", // Changed to string to match the type
     location: "",
     latitude: 0,
     longitude: 0,
@@ -26,7 +27,7 @@ const CreateCar = () => {
     transmission: ""
   };
   
-  const handleSubmit = async (carData: any) => {
+  const handleSubmit = async (carData: CarFormData, imageFile: File | null, documents: any, features: string[]) => {
     setIsSubmitting(true);
     // Submission logic would go here
     setIsSubmitting(false);

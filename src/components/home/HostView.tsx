@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
@@ -15,6 +15,7 @@ interface HostViewProps {
 export const HostView = ({ searchQuery }: HostViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { 
     data: hostCarsData, 
@@ -61,6 +62,11 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
     setSortOrder(prev => prev === "asc" ? "desc" : "asc");
   };
 
+  const handleLoadMore = () => {
+    // Load more logic would go here
+    console.log("Load more triggered in HostView");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -94,7 +100,8 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
         cars={hostCars}
         isLoading={hostCarsLoading}
         error={hostCarsError}
-        loadMoreRef={() => {}}
+        loadMoreRef={loadMoreRef}
+        onLoadMore={handleLoadMore}
         isFetchingNextPage={false}
         isAuthenticated={true}
       />
