@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
@@ -13,8 +13,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Car } from "@/types/car";
-import { AlertCircle, MapPin } from "lucide-react";
+import { AlertCircle, CalendarX,MapPin } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { handleExpiredBookings } from "@/services/bookingService";
+import { checkCarAvailability, getBookedDates, isDateUnavailable } from "@/services/availabilityService";
+import { BookingStatus } from "@/types/booking";
 import { handleExpiredBookings } from "@/services/bookingService";
 import { BookingLocationPicker } from "./BookingLocationPicker";
 
@@ -30,6 +33,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [bookedDates, setBookedDates] = useState<Date[]>([]);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(true);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [pickupLocation, setPickupLocation] = useState<{
     latitude: number;
@@ -57,8 +63,44 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     checkAuth();
   }, [car.owner_id]);
 
-  // Check for expired booking requests when the dialog opens
+  // Fetch booked dates when dialog opens
   useEffect(() => {
+    if (isOpen && car.id) {
+      const fetchBookedDates = async () => {
+        const dates = await getBookedDates(car.id);
+        setBookedDates(dates);
+      };
+      
+      fetchBookedDates();
+      handleExpiredBookings().catch(console.error);
+    }
+  }, [isOpen, car.id]);
+
+  // Check availability whenever date range changes
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (startDate && endDate && car.id) {
+        setIsCheckingAvailability(true);
+        try {
+          const available = await checkCarAvailability(car.id, startDate, endDate);
+          setIsAvailable(available);
+        } catch (error) {
+          console.error("Error checking availability:", error);
+          setIsAvailable(false);
+        } finally {
+          setIsCheckingAvailability(false);
+        }
+      }
+    };
+
+    if (startDate && endDate) {
+      checkAvailability();
+    } else {
+      setIsAvailable(true);
+    }
+  }, [startDate, endDate, car.id]);
+      
+ useEffect(() => {
     let isMounted = true;
 
     if (isOpen) {
@@ -69,6 +111,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       isMounted = false;
     };
   }, [isOpen]);
+
+      
 
   // Set default pickup location from car's location
   useEffect(() => {
@@ -89,7 +133,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   const createNotification = async (
     userId: string,
-    type: "booking_request",
+    type: "booking_request", // Use string literal for DB compatibility
     content: string,
     carId: string,
     bookingId: string
@@ -103,7 +147,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     });
     const { error } = await supabase.from("notifications").insert({
       user_id: userId,
-      type,
+      type, // This will be a string literal for DB compatibility
       content,
       related_car_id: carId,
       related_booking_id: bookingId,
@@ -135,6 +179,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       return;
     }
 
+    const available = await checkCarAvailability(car.id, startDate, endDate);
+    if (!available) {
+      toast({
+        title: "Not available",
+        description: "This car is not available for the selected dates. Please choose different dates.",
+      }
+            
     if (!pickupLocation) {
       toast({
         title: "Error",
@@ -151,7 +202,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
       const numberOfDays = Math.ceil(
         (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      ) + 1; // Include both start and end days
       const totalPrice = numberOfDays * car.price_per_day;
 
       // Create the booking
@@ -242,60 +293,92 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     )}, ${pickupLocation.longitude.toFixed(4)})`;
   };
 
+  // Determine if a date should be disabled in the calendar
+  const isDateDisabled = (date: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate());
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    // Date is in the past
+    if (date < tomorrow) return true;
+    
+    // Date is already booked
+    return isDateUnavailable(date, bookedDates);
+  };
+
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              Book {car.brand} {car.model}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Select your rental dates and pickup location
-            </DialogDescription>
-          </DialogHeader>
-
-          {isOwner && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Not allowed</AlertTitle>
-              <AlertDescription>
-                You cannot book your own car. This is for other renters only.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="grid gap-4 py-4">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            Book {car.brand} {car.model}
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Select your rental dates below
+          </DialogDescription>
+        </DialogHeader>
+        
+        {isOwner && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Not allowed</AlertTitle>
+            <AlertDescription>
+              You cannot book your own car. This is for other renters only.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {!isAvailable && startDate && endDate && (
+          <Alert variant="destructive" className="mb-4">
+            <CalendarX className="h-4 w-4" />
+            <AlertTitle>Not available</AlertTitle>
+            <AlertDescription>
+              This car is not available for the selected dates. Please choose different dates.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <h4 className="font-medium">Select dates</h4>
+            <Calendar
+              mode="range"
+              selected={{
+                from: startDate,
+                to: endDate,
+              }}
+              onSelect={(range) => {
+                setStartDate(range?.from);
+                setEndDate(range?.to);
+              }}
+              numberOfMonths={1}
+              disabled={isDateDisabled}
+              modifiers={{
+                booked: bookedDates
+              }}
+              modifiersStyles={{
+                booked: {
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: 'rgb(239, 68, 68)',
+                  textDecoration: 'line-through'
+                }
+              }}
+            />
+          </div>
+          {startDate && endDate && (
             <div className="space-y-2">
-              <h4 className="font-medium">Select dates</h4>
-              <Calendar
-                mode="range"
-                selected={{
-                  from: startDate,
-                  to: endDate,
-                }}
-                onSelect={(range) => {
-                  setStartDate(range?.from);
-                  setEndDate(range?.to);
-                }}
-                numberOfMonths={1}
-                disabled={(date) => {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate());
-                  tomorrow.setHours(0, 0, 0, 0);
-                  return date < tomorrow;
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium">Pickup Location</h4>
-              <div className="flex items-center justify-between p-3 border rounded-md">
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div className="text-sm">
-                    <p>{formatLocationDescription()}</p>
-                  </div>
+              <h4 className="font-medium">Summary</h4>
+              <div className="text-sm space-y-1 p-4 bg-primary/5 rounded-md">
+                <p>Start date: {format(startDate, "PPP")}</p>
+                <p>End date: {format(endDate, "PPP")}</p>
+                <div className="border-t border-border pt-2 mt-2">
+                  <p className="font-medium text-primary">
+                    Total: BWP{" "}
+                    {Math.ceil(
+                      (endDate.getTime() - startDate.getTime()) /
+                        (1000 * 60 * 60 * 24) + 1
+                    ) * car.price_per_day}
+                  </p>
                 </div>
                 <Button
                   variant="outline"
@@ -306,56 +389,27 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 </Button>
               </div>
             </div>
-
-            {startDate && endDate && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Summary</h4>
-                <div className="text-sm space-y-1 p-4 bg-primary/5 rounded-md">
-                  <p>Start date: {format(startDate, "PPP")}</p>
-                  <p>End date: {format(endDate, "PPP")}</p>
-                  <div className="border-t border-border pt-2 mt-2">
-                    <p className="font-medium text-primary">
-                      Total: BWP{" "}
-                      {Math.ceil(
-                        (endDate.getTime() - startDate.getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      ) * car.price_per_day}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleBooking}
-              disabled={
-                !startDate ||
-                !endDate ||
-                isLoading ||
-                isOwner ||
-                !pickupLocation
-              }
-              className="w-full sm:w-auto"
-            >
-              {isLoading ? "Booking..." : "Confirm"}
-            </Button>
-          </div>
-        </DialogContent>
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleBooking}
+            disabled={!startDate || !endDate || isLoading || isOwner || isCheckingAvailability || !isAvailable || !pickupLocation}
+            className="w-full sm:w-auto"
+          >
+            {isLoading ? "Booking..." : (isCheckingAvailability ? "Checking..." : "Confirm")}
+          </Button>
+        </div>
+      </DialogContent>
       </Dialog>
-
-      <BookingLocationPicker
-        isOpen={isLocationPickerOpen}
-        onClose={() => setIsLocationPickerOpen(false)}
-        onLocationSelected={handleLocationSelected}
-      />
+        <BookingLocationPicker
+          isOpen={isLocationPickerOpen}
+          onClose={() => setIsLocationPickerOpen(false)}
+          onLocationSelected={handleLocationSelected}
+        />
     </>
   );
 };

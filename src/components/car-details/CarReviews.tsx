@@ -127,8 +127,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center justify-between dark:text-white">
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary dark:text-primary-foreground" />
-            Reviews
+            <span className="text-base text-left text-muted-foreground dark:text-white font-medium">Reviews</span>
           </div>
           <span className="text-sm font-normal text-muted-foreground">
             {reviews?.length || 0} {reviews?.length === 1 ? 'review' : 'reviews'}
@@ -139,9 +138,9 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         <div className="space-y-4">
           {reviews?.length === 0 && (
             <div className="text-center py-6">
-              <p className="text-muted-foreground">
+              <span className="text-xs md:text-sm text-muted-foreground">
                 No reviews yet
-              </p>
+              </span>
             </div>
           )}
           

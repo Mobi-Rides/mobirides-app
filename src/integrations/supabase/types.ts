@@ -45,7 +45,8 @@ export type Database = {
           created_at: string
           end_date: string
           id: string
-          pickup_location: Json | null
+          latitude: number | null
+          longitude: number | null
           renter_id: string
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -57,7 +58,8 @@ export type Database = {
           created_at?: string
           end_date: string
           id?: string
-          pickup_location?: Json | null
+          latitude?: number | null
+          longitude?: number | null
           renter_id: string
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -69,7 +71,8 @@ export type Database = {
           created_at?: string
           end_date?: string
           id?: string
-          pickup_location?: Json | null
+          latitude?: number | null
+          longitude?: number | null
           renter_id?: string
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -621,13 +624,19 @@ export type Database = {
       }
     }
     Enums: {
-      booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "cancelled"
+        | "completed"
+        | "expired"
       message_status: "sent" | "delivered" | "read"
       notification_type:
         | "booking_cancelled"
         | "booking_confirmed"
         | "booking_request"
         | "message_received"
+        | "booking_reminder"
       review_type: "car" | "renter"
       user_role: "host" | "renter"
       vehicle_type:

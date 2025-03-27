@@ -33,9 +33,18 @@ export interface Booking extends BookingWithRelations {
 // Add this enum for notifications related to bookings
 export enum BookingNotificationType {
   BOOKING_REQUEST = "booking_request",
-  BOOKING_CONFIRMATION = "booking_confirmation",
+  BOOKING_CONFIRMATION = "booking_confirmation", 
   BOOKING_CANCELLATION = "booking_cancellation",
   BOOKING_REMINDER = "booking_reminder"
+}
+
+// Add this enum for booking statuses
+export enum BookingStatus {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  CANCELLED = "cancelled",
+  COMPLETED = "completed",
+  EXPIRED = "expired"
 }
 
 // Add this enum for handover types

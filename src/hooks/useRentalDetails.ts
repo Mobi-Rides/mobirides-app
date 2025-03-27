@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { differenceInDays, isWithinInterval, addDays } from "date-fns";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
-import { HandoverType } from "@/types/booking";
+import { BookingStatus, HandoverType } from "@/types/booking";
 
 export const useRentalDetails = () => {
   const { id } = useParams();
@@ -73,13 +73,13 @@ export const useRentalDetails = () => {
   const isOwner = booking && currentUser && booking.car.owner_id === currentUser.id;
   
   const isActiveRental = booking && 
-    booking.status === "confirmed" &&
+    booking.status === 'confirmed' && // Use string literal for DB consistency
     isWithinInterval(new Date(), {
       start: new Date(booking.start_date),
       end: addDays(new Date(booking.end_date), 1), // Include the end date
     });
   
-  const isCompletedRental = booking && booking.status === "completed";
+  const isCompletedRental = booking && booking.status === 'completed'; // Use string literal for DB consistency
 
   // Check if handover is possible
   const today = new Date();
@@ -97,9 +97,10 @@ export const useRentalDetails = () => {
     today.getFullYear() === endDate.getFullYear();
 
   const canHandover = booking &&
-    booking.status === "confirmed" &&
+    booking.status === 'confirmed' && // Use string literal for DB consistency
     (isStartHandoverDay || isEndHandoverDay);
     
+
   const handoverType: HandoverType = isStartHandoverDay ? HandoverType.PICKUP : HandoverType.RETURN;
 
   // Calculate duration
@@ -109,7 +110,7 @@ export const useRentalDetails = () => {
 
   // Handover initiation handler
   const handleInitiateHandover = async () => {
-    if (!booking || !currentUser) return;
+    if (!booking || !currentUser) return null;
 
     setIsInitiatingHandover(true);
     try {

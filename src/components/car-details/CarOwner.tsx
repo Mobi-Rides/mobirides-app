@@ -21,8 +21,7 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
     <>
       <Card className="dark:bg-gray-800 dark:border-gray-700 border-border shadow-sm overflow-hidden">
         <CardHeader className="pb-2 bg-muted/30">
-          <CardTitle className="text-lg flex items-center gap-2 dark:text-white">
-            <User className="h-5 w-5 text-primary dark:text-primary-foreground" />
+          <CardTitle className="text-base text-left text-muted-foreground dark:text-white font-medium">
             Host
           </CardTitle>
         </CardHeader>
@@ -30,15 +29,23 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
-                src={avatarUrl
-                  ? supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl
-                  : "/placeholder.svg"}
+                src={
+                  avatarUrl
+                    ? supabase.storage.from("avatars").getPublicUrl(avatarUrl)
+                        .data.publicUrl
+                    : "/placeholder.svg"
+                }
                 alt={ownerName || "Car Owner"}
-                className="w-12 h-12 rounded-full object-cover bg-muted"
+                className="w-8 h-8 rounded-full object-cover bg-muted"
               />
-              <div>
-                <p className="font-semibold">{ownerName || "Car Owner"}</p>
-                <p className="text-sm text-muted-foreground">Vehicle Host</p>
+              <div className="flex flex-col gap-0.5 items-start">
+                <p className="text-sm md:text-base text-gray-700 dark:text-white ">
+                  {ownerName || "Car Owner"}
+                </p>
+
+                <p className="text-xs md:text-sm text-muted-foreground ">
+                  Vehicle Host
+                </p>
               </div>
             </div>
             <TooltipProvider>
