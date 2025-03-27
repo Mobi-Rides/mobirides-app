@@ -18,7 +18,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { handleExpiredBookings } from "@/services/bookingService";
 import { checkCarAvailability, getBookedDates, isDateUnavailable } from "@/services/availabilityService";
 import { BookingStatus } from "@/types/booking";
-import { handleExpiredBookings } from "@/services/bookingService";
 import { BookingLocationPicker } from "./BookingLocationPicker";
 
 interface BookingDialogProps {
@@ -184,7 +183,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       toast({
         title: "Not available",
         description: "This car is not available for the selected dates. Please choose different dates.",
-      }
+      });
+      return;
+    }
             
     if (!pickupLocation) {
       toast({
@@ -307,6 +308,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -413,3 +415,4 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     </>
   );
 };
+

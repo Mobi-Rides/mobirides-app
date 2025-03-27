@@ -177,7 +177,7 @@ export const BookingLocationPicker = ({
               latitude={0}
               zoom={14}
               dpad={true}
-              returnLocation={retunLocation}
+              returnLocation={returnLocation}
             />
             {selectedLocation && (
               <div className="absolute top-2 left-2 bg-background/90 p-2 rounded-md shadow-sm border border-border text-xs">
