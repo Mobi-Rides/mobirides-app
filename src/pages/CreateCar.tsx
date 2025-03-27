@@ -1,4 +1,3 @@
-
 import { CarForm } from "@/components/add-car/CarForm";
 import { Navigation } from "@/components/Navigation";
 import { useState } from "react";
@@ -21,7 +20,10 @@ const CreateCar = () => {
     latitude: 0,
     longitude: 0,
     description: "",
-    features: []
+    features: [],
+    fuel: "",
+    seats: 0,
+    transmission: ""
   };
   
   const handleSubmit = async (carData: any) => {
