@@ -29,8 +29,11 @@ const AddCar = () => {
     location: "",
     transmission: "",
     fuel: "",
-    seats: "",
+    seats: 0,
     description: "",
+    latitude: 0,
+    longitude: 0,
+    features: [],
   };
 
   useEffect(() => {
