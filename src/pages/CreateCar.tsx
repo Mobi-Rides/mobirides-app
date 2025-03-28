@@ -3,7 +3,24 @@ import { CarForm } from "@/components/add-car/CarForm";
 import { Navigation } from "@/components/Navigation";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CarFormData, VehicleType } from "@/types/location";
+import { VehicleType } from "@/types/location";
+
+// Create a type that matches the expected CarFormData type from CarForm component
+interface CarFormData {
+  brand: string;
+  model: string;
+  year: number;
+  vehicle_type: VehicleType;
+  price_per_day: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  description: string;
+  features: string[];
+  fuel: string;
+  seats: number;
+  transmission: string;
+}
 
 const CreateCar = () => {
   const navigate = useNavigate();
@@ -15,8 +32,8 @@ const CreateCar = () => {
     brand: "",
     model: "",
     year: new Date().getFullYear(),
-    vehicle_type: "Basic" as VehicleType, // Use a specific value from VehicleType
-    price_per_day: "0", // Changed to string to match the type
+    vehicle_type: "Basic" as VehicleType,
+    price_per_day: "0",
     location: "",
     latitude: 0,
     longitude: 0,
