@@ -30,8 +30,11 @@ const EditCar = () => {
     location: "",
     transmission: "",
     fuel: "",
-    seats: "",
+    seats: 0,
     description: "",
+    latitude: 0,
+    longitude: 0,
+    features: [],
   };
 
   const { data: car, isLoading } = useQuery({
@@ -138,8 +141,11 @@ const EditCar = () => {
     location: car.location,
     transmission: car.transmission,
     fuel: car.fuel,
-    seats: car.seats.toString(),
+    seats: car.seats,
     description: car.description || "",
+    latitude: car.latitude || 0,
+    longitude: car.longitude || 0,
+    features: car.features || [],
   } : initialFormData;
 
   return (

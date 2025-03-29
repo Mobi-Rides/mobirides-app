@@ -15,7 +15,7 @@ interface CarDetailsProps {
     location: string;
     transmission: string;
     fuel: string;
-    seats: string;
+    seats: number; // Changed from string to number
   };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelectChange: (name: string, value: string) => void;

@@ -22,10 +22,13 @@ interface CarFormData {
   vehicle_type: VehicleType;
   price_per_day: string;
   location: string;
+  latitude: number;
+  longitude: number;
+  description: string;
+  features: string[];
   transmission: string;
   fuel: string;
-  seats: string;
-  description: string;
+  seats: number;
 }
 
 interface CarFormProps {
@@ -58,7 +61,13 @@ export const CarForm = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Convert numeric inputs to the right type
+    if (name === 'year' || name === 'seats') {
+      setFormData((prev) => ({ ...prev, [name]: parseInt(value) || 0 }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {

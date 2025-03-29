@@ -1,14 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { Navigation, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SearchFilters } from "@/components/SearchFilters";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 interface HeaderProps {
   searchQuery: string;
@@ -25,7 +28,11 @@ interface LocationState {
 
 export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderProps) => {
   const navigate = useNavigate();
-  const [location, setLocation] = useState<LocationState>({
+  const locationPath = useLocation();
+  const { user } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [defaultTab, setDefaultTab] = useState<"signin" | "signup">("signin");
+  const [locationData, setLocationData] = useState<LocationState>({
     city: "Gaborone",
     country: "Botswana",
     loading: true,
@@ -81,7 +88,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         const result = data.results?.[0]?.components;
 
         if (result) {
-          setLocation({
+          setLocationData({
             city: result.city || result.town || result.state || result.county || "Unknown",
             country: result.country || "Unknown",
             loading: false,
@@ -90,7 +97,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         }
       } catch (error) {
         console.error("Location error:", error);
-        setLocation(prev => ({
+        setLocationData(prev => ({
           ...prev,
           loading: false,
           error: error instanceof Error ? error.message : "Failed to get location"
@@ -108,7 +115,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
 
         const data = await response.json();
         
-        setLocation({
+        setLocationData({
           city: data.city || "Gaborone",
           country: data.country_name || "Botswana",
           loading: false,
@@ -116,7 +123,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         });
       } catch (error) {
         console.error("IP Location error:", error);
-        setLocation(prev => ({
+        setLocationData(prev => ({
           ...prev,
           loading: false,
           error: null,
@@ -132,7 +139,6 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
   const { data: profile } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
       const { data } = await supabase
@@ -142,13 +148,13 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         .single();
 
       return data;
-    }
+    },
+    enabled: !!user
   });
 
   const { data: notificationCount } = useQuery({
     queryKey: ['notification-count'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return { messages: 0, notifications: 0 };
 
       const [messagesResponse, notificationsResponse] = await Promise.all([
@@ -169,7 +175,8 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         notifications: notificationsResponse.count || 0
       };
     },
-    refetchInterval: 30000 // Refetch every 30 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: !!user
   });
 
   const totalNotifications = (notificationCount?.messages || 0) + (notificationCount?.notifications || 0);
@@ -183,11 +190,37 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
     onFiltersChange({ ...filters, searchQuery });
   };
 
-  const locationDisplay = location.loading 
+  const handleProfileClick = () => {
+    if (user) {
+      navigate("/profile");
+    } else {
+      setDefaultTab("signin");
+      setIsAuthModalOpen(true);
+      navigate(`${locationPath.pathname}?auth=signin`, { replace: true });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsAuthModalOpen(false);
+    navigate(locationPath.pathname, { replace: true });
+  };
+
+  // Check URL for auth parameter
+  useEffect(() => {
+    const params = new URLSearchParams(locationPath.search);
+    const authParam = params.get("auth");
+    
+    if (authParam === "signin" || authParam === "signup") {
+      setDefaultTab(authParam);
+      setIsAuthModalOpen(true);
+    }
+  }, [locationPath.search]);
+
+  const locationDisplay = locationData.loading 
     ? "Loading location..." 
-    : location.error 
+    : locationData.error 
     ? "Gaborone, Botswana" 
-    : `${location.city}, ${location.country}`;
+    : `${locationData.city}, ${locationData.country}`;
 
   return (
     <header className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-900 sticky top-0 z-10 shadow-sm p-6 md:p-8 rounded-b-3xl">
@@ -225,9 +258,9 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
           <div className="relative">
             <button
               className="rounded-full bg-gray-100 flex items-center justify-center"
-              onClick={() => navigate("/profile")}
+              onClick={handleProfileClick}
             >
-              {avatarUrl ? (
+              {avatarUrl && user ? (
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={avatarUrl} alt="Profile" />
                   <AvatarFallback>👤</AvatarFallback>
@@ -238,7 +271,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
                 </Avatar>
               )}
             </button>
-            {totalNotifications > 0 && (
+            {totalNotifications > 0 && user && (
               <Badge
                 variant="destructive"
                 className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
@@ -276,6 +309,12 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
           </SheetContent>
         </Sheet>
       </div>
+      
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={handleCloseModal} 
+        defaultTab={defaultTab} 
+      />
     </header>
   );
 };

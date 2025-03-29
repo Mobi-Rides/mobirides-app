@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Navigation } from "@/components/Navigation";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
@@ -19,12 +20,19 @@ const Index = () => {
     sortBy: "price",
     sortOrder: "asc",
   });
+  const location = useLocation();
 
   const { isAuthenticated, userRole, isLoadingRole } = useAuthStatus();
 
   const handleFiltersChange = (newFilters: Filters) => {
     setFilters(newFilters);
   };
+
+  // This effect handles direct URLs with auth parameters
+  useEffect(() => {
+    // Any initialization based on URL params would go here
+    // The actual modal handling is in UnauthenticatedView
+  }, [location.search]);
 
   return (
     <div className="min-h-screen bg-background pb-20">

@@ -1,4 +1,5 @@
 
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
@@ -13,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 
 const SavedCars = () => {
   const navigate = useNavigate();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { data: cars = [], isLoading, error } = useQuery({
     queryKey: ["saved-cars-full"],
@@ -63,6 +65,11 @@ const SavedCars = () => {
     },
   });
 
+  const handleLoadMore = () => {
+    // This function would be used if pagination was implemented
+    console.log("Load more triggered in SavedCars");
+  };
+
   return (
     <div className="min-h-screen px-4 pb-20">
       <div className="px-4 py-4 mb-4 flex items-center gap-4">
@@ -96,7 +103,8 @@ const SavedCars = () => {
             cars={cars}
             isLoading={isLoading}
             error={error}
-            loadMoreRef={() => {}}
+            loadMoreRef={loadMoreRef}
+            onLoadMore={handleLoadMore}
             isFetchingNextPage={false}
             isAuthenticated={true}
           />

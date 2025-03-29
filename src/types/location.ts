@@ -19,24 +19,31 @@ export interface LocationHandlers {
 
 export interface CarGridProps {
   cars: any[];
-  isLoading: boolean;
-  error: Error | null;
-  loadMoreRef: React.RefObject<HTMLDivElement> | null;
-  hasMoreItems: boolean;  // Keep this property
-  onLoadMore: () => void;
+  isLoading?: boolean;
+  error?: Error | null;
+  loadMoreRef?: React.RefObject<HTMLDivElement>;
+  hasMoreItems?: boolean;
+  onLoadMore?: () => void;
+  isFetchingNextPage?: boolean;
+  isAuthenticated?: boolean;
 }
+
+export type VehicleType = "Basic" | "Standard" | "Executive" | "4x4" | "SUV" | "Electric" | "Exotic";
 
 export interface CarFormData {
   brand: string;
   model: string;
   year: number;
-  vehicle_type: string;
-  price_per_day: number;
+  vehicle_type: VehicleType;
+  price_per_day: string;
   location: string;
   latitude: number;
   longitude: number;
   description: string;
   features: string[];
+  fuel: string;
+  seats: number;
+  transmission: string;
 }
 
 export interface ProfileEditViewProps {

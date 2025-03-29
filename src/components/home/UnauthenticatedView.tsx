@@ -1,10 +1,36 @@
 
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 export const UnauthenticatedView = () => {
-  const navigateToSignIn = () => {
-    window.location.href = "/login";
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [defaultTab, setDefaultTab] = useState<"signin" | "signup">("signin");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Check URL for auth parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const authParam = params.get("auth");
+    
+    if (authParam === "signin" || authParam === "signup") {
+      setDefaultTab(authParam);
+      setIsAuthModalOpen(true);
+    }
+  }, [location.search]);
+
+  const handleSignInClick = () => {
+    setDefaultTab("signin");
+    setIsAuthModalOpen(true);
+    navigate("/?auth=signin", { replace: true });
+  };
+
+  const handleCloseModal = () => {
+    setIsAuthModalOpen(false);
+    navigate("/", { replace: true });
   };
 
   return (
@@ -22,7 +48,7 @@ export const UnauthenticatedView = () => {
           variant="outline"
           size="icon"
           className="rounded-2xl border-primary md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 mx-auto"
-          onClick={navigateToSignIn}
+          onClick={handleSignInClick}
         >
           <LogIn className="h-4 w-4 text-primary" />
           <span className="hidden md:inline-block">
@@ -32,6 +58,12 @@ export const UnauthenticatedView = () => {
           </span>
         </Button>
       </div>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={handleCloseModal} 
+        defaultTab={defaultTab} 
+      />
     </div>
   );
 };

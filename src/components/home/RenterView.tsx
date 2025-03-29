@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
@@ -19,7 +19,19 @@ interface RenterViewProps {
 export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const { ref: loadMoreRef, inView } = useInView();
+  const { ref: inViewRef, inView } = useInView();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // For combining the inView ref with our loadMoreRef
+  const setRefs = (node: HTMLDivElement | null) => {
+    // Set the loadMoreRef
+    if (loadMoreRef.current !== node) {
+      loadMoreRef.current = node || null;
+    }
+    
+    // Call the inViewRef
+    inViewRef(node);
+  };
 
   useEffect(() => {
     onFiltersChange({
@@ -133,6 +145,12 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
         isFetchingNextPage={isFetchingNextPage}
         isAuthenticated={true}
       />
+      {/* This hidden div is used with the intersection observer */}
+      {hasNextPage && (
+        <div ref={setRefs} className="h-10 w-full opacity-0">
+          Load more trigger
+        </div>
+      )}
     </div>
   );
 };
