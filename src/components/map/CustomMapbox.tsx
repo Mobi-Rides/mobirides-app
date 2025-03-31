@@ -21,6 +21,7 @@ interface CustomMapboxProps {
   dpad?: boolean;
   zoom?: number;
   locationToggle?: boolean;
+  destination?: { latitude: number; longitude: number } | null;
 }
 
 const CustomMapbox = ({
@@ -35,6 +36,7 @@ const CustomMapbox = ({
   interactive,
   dpad,
   locationToggle,
+  destination,
   returnLocation,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -212,6 +214,94 @@ const CustomMapbox = ({
 
     setMarkers(newMarkers);
   }, [onlineHosts, mapInit, isHandoverMode]);
+
+  //handle destination marker
+  useEffect(() => {
+    if (!map.current || !mapInit || !destination) return;
+
+    const { latitude, longitude } = destination;
+
+    const el = document.createElement("div");
+    el.className = "destination-marker";
+    el.style.width = "24px";
+    el.style.height = "24px";
+    el.style.borderRadius = "50%";
+    el.style.backgroundColor = "#f59e0b";
+    el.style.border = "3px solid white";
+    el.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([longitude, latitude])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }).setHTML(
+          `<p class="font-medium">Destination</p>`
+        )
+      )
+      .addTo(map.current!);
+
+    return () => {
+      marker.remove();
+    };
+  });
+
+  // Fetch route data and display on map
+  useEffect(() => {
+    if (!map.current || !mapInit || !destination) return;
+
+    const { latitude, longitude } = destination;
+
+    // Fetch route data from Mapbox Directions API
+    const fetchRoute = async () => {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${longitude},${latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+        );
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0].geometry;
+
+          // Add the route as a source and layer to the map
+          if (map.current.getSource("route")) {
+            map.current.getSource("route").setData(route);
+          } else {
+            map.current.addSource("route", {
+              type: "geojson",
+              data: route,
+            });
+
+            map.current.addLayer({
+              id: "route",
+              type: "line",
+              source: "route",
+              layout: {
+                "line-join": "round",
+                "line-cap": "round",
+              },
+              paint: {
+                "line-color": "#3b82f6", // Blue color for the route
+                "line-width": 5,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching route:", error);
+      }
+    };
+
+    fetchRoute();
+
+    // Cleanup route layer and source when the component unmounts or dependencies change
+    return () => {
+      if (map.current.getLayer("route")) {
+        map.current.removeLayer("route");
+      }
+      if (map.current.getSource("route")) {
+        map.current.removeSource("route");
+      }
+    };
+  }, [mapInit, destination, userLocation]);
 
   // Handle handover markers
   useEffect(() => {

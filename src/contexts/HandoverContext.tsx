@@ -6,32 +6,26 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  HandoverStatus,
-  HandoverLocation,
-  getHandoverSession,
-  updateHandoverLocation,
-  markUserReady,
-  completeHandover,
-  subscribeToHandoverUpdates,
-} from "@/services/handoverService";
 import { toast } from "@/utils/toast-utils";
 
 interface HandoverContextType {
-  handoverStatus: HandoverStatus | null;
+  updateLocation(arg0: {
+    latitude: any;
+    longitude: any;
+    address: string;
+  }): unknown;
+  handoverStatus: any;
   isLoading: boolean;
   isHost: boolean;
-  updateLocation: (
-    location: Omit<HandoverLocation, "timestamp">
-  ) => Promise<boolean>;
-  markReady: () => Promise<boolean>;
-  completeHandoverProcess: () => Promise<boolean>;
   bookingDetails: any;
   debugMode: boolean;
   toggleDebugMode: () => void;
+  destination: { latitude: number; longitude: number } | null;
+  ownerId: string;
+  currentUserId: string;
 }
 
 const HandoverContext = createContext<HandoverContextType | undefined>(
@@ -55,10 +49,67 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
 }) => {
   const [searchParams] = useSearchParams();
   const bookingId = searchParams.get("bookingId");
-  const [handoverStatus, setHandoverStatus] = useState<HandoverStatus | null>(
-    null
-  );
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [destination, setDestination] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [carId, setCarId] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+
+  // Fetch destination from bookings table
+  const fetchDestination = async () => {
+    if (!bookingId) return;
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("latitude, longitude, car_id")
+      .eq("id", bookingId)
+      .single();
+
+    if (error) {
+      toast.error("Failed to fetch destination");
+      console.error(error);
+      return;
+    }
+
+    setDestination({
+      latitude: data.latitude,
+      longitude: data.longitude,
+    });
+
+    setCarId(data.car_id);
+
+    return;
+  };
+
+  const fetchHostId = async () => {
+    if (!carId) return;
+    try {
+      const { data, error } = await supabase
+        .from("cars")
+        .select("owner_id")
+        .eq("id", carId)
+        .single();
+
+      if (error) {
+        console.error("Error getting ownerId", error);
+      }
+
+      setOwnerId(data.owner_id);
+
+      return;
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    if (!bookingId) return;
+    fetchDestination();
+  }, [bookingId]);
+
+  useEffect(() => {
+    if (!carId) return;
+    fetchHostId();
+  }, [carId]);
 
   // Get current user
   useEffect(() => {
@@ -108,101 +159,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   });
 
   // Determine if current user is host or renter
-  const isHost = currentUserId === bookingDetails?.car?.owner_id;
-
-  // Fetch handover session
-  const { data: handoverData, isLoading: isHandoverLoading } = useQuery({
-    queryKey: ["handover-session", bookingId],
-    queryFn: async () => {
-      if (!bookingId) return null;
-      return await getHandoverSession(bookingId);
-    },
-    enabled: !!bookingId,
-  });
-
-  // Set handover status when data is loaded
-  useEffect(() => {
-    if (handoverData) {
-      // Convert JSON location data to HandoverLocation type safely
-      const convertedData = {
-        ...handoverData,
-        host_location: handoverData.host_location
-          ? (handoverData.host_location as unknown as HandoverLocation)
-          : null,
-        renter_location: handoverData.renter_location
-          ? (handoverData.renter_location as unknown as HandoverLocation)
-          : null,
-      };
-      setHandoverStatus(convertedData);
-    }
-  }, [handoverData]);
-
-  // Subscribe to realtime updates
-  useEffect(() => {
-    if (!handoverStatus?.id) return;
-
-    const unsubscribe = subscribeToHandoverUpdates(
-      handoverStatus.id,
-      (updatedHandover) => {
-        // Convert JSON location data to HandoverLocation type safely
-        const convertedData = {
-          ...updatedHandover,
-          host_location: updatedHandover.host_location
-            ? (updatedHandover.host_location as unknown as HandoverLocation)
-            : null,
-          renter_location: updatedHandover.renter_location
-            ? (updatedHandover.renter_location as unknown as HandoverLocation)
-            : null,
-        };
-        setHandoverStatus(convertedData);
-      }
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, [handoverStatus?.id]);
-
-  // Update location
-  const updateLocation = async (
-    location: Omit<HandoverLocation, "timestamp">
-  ) => {
-    if (!handoverStatus?.id) {
-      console.error("No handover session ID available");
-      toast.error("Cannot update location: Handover session not found");
-      return false;
-    }
-
-    if (!currentUserId) {
-      console.error("No user ID available");
-      toast.error("Cannot update location: User not authenticated");
-      return false;
-    }
-
-    const locationData: HandoverLocation = {
-      ...location,
-      timestamp: Date.now(),
-    };
-
-    return await updateHandoverLocation(
-      handoverStatus.id,
-      currentUserId,
-      isHost,
-      locationData
-    );
-  };
-
-  // Mark user as ready
-  const markReady = async () => {
-    if (!handoverStatus?.id || !currentUserId) return false;
-    return await markUserReady(handoverStatus.id, currentUserId, isHost);
-  };
-
-  // Complete handover
-  const completeHandoverProcess = async () => {
-    if (!handoverStatus?.id) return false;
-    return await completeHandover(handoverStatus.id);
-  };
+  const isHost = currentUserId === ownerId;
 
   const [debugMode, setDebugMode] = useState(false);
 
@@ -213,15 +170,14 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   return (
     <HandoverContext.Provider
       value={{
-        handoverStatus,
-        isLoading: isHandoverLoading || isBookingLoading,
+        isLoading: isBookingLoading,
         isHost,
-        updateLocation,
-        markReady,
-        completeHandoverProcess,
         bookingDetails,
         debugMode,
         toggleDebugMode,
+        currentUserId,
+        destination,
+        ownerId,
       }}
     >
       {children}
