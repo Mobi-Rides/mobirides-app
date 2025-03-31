@@ -12,7 +12,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
 
 interface HandoverContextType {
-  updateLocation(arg0: { latitude: any; longitude: any; address: string; }): unknown;
+  updateLocation(arg0: {
+    latitude: any;
+    longitude: any;
+    address: string;
+  }): unknown;
   handoverStatus: any;
   isLoading: boolean;
   isHost: boolean;
@@ -20,6 +24,8 @@ interface HandoverContextType {
   debugMode: boolean;
   toggleDebugMode: () => void;
   destination: { latitude: number; longitude: number } | null;
+  ownerId: string;
+  currentUserId: string;
 }
 
 const HandoverContext = createContext<HandoverContextType | undefined>(
@@ -48,13 +54,15 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [carId, setCarId] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
 
   // Fetch destination from bookings table
   const fetchDestination = async () => {
     if (!bookingId) return;
     const { data, error } = await supabase
       .from("bookings")
-      .select("latitude, longitude")
+      .select("latitude, longitude, car_id")
       .eq("id", bookingId)
       .single();
 
@@ -68,12 +76,40 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
       latitude: data.latitude,
       longitude: data.longitude,
     });
+
+    setCarId(data.car_id);
+
+    return;
+  };
+
+  const fetchHostId = async () => {
+    if (!carId) return;
+    try {
+      const { data, error } = await supabase
+        .from("cars")
+        .select("owner_id")
+        .eq("id", carId)
+        .single();
+
+      if (error) {
+        console.error("Error getting ownerId", error);
+      }
+
+      setOwnerId(data.owner_id);
+
+      return;
+    } catch (error) {}
   };
 
   useEffect(() => {
     if (!bookingId) return;
     fetchDestination();
   }, [bookingId]);
+
+  useEffect(() => {
+    if (!carId) return;
+    fetchHostId();
+  }, [carId]);
 
   // Get current user
   useEffect(() => {
@@ -123,7 +159,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   });
 
   // Determine if current user is host or renter
-  const isHost = currentUserId === bookingDetails?.car?.owner_id;
+  const isHost = currentUserId === ownerId;
 
   const [debugMode, setDebugMode] = useState(false);
 
@@ -139,7 +175,9 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         bookingDetails,
         debugMode,
         toggleDebugMode,
+        currentUserId,
         destination,
+        ownerId,
       }}
     >
       {children}

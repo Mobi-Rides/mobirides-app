@@ -6,7 +6,7 @@ import { getMapboxToken } from "../utils/mapbox";
 import { toast } from "@/utils/toast-utils";
 import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
-import { fetchOnlineHosts } from "@/services/hostService";
+import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
 import { HandoverProvider } from "@/contexts/HandoverContext";
 import { HandoverSheet } from "@/components/handover/HandoverSheet";
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,22 @@ const Map = () => {
   const { theme } = useTheme();
 
   const isHandoverMode = Boolean(mode === "handover" && bookingId);
+  const [hostId, setHostId] = useState<string | null>(null);
+  const [isHost, setIsHost] = useState(false);
 
   const getDestination = useCallback((latitude: number, longitude: number) => {
     console.log("Setting destination", latitude, longitude);
     setDestination({ latitude, longitude });
+  }, []);
+
+  const getHostID = useCallback((hostId: string) => {
+    console.log("Handover host", hostId);
+    setHostId(hostId);
+  }, []);
+
+  const toggleIsOwner = useCallback((isHost: boolean) => {
+    console.log("Is user host?", isHost);
+    setIsHost(isHost);
   }, []);
 
   useEffect(() => {
@@ -66,10 +78,16 @@ const Map = () => {
   // get host locations
   const fetchHostLocations = async () => {
     console.log("Fetching host locations...");
+
     try {
       const onlineHosts = await fetchOnlineHosts();
+      const getHandoverHost = await fetchHostById(hostId);
       if (!onlineHosts.length) {
         toast.info("No hosts are currently online");
+      }
+
+      if (hostId) {
+        return setOnlineHosts([getHandoverHost]);
       }
 
       console.log("Host locations", onlineHosts);
@@ -156,6 +174,8 @@ const Map = () => {
             isOpen={isHandoverSheetOpen}
             onClose={() => setIsHandoverSheetOpen(false)}
             getDestination={getDestination}
+            getHostID={getHostID}
+            isHostUser={toggleIsOwner}
           />
           <Navigation />
         </HandoverProvider>

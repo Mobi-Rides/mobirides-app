@@ -12,14 +12,19 @@ interface HandoverSheetProps {
   isOpen: boolean;
   onClose: () => void;
   getDestination?: (latitude: number, longitude: number) => void;
+  getHostID?: (hostId: string) => void;
+  isHostUser?: (isHost: boolean) => void;
 }
 
 export const HandoverSheet = ({
   isOpen,
   onClose,
   getDestination,
+  getHostID,
+  isHostUser,
 }: HandoverSheetProps) => {
-  const { isLoading, isHost, bookingDetails, destination } = useHandover();
+  const { isLoading, isHost, bookingDetails, destination, ownerId } =
+    useHandover();
 
   const [handoverStep, setHandoverStep] = useState(1);
 
@@ -30,6 +35,12 @@ export const HandoverSheet = ({
       getDestination?.(latitude, longitude);
     }
   }, [getDestination, destination]);
+
+  useEffect(() => {
+    if (isHost == undefined) return;
+    getHostID(ownerId);
+    isHostUser(isHost);
+  }, []);
 
   // Handle completing handover
   const handleCompleteHandover = () => {
