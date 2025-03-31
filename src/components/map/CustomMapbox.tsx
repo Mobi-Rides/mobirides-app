@@ -12,8 +12,8 @@ interface CustomMapboxProps {
   mapbox_token: string;
   longitude: number;
   latitude: number;
-  mapStyle?: string;
   onlineHosts?: ExtendedProfile[];
+  mapStyle?: string;
   isHandoverMode?: boolean;
   bookingId?: string | null;
   returnLocation?: (long: number, lat: number) => void;
@@ -47,7 +47,6 @@ const CustomMapbox = ({
   const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
   const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
 
-  // Get handover context if in handover mode
   const handover = isHandoverMode ? useHandover() : null;
 
   useEffect(() => {
@@ -85,14 +84,12 @@ const CustomMapbox = ({
       map.current.addControl(geolocateControl, "top-right");
       geolocateControlRef.current = geolocateControl;
 
-      // Add error handling for geolocation
       geolocateControl.on("error", (e: any) => {
         console.error("Geolocation error:", e);
         toast.error(
           "Unable to access your location. Please check your browser permissions."
         );
 
-        // Notify the handover context about the error if in handover mode
         if (isHandoverMode && handover) {
           toast.error(
             "Location sharing is required for the handover process. Please enable location access."
@@ -112,9 +109,7 @@ const CustomMapbox = ({
 
             setUserLocation(newLocation);
 
-            // Update location in handover context if in handover mode
             if (isHandoverMode && handover) {
-              // Get address using reverse geocoding
               fetchAddressFromCoordinates(
                 newLocation.latitude,
                 newLocation.longitude
@@ -129,7 +124,6 @@ const CustomMapbox = ({
           });
         }
 
-        // Trigger geolocation immediately
         setTimeout(() => {
           if (geolocateControlRef.current) {
             geolocateControlRef.current.trigger();
@@ -151,7 +145,6 @@ const CustomMapbox = ({
     };
   }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover]);
 
-  // Fetch address from coordinates using Mapbox Geocoding API
   const fetchAddressFromCoordinates = async (
     lat: number,
     lng: number
@@ -178,7 +171,6 @@ const CustomMapbox = ({
     }
   }, [mapStyle, mapInit]);
 
-  // Handle regular host markers
   useEffect(() => {
     if (!map.current || !mapInit || !onlineHosts?.length || isHandoverMode)
       return;
@@ -215,7 +207,6 @@ const CustomMapbox = ({
     setMarkers(newMarkers);
   }, [onlineHosts, mapInit, isHandoverMode]);
 
-  //handle destination marker
   useEffect(() => {
     if (!map.current || !mapInit || !destination) return;
 
@@ -244,13 +235,11 @@ const CustomMapbox = ({
     };
   });
 
-  // Fetch route data and display on map
   useEffect(() => {
     if (!map.current || !mapInit || !destination) return;
 
     const { latitude, longitude } = destination;
 
-    // Fetch route data from Mapbox Directions API
     const fetchRoute = async () => {
       try {
         const response = await fetch(
@@ -261,9 +250,8 @@ const CustomMapbox = ({
         if (data.routes && data.routes.length > 0) {
           const route = data.routes[0].geometry;
 
-          // Add the route as a source and layer to the map
           if (map.current.getSource("route")) {
-            map.current.getSource("route").setData(route);
+            (map.current.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
           } else {
             map.current.addSource("route", {
               type: "geojson",
@@ -279,7 +267,7 @@ const CustomMapbox = ({
                 "line-cap": "round",
               },
               paint: {
-                "line-color": "#3b82f6", // Blue color for the route
+                "line-color": "#3b82f6",
                 "line-width": 5,
               },
             });
@@ -292,18 +280,18 @@ const CustomMapbox = ({
 
     fetchRoute();
 
-    // Cleanup route layer and source when the component unmounts or dependencies change
     return () => {
-      if (map.current.getLayer("route")) {
-        map.current.removeLayer("route");
-      }
-      if (map.current.getSource("route")) {
-        map.current.removeSource("route");
+      if (map.current) {
+        if (map.current.getStyle() && map.current.getLayer("route")) {
+          map.current.removeLayer("route");
+        }
+        if (map.current.getStyle() && map.current.getSource("route")) {
+          map.current.removeSource("route");
+        }
       }
     };
   }, [mapInit, destination, userLocation]);
 
-  // Handle handover markers
   useEffect(() => {
     if (
       !map.current ||
@@ -313,13 +301,11 @@ const CustomMapbox = ({
     )
       return;
 
-    // Clear existing handover markers
     handoverMarkers.forEach((marker) => marker.remove());
     setHandoverMarkers([]);
 
     const newHandoverMarkers: mapboxgl.Marker[] = [];
 
-    // Add host marker if location exists
     if (handover.handoverStatus.host_location) {
       const hostLocation = handover.handoverStatus.host_location;
       const hostEl = document.createElement("div");
@@ -327,7 +313,7 @@ const CustomMapbox = ({
       hostEl.style.width = "24px";
       hostEl.style.height = "24px";
       hostEl.style.borderRadius = "50%";
-      hostEl.style.backgroundColor = "#3b82f6"; // Blue
+      hostEl.style.backgroundColor = "#3b82f6";
       hostEl.style.border = "3px solid white";
       hostEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
 
@@ -344,7 +330,6 @@ const CustomMapbox = ({
       newHandoverMarkers.push(hostMarker);
     }
 
-    // Add renter marker if location exists
     if (handover.handoverStatus.renter_location) {
       const renterLocation = handover.handoverStatus.renter_location;
       const renterEl = document.createElement("div");
@@ -352,7 +337,7 @@ const CustomMapbox = ({
       renterEl.style.width = "24px";
       renterEl.style.height = "24px";
       renterEl.style.borderRadius = "50%";
-      renterEl.style.backgroundColor = "#ec4899"; // Pink
+      renterEl.style.backgroundColor = "#ec4899";
       renterEl.style.border = "3px solid white";
       renterEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
 
@@ -369,7 +354,6 @@ const CustomMapbox = ({
       newHandoverMarkers.push(renterMarker);
     }
 
-    // Fit bounds to include both markers if both exist
     if (newHandoverMarkers.length === 2 && map.current) {
       const bounds = new mapboxgl.LngLatBounds();
       newHandoverMarkers.forEach((marker) => {
