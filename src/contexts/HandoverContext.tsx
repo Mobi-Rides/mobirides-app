@@ -24,7 +24,7 @@ interface HandoverContextType {
     longitude: any;
     address: string;
   }): unknown;
-  handoverStatus: any;
+  handoverStatus: HandoverStatus | null;
   isLoading: boolean;
   isHost: boolean;
   bookingDetails: any;
@@ -50,6 +50,62 @@ export const useHandover = () => {
 interface HandoverProviderProps {
   children: ReactNode;
 }
+
+// Helper function to safely convert database JSON to our typed format
+const convertDatabaseLocationToHandoverLocation = (
+  location: any
+): HandoverLocation | null => {
+  if (!location) return null;
+  
+  try {
+    // If it's a string (JSON), parse it
+    if (typeof location === 'string') {
+      const parsed = JSON.parse(location);
+      return {
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+        address: parsed.address || '',
+        timestamp: parsed.timestamp || Date.now(),
+      };
+    } 
+    // If it's already an object
+    else if (typeof location === 'object') {
+      return {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address: location.address || '',
+        timestamp: location.timestamp || Date.now(),
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error converting location data:", error);
+    return null;
+  }
+};
+
+// Helper function to convert database handover session to our HandoverStatus type
+const convertDatabaseHandoverToHandoverStatus = (
+  data: any
+): HandoverStatus | null => {
+  if (!data) return null;
+  
+  return {
+    id: data.id,
+    booking_id: data.booking_id,
+    host_id: data.host_id,
+    renter_id: data.renter_id,
+    host_ready: !!data.host_ready,
+    renter_ready: !!data.renter_ready,
+    host_location: convertDatabaseLocationToHandoverLocation(data.host_location),
+    renter_location: convertDatabaseLocationToHandoverLocation(data.renter_location),
+    handover_completed: !!data.handover_completed,
+    handover_type: data.handover_type || null,
+    status: data.status || null,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+  };
+};
 
 export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   children,
@@ -141,7 +197,10 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         const handoverData = await getHandoverSession(bookingId);
         if (handoverData) {
           setHandoverId(handoverData.id);
-          setHandoverStatus(handoverData);
+          
+          // Use our conversion helper to ensure type safety
+          const convertedHandoverStatus = convertDatabaseHandoverToHandoverStatus(handoverData);
+          setHandoverStatus(convertedHandoverStatus);
         }
       } catch (error) {
         console.error("Error fetching handover session:", error);
