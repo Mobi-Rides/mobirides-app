@@ -178,6 +178,8 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         currentUserId,
         destination,
         ownerId,
+        updateLocation: () => {}, // Provide a default implementation
+        handoverStatus: null, // Provide a default value
       }}
     >
       {children}
