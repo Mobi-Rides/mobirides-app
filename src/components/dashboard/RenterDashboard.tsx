@@ -1,11 +1,17 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
+import { RenterStats } from "./RenterStats";
+import { RenterTabContent } from "./renter/RenterTabContent";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const RenterDashboard = () => {
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["renter-bookings"],
     queryFn: async () => {
@@ -21,7 +27,12 @@ export const RenterDashboard = () => {
             brand,
             model,
             location,
-            image_url
+            image_url,
+            owner_id,
+            price_per_day
+          ),
+          reviews!reviews_booking_id_fkey (
+            id
           )
         `)
         .eq("renter_id", user.id)
@@ -36,105 +47,86 @@ export const RenterDashboard = () => {
   if (isLoading) {
     return (
       <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>
     );
   }
 
-  const activeBookings = bookings?.filter(b => b.status === "confirmed" && new Date(b.end_date) >= new Date());
-  const upcomingBookings = bookings?.filter(b => b.status === "pending");
-  const pastBookings = bookings?.filter(b => b.status === "completed" || new Date(b.end_date) < new Date());
+  const today = new Date();
+  
+  const activeBookings = bookings?.filter(b => {
+    const endDate = new Date(b.end_date);
+    const hasReview = b.reviews && b.reviews.length > 0;
+    
+    return (
+      b.status === "confirmed" && 
+      new Date(b.start_date) <= today && 
+      (endDate >= today || !hasReview)
+    );
+  });
+  
+  const upcomingBookings = bookings?.filter(b => 
+    (b.status === "pending" || b.status === "confirmed") && 
+    new Date(b.start_date) > today
+  );
+  
+  const pastBookings = bookings?.filter(b => {
+    const endDate = new Date(b.end_date);
+    const hasReview = b.reviews && b.reviews.length > 0;
+    
+    return (
+      b.status === "completed" || 
+      b.status === "cancelled" ||
+      (endDate < today && hasReview)
+    );
+  });
+
+  const handleCardClick = (bookingId: string) => {
+    navigate(`/rental-details/${bookingId}`);
+  };
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="active">
-        <TabsList>
-          <TabsTrigger value="active">Active Rentals</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="past">Past Rentals</TabsTrigger>
+      <RenterStats />
+      
+      <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
+        <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="past">Past Rentals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active">
-          <div className="grid gap-4">
-            {activeBookings?.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RenterTabContent 
+            bookings={activeBookings} 
+            tabType="active" 
+            emptyMessage="No active rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
 
         <TabsContent value="upcoming">
-          <div className="grid gap-4">
-            {upcomingBookings?.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                    <p className="text-sm font-medium">Status: {booking.status}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RenterTabContent 
+            bookings={upcomingBookings} 
+            tabType="upcoming" 
+            emptyMessage="No upcoming rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
 
         <TabsContent value="past">
-          <div className="grid gap-4">
-            {pastBookings?.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RenterTabContent 
+            bookings={pastBookings} 
+            tabType="past" 
+            emptyMessage="No past rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
       </Tabs>
     </div>

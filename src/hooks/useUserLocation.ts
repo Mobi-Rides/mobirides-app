@@ -1,117 +1,28 @@
-import { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import { toast } from "sonner";
-import { createMarkerElement } from "@/utils/domUtils";
+import { useState, useEffect } from "react";
+import { Location } from "@/utils/mapbox/location/LocationManager";
+import { eventBus } from "@/utils/mapbox/core/eventBus";
+import { locationStateManager } from "@/utils/mapbox/location/LocationStateManager";
 
-interface UserLocation {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-}
-
-export const useUserLocation = (map: mapboxgl.Map | null) => {
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const watchIdRef = useRef<number | null>(null);
+export const useUserLocation = (current: unknown) => {
+  const [userLocation, setUserLocation] = useState<Location | null>(null);
 
   useEffect(() => {
-    console.log("useUserLocation effect running, map:", !!map);
-    
-    // Don't proceed if map isn't ready
-    if (!map) {
-      console.log("Map not ready, skipping location initialization");
-      return;
-    }
-
-    // Wait for map to be loaded
-    if (!map.loaded()) {
-      console.log("Map not loaded yet, waiting for load event");
-      const onLoad = () => {
-        console.log("Map loaded, initializing location tracking");
-        initializeLocationTracking();
-      };
-      map.once('load', onLoad);
-      return () => {
-        map.off('load', onLoad);
-      };
-    } else {
-      initializeLocationTracking();
-    }
-
-    function initializeLocationTracking() {
-      if (!navigator.geolocation) {
-        console.log("Geolocation not supported");
-        setError("Geolocation is not supported by your browser");
-        toast.error("Geolocation is not supported by your browser");
-        return;
-      }
-
-      const handleSuccess = (position: GeolocationPosition) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        console.log("User location updated:", { latitude, longitude, accuracy });
-
-        setUserLocation({ latitude, longitude, accuracy });
-
-        // Remove existing marker if it exists
-        if (markerRef.current) {
-          markerRef.current.remove();
+    const eventSubscriber = {
+      onEvent: (event: any) => {
+        if (event.type === "locationUpdate" && event.payload.latitude) {
+          setUserLocation(event.payload);
         }
-
-        try {
-          // Create a marker for user location
-          const el = createMarkerElement(accuracy);
-          
-          markerRef.current = new mapboxgl.Marker({ element: el })
-            .setLngLat([longitude, latitude]);
-
-          // Only add to map if map is valid
-          if (map && map.loaded()) {
-            markerRef.current.addTo(map);
-          }
-
-          // Center map on user location
-          map?.flyTo({
-            center: [longitude, latitude],
-            zoom: 14,
-          });
-        } catch (err) {
-          console.error("Error creating location marker:", err);
-        }
-      };
-
-      const handleError = (error: GeolocationPositionError) => {
-        console.error("Geolocation error:", error);
-        const errorMessage = "Failed to get your location. Please check your permissions.";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      };
-
-      // Start watching position
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        handleSuccess,
-        handleError,
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0,
-        }
-      );
-    }
-
-    // Cleanup function
-    return () => {
-      console.log("Cleaning up user location tracking");
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-      if (markerRef.current) {
-        markerRef.current.remove();
-        markerRef.current = null;
       }
     };
-  }, [map]); // Only re-run if map changes
 
-  return { userLocation, error };
+    eventBus.subscribe(eventSubscriber);
+    locationStateManager.enableTracking();
+
+    return () => {
+      eventBus.unsubscribe(eventSubscriber);
+      locationStateManager.disableTracking();
+    };
+  }, []);
+
+  return { userLocation };
 };

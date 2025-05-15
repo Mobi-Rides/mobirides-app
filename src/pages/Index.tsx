@@ -1,200 +1,60 @@
 
 import { useState, useEffect } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { BrandFilter } from "@/components/BrandFilter";
-import { Navigation } from "@/components/Navigation";
-import { useInView } from "react-intersection-observer";
-import { supabase } from "@/integrations/supabase/client";
-import type { Car } from "@/types/car";
-import type { SearchFilters as Filters } from "@/components/SearchFilters";
-import { fetchCars } from "@/utils/carFetching";
+import { useLocation } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { CarGrid } from "@/components/CarGrid";
-import { toast } from "sonner";
+import { Navigation } from "@/components/Navigation";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { UnauthenticatedView } from "@/components/home/UnauthenticatedView";
+import { LoadingView } from "@/components/home/LoadingView";
+import { HostView } from "@/components/home/HostView";
+import { RenterView } from "@/components/home/RenterView";
+import type { SearchFilters as Filters } from "@/components/SearchFilters";
 
 const Index = () => {
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
-  const [isLoadingRole, setIsLoadingRole] = useState(true);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filters, setFilters] = useState<Filters>({
     startDate: undefined,
     endDate: undefined,
     vehicleType: undefined,
     location: "",
-    sortBy: "distance",
+    sortBy: "price",
     sortOrder: "asc",
   });
+  const location = useLocation();
 
-  const { ref: loadMoreRef, inView } = useInView();
+  const { isAuthenticated, userRole, isLoadingRole } = useAuthStatus();
 
-  // Query for all available cars (for renters)
-  const { 
-    data: availableCars,
-    isLoading: isLoadingCars,
-    error: carsError,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage
-  } = useInfiniteQuery({
-    queryKey: ['available-cars', selectedBrand, filters, searchQuery],
-    queryFn: ({ pageParam = 0 }) => fetchCars({ 
-      pageParam, 
-      filters,
-      searchParams: {
-        ...(selectedBrand ? { brand: selectedBrand } : {}),
-        ...(searchQuery ? { searchTerm: searchQuery } : {})
-      }
-    }),
-    getNextPageParam: (lastPage) => lastPage.nextPage || undefined,
-    initialPageParam: 0,
-    enabled: userRole === 'renter'
-  });
+  const handleFiltersChange = (newFilters: Filters) => {
+    setFilters(newFilters);
+  };
 
-  // Query for host's cars with search
-  const { 
-    data: hostCarsData, 
-    isLoading: hostCarsLoading,
-    error: hostCarsError
-  } = useQuery({
-    queryKey: ['host-cars', searchQuery],
-    queryFn: async () => {
-      console.log("Fetching host cars with search:", searchQuery);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return [];
-      
-      let query = supabase
-        .from('cars')
-        .select('*')
-        .eq('owner_id', session.user.id);
-
-      // Apply search filter if exists
-      if (searchQuery) {
-        query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      console.log("Host cars fetched:", data);
-      return data as Car[];
-    },
-    enabled: userRole === 'host'
-  });
-
-  // Query for saved cars IDs - enabled for renters to show saved status
-  const { data: savedCarIds } = useQuery({
-    queryKey: ['saved-car-ids'], // Changed query key to be distinct
-    queryFn: async () => {
-      console.log("Fetching saved car IDs for home page");
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return new Set<string>();
-
-      const { data, error } = await supabase
-        .from('saved_cars')
-        .select('car_id')
-        .eq('user_id', session.user.id);
-
-      if (error) {
-        console.error('Error fetching saved cars:', error);
-        return new Set<string>();
-      }
-
-      const savedIds = new Set(data.map(saved => saved.car_id));
-      console.log("Saved car IDs for home page:", Array.from(savedIds));
-      return savedIds;
-    },
-    enabled: userRole === 'renter' // Only enable for renters
-  });
-
-  const hostCars = hostCarsData || [];
-  
-  // Ensure savedCarIds is always a Set, even if the query hasn't completed
-  const savedCarsSet = savedCarIds || new Set<string>();
-  
-  // Flatten available cars from all pages and mark saved ones
-  const allAvailableCars = availableCars?.pages.flatMap(page => 
-    page.data.map(car => ({
-      ...car,
-      isSaved: savedCarsSet.has(car.id)
-    }))
-  ) || [];
-
-  console.log("Available cars:", allAvailableCars);
-
+  // This effect handles direct URLs with auth parameters
   useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        setIsLoadingRole(true);
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          toast.error("Failed to fetch user session. Please try refreshing the page.");
-          setUserRole(null);
-          return;
-        }
-        
-        if (session?.user) {
-          console.log("Fetching role for user ID:", session.user.id);
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error("Profile error:", profileError);
-            toast.error("Failed to fetch user profile. Please try refreshing the page.");
-            setUserRole(null);
-            return;
-          }
-
-          if (profile) {
-            console.log("User role:", profile.role);
-            setUserRole(profile.role);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-        toast.error("An unexpected error occurred. Please try refreshing the page.");
-      } finally {
-        setIsLoadingRole(false);
-      }
-    };
-
-    fetchUserRole();
-  }, []);
-
-  // Load more cars when scrolling
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+    // Any initialization based on URL params would go here
+    // The actual modal handling is in UnauthenticatedView
+  }, [location.search]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header 
+      <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onFiltersChange={setFilters}
       />
       <main className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
-          <BrandFilter
-            selectedBrand={selectedBrand}
-            onSelectBrand={setSelectedBrand}
+        {isLoadingRole ? (
+          <LoadingView />
+        ) : !isAuthenticated ? (
+          <UnauthenticatedView />
+        ) : userRole === "host" ? (
+          <HostView searchQuery={searchQuery} />
+        ) : (
+          <RenterView 
+            searchQuery={searchQuery} 
+            filters={filters} 
+            onFiltersChange={handleFiltersChange} 
           />
-          <CarGrid
-            cars={userRole === 'host' ? hostCars : allAvailableCars}
-            isLoading={userRole === 'host' ? hostCarsLoading : isLoadingCars}
-            error={userRole === 'host' ? hostCarsError : carsError}
-            loadMoreRef={loadMoreRef}
-            isFetchingNextPage={isFetchingNextPage}
-          />
-        </div>
+        )}
       </main>
       <Navigation />
     </div>
@@ -202,4 +62,3 @@ const Index = () => {
 };
 
 export default Index;
-

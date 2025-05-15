@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +69,6 @@ export const ProfileAvatar = ({ avatarUrl, setAvatarUrl }: ProfileAvatarProps) =
 
   return (
     <div className="mb-8">
-      <h2 className="text-lg font-semibold mb-4">Avatar</h2>
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
           <AvatarImage 
