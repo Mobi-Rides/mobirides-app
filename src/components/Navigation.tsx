@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, MapPin, Bookmark, CalendarClock, Bell } from "lucide-react";
+import { Home, MapPin, CalendarClock, Bell, User, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./ThemeToggle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "./ui/badge";
@@ -68,16 +68,21 @@ export const Navigation = () => {
   const totalUnreadCount = unreadCount + unreadNotifications;
 
   const items: NavigationItem[] = [
-    { path: "/", label: "Home", icon: <Home className="w-5 h-5" />, activeIndex: 0 },
+    { path: "/", label: "Explore", icon: <Search className="w-5 h-5" />, activeIndex: 0 },
     { path: "/map", label: "Map", icon: <MapPin className="w-5 h-5" />, activeIndex: 1 },
-    { path: "/saved-cars", label: "Wishlist", icon: <Bookmark className="w-5 h-5" />, activeIndex: 2 },
-    { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 3 },
+    { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 2 },
     { 
       path: "/notifications", 
       label: "Inbox", 
       icon: <Bell className="w-5 h-5" />, 
-      activeIndex: 4,
+      activeIndex: 3,
       badge: totalUnreadCount > 0 ? totalUnreadCount : undefined
+    },
+    { 
+      path: "/profile", 
+      label: "Profile", 
+      icon: <User className="w-5 h-5" />, 
+      activeIndex: 4 
     },
   ];
 
@@ -117,9 +122,6 @@ export const Navigation = () => {
           ))}
         </div>
       </nav>
-      <div className="absolute -top-12 sm:-top-1 right-8 bg-white dark:bg-gray-900 p-2 rounded-full border border-gray-200 dark:border-gray-800 shadow-md">
-        <ThemeToggle />
-      </div>
     </div>
   );
 };

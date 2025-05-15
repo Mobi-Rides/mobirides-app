@@ -2,13 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
-import { ProfileForm } from "@/components/profile/ProfileForm";
-import { ProfileHeader } from "@/components/profile/ProfileHeader";
-import { RoleSection } from "@/components/profile/RoleSection";
-import { OnlineStatusToggle } from "@/components/profile/OnlineStatusToggle";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
+import { ProfileMenu } from "@/components/profile/ProfileMenu";
+import { ProfileEditView } from "@/components/profile/ProfileEditView";
+import { RoleEditView } from "@/components/profile/RoleEditView";
 import { Navigation } from "@/components/Navigation";
 import { useUserLocation } from "@/hooks/useUserLocation";
 
@@ -17,6 +15,8 @@ const Profile = () => {
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initialFormValues, setInitialFormValues] = useState({ full_name: "" });
+  const [activeView, setActiveView] = useState<'menu' | 'profile' | 'role'>('menu');
+  const [userRole, setUserRole] = useState<string>('renter');
   const navigate = useNavigate();
   const { userLocation } = useUserLocation(null);
 
@@ -46,7 +46,7 @@ const Profile = () => {
         console.log("Loading profile data...");
         const { data, error } = await supabase
           .from("profiles")
-          .select("avatar_url, full_name")
+          .select("avatar_url, full_name, role")
           .eq("id", session.user.id)
           .single();
 
@@ -56,9 +56,11 @@ const Profile = () => {
           console.log("Profile data loaded:", {
             avatarUrl: data.avatar_url,
             fullName: data.full_name,
+            role: data.role
           });
           setAvatarUrl(data.avatar_url);
           setInitialFormValues({ full_name: data.full_name || "" });
+          setUserRole(data.role || 'renter');
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -87,17 +89,37 @@ const Profile = () => {
   if (loading) return <ProfileLoading />;
   if (error) return <ProfileError error={error} />;
 
-  // Default coordinates if userLocation is not available
   const latitude = userLocation?.latitude || 0;
   const longitude = userLocation?.longitude || 0;
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
-      <ProfileHeader />
-      <ProfileForm initialValues={initialFormValues} />
-      <RoleSection />
-      <OnlineStatusToggle lat={latitude} long={longitude} />
+      {activeView === 'menu' && (
+        <ProfileMenu 
+          fullName={initialFormValues.full_name} 
+          avatarUrl={avatarUrl} 
+          setActiveView={setActiveView}
+          role={userRole}
+        />
+      )}
+
+      {activeView === 'profile' && (
+        <ProfileEditView 
+          avatarUrl={avatarUrl}
+          setAvatarUrl={setAvatarUrl}
+          initialFormValues={initialFormValues}
+          onBack={() => setActiveView('menu')}
+        />
+      )}
+
+      {activeView === 'role' && (
+        <RoleEditView
+          latitude={latitude}
+          longitude={longitude}
+          onBack={() => setActiveView('menu')}
+        />
+      )}
+
       <Navigation />
     </div>
   );

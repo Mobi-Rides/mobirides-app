@@ -1,4 +1,5 @@
 
+import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
@@ -7,7 +8,14 @@ import { LoadingView } from "@/components/home/LoadingView";
 import { toast } from "sonner";
 import type { Car } from "@/types/car";
 
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+
 const SavedCars = () => {
+  const navigate = useNavigate();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   const { data: cars = [], isLoading, error } = useQuery({
     queryKey: ["saved-cars-full"],
     queryFn: async () => {
@@ -57,21 +65,46 @@ const SavedCars = () => {
     },
   });
 
-  return (
-    <div className="min-h-screen pb-20">
-      <header className="bg-white dark:bg-gray-800 p-4 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl font-semibold dark:text-white">Saved Cars</h1>
-      </header>
+  const handleLoadMore = () => {
+    // This function would be used if pagination was implemented
+    console.log("Load more triggered in SavedCars");
+  };
 
-      <main className="container mx-auto px-4 py-8">
+  return (
+    <div className="min-h-screen px-4 pb-20">
+      <div className="px-4 py-4 mb-4 flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-xl md:text-2xl text-left font-semibold">Profile</h1>
+      </div>
+
+      <main className="px-4 py-6">
         {isLoading ? (
           <LoadingView />
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-base text-muted-foreground mb-4">
+              Unable to load saved cars
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-sm text-primary hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        ) : cars.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-base text-muted-foreground">No saved cars yet</p>
+          </div>
         ) : (
           <CarGrid
             cars={cars}
             isLoading={isLoading}
             error={error}
-            loadMoreRef={() => {}}
+            loadMoreRef={loadMoreRef}
+            onLoadMore={handleLoadMore}
             isFetchingNextPage={false}
             isAuthenticated={true}
           />

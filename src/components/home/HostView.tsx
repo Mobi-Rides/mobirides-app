@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
-import { BrandFilter } from "@/components/BrandFilter";
+import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import type { Car } from "@/types/car";
@@ -15,15 +15,16 @@ interface HostViewProps {
 export const HostView = ({ searchQuery }: HostViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { 
     data: hostCarsData, 
     isLoading: hostCarsLoading,
     error: hostCarsError
   } = useQuery({
-    queryKey: ['host-cars', searchQuery, sortOrder],
+    queryKey: ['host-cars', searchQuery, sortOrder, selectedBrand],
     queryFn: async () => {
-      console.log("Fetching host cars with search:", searchQuery);
+      console.log("Fetching host cars with search:", searchQuery, "brand:", selectedBrand);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return [];
       
@@ -34,6 +35,10 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
 
       if (searchQuery) {
         query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
+      }
+      
+      if (selectedBrand) {
+        query = query.eq('brand', selectedBrand);
       }
 
       query = query.order('price_per_day', { ascending: sortOrder === 'asc' });
@@ -48,28 +53,22 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
 
   const hostCars = hostCarsData || [];
   
+  const handleBrandSelect = (brand: string | null) => {
+    console.log("Host view brand selected:", brand);
+    setSelectedBrand(brand);
+  };
+  
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === "asc" ? "desc" : "asc");
   };
 
+  const handleLoadMore = () => {
+    // Load more logic would go here
+    console.log("Load more triggered in HostView");
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-left flex items-center ">
-        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
-          Your Fleet
-        </h3>
-
-        <span className="ml-2 px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8]">
-          Host Mode
-        </span>
-      </div>
-
-      {/* <BrandFilter
-        selectedBrand={selectedBrand}
-        onSelectBrand={setSelectedBrand}
-        carsCount={hostCars.length}
-      /> */}
-
       <div className="flex justify-end">
         <Button
           variant={sortOrder ? "secondary" : "outline"}
@@ -91,12 +90,18 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
           )}
         </Button>
       </div>
-
+      
+      <div className="text-left flex items-center ">
+        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
+          My Cars
+        </h3>
+      </div>
       <CarGrid
         cars={hostCars}
         isLoading={hostCarsLoading}
         error={hostCarsError}
-        loadMoreRef={() => {}}
+        loadMoreRef={loadMoreRef}
+        onLoadMore={handleLoadMore}
         isFetchingNextPage={false}
         isAuthenticated={true}
       />

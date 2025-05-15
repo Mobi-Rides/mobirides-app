@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -7,12 +8,16 @@ import { BookingTable } from "@/components/booking/BookingTable";
 import { format } from "date-fns";
 import { Booking } from "@/types/booking";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Bookings = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Add useEffect to check current user
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
@@ -27,7 +32,6 @@ const Bookings = () => {
     queryFn: async () => {
       console.log("Fetching user bookings");
       
-      // Debug current user session
       const { data: sessionData } = await supabase.auth.getSession();
       console.log("Current user session:", sessionData.session);
       
@@ -60,10 +64,8 @@ const Bookings = () => {
       }
 
       console.log("Bookings fetched:", data);
-      // Cast to Booking[] to match our interface
       return data as unknown as Booking[];
     },
-    // Add retry for better reliability
     retry: 2
   });
 
@@ -94,7 +96,6 @@ const Bookings = () => {
       const bookingToCancel = bookings?.find(b => b.id === bookingId);
       if (!bookingToCancel) return;
 
-      // Update in Supabase first
       const { error: updateError } = await supabase
         .from("bookings")
         .update({ status: "cancelled" })
@@ -105,10 +106,8 @@ const Bookings = () => {
         throw updateError;
       }
 
-      // Create notifications about the cancellation
       await createCancellationNotifications(bookingToCancel);
 
-      // Invalidate the query to refetch fresh data
       await queryClient.invalidateQueries({ queryKey: ["bookings"] });
 
       toast({
@@ -123,12 +122,10 @@ const Bookings = () => {
         description: "Failed to cancel booking",
         variant: "destructive",
       });
-      // Refetch to ensure UI shows correct state
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     }
   };
 
-  // Handle query error
   useEffect(() => {
     if (error) {
       console.error("Booking query error:", error);
@@ -140,7 +137,6 @@ const Bookings = () => {
     }
   }, [error, toast]);
 
-  // Check if we have empty bookings but aren't loading
   useEffect(() => {
     if (!isLoading && (!bookings || bookings.length === 0)) {
       console.log("No bookings found in the query result");
@@ -151,11 +147,30 @@ const Bookings = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="container py-4 space-y-4">
-          <h1 className="text-2xl font-bold">My Bookings</h1>
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+          <div className="px-4 py-4 mb-4 flex items-center gap-4">
+            <Button variant="ghost" size="icon" disabled>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-xl md:text-2xl text-left font-semibold">
+              My Booking
+            </h1>
+          </div>
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           </div>
         </div>
         <Navigation />
@@ -166,8 +181,20 @@ const Bookings = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-4 space-y-4">
-        <h1 className="text-2xl font-bold">My Bookings</h1>
-        <BookingTable bookings={bookings} onCancelBooking={handleCancelBooking} />
+        <div className="px-4 py-4 mb-4 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-xl md:text-2xl text-left font-semibold">
+            My Booking
+          </h1>
+        </div>
+        <div className="px-4">
+          <BookingTable
+            bookings={bookings}
+            onCancelBooking={handleCancelBooking}
+          />
+        </div>
       </div>
       <Navigation />
     </div>

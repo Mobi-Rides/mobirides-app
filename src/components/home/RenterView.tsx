@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
 import { CarGrid } from "@/components/CarGrid";
-import { BrandFilter } from "@/components/BrandFilter";
+import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,19 @@ interface RenterViewProps {
 export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const { ref: loadMoreRef, inView } = useInView();
+  const { ref: inViewRef, inView } = useInView();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // For combining the inView ref with our loadMoreRef
+  const setRefs = (node: HTMLDivElement | null) => {
+    // Set the loadMoreRef
+    if (loadMoreRef.current !== node) {
+      loadMoreRef.current = node || null;
+    }
+    
+    // Call the inViewRef
+    inViewRef(node);
+  };
 
   useEffect(() => {
     onFiltersChange({
@@ -27,6 +39,12 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
       sortOrder: sortOrder
     });
   }, [sortOrder, filters, onFiltersChange]);
+
+  // Update filters when brand selection changes
+  const handleBrandSelect = (brand: string | null) => {
+    console.log("Brand selected:", brand);
+    setSelectedBrand(brand);
+  };
 
   const { 
     data: availableCars,
@@ -93,22 +111,6 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
 
   return (
     <div className="space-y-6">
-      <div className="text-left flex items-center ">
-        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
-          Cars Available for Rent
-        </h3>
-
-        <span className="ml-2 px-3 py-1 rounded-md text-xs md:text-sm font-bold bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8]">
-          Renter Mode
-        </span>
-      </div>
-
-      <BrandFilter
-        selectedBrand={selectedBrand}
-        onSelectBrand={setSelectedBrand}
-        carsCount={allAvailableCars.length}
-      />
-
       <div className="flex justify-end">
         <Button
           variant={sortOrder ? "secondary" : "outline"}
@@ -130,7 +132,11 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
           )}
         </Button>
       </div>
-
+      <div className="text-left flex items-center ">
+        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
+          Available Cars
+        </h3>
+      </div>
       <CarGrid
         cars={allAvailableCars}
         isLoading={isLoadingCars}
@@ -139,6 +145,12 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
         isFetchingNextPage={isFetchingNextPage}
         isAuthenticated={true}
       />
+      {/* This hidden div is used with the intersection observer */}
+      {hasNextPage && (
+        <div ref={setRefs} className="h-10 w-full opacity-0">
+          Load more trigger
+        </div>
+      )}
     </div>
   );
 };

@@ -2,6 +2,8 @@
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookingRow } from "./BookingRow";
 import { Booking } from "@/types/booking";
+import { useMediaQuery } from "usehooks-ts";
+import { BookingMobileCard } from "./BookingMobileCard";
 
 interface BookingTableProps {
   bookings: Booking[] | undefined;
@@ -9,8 +11,8 @@ interface BookingTableProps {
 }
 
 export const BookingTable = ({ bookings, onCancelBooking }: BookingTableProps) => {
-  // Add additional debugging for bookings
   console.log("BookingTable received bookings:", bookings);
+  const isDesktop = useMediaQuery("(min-width: 640px)");
   
   if (!bookings?.length) {
     return (
@@ -20,6 +22,22 @@ export const BookingTable = ({ bookings, onCancelBooking }: BookingTableProps) =
     );
   }
 
+  // Mobile view - card layout
+  if (!isDesktop) {
+    return (
+      <div className="space-y-4">
+        {bookings.map((booking) => (
+          <BookingMobileCard
+            key={booking.id}
+            booking={booking}
+            onCancelBooking={onCancelBooking}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Desktop view - table layout
   return (
     <div className="rounded-md border overflow-hidden">
       <Table>

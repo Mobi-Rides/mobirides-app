@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,7 +15,7 @@ interface CarDetailsProps {
     location: string;
     transmission: string;
     fuel: string;
-    seats: string;
+    seats: number; // Changed from string to number
   };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelectChange: (name: string, value: string) => void;
@@ -23,7 +24,7 @@ interface CarDetailsProps {
 export const CarDetails = ({ formData, onInputChange, onSelectChange }: CarDetailsProps) => {
   return (
     <>
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="price_per_day">Price per Day (BWP)</Label>
         <Input
           id="price_per_day"
@@ -35,7 +36,7 @@ export const CarDetails = ({ formData, onInputChange, onSelectChange }: CarDetai
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="location">Location</Label>
         <Input
           id="location"
@@ -47,7 +48,7 @@ export const CarDetails = ({ formData, onInputChange, onSelectChange }: CarDetai
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="space-y-2 text-left">
           <Label htmlFor="transmission">Transmission</Label>
           <Select
             value={formData.transmission}
@@ -63,7 +64,7 @@ export const CarDetails = ({ formData, onInputChange, onSelectChange }: CarDetai
           </Select>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 text-left">
           <Label htmlFor="fuel">Fuel Type</Label>
           <Select
             value={formData.fuel}
@@ -82,7 +83,7 @@ export const CarDetails = ({ formData, onInputChange, onSelectChange }: CarDetai
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="seats">Number of Seats</Label>
         <Input
           id="seats"

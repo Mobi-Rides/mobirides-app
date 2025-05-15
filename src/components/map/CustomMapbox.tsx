@@ -5,13 +5,23 @@ import { toast } from "sonner";
 import Dpad from "./Dpad";
 import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 import { ExtendedProfile } from "@/utils/profileTypes";
+import { useHandover } from "@/contexts/HandoverContext";
+import { HandoverLocation } from "@/services/handoverService";
 
 interface CustomMapboxProps {
   mapbox_token: string;
   longitude: number;
   latitude: number;
-  mapStyle?: string;
   onlineHosts?: ExtendedProfile[];
+  mapStyle?: string;
+  isHandoverMode?: boolean;
+  bookingId?: string | null;
+  returnLocation?: (long: number, lat: number) => void;
+  interactive?: boolean;
+  dpad?: boolean;
+  zoom?: number;
+  locationToggle?: boolean;
+  destination?: { latitude: number; longitude: number } | null;
 }
 
 const CustomMapbox = ({
@@ -20,6 +30,14 @@ const CustomMapbox = ({
   latitude,
   onlineHosts,
   mapStyle = "mapbox://styles/mapbox/streets-v12",
+  isHandoverMode = false,
+  bookingId,
+  zoom,
+  interactive,
+  dpad,
+  locationToggle,
+  destination,
+  returnLocation,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -27,6 +45,18 @@ const CustomMapbox = ({
   const [mapInit, setMapInit] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState({ latitude, longitude });
   const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
+  const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
+
+  const handover = isHandoverMode ? useHandover() : null;
+
+  useEffect(() => {
+    if (!returnLocation) {
+      return;
+    }
+    const long = userLocation.longitude;
+    const lat = userLocation.latitude;
+    returnLocation(long, lat);
+  }, [userLocation]);
 
   useEffect(() => {
     if (mapbox_token) {
@@ -38,7 +68,8 @@ const CustomMapbox = ({
         container: mapContainer.current,
         style: mapStyle,
         center: [longitude, latitude],
-        zoom: 14,
+        zoom: zoom ? zoom : 14,
+        interactive: interactive ? interactive : true,
       });
 
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -53,23 +84,51 @@ const CustomMapbox = ({
       map.current.addControl(geolocateControl, "top-right");
       geolocateControlRef.current = geolocateControl;
 
+      geolocateControl.on("error", (e: any) => {
+        console.error("Geolocation error:", e);
+        toast.error(
+          "Unable to access your location. Please check your browser permissions."
+        );
+
+        if (isHandoverMode && handover) {
+          toast.error(
+            "Location sharing is required for the handover process. Please enable location access."
+          );
+        }
+      });
+
       map.current.on("load", () => {
         console.log("Map loaded successfully");
         setMapInit(true);
         if (geolocateControlRef.current) {
           geolocateControlRef.current.on("geolocate", (e: any) => {
-            setUserLocation({
+            const newLocation = {
               longitude: e.coords.longitude,
               latitude: e.coords.latitude,
-            });
+            };
+
+            setUserLocation(newLocation);
+
+            if (isHandoverMode && handover) {
+              fetchAddressFromCoordinates(
+                newLocation.latitude,
+                newLocation.longitude
+              ).then((address) => {
+                handover.updateLocation({
+                  latitude: newLocation.latitude,
+                  longitude: newLocation.longitude,
+                  address: address || "Unknown location",
+                });
+              });
+            }
           });
         }
 
-        if (location.pathname === "/map") {
-          setTimeout(() => {
-            geolocateControl.trigger();
-          }, 1000);
-        }
+        setTimeout(() => {
+          if (geolocateControlRef.current) {
+            geolocateControlRef.current.trigger();
+          }
+        }, 1000);
       });
 
       map.current.on("error", (e) => {
@@ -84,7 +143,27 @@ const CustomMapbox = ({
         map.current = null;
       }
     };
-  }, [mapbox_token, longitude, latitude, mapStyle]);
+  }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover]);
+
+  const fetchAddressFromCoordinates = async (
+    lat: number,
+    lng: number
+  ): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapbox_token}`
+      );
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        return data.features[0].place_name;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (map.current && mapInit) {
@@ -93,7 +172,8 @@ const CustomMapbox = ({
   }, [mapStyle, mapInit]);
 
   useEffect(() => {
-    if (!map.current || !mapInit || !onlineHosts?.length) return;
+    if (!map.current || !mapInit || !onlineHosts?.length || isHandoverMode)
+      return;
 
     markers.forEach((marker) => marker.remove());
     setMarkers([]);
@@ -125,7 +205,169 @@ const CustomMapbox = ({
       .filter(Boolean) as mapboxgl.Marker[];
 
     setMarkers(newMarkers);
-  }, [onlineHosts, mapInit]);
+  }, [onlineHosts, mapInit, isHandoverMode]);
+
+  useEffect(() => {
+    if (!map.current || !mapInit || !destination) return;
+
+    const { latitude, longitude } = destination;
+
+    const el = document.createElement("div");
+    el.className = "destination-marker";
+    el.style.width = "24px";
+    el.style.height = "24px";
+    el.style.borderRadius = "50%";
+    el.style.backgroundColor = "#f59e0b";
+    el.style.border = "3px solid white";
+    el.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([longitude, latitude])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }).setHTML(
+          `<p class="font-medium">Destination</p>`
+        )
+      )
+      .addTo(map.current!);
+
+    return () => {
+      marker.remove();
+    };
+  });
+
+  useEffect(() => {
+    if (!map.current || !mapInit || !destination) return;
+
+    const { latitude, longitude } = destination;
+
+    const fetchRoute = async () => {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${longitude},${latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+        );
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0].geometry;
+
+          if (map.current.getSource("route")) {
+            (map.current.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
+          } else {
+            map.current.addSource("route", {
+              type: "geojson",
+              data: route,
+            });
+
+            map.current.addLayer({
+              id: "route",
+              type: "line",
+              source: "route",
+              layout: {
+                "line-join": "round",
+                "line-cap": "round",
+              },
+              paint: {
+                "line-color": "#3b82f6",
+                "line-width": 5,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching route:", error);
+      }
+    };
+
+    fetchRoute();
+
+    return () => {
+      if (map.current) {
+        if (map.current.getStyle() && map.current.getLayer("route")) {
+          map.current.removeLayer("route");
+        }
+        if (map.current.getStyle() && map.current.getSource("route")) {
+          map.current.removeSource("route");
+        }
+      }
+    };
+  }, [mapInit, destination, userLocation]);
+
+  useEffect(() => {
+    if (
+      !map.current ||
+      !mapInit ||
+      !isHandoverMode ||
+      !handover?.handoverStatus
+    )
+      return;
+
+    handoverMarkers.forEach((marker) => marker.remove());
+    setHandoverMarkers([]);
+
+    const newHandoverMarkers: mapboxgl.Marker[] = [];
+
+    if (handover.handoverStatus.host_location) {
+      const hostLocation = handover.handoverStatus.host_location;
+      const hostEl = document.createElement("div");
+      hostEl.className = "host-handover-marker";
+      hostEl.style.width = "24px";
+      hostEl.style.height = "24px";
+      hostEl.style.borderRadius = "50%";
+      hostEl.style.backgroundColor = "#3b82f6";
+      hostEl.style.border = "3px solid white";
+      hostEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+
+      const hostMarker = new mapboxgl.Marker(hostEl)
+        .setLngLat([hostLocation.longitude, hostLocation.latitude])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(
+            `<p class="font-medium">Host Location</p>
+             <p class="text-xs">${hostLocation.address}</p>`
+          )
+        )
+        .addTo(map.current!);
+
+      newHandoverMarkers.push(hostMarker);
+    }
+
+    if (handover.handoverStatus.renter_location) {
+      const renterLocation = handover.handoverStatus.renter_location;
+      const renterEl = document.createElement("div");
+      renterEl.className = "renter-handover-marker";
+      renterEl.style.width = "24px";
+      renterEl.style.height = "24px";
+      renterEl.style.borderRadius = "50%";
+      renterEl.style.backgroundColor = "#ec4899";
+      renterEl.style.border = "3px solid white";
+      renterEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+
+      const renterMarker = new mapboxgl.Marker(renterEl)
+        .setLngLat([renterLocation.longitude, renterLocation.latitude])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(
+            `<p class="font-medium">Renter Location</p>
+             <p class="text-xs">${renterLocation.address}</p>`
+          )
+        )
+        .addTo(map.current!);
+
+      newHandoverMarkers.push(renterMarker);
+    }
+
+    if (newHandoverMarkers.length === 2 && map.current) {
+      const bounds = new mapboxgl.LngLatBounds();
+      newHandoverMarkers.forEach((marker) => {
+        bounds.extend(marker.getLngLat());
+      });
+
+      map.current.fitBounds(bounds, {
+        padding: 100,
+        maxZoom: 15,
+      });
+    }
+
+    setHandoverMarkers(newHandoverMarkers);
+  }, [handover?.handoverStatus, mapInit, isHandoverMode]);
 
   const onUp = () => {
     if (map.current) {
@@ -165,26 +407,53 @@ const CustomMapbox = ({
     <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
       <div ref={mapContainer} className="w-full h-full" />
 
-      <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
-        <div
-          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
-                      max-w-xs w-auto pointer-events-auto transition-all duration-300 
-                      border border-gray-200 dark:border-gray-700"
-        >
-          <OnlineStatusToggle
-            lat={userLocation.latitude}
-            long={userLocation.longitude}
-          />
+      {!isHandoverMode && (
+        <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
+          <div
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
+                        max-w-xs w-auto pointer-events-auto transition-all duration-300 
+                        border border-gray-200 dark:border-gray-700"
+          >
+            {locationToggle && (
+              <OnlineStatusToggle
+                lat={userLocation.latitude}
+                long={userLocation.longitude}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <Dpad
-        onUp={onUp}
-        onDown={onDown}
-        onLeft={onLeft}
-        onRight={onRight}
-        onReset={onReset}
-      />
+      {isHandoverMode && handover?.handoverStatus && (
+        <div className="absolute top-4 left-0 right-0 z-10 mx-auto flex justify-center pointer-events-none">
+          <div
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full py-2 px-4 
+                        max-w-xs w-auto pointer-events-auto transition-all duration-300 
+                        border border-gray-200 dark:border-gray-700"
+          >
+            <div className="text-center">
+              <p className="text-sm font-medium">
+                {handover.isHost ? "Host" : "Renter"} Mode
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {handover.handoverStatus.host_location &&
+                handover.handoverStatus.renter_location
+                  ? "Both locations shared"
+                  : "Waiting for location..."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {dpad && (
+        <Dpad
+          onUp={onUp}
+          onDown={onDown}
+          onLeft={onLeft}
+          onRight={onRight}
+          onReset={onReset}
+        />
+      )}
     </div>
   );
 };
