@@ -25,15 +25,17 @@ class MockPaymentService {
       };
     }
 
-    if (request.amount > 10000) {
+    if (request.amount > 50000) {
       return {
         success: false,
-        error_message: "Amount exceeds maximum limit"
+        error_message: "Amount exceeds maximum limit of P50,000"
       };
     }
 
-    // Simulate random payment failures (10% chance)
-    if (Math.random() < 0.1) {
+    // Remove random failures for better user experience
+    // In production, you might want to add this back with a much lower rate
+    // Simulate random payment failures (1% chance instead of 10%)
+    if (Math.random() < 0.01) {
       return {
         success: false,
         error_message: "Payment processing failed. Please try again."
@@ -54,7 +56,8 @@ class MockPaymentService {
   }
 
   getPresetAmounts(): number[] {
-    return [25, 50, 100, 200, 500];
+    // Return amounts in BWP instead of USD
+    return [50, 100, 200, 500, 1000];
   }
 }
 

@@ -153,11 +153,11 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
                   key={presetAmount}
                   variant="outline"
                   size="sm"
-                  onClick={() => handlePresetAmount(presetAmount * 4)} // Convert USD to BWP (rough conversion)
+                  onClick={() => handlePresetAmount(presetAmount)}
                   className="h-8"
                   disabled={isProcessing}
                 >
-                  P{presetAmount * 4}
+                  P{presetAmount}
                 </Button>
               ))}
             </div>
