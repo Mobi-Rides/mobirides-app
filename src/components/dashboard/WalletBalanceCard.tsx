@@ -52,7 +52,7 @@ export const WalletBalanceCard = () => {
   }
 
   const balance = walletBalance?.balance || 0;
-  const isLowBalance = balance < 50;
+  const isLowBalance = balance < 200; // Adjusted for BWP (roughly equivalent to $50 USD)
 
   return (
     <>
@@ -67,7 +67,7 @@ export const WalletBalanceCard = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">
-                ${balance.toFixed(2)}
+                P{balance.toFixed(2)}
               </span>
               {isLowBalance && (
                 <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">

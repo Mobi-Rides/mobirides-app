@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -155,7 +156,7 @@ class WalletService {
       }
 
       console.log("Wallet top-up completed successfully");
-      toast.success(`Successfully added $${request.amount.toFixed(2)} to your wallet`);
+      toast.success(`Successfully added P${request.amount.toFixed(2)} to your wallet`);
       return true;
     } catch (error) {
       console.error("Error in topUpWallet:", error);
@@ -173,7 +174,7 @@ class WalletService {
         .insert({
           host_id: hostId,
           balance: 0.00,
-          currency: "USD"
+          currency: "BWP"
         });
 
       if (error) {

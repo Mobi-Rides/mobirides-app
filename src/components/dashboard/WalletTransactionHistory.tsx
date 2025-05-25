@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -146,10 +145,10 @@ export const WalletTransactionHistory = () => {
               <p className={`font-semibold ${
                 transaction.amount > 0 ? "text-green-600" : "text-red-600"
               }`}>
-                {transaction.amount > 0 ? "+" : ""}${Math.abs(transaction.amount).toFixed(2)}
+                {transaction.amount > 0 ? "+" : ""}P{Math.abs(transaction.amount).toFixed(2)}
               </p>
               <p className="text-xs text-muted-foreground">
-                Balance: ${transaction.balance_after.toFixed(2)}
+                Balance: P{transaction.balance_after.toFixed(2)}
               </p>
             </div>
           </div>

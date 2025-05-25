@@ -41,13 +41,13 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
       return;
     }
 
-    if (topUpAmount < 1) {
-      toast.error("Minimum top-up amount is $1.00");
+    if (topUpAmount < 10) {
+      toast.error("Minimum top-up amount is P10.00");
       return;
     }
 
-    if (topUpAmount > 10000) {
-      toast.error("Maximum top-up amount is $10,000.00");
+    if (topUpAmount > 50000) {
+      toast.error("Maximum top-up amount is P50,000.00");
       return;
     }
 
@@ -127,37 +127,37 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
         <div className="space-y-4">
           <div className="p-3 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">Current Balance</p>
-            <p className="text-lg font-semibold">${currentBalance.toFixed(2)}</p>
+            <p className="text-lg font-semibold">P{currentBalance.toFixed(2)}</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount to Add</Label>
+            <Label htmlFor="amount">Amount to Add (BWP)</Label>
             <Input
               id="amount"
               type="number"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              min="1"
-              max="10000"
+              min="10"
+              max="50000"
               step="0.01"
               disabled={isProcessing}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Quick Select</Label>
+            <Label>Quick Select (BWP)</Label>
             <div className="grid grid-cols-3 gap-2">
               {presetAmounts.map((presetAmount) => (
                 <Button
                   key={presetAmount}
                   variant="outline"
                   size="sm"
-                  onClick={() => handlePresetAmount(presetAmount)}
+                  onClick={() => handlePresetAmount(presetAmount * 4)} // Convert USD to BWP (rough conversion)
                   className="h-8"
                   disabled={isProcessing}
                 >
-                  ${presetAmount}
+                  P{presetAmount * 4}
                 </Button>
               ))}
             </div>
@@ -203,7 +203,7 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
                   Processing...
                 </>
               ) : (
-                `Top Up $${amount || '0.00'}`
+                `Top Up P${amount || '0.00'}`
               )}
             </Button>
           </div>
