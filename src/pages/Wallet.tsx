@@ -35,8 +35,8 @@ const Wallet = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
-        <div className="flex items-center gap-4 mb-6">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -46,20 +46,14 @@ const Wallet = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Wallet & Earnings</h1>
-            <p className="text-muted-foreground">Manage your wallet balance and view transaction history</p>
+            <h1 className="text-3xl font-bold tracking-tight">Wallet & Earnings</h1>
+            <p className="text-muted-foreground mt-1">Manage your wallet balance and view transaction history</p>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-6">
-              <WalletBalanceCard />
-            </div>
-            <div className="space-y-6">
-              <WalletTransactionHistory />
-            </div>
-          </div>
+        <div className="grid gap-8 md:grid-cols-2">
+          <WalletBalanceCard />
+          <WalletTransactionHistory />
         </div>
       </div>
     </div>
