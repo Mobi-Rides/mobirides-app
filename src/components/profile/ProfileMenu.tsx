@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
@@ -20,6 +19,14 @@ interface ProfileMenuProps {
   role?: string;
 }
 
+interface MenuItem {
+  icon: any;
+  label: string;
+  onClick: () => void;
+  color?: string;
+  description?: string;
+}
+
 export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter' }: ProfileMenuProps) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -39,7 +46,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     ? supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl 
     : null;
 
-  const baseMenuItems = [
+  const baseMenuItems: MenuItem[] = [
     {
       icon: UserRound,
       label: "Edit Profile",
@@ -64,7 +71,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
   ];
 
   // Add wallet menu item only for hosts
-  const hostOnlyItems = role === 'host' ? [
+  const hostOnlyItems: MenuItem[] = role === 'host' ? [
     {
       icon: Wallet,
       label: "Wallet & Earnings",
@@ -75,7 +82,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
 
   const vehicleAndBookingsItems = [...baseMenuItems.slice(1), ...hostOnlyItems];
 
-  const settingsItems = [
+  const settingsItems: MenuItem[] = [
     {
       icon: Settings,
       label: "App Settings",
@@ -93,7 +100,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     },
   ];
 
-  const helpItems = [
+  const helpItems: MenuItem[] = [
     {
       icon: HelpCircle,
       label: "Help & Support",
@@ -101,7 +108,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     },
   ];
 
-  const logoutItem = {
+  const logoutItem: MenuItem = {
     icon: LogOut,
     label: "Log Out",
     onClick: handleLogout,

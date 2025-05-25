@@ -2,28 +2,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatsCard } from "./StatsCard";
-import { CalendarClock, CarFront, CheckCircle, Clock, Wallet } from "lucide-react";
+import { CalendarClock, CarFront, CheckCircle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { walletService } from "@/services/walletService";
 
 export const HostStats = () => {
-  const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getUser();
-      return data?.user;
-    }
-  });
-
-  const { data: walletBalance } = useQuery({
-    queryKey: ["wallet-balance", currentUser?.id],
-    queryFn: async () => {
-      if (!currentUser?.id) return null;
-      return await walletService.getWalletBalance(currentUser.id);
-    },
-    enabled: !!currentUser?.id
-  });
-
   const { data: stats, isLoading } = useQuery({
     queryKey: ["host-stats"],
     queryFn: async () => {
@@ -62,26 +44,16 @@ export const HostStats = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        {[...Array(5)].map((_, i) => (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {[...Array(4)].map((_, i) => (
           <Skeleton key={i} className="h-24 w-full" />
         ))}
       </div>
     );
   }
 
-  const balance = walletBalance?.balance || 0;
-  const isLowBalance = balance < 50;
-
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <StatsCard 
-        title="Wallet Balance" 
-        value={`$${balance.toFixed(2)}`}
-        icon={Wallet}
-        iconClassName={isLowBalance ? "bg-amber-500" : "bg-green-500"}
-        description={isLowBalance ? "Low balance" : "Available"}
-      />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <StatsCard 
         title="Total Bookings" 
         value={stats?.total || 0}

@@ -6,8 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { HostStats } from "./HostStats";
 import { HostTabContent } from "./host/HostTabContent";
-import { WalletBalanceCard } from "./WalletBalanceCard";
-import { WalletTransactionHistory } from "./WalletTransactionHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BookingStatus } from "@/types/booking";
 
@@ -66,12 +64,6 @@ export const HostDashboard = () => {
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <Skeleton className="h-32 w-full" />
-          </div>
-          <Skeleton className="h-32 w-full" />
-        </div>
         <Skeleton className="h-32 w-full" />
       </div>
     );
@@ -109,14 +101,6 @@ export const HostDashboard = () => {
   return (
     <div className="space-y-6">
       <HostStats />
-      
-      {/* Wallet Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <WalletTransactionHistory />
-        </div>
-        <WalletBalanceCard />
-      </div>
       
       <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
