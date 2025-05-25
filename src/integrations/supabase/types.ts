@@ -269,6 +269,41 @@ export type Database = {
           },
         ]
       }
+      host_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          host_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          host_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          host_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "host_wallets_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       license_verifications: {
         Row: {
           back_image_path: string | null
@@ -601,6 +636,69 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          booking_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          payment_method: string | null
+          payment_reference: string | null
+          status: string
+          transaction_type: string
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          transaction_type: string
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "host_wallets"
             referencedColumns: ["id"]
           },
         ]
