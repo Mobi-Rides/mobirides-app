@@ -75,7 +75,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     {
       icon: Wallet,
       label: "Wallet & Earnings",
-      onClick: () => navigate("/dashboard"),
+      onClick: () => navigate("/wallet"),
       description: "Manage your wallet balance and view transaction history"
     }
   ] : [];

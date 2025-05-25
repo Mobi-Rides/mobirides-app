@@ -37,6 +37,7 @@ const RentalDetailsRefactored = lazy(
 const Signup = lazy(() => import("./pages/signup"));
 const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Wallet = lazy(() => import("@/pages/Wallet"));
 
 const PageTransitionLoader = () => {
   const location = useLocation();
@@ -91,6 +92,14 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wallet"
+            element={
+              <ProtectedRoute>
+                <Wallet />
               </ProtectedRoute>
             }
           />
