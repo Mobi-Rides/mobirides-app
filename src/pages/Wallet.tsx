@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceCard } from "@/components/dashboard/WalletBalanceCard";
 import { WalletTransactionHistory } from "@/components/dashboard/WalletTransactionHistory";
-import { WalletDevTools } from "@/components/wallet/WalletDevTools";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -53,9 +52,6 @@ const Wallet = () => {
         </div>
 
         <div className="space-y-6">
-          {/* Development Tools - only shows in development */}
-          <WalletDevTools />
-          
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-6">
               <WalletBalanceCard />
