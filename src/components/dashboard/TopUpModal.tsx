@@ -10,7 +10,7 @@ import { Loader2, CreditCard } from "lucide-react";
 import { mockPaymentService } from "@/services/mockPaymentService";
 import { walletService } from "@/services/walletService";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/utils/toast-utils";
+import { toast } from "sonner";
 
 interface TopUpModalProps {
   isOpen: boolean;
@@ -34,8 +34,20 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
   const handleTopUp = async () => {
     const topUpAmount = parseFloat(amount);
     
+    console.log("Starting top-up process:", { topUpAmount, paymentMethod });
+    
     if (!topUpAmount || topUpAmount <= 0) {
       toast.error("Please enter a valid amount");
+      return;
+    }
+
+    if (topUpAmount < 1) {
+      toast.error("Minimum top-up amount is $1.00");
+      return;
+    }
+
+    if (topUpAmount > 10000) {
+      toast.error("Maximum top-up amount is $10,000.00");
       return;
     }
 
@@ -47,11 +59,14 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
     setIsProcessing(true);
     
     try {
+      console.log("Processing mock payment...");
       // Process mock payment
       const paymentResult = await mockPaymentService.processPayment({
         amount: topUpAmount,
         payment_method: paymentMethod
       });
+
+      console.log("Payment result:", paymentResult);
 
       if (!paymentResult.success) {
         toast.error(paymentResult.error_message || "Payment failed");
@@ -59,12 +74,14 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
       }
 
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error("User authentication error:", userError);
         toast.error("User not authenticated");
         return;
       }
 
+      console.log("Adding funds to wallet for user:", user.id);
       // Add funds to wallet
       const success = await walletService.topUpWallet(user.id, {
         amount: topUpAmount,
@@ -73,9 +90,13 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
       });
 
       if (success) {
+        console.log("Top-up successful, calling onSuccess");
         onSuccess();
+        onClose();
         setAmount("");
         setPaymentMethod("");
+      } else {
+        toast.error("Failed to update wallet balance");
       }
     } catch (error) {
       console.error("Top-up error:", error);
@@ -85,8 +106,16 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
     }
   };
 
+  const handleClose = () => {
+    if (!isProcessing) {
+      onClose();
+      setAmount("");
+      setPaymentMethod("");
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -112,6 +141,7 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
               min="1"
               max="10000"
               step="0.01"
+              disabled={isProcessing}
             />
           </div>
 
@@ -125,6 +155,7 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
                   size="sm"
                   onClick={() => handlePresetAmount(presetAmount)}
                   className="h-8"
+                  disabled={isProcessing}
                 >
                   ${presetAmount}
                 </Button>
@@ -134,7 +165,7 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
 
           <div className="space-y-2">
             <Label htmlFor="payment-method">Payment Method</Label>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod} disabled={isProcessing}>
               <SelectTrigger>
                 <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
@@ -158,7 +189,7 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
           </Card>
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+            <Button variant="outline" onClick={handleClose} className="flex-1" disabled={isProcessing}>
               Cancel
             </Button>
             <Button 

@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/utils/toast-utils";
+import { toast } from "sonner";
 
 export interface WalletBalance {
   id: string;
@@ -30,6 +29,8 @@ export interface TopUpRequest {
 class WalletService {
   async getWalletBalance(hostId: string): Promise<WalletBalance | null> {
     try {
+      console.log("Fetching wallet balance for host:", hostId);
+      
       const { data, error } = await supabase
         .from("host_wallets")
         .select("id, balance, currency")
@@ -38,9 +39,20 @@ class WalletService {
 
       if (error) {
         console.error("Error fetching wallet balance:", error);
+        
+        // If wallet doesn't exist, create one
+        if (error.code === 'PGRST116') {
+          console.log("Creating new wallet for host:", hostId);
+          const createResult = await this.createWalletForHost(hostId);
+          if (createResult) {
+            // Retry fetching after creation
+            return await this.getWalletBalance(hostId);
+          }
+        }
         return null;
       }
 
+      console.log("Wallet balance fetched:", data);
       return data;
     } catch (error) {
       console.error("Error in getWalletBalance:", error);
@@ -50,13 +62,18 @@ class WalletService {
 
   async getTransactionHistory(hostId: string, limit = 20): Promise<WalletTransaction[]> {
     try {
+      console.log("Fetching transaction history for host:", hostId);
+      
       const { data: wallet } = await supabase
         .from("host_wallets")
         .select("id")
         .eq("host_id", hostId)
         .single();
 
-      if (!wallet) return [];
+      if (!wallet) {
+        console.log("No wallet found for host");
+        return [];
+      }
 
       const { data, error } = await supabase
         .from("wallet_transactions")
@@ -70,6 +87,7 @@ class WalletService {
         return [];
       }
 
+      console.log("Transaction history fetched:", data?.length || 0, "transactions");
       return data || [];
     } catch (error) {
       console.error("Error in getTransactionHistory:", error);
@@ -79,14 +97,26 @@ class WalletService {
 
   async topUpWallet(hostId: string, request: TopUpRequest): Promise<boolean> {
     try {
+      console.log("Starting wallet top-up for host:", hostId, "amount:", request.amount);
+      
       // First get the current wallet
-      const wallet = await this.getWalletBalance(hostId);
+      let wallet = await this.getWalletBalance(hostId);
       if (!wallet) {
-        toast.error("Wallet not found");
-        return false;
+        console.log("Wallet not found, creating new wallet");
+        const createResult = await this.createWalletForHost(hostId);
+        if (!createResult) {
+          toast.error("Failed to create wallet");
+          return false;
+        }
+        wallet = await this.getWalletBalance(hostId);
+        if (!wallet) {
+          toast.error("Failed to initialize wallet");
+          return false;
+        }
       }
 
       const newBalance = wallet.balance + request.amount;
+      console.log("Updating balance from", wallet.balance, "to", newBalance);
 
       // Update wallet balance
       const { error: walletError } = await supabase
@@ -99,6 +129,7 @@ class WalletService {
 
       if (walletError) {
         console.error("Error updating wallet balance:", walletError);
+        toast.error("Failed to update wallet balance");
         return false;
       }
 
@@ -119,14 +150,41 @@ class WalletService {
 
       if (transactionError) {
         console.error("Error recording transaction:", transactionError);
-        return false;
+        // Don't fail the whole operation if transaction recording fails
+        console.log("Top-up successful but transaction logging failed");
       }
 
-      toast.success(`Successfully added $${request.amount} to your wallet`);
+      console.log("Wallet top-up completed successfully");
+      toast.success(`Successfully added $${request.amount.toFixed(2)} to your wallet`);
       return true;
     } catch (error) {
       console.error("Error in topUpWallet:", error);
       toast.error("Failed to top up wallet");
+      return false;
+    }
+  }
+
+  async createWalletForHost(hostId: string): Promise<boolean> {
+    try {
+      console.log("Creating wallet for host:", hostId);
+      
+      const { error } = await supabase
+        .from("host_wallets")
+        .insert({
+          host_id: hostId,
+          balance: 0.00,
+          currency: "USD"
+        });
+
+      if (error) {
+        console.error("Error creating wallet:", error);
+        return false;
+      }
+
+      console.log("Wallet created successfully for host:", hostId);
+      return true;
+    } catch (error) {
+      console.error("Error in createWalletForHost:", error);
       return false;
     }
   }
@@ -182,28 +240,6 @@ class WalletService {
       return true;
     } catch (error) {
       console.error("Error in deductBookingFee:", error);
-      return false;
-    }
-  }
-
-  async createWalletForHost(hostId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from("host_wallets")
-        .insert({
-          host_id: hostId,
-          balance: 0.00,
-          currency: "USD"
-        });
-
-      if (error) {
-        console.error("Error creating wallet:", error);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error in createWalletForHost:", error);
       return false;
     }
   }
