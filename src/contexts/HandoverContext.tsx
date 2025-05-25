@@ -1,3 +1,4 @@
+
 // src/contexts/HandoverContext.tsx
 import React, {
   createContext,
@@ -10,6 +11,12 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
+import { 
+  HandoverStatus, 
+  HandoverLocation, 
+  updateHandoverLocation, 
+  getHandoverSession 
+} from "@/services/handoverService";
 
 interface HandoverContextType {
   updateLocation(arg0: {
@@ -17,7 +24,7 @@ interface HandoverContextType {
     longitude: any;
     address: string;
   }): unknown;
-  handoverStatus: any;
+  handoverStatus: HandoverStatus | null;
   isLoading: boolean;
   isHost: boolean;
   bookingDetails: any;
@@ -44,6 +51,62 @@ interface HandoverProviderProps {
   children: ReactNode;
 }
 
+// Helper function to safely convert database JSON to our typed format
+const convertDatabaseLocationToHandoverLocation = (
+  location: any
+): HandoverLocation | null => {
+  if (!location) return null;
+  
+  try {
+    // If it's a string (JSON), parse it
+    if (typeof location === 'string') {
+      const parsed = JSON.parse(location);
+      return {
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+        address: parsed.address || '',
+        timestamp: parsed.timestamp || Date.now(),
+      };
+    } 
+    // If it's already an object
+    else if (typeof location === 'object') {
+      return {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address: location.address || '',
+        timestamp: location.timestamp || Date.now(),
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error converting location data:", error);
+    return null;
+  }
+};
+
+// Helper function to convert database handover session to our HandoverStatus type
+const convertDatabaseHandoverToHandoverStatus = (
+  data: any
+): HandoverStatus | null => {
+  if (!data) return null;
+  
+  return {
+    id: data.id,
+    booking_id: data.booking_id,
+    host_id: data.host_id,
+    renter_id: data.renter_id,
+    host_ready: !!data.host_ready,
+    renter_ready: !!data.renter_ready,
+    host_location: convertDatabaseLocationToHandoverLocation(data.host_location),
+    renter_location: convertDatabaseLocationToHandoverLocation(data.renter_location),
+    handover_completed: !!data.handover_completed,
+    handover_type: data.handover_type || null,
+    status: data.status || null,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+  };
+};
+
 export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   children,
 }) => {
@@ -56,6 +119,8 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   } | null>(null);
   const [carId, setCarId] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [handoverId, setHandoverId] = useState<string | null>(null);
+  const [handoverStatus, setHandoverStatus] = useState<HandoverStatus | null>(null);
 
   // Fetch destination from bookings table
   const fetchDestination = async () => {
@@ -123,6 +188,28 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     fetchCurrentUser();
   }, []);
 
+  // Fetch handover session if it exists
+  useEffect(() => {
+    const fetchHandoverSession = async () => {
+      if (!bookingId || !currentUserId) return;
+      
+      try {
+        const handoverData = await getHandoverSession(bookingId);
+        if (handoverData) {
+          setHandoverId(handoverData.id);
+          
+          // Use our conversion helper to ensure type safety
+          const convertedHandoverStatus = convertDatabaseHandoverToHandoverStatus(handoverData);
+          setHandoverStatus(convertedHandoverStatus);
+        }
+      } catch (error) {
+        console.error("Error fetching handover session:", error);
+      }
+    };
+    
+    fetchHandoverSession();
+  }, [bookingId, currentUserId]);
+
   // Fetch booking details
   const { data: bookingDetails, isLoading: isBookingLoading } = useQuery({
     queryKey: ["handover-booking", bookingId],
@@ -167,6 +254,44 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     setDebugMode(!debugMode);
   };
 
+  // Implementation of updateLocation function
+  const updateLocation = async ({ latitude, longitude, address }: { 
+    latitude: number; 
+    longitude: number; 
+    address: string 
+  }) => {
+    if (!handoverId || !currentUserId) {
+      toast.error("Cannot update location: missing handover session or user ID");
+      return false;
+    }
+
+    const locationData: HandoverLocation = {
+      latitude,
+      longitude,
+      address,
+      timestamp: Date.now()
+    };
+
+    try {
+      const success = await updateHandoverLocation(
+        handoverId,
+        currentUserId,
+        isHost,
+        locationData
+      );
+      
+      if (success) {
+        toast.success("Location updated successfully");
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("Error updating location:", error);
+      toast.error("Failed to update location");
+      return false;
+    }
+  };
+
   return (
     <HandoverContext.Provider
       value={{
@@ -178,6 +303,8 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         currentUserId,
         destination,
         ownerId,
+        updateLocation,
+        handoverStatus,
       }}
     >
       {children}

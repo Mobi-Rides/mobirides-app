@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { toast } from "sonner";
 import { FaStar } from "react-icons/fa";
-import { RxDividerHorizontal } from "react-icons/rx"; 
+import { RxDividerHorizontal } from "react-icons/rx";
 import { Separator } from "@/components/ui/separator";
 
 export const RentalReview = () => {
@@ -26,7 +26,8 @@ export const RentalReview = () => {
     queryFn: async () => {
       const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
-        .select(`
+        .select(
+          `
           *,
           cars (
             brand,
@@ -41,31 +42,40 @@ export const RentalReview = () => {
           owner:profiles(
             full_name
           )
-        `)
+        `
+        )
         .eq("id", bookingId)
         .single();
 
       if (bookingError) throw bookingError;
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const userIsRenter = user?.id === bookingData.renter_id;
 
       // Make sure we have the reviewer's name
-      if (userIsRenter && (!bookingData.owner || !bookingData.owner.full_name)) {
+      if (
+        userIsRenter &&
+        (!bookingData.owner || !bookingData.owner.full_name)
+      ) {
         const { data: ownerData, error: ownerError } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', bookingData.cars.owner_id)
+          .from("profiles")
+          .select("full_name")
+          .eq("id", bookingData.cars.owner_id)
           .single();
 
         if (!ownerError && ownerData) {
           bookingData.owner = ownerData;
         }
-      } else if (!userIsRenter && (!bookingData.renter || !bookingData.renter.full_name)) {
+      } else if (
+        !userIsRenter &&
+        (!bookingData.renter || !bookingData.renter.full_name)
+      ) {
         const { data: renterData, error: renterError } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', bookingData.renter_id)
+          .from("profiles")
+          .select("full_name")
+          .eq("id", bookingData.renter_id)
           .single();
 
         if (!renterError && renterData) {
@@ -75,17 +85,19 @@ export const RentalReview = () => {
 
       console.log("Booking data:", bookingData);
       return bookingData;
-    }
+    },
   });
 
   useEffect(() => {
     const checkUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (booking && user) {
         setIsRenter(user.id === booking.renter_id);
       }
     };
-    
+
     checkUserRole();
   }, [booking]);
 
@@ -99,20 +111,26 @@ export const RentalReview = () => {
   const handleSubmitReview = async () => {
     try {
       setIsSubmitting(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
-      const revieweeId = isRenter ? booking?.cars?.owner_id : booking?.renter_id;
+      const revieweeId = isRenter
+        ? booking?.cars?.owner_id
+        : booking?.renter_id;
       if (!revieweeId) throw new Error("No reviewee found");
 
       // Upload all images and collect their URLs
       const uploadPromises = images.map(async (file) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(7)}.${fileExt}`;
         const filePath = `${booking?.id}/${fileName}`;
-        
+
         const { error: uploadError, data } = await supabase.storage
-          .from('return-photos')
+          .from("return-photos")
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
@@ -122,29 +140,29 @@ export const RentalReview = () => {
       const imageUrls = await Promise.all(uploadPromises);
 
       // Create the review with image URLs
-      const { error: reviewError } = await supabase.from('reviews').insert({
+      const { error: reviewError } = await supabase.from("reviews").insert({
         booking_id: bookingId,
         reviewer_id: user.id,
         reviewee_id: revieweeId,
         rating,
         comment,
         images: imageUrls,
-        review_type: 'renter', // Always use 'renter' as per the database enum
-        updated_at: new Date().toISOString()
+        review_type: "renter", // Always use 'renter' as per the database enum
+        updated_at: new Date().toISOString(),
       });
 
       if (reviewError) throw reviewError;
-      
+
       // Update booking status to completed
       const { error: bookingError } = await supabase
-        .from('bookings')
-        .update({ status: 'completed' })
-        .eq('id', bookingId);
+        .from("bookings")
+        .update({ status: "completed" })
+        .eq("id", bookingId);
 
       if (bookingError) throw bookingError;
-      
+
       toast.success("Review submitted successfully");
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
@@ -158,20 +176,22 @@ export const RentalReview = () => {
   }
 
   if (!booking || !booking.cars) {
-    return <div className="container max-w-2xl py-8">
-      <Button variant="ghost" onClick={() => navigate(-1)} className="">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
-      <Card>
-        <CardHeader className="text-left">
-          <CardTitle>Booking Not Found</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>This booking doesn't exist or has been removed.</p>
-        </CardContent>
-      </Card>
-    </div>;
+    return (
+      <div className="container max-w-2xl py-8">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <Card>
+          <CardHeader className="text-left">
+            <CardTitle>Booking Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>This booking doesn't exist or has been removed.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -291,3 +311,5 @@ export const RentalReview = () => {
     </div>
   );
 };
+
+export default RentalReview;
