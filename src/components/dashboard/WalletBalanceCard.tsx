@@ -52,7 +52,7 @@ export const WalletBalanceCard = () => {
   }
 
   const balance = walletBalance?.balance || 0;
-  const isLowBalance = balance < 200; // Adjusted for BWP (roughly equivalent to $50 USD)
+  const isLowBalance = balance < 50; // Changed from 200 to 50 BWP
 
   return (
     <>

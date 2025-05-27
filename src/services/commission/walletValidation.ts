@@ -38,12 +38,15 @@ export const checkHostCanAcceptBooking = async (
     }
 
     const currentBalance = wallet.balance || 0;
-    const canAccept = currentBalance >= calculation.commissionAmount;
+    // Minimum balance required is P50 for accepting bookings
+    const minimumRequired = Math.max(calculation.commissionAmount, 50);
+    const canAccept = currentBalance >= minimumRequired;
 
     console.log("WalletValidation: Booking acceptance check result", {
       canAccept,
       commissionAmount: calculation.commissionAmount,
       currentBalance,
+      minimumRequired,
       required: calculation.commissionAmount
     });
 
@@ -53,7 +56,7 @@ export const checkHostCanAcceptBooking = async (
       currentBalance,
       message: canAccept 
         ? undefined 
-        : `Insufficient wallet balance. Need P${calculation.commissionAmount.toFixed(2)}, have P${currentBalance.toFixed(2)}`
+        : `Insufficient wallet balance. Need at least P${minimumRequired.toFixed(2)}, have P${currentBalance.toFixed(2)}`
     };
   } catch (error) {
     console.error("WalletValidation: Error checking booking acceptance:", error);
