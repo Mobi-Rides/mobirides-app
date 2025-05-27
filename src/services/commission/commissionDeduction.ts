@@ -1,17 +1,16 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { calculateCommission } from "./commissionCalculation";
 import { getCurrentCommissionRate } from "./commissionRates";
 import { checkHostCanAcceptBooking } from "./walletValidation";
 
-export const deductCommissionOnBookingAcceptance = async (
+export const deductCommissionFromEarnings = async (
   hostId: string, 
   bookingId: string, 
   bookingTotal: number
 ): Promise<boolean> => {
   try {
-    console.log("CommissionDeduction: Deducting commission on booking acceptance", {
+    console.log("CommissionDeduction: Processing commission from rental earnings", {
       hostId,
       bookingId,
       bookingTotal
@@ -20,7 +19,7 @@ export const deductCommissionOnBookingAcceptance = async (
     const commissionRate = await getCurrentCommissionRate();
     const calculation = calculateCommission(bookingTotal, commissionRate);
     
-    // Check if host can accept first
+    // Check if host can accept first (P50 minimum balance check)
     const acceptanceCheck = await checkHostCanAcceptBooking(hostId, bookingTotal);
     if (!acceptanceCheck.canAccept) {
       console.error("CommissionDeduction: Host cannot accept booking due to insufficient funds");
@@ -28,7 +27,7 @@ export const deductCommissionOnBookingAcceptance = async (
       return false;
     }
 
-    // Get wallet info
+    // Get wallet info for transaction recording
     const { data: wallet, error: walletError } = await supabase
       .from("host_wallets")
       .select("id, balance")
@@ -36,27 +35,11 @@ export const deductCommissionOnBookingAcceptance = async (
       .single();
 
     if (walletError) {
-      console.error("CommissionDeduction: Error fetching wallet for deduction:", walletError);
+      console.error("CommissionDeduction: Error fetching wallet for transaction recording:", walletError);
       return false;
     }
 
-    const newBalance = wallet.balance - calculation.commissionAmount;
-
-    // Update wallet balance
-    const { error: updateError } = await supabase
-      .from("host_wallets")
-      .update({ 
-        balance: newBalance,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", wallet.id);
-
-    if (updateError) {
-      console.error("CommissionDeduction: Error updating wallet balance:", updateError);
-      return false;
-    }
-
-    // Record commission transaction
+    // Record commission transaction (informational only - no balance deduction)
     const { error: transactionError } = await supabase
       .from("wallet_transactions")
       .insert({
@@ -65,8 +48,8 @@ export const deductCommissionOnBookingAcceptance = async (
         transaction_type: "commission_deduction",
         amount: -calculation.commissionAmount,
         balance_before: wallet.balance,
-        balance_after: newBalance,
-        description: `Platform commission (${(calculation.commissionRate * 100).toFixed(1)}%)`,
+        balance_after: wallet.balance, // Balance unchanged - commission from earnings
+        description: `Platform commission (${(calculation.commissionRate * 100).toFixed(1)}%) deducted from rental earnings`,
         status: "completed",
         commission_rate: calculation.commissionRate,
         booking_reference: `BOOKING_${bookingId.slice(-8)}`
@@ -89,12 +72,21 @@ export const deductCommissionOnBookingAcceptance = async (
       console.error("CommissionDeduction: Error updating booking commission info:", bookingUpdateError);
     }
 
-    console.log("CommissionDeduction: Commission deducted successfully");
-    toast.success(`Commission of P${calculation.commissionAmount.toFixed(2)} deducted from wallet`);
+    console.log("CommissionDeduction: Commission processed successfully from rental earnings");
+    toast.success(`Booking confirmed! Commission of P${calculation.commissionAmount.toFixed(2)} will be deducted from rental earnings`);
     return true;
   } catch (error) {
-    console.error("CommissionDeduction: Error deducting commission:", error);
+    console.error("CommissionDeduction: Error processing commission:", error);
     toast.error("Failed to process commission. Please try again.");
     return false;
   }
+};
+
+// Keep the old function for backward compatibility but redirect to new logic
+export const deductCommissionOnBookingAcceptance = async (
+  hostId: string, 
+  bookingId: string, 
+  bookingTotal: number
+): Promise<boolean> => {
+  return deductCommissionFromEarnings(hostId, bookingId, bookingTotal);
 };

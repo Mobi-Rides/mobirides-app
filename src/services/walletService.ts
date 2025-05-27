@@ -1,4 +1,3 @@
-
 import { getWalletBalance, createWalletForHost } from "./wallet/walletBalance";
 import { topUpWallet } from "./wallet/walletTopUp";
 import { walletOperations } from "./wallet/walletOperations";
@@ -35,6 +34,10 @@ class WalletService {
 
   async deductBookingFee(hostId: string, bookingId: string, feeAmount: number) {
     return walletOperations.deductBookingFee(hostId, bookingId, feeAmount);
+  }
+
+  async processRentalEarnings(hostId: string, bookingId: string, commissionAmount: number, hostEarnings: number) {
+    return walletOperations.processBookingCommission(hostId, bookingId, commissionAmount, hostEarnings);
   }
 
   async deductBookingCommission(hostId: string, bookingId: string, commissionAmount: number) {

@@ -6,7 +6,7 @@ import { commissionService } from "@/services/commissionService";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, AlertTriangle, Plus } from "lucide-react";
+import { Wallet, AlertTriangle, Plus, Info } from "lucide-react";
 import { useState } from "react";
 import { TopUpModal } from "./TopUpModal";
 
@@ -75,7 +75,7 @@ export const WalletBalanceIndicator = ({
           <span className="text-sm font-medium">P{currentBalance.toFixed(2)}</span>
           {bookingTotal && !canAcceptBooking && (
             <Badge variant="destructive" className="text-xs">
-              Insufficient Funds
+              Low Balance
             </Badge>
           )}
           <Button
@@ -112,10 +112,19 @@ export const WalletBalanceIndicator = ({
                 <p className="text-2xl font-bold">P{currentBalance.toFixed(2)}</p>
                 
                 {showCommissionBreakdown && commissionCalc && (
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <p>Booking Total: P{commissionCalc.bookingTotal.toFixed(2)}</p>
-                    <p>Commission ({(commissionCalc.commissionRate * 100).toFixed(1)}%): -P{commissionCalc.commissionAmount.toFixed(2)}</p>
-                    <p className="font-medium text-foreground">You'll receive: P{commissionCalc.hostReceives.toFixed(2)}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                      <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <div className="text-xs text-blue-700 dark:text-blue-300">
+                        <p className="font-medium">Commission is deducted from rental earnings, not your wallet</p>
+                        <p>Your wallet balance (P50+ required) qualifies you to accept bookings</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <p>Booking Total: P{commissionCalc.bookingTotal.toFixed(2)}</p>
+                      <p>Commission ({(commissionCalc.commissionRate * 100).toFixed(1)}%): P{commissionCalc.commissionAmount.toFixed(2)}</p>
+                      <p className="font-medium text-foreground">You'll earn: P{commissionCalc.hostReceives.toFixed(2)}</p>
+                    </div>
                   </div>
                 )}
               </div>

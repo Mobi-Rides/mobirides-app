@@ -1,8 +1,7 @@
-
 import { getCurrentCommissionRate } from "./commission/commissionRates";
 import { calculateCommission } from "./commission/commissionCalculation";
 import { checkHostCanAcceptBooking } from "./commission/walletValidation";
-import { deductCommissionOnBookingAcceptance } from "./commission/commissionDeduction";
+import { deductCommissionFromEarnings } from "./commission/commissionDeduction";
 
 export type { CommissionRate } from "./commission/commissionRates";
 export type { CommissionCalculation } from "./commission/commissionCalculation";
@@ -22,12 +21,21 @@ class CommissionService {
     return checkHostCanAcceptBooking(hostId, bookingTotal);
   }
 
+  async processCommissionOnBookingConfirmation(
+    hostId: string, 
+    bookingId: string, 
+    bookingTotal: number
+  ): Promise<boolean> {
+    return deductCommissionFromEarnings(hostId, bookingId, bookingTotal);
+  }
+
+  // Keep old method name for backward compatibility
   async deductCommissionOnBookingAcceptance(
     hostId: string, 
     bookingId: string, 
     bookingTotal: number
   ): Promise<boolean> {
-    return deductCommissionOnBookingAcceptance(hostId, bookingId, bookingTotal);
+    return this.processCommissionOnBookingConfirmation(hostId, bookingId, bookingTotal);
   }
 }
 

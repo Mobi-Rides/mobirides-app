@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getWalletBalance } from "./walletBalance";
@@ -72,74 +71,61 @@ export class WalletOperations {
     }
   }
 
-  async deductBookingCommission(hostId: string, bookingId: string, commissionAmount: number): Promise<boolean> {
+  async processBookingCommission(hostId: string, bookingId: string, commissionAmount: number, hostEarnings: number): Promise<boolean> {
     try {
-      console.log("WalletOperations: Deducting booking commission", { hostId, bookingId, commissionAmount });
+      console.log("WalletOperations: Processing booking commission from earnings", { 
+        hostId, 
+        bookingId, 
+        commissionAmount,
+        hostEarnings 
+      });
       
       const wallet = await getWalletBalance(hostId);
       if (!wallet) {
-        console.error("WalletOperations: Wallet not found for commission deduction");
+        console.error("WalletOperations: Wallet not found for commission processing");
         return false;
       }
 
-      if (wallet.balance < commissionAmount) {
-        console.error("WalletOperations: Insufficient balance for commission deduction", { 
-          balance: wallet.balance, 
-          required: commissionAmount 
-        });
-        toast.error("Insufficient wallet balance for booking commission");
-        return false;
-      }
-
-      const newBalance = wallet.balance - commissionAmount;
-
-      // Update wallet balance
-      const { error: walletError } = await supabase
-        .from("host_wallets")
-        .update({ 
-          balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", wallet.id);
-
-      if (walletError) {
-        console.error("WalletOperations: Error updating wallet balance for commission deduction:", walletError);
-        return false;
-      }
-
-      // Record transaction
-      const { error: transactionError } = await supabase
+      // Record earnings transaction (positive amount showing what host receives)
+      const { error: earningsError } = await supabase
         .from("wallet_transactions")
         .insert({
           wallet_id: wallet.id,
           booking_id: bookingId,
-          transaction_type: "commission_deduction",
-          amount: -commissionAmount,
+          transaction_type: "rental_earnings",
+          amount: hostEarnings,
           balance_before: wallet.balance,
-          balance_after: newBalance,
-          description: `Booking platform commission`,
+          balance_after: wallet.balance, // Wallet balance unchanged
+          description: `Rental earnings (after ${((commissionAmount / (hostEarnings + commissionAmount)) * 100).toFixed(1)}% commission)`,
           status: "completed"
         });
 
-      if (transactionError) {
-        console.error("WalletOperations: Error recording commission transaction:", transactionError);
+      if (earningsError) {
+        console.error("WalletOperations: Error recording earnings transaction:", earningsError);
         return false;
       }
 
-      // Create notification for commission deduction
+      // Create notification for earnings
       await notificationService.createNotification(
         hostId,
-        "wallet_deduction",
-        `Commission of P${commissionAmount.toFixed(2)} charged for booking`,
+        "rental_earnings",
+        `You earned P${hostEarnings.toFixed(2)} from your rental (commission: P${commissionAmount.toFixed(2)})`,
         bookingId
       );
 
-      console.log("WalletOperations: Booking commission deducted successfully");
+      console.log("WalletOperations: Booking commission processed successfully");
       return true;
     } catch (error) {
-      console.error("WalletOperations: Unexpected error in deductBookingCommission:", error);
+      console.error("WalletOperations: Unexpected error in processBookingCommission:", error);
       return false;
     }
+  }
+
+  async deductBookingCommission(hostId: string, bookingId: string, commissionAmount: number): Promise<boolean> {
+    // Calculate host earnings (assuming total = commission / 0.15)
+    const totalBookingAmount = commissionAmount / 0.15;
+    const hostEarnings = totalBookingAmount - commissionAmount;
+    return this.processBookingCommission(hostId, bookingId, commissionAmount, hostEarnings);
   }
 
   async addTestFunds(hostId: string, amount: number): Promise<boolean> {
