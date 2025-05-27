@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -187,33 +186,6 @@ class WalletService {
     }
   }
 
-  async createWalletForHost(hostId: string): Promise<boolean> {
-    try {
-      console.log("WalletService: Creating wallet for host:", hostId);
-      
-      const { data, error } = await supabase
-        .from("host_wallets")
-        .insert({
-          host_id: hostId,
-          balance: 0.00,
-          currency: "BWP"
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("WalletService: Error creating wallet:", error);
-        return false;
-      }
-
-      console.log("WalletService: Wallet created successfully:", data);
-      return true;
-    } catch (error) {
-      console.error("WalletService: Unexpected error in createWalletForHost:", error);
-      return false;
-    }
-  }
-
   async deductBookingFee(hostId: string, bookingId: string, feeAmount: number): Promise<boolean> {
     try {
       console.log("WalletService: Deducting booking fee", { hostId, bookingId, feeAmount });
@@ -269,6 +241,95 @@ class WalletService {
       return true;
     } catch (error) {
       console.error("WalletService: Unexpected error in deductBookingFee:", error);
+      return false;
+    }
+  }
+
+  async deductBookingCommission(hostId: string, bookingId: string, commissionAmount: number): Promise<boolean> {
+    try {
+      console.log("WalletService: Deducting booking commission", { hostId, bookingId, commissionAmount });
+      
+      const wallet = await this.getWalletBalance(hostId);
+      if (!wallet) {
+        console.error("WalletService: Wallet not found for commission deduction");
+        return false;
+      }
+
+      if (wallet.balance < commissionAmount) {
+        console.error("WalletService: Insufficient balance for commission deduction", { 
+          balance: wallet.balance, 
+          required: commissionAmount 
+        });
+        toast.error("Insufficient wallet balance for booking commission");
+        return false;
+      }
+
+      const newBalance = wallet.balance - commissionAmount;
+
+      // Update wallet balance
+      const { error: walletError } = await supabase
+        .from("host_wallets")
+        .update({ 
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", wallet.id);
+
+      if (walletError) {
+        console.error("WalletService: Error updating wallet balance for commission deduction:", walletError);
+        return false;
+      }
+
+      // Record transaction
+      const { error: transactionError } = await supabase
+        .from("wallet_transactions")
+        .insert({
+          wallet_id: wallet.id,
+          booking_id: bookingId,
+          transaction_type: "commission_deduction",
+          amount: -commissionAmount,
+          balance_before: wallet.balance,
+          balance_after: newBalance,
+          description: `Booking platform commission`,
+          status: "completed"
+        });
+
+      if (transactionError) {
+        console.error("WalletService: Error recording commission transaction:", transactionError);
+        return false;
+      }
+
+      console.log("WalletService: Booking commission deducted successfully");
+      return true;
+    } catch (error) {
+      console.error("WalletService: Unexpected error in deductBookingCommission:", error);
+      return false;
+    }
+  }
+
+  async createWalletForHost(hostId: string): Promise<boolean> {
+    try {
+      console.log("WalletService: Creating wallet for host:", hostId);
+      
+      const { data, error } = await supabase
+        .from("host_wallets")
+        .insert({
+          host_id: hostId,
+          balance: 0.00,
+          currency: "BWP"
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("WalletService: Error creating wallet:", error);
+        return false;
+      }
+
+      console.log("WalletService: Wallet created successfully:", data);
+      return true;
+    } catch (error) {
+      console.error("WalletService: Unexpected error in createWalletForHost:", error);
       return false;
     }
   }

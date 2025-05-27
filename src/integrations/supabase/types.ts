@@ -42,6 +42,8 @@ export type Database = {
       bookings: {
         Row: {
           car_id: string
+          commission_amount: number | null
+          commission_status: string | null
           created_at: string
           end_date: string
           id: string
@@ -55,6 +57,8 @@ export type Database = {
         }
         Insert: {
           car_id: string
+          commission_amount?: number | null
+          commission_status?: string | null
           created_at?: string
           end_date: string
           id?: string
@@ -68,6 +72,8 @@ export type Database = {
         }
         Update: {
           car_id?: string
+          commission_amount?: number | null
+          commission_status?: string | null
           created_at?: string
           end_date?: string
           id?: string
@@ -204,6 +210,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      commission_rates: {
+        Row: {
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          id: string
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          rate?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          rate?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       handover_sessions: {
         Row: {
@@ -646,6 +679,8 @@ export type Database = {
           balance_after: number
           balance_before: number
           booking_id: string | null
+          booking_reference: string | null
+          commission_rate: number | null
           created_at: string
           description: string | null
           id: string
@@ -661,6 +696,8 @@ export type Database = {
           balance_after: number
           balance_before: number
           booking_id?: string | null
+          booking_reference?: string | null
+          commission_rate?: number | null
           created_at?: string
           description?: string | null
           id?: string
@@ -676,6 +713,8 @@ export type Database = {
           balance_after?: number
           balance_before?: number
           booking_id?: string | null
+          booking_reference?: string | null
+          commission_rate?: number | null
           created_at?: string
           description?: string | null
           id?: string
@@ -712,9 +751,17 @@ export type Database = {
         Args: { car_uuid: string }
         Returns: number
       }
+      calculate_commission: {
+        Args: { booking_total: number; rate?: number }
+        Returns: number
+      }
       calculate_user_rating: {
         Args: { user_uuid: string }
         Returns: number
+      }
+      check_host_wallet_balance: {
+        Args: { host_uuid: string; required_commission: number }
+        Returns: boolean
       }
     }
     Enums: {

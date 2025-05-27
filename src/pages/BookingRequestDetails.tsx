@@ -1,9 +1,8 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, Calendar, MapPin, Car, Clock, CreditCard, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, Star, Calendar, MapPin, Car, Clock, CreditCard, CheckCircle, XCircle, AlertCircle, Wallet } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
@@ -12,6 +11,9 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { WalletBalanceIndicator } from "@/components/dashboard/WalletBalanceIndicator";
+import { commissionService } from "@/services/commissionService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
@@ -64,9 +66,38 @@ const BookingRequestDetails = () => {
     enabled: !!booking?.renter_id
   });
 
+  const { data: walletCheck } = useQuery({
+    queryKey: ['wallet-acceptance-check', userId, booking?.total_price],
+    queryFn: async () => {
+      if (!userId || !booking?.total_price || !isCarOwner) return null;
+      return await commissionService.checkHostCanAcceptBooking(userId, booking.total_price);
+    },
+    enabled: !!userId && !!booking?.total_price && isCarOwner
+  });
+
   const updateBookingStatus = useMutation({
     mutationFn: async ({ status }: { status: 'confirmed' | 'cancelled'; }) => {
       console.log('Updating booking status:', status);
+      
+      // If confirming, check wallet and deduct commission
+      if (status === 'confirmed' && booking && userId) {
+        const canAccept = await commissionService.checkHostCanAcceptBooking(userId, booking.total_price);
+        
+        if (!canAccept.canAccept) {
+          throw new Error(canAccept.message || 'Insufficient wallet balance');
+        }
+
+        // Deduct commission before confirming booking
+        const commissionDeducted = await commissionService.deductCommissionOnBookingAcceptance(
+          userId, 
+          booking.id, 
+          booking.total_price
+        );
+        
+        if (!commissionDeducted) {
+          throw new Error('Failed to process commission payment');
+        }
+      }
       
       const { error } = await supabase
         .from('bookings')
@@ -80,11 +111,18 @@ const BookingRequestDetails = () => {
       
       toast({
         title: `Booking ${action}`,
-        description: `The booking request has been successfully ${action}.`
+        description: variables.status === 'confirmed' 
+          ? `Booking approved and commission deducted from your wallet.`
+          : `The booking request has been cancelled.`
       });
       
       queryClient.invalidateQueries({
         queryKey: ['booking-request', id]
+      });
+      
+      // Refresh wallet data
+      queryClient.invalidateQueries({
+        queryKey: ['wallet-balance']
       });
     },
     onError: error => {
@@ -92,7 +130,7 @@ const BookingRequestDetails = () => {
       
       toast({
         title: "Error",
-        description: "Failed to update the booking status. Please try again.",
+        description: error.message || "Failed to update the booking status. Please try again.",
         variant: "destructive"
       });
     }
@@ -148,6 +186,8 @@ const BookingRequestDetails = () => {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
+
+  const canApproveBooking = walletCheck?.canAccept ?? true;
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
@@ -266,6 +306,32 @@ const BookingRequestDetails = () => {
             </div>
           </CardContent>
 
+          {/* Wallet Balance Section for Car Owners */}
+          {isCarOwner && booking.status === 'pending' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
+                <span className="p-1.5 rounded-full bg-primary/10 dark:bg-primary/20 mr-2">
+                  <Wallet className="h-4 w-4 text-primary" />
+                </span>
+                Wallet & Commission
+              </h2>
+              
+              <WalletBalanceIndicator 
+                bookingTotal={booking.total_price}
+                showCommissionBreakdown={true}
+              />
+              
+              {!canApproveBooking && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    You need sufficient wallet balance to accept this booking. The platform commission will be deducted from your wallet when you approve the request.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
           {/* Action Buttons */}
           {booking.status === 'pending' && (
             <CardFooter className="border-t bg-card p-6 flex flex-col sm:flex-row gap-4 justify-end">
@@ -280,14 +346,27 @@ const BookingRequestDetails = () => {
                     <XCircle className="h-4 w-4" />
                     Reject Request
                   </Button>
-                  <Button 
-                    className="flex items-center gap-2 w-full sm:w-auto" 
-                    onClick={handleApprove} 
-                    disabled={updateBookingStatus.isPending}
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    Approve Request
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-full sm:w-auto">
+                          <Button 
+                            className="flex items-center gap-2 w-full sm:w-auto" 
+                            onClick={handleApprove} 
+                            disabled={updateBookingStatus.isPending || !canApproveBooking}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Approve Request
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      {!canApproveBooking && (
+                        <TooltipContent>
+                          <p>Insufficient wallet balance for commission payment</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </>
               ) : isRenter ? (
                 <Button 

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +7,10 @@ import { HostStats } from "./HostStats";
 import { HostTabContent } from "./host/HostTabContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BookingStatus } from "@/types/booking";
+import { WalletBalanceIndicator } from "./WalletBalanceIndicator";
+import { walletService } from "@/services/walletService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
@@ -56,6 +59,23 @@ export const HostDashboard = () => {
     }
   });
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+  });
+
+  const { data: walletBalance } = useQuery({
+    queryKey: ["wallet-balance", currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+      return await walletService.getWalletBalance(currentUser.id);
+    },
+    enabled: !!currentUser?.id
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -98,9 +118,39 @@ export const HostDashboard = () => {
     navigate(`/booking-requests/${bookingId}`);
   };
 
+  const currentBalance = walletBalance?.balance || 0;
+  const showLowBalanceWarning = currentBalance < 50; // Show warning if balance is below P50
+
   return (
     <div className="space-y-6">
       <HostStats />
+      
+      {/* Low Balance Warning */}
+      {showLowBalanceWarning && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Low wallet balance (P{currentBalance.toFixed(2)}). You may not be able to accept new booking requests. 
+            <span 
+              className="underline cursor-pointer ml-1"
+              onClick={() => navigate('/wallet')}
+            >
+              Top up your wallet
+            </span>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Compact Wallet Balance Indicator */}
+      <div className="bg-card rounded-lg p-4 shadow-sm dark:border dark:border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium">Wallet Balance</h3>
+            <p className="text-sm text-muted-foreground">Available for booking commissions</p>
+          </div>
+          <WalletBalanceIndicator compact={true} />
+        </div>
+      </div>
       
       <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
