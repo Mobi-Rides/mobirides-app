@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
 
 interface ProfileMenuProps {
   fullName: string;
@@ -30,6 +31,32 @@ interface MenuItem {
 export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter' }: ProfileMenuProps) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const [hasListedCar, setHasListedCar] = useState(false);
+  const [checkingCars, setCheckingCars] = useState(true);
+
+  useEffect(() => {
+    checkListedCars();
+  }, []);
+
+  const checkListedCars = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: cars, error } = await supabase
+        .from("cars")
+        .select("id")
+        .eq("owner_id", user.id)
+        .limit(1);
+
+      if (error) throw error;
+      setHasListedCar(cars && cars.length > 0);
+    } catch (error) {
+      console.error('Error checking listed cars:', error);
+    } finally {
+      setCheckingCars(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -40,6 +67,14 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
     }
+  };
+
+  const handleSwitchRole = () => {
+    if (role === "renter" && !hasListedCar) {
+      toast.error("You need to list at least one car before becoming a host");
+      return;
+    }
+    setActiveView('role');
   };
 
   const avatarPublicUrl = avatarUrl 
@@ -116,6 +151,8 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
   };
 
   const switchRoleText = role === 'host' ? 'Switch to Renter' : 'Switch to Host';
+  const canSwitchToHost = role === 'renter' ? hasListedCar : true;
+  const isButtonDisabled = role === 'renter' && !hasListedCar && !checkingCars;
 
   return (
     <>
@@ -123,14 +160,20 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
       <div className="fixed bottom-[96px] left-0 right-0 z-50 flex justify-center">
         <Button 
           type="button"
-          onClick={() => setActiveView('role')}
-          className="shadow-md rounded-full px-6 bg-primary hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+          onClick={handleSwitchRole}
+          disabled={isButtonDisabled || checkingCars}
+          className={`shadow-md rounded-full px-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${
+            isButtonDisabled 
+              ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted" 
+              : "bg-primary hover:bg-accent/70"
+          }`}
           size="lg"
           aria-label={switchRoleText}
+          title={isButtonDisabled ? "List a car first to become a host" : switchRoleText}
         >
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5" />
-            {switchRoleText}
+            {checkingCars ? "Loading..." : switchRoleText}
           </div>
         </Button>
       </div>
@@ -140,131 +183,136 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           <h1 className="text-xl sm:text-2xl text-left font-semibold text-foreground">Profile Settings</h1>
         </div>
 
-      <button
-        type="button"
-        onClick={() => setActiveView('profile')}
-        className="w-full flex items-center gap-3 p-3 hover:bg-accent/70 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring mb-6 transition-colors"
-        aria-label="View and edit profile"
-      >
-        <Avatar className="h-10 w-10 bg-[#2B2B2B] text-white">
-          <AvatarImage 
-            src={avatarPublicUrl || undefined}
-            alt="Profile" 
-          />
-          <AvatarFallback className="text-sm font-medium">
-            {fullName?.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col items-start gap-0.5">
-          <span className="text-[15px] font-medium">{fullName?.split(' ')[0]}</span>
-          <span className="text-[13px] text-muted-foreground">Show profile</span>
-        </div>
-      </button>
-
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-left">Vehicle & Bookings</CardTitle>
-          <CardDescription className="text-left">
-            Manage your saved vehicles, booking activities{role === 'host' ? ', and wallet' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 pt-0">
-          {vehicleAndBookingsItems.map((item, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={item.onClick}
-              aria-label={item.label}
-              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5" />
-                <div className="flex flex-col items-start">
-                  <span>{item.label}</span>
-                  {item.description && (
-                    <span className="text-xs text-muted-foreground">{item.description}</span>
-                  )}
-                </div>
-              </div>
-            </button>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-left">Account Settings</CardTitle>
-          <CardDescription className="text-left">Manage your preferences and account security</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 pt-0">
-          <button
-            type="button"
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
-            onClick={toggleTheme}
-            aria-label={`Toggle dark mode, currently ${theme === 'dark' ? 'on' : 'off'}`}
-          >
-            <div className="flex items-center gap-3">
-              {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              <span>Dark Mode</span>
-            </div>
-            <Switch
-              checked={theme === 'dark'}
-              onCheckedChange={toggleTheme}
-              aria-label="Toggle dark mode"
+        {/* Profile section - keep existing code */}
+        <button
+          type="button"
+          onClick={() => setActiveView('profile')}
+          className="w-full flex items-center gap-3 p-3 hover:bg-accent/70 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring mb-6 transition-colors"
+          aria-label="View and edit profile"
+        >
+          <Avatar className="h-10 w-10 bg-[#2B2B2B] text-white">
+            <AvatarImage 
+              src={avatarPublicUrl || undefined}
+              alt="Profile" 
             />
-          </button>
+            <AvatarFallback className="text-sm font-medium">
+              {fullName?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-start gap-0.5">
+            <span className="text-[15px] font-medium">{fullName?.split(' ')[0]}</span>
+            <span className="text-[13px] text-muted-foreground">Show profile</span>
+          </div>
+        </button>
 
-          {settingsItems.map((item, idx) => (
+        {/* Vehicle & Bookings section - keep existing code */}
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-left">Vehicle & Bookings</CardTitle>
+            <CardDescription className="text-left">
+              Manage your saved vehicles, booking activities{role === 'host' ? ', and wallet' : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 pt-0">
+            {vehicleAndBookingsItems.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={item.onClick}
+                aria-label={item.label}
+                className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5" />
+                  <div className="flex flex-col items-start">
+                    <span>{item.label}</span>
+                    {item.description && (
+                      <span className="text-xs text-muted-foreground">{item.description}</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Account Settings section - keep existing code */}
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-left">Account Settings</CardTitle>
+            <CardDescription className="text-left">Manage your preferences and account security</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 pt-0">
             <button
-              key={idx}
               type="button"
-              onClick={item.onClick}
-              aria-label={item.label}
-              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+              onClick={toggleTheme}
+              aria-label={`Toggle dark mode, currently ${theme === 'dark' ? 'on' : 'off'}`}
             >
               <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                <span>Dark Mode</span>
               </div>
+              <Switch
+                checked={theme === 'dark'}
+                onCheckedChange={toggleTheme}
+                aria-label="Toggle dark mode"
+              />
             </button>
-          ))}
-        </CardContent>
-      </Card>
 
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-left">Help & Support</CardTitle>
-          <CardDescription className="text-left">Get assistance and learn more about MobiRides</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 pt-0">
-          {helpItems.map((item, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={item.onClick}
-              aria-label={item.label}
-              className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </div>
-            </button>
-          ))}
-        </CardContent>
-      </Card>
+            {settingsItems.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={item.onClick}
+                aria-label={item.label}
+                className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </div>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
 
-      <button
-        type="button"
-        onClick={logoutItem.onClick}
-        aria-label={logoutItem.label}
-        className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${logoutItem.color}`}
-      >
-        <div className="flex items-center gap-3">
-          <LogOut className="h-5 w-5" />
-          <span>{logoutItem.label}</span>
-        </div>
-      </button>
+        {/* Help & Support section - keep existing code */}
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-left">Help & Support</CardTitle>
+            <CardDescription className="text-left">Get assistance and learn more about MobiRides</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 pt-0">
+            {helpItems.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={item.onClick}
+                aria-label={item.label}
+                className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </div>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Logout section - keep existing code */}
+        <button
+          type="button"
+          onClick={logoutItem.onClick}
+          aria-label={logoutItem.label}
+          className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${logoutItem.color}`}
+        >
+          <div className="flex items-center gap-3">
+            <LogOut className="h-5 w-5" />
+            <span>{logoutItem.label}</span>
+          </div>
+        </button>
       </div>
     </>
   );
