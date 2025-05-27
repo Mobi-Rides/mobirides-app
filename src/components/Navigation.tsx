@@ -68,29 +68,33 @@ export const Navigation = () => {
 
   // Listen for wallet transaction changes to refresh notifications
   useEffect(() => {
-    const { data: { user } } = supabase.auth.getUser();
-    if (!user) return;
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const channel = supabase
-      .channel('wallet-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications'
-        },
-        () => {
-          // Invalidate notification queries when new notifications are created
-          queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        }
-      )
-      .subscribe();
+      const channel = supabase
+        .channel('wallet-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications'
+          },
+          () => {
+            // Invalidate notification queries when new notifications are created
+            queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
+      return () => {
+        supabase.removeChannel(channel);
+      };
     };
+
+    setupRealtimeSubscription();
   }, [queryClient]);
 
   const totalUnreadCount = unreadCount + unreadNotifications;
