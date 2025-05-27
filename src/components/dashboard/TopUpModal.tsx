@@ -96,17 +96,27 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
         return;
       }
 
-      // Get current user
+      // Get current user with detailed logging
+      console.log("TopUpModal: Getting current user...");
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error("TopUpModal: User authentication error:", userError);
-        const error = "User not authenticated. Please log in and try again.";
+      
+      if (userError) {
+        console.error("TopUpModal: Supabase auth error:", userError);
+        const error = "Authentication error. Please log in and try again.";
         setError(error);
         toast.error(error);
         return;
       }
 
-      console.log("TopUpModal: User authenticated, proceeding with payment");
+      if (!user) {
+        console.error("TopUpModal: No user found in session");
+        const error = "No user session found. Please log in and try again.";
+        setError(error);
+        toast.error(error);
+        return;
+      }
+
+      console.log("TopUpModal: User authenticated successfully:", user.id);
 
       // Process payment
       setProcessingStep('processing_payment');
@@ -144,10 +154,7 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
         // Show success state briefly before closing
         setTimeout(() => {
           onSuccess();
-          onClose();
-          setAmount("");
-          setPaymentMethod("");
-          setProcessingStep('validating');
+          handleClose();
         }, 1500);
       } else {
         const error = "Failed to update wallet balance. Please contact support.";
@@ -157,7 +164,7 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
       }
     } catch (error) {
       console.error("TopUpModal: Unexpected error:", error);
-      const errorMessage = "An unexpected error occurred. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
       setError(errorMessage);
       toast.error(errorMessage);
       setProcessingStep('error');

@@ -20,7 +20,15 @@ export const topUpWallet = async (hostId: string, request: TopUpRequest): Promis
       return false;
     }
 
-    // Get current wallet
+    // Verify user is authenticated and matches hostId
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user || user.id !== hostId) {
+      console.error("WalletTopUp: Authentication error or user mismatch:", authError);
+      toast.error("Authentication required for wallet top-up");
+      return false;
+    }
+
+    // Get or create wallet
     let wallet = await getWalletBalance(hostId);
     if (!wallet) {
       console.log("WalletTopUp: Wallet not found, creating new wallet");
@@ -42,15 +50,14 @@ export const topUpWallet = async (hostId: string, request: TopUpRequest): Promis
     console.log("WalletTopUp: Updating balance", { from: wallet.balance, to: newBalance, difference: request.amount });
 
     // Update wallet balance
-    const { data: updatedWallet, error: walletError } = await supabase
+    const { error: walletError } = await supabase
       .from("host_wallets")
       .update({ 
         balance: newBalance,
         updated_at: new Date().toISOString()
       })
       .eq("id", wallet.id)
-      .select()
-      .single();
+      .eq("host_id", hostId); // Extra security check
 
     if (walletError) {
       console.error("WalletTopUp: Error updating wallet balance:", walletError);

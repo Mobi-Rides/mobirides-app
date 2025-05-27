@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface WalletBalance {
   id: string;
@@ -21,7 +22,7 @@ export const getWalletBalance = async (hostId: string): Promise<WalletBalance | 
       console.error("WalletBalance: Error fetching wallet balance:", error);
       
       if (error.code === 'PGRST116') {
-        console.log("WalletBalance: Creating new wallet for host:", hostId);
+        console.log("WalletBalance: No wallet found, creating new wallet for host:", hostId);
         const createResult = await createWalletForHost(hostId);
         if (createResult) {
           return await getWalletBalance(hostId);
@@ -42,6 +43,14 @@ export const createWalletForHost = async (hostId: string): Promise<boolean> => {
   try {
     console.log("WalletBalance: Creating wallet for host:", hostId);
     
+    // Check if user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user || user.id !== hostId) {
+      console.error("WalletBalance: Authentication error or user mismatch:", authError);
+      toast.error("Authentication required to create wallet");
+      return false;
+    }
+
     const { data, error } = await supabase
       .from("host_wallets")
       .insert({
@@ -54,13 +63,20 @@ export const createWalletForHost = async (hostId: string): Promise<boolean> => {
 
     if (error) {
       console.error("WalletBalance: Error creating wallet:", error);
+      if (error.code === '23505') {
+        console.log("WalletBalance: Wallet already exists, this is normal");
+        return true;
+      }
+      toast.error("Failed to create wallet. Please try again.");
       return false;
     }
 
     console.log("WalletBalance: Wallet created successfully:", data);
+    toast.success("Wallet created successfully");
     return true;
   } catch (error) {
     console.error("WalletBalance: Unexpected error in createWalletForHost:", error);
+    toast.error("An unexpected error occurred while creating wallet");
     return false;
   }
 };
