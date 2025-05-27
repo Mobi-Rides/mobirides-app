@@ -121,22 +121,26 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
   };
 
   const switchRoleText = role === 'host' ? 'Switch to Renter' : 'Switch to Host';
+  const roleIcon = role === 'host' ? User : Users;
 
   return (
     <>
-      {/* Floating Role Switch Button */}
-      <div className="fixed bottom-[96px] left-0 right-0 z-50 flex justify-center">
+      {/* Enhanced Floating Role Switch Button */}
+      <div className="fixed bottom-[96px] left-0 right-0 z-50 flex justify-center px-4">
         <Button 
           type="button"
           onClick={handleSwitchRole}
-          className="shadow-md rounded-full px-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors bg-primary hover:bg-accent/70"
+          className="shadow-lg rounded-full px-6 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all duration-200 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 transform hover:scale-105"
           size="lg"
           aria-label={switchRoleText}
           title={switchRoleText}
         >
-          <div className="flex items-center gap-2">
-            <ArrowRightLeft className="h-5 w-5" />
-            {switchRoleText}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center space-x-1">
+              <roleIcon className="h-4 w-4" />
+              <ArrowRightLeft className="h-4 w-4" />
+            </div>
+            <span className="font-medium">{switchRoleText}</span>
           </div>
         </Button>
       </div>
