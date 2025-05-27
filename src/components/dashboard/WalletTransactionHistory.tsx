@@ -1,13 +1,17 @@
+
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { walletService } from "@/services/walletService";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { ArrowUpDown, TrendingUp, TrendingDown, RefreshCw, Minus } from "lucide-react";
+import { ArrowUpDown, TrendingUp, TrendingDown, RefreshCw, Minus, ExternalLink } from "lucide-react";
 
 export const WalletTransactionHistory = () => {
+  const navigate = useNavigate();
+
   const { data: currentUser } = useQuery({
     queryKey: ["current-user"],
     queryFn: async () => {
@@ -20,7 +24,7 @@ export const WalletTransactionHistory = () => {
     queryKey: ["wallet-transactions", currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return [];
-      return await walletService.getTransactionHistory(currentUser.id, 10);
+      return await walletService.getTransactionHistory(currentUser.id, 20);
     },
     enabled: !!currentUser?.id
   });
@@ -30,6 +34,7 @@ export const WalletTransactionHistory = () => {
       case "top_up":
         return <TrendingUp className="h-4 w-4 text-green-500" />;
       case "fee_deduction":
+      case "commission_deduction":
         return <TrendingDown className="h-4 w-4 text-red-500" />;
       case "refund":
         return <RefreshCw className="h-4 w-4 text-blue-500" />;
@@ -43,9 +48,11 @@ export const WalletTransactionHistory = () => {
   const getTransactionTypeLabel = (type: string) => {
     switch (type) {
       case "top_up":
-        return "Top Up";
+        return "Wallet Top Up";
       case "fee_deduction":
         return "Platform Fee";
+      case "commission_deduction":
+        return "Commission Charge";
       case "refund":
         return "Refund";
       case "withdrawal":
@@ -66,6 +73,17 @@ export const WalletTransactionHistory = () => {
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
+  };
+
+  const handleTransactionClick = (transaction: any) => {
+    // Navigate to booking details if it's a commission charge and has a booking_id
+    if ((transaction.transaction_type === "commission_deduction" || transaction.transaction_type === "fee_deduction") && transaction.booking_id) {
+      navigate(`/booking-request/${transaction.booking_id}`);
+    }
+  };
+
+  const isClickableTransaction = (transaction: any) => {
+    return (transaction.transaction_type === "commission_deduction" || transaction.transaction_type === "fee_deduction") && transaction.booking_id;
   };
 
   if (isLoading) {
@@ -118,13 +136,18 @@ export const WalletTransactionHistory = () => {
         {transactions.map((transaction) => (
           <div
             key={transaction.id}
-            className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+            className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+              isClickableTransaction(transaction) 
+                ? "cursor-pointer hover:bg-muted/50 hover:border-primary/50" 
+                : "hover:bg-muted/30"
+            }`}
+            onClick={() => handleTransactionClick(transaction)}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
               <div className="p-2 rounded-full bg-muted">
                 {getTransactionIcon(transaction.transaction_type)}
               </div>
-              <div>
+              <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <p className="font-medium">
                     {getTransactionTypeLabel(transaction.transaction_type)}
@@ -132,6 +155,9 @@ export const WalletTransactionHistory = () => {
                   <Badge variant="secondary" className={getStatusColor(transaction.status)}>
                     {transaction.status}
                   </Badge>
+                  {isClickableTransaction(transaction) && (
+                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {transaction.description}

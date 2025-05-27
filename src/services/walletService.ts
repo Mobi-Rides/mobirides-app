@@ -188,7 +188,6 @@ class WalletService {
     return createWalletForHost(hostId);
   }
 
-  // Development testing methods
   async addTestFunds(hostId: string, amount: number): Promise<boolean> {
     console.log("WalletService: Adding test funds:", { hostId, amount });
     return await this.topUpWallet(hostId, {
