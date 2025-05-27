@@ -39,7 +39,7 @@ export const checkHostCanAcceptBooking = async (
 
     const currentBalance = wallet.balance || 0;
     // Minimum balance required is P50 for accepting bookings
-    const minimumRequired = Math.max(calculation.commissionAmount, 50);
+    const minimumRequired = 50;
     const canAccept = currentBalance >= minimumRequired;
 
     console.log("WalletValidation: Booking acceptance check result", {
@@ -47,7 +47,7 @@ export const checkHostCanAcceptBooking = async (
       commissionAmount: calculation.commissionAmount,
       currentBalance,
       minimumRequired,
-      required: calculation.commissionAmount
+      required: minimumRequired
     });
 
     return {
