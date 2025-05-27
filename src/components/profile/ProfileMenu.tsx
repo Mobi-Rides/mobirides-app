@@ -1,9 +1,8 @@
-
 import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
   LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark,
-  ArrowRightLeft, Wallet
+  ArrowRightLeft, Wallet, Car, Users
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -121,7 +120,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
   };
 
   const switchRoleText = role === 'host' ? 'Switch to Renter' : 'Switch to Host';
-  const roleIcon = role === 'host' ? User : Users;
+  const RoleIcon = role === 'host' ? Car : Users;
 
   return (
     <>
@@ -137,7 +136,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
         >
           <div className="flex items-center gap-3">
             <div className="flex items-center space-x-1">
-              <roleIcon className="h-4 w-4" />
+              <RoleIcon className="h-4 w-4" />
               <ArrowRightLeft className="h-4 w-4" />
             </div>
             <span className="font-medium">{switchRoleText}</span>
