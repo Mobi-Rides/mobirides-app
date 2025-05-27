@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Bell, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,12 +7,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import { useMessages } from "@/hooks/useMessages";
 import { MessageList } from "./MessageList";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export const NotificationsSection = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedChat, setSelectedChat] = useState<{
     isOpen: boolean;
     senderId: string;
@@ -37,6 +40,33 @@ export const NotificationsSection = () => {
       return data || [];
     }
   });
+
+  // Set up real-time subscription for notifications
+  useEffect(() => {
+    const { data: { user } } = supabase.auth.getUser();
+    if (!user) return;
+
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.then(u => u?.user?.id)}`
+        },
+        () => {
+          // Refresh notifications when new ones are created
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleChatClick = async (senderId: string, senderName: string | null) => {
     await markMessageAsRead(senderId);

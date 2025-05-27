@@ -1,3 +1,4 @@
+
 import { getWalletBalance, createWalletForHost } from "./wallet/walletBalance";
 import { topUpWallet } from "./wallet/walletTopUp";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,12 +21,43 @@ export interface WalletTransaction {
 }
 
 class WalletService {
+  private async createNotification(hostId: string, type: string, content: string, relatedBookingId?: string) {
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .insert({
+          user_id: hostId,
+          type: type,
+          content: content,
+          related_booking_id: relatedBookingId,
+          is_read: false
+        });
+
+      if (error) {
+        console.error("WalletService: Error creating notification:", error);
+      }
+    } catch (error) {
+      console.error("WalletService: Unexpected error creating notification:", error);
+    }
+  }
+
   async getWalletBalance(hostId: string) {
     return getWalletBalance(hostId);
   }
 
   async topUpWallet(hostId: string, request: any) {
-    return topUpWallet(hostId, request);
+    const result = await topUpWallet(hostId, request);
+    
+    if (result) {
+      // Create notification for successful top-up
+      await this.createNotification(
+        hostId,
+        "wallet_topup",
+        `Your wallet has been topped up with P${request.amount.toFixed(2)}`
+      );
+    }
+    
+    return result;
   }
 
   async getTransactionHistory(hostId: string, limit = 20): Promise<WalletTransaction[]> {
@@ -114,6 +146,14 @@ class WalletService {
         return false;
       }
 
+      // Create notification for fee deduction
+      await this.createNotification(
+        hostId,
+        "wallet_deduction",
+        `Platform fee of P${feeAmount.toFixed(2)} deducted for booking`,
+        bookingId
+      );
+
       console.log("WalletService: Booking fee deducted successfully");
       return true;
     } catch (error) {
@@ -176,6 +216,14 @@ class WalletService {
         return false;
       }
 
+      // Create notification for commission deduction
+      await this.createNotification(
+        hostId,
+        "wallet_deduction",
+        `Commission of P${commissionAmount.toFixed(2)} charged for booking`,
+        bookingId
+      );
+
       console.log("WalletService: Booking commission deducted successfully");
       return true;
     } catch (error) {
@@ -185,7 +233,18 @@ class WalletService {
   }
 
   async createWalletForHost(hostId: string) {
-    return createWalletForHost(hostId);
+    const result = await createWalletForHost(hostId);
+    
+    if (result) {
+      // Create notification for wallet creation
+      await this.createNotification(
+        hostId,
+        "wallet_created",
+        "Your wallet has been created successfully"
+      );
+    }
+    
+    return result;
   }
 
   async addTestFunds(hostId: string, amount: number): Promise<boolean> {
@@ -216,6 +275,13 @@ class WalletService {
         console.error("WalletService: Error resetting wallet:", error);
         return false;
       }
+
+      // Create notification for wallet reset
+      await this.createNotification(
+        hostId,
+        "wallet_reset",
+        "Your wallet has been reset to P0.00"
+      );
 
       console.log("WalletService: Wallet reset successfully");
       toast.success("Wallet reset to P0.00");
