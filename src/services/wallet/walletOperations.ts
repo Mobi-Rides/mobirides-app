@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getWalletBalance } from "./walletBalance";
@@ -71,32 +72,31 @@ export class WalletOperations {
     }
   }
 
-  async processBookingCommission(hostId: string, bookingId: string, commissionAmount: number, hostEarnings: number): Promise<boolean> {
+  async processRentalEarnings(hostId: string, bookingId: string, totalBookingAmount: number): Promise<boolean> {
     try {
-      console.log("WalletOperations: Processing booking commission from earnings", { 
+      console.log("WalletOperations: Processing rental earnings", { 
         hostId, 
         bookingId, 
-        commissionAmount,
-        hostEarnings 
+        totalBookingAmount
       });
       
       const wallet = await getWalletBalance(hostId);
       if (!wallet) {
-        console.error("WalletOperations: Wallet not found for commission processing");
+        console.error("WalletOperations: Wallet not found for earnings processing");
         return false;
       }
 
-      // Record earnings transaction (positive amount showing what host receives)
+      // Record earnings transaction - host receives full booking amount
       const { error: earningsError } = await supabase
         .from("wallet_transactions")
         .insert({
           wallet_id: wallet.id,
           booking_id: bookingId,
           transaction_type: "rental_earnings",
-          amount: hostEarnings,
+          amount: totalBookingAmount,
           balance_before: wallet.balance,
-          balance_after: wallet.balance, // Wallet balance unchanged
-          description: `Rental earnings (after ${((commissionAmount / (hostEarnings + commissionAmount)) * 100).toFixed(1)}% commission)`,
+          balance_after: wallet.balance, // Wallet balance unchanged - this is separate earnings
+          description: `Rental earnings from booking`,
           status: "completed"
         });
 
@@ -109,23 +109,28 @@ export class WalletOperations {
       await notificationService.createNotification(
         hostId,
         "rental_earnings",
-        `You earned P${hostEarnings.toFixed(2)} from your rental (commission: P${commissionAmount.toFixed(2)})`,
+        `You earned P${totalBookingAmount.toFixed(2)} from your rental`,
         bookingId
       );
 
-      console.log("WalletOperations: Booking commission processed successfully");
+      console.log("WalletOperations: Rental earnings processed successfully");
       return true;
     } catch (error) {
-      console.error("WalletOperations: Unexpected error in processBookingCommission:", error);
+      console.error("WalletOperations: Unexpected error in processRentalEarnings:", error);
       return false;
     }
   }
 
+  async processBookingCommission(hostId: string, bookingId: string, commissionAmount: number, hostEarnings: number): Promise<boolean> {
+    // For the new flow, we just process the full rental earnings
+    // Commission is already deducted from wallet in commissionDeduction.ts
+    return this.processRentalEarnings(hostId, bookingId, hostEarnings + commissionAmount);
+  }
+
   async deductBookingCommission(hostId: string, bookingId: string, commissionAmount: number): Promise<boolean> {
-    // Calculate host earnings (assuming total = commission / 0.15)
-    const totalBookingAmount = commissionAmount / 0.15;
-    const hostEarnings = totalBookingAmount - commissionAmount;
-    return this.processBookingCommission(hostId, bookingId, commissionAmount, hostEarnings);
+    // This method is now handled by commissionDeduction.ts
+    console.log("WalletOperations: Commission deduction handled by commission service");
+    return true;
   }
 
   async addTestFunds(hostId: string, amount: number): Promise<boolean> {

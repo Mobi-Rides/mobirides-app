@@ -116,14 +116,15 @@ export const WalletBalanceIndicator = ({
                     <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
                       <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <div className="text-xs text-blue-700 dark:text-blue-300">
-                        <p className="font-medium">Commission is deducted from rental earnings, not your wallet</p>
-                        <p>Your wallet balance (P50+ required) qualifies you to accept bookings</p>
+                        <p className="font-medium">Commission is deducted from your wallet balance</p>
+                        <p>You receive the full rental earnings (P{commissionCalc.bookingTotal.toFixed(2)})</p>
                       </div>
                     </div>
                     <div className="space-y-1 text-sm text-muted-foreground">
                       <p>Booking Total: P{commissionCalc.bookingTotal.toFixed(2)}</p>
                       <p>Commission ({(commissionCalc.commissionRate * 100).toFixed(1)}%): P{commissionCalc.commissionAmount.toFixed(2)}</p>
-                      <p className="font-medium text-foreground">You'll earn: P{commissionCalc.hostReceives.toFixed(2)}</p>
+                      <p className="font-medium text-foreground">You'll earn: P{commissionCalc.bookingTotal.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">Commission paid from wallet: P{commissionCalc.commissionAmount.toFixed(2)}</p>
                     </div>
                   </div>
                 )}
