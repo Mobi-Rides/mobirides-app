@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
@@ -11,7 +12,6 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
 
 interface ProfileMenuProps {
   fullName: string;
@@ -31,32 +31,6 @@ interface MenuItem {
 export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter' }: ProfileMenuProps) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const [hasListedCar, setHasListedCar] = useState(false);
-  const [checkingCars, setCheckingCars] = useState(true);
-
-  useEffect(() => {
-    checkListedCars();
-  }, []);
-
-  const checkListedCars = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: cars, error } = await supabase
-        .from("cars")
-        .select("id")
-        .eq("owner_id", user.id)
-        .limit(1);
-
-      if (error) throw error;
-      setHasListedCar(cars && cars.length > 0);
-    } catch (error) {
-      console.error('Error checking listed cars:', error);
-    } finally {
-      setCheckingCars(false);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -70,10 +44,6 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
   };
 
   const handleSwitchRole = () => {
-    if (role === "renter" && !hasListedCar) {
-      toast.error("You need to list at least one car before becoming a host");
-      return;
-    }
     setActiveView('role');
   };
 
@@ -151,8 +121,6 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
   };
 
   const switchRoleText = role === 'host' ? 'Switch to Renter' : 'Switch to Host';
-  const canSwitchToHost = role === 'renter' ? hasListedCar : true;
-  const isButtonDisabled = role === 'renter' && !hasListedCar && !checkingCars;
 
   return (
     <>
@@ -161,19 +129,14 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
         <Button 
           type="button"
           onClick={handleSwitchRole}
-          disabled={isButtonDisabled || checkingCars}
-          className={`shadow-md rounded-full px-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${
-            isButtonDisabled 
-              ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted" 
-              : "bg-primary hover:bg-accent/70"
-          }`}
+          className="shadow-md rounded-full px-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors bg-primary hover:bg-accent/70"
           size="lg"
           aria-label={switchRoleText}
-          title={isButtonDisabled ? "List a car first to become a host" : switchRoleText}
+          title={switchRoleText}
         >
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5" />
-            {checkingCars ? "Loading..." : switchRoleText}
+            {switchRoleText}
           </div>
         </Button>
       </div>
@@ -183,7 +146,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           <h1 className="text-xl sm:text-2xl text-left font-semibold text-foreground">Profile Settings</h1>
         </div>
 
-        {/* Profile section - keep existing code */}
+        {/* Profile section */}
         <button
           type="button"
           onClick={() => setActiveView('profile')}
@@ -205,7 +168,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           </div>
         </button>
 
-        {/* Vehicle & Bookings section - keep existing code */}
+        {/* Vehicle & Bookings section */}
         <Card className="mb-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-left">Vehicle & Bookings</CardTitle>
@@ -236,7 +199,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           </CardContent>
         </Card>
 
-        {/* Account Settings section - keep existing code */}
+        {/* Account Settings section */}
         <Card className="mb-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-left">Account Settings</CardTitle>
@@ -277,7 +240,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           </CardContent>
         </Card>
 
-        {/* Help & Support section - keep existing code */}
+        {/* Help & Support section */}
         <Card className="mb-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-left">Help & Support</CardTitle>
@@ -301,7 +264,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           </CardContent>
         </Card>
 
-        {/* Logout section - keep existing code */}
+        {/* Logout section */}
         <button
           type="button"
           onClick={logoutItem.onClick}

@@ -5,7 +5,7 @@ export class NotificationService {
   async createNotification(hostId: string, type: string, content: string, relatedBookingId?: string) {
     try {
       // Map wallet-specific types to database enum values
-      const typeMapping: { [key: string]: string } = {
+      const typeMapping: { [key: string]: "booking_cancelled" | "booking_confirmed" | "booking_request" | "message_received" | "booking_reminder" } = {
         "wallet_topup": "booking_confirmed",
         "wallet_deduction": "booking_cancelled", 
         "wallet_created": "booking_confirmed",
