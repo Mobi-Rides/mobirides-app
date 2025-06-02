@@ -42,6 +42,8 @@ export type Database = {
       bookings: {
         Row: {
           car_id: string
+          commission_amount: number | null
+          commission_status: string | null
           created_at: string
           end_date: string
           id: string
@@ -55,6 +57,8 @@ export type Database = {
         }
         Insert: {
           car_id: string
+          commission_amount?: number | null
+          commission_status?: string | null
           created_at?: string
           end_date: string
           id?: string
@@ -68,6 +72,8 @@ export type Database = {
         }
         Update: {
           car_id?: string
+          commission_amount?: number | null
+          commission_status?: string | null
           created_at?: string
           end_date?: string
           id?: string
@@ -205,6 +211,33 @@ export type Database = {
           },
         ]
       }
+      commission_rates: {
+        Row: {
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          id: string
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          rate?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          rate?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       handover_sessions: {
         Row: {
           booking_id: string
@@ -264,6 +297,41 @@ export type Database = {
             foreignKeyName: "handover_sessions_renter_id_fkey"
             columns: ["renter_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      host_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          host_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          host_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          host_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "host_wallets_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -605,6 +673,75 @@ export type Database = {
           },
         ]
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          booking_id: string | null
+          booking_reference: string | null
+          commission_rate: number | null
+          created_at: string
+          description: string | null
+          id: string
+          payment_method: string | null
+          payment_reference: string | null
+          status: string
+          transaction_type: string
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          booking_id?: string | null
+          booking_reference?: string | null
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          transaction_type: string
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          booking_id?: string | null
+          booking_reference?: string | null
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "host_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -614,9 +751,17 @@ export type Database = {
         Args: { car_uuid: string }
         Returns: number
       }
+      calculate_commission: {
+        Args: { booking_total: number; rate?: number }
+        Returns: number
+      }
       calculate_user_rating: {
         Args: { user_uuid: string }
         Returns: number
+      }
+      check_host_wallet_balance: {
+        Args: { host_uuid: string; required_commission: number }
+        Returns: boolean
       }
     }
     Enums: {

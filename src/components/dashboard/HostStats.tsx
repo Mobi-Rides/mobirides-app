@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatsCard } from "./StatsCard";
-import { CalendarClock, CarFront, CheckCircle, Clock, XCircle } from "lucide-react";
+import { CalendarClock, CarFront, CheckCircle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const HostStats = () => {

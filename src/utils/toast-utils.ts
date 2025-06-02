@@ -11,33 +11,65 @@ export const toast = {
   /**
    * Show a success toast
    */
-  success: (message: string) => {
-    // Use sonner for simpler messages
-    sonnerToast.success(message);
+  success: (message: string, options?: { duration?: number }) => {
+    sonnerToast.success(message, {
+      duration: options?.duration || 4000,
+    });
   },
 
   /**
    * Show an error toast
    */
-  error: (message: string) => {
-    // Use sonner for simpler messages
-    sonnerToast.error(message);
+  error: (message: string, options?: { duration?: number }) => {
+    sonnerToast.error(message, {
+      duration: options?.duration || 6000,
+    });
   },
 
   /**
    * Show an info toast
    */
-  info: (message: string) => {
-    // Use sonner for simpler messages
-    sonnerToast.info(message);
+  info: (message: string, options?: { duration?: number }) => {
+    sonnerToast.info(message, {
+      duration: options?.duration || 4000,
+    });
   },
 
   /**
    * Show a warning toast
    */
-  warning: (message: string) => {
-    // Use sonner for simpler messages
-    sonnerToast.warning(message);
+  warning: (message: string, options?: { duration?: number }) => {
+    sonnerToast.warning(message, {
+      duration: options?.duration || 5000,
+    });
+  },
+
+  /**
+   * Show a loading toast that can be updated
+   */
+  loading: (message: string) => {
+    return sonnerToast.loading(message);
+  },
+
+  /**
+   * Show a promise toast that handles loading/success/error states
+   */
+  promise: <T,>(
+    promise: Promise<T>,
+    messages: {
+      loading: string;
+      success: string | ((data: T) => string);
+      error: string | ((error: any) => string);
+    }
+  ) => {
+    return sonnerToast.promise(promise, messages);
+  },
+
+  /**
+   * Dismiss a specific toast
+   */
+  dismiss: (toastId?: string | number) => {
+    sonnerToast.dismiss(toastId);
   },
 
   /**
@@ -48,13 +80,14 @@ export const toast = {
     description?: string;
     variant?: "default" | "destructive";
     action?: ToastActionElement;
+    duration?: number;
   }) => {
-    // Use shadcn toast for more complex toasts
     return shadcnToast({
       title: options.title,
       description: options.description,
       variant: options.variant,
       action: options.action,
+      duration: options.duration,
     });
   }
 };

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, MapPin, CalendarClock, Bell, User, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "./ui/badge";
 
@@ -18,6 +18,7 @@ interface NavigationItem {
 export const Navigation = () => {
   const location = useLocation();
   const [activeIndex, setActiveIndex] = useState(0);
+  const queryClient = useQueryClient();
   
   // Fetch unread messages count
   const { data: unreadCount = 0 } = useQuery({
@@ -62,8 +63,39 @@ export const Navigation = () => {
 
       return count || 0;
     },
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 5000, // Refetch every 5 seconds for faster notification updates
   });
+
+  // Listen for wallet transaction changes to refresh notifications
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const channel = supabase
+        .channel('wallet-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications'
+          },
+          () => {
+            // Invalidate notification queries when new notifications are created
+            queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupRealtimeSubscription();
+  }, [queryClient]);
 
   const totalUnreadCount = unreadCount + unreadNotifications;
 
