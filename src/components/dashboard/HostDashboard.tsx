@@ -1,181 +1,199 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
+import { HostStats } from "./HostStats";
+import { HostTabContent } from "./host/HostTabContent";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { BookingStatus } from "@/types/booking";
+import { WalletBalanceIndicator } from "./WalletBalanceIndicator";
+import { walletService } from "@/services/walletService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 export const HostDashboard = () => {
-  const { data: hostData, isLoading } = useQuery({
-    queryKey: ["host-dashboard"],
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
+  const { data: bookings, isLoading } = useQuery({
+    queryKey: ["host-bookings"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      console.log("Fetching host data");
-      const [carsResponse, bookingsResponse] = await Promise.all([
-        supabase
-          .from("cars")
-          .select("*")
-          .eq("owner_id", user.id),
-        supabase
-          .from("bookings")
-          .select(`
-            *,
-            cars (
-              brand,
-              model,
-              location
-            ),
-            renter:profiles!renter_id (
-              full_name
-            )
-          `)
-          .eq("cars.owner_id", user.id)
-          .order("start_date", { ascending: true })
-      ]);
+      console.log("Fetching host bookings");
+      const { data: cars, error: carsError } = await supabase
+        .from("cars")
+        .select("id")
+        .eq("owner_id", user.id);
 
-      if (carsResponse.error) throw carsResponse.error;
-      if (bookingsResponse.error) throw bookingsResponse.error;
+      if (carsError) throw carsError;
+      if (!cars.length) return [];
 
-      console.log("Host cars:", carsResponse.data);
-      console.log("Host bookings:", bookingsResponse.data);
+      const carIds = cars.map(car => car.id);
+      
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          cars (
+            brand,
+            model,
+            location,
+            image_url,
+            owner_id,
+            price_per_day
+          ),
+          renter:profiles!renter_id (
+            full_name
+          )
+        `)
+        .in("car_id", carIds)
+        .order("created_at", { ascending: false });
 
-      return {
-        cars: carsResponse.data,
-        bookings: bookingsResponse.data
-      };
+      if (error) throw error;
+      
+      console.log("Host bookings:", data);
+      return data;
     }
+  });
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+  });
+
+  const { data: walletBalance } = useQuery({
+    queryKey: ["wallet-balance", currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+      return await walletService.getWalletBalance(currentUser.id);
+    },
+    enabled: !!currentUser?.id
   });
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
         <Skeleton className="h-32 w-full" />
       </div>
     );
   }
 
-  const activeBookings = hostData?.bookings.filter(b => 
-    b.status === "confirmed" && new Date(b.end_date) >= new Date()
+  const today = new Date();
+  
+  const activeBookings = bookings?.filter(b => 
+    b.status === 'confirmed' && // Using string literal for consistency with DB
+    new Date(b.start_date) <= today && 
+    new Date(b.end_date) >= today
   );
-  const pendingRequests = hostData?.bookings.filter(b => b.status === "pending");
+  
+  const pendingBookings = bookings?.filter(b => 
+    b.status === 'pending' // Using string literal for consistency with DB
+  );
+  
+  const expiredBookings = bookings?.filter(b => 
+    b.status === 'expired' // Using string literal for consistency with DB
+  );
+  
+  const completedBookings = bookings?.filter(b => 
+    b.status === 'completed' || // Using string literal for consistency with DB
+    (b.status === 'confirmed' && new Date(b.end_date) < today)
+  );
+
+  const handleCardClick = (bookingId: string) => {
+    navigate(`/rental-details/${bookingId}`);
+  };
+
+  const handlePendingCardClick = (bookingId: string) => {
+    navigate(`/booking-requests/${bookingId}`);
+  };
+
+  const currentBalance = walletBalance?.balance || 0;
+  const showLowBalanceWarning = currentBalance < 50; // Show warning if balance is below P50
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Your Cars</h2>
-        <Link to="/add-car">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add New Car
-          </Button>
-        </Link>
+      <HostStats />
+      
+      {/* Low Balance Warning */}
+      {showLowBalanceWarning && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Low wallet balance (P{currentBalance.toFixed(2)}). You may not be able to accept new booking requests. 
+            <span 
+              className="underline cursor-pointer ml-1"
+              onClick={() => navigate('/wallet')}
+            >
+              Top up your wallet
+            </span>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Compact Wallet Balance Indicator */}
+      <div className="bg-card rounded-lg p-4 shadow-sm dark:border dark:border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium">Wallet Balance</h3>
+            <p className="text-sm text-muted-foreground">Available for booking commissions</p>
+          </div>
+          <WalletBalanceIndicator compact={true} />
+        </div>
       </div>
-
-      <Tabs defaultValue="cars">
-        <TabsList>
-          <TabsTrigger value="cars">Listed Cars</TabsTrigger>
-          <TabsTrigger value="active">Active Rentals</TabsTrigger>
-          <TabsTrigger value="requests">Requests</TabsTrigger>
+      
+      <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
+        <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="pending">Booking Requests</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="expired">Expired Requests</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="completed">Past Rentals</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="cars">
-          <div className="grid gap-4">
-            {hostData?.cars.map((car) => (
-              <Card key={car.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {car.brand} {car.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Location: {car.location}
-                    </p>
-                    <p className="text-sm">
-                      Price: BWP {car.price_per_day} per day
-                    </p>
-                    <Link to={`/edit-car/${car.id}`}>
-                      <Button variant="outline" size="sm">
-                        Edit Car
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
         <TabsContent value="active">
-          <div className="grid gap-4">
-            {activeBookings?.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm">
-                      Renter: {booking.renter.full_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <HostTabContent 
+            bookings={activeBookings} 
+            tabType="active" 
+            emptyMessage="No active rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
 
-        <TabsContent value="requests">
-          <div className="grid gap-4">
-            {pendingRequests?.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {booking.cars.brand} {booking.cars.model}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm">
-                      Renter: {booking.renter.full_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Location: {booking.cars.location}
-                    </p>
-                    <p className="text-sm">
-                      Pickup: {format(new Date(booking.start_date), "PPP")}
-                    </p>
-                    <p className="text-sm">
-                      Return: {format(new Date(booking.end_date), "PPP")}
-                    </p>
-                    <Link to={`/booking-requests/${booking.id}`}>
-                      <Button variant="outline" size="sm">
-                        View Request
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <TabsContent value="pending">
+          <HostTabContent 
+            bookings={pendingBookings} 
+            tabType="pending" 
+            emptyMessage="No booking requests"
+            onCardClick={handlePendingCardClick}
+          />
+        </TabsContent>
+
+        <TabsContent value="expired">
+          <HostTabContent 
+            bookings={expiredBookings} 
+            tabType="expired" 
+            emptyMessage="No expired requests"
+            onCardClick={handleCardClick}
+          />
+        </TabsContent>
+
+        <TabsContent value="completed">
+          <HostTabContent 
+            bookings={completedBookings} 
+            tabType="completed" 
+            emptyMessage="No completed rentals"
+            onCardClick={handleCardClick}
+          />
         </TabsContent>
       </Tabs>
     </div>

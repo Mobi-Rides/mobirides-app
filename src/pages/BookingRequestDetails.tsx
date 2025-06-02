@@ -1,17 +1,35 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Star, Calendar, MapPin, Car, Clock, CreditCard, CheckCircle, XCircle, AlertCircle, Wallet } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { WalletBalanceIndicator } from "@/components/dashboard/WalletBalanceIndicator";
+import { commissionService } from "@/services/commissionService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BookingRequestHeader } from "@/components/booking-request/BookingRequestHeader";
+import { RenterInformation } from "@/components/booking-request/RenterInformation";
+import { CarInformation } from "@/components/booking-request/CarInformation";
+import { BookingDates } from "@/components/booking-request/BookingDates";
+import { BookingPrice } from "@/components/booking-request/BookingPrice";
+import { WalletCommissionSection } from "@/components/booking-request/WalletCommissionSection";
+import { BookingActions } from "@/components/booking-request/BookingActions";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userId } = useAuthStatus();
+  const isMobile = useIsMobile();
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ['booking-request', id],
@@ -30,58 +48,101 @@ const BookingRequestDetails = () => {
             model,
             image_url,
             location,
-            price_per_day
+            price_per_day,
+            owner_id
           )
         `)
         .eq('id', id)
         .single();
-
+      
       if (error) throw error;
       return data;
     }
   });
+
+  // Fix: Move isCarOwner declaration here, before it's used
+  const isCarOwner = userId === booking?.car.owner_id;
+  const isRenter = userId === booking?.renter_id;
 
   const { data: renterRating } = useQuery({
     queryKey: ['renter-rating', booking?.renter_id],
     queryFn: async () => {
       if (!booking?.renter_id) return null;
       
-      const { data } = await supabase
-        .rpc('calculate_user_rating', {
-          user_uuid: booking.renter_id
-        });
+      const { data } = await supabase.rpc('calculate_user_rating', {
+        user_uuid: booking.renter_id
+      });
       
       return data;
     },
     enabled: !!booking?.renter_id
   });
 
+  const { data: walletCheck } = useQuery({
+    queryKey: ['wallet-acceptance-check', userId, booking?.total_price],
+    queryFn: async () => {
+      if (!userId || !booking?.total_price || !isCarOwner) return null;
+      return await commissionService.checkHostCanAcceptBooking(userId, booking.total_price);
+    },
+    enabled: !!userId && !!booking?.total_price && isCarOwner
+  });
+
   const updateBookingStatus = useMutation({
-    mutationFn: async ({ status }: { status: 'confirmed' | 'cancelled' }) => {
+    mutationFn: async ({ status }: { status: 'confirmed' | 'cancelled'; }) => {
       console.log('Updating booking status:', status);
+      
+      if (status === 'confirmed' && booking && userId) {
+        const canAccept = await commissionService.checkHostCanAcceptBooking(userId, booking.total_price);
+        
+        if (!canAccept.canAccept) {
+          throw new Error(canAccept.message || 'Insufficient wallet balance');
+        }
+
+        const commissionDeducted = await commissionService.deductCommissionOnBookingAcceptance(
+          userId, 
+          booking.id, 
+          booking.total_price
+        );
+        
+        if (!commissionDeducted) {
+          throw new Error('Failed to process commission payment');
+        }
+      }
+      
       const { error } = await supabase
         .from('bookings')
         .update({ status })
         .eq('id', id);
-
+      
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
       const action = variables.status === 'confirmed' ? 'approved' : 'cancelled';
+      
       toast({
         title: `Booking ${action}`,
-        description: `The booking request has been successfully ${action}.`,
+        description: variables.status === 'confirmed' 
+          ? `Booking approved and commission deducted from your wallet.`
+          : `The booking request has been cancelled.`
       });
-      queryClient.invalidateQueries({ queryKey: ['booking-request', id] });
+      
+      queryClient.invalidateQueries({
+        queryKey: ['booking-request', id]
+      });
+      
+      queryClient.invalidateQueries({
+        queryKey: ['wallet-balance']
+      });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Error updating booking status:', error);
+      
       toast({
         title: "Error",
-        description: "Failed to update the booking status. Please try again.",
-        variant: "destructive",
+        description: error.message || "Failed to update the booking status. Please try again.",
+        variant: "destructive"
       });
-    },
+    }
   });
 
   const handleApprove = () => {
@@ -96,8 +157,8 @@ const BookingRequestDetails = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
         </div>
       </div>
     );
@@ -106,16 +167,18 @@ const BookingRequestDetails = () => {
   if (!booking) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <p className="text-gray-600">Booking request not found</p>
+        <p className="text-gray-600 dark:text-gray-300">Booking request not found</p>
       </div>
     );
   }
 
+  const canApproveBooking = walletCheck?.canAccept ?? true;
+
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      <Button
-        variant="ghost"
-        className="mb-6"
+      <Button 
+        variant="ghost" 
+        className="mb-6 flex items-center" 
         onClick={() => navigate(-1)}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -123,111 +186,40 @@ const BookingRequestDetails = () => {
       </Button>
 
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-semibold mb-6">Booking Request Details</h1>
+        <Card className="overflow-hidden">
+          <BookingRequestHeader status={booking.status} />
           
-          <div className="space-y-6">
-            {/* Renter Information */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Renter Information</h2>
-              <div className="flex items-center gap-4">
-                <img
-                  src={booking.renter.avatar_url 
-                    ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl
-                    : "/placeholder.svg"
-                  }
-                  alt={booking.renter.full_name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-                <div>
-                  <p className="font-medium">{booking.renter.full_name}</p>
-                  {typeof renterRating === 'number' && (
-                    <div className="flex items-center gap-1 text-yellow-500">
-                      <Star className="h-4 w-4 fill-current" />
-                      <span>{renterRating.toFixed(1)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+          <CardContent className="p-6 space-y-8">
+            <RenterInformation 
+              renter={booking.renter} 
+              renterRating={renterRating} 
+            />
+            <CarInformation car={booking.car} />
+            <BookingDates 
+              startDate={booking.start_date} 
+              endDate={booking.end_date} 
+            />
+            <BookingPrice totalPrice={booking.total_price} />
+          </CardContent>
 
-            {/* Car Information */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Requested Car</h2>
-              <div className="flex gap-4">
-                <img
-                  src={booking.car.image_url || "/placeholder.svg"}
-                  alt={`${booking.car.brand} ${booking.car.model}`}
-                  className="w-32 h-24 object-cover rounded-lg"
-                />
-                <div>
-                  <p className="font-medium">{booking.car.brand} {booking.car.model}</p>
-                  <p className="text-sm text-gray-600">{booking.car.location}</p>
-                  <p className="text-sm font-medium">BWP {booking.car.price_per_day} per day</p>
-                </div>
-              </div>
-            </div>
+          {isCarOwner && booking.status === 'pending' && (
+            <WalletCommissionSection 
+              bookingTotal={booking.total_price}
+              canApproveBooking={canApproveBooking}
+            />
+          )}
 
-            {/* Booking Dates */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Booking Dates</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Start Date</p>
-                  <p className="font-medium">
-                    {format(new Date(booking.start_date), 'PPP')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">End Date</p>
-                  <p className="font-medium">
-                    {format(new Date(booking.end_date), 'PPP')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Total Price */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold">Total Price</p>
-                <p className="text-xl font-bold">BWP {booking.total_price}</p>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            {booking.status === 'pending' && (
-              <div className="flex gap-4 justify-end border-t pt-6">
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={handleCancel}
-                  disabled={updateBookingStatus.isPending}
-                >
-                  <XCircle className="h-4 w-4" />
-                  Cancel Request
-                </Button>
-                <Button
-                  className="flex items-center gap-2"
-                  onClick={handleApprove}
-                  disabled={updateBookingStatus.isPending}
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Approve Request
-                </Button>
-              </div>
-            )}
-
-            {/* Status Badge */}
-            {booking.status !== 'pending' && (
-              <div className="border-t pt-4">
-                <p className="text-sm font-medium">
-                  Status: <span className="capitalize">{booking.status}</span>
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+          {booking.status === 'pending' && (
+            <BookingActions 
+              isCarOwner={isCarOwner}
+              isRenter={isRenter}
+              canApproveBooking={canApproveBooking}
+              onApprove={handleApprove}
+              onCancel={handleCancel}
+              isLoading={updateBookingStatus.isPending}
+            />
+          )}
+        </Card>
       </div>
 
       <Navigation />

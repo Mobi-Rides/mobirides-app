@@ -4,11 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Fuel, GaugeCircle, Users } from "lucide-react";
+import { Fuel, GaugeCircle, Users, Heart } from "lucide-react";
 import { BookingDialog } from "@/components/booking/BookingDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { saveCar, unsaveCar } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
+import { Separator } from "./ui/separator";
+import { BarLoader } from "react-spinners";
 
 interface CarCardProps {
   id: string;
@@ -21,7 +24,6 @@ interface CarCardProps {
   seats: number;
   location: string;
   year: number;
-  onSaveToggle?: () => void;
   isSaved?: boolean;
 }
 
@@ -36,13 +38,15 @@ export const CarCard = ({
   seats,
   location,
   year,
-  onSaveToggle,
-  isSaved,
+  isSaved: initialIsSaved = false,
 }: CarCardProps) => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(initialIsSaved);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { data: carDetails } = useQuery({
+  const { data: carDetails, isLoading: isLoadingCarDetails } = useQuery({
     queryKey: ['car', id],
     queryFn: async () => {
       console.log("Fetching complete car details for booking");
@@ -72,9 +76,33 @@ export const CarCard = ({
     setIsBookingOpen(true);
   };
 
-  const handleSaveClick = (e: React.MouseEvent) => {
+  const handleSaveClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    onSaveToggle?.();
+    
+    if (isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      if (isSaved) {
+        const success = await unsaveCar(id);
+        if (success) {
+          setIsSaved(false);
+          // Invalidate saved cars queries
+          queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
+          queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
+        }
+      } else {
+        const success = await saveCar(id);
+        if (success) {
+          setIsSaved(true);
+          // Invalidate saved cars queries
+          queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
+          queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
+        }
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Determine car type based on seats
@@ -88,57 +116,56 @@ export const CarCard = ({
   return (
     <>
       <Card
-        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[28rem]"
+        className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-auto min-h-[20rem] sm:h-[24rem] dark:bg-gray-800 dark:border-gray-700"
         onClick={handleCardClick}
       >
-        <div className="relative h-48">
+        <div className="relative h-40 sm:h-48">
           <img
             src={image_url}
             alt={`${brand} ${model}`}
             className="w-full h-full object-cover"
           />
-          {onSaveToggle && (
-            <button
-              onClick={handleSaveClick}
-              className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-            >
-              {isSaved ? "❤️" : "🤍"}
-            </button>
-          )}
+          <button
+            onClick={handleSaveClick}
+            className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            disabled={isSaving}
+          >
+            <Heart
+              className={`w-5 h-5 ${
+                isSaving ? "text-gray-400" : isSaved ? "fill-red-500 text-red-500" : "text-gray-600"
+              }`}
+            />
+          </button>
         </div>
-        <div className="p-4 flex flex-col h-[calc(28rem-12rem)]">
-          <span className="px-3 py-1 rounded-full text-sm bg-[#F1F0FB] text-[#7C3AED] w-fit mb-2">
+        <div className="p-3 sm:p-4 flex flex-col flex-1">
+          <span className="px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8] w-fit mb-2">
             {getCarType(seats)}
           </span>
-          <div className="flex justify-between items-start mb-2">
+          <div className="flex justify-between items-start mb-2 min-h-[3rem]">
             <div className="flex-1">
-              <h3 className="font-semibold text-left break-words line-clamp-2">{brand} {model}</h3>
-              <p className="text-sm text-gray-500 text-left">{year}</p>
+              <h3 className="font-semibold text-left break-words line-clamp-2 text-sm md:text-base dark:text-white">{brand} {model}</h3>
             </div>
             <div className="text-right ml-2">
               <div className="flex items-center gap-1 justify-end">
-                <p className="font-semibold whitespace-nowrap text-primary">BWP {price_per_day}</p>
-                <p className="text-xs text-gray-500">/day</p>
+                <p className="font-semibold whitespace-nowrap text-primary dark:text-primary-foreground">BWP {price_per_day}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">/day</p>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-              <GaugeCircle className="w-4 h-4 text-primary" />
+          <Separator className="w-full my-2 sm:my-3 dark:bg-gray-700" />
+          <div className="grid grid-cols-3 gap-1 sm:gap-2 mb-3 sm:mb-4 text-[0.7rem] sm:text-sm">
+            <div className="flex items-center justify-left gap-1 text-sm text-gray-400 dark:text-gray-300">
+              <GaugeCircle className="w-4 h-4 text-primary dark:text-primary-foreground" />
               {transmission}
             </div>
-            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-              <Fuel className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-left gap-1 text-sm text-gray-400 dark:text-gray-300">
+              <Fuel className="w-4 h-4 text-primary dark:text-primary-foreground" />
               {fuel}
             </div>
-            <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-              <Users className="w-4 h-4 text-primary" />
-              {seats}
+            <div className="flex items-center justify-left gap-1 text-sm text-gray-400 dark:text-gray-300">
+              <Users className="w-4 h-4 text-primary dark:text-primary-foreground" />
+              {seats} Seats
             </div>
-          </div>
-          <div className="mt-auto flex justify-between items-center">
-            <Badge variant="secondary" className="truncate max-w-[150px]">{location}</Badge>
-            <Button onClick={handleBookNow}>Book now</Button>
           </div>
         </div>
       </Card>

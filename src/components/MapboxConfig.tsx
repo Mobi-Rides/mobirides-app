@@ -1,100 +1,104 @@
+
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { mapboxTokenManager } from "@/utils/mapbox";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { mapboxTokenManager } from "@/utils/mapboxTokenManager";
 
-export const getMapboxToken = async () => {
-  return mapboxTokenManager.getToken();
-};
-
-export const MapboxConfig = () => {
+const MapboxConfig = () => {
   const [token, setToken] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const tokenState = mapboxTokenManager.getTokenState();
+  const hasToken = !!tokenState.token;
 
-  const handleSaveToken = async () => {
-    if (!token) {
-      toast.error("Please enter a Mapbox token");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (!token.trim()) {
+      setError("Please enter a Mapbox token");
       return;
     }
-
-    if (!token.startsWith('pk.')) {
-      toast.error("Invalid Mapbox token format. Public tokens should start with 'pk.'");
-      return;
-    }
-
-    setIsLoading(true);
+    
+    setIsSubmitting(true);
+    
     try {
-      // Always store in localStorage first as primary storage
-      localStorage.setItem('mapbox_token', token);
-      console.log('Token saved to localStorage');
+      const isValid = await mapboxTokenManager.validateAndSetToken(token);
       
-      // Attempt to save to Supabase as backup, but don't block on it
-      try {
-        console.log('Attempting to save token to Supabase...');
-        const { error } = await supabase.functions.invoke('set-mapbox-token', {
-          body: { token }
-        });
-
-        if (error) {
-          console.warn("Supabase function error (using localStorage):", error);
-        } else {
-          console.log('Token also saved to Supabase successfully');
-        }
-      } catch (e) {
-        console.warn("Supabase function unavailable (using localStorage):", e);
+      if (isValid) {
+        toast.success("Mapbox token set successfully");
+        window.location.reload(); // Reload to initialize map with new token
+      } else {
+        setError("Invalid token format");
       }
-
-      // Clear the cached token to force a fresh fetch
-      mapboxTokenManager.clearToken();
-      
-      toast.success("Mapbox token saved successfully");
-      
-      // Reload after a short delay to ensure the token is available
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (error) {
-      console.error("Error saving token:", error);
-      toast.error("Failed to save token. Please try again.");
+      console.error("Error setting token:", error);
+      setError("Failed to set token. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm p-4 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-4">
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Mapbox Configuration Required</h2>
-          <p className="text-sm text-muted-foreground">
-            Please enter your Mapbox public token to enable map functionality.
-            You can find your token at{" "}
-            <a
-              href="https://account.mapbox.com/access-tokens/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Mapbox Access Tokens
-            </a>
+    <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm w-full max-w-md mx-auto">
+      <div className="flex flex-col space-y-4">
+        <h2 className="text-lg font-semibold">Map Configuration Required</h2>
+        
+        {!hasToken && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No Mapbox Token Found</AlertTitle>
+            <AlertDescription>
+              This feature requires a Mapbox token to function.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {tokenState.token && !tokenState.valid && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Invalid Token</AlertTitle>
+            <AlertDescription>
+              Your Mapbox token is invalid or has expired.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <p className="text-sm text-muted-foreground">
+          Please enter your Mapbox public token below. You can find this in your Mapbox account dashboard.
+        </p>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Input
+              type="text"
+              placeholder="Enter your Mapbox token here"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="w-full"
+            />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
+          
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Setting..." : "Set Token"}
+            </Button>
+          </div>
+        </form>
+        
+        <div className="text-xs text-muted-foreground mt-2">
+          <p>
+            Need a token? <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Get one from Mapbox</a>
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Enter your Mapbox token"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="flex-1"
-            disabled={isLoading}
-          />
-          <Button onClick={handleSaveToken} disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Token"}
-          </Button>
         </div>
       </div>
     </div>
   );
 };
+
+export default MapboxConfig;

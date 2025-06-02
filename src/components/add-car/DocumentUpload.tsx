@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -8,7 +9,7 @@ interface DocumentUploadProps {
 export const DocumentUpload = ({ onDocumentChange }: DocumentUploadProps) => {
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="registration" className="text-base">Car Registration Document</Label>
         <Input
           id="registration"
@@ -18,7 +19,7 @@ export const DocumentUpload = ({ onDocumentChange }: DocumentUploadProps) => {
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="insurance" className="text-base">Insurance Document (First Page)</Label>
         <Input
           id="insurance"
@@ -28,7 +29,7 @@ export const DocumentUpload = ({ onDocumentChange }: DocumentUploadProps) => {
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-left">
         <Label htmlFor="additional" className="text-base">Additional Documents</Label>
         <Input
           id="additional"

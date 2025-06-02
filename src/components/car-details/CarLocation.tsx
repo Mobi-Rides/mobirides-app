@@ -1,130 +1,156 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "../ui/button";
+
+import { useEffect, useRef, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { useMapLocation } from "@/hooks/useMapLocation";
-import { updateCarLocation } from "@/services/carLocation";
-import { useUserLocation } from "@/hooks/useUserLocation";
-import { useMapboxToken } from "@/hooks/useMapboxToken";
+import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { getMapboxToken } from "@/utils/mapbox";
+import { Skeleton } from "../ui/skeleton";
 
 interface CarLocationProps {
-  latitude: number | null;
-  longitude: number | null;
+  latitude: number;
+  longitude: number;
   location: string;
+  mapStyle?: string;
 }
 
-export const CarLocation = ({ latitude, longitude, location }: CarLocationProps) => {
-  const [isAdjusting, setIsAdjusting] = useState(false);
-  const { id: carId } = useParams();
-  const queryClient = useQueryClient();
-  const { token, isLoading: isTokenLoading } = useMapboxToken();
+export const CarLocation = ({
+  latitude,
+  longitude,
+  location,
+  mapStyle = "mapbox://styles/mapbox/streets-v12",
+}: CarLocationProps) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+  const mapInitializedRef = useRef<boolean>(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const fallbackStyle = "mapbox://styles/mapbox/light-v11";
 
-  const { 
-    mapContainer, 
-    map, 
-    newCoordinates, 
-    setNewCoordinates,
-    isMapLoaded 
-  } = useMapLocation({
-    initialLatitude: latitude || 0,
-    initialLongitude: longitude || 0,
-    mapboxToken: token,
-    isAdjusting
-  });
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      try {
+        const token = await getMapboxToken();
+        if (!token) {
+          toast.error("Failed to get the map token");
+          return;
+        }
+        setMapboxToken(token);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error getting Mapbox token:", error);
+        toast.error("Failed to load map configuration");
+      }
+    };
+    fetchMapboxToken();
+  }, []);
 
-  // Initialize user location tracking
-  useUserLocation(map?.current);
-
-  const handleAdjustLocation = () => {
-    setIsAdjusting(true);
-    toast.info("Click anywhere on the map to adjust the location. Click 'Save Location' when done.");
-  };
-
-  const handleSaveLocation = async () => {
-    if (!newCoordinates || !carId) {
-      console.log("Missing required data for location update:", { newCoordinates, carId });
-      toast.error("Please select a new location first");
+  // Initialize map only once when component mounts
+  useEffect(() => {
+    if (isLoading || !mapContainer.current) {
       return;
     }
 
-    console.log("Saving new location:", newCoordinates);
-    
-    const success = await updateCarLocation(
-      carId,
-      newCoordinates.lat,
-      newCoordinates.lng
-    );
-
-    if (success) {
-      console.log("Location update successful, invalidating queries");
-      await queryClient.invalidateQueries({ queryKey: ['car', carId] });
-      setIsAdjusting(false);
-      setNewCoordinates(null);
+    // Verify container size
+    const container = mapContainer.current;
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.error("Map container has zero width or height");
+      return;
     }
-  };
 
-  // Show loading state while token is being fetched
-  if (isTokenLoading) {
-    console.log("Loading token state:", { isTokenLoading, token });
-    return <div>Loading map configuration...</div>;
-  }
+    console.log("Initializing map with coordinates:", { longitude, latitude });
 
-  // Don't show MapboxConfig overlay, just show a message if there's no token
-  if (!token) {
-    console.log("Token state check:", { token, isTokenLoading });
-    return <div className="text-muted-foreground">Map configuration required</div>;
-  }
+    if (mapboxToken) {
+      mapboxgl.accessToken = mapboxToken;
+    } else {
+      console.error("No Mapbox token available");
+      return;
+    }
 
-  if (!latitude || !longitude) {
-    return (
-      <div>
-        <h2 className="font-semibold mb-2">Location</h2>
-        <p className="text-muted-foreground">{location}</p>
-      </div>
-    );
-  }
+    try {
+      // Use the correct coordinate order for mapbox [lng, lat]
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: mapStyle || fallbackStyle,
+        center: [longitude, latitude], // Correct order: [longitude, latitude]
+        zoom: 13,
+        interactive: false, // Make the map non-interactive
+      });
+
+      map.current.on("load", () => {
+        console.log("Map loaded successfully");
+        
+        // Add marker
+        marker.current = new mapboxgl.Marker({ color: "#7C3AED" })
+          .setLngLat([longitude, latitude])
+          .addTo(map.current!);
+
+        mapInitializedRef.current = true;
+      });
+
+      map.current.on("style.load", () => {
+        console.log("Map style loaded successfully");
+      });
+
+      map.current.on("error", (e) => {
+        console.error("Map error:", e);
+        toast.error("Error loading location map");
+        
+        // Try to load fallback style if the error was style-related
+        if (e.error && e.error.message.includes("style") && mapStyle !== fallbackStyle) {
+          console.log("Attempting to load fallback style");
+          map.current?.setStyle(fallbackStyle);
+        }
+      });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Could not initialize location map");
+    }
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        marker.current = null;
+        mapInitializedRef.current = false;
+      }
+    };
+  }, [latitude, longitude, mapboxToken, mapStyle, isLoading]);
+
+  // Update map center when coordinates change
+  useEffect(() => {
+    if (map.current && mapInitializedRef.current && marker.current) {
+      map.current.setCenter([longitude, latitude]);
+      marker.current.setLngLat([longitude, latitude]);
+    }
+  }, [latitude, longitude]);
+
+  // Update map style when mapStyle prop changes
+  useEffect(() => {
+    if (map.current && mapInitializedRef.current) {
+      map.current.setStyle(mapStyle || fallbackStyle);
+    }
+  }, [mapStyle]);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">Location</h2>
-        <div className="space-x-2">
-          {!isAdjusting ? (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleAdjustLocation}
-            >
-              Adjust Location
-            </Button>
-          ) : (
-            <Button 
-              variant="default" 
-              size="sm"
-              onClick={handleSaveLocation}
-            >
-              Save Location
-            </Button>
-          )}
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base text-left text-muted-foreground dark:text-white font-medium">
+          Location
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-2 mb-3">
+          <MapPin size={16} className="text-red-500 " />
+          <p className="text-xs md:text-sm text-left text-muted-foreground dark:text-gray-300">{location}</p>
         </div>
-      </div>
-      <p className="text-muted-foreground mb-2">{location}</p>
-      <div className="relative w-full h-[300px] rounded-lg overflow-hidden">
-        <div ref={mapContainer} className="absolute inset-0" />
-        {!isMapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <div className="animate-pulse text-primary">Loading map...</div>
-          </div>
-        )}
-      </div>
-      <div className="space-y-1 text-xs text-muted-foreground">
-        <p>Current coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}</p>
-        {newCoordinates && (
-          <p>New coordinates: {newCoordinates.lat.toFixed(6)}, {newCoordinates.lng.toFixed(6)}</p>
-        )}
-      </div>
-    </div>
+        <div
+          ref={mapContainer}
+          className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700"
+        />
+      </CardContent>
+    </Card>
   );
 };

@@ -1,58 +1,175 @@
-import { useState } from "react";
+
+import React, { useEffect, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { defaultBrands } from "@/integrations/supabase/types";
-import { Button } from "./ui/button";
+
+// Define the list of default brands
+const defaultBrands = [
+  "Toyota",
+  "Honda",
+  "Nissan",
+  "Ford",
+  "BMW",
+  "Mercedes-Benz",
+  "Audi",
+  "Volkswagen",
+  "Hyundai",
+  "Kia",
+  "Chevrolet",
+  "Lexus",
+  "Mazda",
+  "Subaru",
+  "Tesla"
+];
 
 interface BrandFilterProps {
-  selectedBrand: string | null;
-  onSelectBrand: (brand: string | null) => void;
+  // For multi-select mode
+  selectedBrands?: string[];
+  onBrandsChange?: (brands: string[]) => void;
+  
+  // For single-select mode
+  selectedBrand?: string | null;
+  onSelectBrand?: (brand: string | null) => void;
+  
+  // Additional props
+  carsCount?: number;
 }
 
-export const BrandFilter = ({
+const BrandFilter = ({ 
+  selectedBrands = [],
+  onBrandsChange,
   selectedBrand,
   onSelectBrand,
+  carsCount
 }: BrandFilterProps) => {
-  const [showAll, setShowAll] = useState(false);
-  console.log("Rendering BrandFilter with brands:", defaultBrands);
+  const [open, setOpen] = useState(false);
+  const [localSelectedBrands, setLocalSelectedBrands] = useState<string[]>(selectedBrands);
   
-  // Initially show only 4 brands (changed from 5)
-  const visibleBrands = showAll ? defaultBrands : defaultBrands.slice(0, 4);
+  // Determine if we're in single or multi-select mode
+  const isSingleSelectMode = !!onSelectBrand;
   
+  // Update local state when props change
+  useEffect(() => {
+    if (!isSingleSelectMode) {
+      setLocalSelectedBrands(selectedBrands);
+    }
+  }, [selectedBrands, isSingleSelectMode]);
+
+  // Handle selection based on the component's mode
+  const handleBrandSelect = (brand: string) => {
+    if (isSingleSelectMode) {
+      // Single select mode
+      onSelectBrand?.(selectedBrand === brand ? null : brand);
+      setOpen(false);
+    } else {
+      // Multi-select mode
+      const isSelected = localSelectedBrands.includes(brand);
+      const updatedBrands = isSelected 
+        ? localSelectedBrands.filter((b) => b !== brand)
+        : [...localSelectedBrands, brand];
+        
+      setLocalSelectedBrands(updatedBrands);
+    }
+  };
+
+  // Apply filters in multi-select mode
+  const applyFilters = () => {
+    if (onBrandsChange) {
+      onBrandsChange(localSelectedBrands);
+    }
+    setOpen(false);
+  };
+
+  // Display text based on mode
+  const displayText = () => {
+    if (isSingleSelectMode && selectedBrand) {
+      return selectedBrand;
+    } else if (!isSingleSelectMode && localSelectedBrands.length > 0) {
+      return `${localSelectedBrands.length} brand${localSelectedBrands.length > 1 ? 's' : ''} selected`;
+    }
+    return "Select Brand";
+  };
+
+  // Check if a brand is selected based on the current mode
+  const isBrandSelected = (brand: string) => {
+    return isSingleSelectMode
+      ? selectedBrand === brand
+      : localSelectedBrands.includes(brand);
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-        {visibleBrands.map((brand) => (
-          <button
-            key={brand.id}
-            onClick={() => onSelectBrand(brand.name === selectedBrand ? null : brand.name)}
-            className={cn(
-              "flex flex-col items-center min-w-[144px] p-6 rounded-lg transition-all",
-              selectedBrand === brand.name
-                ? "bg-primary text-white"
-                : "bg-secondary hover:bg-accent"
-            )}
-          >
-            <img
-              src={brand.logo_url}
-              alt={`${brand.name} logo`}
-              className="w-16 h-16 object-contain"
-            />
-            <span className="text-sm mt-3 font-medium">{brand.name}</span>
-          </button>
-        ))}
+    <div className="flex justify-between items-center mb-4">
+      <div className="flex items-center gap-2">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-[200px] justify-between"
+            >
+              {displayText()}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <Command>
+              <CommandInput placeholder="Search brand..." />
+              <CommandList>
+                <CommandEmpty>No brand found.</CommandEmpty>
+                <CommandGroup>
+                  {defaultBrands.map((brand) => (
+                    <CommandItem
+                      key={brand}
+                      onSelect={() => handleBrandSelect(brand)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          isBrandSelected(brand) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {brand}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                {!isSingleSelectMode && (
+                  <>
+                    <CommandSeparator />
+                    <CommandGroup>
+                      <CommandItem onSelect={applyFilters}>
+                        Apply Filters
+                      </CommandItem>
+                    </CommandGroup>
+                  </>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        {carsCount !== undefined && (
+          <span className="text-sm text-muted-foreground">
+            {carsCount} car{carsCount !== 1 ? "s" : ""} available
+          </span>
+        )}
       </div>
-      
-      {defaultBrands.length > 4 && (
-        <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            onClick={() => setShowAll(!showAll)}
-            className="text-primary"
-          >
-            {showAll ? "Show Less" : "See All"}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
+
+export default BrandFilter;
