@@ -73,6 +73,12 @@ export const createHandoverSession = async (
       return null;
     }
 
+    // Initialize handover steps for the new session
+    if (data?.id) {
+      const { initializeHandoverSteps } = await import("./enhancedHandoverService");
+      await initializeHandoverSteps(data.id);
+    }
+
     // If the current user is the host, send a notification to the renter
     if (currentUserId === hostId) {
       try {
@@ -96,7 +102,7 @@ export const createHandoverSession = async (
 
         if (carId) {
           // Create notification for the renter
-          const notificationContent = `${hostName} is requesting your location for car handover. Please share your location to proceed with the handover process.`;
+          const notificationContent = `${hostName} has initiated the handover process. Please join the handover session to complete the vehicle inspection and documentation.`;
 
           const { error: notificationError } = await supabase
             .from("notifications")
@@ -111,7 +117,7 @@ export const createHandoverSession = async (
           if (notificationError) {
             console.error("Error creating notification:", notificationError);
           } else {
-            console.log("Location request notification sent to renter");
+            console.log("Enhanced handover notification sent to renter");
           }
         }
       } catch (notificationError) {

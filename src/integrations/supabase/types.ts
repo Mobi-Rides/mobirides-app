@@ -46,10 +46,13 @@ export type Database = {
           commission_status: string | null
           created_at: string
           end_date: string
+          host_preparation_completed: boolean | null
           id: string
           latitude: number | null
           longitude: number | null
+          preparation_reminder_sent: boolean | null
           renter_id: string
+          renter_preparation_completed: boolean | null
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           total_price: number
@@ -61,10 +64,13 @@ export type Database = {
           commission_status?: string | null
           created_at?: string
           end_date: string
+          host_preparation_completed?: boolean | null
           id?: string
           latitude?: number | null
           longitude?: number | null
+          preparation_reminder_sent?: boolean | null
           renter_id: string
+          renter_preparation_completed?: boolean | null
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_price: number
@@ -76,10 +82,13 @@ export type Database = {
           commission_status?: string | null
           created_at?: string
           end_date?: string
+          host_preparation_completed?: boolean | null
           id?: string
           latitude?: number | null
           longitude?: number | null
+          preparation_reminder_sent?: boolean | null
           renter_id?: string
+          renter_preparation_completed?: boolean | null
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_price?: number
@@ -302,6 +311,60 @@ export type Database = {
           },
         ]
       }
+      handover_step_completion: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          completion_data: Json | null
+          created_at: string
+          handover_session_id: string | null
+          id: string
+          is_completed: boolean | null
+          step_name: string
+          step_order: number
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_data?: Json | null
+          created_at?: string
+          handover_session_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          step_name: string
+          step_order: number
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_data?: Json | null
+          created_at?: string
+          handover_session_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          step_name?: string
+          step_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_step_completion_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handover_step_completion_handover_session_id_fkey"
+            columns: ["handover_session_id"]
+            isOneToOne: false
+            referencedRelation: "handover_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       host_wallets: {
         Row: {
           balance: number
@@ -332,6 +395,70 @@ export type Database = {
             foreignKeyName: "host_wallets_host_id_fkey"
             columns: ["host_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      identity_verification_checks: {
+        Row: {
+          created_at: string
+          handover_session_id: string | null
+          id: string
+          license_photo_url: string | null
+          updated_at: string
+          verification_notes: string | null
+          verification_photo_url: string | null
+          verification_status: string | null
+          verified_at: string | null
+          verified_user_id: string | null
+          verifier_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          handover_session_id?: string | null
+          id?: string
+          license_photo_url?: string | null
+          updated_at?: string
+          verification_notes?: string | null
+          verification_photo_url?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_user_id?: string | null
+          verifier_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          handover_session_id?: string | null
+          id?: string
+          license_photo_url?: string | null
+          updated_at?: string
+          verification_notes?: string | null
+          verification_photo_url?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_user_id?: string | null
+          verifier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identity_verification_checks_handover_session_id_fkey"
+            columns: ["handover_session_id"]
+            isOneToOne: false
+            referencedRelation: "handover_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "identity_verification_checks_verified_user_id_fkey"
+            columns: ["verified_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "identity_verification_checks_verifier_id_fkey"
+            columns: ["verifier_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -531,8 +658,11 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string | null
           id: string
+          id_photo_url: string | null
           is_sharing_location: boolean | null
           latitude: number | null
           location_sharing_scope: string | null
@@ -544,8 +674,11 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
           id: string
+          id_photo_url?: string | null
           is_sharing_location?: boolean | null
           latitude?: number | null
           location_sharing_scope?: string | null
@@ -557,8 +690,11 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
           id?: string
+          id_photo_url?: string | null
           is_sharing_location?: boolean | null
           latitude?: number | null
           location_sharing_scope?: string | null
@@ -667,6 +803,98 @@ export type Database = {
           {
             foreignKeyName: "saved_cars_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_condition_reports: {
+        Row: {
+          acknowledged_at: string | null
+          additional_notes: string | null
+          booking_id: string | null
+          car_id: string | null
+          created_at: string
+          damage_reports: Json | null
+          digital_signature_data: string | null
+          exterior_condition_notes: string | null
+          fuel_level: number | null
+          handover_session_id: string | null
+          id: string
+          interior_condition_notes: string | null
+          is_acknowledged: boolean | null
+          mileage: number | null
+          report_type: string
+          reporter_id: string | null
+          updated_at: string
+          vehicle_photos: Json | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          additional_notes?: string | null
+          booking_id?: string | null
+          car_id?: string | null
+          created_at?: string
+          damage_reports?: Json | null
+          digital_signature_data?: string | null
+          exterior_condition_notes?: string | null
+          fuel_level?: number | null
+          handover_session_id?: string | null
+          id?: string
+          interior_condition_notes?: string | null
+          is_acknowledged?: boolean | null
+          mileage?: number | null
+          report_type: string
+          reporter_id?: string | null
+          updated_at?: string
+          vehicle_photos?: Json | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          additional_notes?: string | null
+          booking_id?: string | null
+          car_id?: string | null
+          created_at?: string
+          damage_reports?: Json | null
+          digital_signature_data?: string | null
+          exterior_condition_notes?: string | null
+          fuel_level?: number | null
+          handover_session_id?: string | null
+          id?: string
+          interior_condition_notes?: string | null
+          is_acknowledged?: boolean | null
+          mileage?: number | null
+          report_type?: string
+          reporter_id?: string | null
+          updated_at?: string
+          vehicle_photos?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_condition_reports_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_condition_reports_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_condition_reports_handover_session_id_fkey"
+            columns: ["handover_session_id"]
+            isOneToOne: false
+            referencedRelation: "handover_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_condition_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
