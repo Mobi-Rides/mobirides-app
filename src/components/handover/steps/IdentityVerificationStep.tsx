@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { uploadHandoverPhoto, createIdentityVerificationCheck, updateIdentityVerificationStatus } from "@/services/enhancedHandoverService";
+import { uploadHandoverPhoto, createIdentityVerificationCheck } from "@/services/enhancedHandoverService";
 import { toast } from "@/utils/toast-utils";
 
 interface IdentityVerificationStepProps {

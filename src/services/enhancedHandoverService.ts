@@ -36,7 +36,6 @@ export interface VehicleConditionReport {
   handover_session_id: string;
   booking_id: string;
   car_id: string;
-  reporter_id: string;
   report_type: 'pickup' | 'return';
   vehicle_photos: VehiclePhoto[];
   damage_reports: DamageReport[];
@@ -177,14 +176,26 @@ export const createVehicleConditionReport = async (report: VehicleConditionRepor
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) throw new Error("User not authenticated");
 
+    // Convert arrays to JSON for database storage
+    const dbReport = {
+      handover_session_id: report.handover_session_id,
+      booking_id: report.booking_id,
+      car_id: report.car_id,
+      report_type: report.report_type,
+      vehicle_photos: JSON.stringify(report.vehicle_photos),
+      damage_reports: JSON.stringify(report.damage_reports),
+      fuel_level: report.fuel_level,
+      mileage: report.mileage,
+      exterior_condition_notes: report.exterior_condition_notes,
+      interior_condition_notes: report.interior_condition_notes,
+      additional_notes: report.additional_notes,
+      digital_signature_data: report.digital_signature_data,
+      is_acknowledged: report.is_acknowledged
+    };
+
     const { data, error } = await supabase
       .from("vehicle_condition_reports")
-      .insert({
-        ...report,
-        reporter_id: userData.user.id,
-        vehicle_photos: report.vehicle_photos,
-        damage_reports: report.damage_reports
-      })
+      .insert(dbReport)
       .select()
       .single();
 
@@ -203,9 +214,18 @@ export const updateVehicleConditionReport = async (
   updates: Partial<VehicleConditionReport>
 ) => {
   try {
+    // Convert arrays to JSON if they exist in updates
+    const dbUpdates: any = { ...updates };
+    if (updates.vehicle_photos) {
+      dbUpdates.vehicle_photos = JSON.stringify(updates.vehicle_photos);
+    }
+    if (updates.damage_reports) {
+      dbUpdates.damage_reports = JSON.stringify(updates.damage_reports);
+    }
+
     const { error } = await supabase
       .from("vehicle_condition_reports")
-      .update(updates)
+      .update(dbUpdates)
       .eq("id", reportId);
 
     if (error) throw error;
@@ -220,9 +240,22 @@ export const updateVehicleConditionReport = async (
 // Create identity verification check
 export const createIdentityVerificationCheck = async (check: IdentityVerificationCheck) => {
   try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) throw new Error("User not authenticated");
+
+    const checkData = {
+      handover_session_id: check.handover_session_id,
+      verifier_id: userData.user.id, // Set current user as verifier
+      verified_user_id: check.verified_user_id,
+      verification_photo_url: check.verification_photo_url,
+      license_photo_url: check.license_photo_url,
+      verification_status: check.verification_status,
+      verification_notes: check.verification_notes
+    };
+
     const { data, error } = await supabase
       .from("identity_verification_checks")
-      .insert(check)
+      .insert(checkData)
       .select()
       .single();
 
@@ -269,7 +302,17 @@ export const getVehicleConditionReports = async (handoverSessionId: string) => {
       .eq("handover_session_id", handoverSessionId);
 
     if (error) throw error;
-    return data || [];
+    
+    // Parse JSON fields back to arrays
+    return (data || []).map(report => ({
+      ...report,
+      vehicle_photos: typeof report.vehicle_photos === 'string' 
+        ? JSON.parse(report.vehicle_photos) 
+        : report.vehicle_photos || [],
+      damage_reports: typeof report.damage_reports === 'string' 
+        ? JSON.parse(report.damage_reports) 
+        : report.damage_reports || []
+    }));
   } catch (error) {
     console.error("Error fetching condition reports:", error);
     return [];
