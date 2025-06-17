@@ -19,6 +19,9 @@ import {
 import { IdentityVerificationStep } from "./steps/IdentityVerificationStep";
 import { VehicleInspectionStep } from "./steps/VehicleInspectionStep";
 import { DamageDocumentationStep } from "./steps/DamageDocumentationStep";
+import { FuelMileageStep } from "./steps/FuelMileageStep";
+import { KeyTransferStep } from "./steps/KeyTransferStep";
+import { DigitalSignatureStep } from "./steps/DigitalSignatureStep";
 import { toast } from "@/utils/toast-utils";
 
 interface EnhancedHandoverSheetProps {
@@ -80,13 +83,12 @@ export const EnhancedHandoverSheet = ({
 
   const handleHandoverComplete = async () => {
     try {
-      // Create final vehicle condition report
-      if (vehiclePhotos.length > 0 || damageReports.length > 0) {
+      // Create final vehicle condition report only if we have data
+      if (vehiclePhotos.length > 0 || damageReports.length > 0 || fuelLevel || mileage) {
         await createVehicleConditionReport({
           handover_session_id: handoverSessionId,
           booking_id: bookingDetails?.id || "",
           car_id: bookingDetails?.car?.id || "",
-          reporter_id: "", // Will be set by service
           report_type: 'pickup', // This should be determined by handover type
           vehicle_photos: vehiclePhotos,
           damage_reports: damageReports,
@@ -102,6 +104,31 @@ export const EnhancedHandoverSheet = ({
     } catch (error) {
       console.error("Error completing handover:", error);
       toast.error("Failed to complete handover");
+    }
+  };
+
+  const canProceedToNextStep = (stepName: string) => {
+    switch (stepName) {
+      case "identity_verification":
+        return true; // Can always proceed after identity verification
+      case "vehicle_inspection_exterior":
+        const exteriorPhotos = vehiclePhotos.filter(p => p.type.startsWith('exterior_'));
+        return exteriorPhotos.length >= 4; // Front, back, left, right
+      case "vehicle_inspection_interior":
+        const interiorPhotos = vehiclePhotos.filter(p => 
+          p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)
+        );
+        return interiorPhotos.length >= 4; // Dashboard, seats, fuel gauge, odometer
+      case "damage_documentation":
+        return true; // Can proceed with or without damage reports
+      case "fuel_mileage_check":
+        return fuelLevel !== undefined && mileage !== undefined;
+      case "key_transfer":
+        return true; // Can proceed after acknowledgment
+      case "digital_signature":
+        return digitalSignature !== undefined;
+      default:
+        return true;
     }
   };
 
@@ -157,6 +184,40 @@ export const EnhancedHandoverSheet = ({
             initialReports={damageReports}
           />
         );
+
+      case "fuel_mileage_check":
+        return (
+          <FuelMileageStep
+            handoverSessionId={handoverSessionId}
+            onFuelLevelChange={setFuelLevel}
+            onMileageChange={setMileage}
+            onStepComplete={() => handleStepComplete(step.name, { fuel_level: fuelLevel, mileage })}
+            initialFuelLevel={fuelLevel}
+            initialMileage={mileage}
+          />
+        );
+
+      case "key_transfer":
+        return (
+          <KeyTransferStep
+            handoverSessionId={handoverSessionId}
+            otherUserName={otherUser?.full_name || "User"}
+            isHost={isHost}
+            onStepComplete={() => handleStepComplete(step.name)}
+          />
+        );
+
+      case "digital_signature":
+        return (
+          <DigitalSignatureStep
+            handoverSessionId={handoverSessionId}
+            onSignatureComplete={(signature) => {
+              setDigitalSignature(signature);
+              handleStepComplete(step.name, { signature });
+            }}
+            initialSignature={digitalSignature}
+          />
+        );
         
       default:
         return (
@@ -165,7 +226,10 @@ export const EnhancedHandoverSheet = ({
               <div className="text-center">
                 <h3 className="font-medium mb-2">{step.title}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{step.description}</p>
-                <Button onClick={() => handleStepComplete(step.name)}>
+                <Button 
+                  onClick={() => handleStepComplete(step.name)}
+                  disabled={!canProceedToNextStep(step.name)}
+                >
                   Complete {step.title}
                 </Button>
               </div>

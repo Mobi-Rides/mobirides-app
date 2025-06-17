@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
 
@@ -72,6 +71,17 @@ export interface HandoverStepCompletion {
 // Initialize handover steps for a session
 export const initializeHandoverSteps = async (handoverSessionId: string) => {
   try {
+    // Check if steps already exist
+    const { data: existingSteps } = await supabase
+      .from("handover_step_completion")
+      .select("id")
+      .eq("handover_session_id", handoverSessionId);
+
+    if (existingSteps && existingSteps.length > 0) {
+      console.log("Handover steps already initialized");
+      return true;
+    }
+
     const stepsToInsert = HANDOVER_STEPS.map(step => ({
       handover_session_id: handoverSessionId,
       step_name: step.name,
@@ -84,6 +94,7 @@ export const initializeHandoverSteps = async (handoverSessionId: string) => {
       .insert(stepsToInsert);
 
     if (error) throw error;
+    console.log("Handover steps initialized successfully");
     return true;
   } catch (error) {
     console.error("Error initializing handover steps:", error);
@@ -109,7 +120,7 @@ export const getHandoverSteps = async (handoverSessionId: string) => {
   }
 };
 
-// Complete a handover step
+// Complete a handover step with validation
 export const completeHandoverStep = async (
   handoverSessionId: string,
   stepName: string,
@@ -118,6 +129,13 @@ export const completeHandoverStep = async (
   try {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) throw new Error("User not authenticated");
+
+    // Validate step completion based on step type
+    const validationResult = await validateStepCompletion(handoverSessionId, stepName, completionData);
+    if (!validationResult.isValid) {
+      toast.error(validationResult.message);
+      return false;
+    }
 
     const { error } = await supabase
       .from("handover_step_completion")
@@ -131,6 +149,8 @@ export const completeHandoverStep = async (
       .eq("step_name", stepName);
 
     if (error) throw error;
+    
+    console.log(`Step ${stepName} completed successfully`);
     return true;
   } catch (error) {
     console.error("Error completing handover step:", error);
@@ -139,35 +159,83 @@ export const completeHandoverStep = async (
   }
 };
 
-// Upload handover photo
+// Validate step completion
+const validateStepCompletion = async (
+  handoverSessionId: string,
+  stepName: string,
+  completionData?: any
+): Promise<{ isValid: boolean; message: string }> => {
+  switch (stepName) {
+    case "fuel_mileage_check":
+      if (!completionData?.fuel_level || !completionData?.mileage) {
+        return { isValid: false, message: "Fuel level and mileage are required" };
+      }
+      if (completionData.fuel_level < 0 || completionData.fuel_level > 100) {
+        return { isValid: false, message: "Fuel level must be between 0 and 100%" };
+      }
+      if (completionData.mileage < 0) {
+        return { isValid: false, message: "Mileage must be a positive number" };
+      }
+      break;
+    
+    case "digital_signature":
+      if (!completionData?.signature) {
+        return { isValid: false, message: "Digital signature is required" };
+      }
+      break;
+    
+    default:
+      // No specific validation needed for other steps
+      break;
+  }
+  
+  return { isValid: true, message: "Validation passed" };
+};
+
+// Upload handover photo with retry mechanism
 export const uploadHandoverPhoto = async (
   file: File,
   handoverSessionId: string,
-  photoType: string
+  photoType: string,
+  maxRetries: number = 3
 ): Promise<string | null> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user?.id) throw new Error("User not authenticated");
+  let attempt = 0;
+  
+  while (attempt < maxRetries) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) throw new Error("User not authenticated");
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userData.user.id}/${handoverSessionId}/${photoType}_${Date.now()}.${fileExt}`;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userData.user.id}/${handoverSessionId}/${photoType}_${Date.now()}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('handover-photos')
-      .upload(fileName, file);
+      const { error: uploadError } = await supabase.storage
+        .from('handover-photos')
+        .upload(fileName, file);
 
-    if (uploadError) throw uploadError;
+      if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('handover-photos')
-      .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage
+        .from('handover-photos')
+        .getPublicUrl(fileName);
 
-    return publicUrl;
-  } catch (error) {
-    console.error("Error uploading handover photo:", error);
-    toast.error("Failed to upload photo");
-    return null;
+      console.log(`Photo uploaded successfully: ${fileName}`);
+      return publicUrl;
+    } catch (error) {
+      attempt++;
+      console.error(`Photo upload attempt ${attempt} failed:`, error);
+      
+      if (attempt >= maxRetries) {
+        toast.error("Failed to upload photo after multiple attempts");
+        return null;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
   }
+  
+  return null;
 };
 
 // Create vehicle condition report
@@ -200,6 +268,7 @@ export const createVehicleConditionReport = async (report: VehicleConditionRepor
       .single();
 
     if (error) throw error;
+    console.log("Vehicle condition report created successfully");
     return data;
   } catch (error) {
     console.error("Error creating vehicle condition report:", error);
