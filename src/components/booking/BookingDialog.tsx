@@ -19,6 +19,7 @@ import { handleExpiredBookings } from "@/services/bookingService";
 import { checkCarAvailability, getBookedDates, isDateUnavailable } from "@/services/availabilityService";
 import { BookingStatus } from "@/types/booking";
 import { BookingLocationPicker } from "./BookingLocationPicker";
+import { trackFunnelStep, trackJourneyCompletion } from "@/utils/analytics";
 
 interface BookingDialogProps {
   car: Car;
@@ -40,6 +41,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [userType, setUserType] = useState<'new' | 'returning'>('new');
   const mountedRef = useRef(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -57,6 +59,26 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (currentUserId && car.owner_id === currentUserId) {
         setIsOwner(true);
       }
+
+      // Determine user type based on profile creation date
+      if (currentUserId) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('created_at')
+            .eq('id', currentUserId)
+            .single();
+          
+          if (profile) {
+            const profileAge = Date.now() - new Date(profile.created_at).getTime();
+            const isNewUser = profileAge < (30 * 24 * 60 * 60 * 1000); // 30 days
+            setUserType(isNewUser ? 'new' : 'returning');
+          }
+        } catch (error) {
+          console.error('Error determining user type:', error);
+          setUserType('new');
+        }
+      }
     };
 
     checkAuth();
@@ -72,8 +94,11 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       
       fetchBookedDates();
       handleExpiredBookings().catch(console.error);
+      
+      // Track booking dialog opened
+      trackFunnelStep('booking_dialog_opened', userType);
     }
-  }, [isOpen, car.id]);
+  }, [isOpen, car.id, userType]);
 
   // Check availability whenever date range changes
   useEffect(() => {
@@ -83,6 +108,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         try {
           const available = await checkCarAvailability(car.id, startDate, endDate);
           setIsAvailable(available);
+          
+          // Track date selection
+          trackFunnelStep('dates_selected', userType);
         } catch (error) {
           console.error("Error checking availability:", error);
           setIsAvailable(false);
@@ -97,7 +125,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     } else {
       setIsAvailable(true);
     }
-  }, [startDate, endDate, car.id]);
+  }, [startDate, endDate, car.id, userType]);
       
  useEffect(() => {
     let isMounted = true;
@@ -196,6 +224,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       return;
     }
 
+    // Track booking confirmation step
+    trackFunnelStep('booking_confirmed', userType);
+
     setIsLoading(true);
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -249,6 +280,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
       if (!mountedRef.current) return;
 
+      // Track successful booking completion
+      trackJourneyCompletion('booking', userType);
+
       toast({
         title: "Success",
         description: "Your booking request has been submitted!",
@@ -277,6 +311,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       latitude: lat,
       longitude: lng,
     });
+    
+    // Track location selection
+    trackFunnelStep('location_selected', userType);
   };
 
   const formatLocationDescription = () => {

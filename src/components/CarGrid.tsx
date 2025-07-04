@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CarCard } from "@/components/CarCard";
 
@@ -11,9 +10,10 @@ export interface CarGridProps {
   onLoadMore?: () => void;
   isFetchingNextPage?: boolean;
   isAuthenticated?: boolean;
+  onRestrictedAction?: (carId?: string) => void;
 }
 
-export const CarGrid = ({ cars, hasMoreItems, isLoading, error, loadMoreRef, onLoadMore, isFetchingNextPage, isAuthenticated }: CarGridProps) => {
+export const CarGrid = ({ cars, hasMoreItems, isLoading, error, loadMoreRef, onLoadMore, isFetchingNextPage, isAuthenticated, onRestrictedAction }: CarGridProps) => {
   if (isLoading) {
     return (
       <div className="text-center mt-8">
@@ -54,6 +54,8 @@ export const CarGrid = ({ cars, hasMoreItems, isLoading, error, loadMoreRef, onL
           location={car.location}
           year={car.year}
           isSaved={car.isSaved}
+          isAuthenticated={isAuthenticated}
+          onRestrictedAction={onRestrictedAction}
         />
       ))}
       {loadMoreRef && (

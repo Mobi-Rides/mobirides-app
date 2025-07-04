@@ -1,6 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { trackFunnelStep, trackJourneyCompletion } from "@/utils/analytics";
 
 /**
  * Save a car to the user's favorites
@@ -15,6 +15,27 @@ export const saveCar = async (carId: string): Promise<boolean> => {
       toast.error("Please sign in to save cars");
       return false;
     }
+
+    // Determine user type
+    let userType: 'new' | 'returning' = 'new';
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        const profileAge = Date.now() - new Date(profile.created_at).getTime();
+        const isNewUser = profileAge < (30 * 24 * 60 * 60 * 1000); // 30 days
+        userType = isNewUser ? 'new' : 'returning';
+      }
+    } catch (error) {
+      console.error('Error determining user type:', error);
+    }
+
+    // Track save attempt
+    trackFunnelStep('save_car_attempted', userType);
 
     // Check if car is already saved
     const { data: existingSaved } = await supabase
@@ -42,6 +63,9 @@ export const saveCar = async (carId: string): Promise<boolean> => {
       toast.error("Failed to save car. Please try again.");
       return false;
     }
+
+    // Track successful car save
+    trackJourneyCompletion('car_save', userType);
 
     toast.success("Car saved to your favorites");
     return true;

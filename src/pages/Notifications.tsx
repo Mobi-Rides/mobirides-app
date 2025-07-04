@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,8 +13,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 
 const Notifications = () => {
+  const { isAuthenticated, isLoadingRole } = useAuthStatus();
+  const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedChat, setSelectedChat] = useState<{
@@ -103,6 +106,24 @@ const Notifications = () => {
       toast.error("Failed to mark notifications as read");
     }
   };
+
+  // Show popup for guests
+  if (!isLoadingRole && !isAuthenticated) {
+    return (
+      <SignUpRequiredModal
+        open={showSignUpModal}
+        onSignUp={() => {
+          sessionStorage.setItem("postAuthIntent", JSON.stringify({ page: window.location.pathname + window.location.search }));
+          setShowSignUpModal(false);
+          navigate("/signup");
+        }}
+        onCancel={() => {
+          setShowSignUpModal(false);
+          navigate("/");
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24">

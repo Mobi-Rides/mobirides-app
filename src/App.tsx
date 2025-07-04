@@ -9,9 +9,12 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BarLoader } from "react-spinners";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/hooks/useAuth";
+import { SecurityMiddleware } from "@/components/security/SecurityMiddleware";
+import { initializeGuestTracking, trackUserType } from "@/utils/analytics";
 import "./App.css";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Lazy load pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -79,13 +82,10 @@ const AppRoutes = () => {
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/cars/:id" element={<CarDetails />} />
           <Route
             path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
+            element={<Profile />}
           />
           <Route
             path="/dashboard"
@@ -105,25 +105,13 @@ const AppRoutes = () => {
           />
           <Route
             path="/map"
-            element={
-              <ProtectedRoute>
-                <Map />
-              </ProtectedRoute>
-            }
+            element={<Map />}
           />
           <Route
             path="/more"
             element={
               <ProtectedRoute>
                 <More />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cars/:id"
-            element={
-              <ProtectedRoute>
-                <CarDetails />
               </ProtectedRoute>
             }
           />
@@ -153,19 +141,11 @@ const AppRoutes = () => {
           />
           <Route
             path="/bookings"
-            element={
-              <ProtectedRoute>
-                <Bookings />
-              </ProtectedRoute>
-            }
+            element={<Bookings />}
           />
           <Route
             path="/notifications"
-            element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            }
+            element={<Notifications />}
           />
           <Route
             path="/saved-cars"
@@ -208,14 +188,64 @@ const AppRoutes = () => {
 };
 
 function App() {
+  useEffect(() => {
+    // Initialize guest session tracking when app loads
+    initializeGuestTracking();
+    // Check for authenticated user and track user type
+    const checkUserType = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('created_at')
+            .eq('id', session.user.id)
+            .single();
+          if (profile) {
+            const profileAge = Date.now() - new Date(profile.created_at).getTime();
+            const isNewUser = profileAge < (30 * 24 * 60 * 60 * 1000); // 30 days
+            const userType = isNewUser ? 'new' : 'returning';
+            trackUserType(userType, 'login');
+          }
+        } catch (error) {
+          console.error('Error determining user type:', error);
+        }
+      }
+    };
+    checkUserType();
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('created_at')
+            .eq('id', session.user.id)
+            .single();
+          if (profile) {
+            const profileAge = Date.now() - new Date(profile.created_at).getTime();
+            const isNewUser = profileAge < (30 * 24 * 60 * 60 * 1000); // 30 days
+            const userType = isNewUser ? 'new' : 'returning';
+            trackUserType(userType, 'login');
+          }
+        } catch (error) {
+          console.error('Error determining user type on sign in:', error);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <AppRoutes />
-          <ShadcnToaster />
-          <SonnerToaster position="top-center" />
-        </Router>
+        <SecurityMiddleware recaptchaSiteKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
+          <Router>
+            <AppRoutes />
+            <ShadcnToaster />
+            <SonnerToaster position="top-center" />
+          </Router>
+        </SecurityMiddleware>
       </AuthProvider>
     </ThemeProvider>
   );

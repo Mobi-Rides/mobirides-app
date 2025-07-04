@@ -1,6 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
 import type { SearchFilters } from "@/components/SearchFilters";
 import type { CarQueryResponse } from "@/types/car";
+import { supabase } from "@/integrations/supabase/client";
 
 const ITEMS_PER_PAGE = 10;
 

@@ -1,6 +1,5 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Navigation } from "@/components/Navigation";
 import { CarActions } from "@/components/car-details/CarActions";
@@ -16,9 +15,24 @@ import { useUser } from "@supabase/auth-helpers-react";
 import type { Car } from "@/types/car";
 import { useTheme } from "@/contexts/ThemeContext";
 import { AlertTriangle } from "lucide-react";
+import { trackGuestPageView, trackGuestInteraction } from "@/utils/analytics";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const CarDetails = () => {
   const { id } = useParams();
+  console.log('CarDetails page loaded with id:', id); // Debug log
+  if (!id) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-500">Invalid car ID</h2>
+          <p className="text-muted-foreground dark:text-gray-400">No car ID was provided in the URL.</p>
+        </div>
+        <Navigation />
+      </div>
+    );
+  }
   const { theme } = useTheme();
   const user = useUser();
 
@@ -71,6 +85,14 @@ const CarDetails = () => {
       return data as Car & { profiles: { full_name: string; avatar_url: string | null } };
     },
   });
+
+  // Track guest page view and car view interaction
+  useEffect(() => {
+    if (!user && car && !isLoading) {
+      trackGuestPageView('car_details');
+      trackGuestInteraction('car_view');
+    }
+  }, [user, car, isLoading]);
 
   if (isLoading) {
     return (

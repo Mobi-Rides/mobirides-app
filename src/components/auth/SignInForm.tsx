@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import { trackGuestInteraction, trackAuthTrigger } from "@/utils/analytics";
 
 interface SignInFormProps {
   onSuccess?: () => void;
@@ -29,7 +29,16 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
   const [resetEmail, setResetEmail] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [formStarted, setFormStarted] = useState(false);
   const navigate = useNavigate();
+
+  const handleFormStart = () => {
+    if (!formStarted) {
+      setFormStarted(true);
+      trackGuestInteraction('form_start');
+      trackAuthTrigger('form_start', 'signin_form');
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +101,10 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
               type="email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                handleFormStart();
+              }}
               className="pl-10"
               required
             />
@@ -159,7 +171,10 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                handleFormStart();
+              }}
               className="pl-10 pr-10"
               required
             />

@@ -6,6 +6,10 @@ import { ChatHeader } from "./ChatHeader";
 import { ChatInput } from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
 import type { Message } from "@/types/message";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { AuthTriggerService } from "@/services/authTriggerService";
+import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
+import { useNavigate } from "react-router-dom";
 
 interface ChatDrawerProps {
   isOpen: boolean;
@@ -27,7 +31,27 @@ export const ChatDrawer = ({
   const [sending, setSending] = useState(false);
   const [receiverAvatar, setReceiverAvatar] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -94,6 +118,21 @@ export const ChatDrawer = ({
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
+    if (!isAuthenticated) {
+      sessionStorage.setItem(
+        "postAuthIntent",
+        JSON.stringify({
+          action: "message",
+          carId: carId || '',
+          receiverId: receiverId,
+          message: newMessage.trim(),
+          page: window.location.pathname + window.location.search,
+          timestamp: Date.now(),
+        })
+      );
+      setShowSignUpModal(true);
+      return;
+    }
 
     setSending(true);
     try {
@@ -129,27 +168,50 @@ export const ChatDrawer = ({
     }
   };
 
+  const handleSignUpNow = () => {
+    setShowSignUpModal(false);
+    navigate("/signup");
+  };
+
+  const handleCancelSignUp = () => {
+    setShowSignUpModal(false);
+  };
+
   return (
-    <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="h-[90%] flex flex-col">
-        <ChatHeader
-          receiverName={receiverName}
-          receiverAvatar={receiverAvatar}
-          onClose={onClose}
-        />
-        {currentUserId && (
-          <ChatMessages
-            messages={messages}
-            currentUserId={currentUserId}
+    <>
+      <Drawer open={isOpen} onOpenChange={onClose}>
+        <DrawerContent className="h-[90%] flex flex-col">
+          <ChatHeader
+            receiverName={receiverName}
+            receiverAvatar={receiverAvatar}
+            onClose={onClose}
           />
-        )}
-        <ChatInput
-          newMessage={newMessage}
-          onChange={setNewMessage}
-          onSend={sendMessage}
-          sending={sending}
-        />
-      </DrawerContent>
-    </Drawer>
+          {currentUserId && (
+            <ChatMessages
+              messages={messages}
+              currentUserId={currentUserId}
+            />
+          )}
+          <ChatInput
+            newMessage={newMessage}
+            onChange={setNewMessage}
+            onSend={sendMessage}
+            sending={sending}
+          />
+        </DrawerContent>
+      </Drawer>
+      
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        defaultTab="signin"
+      />
+
+      <SignUpRequiredModal
+        open={showSignUpModal}
+        onSignUp={handleSignUpNow}
+        onCancel={handleCancelSignUp}
+      />
+    </>
   );
 };

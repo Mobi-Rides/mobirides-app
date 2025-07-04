@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +8,8 @@ import { ProfileEditView } from "@/components/profile/ProfileEditView";
 import { RoleEditView } from "@/components/profile/RoleEditView";
 import { Navigation } from "@/components/Navigation";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,8 @@ const Profile = () => {
   const [userRole, setUserRole] = useState<string>('renter');
   const navigate = useNavigate();
   const { userLocation } = useUserLocation(null);
+  const { isAuthenticated, isLoadingRole } = useAuthStatus();
+  const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -88,6 +91,24 @@ const Profile = () => {
 
   if (loading) return <ProfileLoading />;
   if (error) return <ProfileError error={error} />;
+
+  // Show popup for guests
+  if (!isLoadingRole && !isAuthenticated) {
+    return (
+      <SignUpRequiredModal
+        open={showSignUpModal}
+        onSignUp={() => {
+          sessionStorage.setItem("postAuthIntent", JSON.stringify({ page: window.location.pathname + window.location.search }));
+          setShowSignUpModal(false);
+          navigate("/signup");
+        }}
+        onCancel={() => {
+          setShowSignUpModal(false);
+          navigate("/");
+        }}
+      />
+    );
+  }
 
   const latitude = userLocation?.latitude || 0;
   const longitude = userLocation?.longitude || 0;

@@ -1,10 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { trackAuthModalDismissal } from "@/utils/analytics";
+import { AuthTriggerService } from "@/services/authTriggerService";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -36,6 +37,14 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalP
   // Handle dialog close
   const handleOpenChange = (open: boolean) => {
     if (!open) {
+      // Track auth modal dismissal if it was opened for a specific trigger
+      const storedIntent = AuthTriggerService.getStoredIntent();
+      if (storedIntent) {
+        const triggerType = storedIntent.action === 'book' ? 'booking' : 
+                           storedIntent.action === 'save' ? 'save_car' : 'form_start';
+        trackAuthModalDismissal(triggerType);
+      }
+      
       onClose();
       navigate("/", { replace: true });
     }
@@ -43,12 +52,21 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogOverlay className="backdrop-blur-sm" />
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
             Welcome to <span className="text-primary">Mobirides</span>
           </DialogTitle>
         </DialogHeader>
+        <div className="mb-4 text-center">
+          <p className="text-base font-semibold mb-2 text-primary">Why sign up?</p>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li>🚗 Book cars instantly from trusted hosts</li>
+            <li>⭐ Save your favorite vehicles for quick access</li>
+            <li>🔒 Secure payments & exclusive offers</li>
+          </ul>
+        </div>
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as "signin" | "signup")}

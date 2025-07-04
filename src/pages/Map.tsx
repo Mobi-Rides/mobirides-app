@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import CustomMapbox from "@/components/map/CustomMapbox";
 import { getMapboxToken } from "../utils/mapbox";
@@ -11,6 +11,8 @@ import { HandoverProvider } from "@/contexts/HandoverContext";
 import { HandoverSheet } from "@/components/handover/HandoverSheet";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 
 const Map = () => {
   const [searchParams] = useSearchParams();
@@ -30,6 +32,10 @@ const Map = () => {
   const isHandoverMode = Boolean(mode === "handover" && bookingId);
   const [hostId, setHostId] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
+
+  const { isAuthenticated, isLoadingRole } = useAuthStatus();
+  const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
+  const navigate = useNavigate();
 
   const getDestination = useCallback((latitude: number, longitude: number) => {
     console.log("Setting destination", latitude, longitude);
@@ -153,6 +159,24 @@ const Map = () => {
       />
     );
   };
+
+  // Show popup for guests
+  if (!isLoadingRole && !isAuthenticated) {
+    return (
+      <SignUpRequiredModal
+        open={showSignUpModal}
+        onSignUp={() => {
+          sessionStorage.setItem("postAuthIntent", JSON.stringify({ page: window.location.pathname + window.location.search }));
+          setShowSignUpModal(false);
+          navigate("/signup");
+        }}
+        onCancel={() => {
+          setShowSignUpModal(false);
+          navigate("/");
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900">

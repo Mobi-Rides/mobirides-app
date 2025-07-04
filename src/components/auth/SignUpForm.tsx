@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
+import { trackUserRegistered, trackGuestSessionEndOnRegistration, trackGuestInteraction, trackAuthTrigger } from "@/utils/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,12 +33,21 @@ export const SignUpForm = () => {
   const [countryCode, setCountryCode] = useState("+267"); // Default to Botswana
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formStarted, setFormStarted] = useState(false);
   const navigate = useNavigate();
 
   const formatPhoneNumber = (number: string) => {
     // Remove any non-digit characters except plus sign
     const cleaned = number.replace(/[^\d+]/g, "");
     return cleaned;
+  };
+
+  const handleFormStart = () => {
+    if (!formStarted) {
+      setFormStarted(true);
+      trackGuestInteraction('form_start');
+      trackAuthTrigger('form_start', 'signup_form');
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -155,6 +164,25 @@ export const SignUpForm = () => {
 
         toast.success("Account created successfully!");
 
+        // Track user registration and guest session end for analytics
+        trackUserRegistered();
+        trackGuestSessionEndOnRegistration();
+
+        // Check for post-auth intent and redirect accordingly
+        const postAuthIntent = sessionStorage.getItem("postAuthIntent");
+        if (postAuthIntent) {
+          try {
+            const { page } = JSON.parse(postAuthIntent);
+            if (page) {
+              sessionStorage.removeItem("postAuthIntent");
+              navigate(page);
+              return;
+            }
+          } catch (e) {
+            // Fallback to login if parsing fails
+            sessionStorage.removeItem("postAuthIntent");
+          }
+        }
         navigate("/login");
       }
     } catch (error) {
@@ -176,7 +204,10 @@ export const SignUpForm = () => {
               id="username"
               placeholder="Enter your full name"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                handleFormStart();
+              }}
               className="pl-10"
               required
             />
@@ -191,7 +222,10 @@ export const SignUpForm = () => {
               type="email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                handleFormStart();
+              }}
               className="pl-10"
               required
             />
@@ -219,9 +253,10 @@ export const SignUpForm = () => {
                 type="tel"
                 placeholder="Enter phone number"
                 value={phoneNumber}
-                onChange={(e) =>
-                  setPhoneNumber(formatPhoneNumber(e.target.value))
-                }
+                onChange={(e) => {
+                  setPhoneNumber(formatPhoneNumber(e.target.value));
+                  handleFormStart();
+                }}
                 className="pl-10"
                 required
               />
@@ -237,7 +272,10 @@ export const SignUpForm = () => {
               type={showPassword ? "text" : "password"}
               placeholder="Create a password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                handleFormStart();
+              }}
               className="pl-10 pr-10"
               required
             />
@@ -268,7 +306,10 @@ export const SignUpForm = () => {
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Confirm your password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                handleFormStart();
+              }}
               className="pl-10 pr-10"
               required
             />

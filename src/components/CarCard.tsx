@@ -1,4 +1,4 @@
-
+import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { saveCar, unsaveCar } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
 import { Separator } from "./ui/separator";
-import { BarLoader } from "react-spinners";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { toast } from "sonner";
+import { AuthTriggerService } from "@/services/authTriggerService";
+import { debugAuthModal } from "@/utils/debugAuthModal";
+import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 
 interface CarCardProps {
   id: string;
@@ -25,7 +29,12 @@ interface CarCardProps {
   location: string;
   year: number;
   isSaved?: boolean;
+  isAuthenticated?: boolean;
+  onRestrictedAction?: (carId?: string) => void;
 }
+
+// Component instance counter
+let carCardInstanceCount = 0;
 
 export const CarCard = ({
   id,
@@ -39,12 +48,25 @@ export const CarCard = ({
   location,
   year,
   isSaved: initialIsSaved = false,
+  isAuthenticated = true,
+  onRestrictedAction,
 }: CarCardProps) => {
+  const instanceId = ++carCardInstanceCount;
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+
+  // Log component mount
+  React.useEffect(() => {
+    console.log(`🏗️ CarCard instance ${instanceId} mounted for car: ${id}`);
+    return () => {
+      console.log(`🏗️ CarCard instance ${instanceId} unmounted`);
+    };
+  }, [instanceId, id]);
 
   const { data: carDetails, isLoading: isLoadingCarDetails } = useQuery({
     queryKey: ['car', id],
@@ -68,16 +90,44 @@ export const CarCard = ({
   });
 
   const handleCardClick = () => {
+    // Always navigate to car details, regardless of authentication status
     navigate(`/cars/${id}`);
   };
 
   const handleBookNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      sessionStorage.setItem(
+        "postAuthIntent",
+        JSON.stringify({
+          action: "book",
+          carId: id,
+          page: window.location.pathname + window.location.search,
+          timestamp: Date.now(),
+        })
+      );
+      setShowSignUpModal(true);
+      return;
+    }
     setIsBookingOpen(true);
   };
 
-  const handleSaveClick = async (e: React.MouseEvent) => {
+  const handleSaveToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      // Store the save intent and current page for post-auth
+      sessionStorage.setItem(
+        "postAuthIntent",
+        JSON.stringify({
+          action: "save",
+          carId: id,
+          page: window.location.pathname + window.location.search,
+          timestamp: Date.now(),
+        })
+      );
+      setShowSignUpModal(true);
+      return;
+    }
     
     if (isSaving) return;
     
@@ -87,7 +137,7 @@ export const CarCard = ({
         const success = await unsaveCar(id);
         if (success) {
           setIsSaved(false);
-          // Invalidate saved cars queries
+          toast.success("Vehicle removed from saved list");
           queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
           queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
         }
@@ -95,14 +145,30 @@ export const CarCard = ({
         const success = await saveCar(id);
         if (success) {
           setIsSaved(true);
-          // Invalidate saved cars queries
+          toast.success("Vehicle added to saved list");
           queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
           queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
         }
       }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAuthModalClose = () => {
+    debugAuthModal.close(`CarCard-${instanceId}`);
+    setIsAuthModalOpen(false);
+  };
+
+  const handleSignUpNow = () => {
+    setShowSignUpModal(false);
+    navigate("/signup");
+  };
+
+  const handleCancelSignUp = () => {
+    setShowSignUpModal(false);
   };
 
   // Determine car type based on seats
@@ -126,7 +192,7 @@ export const CarCard = ({
             className="w-full h-full object-cover"
           />
           <button
-            onClick={handleSaveClick}
+            onClick={handleSaveToggle}
             className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             disabled={isSaving}
           >
@@ -177,6 +243,11 @@ export const CarCard = ({
           onClose={() => setIsBookingOpen(false)}
         />
       )}
+      <SignUpRequiredModal
+        open={showSignUpModal}
+        onSignUp={handleSignUpNow}
+        onCancel={handleCancelSignUp}
+      />
     </>
   );
 };

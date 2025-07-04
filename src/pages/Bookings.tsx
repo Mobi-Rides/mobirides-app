@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -7,13 +6,17 @@ import { useToast } from "@/hooks/use-toast";
 import { BookingTable } from "@/components/booking/BookingTable";
 import { format } from "date-fns";
 import { Booking } from "@/types/booking";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 
 const Bookings = () => {
+  const { isAuthenticated, isLoadingRole } = useAuthStatus();
+  const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -142,6 +145,24 @@ const Bookings = () => {
       console.log("No bookings found in the query result");
     }
   }, [bookings, isLoading]);
+
+  // Show popup for guests
+  if (!isLoadingRole && !isAuthenticated) {
+    return (
+      <SignUpRequiredModal
+        open={showSignUpModal}
+        onSignUp={() => {
+          sessionStorage.setItem("postAuthIntent", JSON.stringify({ page: window.location.pathname + window.location.search }));
+          setShowSignUpModal(false);
+          navigate("/signup");
+        }}
+        onCancel={() => {
+          setShowSignUpModal(false);
+          navigate("/");
+        }}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
