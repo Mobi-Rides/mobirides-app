@@ -44,15 +44,14 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         {isLoadingRole ? (
           <LoadingView />
-        ) : !isAuthenticated ? (
-          <UnauthenticatedView />
-        ) : userRole === "host" ? (
+        ) : isAuthenticated && userRole === "host" ? (
           <HostView searchQuery={searchQuery} />
         ) : (
           <RenterView 
             searchQuery={searchQuery} 
             filters={filters} 
-            onFiltersChange={handleFiltersChange} 
+            onFiltersChange={handleFiltersChange}
+            isAuthenticated={isAuthenticated}
           />
         )}
       </main>
