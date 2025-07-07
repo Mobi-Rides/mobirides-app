@@ -119,14 +119,7 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/cars/:id"
-            element={
-              <ProtectedRoute>
-                <CarDetails />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/cars/:id" element={<CarDetails />} />
           <Route
             path="/add-car"
             element={
