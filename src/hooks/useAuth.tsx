@@ -35,9 +35,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Execute pending actions after successful authentication
         if (currentSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+          console.log('Auth event detected, executing pending actions after delay:', event);
+          // Increased delay to ensure components are ready
           setTimeout(() => {
             AuthTriggerService.executePendingAction();
-          }, 100);
+          }, 500);
         }
       }
     );

@@ -53,33 +53,37 @@ export const AuthContextModal = ({
 
   const contextContent = getContextContent(context?.action);
 
-  // Update URL when tab changes
+  // Update URL when tab changes (only if we're not handling a pending action)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !context) {
       navigate(`/?auth=${activeTab}`, { replace: true });
     }
-  }, [activeTab, isOpen, navigate]);
+  }, [activeTab, isOpen, navigate, context]);
 
-  // Close modal and reset URL when navigating away
+  // Close modal and reset URL when navigating away (only if no pending action)
   useEffect(() => {
     return () => {
-      if (isOpen && location.search.includes("auth=")) {
+      if (isOpen && location.search.includes("auth=") && !context) {
         navigate("/", { replace: true });
       }
     };
-  }, [isOpen, location.search, navigate]);
+  }, [isOpen, location.search, navigate, context]);
 
   // Handle dialog close
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       onClose();
-      navigate("/", { replace: true });
+      // Only navigate to home if we don't have a pending action context
+      if (!context) {
+        navigate("/", { replace: true });
+      }
     }
   };
 
   const handleSuccess = () => {
     onClose();
-    // The auth state change will trigger pending action execution
+    // Don't navigate away - let the auth state change handle the pending action execution
+    // The components will stay on the same page to receive the events
   };
 
   return (

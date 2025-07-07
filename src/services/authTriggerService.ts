@@ -30,22 +30,27 @@ class AuthTriggerService {
     const action = this.getPendingAction();
     if (!action) return false;
 
+    console.log('Executing pending action:', action);
+
     try {
       switch (action.type) {
         case 'booking':
           // Trigger booking dialog with stored car data
+          console.log('Dispatching execute-booking event:', action.payload);
           window.dispatchEvent(new CustomEvent('execute-booking', { 
             detail: action.payload 
           }));
           break;
         case 'save_car':
           // Trigger save car action
+          console.log('Dispatching execute-save-car event:', action.payload);
           window.dispatchEvent(new CustomEvent('execute-save-car', { 
             detail: action.payload 
           }));
           break;
         case 'contact_host':
           // Trigger contact host action
+          console.log('Dispatching execute-contact-host event:', action.payload);
           window.dispatchEvent(new CustomEvent('execute-contact-host', { 
             detail: action.payload 
           }));
