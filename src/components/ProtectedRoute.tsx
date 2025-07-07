@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { AuthContextModal } from "@/components/auth/AuthContextModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -65,7 +65,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           <p className="text-gray-600 mb-8">
             Please sign in to access this page
           </p>
-          <AuthModal
+          <AuthContextModal
             isOpen={isAuthModalOpen}
             onClose={handleCloseModal}
             defaultTab="signin"

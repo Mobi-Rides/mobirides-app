@@ -7,7 +7,7 @@ import { ArrowLeft, Star, Calendar, MapPin, Car, Clock, CreditCard, CheckCircle,
 import { Navigation } from "@/components/Navigation";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -28,7 +28,8 @@ const BookingRequestDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { userId } = useAuthStatus();
+  const { user } = useAuth();
+  const userId = user?.id;
   const isMobile = useIsMobile();
 
   const { data: booking, isLoading } = useQuery({

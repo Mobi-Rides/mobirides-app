@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { AuthContextModal } from "@/components/auth/AuthContextModal";
 
 interface HeaderProps {
   searchQuery: string;
@@ -310,7 +310,7 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
         </Sheet>
       </div>
       
-      <AuthModal 
+      <AuthContextModal 
         isOpen={isAuthModalOpen} 
         onClose={handleCloseModal} 
         defaultTab={defaultTab} 
