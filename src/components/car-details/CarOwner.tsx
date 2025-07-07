@@ -1,6 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { MessageCircle, User } from "lucide-react";
 import { useState, useEffect } from "react";
+=======
+import { useState } from "react";
 import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -10,6 +13,7 @@ import { toast } from "sonner";
 import { AuthTriggerService } from "@/services/authTriggerService";
 import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 import { useNavigate } from "react-router-dom";
+=======
 
 interface CarOwnerProps {
   ownerName: string;
@@ -103,6 +107,8 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button className="gap-2" onClick={handleContactHost}>
+=======
+                  <Button className="gap-2" onClick={() => setIsChatOpen(true)}>
                     <MessageCircle className="h-4 w-4" />
                     <span className="hidden sm:inline">Contact</span>
                   </Button>

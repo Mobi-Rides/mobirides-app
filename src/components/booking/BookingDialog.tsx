@@ -20,6 +20,7 @@ import { checkCarAvailability, getBookedDates, isDateUnavailable } from "@/servi
 import { BookingStatus } from "@/types/booking";
 import { BookingLocationPicker } from "./BookingLocationPicker";
 import { trackFunnelStep, trackJourneyCompletion } from "@/utils/analytics";
+=======
 
 interface BookingDialogProps {
   car: Car;
@@ -42,6 +43,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     longitude: number;
   } | null>(null);
   const [userType, setUserType] = useState<'new' | 'returning'>('new');
+=======
   const mountedRef = useRef(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -79,6 +81,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           setUserType('new');
         }
       }
+=======
     };
 
     checkAuth();
@@ -99,6 +102,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       trackFunnelStep('booking_dialog_opened', userType);
     }
   }, [isOpen, car.id, userType]);
+=======
+    }
+  }, [isOpen, car.id]);
 
   // Check availability whenever date range changes
   useEffect(() => {
@@ -111,6 +117,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           
           // Track date selection
           trackFunnelStep('dates_selected', userType);
+=======
         } catch (error) {
           console.error("Error checking availability:", error);
           setIsAvailable(false);
@@ -126,6 +133,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       setIsAvailable(true);
     }
   }, [startDate, endDate, car.id, userType]);
+=======
+  }, [startDate, endDate, car.id]);
       
  useEffect(() => {
     let isMounted = true;
@@ -227,6 +236,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     // Track booking confirmation step
     trackFunnelStep('booking_confirmed', userType);
 
+=======
     setIsLoading(true);
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -283,6 +293,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       // Track successful booking completion
       trackJourneyCompletion('booking', userType);
 
+=======
       toast({
         title: "Success",
         description: "Your booking request has been submitted!",
@@ -303,7 +314,43 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (mountedRef.current) {
         setIsLoading(false);
       }
+=======
     }
+  };
+
+  const handleLocationSelected = (lat: number, lng: number) => {
+    setPickupLocation({
+      latitude: lat,
+      longitude: lng,
+    });
+  };
+
+  const formatLocationDescription = () => {
+    if (!pickupLocation) return "No location selected";
+
+    if (
+      pickupLocation.latitude === car.latitude &&
+      pickupLocation.longitude === car.longitude
+    ) {
+      return `Default: ${car.location}`;
+    }
+
+    return `Custom location (${pickupLocation.latitude.toFixed(
+      4
+    )}, ${pickupLocation.longitude.toFixed(4)})`;
+  };
+
+  // Determine if a date should be disabled in the calendar
+  const isDateDisabled = (date: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate());
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    // Date is in the past
+    if (date < tomorrow) return true;
+    
+    // Date is already booked
+    return isDateUnavailable(date, bookedDates);
   };
 
   const handleLocationSelected = (lat: number, lng: number) => {

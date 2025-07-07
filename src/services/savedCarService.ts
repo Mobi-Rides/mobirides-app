@@ -1,6 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { trackFunnelStep, trackJourneyCompletion } from "@/utils/analytics";
+=======
+
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /**
  * Save a car to the user's favorites
@@ -37,6 +41,7 @@ export const saveCar = async (carId: string): Promise<boolean> => {
     // Track save attempt
     trackFunnelStep('save_car_attempted', userType);
 
+=======
     // Check if car is already saved
     const { data: existingSaved } = await supabase
       .from("saved_cars")
@@ -67,6 +72,7 @@ export const saveCar = async (carId: string): Promise<boolean> => {
     // Track successful car save
     trackJourneyCompletion('car_save', userType);
 
+=======
     toast.success("Car saved to your favorites");
     return true;
   } catch (error) {

@@ -4,12 +4,19 @@ import { Header } from "@/components/Header";
 import { Navigation } from "@/components/Navigation";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { GuestView } from "@/components/home/GuestView";
+=======
+import { useLocation } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Navigation } from "@/components/Navigation";
+import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { UnauthenticatedView } from "@/components/home/UnauthenticatedView";
 import { LoadingView } from "@/components/home/LoadingView";
 import { HostView } from "@/components/home/HostView";
 import { RenterView } from "@/components/home/RenterView";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { AuthTriggerService } from "@/services/authTriggerService";
 import { trackGuestPageView } from "@/utils/analytics";
+=======
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,6 +30,7 @@ const Index = () => {
   });
   const location = useLocation();
   const navigate = useNavigate();
+=======
 
   const { isAuthenticated, userRole, isLoadingRole } = useAuthStatus();
 
@@ -33,6 +41,7 @@ const Index = () => {
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
+=======
 
   // This effect handles direct URLs with auth parameters
   useEffect(() => {
@@ -101,6 +110,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header 
+=======
+
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      <Header
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         onFiltersChange={handleFiltersChange}
@@ -111,6 +125,19 @@ const Index = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
         />
+=======
+        {isLoadingRole ? (
+          <LoadingView />
+        ) : isAuthenticated && userRole === "host" ? (
+          <HostView searchQuery={searchQuery} />
+        ) : (
+          <RenterView 
+            searchQuery={searchQuery} 
+            filters={filters} 
+            onFiltersChange={handleFiltersChange}
+            isAuthenticated={isAuthenticated}
+          />
+        )}
       </main>
       <Navigation />
     </div>

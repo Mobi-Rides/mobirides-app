@@ -1,8 +1,11 @@
+=======
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
 import { trackUserRegistered, trackGuestSessionEndOnRegistration, trackGuestInteraction, trackAuthTrigger } from "@/utils/analytics";
+=======
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +21,19 @@ import { Eye, EyeOff, Mail, User, Phone, Lock } from "lucide-react";
 // Import country codes from constants
 import countryCodes from "@/constants/Countries";
 
+=======
+interface SignUpFormProps {
+  onSuccess?: () => void;
+}
+
 interface ExtendedProfile {
   full_name?: string;
   phone_number?: string;
 }
 
 export const SignUpForm = () => {
+=======
+export const SignUpForm = ({ onSuccess }: SignUpFormProps = {}) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,6 +44,7 @@ export const SignUpForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formStarted, setFormStarted] = useState(false);
+=======
   const navigate = useNavigate();
 
   const formatPhoneNumber = (number: string) => {
@@ -50,6 +61,7 @@ export const SignUpForm = () => {
     }
   };
 
+=======
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -184,6 +196,13 @@ export const SignUpForm = () => {
           }
         }
         navigate("/login");
+=======
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate("/login");
+        }
       }
     } catch (error) {
       console.error("Error during signup:", error);
@@ -208,6 +227,8 @@ export const SignUpForm = () => {
                 setUsername(e.target.value);
                 handleFormStart();
               }}
+=======
+              onChange={(e) => setUsername(e.target.value)}
               className="pl-10"
               required
             />
@@ -226,6 +247,8 @@ export const SignUpForm = () => {
                 setEmail(e.target.value);
                 handleFormStart();
               }}
+=======
+              onChange={(e) => setEmail(e.target.value)}
               className="pl-10"
               required
             />
@@ -257,6 +280,10 @@ export const SignUpForm = () => {
                   setPhoneNumber(formatPhoneNumber(e.target.value));
                   handleFormStart();
                 }}
+=======
+                onChange={(e) =>
+                  setPhoneNumber(formatPhoneNumber(e.target.value))
+                }
                 className="pl-10"
                 required
               />
@@ -276,6 +303,8 @@ export const SignUpForm = () => {
                 setPassword(e.target.value);
                 handleFormStart();
               }}
+=======
+              onChange={(e) => setPassword(e.target.value)}
               className="pl-10 pr-10"
               required
             />
@@ -310,6 +339,8 @@ export const SignUpForm = () => {
                 setConfirmPassword(e.target.value);
                 handleFormStart();
               }}
+=======
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="pl-10 pr-10"
               required
             />

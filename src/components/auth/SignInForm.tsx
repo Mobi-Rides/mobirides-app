@@ -1,3 +1,5 @@
+=======
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +18,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { trackGuestInteraction, trackAuthTrigger } from "@/utils/analytics";
+=======
 
 interface SignInFormProps {
   onSuccess?: () => void;
@@ -39,6 +42,9 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
       trackAuthTrigger('form_start', 'signin_form');
     }
   };
+
+=======
+  const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +111,8 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
                 setEmail(e.target.value);
                 handleFormStart();
               }}
+=======
+              onChange={(e) => setEmail(e.target.value)}
               className="pl-10"
               required
             />
@@ -175,6 +183,8 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
                 setPassword(e.target.value);
                 handleFormStart();
               }}
+=======
+              onChange={(e) => setPassword(e.target.value)}
               className="pl-10 pr-10"
               required
             />

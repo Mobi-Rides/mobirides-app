@@ -1,3 +1,5 @@
+=======
+
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +21,9 @@ import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 const Notifications = () => {
   const { isAuthenticated, isLoadingRole } = useAuthStatus();
   const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
+=======
+
+const Notifications = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedChat, setSelectedChat] = useState<{
@@ -125,6 +130,7 @@ const Notifications = () => {
     );
   }
 
+=======
   return (
     <div className="min-h-screen pb-24">
       <header className="bg-white dark:bg-gray-900 p-4 sticky top-0 z-10 shadow-sm flex justify-between items-center">

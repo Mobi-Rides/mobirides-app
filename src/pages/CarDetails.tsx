@@ -33,6 +33,10 @@ const CarDetails = () => {
       </div>
     );
   }
+=======
+
+const CarDetails = () => {
+  const { id } = useParams();
   const { theme } = useTheme();
   const user = useUser();
 

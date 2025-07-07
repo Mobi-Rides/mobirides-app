@@ -17,6 +17,11 @@ interface RenterViewProps {
 }
 
 export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterViewProps) => {
+=======
+  isAuthenticated?: boolean;
+}
+
+export const RenterView = ({ searchQuery, filters, onFiltersChange, isAuthenticated = false }: RenterViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { ref: inViewRef, inView } = useInView();
@@ -70,6 +75,9 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
   const { data: savedCarIds } = useQuery({
     queryKey: ['saved-car-ids'],
     queryFn: async () => {
+=======
+      if (!isAuthenticated) return new Set<string>();
+      
       console.log("Fetching saved car IDs for home page");
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return new Set<string>();
@@ -88,6 +96,9 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
       console.log("Saved car IDs for home page:", Array.from(savedIds));
       return savedIds;
     }
+=======
+    },
+    enabled: isAuthenticated
   });
   
   const savedCarsSet = savedCarIds || new Set<string>();
@@ -144,6 +155,8 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
         loadMoreRef={loadMoreRef}
         isFetchingNextPage={isFetchingNextPage}
         isAuthenticated={true}
+=======
+        isAuthenticated={isAuthenticated}
       />
       {/* This hidden div is used with the intersection observer */}
       {hasNextPage && (

@@ -1,30 +1,57 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SignUpForm } from "@/components/auth/SignUpForm";
-import { SignInForm } from "@/components/auth/SignInForm";
-import { trackAuthModalDismissal } from "@/utils/analytics";
-import { AuthTriggerService } from "@/services/authTriggerService";
-=======
-
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { SignInForm } from "@/components/auth/SignInForm";
 
-interface AuthModalProps {
+interface AuthContextModalProps {
   isOpen: boolean;
   onClose: () => void;
+  context?: {
+    action: 'booking' | 'save_car' | 'contact_host';
+    title?: string;
+    description?: string;
+  };
   defaultTab?: "signin" | "signup";
 }
 
-export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalProps) => {
+const getContextContent = (action?: string) => {
+  switch (action) {
+    case 'booking':
+      return {
+        title: 'Sign up to book this car',
+        description: 'Create an account to complete your booking and connect with the host.'
+      };
+    case 'save_car':
+      return {
+        title: 'Sign up to save cars',
+        description: 'Create an account to save your favorite cars and access them anytime.'
+      };
+    case 'contact_host':
+      return {
+        title: 'Sign up to contact host',
+        description: 'Create an account to message the host and ask questions about the car.'
+      };
+    default:
+      return {
+        title: 'Join Mobirides',
+        description: 'Sign up to access all features and start your car rental journey.'
+      };
+  }
+};
+
+export const AuthContextModal = ({ 
+  isOpen, 
+  onClose, 
+  context,
+  defaultTab = "signup" 
+}: AuthContextModalProps) => {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">(defaultTab);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const contextContent = getContextContent(context?.action);
 
   // Update URL when tab changes
   useEffect(() => {
@@ -45,39 +72,29 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalP
   // Handle dialog close
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      // Track auth modal dismissal if it was opened for a specific trigger
-      const storedIntent = AuthTriggerService.getStoredIntent();
-      if (storedIntent) {
-        const triggerType = storedIntent.action === 'book' ? 'booking' : 
-                           storedIntent.action === 'save' ? 'save_car' : 'form_start';
-        trackAuthModalDismissal(triggerType);
-      }
-      
-=======
       onClose();
       navigate("/", { replace: true });
     }
   };
 
+  const handleSuccess = () => {
+    onClose();
+    // The auth state change will trigger pending action execution
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogOverlay className="backdrop-blur-sm" />
-=======
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
-            Welcome to <span className="text-primary">Mobirides</span>
+          <DialogTitle className="text-center text-xl font-bold">
+            {context?.title || contextContent.title}
           </DialogTitle>
+          {(context?.description || contextContent.description) && (
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              {context?.description || contextContent.description}
+            </p>
+          )}
         </DialogHeader>
-        <div className="mb-4 text-center">
-          <p className="text-base font-semibold mb-2 text-primary">Why sign up?</p>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>🚗 Book cars instantly from trusted hosts</li>
-            <li>⭐ Save your favorite vehicles for quick access</li>
-            <li>🔒 Secure payments & exclusive offers</li>
-          </ul>
-        </div>
-=======
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as "signin" | "signup")}
@@ -88,10 +105,10 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalP
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="signin" className="mt-4">
-            <SignInForm onSuccess={onClose} />
+            <SignInForm onSuccess={handleSuccess} />
           </TabsContent>
           <TabsContent value="signup" className="mt-4">
-            <SignUpForm />
+            <SignUpForm onSuccess={handleSuccess} />
           </TabsContent>
         </Tabs>
       </DialogContent>

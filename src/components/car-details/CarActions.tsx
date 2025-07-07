@@ -1,3 +1,5 @@
+=======
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +14,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { AuthTriggerService } from "@/services/authTriggerService";
 import { debugAuthModal } from "@/utils/debugAuthModal";
 import { trackGuestInteraction, trackAuthTrigger, trackAuthModalDismissal } from "@/utils/analytics";
+=======
 
 interface CarActionsProps {
   car: Car;
@@ -22,6 +25,7 @@ let carActionsInstanceCount = 0;
 
 export const CarActions = ({ car }: CarActionsProps) => {
   const instanceId = ++carActionsInstanceCount;
+=======
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -38,6 +42,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
       console.log(`🏗️ CarActions instance ${instanceId} unmounted`);
     };
   }, [instanceId, car.id]);
+=======
 
   // Check if user is authenticated and if they're the owner
   useEffect(() => {
@@ -100,10 +105,36 @@ export const CarActions = ({ car }: CarActionsProps) => {
       setIsAuthModalOpen(true);
       return;
     }
+=======
+
+  // Check if car is saved
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        const saved = await isCarSaved(car.id);
+        setIsSaved(saved);
+      } catch (error) {
+        console.error("Failed to check if car is saved:", error);
+      }
+    };
+    
+    checkIfSaved();
+  }, [car.id, isAuthenticated]);
+
+  const handleBookNow = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    
     if (isOwner) {
       toast.error("You cannot book your own vehicle");
       return;
     }
+=======
+    
     setIsBookingOpen(true);
   };
 
@@ -119,6 +150,8 @@ export const CarActions = ({ car }: CarActionsProps) => {
         })
       );
       setIsAuthModalOpen(true);
+=======
+      navigate("/login");
       return;
     }
     
@@ -199,6 +232,40 @@ export const CarActions = ({ car }: CarActionsProps) => {
           </div>
         )}
       </div>
+=======
+  };
+
+  return (
+    <div className="sticky bottom-[72px] bg-background dark:bg-gray-800 p-4 rounded-t-lg border-t border-gray-200 dark:border-gray-700 shadow-lg">
+      {isOwner ? (
+        <div className="flex items-center justify-center p-2 bg-muted rounded-lg">
+          <ShieldAlert className="h-5 w-5 mr-2 text-amber-500" />
+          <p className="text-sm text-muted-foreground">You own this vehicle</p>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="w-12 flex-shrink-0"
+            onClick={handleSaveToggle}
+            disabled={isSaving}
+          >
+            <Heart
+              className={`${
+                isSaved ? "fill-red-500 text-red-500" : "text-gray-600 dark:text-gray-400"
+              }`}
+            />
+          </Button>
+          
+          <Button
+            className="flex-1 flex items-center justify-center gap-2"
+            onClick={handleBookNow}
+          >
+            <Calendar className="w-5 h-5" />
+            Book Now
+          </Button>
+        </div>
+      )}
       
       {isBookingOpen && (
         <BookingDialog
@@ -213,5 +280,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
         defaultTab="signin"
       />
     </>
+=======
+    </div>
   );
 };

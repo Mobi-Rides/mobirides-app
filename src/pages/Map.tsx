@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+=======
+import { useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import CustomMapbox from "@/components/map/CustomMapbox";
 import { getMapboxToken } from "../utils/mapbox";
@@ -13,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
+=======
 
 const Map = () => {
   const [searchParams] = useSearchParams();
@@ -37,6 +40,7 @@ const Map = () => {
   const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
   const navigate = useNavigate();
 
+=======
   const getDestination = useCallback((latitude: number, longitude: number) => {
     console.log("Setting destination", latitude, longitude);
     setDestination({ latitude, longitude });
@@ -177,6 +181,50 @@ const Map = () => {
       />
     );
   }
+
+=======
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full w-full bg-muted/20 dark:bg-gray-800/20">
+          <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">
+            Loading map...
+          </p>
+          <BarLoader color="#7c3aed" width={100} />
+        </div>
+      );
+    }
+
+    if (!mapToken) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full w-full bg-muted/20 dark:bg-gray-800/20">
+          <p className="text-sm text-destructive font-medium">
+            Could not load the map
+          </p>
+          <p className="text-xs text-muted-foreground dark:text-gray-400 mt-1">
+            Please check your connection
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <CustomMapbox
+        mapbox_token={mapToken}
+        longitude={25.90859}
+        latitude={-24.65451}
+        onlineHosts={isHandoverMode ? [] : onlineHosts}
+        mapStyle={getMapStyle()}
+        isHandoverMode={isHandoverMode}
+        bookingId={bookingId}
+        dpad={true}
+        locationToggle={true}
+        destination={destination}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900">

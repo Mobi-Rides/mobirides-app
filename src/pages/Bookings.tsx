@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -7,6 +8,8 @@ import { BookingTable } from "@/components/booking/BookingTable";
 import { format } from "date-fns";
 import { Booking } from "@/types/booking";
 import { useEffect, useState } from "react";
+=======
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +20,9 @@ import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
 const Bookings = () => {
   const { isAuthenticated, isLoadingRole } = useAuthStatus();
   const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
+=======
+
+const Bookings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -164,6 +170,7 @@ const Bookings = () => {
     );
   }
 
+=======
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">

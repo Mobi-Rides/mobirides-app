@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +11,7 @@ import { Navigation } from "@/components/Navigation";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
+=======
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,7 @@ const Profile = () => {
   const { userLocation } = useUserLocation(null);
   const { isAuthenticated, isLoadingRole } = useAuthStatus();
   const [showSignUpModal, setShowSignUpModal] = useState(!isAuthenticated);
+=======
 
   useEffect(() => {
     const checkUser = async () => {
@@ -110,6 +113,7 @@ const Profile = () => {
     );
   }
 
+=======
   const latitude = userLocation?.latitude || 0;
   const longitude = userLocation?.longitude || 0;
 

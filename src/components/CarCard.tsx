@@ -1,5 +1,10 @@
+
 import React from "react";
 import { useState } from "react";
+=======
+
+import { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,11 +16,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { saveCar, unsaveCar } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
 import { Separator } from "./ui/separator";
+
 import { AuthModal } from "@/components/auth/AuthModal";
 import { toast } from "sonner";
 import { AuthTriggerService } from "@/services/authTriggerService";
 import { debugAuthModal } from "@/utils/debugAuthModal";
 import { SignUpRequiredModal } from "@/components/auth/SignUpRequiredModal";
+=======
+import { BarLoader } from "react-spinners";
+import { AuthContextModal } from "@/components/auth/AuthContextModal";
+import AuthTriggerService from "@/services/authTriggerService";
+import { useAuth } from "@/hooks/useAuth";
+
 
 interface CarCardProps {
   id: string;
@@ -48,13 +60,17 @@ export const CarCard = ({
   location,
   year,
   isSaved: initialIsSaved = false,
+
   isAuthenticated = true,
   onRestrictedAction,
+=======
+
 }: CarCardProps) => {
   const instanceId = ++carCardInstanceCount;
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isSaving, setIsSaving] = useState(false);
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -67,6 +83,16 @@ export const CarCard = ({
       console.log(`🏗️ CarCard instance ${instanceId} unmounted`);
     };
   }, [instanceId, id]);
+=======
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authContext, setAuthContext] = useState<{
+    action: 'booking' | 'save_car' | 'contact_host';
+    title?: string;
+    description?: string;
+  } | undefined>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isAuthenticated, user } = useAuth();
 
   const { data: carDetails, isLoading: isLoadingCarDetails } = useQuery({
     queryKey: ['car', id],
@@ -89,6 +115,39 @@ export const CarCard = ({
     enabled: isBookingOpen
   });
 
+  // Listen for pending action execution events
+  useEffect(() => {
+    const handleExecuteBooking = (event: CustomEvent) => {
+      if (event.detail.carId === id) {
+        setIsBookingOpen(true);
+      }
+    };
+
+    const handleExecuteSaveCar = async (event: CustomEvent) => {
+      if (event.detail.carId === id && isAuthenticated) {
+        setIsSaving(true);
+        try {
+          const success = await saveCar(id);
+          if (success) {
+            setIsSaved(true);
+            queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
+            queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
+          }
+        } finally {
+          setIsSaving(false);
+        }
+      }
+    };
+
+    window.addEventListener('execute-booking', handleExecuteBooking as EventListener);
+    window.addEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
+
+    return () => {
+      window.removeEventListener('execute-booking', handleExecuteBooking as EventListener);
+      window.removeEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
+    };
+  }, [id, isAuthenticated, queryClient]);
+
   const handleCardClick = () => {
     // Always navigate to car details, regardless of authentication status
     navigate(`/cars/${id}`);
@@ -96,6 +155,7 @@ export const CarCard = ({
 
   const handleBookNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
+
     if (!isAuthenticated) {
       sessionStorage.setItem(
         "postAuthIntent",
@@ -126,6 +186,45 @@ export const CarCard = ({
         })
       );
       setShowSignUpModal(true);
+=======
+    
+    if (!isAuthenticated) {
+      // Store pending booking action
+      AuthTriggerService.storePendingAction({
+        type: 'booking',
+        payload: { carId: id },
+        context: `${brand} ${model}`
+      });
+      
+      setAuthContext({
+        action: 'booking',
+        title: `Sign up to book ${brand} ${model}`,
+        description: 'Create an account to complete your booking and connect with the host.'
+      });
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
+    setIsBookingOpen(true);
+  };
+
+  const handleSaveClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      // Store pending save action
+      AuthTriggerService.storePendingAction({
+        type: 'save_car',
+        payload: { carId: id },
+        context: `${brand} ${model}`
+      });
+      
+      setAuthContext({
+        action: 'save_car',
+        title: 'Sign up to save cars',
+        description: 'Create an account to save your favorite cars and access them anytime.'
+      });
+      setIsAuthModalOpen(true);
       return;
     }
     
@@ -138,6 +237,8 @@ export const CarCard = ({
         if (success) {
           setIsSaved(false);
           toast.success("Vehicle removed from saved list");
+=======
+          // Invalidate saved cars queries
           queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
           queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
         }
@@ -146,6 +247,8 @@ export const CarCard = ({
         if (success) {
           setIsSaved(true);
           toast.success("Vehicle added to saved list");
+=======
+          // Invalidate saved cars queries
           queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
           queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
         }
@@ -169,6 +272,10 @@ export const CarCard = ({
 
   const handleCancelSignUp = () => {
     setShowSignUpModal(false);
+=======
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Determine car type based on seats
@@ -193,12 +300,16 @@ export const CarCard = ({
           />
           <button
             onClick={handleSaveToggle}
+=======
+            onClick={handleSaveClick}
             className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             disabled={isSaving}
           >
             <Heart
               className={`w-5 h-5 ${
                 isSaving ? "text-gray-400" : isSaved ? "fill-red-500 text-red-500" : "text-gray-600"
+=======
+                isSaving ? "text-gray-400" : (isAuthenticated && isSaved) ? "fill-red-500 text-red-500" : "text-gray-600"
               }`}
             />
           </button>
@@ -247,6 +358,13 @@ export const CarCard = ({
         open={showSignUpModal}
         onSignUp={handleSignUpNow}
         onCancel={handleCancelSignUp}
+=======
+
+      <AuthContextModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        context={authContext}
+        defaultTab="signup"
       />
     </>
   );
