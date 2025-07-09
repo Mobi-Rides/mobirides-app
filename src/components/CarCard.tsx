@@ -1,20 +1,19 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Fuel, GaugeCircle, Users, Heart } from "lucide-react";
 import { BookingDialog } from "@/components/booking/BookingDialog";
+import { VerificationRequiredDialog } from "@/components/verification/VerificationRequiredDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { saveCar, unsaveCar } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
 import { Separator } from "./ui/separator";
 import { BarLoader } from "react-spinners";
-import { AuthContextModal } from "@/components/auth/AuthContextModal";
-import AuthTriggerService from "@/services/authTriggerService";
-import { useAuth } from "@/hooks/useAuth";
+import { useVerificationStatus } from "@/hooks/useVerificationStatus";
+import { toast } from "sonner";
 
 interface CarCardProps {
   id: string;
@@ -44,26 +43,23 @@ export const CarCard = ({
   isSaved: initialIsSaved = false,
 }: CarCardProps) => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isVerificationDialogOpen, setIsVerificationDialogOpen] =
+    useState(false);
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isSaving, setIsSaving] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authContext, setAuthContext] = useState<{
-    action: 'booking' | 'save_car' | 'contact_host';
-    title?: string;
-    description?: string;
-  } | undefined>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAuthenticated, user } = useAuth();
+  const { isVerified, isLoading: isVerificationLoading } =
+    useVerificationStatus();
 
   const { data: carDetails, isLoading: isLoadingCarDetails } = useQuery({
-    queryKey: ['car', id],
+    queryKey: ["car", id],
     queryFn: async () => {
       console.log("Fetching complete car details for booking");
       const { data, error } = await supabase
-        .from('cars')
-        .select('*')
-        .eq('id', id)
+        .from("cars")
+        .select("*")
+        .eq("id", id)
         .single();
 
       if (error) {
@@ -74,41 +70,8 @@ export const CarCard = ({
       console.log("Car details fetched:", data);
       return data as Car;
     },
-    enabled: isBookingOpen
+    enabled: isBookingOpen,
   });
-
-  // Listen for pending action execution events
-  useEffect(() => {
-    const handleExecuteBooking = (event: CustomEvent) => {
-      if (event.detail.carId === id) {
-        setIsBookingOpen(true);
-      }
-    };
-
-    const handleExecuteSaveCar = async (event: CustomEvent) => {
-      if (event.detail.carId === id && isAuthenticated) {
-        setIsSaving(true);
-        try {
-          const success = await saveCar(id);
-          if (success) {
-            setIsSaved(true);
-            queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
-            queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
-          }
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    };
-
-    window.addEventListener('execute-booking', handleExecuteBooking as EventListener);
-    window.addEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
-
-    return () => {
-      window.removeEventListener('execute-booking', handleExecuteBooking as EventListener);
-      window.removeEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
-    };
-  }, [id, isAuthenticated, queryClient]);
 
   const handleCardClick = () => {
     navigate(`/cars/${id}`);
@@ -116,49 +79,21 @@ export const CarCard = ({
 
   const handleBookNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      // Store pending booking action
-      AuthTriggerService.storePendingAction({
-        type: 'booking',
-        payload: { carId: id },
-        context: `${brand} ${model}`
-      });
-      
-      setAuthContext({
-        action: 'booking',
-        title: `Sign up to book ${brand} ${model}`,
-        description: 'Create an account to complete your booking and connect with the host.'
-      });
-      setIsAuthModalOpen(true);
+
+    // Check verification status before allowing booking
+    if (!isVerified && !isVerificationLoading) {
+      setIsVerificationDialogOpen(true);
       return;
     }
-    
+
     setIsBookingOpen(true);
   };
 
   const handleSaveClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      // Store pending save action
-      AuthTriggerService.storePendingAction({
-        type: 'save_car',
-        payload: { carId: id },
-        context: `${brand} ${model}`
-      });
-      
-      setAuthContext({
-        action: 'save_car',
-        title: 'Sign up to save cars',
-        description: 'Create an account to save your favorite cars and access them anytime.'
-      });
-      setIsAuthModalOpen(true);
-      return;
-    }
-    
+
     if (isSaving) return;
-    
+
     setIsSaving(true);
     try {
       if (isSaved) {
@@ -210,7 +145,11 @@ export const CarCard = ({
           >
             <Heart
               className={`w-5 h-5 ${
-                isSaving ? "text-gray-400" : (isAuthenticated && isSaved) ? "fill-red-500 text-red-500" : "text-gray-600"
+                isSaving
+                  ? "text-gray-400"
+                  : isSaved
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-600"
               }`}
             />
           </button>
@@ -221,11 +160,15 @@ export const CarCard = ({
           </span>
           <div className="flex justify-between items-start mb-2 min-h-[3rem]">
             <div className="flex-1">
-              <h3 className="font-semibold text-left break-words line-clamp-2 text-sm md:text-base dark:text-white">{brand} {model}</h3>
+              <h3 className="font-semibold text-left break-words line-clamp-2 text-sm md:text-base dark:text-white">
+                {brand} {model}
+              </h3>
             </div>
             <div className="text-right ml-2">
               <div className="flex items-center gap-1 justify-end">
-                <p className="font-semibold whitespace-nowrap text-primary dark:text-primary-foreground">BWP {price_per_day}</p>
+                <p className="font-semibold whitespace-nowrap text-primary dark:text-primary-foreground">
+                  BWP {price_per_day}
+                </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">/day</p>
               </div>
             </div>
@@ -256,11 +199,11 @@ export const CarCard = ({
         />
       )}
 
-      <AuthContextModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        context={authContext}
-        defaultTab="signup"
+      <VerificationRequiredDialog
+        isOpen={isVerificationDialogOpen}
+        onClose={() => setIsVerificationDialogOpen(false)}
+        action="booking"
+        carData={carDetails}
       />
     </>
   );

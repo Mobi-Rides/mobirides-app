@@ -1,53 +1,30 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { AuthContextModal } from "@/components/auth/AuthContextModal";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { isAuthenticated, isLoading } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
-
-      if (!data.session) {
-        setIsAuthModalOpen(true);
-      }
-    };
-
-    checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      if (!session && event === "SIGNED_OUT") {
-        setIsAuthModalOpen(true);
-      } else if (session) {
-        setIsAuthModalOpen(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) setIsAuthModalOpen(false);
-  }, [isAuthModalOpen, isAuthenticated]);
+  // Show auth modal if not authenticated and not loading
+  React.useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setIsAuthModalOpen(true);
+    } else if (isAuthenticated) {
+      setIsAuthModalOpen(false);
+    }
+  }, [isAuthenticated, isLoading]);
 
   const handleCloseModal = () => {
     setIsAuthModalOpen(false);
   };
 
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         Loading...
@@ -65,7 +42,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           <p className="text-gray-600 mb-8">
             Please sign in to access this page
           </p>
-          <AuthContextModal
+          <AuthModal
             isOpen={isAuthModalOpen}
             onClose={handleCloseModal}
             defaultTab="signin"

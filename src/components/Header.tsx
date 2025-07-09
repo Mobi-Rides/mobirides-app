@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigation, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
-import { AuthContextModal } from "@/components/auth/AuthContextModal";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { VerificationStatusBadge } from "@/components/verification/VerificationStatusBadge";
 
 interface HeaderProps {
   searchQuery: string;
@@ -26,7 +26,11 @@ interface LocationState {
   error: string | null;
 }
 
-export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderProps) => {
+export const Header = ({
+  searchQuery,
+  onSearchChange,
+  onFiltersChange,
+}: HeaderProps) => {
   const navigate = useNavigate();
   const locationPath = useLocation();
   const { user } = useAuth();
@@ -36,19 +40,21 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
     city: "Gaborone",
     country: "Botswana",
     loading: true,
-    error: null
+    error: null,
   });
 
   useEffect(() => {
     const checkPermissionAndFetchLocation = async () => {
       try {
         // Check if permission is already granted
-        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-        
-        if (permissionStatus.state === 'granted') {
+        const permissionStatus = await navigator.permissions.query({
+          name: "geolocation",
+        });
+
+        if (permissionStatus.state === "granted") {
           // Permission already granted, get location
           await fetchUserLocation();
-        } else if (permissionStatus.state === 'denied') {
+        } else if (permissionStatus.state === "denied") {
           // User previously denied, use IP-based fallback without prompting
           await fetchLocationByIP();
         } else {
@@ -67,21 +73,23 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
 
     const fetchUserLocation = async () => {
       try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-          });
-        });
+        const position = await new Promise<GeolocationPosition>(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 0,
+            });
+          },
+        );
 
         // Using your OpenCage API key
         const response = await fetch(
-          `https://api.opencagedata.com/geocode/v1/json?q=${position.coords.latitude}+${position.coords.longitude}&key=4382106d8cc34d2e9c95f4dc83f23736`
+          `https://api.opencagedata.com/geocode/v1/json?q=${position.coords.latitude}+${position.coords.longitude}&key=4382106d8cc34d2e9c95f4dc83f23736`,
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch location data');
+          throw new Error("Failed to fetch location data");
         }
 
         const data = await response.json();
@@ -89,46 +97,52 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
 
         if (result) {
           setLocationData({
-            city: result.city || result.town || result.state || result.county || "Unknown",
+            city:
+              result.city ||
+              result.town ||
+              result.state ||
+              result.county ||
+              "Unknown",
             country: result.country || "Unknown",
             loading: false,
-            error: null
+            error: null,
           });
         }
       } catch (error) {
         console.error("Location error:", error);
-        setLocationData(prev => ({
+        setLocationData((prev) => ({
           ...prev,
           loading: false,
-          error: error instanceof Error ? error.message : "Failed to get location"
+          error:
+            error instanceof Error ? error.message : "Failed to get location",
         }));
       }
     };
 
     const fetchLocationByIP = async () => {
       try {
-        const response = await fetch('https://ipapi.co/json/');
-        
+        const response = await fetch("https://ipapi.co/json/");
+
         if (!response.ok) {
-          throw new Error('Failed to fetch location data');
+          throw new Error("Failed to fetch location data");
         }
 
         const data = await response.json();
-        
+
         setLocationData({
           city: data.city || "Gaborone",
           country: data.country_name || "Botswana",
           loading: false,
-          error: null
+          error: null,
         });
       } catch (error) {
         console.error("IP Location error:", error);
-        setLocationData(prev => ({
+        setLocationData((prev) => ({
           ...prev,
           loading: false,
           error: null,
           city: "Gaborone",
-          country: "Botswana"
+          country: "Botswana",
         }));
       }
     };
@@ -137,56 +151,59 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
   }, []);
 
   const { data: profile } = useQuery({
-    queryKey: ['profile'],
+    queryKey: ["profile"],
     queryFn: async () => {
       if (!user) return null;
 
       const { data } = await supabase
-        .from('profiles')
-        .select('avatar_url, full_name')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("avatar_url, full_name")
+        .eq("id", user.id)
         .single();
 
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
   });
 
   const { data: notificationCount } = useQuery({
-    queryKey: ['notification-count'],
+    queryKey: ["notification-count"],
     queryFn: async () => {
       if (!user) return { messages: 0, notifications: 0 };
 
       const [messagesResponse, notificationsResponse] = await Promise.all([
         supabase
-          .from('messages')
-          .select('id', { count: 'exact' })
-          .eq('receiver_id', user.id)
-          .eq('status', 'sent'),
+          .from("messages")
+          .select("id", { count: "exact" })
+          .eq("receiver_id", user.id)
+          .eq("status", "sent"),
         supabase
-          .from('notifications')
-          .select('id', { count: 'exact' })
-          .eq('user_id', user.id)
-          .eq('is_read', false)
+          .from("notifications")
+          .select("id", { count: "exact" })
+          .eq("user_id", user.id)
+          .eq("is_read", false),
       ]);
 
       return {
         messages: messagesResponse.count || 0,
-        notifications: notificationsResponse.count || 0
+        notifications: notificationsResponse.count || 0,
       };
     },
     refetchInterval: 30000, // Refetch every 30 seconds
-    enabled: !!user
+    enabled: !!user,
   });
 
-  const totalNotifications = (notificationCount?.messages || 0) + (notificationCount?.notifications || 0);
+  const totalNotifications =
+    (notificationCount?.messages || 0) +
+    (notificationCount?.notifications || 0);
 
-  const avatarUrl = profile?.avatar_url 
-    ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl 
+  const avatarUrl = profile?.avatar_url
+    ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_url).data
+        .publicUrl
     : null;
 
   const handleFiltersChange = (filters: Filters) => {
-    console.log('Filters changed:', filters);
+    console.log("Filters changed:", filters);
     onFiltersChange({ ...filters, searchQuery });
   };
 
@@ -209,18 +226,18 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
   useEffect(() => {
     const params = new URLSearchParams(locationPath.search);
     const authParam = params.get("auth");
-    
+
     if (authParam === "signin" || authParam === "signup") {
       setDefaultTab(authParam);
       setIsAuthModalOpen(true);
     }
   }, [locationPath.search]);
 
-  const locationDisplay = locationData.loading 
-    ? "Loading location..." 
-    : locationData.error 
-    ? "Gaborone, Botswana" 
-    : `${locationData.city}, ${locationData.country}`;
+  const locationDisplay = locationData.loading
+    ? "Loading location..."
+    : locationData.error
+      ? "Gaborone, Botswana"
+      : `${locationData.city}, ${locationData.country}`;
 
   return (
     <header className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-900 sticky top-0 z-10 shadow-sm p-6 md:p-8 rounded-b-3xl">
@@ -255,6 +272,14 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
               </p>
             </span>
           </Button>
+
+          {/* Verification Status Badge - only show for authenticated users */}
+          {user && (
+            <div className="hidden sm:block">
+              <VerificationStatusBadge variant="button" size="sm" />
+            </div>
+          )}
+
           <div className="relative">
             <button
               className="rounded-full bg-gray-100 flex items-center justify-center"
@@ -309,11 +334,11 @@ export const Header = ({ searchQuery, onSearchChange, onFiltersChange }: HeaderP
           </SheetContent>
         </Sheet>
       </div>
-      
-      <AuthContextModal 
-        isOpen={isAuthModalOpen} 
-        onClose={handleCloseModal} 
-        defaultTab={defaultTab} 
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={handleCloseModal}
+        defaultTab={defaultTab}
       />
     </header>
   );

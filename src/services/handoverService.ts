@@ -32,7 +32,7 @@ export const createHandoverSession = async (
   bookingId: string,
   hostId: string,
   renterId: string,
-  handoverType?: string
+  handoverType?: string,
 ) => {
   try {
     // Get current user
@@ -65,18 +65,12 @@ export const createHandoverSession = async (
       if (error.code === "42501") {
         console.error("RLS policy violation:", error);
         toast.error(
-          "Permission denied: You don't have access to create a handover session"
+          "Permission denied: You don't have access to create a handover session",
         );
       } else {
         throw error;
       }
       return null;
-    }
-
-    // Initialize handover steps for the new session
-    if (data?.id) {
-      const { initializeHandoverSteps } = await import("./enhancedHandoverService");
-      await initializeHandoverSteps(data.id);
     }
 
     // If the current user is the host, send a notification to the renter
@@ -102,7 +96,7 @@ export const createHandoverSession = async (
 
         if (carId) {
           // Create notification for the renter
-          const notificationContent = `${hostName} has initiated the handover process. Please join the handover session to complete the vehicle inspection and documentation.`;
+          const notificationContent = `${hostName} is requesting your location for car handover. Please share your location to proceed with the handover process.`;
 
           const { error: notificationError } = await supabase
             .from("notifications")
@@ -115,24 +109,36 @@ export const createHandoverSession = async (
             });
 
           if (notificationError) {
-            console.error("Error creating notification:", notificationError);
+            console.error(
+              "Error creating notification:",
+              notificationError.message ||
+                JSON.stringify(notificationError, null, 2),
+            );
           } else {
-            console.log("Enhanced handover notification sent to renter");
+            console.log("Location request notification sent to renter");
           }
         }
       } catch (notificationError) {
-        console.error("Error sending notification:", notificationError);
+        console.error(
+          "Error sending notification:",
+          notificationError instanceof Error
+            ? notificationError.message
+            : JSON.stringify(notificationError, null, 2),
+        );
         // Don't throw here, we still want to return the handover session
       }
     }
 
     return data;
   } catch (error) {
-    console.error("Error creating handover session:", error);
+    console.error(
+      "Error creating handover session:",
+      error instanceof Error ? error.message : JSON.stringify(error, null, 2),
+    );
     toast.error(
       `Failed to create handover session: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
     );
     return null;
   }
@@ -150,7 +156,10 @@ export const getHandoverSession = async (bookingId: string) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error("Error fetching handover session:", error);
+    console.error(
+      "Error fetching handover session:",
+      error instanceof Error ? error.message : JSON.stringify(error, null, 2),
+    );
     return null;
   }
 };
@@ -160,7 +169,7 @@ export const updateHandoverLocation = async (
   handoverId: string,
   userId: string,
   isHost: boolean,
-  location: HandoverLocation
+  location: HandoverLocation,
 ) => {
   try {
     const field = isHost ? "host_location" : "renter_location";
@@ -186,7 +195,7 @@ export const updateHandoverLocation = async (
 export const markUserReady = async (
   handoverId: string,
   userId: string,
-  isHost: boolean
+  isHost: boolean,
 ) => {
   try {
     const field = isHost ? "host_ready" : "renter_ready";
@@ -233,7 +242,7 @@ let handoverChannel: RealtimeChannel | null = null;
 
 export const subscribeToHandoverUpdates = (
   handoverId: string,
-  onUpdate: (handover: HandoverStatus) => void
+  onUpdate: (handover: HandoverStatus) => void,
 ) => {
   if (handoverChannel) handoverChannel.unsubscribe();
 
@@ -249,7 +258,7 @@ export const subscribeToHandoverUpdates = (
       },
       (payload) => {
         onUpdate(payload.new as HandoverStatus);
-      }
+      },
     )
     .subscribe((status) => {
       if (status !== "SUBSCRIBED") {
