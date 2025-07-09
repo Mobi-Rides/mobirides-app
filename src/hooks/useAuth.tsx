@@ -29,17 +29,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('Auth state change event:', event, !!currentSession);
+        
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setIsLoading(false);
         
-        // Execute pending actions after successful authentication
-        if (currentSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-          console.log('Auth event detected, executing pending actions after delay:', event);
-          // Increased delay to ensure components are ready
-          setTimeout(() => {
-            AuthTriggerService.executePendingAction();
-          }, 500);
+        // Only execute pending actions on actual sign-in events, NOT on token refresh
+        if (currentSession?.user && event === 'SIGNED_IN') {
+          console.log('Sign-in detected, executing pending actions with session ID:', currentSession.access_token.substring(0, 10));
+          // Pass session ID to prevent duplicate executions
+          AuthTriggerService.executePendingAction(currentSession.access_token);
+        }
+        
+        // Clear session tracker on sign out
+        if (event === 'SIGNED_OUT') {
+          console.log('Sign-out detected, clearing session tracker');
+          AuthTriggerService.clearSessionTracker();
         }
       }
     );
