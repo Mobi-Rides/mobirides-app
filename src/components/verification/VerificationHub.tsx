@@ -399,26 +399,7 @@ export const VerificationHub: React.FC = () => {
             <p className="text-muted-foreground mb-4">
               Initializing verification...
             </p>
-            {process.env.NODE_ENV === "development" && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  console.log("[VerificationHub] Manual bypass initiated");
-                  // Force initialize with a basic verification data structure
-                  if (user?.id) {
-                    const userRole = user.user_metadata?.role || "renter";
-                    initializeVerification(user.id, userRole).catch(() => {
-                      // If initialization fails, at least clear loading
-                      toast.warning(
-                        "Database initialization failed, but you can still test the verification flow",
-                      );
-                    });
-                  }
-                }}
-              >
-                Skip Database Loading (Dev)
-              </Button>
-            )}
+       
           </CardContent>
         </Card>
       </div>
@@ -529,93 +510,7 @@ export const VerificationHub: React.FC = () => {
           <CardContent>{getCurrentStepComponent()}</CardContent>
         </Card>
 
-        {/* Developer Controls (for development only) */}
-        {process.env.NODE_ENV === "development" && (
-          <Card className="border-dashed border-orange-300 bg-orange-50">
-            <CardHeader>
-              <Button
-                variant="outline"
-                onClick={() => setShowDeveloperControls(!showDeveloperControls)}
-                className="w-fit"
-              >
-                {showDeveloperControls ? "Hide" : "Show"} Developer Controls
-              </Button>
-            </CardHeader>
-            {showDeveloperControls && (
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Quick Navigation</h4>
-                      <div className="space-y-2">
-                        {Object.values(VerificationStep).map((step) => (
-                          <Button
-                            key={step}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigateToStep(step)}
-                            className="w-full text-left justify-start"
-                          >
-                            {STEP_CONFIG[step].title}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Development Actions</h4>
-                      <div className="space-y-2">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={resetVerification}
-                          className="w-full"
-                        >
-                          Reset Verification
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            console.log(
-                              "Current verification data:",
-                              verificationData,
-                            );
-                            toast.success(
-                              "Check console for verification data",
-                            );
-                          }}
-                          className="w-full"
-                        >
-                          Log Verification Data
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="text-xs text-muted-foreground">
-                    <p>
-                      <strong>Development Mode:</strong> This panel is only
-                      visible in development.
-                    </p>
-                    <p>
-                      <strong>User Role:</strong> {verificationData.userRole}
-                    </p>
-                    <p>
-                      <strong>Current Step:</strong>{" "}
-                      {verificationData.currentStep}
-                    </p>
-                    <p>
-                      <strong>Overall Status:</strong>{" "}
-                      {verificationData.overallStatus}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        )}
+     
       </div>
     </div>
   );
