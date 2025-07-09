@@ -2,7 +2,6 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
-import AuthTriggerService from '@/services/authTriggerService';
 
 type AuthContextType = {
   user: User | null;
@@ -32,15 +31,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setIsLoading(false);
-        
-        // Execute pending actions after successful authentication
-        if (currentSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-          console.log('Auth event detected, executing pending actions after delay:', event);
-          // Increased delay to ensure components are ready
-          setTimeout(() => {
-            AuthTriggerService.executePendingAction();
-          }, 500);
-        }
       }
     );
 

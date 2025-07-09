@@ -1,15 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, Calendar, ShieldAlert } from "lucide-react";
 import { BookingDialog } from "@/components/booking/BookingDialog";
+import { VerificationRequiredDialog } from "@/components/verification/VerificationRequiredDialog";
+import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import { saveCar, unsaveCar, isCarSaved } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AuthContextModal } from "@/components/auth/AuthContextModal";
-import AuthTriggerService from "@/services/authTriggerService";
 
 interface CarActionsProps {
   car: Car;
@@ -17,16 +17,17 @@ interface CarActionsProps {
 
 export const CarActions = ({ car }: CarActionsProps) => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isVerificationDialogOpen, setIsVerificationDialogOpen] =
+    useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authContext, setAuthContext] = useState<{
-    action: 'booking' | 'save_car' | 'contact_host';
-    title?: string;
-    description?: string;
-  } | undefined>();
+
+  // Verification status
+  const { isVerified, isLoading: isVerificationLoading } =
+    useVerificationStatus();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Check if user is authenticated and if they're the owner
@@ -35,20 +36,22 @@ export const CarActions = ({ car }: CarActionsProps) => {
       const { data } = await supabase.auth.getSession();
       const isLoggedIn = !!data.session;
       setIsAuthenticated(isLoggedIn);
-      
+
       if (isLoggedIn && data.session?.user) {
         const userId = data.session.user.id;
         setIsOwner(userId === car.owner_id);
       }
     };
-    
+
     checkAuth();
-    
+
     // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_, session) => {
       const isLoggedIn = !!session;
       setIsAuthenticated(isLoggedIn);
-      
+
       if (isLoggedIn && session) {
         const userId = session.user.id;
         setIsOwner(userId === car.owner_id);
@@ -56,7 +59,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
         setIsOwner(false);
       }
     });
-    
+
     return () => subscription.unsubscribe();
   }, [car.owner_id]);
 
@@ -64,7 +67,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
   useEffect(() => {
     const checkIfSaved = async () => {
       if (!isAuthenticated) return;
-      
+
       try {
         const saved = await isCarSaved(car.id);
         setIsSaved(saved);
@@ -72,88 +75,38 @@ export const CarActions = ({ car }: CarActionsProps) => {
         console.error("Failed to check if car is saved:", error);
       }
     };
-    
+
     checkIfSaved();
   }, [car.id, isAuthenticated]);
 
-  // Listen for pending action execution events
-  useEffect(() => {
-    const handleExecuteBooking = (event: CustomEvent) => {
-      if (event.detail.carId === car.id) {
-        setIsBookingOpen(true);
-      }
-    };
-
-    const handleExecuteSaveCar = async (event: CustomEvent) => {
-      if (event.detail.carId === car.id && isAuthenticated) {
-        setIsSaving(true);
-        try {
-          const success = await saveCar(car.id);
-          if (success) {
-            setIsSaved(true);
-            toast.success("Vehicle added to saved list");
-            queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
-            queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
-          }
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    };
-
-    window.addEventListener('execute-booking', handleExecuteBooking as EventListener);
-    window.addEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
-
-    return () => {
-      window.removeEventListener('execute-booking', handleExecuteBooking as EventListener);
-      window.removeEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
-    };
-  }, [car.id, isAuthenticated, queryClient]);
-
   const handleBookNow = () => {
     if (!isAuthenticated) {
-      AuthTriggerService.storePendingAction({
-        type: 'booking',
-        payload: { carId: car.id },
-        context: `${car.brand} ${car.model}`
-      });
-      
-      setAuthContext({
-        action: 'booking',
-        title: `Sign up to book ${car.brand} ${car.model}`,
-        description: 'Create an account to complete your booking and connect with the host.'
-      });
-      setIsAuthModalOpen(true);
+      navigate("/login");
       return;
     }
-    
+
     if (isOwner) {
       toast.error("You cannot book your own vehicle");
       return;
     }
-    
+
+    // Check verification status before allowing booking
+    if (!isVerified && !isVerificationLoading) {
+      setIsVerificationDialogOpen(true);
+      return;
+    }
+
     setIsBookingOpen(true);
   };
 
   const handleSaveToggle = async () => {
     if (!isAuthenticated) {
-      AuthTriggerService.storePendingAction({
-        type: 'save_car',
-        payload: { carId: car.id },
-        context: `${car.brand} ${car.model}`
-      });
-      
-      setAuthContext({
-        action: 'save_car',
-        title: 'Sign up to save cars',
-        description: 'Create an account to save your favorite cars and access them anytime.'
-      });
-      setIsAuthModalOpen(true);
+      navigate("/login");
       return;
     }
-    
+
     if (isSaving) return;
-    
+
     setIsSaving(true);
     try {
       if (isSaved) {
@@ -199,11 +152,13 @@ export const CarActions = ({ car }: CarActionsProps) => {
           >
             <Heart
               className={`${
-                isSaved ? "fill-red-500 text-red-500" : "text-gray-600 dark:text-gray-400"
+                isSaved
+                  ? "fill-red-500 text-red-500"
+                  : "text-gray-600 dark:text-gray-400"
               }`}
             />
           </Button>
-          
+
           <Button
             className="flex-1 flex items-center justify-center gap-2"
             onClick={handleBookNow}
@@ -213,20 +168,18 @@ export const CarActions = ({ car }: CarActionsProps) => {
           </Button>
         </div>
       )}
-      
-      {isBookingOpen && (
-        <BookingDialog
-          car={car}
-          isOpen={isBookingOpen}
-          onClose={() => setIsBookingOpen(false)}
-        />
-      )}
 
-      <AuthContextModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        context={authContext}
-        defaultTab="signup"
+      <BookingDialog
+        car={car}
+        isOpen={isBookingOpen}
+        onClose={() => setIsBookingOpen(false)}
+      />
+
+      <VerificationRequiredDialog
+        isOpen={isVerificationDialogOpen}
+        onClose={() => setIsVerificationDialogOpen(false)}
+        action="booking"
+        carData={car}
       />
     </div>
   );
