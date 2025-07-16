@@ -10,7 +10,9 @@ import { BookingStatus } from "@/types/booking";
 import { WalletBalanceIndicator } from "./WalletBalanceIndicator";
 import { walletService } from "@/services/walletService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CarFront, CalendarDays } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
@@ -120,11 +122,14 @@ export const HostDashboard = () => {
 
   const currentBalance = walletBalance?.balance || 0;
   const showLowBalanceWarning = currentBalance < 50; // Show warning if balance is below P50
-
+  
   return (
-    <div className="space-y-6">
-      <HostStats />
+    <div className="space-y-6"> 
       
+      <HostStats />
+      {/* B1.3: Integrate Existing Booking Tabs into Dashboard Structure */}
+      
+
       {/* Low Balance Warning */}
       {showLowBalanceWarning && (
         <Alert variant="destructive">
@@ -151,7 +156,16 @@ export const HostDashboard = () => {
           <WalletBalanceIndicator compact={true} />
         </div>
       </div>
+
+      {/* [B1.1] - Refactor Host Landing Page to "My Bookings" with Dashboard Components */}
+      <Card className="bg-card rounded-lg p-4 shadow-sm dark:border dark:border-border text-left">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+          <CardTitle className="text-xl font-bold">
+            Bookings Overview 
+          </CardTitle>
+        </CardHeader>
       
+
       <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
           <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
@@ -161,41 +175,30 @@ export const HostDashboard = () => {
         </TabsList>
 
         <TabsContent value="active">
-          <HostTabContent 
-            bookings={activeBookings} 
-            tabType="active" 
-            emptyMessage="No active rentals"
+          <HostTabContent bookings={activeBookings} tabType="active" emptyMessage="No active rentals"
             onCardClick={handleCardClick}
           />
         </TabsContent>
 
         <TabsContent value="pending">
-          <HostTabContent 
-            bookings={pendingBookings} 
-            tabType="pending" 
-            emptyMessage="No booking requests"
+          <HostTabContent bookings={pendingBookings} tabType="pending" emptyMessage="No booking requests"
             onCardClick={handlePendingCardClick}
           />
         </TabsContent>
 
         <TabsContent value="expired">
-          <HostTabContent 
-            bookings={expiredBookings} 
-            tabType="expired" 
-            emptyMessage="No expired requests"
+          <HostTabContent bookings={expiredBookings} tabType="expired" emptyMessage="No expired requests"
             onCardClick={handleCardClick}
           />
         </TabsContent>
 
         <TabsContent value="completed">
-          <HostTabContent 
-            bookings={completedBookings} 
-            tabType="completed" 
-            emptyMessage="No completed rentals"
+          <HostTabContent bookings={completedBookings} tabType="completed" emptyMessage="No completed rentals"
             onCardClick={handleCardClick}
           />
         </TabsContent>
       </Tabs>
+      </Card>
     </div>
   );
 };

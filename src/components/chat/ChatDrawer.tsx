@@ -131,7 +131,7 @@ export const ChatDrawer = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="h-[90%] flex flex-col">
+      <DrawerContent className="h-[80%] flex flex-col w-[400px] max-w-full fixed right-10 bottom-0 z-50">
         <ChatHeader
           receiverName={receiverName}
           receiverAvatar={receiverAvatar}

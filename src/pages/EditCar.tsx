@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +9,7 @@ import { CarForm } from "@/components/add-car/CarForm";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
+import type { Car } from "@/types/car";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
 
@@ -35,6 +35,13 @@ const EditCar = () => {
     latitude: 0,
     longitude: 0,
     features: [],
+    engine_size: "",
+    horsepower: "",
+    mileage: "",
+    fuel_efficiency: "",
+    max_speed: "",
+    warranty: "",
+    maintenance_history: "",
   };
 
   const { data: car, isLoading } = useQuery({
@@ -47,7 +54,7 @@ const EditCar = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Car;
     },
   });
 
@@ -95,6 +102,13 @@ const EditCar = () => {
           fuel: formData.fuel,
           description: formData.description,
           features: selectedFeatures,
+          engine_size: formData.engine_size || null,
+          horsepower: formData.horsepower || null,
+          mileage: formData.mileage ? parseInt(formData.mileage) : null,
+          fuel_efficiency: formData.fuel_efficiency || null,
+          max_speed: formData.max_speed || null,
+          warranty: formData.warranty || null,
+          maintenance_history: formData.maintenance_history || null,
         })
         .eq("id", id);
 
@@ -146,6 +160,12 @@ const EditCar = () => {
     latitude: car.latitude || 0,
     longitude: car.longitude || 0,
     features: car.features || [],
+    engine_size: car.engine_size || "",
+    mileage: car.mileage?.toString() || "",
+    fuel_efficiency: car.fuel_efficiency || "",
+    max_speed: car.max_speed || "",
+    warranty: car.warranty || "",
+    maintenance_history: car.maintenance_history || "",
   } : initialFormData;
 
   return (

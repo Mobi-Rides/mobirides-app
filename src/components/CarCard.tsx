@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,9 +12,6 @@ import { saveCar, unsaveCar } from "@/services/savedCarService";
 import type { Car } from "@/types/car";
 import { Separator } from "./ui/separator";
 import { BarLoader } from "react-spinners";
-import { AuthContextModal } from "@/components/auth/AuthContextModal";
-import AuthTriggerService from "@/services/authTriggerService";
-import { useAuth } from "@/hooks/useAuth";
 
 interface CarCardProps {
   id: string;
@@ -46,15 +43,8 @@ export const CarCard = ({
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isSaving, setIsSaving] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authContext, setAuthContext] = useState<{
-    action: 'booking' | 'save_car' | 'contact_host';
-    title?: string;
-    description?: string;
-  } | undefined>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAuthenticated, user } = useAuth();
 
   const { data: carDetails, isLoading: isLoadingCarDetails } = useQuery({
     queryKey: ['car', id],
@@ -77,85 +67,17 @@ export const CarCard = ({
     enabled: isBookingOpen
   });
 
-  // Listen for pending action execution events
-  useEffect(() => {
-    const handleExecuteBooking = (event: CustomEvent) => {
-      if (event.detail.carId === id) {
-        setIsBookingOpen(true);
-      }
-    };
-
-    const handleExecuteSaveCar = async (event: CustomEvent) => {
-      if (event.detail.carId === id && isAuthenticated) {
-        setIsSaving(true);
-        try {
-          const success = await saveCar(id);
-          if (success) {
-            setIsSaved(true);
-            queryClient.invalidateQueries({ queryKey: ["saved-cars-full"] });
-            queryClient.invalidateQueries({ queryKey: ["saved-car-ids"] });
-          }
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    };
-
-    window.addEventListener('execute-booking', handleExecuteBooking as EventListener);
-    window.addEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
-
-    return () => {
-      window.removeEventListener('execute-booking', handleExecuteBooking as EventListener);
-      window.removeEventListener('execute-save-car', handleExecuteSaveCar as EventListener);
-    };
-  }, [id, isAuthenticated, queryClient]);
-
   const handleCardClick = () => {
     navigate(`/cars/${id}`);
   };
 
   const handleBookNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      // Store pending booking action
-      AuthTriggerService.storePendingAction({
-        type: 'booking',
-        payload: { carId: id },
-        context: `${brand} ${model}`
-      });
-      
-      setAuthContext({
-        action: 'booking',
-        title: `Sign up to book ${brand} ${model}`,
-        description: 'Create an account to complete your booking and connect with the host.'
-      });
-      setIsAuthModalOpen(true);
-      return;
-    }
-    
     setIsBookingOpen(true);
   };
 
   const handleSaveClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      // Store pending save action
-      AuthTriggerService.storePendingAction({
-        type: 'save_car',
-        payload: { carId: id },
-        context: `${brand} ${model}`
-      });
-      
-      setAuthContext({
-        action: 'save_car',
-        title: 'Sign up to save cars',
-        description: 'Create an account to save your favorite cars and access them anytime.'
-      });
-      setIsAuthModalOpen(true);
-      return;
-    }
     
     if (isSaving) return;
     
@@ -210,7 +132,7 @@ export const CarCard = ({
           >
             <Heart
               className={`w-5 h-5 ${
-                isSaving ? "text-gray-400" : (isAuthenticated && isSaved) ? "fill-red-500 text-red-500" : "text-gray-600"
+                isSaving ? "text-gray-400" : isSaved ? "fill-red-500 text-red-500" : "text-gray-600"
               }`}
             />
           </button>
@@ -255,13 +177,6 @@ export const CarCard = ({
           onClose={() => setIsBookingOpen(false)}
         />
       )}
-
-      <AuthContextModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        context={authContext}
-        defaultTab="signup"
-      />
     </>
   );
 };

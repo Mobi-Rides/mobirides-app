@@ -200,7 +200,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.user) throw new Error("No authenticated user");
-
+      
       const numberOfDays = Math.ceil(
         (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
       ) + 1; // Include both start and end days

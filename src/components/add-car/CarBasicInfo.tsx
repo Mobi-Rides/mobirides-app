@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,9 +20,10 @@ interface CarBasicInfoProps {
   };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelectChange: (name: string, value: string) => void;
+  errors?: Record<string, string>;
 }
 
-export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBasicInfoProps) => {
+export const CarBasicInfo = ({ formData, onInputChange, onSelectChange, errors = {} }: CarBasicInfoProps) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2 text-left">
@@ -35,6 +35,8 @@ export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBas
           onChange={onInputChange}
           required
         />
+        <span className="text-xs text-muted-foreground">e.g., Toyota, BMW, Ford</span>
+        {errors.brand && <span className="text-xs text-red-500">{errors.brand}</span>}
       </div>
       
       <div className="space-y-2 text-left">
@@ -46,6 +48,8 @@ export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBas
           onChange={onInputChange}
           required
         />
+        <span className="text-xs text-muted-foreground">e.g., Corolla, X5, Fiesta</span>
+        {errors.model && <span className="text-xs text-red-500">{errors.model}</span>}
       </div>
 
       <div className="space-y-2 text-left">
@@ -58,6 +62,8 @@ export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBas
           onChange={onInputChange}
           required
         />
+        <span className="text-xs text-muted-foreground">Year must be between 2000 and {new Date().getFullYear() + 1}</span>
+        {errors.year && <span className="text-xs text-red-500">{errors.year}</span>}
       </div>
       
       <div className="space-y-2 text-left">

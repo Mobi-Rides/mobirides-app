@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +28,13 @@ interface CarFormData {
   transmission: string;
   fuel: string;
   seats: number;
+  engine_size?: string;
+  horsepower?: string;
+  mileage?: string;
+  fuel_efficiency?: string;
+  max_speed?: string;
+  warranty?: string;
+  maintenance_history?: string;
 }
 
 interface CarFormProps {
@@ -49,6 +55,7 @@ export const CarForm = ({
   onSubmit,
   isSubmitting
 }: CarFormProps) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<CarFormData>(initialData);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [documents, setDocuments] = useState<{
@@ -56,6 +63,7 @@ export const CarForm = ({
     insurance?: File;
     additional?: FileList;
   }>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -68,6 +76,7 @@ export const CarForm = ({
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+    setFormErrors((prev) => ({ ...prev, [name]: "" })); // Clear error on change
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -76,6 +85,7 @@ export const CarForm = ({
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+    setFormErrors((prev) => ({ ...prev, [name]: "" })); // Clear error on change
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +106,16 @@ export const CarForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate important fields
+    const errors: Record<string, string> = {};
+    if (!formData.brand.trim()) errors.brand = "Brand is required.";
+    if (!formData.model.trim()) errors.model = "Model is required.";
+    if (!formData.year || formData.year < 2000 || formData.year > new Date().getFullYear() + 1) errors.year = `Year must be between 2000 and ${new Date().getFullYear() + 1}.`;
+    if (!formData.price_per_day || isNaN(Number(formData.price_per_day)) || Number(formData.price_per_day) <= 0) errors.price_per_day = "Price per day must be a positive number.";
+    if (!formData.location.trim()) errors.location = "Location is required.";
+    if (!formData.seats || formData.seats < 2 || formData.seats > 15) errors.seats = "Seats must be between 2 and 15.";
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
     await onSubmit(formData, imageFile, documents, selectedFeatures);
   };
 
@@ -109,23 +129,25 @@ export const CarForm = ({
           formData={formData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
+          errors={formErrors}
         />
       </FormSection>
 
       <FormSection 
         title="Vehicle Specifications" 
-        description="Provide technical details and pricing information"
+        description="Provide comprehensive technical details, performance metrics, and pricing information"
       >
         <CarDetails
           formData={formData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
+          errors={formErrors}
         />
       </FormSection>
       
       <FormSection 
         title="Features & Amenities" 
-        description="Select the features available in your vehicle"
+        description="Select from a comprehensive list of comfort, technology, safety, and performance features"
       >
         <CarFeatures
           selectedFeatures={selectedFeatures}
@@ -159,9 +181,20 @@ export const CarForm = ({
         </FormSection>
       )}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (isEdit ? "Updating Car..." : "Adding Car...") : (isEdit ? "Update Car" : "Add Car")}
-      </Button>
+      <div className="flex gap-4">
+        <Button 
+          type="button" 
+          variant="destructive" 
+          className="flex-1" 
+          onClick={() => navigate(-1)}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+          {isSubmitting ? (isEdit ? "Updating Car..." : "Adding Car...") : (isEdit ? "Update Car" : "Add Car")}
+        </Button>
+      </div>
     </form>
   );
 };

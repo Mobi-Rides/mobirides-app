@@ -140,6 +140,22 @@ const CarDetails = () => {
               transmission={car.transmission}
               seats={car.seats}
               features={car.features}
+              engine_size={car.engine_size}
+              horsepower={car.horsepower}
+              mileage={car.mileage}
+              color={car.color}
+              doors={car.doors}
+              fuel_efficiency={car.fuel_efficiency}
+              max_speed={car.max_speed}
+              acceleration={car.acceleration}
+              weight={car.weight}
+              length={car.length}
+              width={car.width}
+              height={car.height}
+              trunk_capacity={car.trunk_capacity}
+              ground_clearance={car.ground_clearance}
+              warranty={car.warranty}
+              maintenance_history={car.maintenance_history}
             />
             
             {car.description && <CarDescription description={car.description} />}

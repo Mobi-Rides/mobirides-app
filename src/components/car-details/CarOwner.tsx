@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { MessageCircle, User } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -6,8 +5,6 @@ import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthContextModal } from "@/components/auth/AuthContextModal";
-import AuthTriggerService from "@/services/authTriggerService";
 
 interface CarOwnerProps {
   ownerName: string;
@@ -18,55 +15,30 @@ interface CarOwnerProps {
 
 export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
-  // Check authentication status
+  // Check if current user is the owner
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
+    const checkIfOwner = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setIsOwner(session.user.id === ownerId);
+      }
     };
     
-    checkAuth();
+    checkIfOwner();
     
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setIsAuthenticated(!!session);
+      if (session?.user) {
+        setIsOwner(session.user.id === ownerId);
+      } else {
+        setIsOwner(false);
+      }
     });
     
     return () => subscription.unsubscribe();
-  }, []);
-
-  // Listen for pending action execution events
-  useEffect(() => {
-    const handleExecuteContactHost = (event: CustomEvent) => {
-      if (event.detail.carId === carId && isAuthenticated) {
-        setIsChatOpen(true);
-      }
-    };
-
-    window.addEventListener('execute-contact-host', handleExecuteContactHost as EventListener);
-
-    return () => {
-      window.removeEventListener('execute-contact-host', handleExecuteContactHost as EventListener);
-    };
-  }, [carId, isAuthenticated]);
-
-  const handleContactClick = () => {
-    if (!isAuthenticated) {
-      AuthTriggerService.storePendingAction({
-        type: 'contact_host',
-        payload: { carId },
-        context: ownerName
-      });
-      
-      setIsAuthModalOpen(true);
-      return;
-    }
-    
-    setIsChatOpen(true);
-  };
+  }, [ownerId]);
 
   return (
     <>
@@ -99,42 +71,31 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
                 </p>
               </div>
             </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button className="gap-2" onClick={handleContactClick}>
-                    <MessageCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Contact</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Message the vehicle owner</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {!isOwner && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button className="gap-2" onClick={() => setIsChatOpen(true)}>
+                      <MessageCircle className="h-4 w-4" />
+                      <span className="hidden sm:inline">Contact</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Message the vehicle owner</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {isAuthenticated && (
-        <ChatDrawer
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          receiverId={ownerId}
-          receiverName={ownerName}
-          carId={carId}
-        />
-      )}
-
-      <AuthContextModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        context={{
-          action: 'contact_host',
-          title: `Sign up to contact ${ownerName}`,
-          description: 'Create an account to message the host and ask questions about the car.'
-        }}
-        defaultTab="signup"
+      <ChatDrawer
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        receiverId={ownerId}
+        receiverName={ownerName}
+        carId={carId}
       />
     </>
   );

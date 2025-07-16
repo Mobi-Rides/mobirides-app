@@ -2,6 +2,7 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
+  RouterProvider,
   useLocation,
 } from "react-router-dom";
 import { useState, useEffect, Suspense, lazy } from "react";
@@ -12,6 +13,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import "./App.css";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
+
 
 // Lazy load pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -119,7 +121,14 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/cars/:id" element={<CarDetails />} />
+          <Route
+            path="/cars/:id"
+            element={
+              <ProtectedRoute>
+                <CarDetails />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/add-car"
             element={

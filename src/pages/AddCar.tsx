@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +33,22 @@ const AddCar = () => {
     latitude: 0,
     longitude: 0,
     features: [],
+    engine_size: "",
+    horsepower: "",
+    mileage: "",
+    color: "",
+    doors: 0,
+    fuel_efficiency: "",
+    max_speed: "",
+    acceleration: "",
+    weight: "",
+    length: "",
+    width: "",
+    height: "",
+    trunk_capacity: "",
+    ground_clearance: "",
+    warranty: "",
+    maintenance_history: "",
   };
 
   useEffect(() => {
@@ -136,6 +151,22 @@ const AddCar = () => {
         description: formData.description,
         features: features || [],
         is_available: true,
+        engine_size: formData.engine_size || null,
+        horsepower: formData.horsepower || null,
+        mileage: formData.mileage ? parseInt(formData.mileage) : null,
+        color: formData.color || null,
+        doors: formData.doors || null,
+        fuel_efficiency: formData.fuel_efficiency || null,
+        max_speed: formData.max_speed || null,
+        acceleration: formData.acceleration || null,
+        weight: formData.weight || null,
+        length: formData.length || null,
+        width: formData.width || null,
+        height: formData.height || null,
+        trunk_capacity: formData.trunk_capacity || null,
+        ground_clearance: formData.ground_clearance || null,
+        warranty: formData.warranty || null,
+        maintenance_history: formData.maintenance_history || null,
       });
 
       if (insertError) {
