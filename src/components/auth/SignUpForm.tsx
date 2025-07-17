@@ -18,16 +18,12 @@ import { Eye, EyeOff, Mail, User, Phone, Lock } from "lucide-react";
 // Import country codes from constants
 import countryCodes from "@/constants/Countries";
 
-interface SignUpFormProps {
-  onSuccess?: () => void;
-}
-
 interface ExtendedProfile {
   full_name?: string;
   phone_number?: string;
 }
 
-export const SignUpForm = ({ onSuccess }: SignUpFormProps = {}) => {
+export const SignUpForm = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -159,12 +155,7 @@ export const SignUpForm = ({ onSuccess }: SignUpFormProps = {}) => {
 
         toast.success("Account created successfully!");
 
-        // Call onSuccess callback if provided
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          navigate("/login");
-        }
+        navigate("/login");
       }
     } catch (error) {
       console.error("Error during signup:", error);

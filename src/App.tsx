@@ -26,18 +26,19 @@ const Bookings = lazy(() => import("@/pages/Bookings"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
 const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
 const BookingRequestDetails = lazy(
-  () => import("@/pages/BookingRequestDetails")
+  () => import("@/pages/BookingRequestDetails"),
 );
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Notifications = lazy(() => import("@/pages/Notifications"));
 const RentalReview = lazy(() => import("./pages/RentalReview"));
 const RentalDetailsRefactored = lazy(
-  () => import("./pages/RentalDetailsRefactored")
+  () => import("./pages/RentalDetailsRefactored"),
 );
 const Signup = lazy(() => import("./pages/signup"));
 const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Wallet = lazy(() => import("@/pages/Wallet"));
+const Verification = lazy(() => import("@/pages/Verification"));
 
 const PageTransitionLoader = () => {
   const location = useLocation();
@@ -119,7 +120,14 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/cars/:id" element={<CarDetails />} />
+          <Route
+            path="/cars/:id"
+            element={
+              <ProtectedRoute>
+                <CarDetails />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/add-car"
             element={
@@ -194,6 +202,14 @@ const AppRoutes = () => {
             }
           />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/verification"
+            element={
+              <ProtectedRoute>
+                <Verification />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Suspense>
     </>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
@@ -14,10 +13,13 @@ interface RenterViewProps {
   searchQuery: string;
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
-  isAuthenticated?: boolean;
 }
 
-export const RenterView = ({ searchQuery, filters, onFiltersChange, isAuthenticated = false }: RenterViewProps) => {
+export const RenterView = ({
+  searchQuery,
+  filters,
+  onFiltersChange,
+}: RenterViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { ref: inViewRef, inView } = useInView();
@@ -29,7 +31,7 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange, isAuthentica
     if (loadMoreRef.current !== node) {
       loadMoreRef.current = node || null;
     }
-    
+
     // Call the inViewRef
     inViewRef(node);
   };
@@ -37,9 +39,9 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange, isAuthentica
   useEffect(() => {
     onFiltersChange({
       ...filters,
-      sortOrder: sortOrder
+      sortOrder: sortOrder,
     });
-  }, [sortOrder, filters, onFiltersChange]);
+  }, [sortOrder, onFiltersChange]);
 
   // Update filters when brand selection changes
   const handleBrandSelect = (brand: string | null) => {
@@ -47,61 +49,62 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange, isAuthentica
     setSelectedBrand(brand);
   };
 
-  const { 
+  const {
     data: availableCars,
     isLoading: isLoadingCars,
     error: carsError,
     hasNextPage,
     fetchNextPage,
-    isFetchingNextPage
+    isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['available-cars', selectedBrand, filters, searchQuery],
-    queryFn: ({ pageParam = 0 }) => fetchCars({ 
-      pageParam, 
-      filters,
-      searchParams: {
-        ...(selectedBrand ? { brand: selectedBrand } : {}),
-        ...(searchQuery ? { searchTerm: searchQuery } : {})
-      }
-    }),
+    queryKey: ["available-cars", selectedBrand, filters, searchQuery],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchCars({
+        pageParam,
+        filters,
+        searchParams: {
+          ...(selectedBrand ? { brand: selectedBrand } : {}),
+          ...(searchQuery ? { searchTerm: searchQuery } : {}),
+        },
+      }),
     getNextPageParam: (lastPage) => lastPage.nextPage || undefined,
-    initialPageParam: 0
+    initialPageParam: 0,
   });
 
   const { data: savedCarIds } = useQuery({
-    queryKey: ['saved-car-ids'],
+    queryKey: ["saved-car-ids"],
     queryFn: async () => {
-      if (!isAuthenticated) return new Set<string>();
-      
       console.log("Fetching saved car IDs for home page");
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.user?.id) return new Set<string>();
 
       const { data, error } = await supabase
-        .from('saved_cars')
-        .select('car_id')
-        .eq('user_id', session.user.id);
+        .from("saved_cars")
+        .select("car_id")
+        .eq("user_id", session.user.id);
 
       if (error) {
-        console.error('Error fetching saved cars:', error);
+        console.error("Error fetching saved cars:", error);
         return new Set<string>();
       }
 
-      const savedIds = new Set(data.map(saved => saved.car_id));
+      const savedIds = new Set(data.map((saved) => saved.car_id));
       console.log("Saved car IDs for home page:", Array.from(savedIds));
       return savedIds;
     },
-    enabled: isAuthenticated
   });
-  
+
   const savedCarsSet = savedCarIds || new Set<string>();
-  
-  const allAvailableCars = availableCars?.pages.flatMap(page => 
-    page.data.map(car => ({
-      ...car,
-      isSaved: savedCarsSet.has(car.id)
-    }))
-  ) || [];
+
+  const allAvailableCars =
+    availableCars?.pages.flatMap((page) =>
+      page.data.map((car) => ({
+        ...car,
+        isSaved: savedCarsSet.has(car.id),
+      })),
+    ) || [];
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -110,7 +113,7 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange, isAuthentica
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const toggleSortOrder = () => {
-    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
   return (
@@ -147,7 +150,7 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange, isAuthentica
         error={carsError}
         loadMoreRef={loadMoreRef}
         isFetchingNextPage={isFetchingNextPage}
-        isAuthenticated={isAuthenticated}
+        isAuthenticated={true}
       />
       {/* This hidden div is used with the intersection observer */}
       {hasNextPage && (

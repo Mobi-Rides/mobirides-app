@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -6,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { CarForm } from "@/components/add-car/CarForm";
+import { VerificationRequiredDialog } from "@/components/verification/VerificationRequiredDialog";
+import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
 
-type VehicleType = Database['public']['Enums']['vehicle_type'];
+type VehicleType = Database["public"]["Enums"]["vehicle_type"];
 
 const AddCar = () => {
   const navigate = useNavigate();
@@ -19,6 +20,12 @@ const AddCar = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [isVerificationDialogOpen, setIsVerificationDialogOpen] =
+    useState(false);
+
+  // Verification status
+  const { isVerified, isLoading: isVerificationLoading } =
+    useVerificationStatus();
 
   const initialFormData = {
     brand: "",
@@ -38,9 +45,11 @@ const AddCar = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.user) {
-        navigate('/login');
+        navigate("/login");
         return;
       }
       setUserId(session.user.id);
@@ -48,7 +57,10 @@ const AddCar = () => {
     checkUser();
   }, [navigate]);
 
-  const uploadDocument = async (file: File, path: string): Promise<string | null> => {
+  const uploadDocument = async (
+    file: File,
+    path: string,
+  ): Promise<string | null> => {
     console.log(`Attempting to upload document to ${path}`);
     try {
       const fileExt = file.name.split(".").pop();
@@ -64,9 +76,9 @@ const AddCar = () => {
         return null;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("car-documents")
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("car-documents").getPublicUrl(filePath);
 
       console.log(`Document uploaded successfully to ${publicUrl}`);
       return publicUrl;
@@ -76,16 +88,43 @@ const AddCar = () => {
     }
   };
 
-  const handleSubmit = async (formData: any, imageFile: File | null, documents: any, features: string[]) => {
+  type CarFormData = {
+    brand: string;
+    model: string;
+    year: number;
+    vehicle_type: VehicleType;
+    price_per_day: string;
+    location: string;
+    transmission: string;
+    fuel: string;
+    seats: number;
+    description: string;
+    latitude: number;
+    longitude: number;
+    features: string[];
+  };
+
+  const handleSubmit = async (
+    formData: CarFormData,
+    imageFile: File | null,
+    documents: File[],
+    features: string[],
+  ) => {
     console.log("Starting car submission process...");
     console.log("Selected features:", features);
-    
+
     if (!userId) {
       toast({
         title: "Error",
         description: "You must be logged in to add a car",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Check verification status before allowing car listing
+    if (!isVerified && !isVerificationLoading) {
+      setIsVerificationDialogOpen(true);
       return;
     }
 
@@ -101,18 +140,20 @@ const AddCar = () => {
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+		  const { error: uploadError } = await supabase.storage
+			
           .from("car-images")
-          .upload(filePath, imageFile);
+		  .upload(filePath, imageFile);
+		  
 
         if (uploadError) {
           console.error("Error uploading car image:", uploadError);
           throw uploadError;
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("car-images")
-          .getPublicUrl(filePath);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("car-images").getPublicUrl(filePath);
 
         image_url = publicUrl;
         console.log("Car image uploaded successfully:", image_url);
@@ -120,13 +161,13 @@ const AddCar = () => {
 
       console.log("Inserting car data into database...");
       console.log("Features to insert:", features);
-      
+
       const { error: insertError } = await supabase.from("cars").insert({
         owner_id: userId,
         image_url,
         price_per_day: parseFloat(formData.price_per_day),
         year: parseInt(formData.year.toString()),
-        seats: parseInt(formData.seats),
+        seats: formData.seats,
         brand: formData.brand,
         model: formData.model,
         vehicle_type: formData.vehicle_type,
@@ -181,7 +222,7 @@ const AddCar = () => {
           </Button>
           <h1 className="text-2xl font-semibold">List Your Car</h1>
         </div>
-        
+
         <CarForm
           initialData={initialFormData}
           selectedFeatures={selectedFeatures}
@@ -191,6 +232,12 @@ const AddCar = () => {
         />
       </div>
       <Navigation />
+
+      <VerificationRequiredDialog
+        isOpen={isVerificationDialogOpen}
+        onClose={() => setIsVerificationDialogOpen(false)}
+        action="listing"
+      />
     </div>
   );
 };
