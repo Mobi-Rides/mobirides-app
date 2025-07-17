@@ -2,17 +2,17 @@
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
 import { BookingRow } from "./BookingRow";
 import { BookingCard } from "./BookingCard";
-import { Booking } from "@/types/booking";
+import { BookingWithDetails } from "@/services/api/BookingService";
 import { useMediaQuery } from "usehooks-ts";
 import { BookingMobileCard } from "./BookingMobileCard";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 interface BookingTableProps {
-  bookings: Booking[];
+  bookings: BookingWithDetails[];
   onCancelBooking: (bookingId: string) => Promise<void>;
   onApproveBooking: (bookingId: string) => Promise<void>;
   onDeclineBooking: (bookingId: string) => Promise<void>;
-  onMessage: (otherUserId: string, bookingId: string) => void;
+  onMessage: (otherUserId: string, bookingId: string) => Promise<void>;
   isHost: boolean;
   showNetEarnings?: boolean;
   selectedBookingIds: string[];

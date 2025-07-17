@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Booking } from "@/types/booking";
+import { BookingWithDetails } from "@/services/api/BookingService";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,11 @@ import {
 import { calculateCommission } from "@/services/commission/commissionCalculation";
 
 interface BookingCardProps {
-  booking: Booking;
+  booking: BookingWithDetails;
   onCancelBooking: (bookingId: string) => Promise<void>;
   onApproveBooking: (bookingId: string) => Promise<void>;
   onDeclineBooking: (bookingId: string) => Promise<void>;
-  onMessage: (otherUserId: string, bookingId: string) => void;
+  onMessage: (otherUserId: string, bookingId: string) => Promise<void>;
   isHost: boolean;
   showNetEarnings?: boolean;
   commissionRate?: number;
@@ -147,7 +147,7 @@ export const BookingCard = ({
             {/* User Info */}
             <div className="mb-3">
               <p className="text-sm text-muted-foreground">
-                {isHost ? 'Rented by' : 'Host'} {isHost ? booking.renters?.full_name : booking.cars?.owner_profile?.full_name}
+                {isHost ? 'Rented by' : 'Host'} {isHost ? booking.profiles?.full_name : 'Host'}
               </p>
             </div>
 
@@ -189,7 +189,7 @@ export const BookingCard = ({
             isOpen={isChatOpen}
             onClose={() => setIsChatOpen(false)}
             receiverId={isHost ? booking.renter_id : booking.cars?.owner_id}
-            receiverName={isHost ? booking.renters?.full_name : booking.cars?.owner_profile?.full_name}
+            receiverName={isHost ? booking.profiles?.full_name : 'Host'}
             carId={booking.car_id}
           />
         )}

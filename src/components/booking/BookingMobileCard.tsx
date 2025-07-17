@@ -1,5 +1,5 @@
 import { format, differenceInDays, parseISO } from "date-fns";
-import { Booking } from "@/types/booking";
+import { BookingWithDetails } from "@/services/api/BookingService";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,12 @@ import { Clock, Check, X, MapPin, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BookingMobileCardProps {
-  booking: Booking;
+  booking: BookingWithDetails;
   onCancelBooking: (bookingId: string) => Promise<void>;
   // Add new props for approve, decline, and message actions
   onApproveBooking: (bookingId: string) => Promise<void>;
   onDeclineBooking: (bookingId: string) => Promise<void>;
-  onMessage: (renterId: string, bookingId: string) => void; // Assuming you'll need renterId for messaging
+  onMessage: (renterId: string, bookingId: string) => Promise<void>; // Assuming you'll need renterId for messaging
   selectedBookingIds?: string[];
   toggleSelectBooking?: (bookingId: string) => void;
 }
@@ -74,8 +74,8 @@ export const BookingMobileCard = ({
    const handleMessageClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Assuming 'renter' object exists and has an 'id'
-    if (booking.renter?.full_name && booking.id) {
-      onMessage(booking.renter.full_name, booking.id);
+    if (booking.profiles?.full_name && booking.id) {
+      onMessage(booking.profiles.full_name, booking.id);
     } else {
       console.warn("Attempted to message renter with missing renter ID or booking ID.");
     }

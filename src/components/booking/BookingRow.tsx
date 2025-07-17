@@ -1,7 +1,7 @@
 import { format, differenceInDays, parseISO } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Booking } from "@/types/booking";
+import { BookingWithDetails } from "@/services/api/BookingService";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Check, X, ArrowRight, Calendar, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -19,11 +19,11 @@ import { MoreVertical } from "lucide-react";
 import { calculateCommission } from "@/services/commission/commissionCalculation";
 
 interface BookingRowProps {
-  booking: Booking;
+  booking: BookingWithDetails;
   onCancelBooking: (bookingId: string) => Promise<void>;
   onApproveBooking: (bookingId: string) => Promise<void>;
   onDeclineBooking: (bookingId: string) => Promise<void>;
-  onMessage: (otherUserId: string, bookingId: string) => void;
+  onMessage: (otherUserId: string, bookingId: string) => Promise<void>;
   isHost: boolean;
   showNetEarnings?: boolean;
   commissionRate?: number;
@@ -105,7 +105,7 @@ export const BookingRow = ({ booking, onCancelBooking, onApproveBooking, onDecli
         </div>
       </TableCell>
       <TableCell className="text-left align-top">
-        <span className="font-medium block mb-2">{booking.renters?.full_name ? booking.renters.full_name : 'Unknown'}</span>
+        <span className="font-medium block mb-2">{booking.profiles?.full_name ? booking.profiles.full_name : 'Unknown'}</span>
       </TableCell>
       <TableCell className="text-left align-top">
         <div className="flex flex-col items-start bg-muted/40 rounded px-2 py-1 gap-1">
@@ -178,7 +178,7 @@ export const BookingRow = ({ booking, onCancelBooking, onApproveBooking, onDecli
               isOpen={isChatOpen}
               onClose={() => setIsChatOpen(false)}
               receiverId={isHost ? booking.renter_id : booking.cars?.owner_id}
-              receiverName={isHost ? booking.renters?.full_name : booking.cars?.owner_profile?.full_name}
+              receiverName={isHost ? booking.profiles?.full_name : 'Host'}
               carId={booking.car_id}
             />
           )}
