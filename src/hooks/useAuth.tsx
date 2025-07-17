@@ -8,6 +8,8 @@ type AuthContextType = {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, options?: { full_name?: string }) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 };
 
@@ -16,6 +18,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   isAuthenticated: false,
   isLoading: true,
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
   signOut: async () => {},
 });
 
@@ -43,6 +47,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
+    } catch (error) {
+      console.error("Sign in failed:", error);
+      return { error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, options?: { full_name?: string }) => {
+    try {
+      setIsLoading(true);
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: options?.full_name || '',
+          },
+        },
+      });
+      return { error };
+    } catch (error) {
+      console.error("Sign up failed:", error);
+      return { error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const signOut = async () => {
     try {
@@ -72,6 +116,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         session,
         isAuthenticated: !!user,
         isLoading,
+        signIn,
+        signUp,
         signOut,
       }}
     >
