@@ -285,6 +285,9 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
     toast.success("Certificate download started (Feature coming soon)");
   };
 
+  // Type assertion to ensure user_role is treated as the union type
+  const userRole = (verificationData.user_role === "host" ? "host" : "renter") as "renter" | "host";
+
   return (
     <div className="space-y-6">
       {/* Success Animation Area */}
@@ -369,7 +372,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
       </Card>
 
       {/* Next Steps */}
-      <NextSteps userRole={verificationData.user_role} />
+      <NextSteps userRole={userRole} />
 
       {/* Important Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
