@@ -1,8 +1,13 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BookingService, BookingWithDetails } from "@/services/api";
 import { toast } from "sonner";
 
-export const useRenterBookings = (renterId: string) => {
+interface UseBookingsOptions {
+  enabled?: boolean;
+}
+
+export const useRenterBookings = (renterId: string, options: UseBookingsOptions = {}) => {
   return useQuery({
     queryKey: ["renter-bookings", renterId],
     queryFn: async () => {
@@ -12,13 +17,13 @@ export const useRenterBookings = (renterId: string) => {
       }
       return response.data || [];
     },
-    enabled: !!renterId,
+    enabled: !!renterId && (options.enabled !== false),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 };
 
-export const useHostBookings = (hostId: string) => {
+export const useHostBookings = (hostId: string, options: UseBookingsOptions = {}) => {
   return useQuery({
     queryKey: ["host-bookings", hostId],
     queryFn: async () => {
@@ -28,7 +33,7 @@ export const useHostBookings = (hostId: string) => {
       }
       return response.data || [];
     },
-    enabled: !!hostId,
+    enabled: !!hostId && (options.enabled !== false),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
