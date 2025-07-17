@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
 
 interface ProtectedRouteProps {
@@ -8,46 +9,22 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { isAuthenticated, isLoading } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
-
-      if (!data.session) {
-        setIsAuthModalOpen(true);
-      }
-    };
-
-    checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      if (!session && event === "SIGNED_OUT") {
-        setIsAuthModalOpen(true);
-      } else if (session) {
-        setIsAuthModalOpen(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) setIsAuthModalOpen(false);
-  }, [isAuthModalOpen, isAuthenticated]);
+    if (!isLoading && !isAuthenticated) {
+      setIsAuthModalOpen(true);
+    } else if (isAuthenticated) {
+      setIsAuthModalOpen(false);
+    }
+  }, [isAuthenticated, isLoading]);
 
   const handleCloseModal = () => {
     setIsAuthModalOpen(false);
   };
 
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         Loading...

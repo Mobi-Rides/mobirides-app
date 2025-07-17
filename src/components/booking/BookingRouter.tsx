@@ -1,11 +1,12 @@
-import { useAuthStatus } from "@/hooks/useAuthStatus";
-import HostBookings from "@/pages/HostBookings";
-import RenterBookings from "@/pages/RenterBookings";
+
+import { HostBookings } from "@/pages/HostBookings";
+import { RenterBookings } from "@/pages/RenterBookings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Navigation } from "@/components/Navigation";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const BookingRouter = () => {
-  const { userRole, isLoadingRole } = useAuthStatus();
+  const { userRole, isLoadingRole } = useUserRole();
 
   if (isLoadingRole) {
     return (

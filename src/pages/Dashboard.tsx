@@ -1,38 +1,15 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { RenterDashboard } from "@/components/dashboard/RenterDashboard";
 import { HostDashboard } from "@/components/dashboard/HostDashboard";
-import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Dashboard = () => {
-  const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
+  const { userRole, isLoadingRole } = useUserRole();
 
-  useEffect(() => {
-    const getUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      console.log("Fetching user role for dashboard");
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role) {
-        console.log("User role:", profile.role);
-        setUserRole(profile.role);
-      }
-    };
-
-    getUserRole();
-  }, []);
-
-  if (!userRole) {
+  if (isLoadingRole) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
