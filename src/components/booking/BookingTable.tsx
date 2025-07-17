@@ -32,7 +32,7 @@ export const BookingTable = ({ bookings, onCancelBooking,
   toggleSelectAll,
   viewMode = "table",
 }: BookingTableProps) => {
-  console.log("BookingTable received bookings:", bookings);
+  
   const isDesktop = useMediaQuery("(min-width: 640px)");
   const COMMISSION_RATE = 0.15;
   

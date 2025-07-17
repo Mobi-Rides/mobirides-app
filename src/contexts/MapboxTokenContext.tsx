@@ -35,12 +35,10 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const initializeToken = async () => {
-    console.info("[MapboxTokenProvider] Initializing token...");
     setTokenState((prev) => ({ ...prev, loading: true }));
 
     try {
       const token = await getMapboxToken();
-      console.info("[MapboxTokenProvider] Token initialized:", token ? "✓" : "✗");
 
       if (!token) {
         throw new Error("No token returned from token manager");
@@ -48,10 +46,7 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
 
       // Set the token in the mapboxgl instance
       if (window.mapboxgl) {
-        console.log("[MapboxTokenProvider] Setting token on mapboxgl:", token.substring(0, 10) + "...");
         window.mapboxgl.accessToken = token;
-      } else {
-        console.warn("[MapboxTokenProvider] mapboxgl not available yet");
       }
 
       setTokenState({
@@ -71,12 +66,37 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshToken = async () => {
-    console.info("[MapboxTokenProvider] Refreshing token...");
-    await initializeToken();
+    setTokenState((prev) => ({ ...prev, loading: true }));
+    
+    try {
+      const token = await getMapboxToken();
+      
+      if (!token) {
+        throw new Error("Failed to refresh Mapbox token");
+      }
+
+      // Update the global mapboxgl instance if available
+      if (window.mapboxgl) {
+        window.mapboxgl.accessToken = token;
+      }
+
+      setTokenState({
+        token,
+        isValid: true,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("[MapboxTokenProvider] Failed to refresh token", error);
+      toast.error("Failed to refresh map token. Please reload the page.");
+      setTokenState({
+        token: null,
+        isValid: false,
+        loading: false,
+      });
+    }
   };
 
   useEffect(() => {
-    console.info("[MapboxTokenProvider] Component mounted, initializing token...");
     initializeToken();
   }, []);
 

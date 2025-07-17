@@ -24,7 +24,9 @@ const CarDetails = lazy(() => import("@/pages/CarDetails"));
 const AddCar = lazy(() => import("@/pages/AddCar"));
 const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
-const Bookings = lazy(() => import("@/pages/Bookings"));
+const HostBookings = lazy(() => import("@/pages/HostBookings"));
+const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
+const BookingRouter = lazy(() => import("@/components/booking/BookingRouter").then(m => ({ default: m.BookingRouter })));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
 const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
 const BookingRequestDetails = lazy(
@@ -157,7 +159,23 @@ const AppRoutes = () => {
             path="/bookings"
             element={
               <ProtectedRoute>
-                <Bookings />
+                <BookingRouter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/host-bookings"
+            element={
+              <ProtectedRoute>
+                <HostBookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/renter-bookings"
+            element={
+              <ProtectedRoute>
+                <RenterBookings />
               </ProtectedRoute>
             }
           />

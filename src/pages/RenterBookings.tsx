@@ -5,41 +5,44 @@ import { Navigation } from "@/components/Navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { BookingTable } from "@/components/booking/BookingTable";
-import { format } from "date-fns";
 import { Booking } from "@/types/booking";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 
-const COMMISSION_RATE = 0.15;
-
-const HostBookings = () => {
+const RenterBookings = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
     const { data: bookings, isLoading, error } = useQuery({
-        queryKey: ["host-bookings"],
+        queryKey: ["renter-bookings"],
         queryFn: async () => {
             const { data: sessionData } = await supabase.auth.getSession();
             if (!sessionData.session) {
                 throw new Error("No active session found");
             }
-            // Get cars owned by the user
-            const { data: cars, error: carsError } = await supabase
-                .from("cars")
-                .select("id")
-                .eq("owner_id", sessionData.session.user.id);
-            if (carsError) throw carsError;
-            if (!cars.length) return [];
-            const carIds = cars.map(car => car.id);
-            // Get bookings for those cars
+
+            // Get bookings made by the renter
             const { data, error } = await supabase
                 .from("bookings")
-                .select(`*, cars (brand, model, image_url, owner_id, location, price_per_day), reviews!reviews_booking_id_fkey (id)`)
-                .in("car_id", carIds)
+                .select(`
+                    *, 
+                    cars (
+                        brand, 
+                        model, 
+                        image_url, 
+                        owner_id, 
+                        location, 
+                        price_per_day,
+                        owner_profile:profiles!cars_owner_id_fkey(full_name)
+                    ), 
+                    reviews!reviews_booking_id_fkey (id)
+                `)
+                .eq("renter_id", sessionData.session.user.id)
                 .order("created_at", { ascending: false });
+
             if (error) throw error;
             return data as unknown as Booking[];
         },
@@ -65,7 +68,7 @@ const HostBookings = () => {
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                         <h1 className="text-xl md:text-2xl text-left font-semibold">
-                            My Bookings (Host)
+                            My Bookings (Renter)
                         </h1>
                     </div>
                     <div className="space-y-4">
@@ -99,41 +102,43 @@ const HostBookings = () => {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <h1 className="text-xl md:text-2xl text-left font-semibold">
-                        My Bookings (Host)
+                        My Bookings (Renter)
                     </h1>
                 </div>
                 <div className="px-4">
                     <BookingTable
                         bookings={bookings}
                         onCancelBooking={async (bookingId: string) => {
-                            // Host bookings don't need cancel functionality
-                            console.warn("Cancel booking not implemented for host view");
-                        }}
-                        onApproveBooking={async (bookingId: string) => {
-                            const { error } = await supabase
-                                .from("bookings")
-                                .update({ status: "confirmed" })
-                                .eq("id", bookingId);
-                            if (!error) {
-                                toast({ title: "Booking approved", variant: "default" });
-                                queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+                            try {
+                                const { error } = await supabase
+                                    .from("bookings")
+                                    .update({ status: "cancelled" })
+                                    .eq("id", bookingId);
+
+                                if (error) throw error;
+                                
+                                toast({
+                                    title: "Success",
+                                    description: "Booking cancelled successfully",
+                                    variant: "default",
+                                });
+                                
+                                queryClient.invalidateQueries({ queryKey: ["renter-bookings"] });
+                            } catch (error) {
+                                toast({
+                                    title: "Error",
+                                    description: "Failed to cancel booking",
+                                    variant: "destructive",
+                                });
                             }
                         }}
-                        onDeclineBooking={async (bookingId: string) => {
-                            const { error } = await supabase
-                                .from("bookings")
-                                .update({ status: "cancelled" })
-                                .eq("id", bookingId);
-                            if (!error) {
-                                toast({ title: "Booking declined", variant: "default" });
-                                queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
-                            }
-                        }}
+                        onApproveBooking={async () => {}}
+                        onDeclineBooking={async () => {}}
                         onMessage={(otherUserId: string, bookingId: string) => {
                             // Navigate to message view
                         }}
-                        isHost={true}
-                        showNetEarnings={true}
+                        isHost={false}
+                        showNetEarnings={false}
                         selectedBookingIds={[]}
                         toggleSelectBooking={() => {}}
                         allSelected={false}
@@ -147,4 +152,4 @@ const HostBookings = () => {
     );
 };
 
-export default HostBookings; 
+export default RenterBookings;
