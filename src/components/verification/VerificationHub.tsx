@@ -218,10 +218,6 @@ export const VerificationHub: React.FC = () => {
   const [showDeveloperControls, setShowDeveloperControls] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  /**
-   * Initialize verification if not already started
-   * Uses authenticated user and their role from the profile
-   */
   useEffect(() => {
     if (!user?.id) {
       console.log("[VerificationHub] No user ID available, user:", user);
@@ -361,9 +357,6 @@ export const VerificationHub: React.FC = () => {
     );
   };
 
-  /**
-   * Render error state
-   */
   if (error) {
     return (
       <div
@@ -384,9 +377,6 @@ export const VerificationHub: React.FC = () => {
     );
   }
 
-  /**
-   * Render loading state
-   */
   if (isLoading || !verificationData) {
     return (
       <div
@@ -399,7 +389,6 @@ export const VerificationHub: React.FC = () => {
             <p className="text-muted-foreground mb-4">
               Initializing verification...
             </p>
-       
           </CardContent>
         </Card>
       </div>
@@ -489,7 +478,16 @@ export const VerificationHub: React.FC = () => {
         {/* Progress Stepper */}
         <ProgressStepper
           currentStep={verificationData.currentStep}
-          stepStatuses={verificationData.stepStatuses}
+          stepStatuses={{
+            [VerificationStep.PERSONAL_INFO]: verificationData.personal_info_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.DOCUMENT_UPLOAD]: verificationData.documents_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.SELFIE_VERIFICATION]: verificationData.selfie_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.PHONE_VERIFICATION]: verificationData.phone_verified ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.ADDRESS_CONFIRMATION]: verificationData.address_confirmed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.REVIEW_SUBMIT]: VerificationStatus.NOT_STARTED,
+            [VerificationStep.PROCESSING_STATUS]: VerificationStatus.NOT_STARTED,
+            [VerificationStep.COMPLETION]: VerificationStatus.NOT_STARTED,
+          }}
           onStepClick={handleStepNavigation}
           canNavigateToStep={canNavigateToStep}
         />
@@ -510,7 +508,49 @@ export const VerificationHub: React.FC = () => {
           <CardContent>{getCurrentStepComponent()}</CardContent>
         </Card>
 
-     
+        {/* Development Controls */}
+        {process.env.NODE_ENV === "development" && (
+          <Card className="mt-6 border-orange-200">
+            <CardHeader>
+              <Button
+                variant="ghost"
+                onClick={() => setShowDeveloperControls(!showDeveloperControls)}
+                className="justify-start p-0 h-auto text-orange-600 hover:text-orange-700"
+              >
+                🛠️ Developer Controls {showDeveloperControls ? "▼" : "▶"}
+              </Button>
+            </CardHeader>
+            {showDeveloperControls && (
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {Object.values(VerificationStep).map((step) => (
+                      <Button
+                        key={step}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigateToStep(step)}
+                        className="text-xs"
+                      >
+                        {step.replace("_", " ")}
+                      </Button>
+                    ))}
+                  </div>
+                  <Separator />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={resetVerification}
+                    >
+                      Reset Verification
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   );

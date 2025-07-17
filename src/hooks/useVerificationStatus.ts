@@ -1,169 +1,68 @@
+
 /**
- * Hook to check user verification status
- * Determines if user needs to complete verification before certain actions
+ * Verification Status Hook
+ * Provides verification status checking functionality
  */
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { VerificationService } from "@/services/verificationService";
-import { VerificationStatus } from "@/types/verification";
-import { supabase } from "@/integrations/supabase/client";
+import { VerificationData, VerificationStatus } from "@/types/verification";
 
-interface VerificationStatusHook {
-  isVerified: boolean;
-  isLoading: boolean;
-  verificationData: any;
-  checkVerificationStatus: () => Promise<void>;
-}
+// Global event for verification completion
+export const triggerVerificationCompletionEvent = () => {
+  window.dispatchEvent(new CustomEvent("verification-completed"));
+};
 
-/**
- * Hook to check and manage user verification status
- */
-export const useVerificationStatus = (): VerificationStatusHook => {
+export const useVerificationStatus = () => {
+  const { user } = useAuth();
+  const [verificationData, setVerificationData] = useState<VerificationData | null>(null);
   const [isVerified, setIsVerified] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [verificationData, setVerificationData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  /**
-   * Check verification status for current user
-   */
   const checkVerificationStatus = async () => {
+    if (!user?.id) return;
+
     try {
       setIsLoading(true);
-
-      // Get current authenticated user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        setIsVerified(false);
-        setVerificationData(null);
-        return;
-      }
-
-      // Check profile verification status first (most reliable source)
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("verification_status, verification_completed_at")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        console.error(
-          "[VerificationStatus] Error checking profile status:",
-          profileError,
-        );
-        setIsVerified(false);
-        setVerificationData(null);
-        return;
-      }
-
-      // Load full verification data from Supabase
-      const verificationData = await VerificationService.loadVerificationData(
-        user.id,
-      );
-
-      if (verificationData) {
-        // Check if verification is completed (prefer profile status as source of truth)
-        const profileStatus = profile?.verification_status;
-        const isComplete =
-          profileStatus === VerificationStatus.COMPLETED ||
-          profileStatus === "completed" ||
-          verificationData.overallStatus === VerificationStatus.COMPLETED;
-
-        setIsVerified(isComplete);
-        setVerificationData(verificationData);
-
-        console.log("[VerificationStatus] User verification status:", {
-          userId: user.id,
-          isVerified: isComplete,
-          profileStatus: profileStatus,
-          dataStatus: verificationData.overallStatus,
-          completedAt: profile?.verification_completed_at,
-        });
+      const data = await VerificationService.loadVerificationData(user.id);
+      
+      if (data) {
+        setVerificationData(data);
+        setIsVerified(data.overall_status === VerificationStatus.COMPLETED);
       } else {
-        // No verification data found - user is not verified
-        const isComplete =
-          profile?.verification_status === VerificationStatus.COMPLETED ||
-          profile?.verification_status === "completed";
-
-        setIsVerified(isComplete);
         setVerificationData(null);
-
-        console.log(
-          "[VerificationStatus] No verification data found for user:",
-          user.id,
-          "Profile status:",
-          profile?.verification_status,
-        );
+        setIsVerified(false);
       }
     } catch (error) {
-      console.error(
-        "[VerificationStatus] Failed to check verification status:",
-        error,
-      );
-      setIsVerified(false);
+      console.error("Failed to check verification status:", error);
       setVerificationData(null);
+      setIsVerified(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  /**
-   * Check verification status on mount and when auth changes
-   */
   useEffect(() => {
     checkVerificationStatus();
+  }, [user?.id]);
 
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        checkVerificationStatus();
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  /**
-   * Listen for verification completion (for real-time updates)
-   */
+  // Listen for verification completion events
   useEffect(() => {
-    const handleVerificationUpdate = () => {
+    const handleVerificationComplete = () => {
       checkVerificationStatus();
     };
 
-    // Listen for storage changes (when verification is completed in another tab)
-    window.addEventListener("storage", handleVerificationUpdate);
-
-    // Listen for custom verification completion event
-    window.addEventListener("verificationCompleted", handleVerificationUpdate);
-
+    window.addEventListener("verification-completed", handleVerificationComplete);
     return () => {
-      window.removeEventListener("storage", handleVerificationUpdate);
-      window.removeEventListener(
-        "verificationCompleted",
-        handleVerificationUpdate,
-      );
+      window.removeEventListener("verification-completed", handleVerificationComplete);
     };
   }, []);
 
   return {
+    verificationData,
     isVerified,
     isLoading,
-    verificationData,
-    checkVerificationStatus,
+    refetch: checkVerificationStatus,
   };
-};
-
-/**
- * Helper function to trigger verification completion event
- * Call this when verification is completed to notify other components
- */
-export const triggerVerificationCompletionEvent = () => {
-  const event = new CustomEvent("verificationCompleted");
-  window.dispatchEvent(event);
 };
