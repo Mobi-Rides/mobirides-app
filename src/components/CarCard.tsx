@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,7 +27,7 @@ interface CarCardProps {
   isSaved?: boolean;
 }
 
-export const CarCard = ({
+export const CarCard = memo(({
   id,
   brand,
   model,
@@ -67,16 +67,16 @@ export const CarCard = ({
     enabled: isBookingOpen
   });
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     navigate(`/cars/${id}`);
-  };
+  }, [navigate, id]);
 
-  const handleBookNow = async (e: React.MouseEvent) => {
+  const handleBookNow = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsBookingOpen(true);
-  };
+  }, []);
 
-  const handleSaveClick = async (e: React.MouseEvent) => {
+  const handleSaveClick = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     
     if (isSaving) return;
@@ -103,15 +103,21 @@ export const CarCard = ({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [id, isSaved, isSaving, queryClient]);
+
+  const handleCloseBooking = useCallback(() => {
+    setIsBookingOpen(false);
+  }, []);
 
   // Determine car type based on seats
-  const getCarType = (seats: number) => {
+  const getCarType = useCallback((seats: number) => {
     if (seats <= 2) return "Sports";
     if (seats <= 5) return "Sedan";
     if (seats <= 7) return "SUV";
     return "Van";
-  };
+  }, []);
+
+  const carType = getCarType(seats);
 
   return (
     <>
@@ -139,7 +145,7 @@ export const CarCard = ({
         </div>
         <div className="p-3 sm:p-4 flex flex-col flex-1">
           <span className="px-3 py-1 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8] w-fit mb-2">
-            {getCarType(seats)}
+            {carType}
           </span>
           <div className="flex justify-between items-start mb-2 min-h-[3rem]">
             <div className="flex-1">
@@ -174,9 +180,11 @@ export const CarCard = ({
         <BookingDialog
           car={carDetails}
           isOpen={isBookingOpen}
-          onClose={() => setIsBookingOpen(false)}
+          onClose={handleCloseBooking}
         />
       )}
     </>
   );
-};
+});
+
+CarCard.displayName = 'CarCard';

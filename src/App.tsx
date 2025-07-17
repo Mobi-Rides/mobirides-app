@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,6 +13,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import "./App.css";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
+import { ErrorBoundary } from "@/utils/ErrorBoundary";
 
 // Lazy load pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -69,151 +69,153 @@ const AppRoutes = () => {
   return (
     <>
       <PageTransitionLoader />
-      <Suspense
-        fallback={
-          <div className="fixed top-0 left-0 w-full z-50 bg-background/80">
-            <div className="flex flex-col items-center justify-center py-3">
-              <BarLoader color="#7c3aed" width={150} />
+      <ErrorBoundary>
+        <Suspense
+          fallback={
+            <div className="fixed top-0 left-0 w-full z-50 bg-background/80">
+              <div className="flex flex-col items-center justify-center py-3">
+                <BarLoader color="#7c3aed" width={150} />
+              </div>
             </div>
-          </div>
-        }
-      >
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/wallet"
-            element={
-              <ProtectedRoute>
-                <Wallet />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/map"
-            element={
-              <ProtectedRoute>
-                <Map />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/more"
-            element={
-              <ProtectedRoute>
-                <More />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cars/:id"
-            element={
-              <ProtectedRoute>
-                <CarDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-car"
-            element={
-              <ProtectedRoute>
-                <AddCar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/driver-license"
-            element={
-              <ProtectedRoute>
-                <DriverLicense />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/edit-car/:id"
-            element={
-              <ProtectedRoute>
-                <EditCar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/host-bookings"
-            element={
-              <ProtectedRoute>
-                <HostBookings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/renter-bookings"
-            element={
-              <ProtectedRoute>
-                <RenterBookings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/saved-cars"
-            element={
-              <ProtectedRoute>
-                <SavedCars />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications/:id"
-            element={
-              <ProtectedRoute>
-                <NotificationDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/booking-requests/:id"
-            element={
-              <ProtectedRoute>
-                <BookingRequestDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/rental-review/:bookingId" element={<RentalReview />} />
-          <Route
-            path="/rental-details/:id"
-            element={
-              <ProtectedRoute>
-                <RentalDetailsRefactored />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/reset-password" element={<ResetPassword />} />
-        </Routes>
-      </Suspense>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/wallet"
+              element={
+                <ProtectedRoute>
+                  <Wallet />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/map"
+              element={
+                <ProtectedRoute>
+                  <Map />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/more"
+              element={
+                <ProtectedRoute>
+                  <More />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cars/:id"
+              element={
+                <ProtectedRoute>
+                  <CarDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-car"
+              element={
+                <ProtectedRoute>
+                  <AddCar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver-license"
+              element={
+                <ProtectedRoute>
+                  <DriverLicense />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edit-car/:id"
+              element={
+                <ProtectedRoute>
+                  <EditCar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/host-bookings"
+              element={
+                <ProtectedRoute>
+                  <HostBookings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/renter-bookings"
+              element={
+                <ProtectedRoute>
+                  <RenterBookings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/saved-cars"
+              element={
+                <ProtectedRoute>
+                  <SavedCars />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications/:id"
+              element={
+                <ProtectedRoute>
+                  <NotificationDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/booking-requests/:id"
+              element={
+                <ProtectedRoute>
+                  <BookingRequestDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/rental-review/:bookingId" element={<RentalReview />} />
+            <Route
+              path="/rental-details/:id"
+              element={
+                <ProtectedRoute>
+                  <RentalDetailsRefactored />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/reset-password" element={<ResetPassword />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 };

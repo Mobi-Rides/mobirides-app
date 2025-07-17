@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
@@ -23,7 +23,7 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // For combining the inView ref with our loadMoreRef
-  const setRefs = (node: HTMLDivElement | null) => {
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
     // Set the loadMoreRef
     if (loadMoreRef.current !== node) {
       loadMoreRef.current = node || null;
@@ -31,20 +31,34 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
     
     // Call the inViewRef
     inViewRef(node);
-  };
+  }, [inViewRef]);
 
-  useEffect(() => {
+  // Memoize the filters to prevent unnecessary re-renders
+  const stableFilters = useMemo(() => ({
+    ...filters,
+    sortOrder: sortOrder
+  }), [filters.startDate, filters.endDate, filters.vehicleType, filters.location, filters.sortBy, sortOrder]);
+
+  // Only update filters when sortOrder changes, not on every render
+  const handleSortOrderChange = useCallback((newSortOrder: "asc" | "desc") => {
+    setSortOrder(newSortOrder);
     onFiltersChange({
       ...filters,
-      sortOrder: sortOrder
+      sortOrder: newSortOrder
     });
-  }, [sortOrder, filters, onFiltersChange]);
+  }, [filters, onFiltersChange]);
 
   // Update filters when brand selection changes
-  const handleBrandSelect = (brand: string | null) => {
+  const handleBrandSelect = useCallback((brand: string | null) => {
     console.log("Brand selected:", brand);
     setSelectedBrand(brand);
-  };
+  }, []);
+
+  // Memoize search parameters to prevent query key changes
+  const searchParams = useMemo(() => ({
+    ...(selectedBrand ? { brand: selectedBrand } : {}),
+    ...(searchQuery ? { searchTerm: searchQuery } : {})
+  }), [selectedBrand, searchQuery]);
 
   const { 
     data: availableCars,
@@ -54,14 +68,11 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
     fetchNextPage,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ['available-cars', selectedBrand, filters, searchQuery],
+    queryKey: ['available-cars', selectedBrand, stableFilters, searchQuery],
     queryFn: ({ pageParam = 0 }) => fetchCars({ 
       pageParam, 
-      filters,
-      searchParams: {
-        ...(selectedBrand ? { brand: selectedBrand } : {}),
-        ...(searchQuery ? { searchTerm: searchQuery } : {})
-      }
+      filters: stableFilters,
+      searchParams
     }),
     getNextPageParam: (lastPage) => lastPage.nextPage || undefined,
     initialPageParam: 0
@@ -92,12 +103,14 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
   
   const savedCarsSet = savedCarIds || new Set<string>();
   
-  const allAvailableCars = availableCars?.pages.flatMap(page => 
-    page.data.map(car => ({
-      ...car,
-      isSaved: savedCarsSet.has(car.id)
-    }))
-  ) || [];
+  // Memoize the processed cars to prevent unnecessary re-renders
+  const allAvailableCars = useMemo(() => 
+    availableCars?.pages.flatMap(page => 
+      page.data.map(car => ({
+        ...car,
+        isSaved: savedCarsSet.has(car.id)
+      }))
+    ) || [], [availableCars, savedCarsSet]);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -105,9 +118,10 @@ export const RenterView = ({ searchQuery, filters, onFiltersChange }: RenterView
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const toggleSortOrder = () => {
-    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
-  };
+  const toggleSortOrder = useCallback(() => {
+    const newSortOrder = sortOrder === "asc" ? "desc" : "asc";
+    handleSortOrderChange(newSortOrder);
+  }, [sortOrder, handleSortOrderChange]);
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { CarCard } from "@/components/CarCard";
 
 export interface CarGridProps {
@@ -13,7 +13,7 @@ export interface CarGridProps {
   isAuthenticated?: boolean;
 }
 
-export const CarGrid = ({ cars, hasMoreItems, isLoading, error, loadMoreRef, onLoadMore, isFetchingNextPage, isAuthenticated }: CarGridProps) => {
+export const CarGrid = memo(({ cars, hasMoreItems, isLoading, error, loadMoreRef, onLoadMore, isFetchingNextPage, isAuthenticated }: CarGridProps) => {
   if (isLoading) {
     return (
       <div className="text-center mt-8">
@@ -63,4 +63,6 @@ export const CarGrid = ({ cars, hasMoreItems, isLoading, error, loadMoreRef, onL
       )}
     </div>
   );
-};
+});
+
+CarGrid.displayName = 'CarGrid';
