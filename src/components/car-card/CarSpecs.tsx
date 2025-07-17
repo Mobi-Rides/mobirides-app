@@ -1,4 +1,5 @@
-import { Car } from "lucide-react";
+
+import { CarSpecs as UnifiedCarSpecs } from "@/components/shared/CarSpecs";
 
 interface CarSpecsProps {
   transmission: string;
@@ -7,20 +8,5 @@ interface CarSpecsProps {
 }
 
 export const CarSpecs = ({ transmission, fuel, seats }: CarSpecsProps) => {
-  return (
-    <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
-      <span className="flex items-center gap-1">
-        <Car className="w-4 h-4" />
-        {transmission}
-      </span>
-      <span className="flex items-center gap-1">
-        <i className="w-4 h-4">⛽</i>
-        {fuel}
-      </span>
-      <span className="flex items-center gap-1">
-        <i className="w-4 h-4">👥</i>
-        {seats} Seats
-      </span>
-    </div>
-  );
+  return <UnifiedCarSpecs transmission={transmission} fuel={fuel} seats={seats} variant="grid" />;
 };

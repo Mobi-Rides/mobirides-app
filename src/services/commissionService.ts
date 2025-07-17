@@ -1,3 +1,4 @@
+
 import { getCurrentCommissionRate } from "./commission/commissionRates";
 import { calculateCommission } from "./commission/commissionCalculation";
 import { checkHostCanAcceptBooking } from "./commission/walletValidation";
@@ -28,21 +29,12 @@ class CommissionService {
   ): Promise<boolean> {
     return deductCommissionFromEarnings(hostId, bookingId, bookingTotal);
   }
-
-  // Keep old method name for backward compatibility
-  async deductCommissionOnBookingAcceptance(
-    hostId: string, 
-    bookingId: string, 
-    bookingTotal: number
-  ): Promise<boolean> {
-    return this.processCommissionOnBookingConfirmation(hostId, bookingId, bookingTotal);
-  }
 }
 
 export const commissionService = new CommissionService();
 
 // Development helpers
-if (typeof window !== 'undefined') {
+if (import.meta.env.DEV) {
   (window as any).commissionService = commissionService;
   console.log('CommissionService available in console for testing');
 }

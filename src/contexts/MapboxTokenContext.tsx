@@ -1,4 +1,3 @@
-
 import {
   createContext,
   useContext,
@@ -72,7 +71,20 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshToken = async () => {
     console.info("[MapboxTokenProvider] Refreshing token...");
-    await initializeToken();
+    try {
+      // Clear current token state
+      setTokenState(prev => ({ ...prev, loading: true, isValid: false }));
+      
+      // Re-initialize the token
+      await initializeToken();
+      
+      console.info("[MapboxTokenProvider] Token refresh completed successfully");
+      toast.success("Map configuration refreshed");
+    } catch (error) {
+      console.error("[MapboxTokenProvider] Token refresh failed", error);
+      toast.error("Failed to refresh map configuration");
+      throw error;
+    }
   };
 
   useEffect(() => {
