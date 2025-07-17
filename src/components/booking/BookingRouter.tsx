@@ -26,3 +26,5 @@ export const BookingRouter = () => {
 
   return userRole === "host" ? <HostBookings /> : <RenterBookings />;
 };
+
+export default BookingRouter;
