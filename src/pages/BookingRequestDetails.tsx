@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +97,7 @@ const BookingRequestDetails = () => {
           throw new Error(canAccept.message || 'Insufficient wallet balance');
         }
 
-        const commissionDeducted = await commissionService.deductCommissionOnBookingAcceptance(
+        const commissionDeducted = await commissionService.processCommissionOnBookingConfirmation(
           userId, 
           booking.id, 
           booking.total_price
