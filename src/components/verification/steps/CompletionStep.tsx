@@ -1,3 +1,4 @@
+
 /**
  * Completion Step Component
  * Displays successful completion of verification process
@@ -38,11 +39,11 @@ interface CompletionStepProps {
 const VerificationCertificate: React.FC<{
   verificationData: any;
 }> = ({ verificationData }) => {
-  const verificationId = verificationData?.userId
-    ? `VER-${verificationData.userId.slice(-8).toUpperCase()}`
+  const verificationId = verificationData?.user_id
+    ? `VER-${verificationData.user_id.slice(-8).toUpperCase()}`
     : "Unknown";
-  const completionDate = verificationData?.completedAt
-    ? new Date(verificationData.completedAt).toLocaleDateString()
+  const completionDate = verificationData?.completed_at
+    ? new Date(verificationData.completed_at).toLocaleDateString()
     : new Date().toLocaleDateString();
 
   const copyVerificationId = () => {
@@ -99,7 +100,7 @@ const VerificationCertificate: React.FC<{
               <div>
                 <p className="font-medium text-gray-600">User Role</p>
                 <p className="text-green-600 capitalize">
-                  {verificationData?.userRole || "Renter"}
+                  {verificationData?.user_role || "Renter"}
                 </p>
               </div>
               <div>
@@ -272,7 +273,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
 
   const handleGoToApp = () => {
     // Navigate to appropriate page based on user role
-    if (verificationData.userRole === "host") {
+    if (verificationData.user_role === "host") {
       navigate("/dashboard");
     } else {
       navigate("/");
@@ -351,7 +352,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
                 </div>
               </div>
 
-              {verificationData.userRole === "host" && (
+              {verificationData.user_role === "host" && (
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <div>
@@ -368,7 +369,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
       </Card>
 
       {/* Next Steps */}
-      <NextSteps userRole={verificationData.userRole} />
+      <NextSteps userRole={verificationData.user_role} />
 
       {/* Important Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -406,7 +407,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
           className="flex items-center space-x-2 flex-1 bg-green-600 hover:bg-green-700"
         >
           <span>
-            {verificationData.userRole === "host"
+            {verificationData.user_role === "host"
               ? "Go to Dashboard"
               : "Start Using MobiRides"}
           </span>

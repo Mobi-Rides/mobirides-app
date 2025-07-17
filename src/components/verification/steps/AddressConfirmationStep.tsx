@@ -25,7 +25,7 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
 
   const handleConfirmAddress = async () => {
     await updateAddressConfirmation({
-      currentAddress: verificationData?.personalInfo?.address || {
+      currentAddress: verificationData?.personal_info?.address || {
         street: "",
         area: "",
         city: "",
@@ -67,10 +67,10 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
         <CardContent className="space-y-4">
           <div className="bg-muted p-4 rounded-lg">
             <div className="space-y-2">
-              <p><strong>Street:</strong> {verificationData?.personalInfo?.address?.street || "Not provided"}</p>
-              <p><strong>Area:</strong> {verificationData?.personalInfo?.address?.area || "Not provided"}</p>
-              <p><strong>City:</strong> {verificationData?.personalInfo?.address?.city || "Not provided"}</p>
-              <p><strong>Postal Code:</strong> {verificationData?.personalInfo?.address?.postalCode || "Not provided"}</p>
+              <p><strong>Street:</strong> {verificationData?.personal_info?.address?.street || "Not provided"}</p>
+              <p><strong>Area:</strong> {verificationData?.personal_info?.address?.area || "Not provided"}</p>
+              <p><strong>City:</strong> {verificationData?.personal_info?.address?.city || "Not provided"}</p>
+              <p><strong>Postal Code:</strong> {verificationData?.personal_info?.address?.postalCode || "Not provided"}</p>
             </div>
           </div>
 

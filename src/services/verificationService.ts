@@ -233,6 +233,32 @@ export class VerificationService {
   }
 
   /**
+   * Complete verification (for admin/development use)
+   */
+  static async completeVerification(userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("user_verifications")
+        .update({
+          current_step: "completion",
+          overall_status: "completed",
+          completed_at: new Date().toISOString(),
+          last_updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("[VerificationService] Failed to complete verification:", error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("[VerificationService] Failed to complete verification:", error);
+      return false;
+    }
+  }
+
+  /**
    * Navigate to specific step
    */
   static async navigateToStep(userId: string, step: VerificationStep): Promise<boolean> {
