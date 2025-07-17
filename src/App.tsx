@@ -26,7 +26,7 @@ const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
 const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
-const BookingRouter = lazy(() => import("@/components/booking/BookingRouter").then(m => ({ default: m.BookingRouter })));
+const BookingRouter = lazy(() => import("@/components/booking/BookingRouter"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
 const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
 const BookingRequestDetails = lazy(
