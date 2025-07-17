@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import AuthTriggerService from '@/services/authTriggerService';
 
 type AuthContextType = {
   user: User | null;
