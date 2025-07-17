@@ -14,9 +14,84 @@ import {
   AddressConfirmation,
 } from "@/types/verification";
 
+interface ProfileData {
+  full_name: string | null;
+  phone_number: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  role: string;
+}
+
 export class VerificationService {
   /**
-   * Initialize verification for a new user
+   * Fetch user profile data for verification initialization
+   */
+  static async fetchUserProfileData(userId: string): Promise<ProfileData | null> {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, phone_number, emergency_contact_name, emergency_contact_phone, role")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("[VerificationService] Error fetching profile:", error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("[VerificationService] Failed to fetch profile:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Map profile data to personal info structure
+   */
+  static mapProfileToPersonalInfo(profile: ProfileData | null, userEmail: string | null): Partial<PersonalInfo> {
+    if (!profile) return { email: userEmail || "" };
+
+    return {
+      fullName: profile.full_name || "",
+      phoneNumber: profile.phone_number || "",
+      email: userEmail || "",
+      emergencyContact: {
+        name: profile.emergency_contact_name || "",
+        relationship: "", // Default empty, not stored in profile
+        phoneNumber: profile.emergency_contact_phone || "",
+      },
+      // Default empty values for fields not in profile
+      dateOfBirth: "",
+      nationalIdNumber: "",
+      address: {
+        street: "",
+        area: "",
+        city: "",
+        postalCode: "",
+      },
+    };
+  }
+
+  /**
+   * Determine completion status based on profile data
+   */
+  static determineCompletionStatus(profile: ProfileData | null) {
+    if (!profile) {
+      return {
+        personal_info_completed: false,
+        phone_verified: false,
+      };
+    }
+
+    return {
+      personal_info_completed: !!(profile.full_name && profile.phone_number),
+      phone_verified: !!profile.phone_number,
+    };
+  }
+
+  /**
+   * Initialize verification for a new user with profile data integration
    */
   static async initializeVerification(
     userId: string,
@@ -37,20 +112,38 @@ export class VerificationService {
         return existing as VerificationData;
       }
 
-      // Create new verification record
+      // Fetch existing profile data
+      const profileData = await this.fetchUserProfileData(userId);
+      console.log("[VerificationService] Fetched profile data:", profileData);
+
+      // Get user email from auth session
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email || null;
+
+      // Map profile data to personal info
+      const personalInfo = this.mapProfileToPersonalInfo(profileData, userEmail);
+      const completionStatus = this.determineCompletionStatus(profileData);
+
+      // Determine initial step based on profile completeness
+      let currentStep = "personal_info";
+      if (completionStatus.personal_info_completed) {
+        currentStep = "document_upload";
+      }
+
+      // Create new verification record with mapped data
       const { data, error } = await supabase
         .from("user_verifications")
         .insert([
           {
             user_id: userId,
-            current_step: "personal_info",
+            current_step: currentStep,
             overall_status: "not_started",
-            personal_info: {},
+            personal_info: personalInfo,
             user_role: userRole,
-            personal_info_completed: false,
+            personal_info_completed: completionStatus.personal_info_completed,
             documents_completed: false,
             selfie_completed: false,
-            phone_verified: false,
+            phone_verified: completionStatus.phone_verified,
             address_confirmed: false,
           },
         ])
@@ -62,7 +155,7 @@ export class VerificationService {
         throw new Error(`Failed to initialize verification: ${error.message}`);
       }
 
-      console.log("[VerificationService] Created verification:", data);
+      console.log("[VerificationService] Created verification with profile data:", data);
       return data as VerificationData;
     } catch (error) {
       console.error("[VerificationService] Failed to initialize verification:", error);
@@ -278,6 +371,39 @@ export class VerificationService {
       return true;
     } catch (error) {
       console.error("[VerificationService] Failed to navigate to step:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Refresh verification data from current profile
+   */
+  static async refreshFromProfile(userId: string): Promise<boolean> {
+    try {
+      const profileData = await this.fetchUserProfileData(userId);
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email || null;
+
+      const personalInfo = this.mapProfileToPersonalInfo(profileData, userEmail);
+      const completionStatus = this.determineCompletionStatus(profileData);
+
+      const { error } = await supabase
+        .from("user_verifications")
+        .update({
+          personal_info: personalInfo,
+          personal_info_completed: completionStatus.personal_info_completed,
+          phone_verified: completionStatus.phone_verified,
+          last_updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("[VerificationService] Failed to refresh from profile:", error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("[VerificationService] Failed to refresh from profile:", error);
       return false;
     }
   }

@@ -4,14 +4,15 @@
  * Collects user's basic personal details
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useVerification } from "@/contexts/VerificationContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, User } from "lucide-react";
+import { ArrowRight, User, RefreshCw, Info } from "lucide-react";
 import { toast } from "sonner";
+import { VerificationService } from "@/services/verificationService";
 
 interface PersonalInfoStepProps {
   onNext: () => void;
@@ -21,20 +22,47 @@ interface PersonalInfoStepProps {
 export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
   onNext,
 }) => {
-  const { verificationData, updatePersonalInfo, isLoading } = useVerification();
+  const { verificationData, updatePersonalInfo, isLoading, refreshData } = useVerification();
   const [formData, setFormData] = useState({
-    fullName: verificationData?.personal_info?.fullName || "",
-    dateOfBirth: verificationData?.personal_info?.dateOfBirth || "",
-    nationalIdNumber: verificationData?.personal_info?.nationalIdNumber || "",
-    phoneNumber: verificationData?.personal_info?.phoneNumber || "",
-    email: verificationData?.personal_info?.email || "",
+    fullName: "",
+    dateOfBirth: "",
+    nationalIdNumber: "",
+    phoneNumber: "",
+    email: "",
     address: {
-      street: verificationData?.personal_info?.address?.street || "",
-      area: verificationData?.personal_info?.address?.area || "",
-      city: verificationData?.personal_info?.address?.city || "",
-      postalCode: verificationData?.personal_info?.address?.postalCode || "",
+      street: "",
+      area: "",
+      city: "",
+      postalCode: "",
     },
   });
+  const [hasPrefilledData, setHasPrefilledData] = useState(false);
+
+  // Update form data when verification data changes
+  useEffect(() => {
+    if (verificationData?.personal_info) {
+      const personalInfo = verificationData.personal_info;
+      const newFormData = {
+        fullName: personalInfo.fullName || "",
+        dateOfBirth: personalInfo.dateOfBirth || "",
+        nationalIdNumber: personalInfo.nationalIdNumber || "",
+        phoneNumber: personalInfo.phoneNumber || "",
+        email: personalInfo.email || "",
+        address: {
+          street: personalInfo.address?.street || "",
+          area: personalInfo.address?.area || "",
+          city: personalInfo.address?.city || "",
+          postalCode: personalInfo.address?.postalCode || "",
+        },
+      };
+      
+      setFormData(newFormData);
+      
+      // Check if we have pre-filled data from profile
+      const hasData = personalInfo.fullName || personalInfo.phoneNumber || personalInfo.email;
+      setHasPrefilledData(!!hasData);
+    }
+  }, [verificationData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +100,23 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
     }
   };
 
+  const handleRefreshFromProfile = async () => {
+    if (!verificationData?.user_id) return;
+    
+    try {
+      const success = await VerificationService.refreshFromProfile(verificationData.user_id);
+      if (success) {
+        await refreshData();
+        toast.success("Profile data refreshed successfully!");
+      } else {
+        toast.error("Failed to refresh profile data");
+      }
+    } catch (error) {
+      console.error("Failed to refresh from profile:", error);
+      toast.error("Failed to refresh profile data");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -80,6 +125,34 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
           Please provide your personal details for verification
         </p>
       </div>
+
+      {hasPrefilledData && (
+        <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+          <CardContent className="pt-6">
+            <div className="flex items-start space-x-3">
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Profile Data Imported
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  We've pre-filled some fields from your profile. Please review and update as needed.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefreshFromProfile}
+                  className="text-blue-700 border-blue-300 hover:bg-blue-100 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-900"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh from Profile
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

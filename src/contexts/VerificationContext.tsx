@@ -24,6 +24,7 @@ interface VerificationContextType {
   // Actions
   initializeVerification: (userId: string, userRole: "renter" | "host") => Promise<void>;
   refreshData: () => Promise<void>;
+  refreshFromProfile: () => Promise<void>;
   updatePersonalInfo: (personalInfo: Partial<PersonalInfo>) => Promise<void>;
   completeSelfieVerification: () => Promise<void>;
   updatePhoneVerification: (phoneData: Partial<PhoneVerification>) => Promise<void>;
@@ -86,6 +87,21 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
       console.error("[VerificationContext] Failed to refresh data:", error);
     }
   }, [verificationData?.user_id]);
+
+  const refreshFromProfile = useCallback(async () => {
+    if (!verificationData?.user_id) return;
+
+    try {
+      setIsLoading(true);
+      await VerificationService.refreshFromProfile(verificationData.user_id);
+      await refreshData();
+    } catch (error) {
+      console.error("[VerificationContext] Failed to refresh from profile:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [verificationData?.user_id, refreshData]);
 
   const updatePersonalInfo = useCallback(async (personalInfo: Partial<PersonalInfo>) => {
     if (!verificationData?.user_id) throw new Error("No verification data");
@@ -213,6 +229,7 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     // Actions
     initializeVerification,
     refreshData,
+    refreshFromProfile,
     updatePersonalInfo,
     completeSelfieVerification,
     updatePhoneVerification,
