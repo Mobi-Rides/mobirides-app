@@ -1,15 +1,14 @@
 
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { useAuthModal } from "@/hooks/useAuthModal";
 
 export const UnauthenticatedView = () => {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [defaultTab, setDefaultTab] = useState<"signin" | "signup">("signin");
+  const { isOpen, defaultTab, openSignIn, close } = useAuthModal();
   const location = useLocation();
-  const navigate = useNavigate();
 
   // Check URL for auth parameter
   useEffect(() => {
@@ -17,21 +16,11 @@ export const UnauthenticatedView = () => {
     const authParam = params.get("auth");
     
     if (authParam === "signin" || authParam === "signup") {
-      setDefaultTab(authParam);
-      setIsAuthModalOpen(true);
+      if (authParam === "signin") {
+        openSignIn();
+      }
     }
-  }, [location.search]);
-
-  const handleSignInClick = () => {
-    setDefaultTab("signin");
-    setIsAuthModalOpen(true);
-    navigate("/?auth=signin", { replace: true });
-  };
-
-  const handleCloseModal = () => {
-    setIsAuthModalOpen(false);
-    navigate("/", { replace: true });
-  };
+  }, [location.search, openSignIn]);
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 min-h-[400px] text-center max-w-md mx-auto">
@@ -48,7 +37,7 @@ export const UnauthenticatedView = () => {
           variant="outline"
           size="icon"
           className="rounded-2xl border-primary md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 mx-auto"
-          onClick={handleSignInClick}
+          onClick={openSignIn}
         >
           <LogIn className="h-4 w-4 text-primary" />
           <span className="hidden md:inline-block">
@@ -60,8 +49,8 @@ export const UnauthenticatedView = () => {
       </div>
 
       <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={handleCloseModal} 
+        isOpen={isOpen} 
+        onClose={close} 
         defaultTab={defaultTab} 
       />
     </div>

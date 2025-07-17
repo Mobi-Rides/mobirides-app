@@ -1,8 +1,8 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import AuthTriggerService from '@/services/authTriggerService';
+import { toast } from "sonner";
 
 type AuthContextType = {
   user: User | null;
@@ -61,7 +61,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      console.log('[AuthProvider] Starting sign out process...');
+      setIsLoading(true);
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('[AuthProvider] Sign out error:', error);
+        toast.error('Failed to sign out. Please try again.');
+        throw error;
+      }
+      
+      console.log('[AuthProvider] Sign out successful');
+      toast.success('Signed out successfully');
+      
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
+      
+    } catch (error) {
+      console.error('[AuthProvider] Sign out failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
