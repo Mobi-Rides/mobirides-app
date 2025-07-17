@@ -1,9 +1,11 @@
+
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
 import { BookingRow } from "./BookingRow";
 import { BookingCard } from "./BookingCard";
 import { Booking } from "@/types/booking";
 import { useMediaQuery } from "usehooks-ts";
 import { BookingMobileCard } from "./BookingMobileCard";
+import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 interface BookingTableProps {
   bookings: Booking[];
@@ -20,7 +22,9 @@ interface BookingTableProps {
   viewMode?: "cards" | "table";
 }
 
-export const BookingTable = ({ bookings, onCancelBooking,
+export const BookingTable = ({ 
+  bookings, 
+  onCancelBooking,
   onApproveBooking,  
   onDeclineBooking,   
   onMessage,  
@@ -34,7 +38,7 @@ export const BookingTable = ({ bookings, onCancelBooking,
 }: BookingTableProps) => {
   
   const isDesktop = useMediaQuery("(min-width: 640px)");
-  const COMMISSION_RATE = 0.15;
+  const { data: commissionRate = 0.15 } = useCommissionRate();
   
   if (!bookings?.length) {
     return (
@@ -78,7 +82,7 @@ export const BookingTable = ({ bookings, onCancelBooking,
             onMessage={onMessage}
             isHost={isHost}
             showNetEarnings={showNetEarnings}
-            commissionRate={COMMISSION_RATE}
+            commissionRate={commissionRate}
             selectedBookingIds={selectedBookingIds}
             toggleSelectBooking={toggleSelectBooking}
           />
@@ -113,7 +117,7 @@ export const BookingTable = ({ bookings, onCancelBooking,
               onMessage={onMessage}
               isHost={isHost}
               showNetEarnings={showNetEarnings}
-              commissionRate={COMMISSION_RATE}
+              commissionRate={commissionRate}
               selectedBookingIds={selectedBookingIds}
               toggleSelectBooking={toggleSelectBooking}
             />
