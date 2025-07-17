@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,7 +15,6 @@ import "./App.css";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 
-
 // Lazy load pages
 const Index = lazy(() => import("@/pages/Index"));
 const Profile = lazy(() => import("@/pages/Profile"));
@@ -26,7 +26,6 @@ const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
 const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
-const BookingRouter = lazy(() => import("@/components/booking/BookingRouter"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
 const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
 const BookingRequestDetails = lazy(
@@ -156,14 +155,6 @@ const AppRoutes = () => {
             }
           />
           <Route
-            path="/bookings"
-            element={
-              <ProtectedRoute>
-                <BookingRouter />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/host-bookings"
             element={
               <ProtectedRoute>
@@ -180,18 +171,18 @@ const AppRoutes = () => {
             }
           />
           <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/saved-cars"
             element={
               <ProtectedRoute>
                 <SavedCars />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

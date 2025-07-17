@@ -2,13 +2,18 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, LayoutDashboard } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const ProfileHeader = () => {
+  const { userRole } = useUserRole();
+  
+  const bookingsPath = userRole === "host" ? "/host-bookings" : "/renter-bookings";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-end">
         <div className="flex gap-2">
-          <Link to="/bookings">
+          <Link to={bookingsPath}>
             <Button className="gap-2">
               <CalendarDays className="h-4 w-4" />
               My Bookings

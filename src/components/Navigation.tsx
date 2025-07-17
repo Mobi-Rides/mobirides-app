@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, MapPin, CalendarClock, Bell, User, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "./ui/badge";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface NavigationItem {
   path: string;
@@ -13,12 +14,15 @@ interface NavigationItem {
   icon: React.ReactNode;
   activeIndex: number;
   badge?: number;
+  onClick?: () => void;
 }
 
 export const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const queryClient = useQueryClient();
+  const { userRole } = useUserRole();
   
   // Fetch unread messages count
   const { data: unreadCount = 0 } = useQuery({
@@ -99,10 +103,24 @@ export const Navigation = () => {
 
   const totalUnreadCount = unreadCount + unreadNotifications;
 
+  const handleBookingsClick = () => {
+    if (userRole === "host") {
+      navigate("/host-bookings");
+    } else {
+      navigate("/renter-bookings");
+    }
+  };
+
   const items: NavigationItem[] = [
     { path: "/", label: "Explore", icon: <Search className="w-5 h-5" />, activeIndex: 0 },
     { path: "/map", label: "Map", icon: <MapPin className="w-5 h-5" />, activeIndex: 1 },
-    { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 2 },
+    { 
+      path: userRole === "host" ? "/host-bookings" : "/renter-bookings", 
+      label: "Bookings", 
+      icon: <CalendarClock className="w-5 h-5" />, 
+      activeIndex: 2,
+      onClick: handleBookingsClick
+    },
     { 
       path: "/notifications", 
       label: "Inbox", 
@@ -119,27 +137,39 @@ export const Navigation = () => {
   ];
 
   useEffect(() => {
-    const currentItem = items.find((item) => location.pathname === item.path);
+    const currentItem = items.find((item) => {
+      if (item.activeIndex === 2) {
+        // For bookings, check both host and renter booking paths
+        return location.pathname === "/host-bookings" || location.pathname === "/renter-bookings";
+      }
+      return location.pathname === item.path;
+    });
     if (currentItem) {
       setActiveIndex(currentItem.activeIndex);
     }
-  }, [location.pathname]);
+  }, [location.pathname, userRole]);
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
       <nav className="container max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 h-16">
         <div className="grid grid-cols-5 h-full w-full">
           {items.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
+            <div
+              key={item.activeIndex}
               className={cn(
-                "flex flex-col items-center justify-center h-full transition-colors px-1 relative",
+                "flex flex-col items-center justify-center h-full transition-colors px-1 relative cursor-pointer",
                 activeIndex === item.activeIndex
                   ? "text-primary dark:text-primary"
                   : "text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary"
               )}
-              onClick={() => setActiveIndex(item.activeIndex)}
+              onClick={() => {
+                setActiveIndex(item.activeIndex);
+                if (item.onClick) {
+                  item.onClick();
+                } else {
+                  navigate(item.path);
+                }
+              }}
             >
               <div className="relative">
                 {item.icon}
@@ -150,7 +180,7 @@ export const Navigation = () => {
                 )}
               </div>
               <span className="text-xs mt-1">{item.label}</span>
-            </Link>
+            </div>
           ))}
         </div>
       </nav>
