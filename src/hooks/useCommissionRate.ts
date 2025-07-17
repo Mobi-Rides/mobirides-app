@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const useCommissionRate = () => {
   return useQuery({
     queryKey: ["commission-rate"],
-    queryFn: async () => {
+    queryFn: async (): Promise<number> => {
       const { data, error } = await supabase
         .from("commission_rates")
         .select("rate")
@@ -22,6 +22,6 @@ export const useCommissionRate = () => {
       return data.rate;
     },
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
-    cacheTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
+    gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours (replaces cacheTime)
   });
 };
