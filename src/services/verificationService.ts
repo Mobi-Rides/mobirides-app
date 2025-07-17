@@ -2,15 +2,14 @@
 /**
  * Verification Service
  * Handles all verification-related database operations
+ * Updated to work with actual database schema
  */
 
 import { supabase } from "@/integrations/supabase/client";
 import {
   VerificationData,
   VerificationStep,
-  VerificationStatus,
   PersonalInfo,
-  DocumentUpload,
   PhoneVerification,
   AddressConfirmation,
 } from "@/types/verification";
@@ -59,7 +58,7 @@ export class VerificationService {
         .single();
 
       if (error) {
-        console.error("[VerificationService] Error creating verification:", error.message || JSON.stringify(error, null, 2), "Code:", error.code);
+        console.error("[VerificationService] Error creating verification:", error.message, "Code:", error.code);
         throw new Error(`Failed to initialize verification: ${error.message}`);
       }
 
@@ -229,32 +228,6 @@ export class VerificationService {
       return true;
     } catch (error) {
       console.error("[VerificationService] Failed to submit for review:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Complete verification (for admin use)
-   */
-  static async completeVerification(userId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from("user_verifications")
-        .update({
-          current_step: "completion",
-          overall_status: "completed",
-          completed_at: new Date().toISOString(),
-          last_updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", userId);
-
-      if (error) {
-        console.error("[VerificationService] Failed to complete verification:", error);
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.error("[VerificationService] Failed to complete verification:", error);
       return false;
     }
   }

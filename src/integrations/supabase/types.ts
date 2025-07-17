@@ -814,6 +814,63 @@ export type Database = {
           },
         ]
       }
+      user_verifications: {
+        Row: {
+          address_confirmed: boolean | null
+          admin_notes: string | null
+          completed_at: string | null
+          created_at: string
+          current_step: string
+          documents_completed: boolean | null
+          id: string
+          last_updated_at: string
+          overall_status: string
+          personal_info: Json | null
+          personal_info_completed: boolean | null
+          phone_verified: boolean | null
+          rejection_reasons: string[] | null
+          selfie_completed: boolean | null
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          address_confirmed?: boolean | null
+          admin_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_step?: string
+          documents_completed?: boolean | null
+          id?: string
+          last_updated_at?: string
+          overall_status?: string
+          personal_info?: Json | null
+          personal_info_completed?: boolean | null
+          phone_verified?: boolean | null
+          rejection_reasons?: string[] | null
+          selfie_completed?: boolean | null
+          user_id: string
+          user_role?: string
+        }
+        Update: {
+          address_confirmed?: boolean | null
+          admin_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_step?: string
+          documents_completed?: boolean | null
+          id?: string
+          last_updated_at?: string
+          overall_status?: string
+          personal_info?: Json | null
+          personal_info_completed?: boolean | null
+          phone_verified?: boolean | null
+          rejection_reasons?: string[] | null
+          selfie_completed?: boolean | null
+          user_id?: string
+          user_role?: string
+        }
+        Relationships: []
+      }
       vehicle_condition_reports: {
         Row: {
           acknowledged_at: string | null

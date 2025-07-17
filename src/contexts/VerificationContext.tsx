@@ -8,7 +8,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   VerificationData,
   VerificationStep,
-  VerificationStatus,
   PersonalInfo,
   PhoneVerification,
   AddressConfirmation,
@@ -34,7 +33,7 @@ interface VerificationContextType {
 
   // Utilities
   canNavigateToStep: (step: VerificationStep) => boolean;
-  getStepProgress: () => number;
+  getStepProgress: () => { completed: number; total: number; percentage: number };
   resetVerification: () => void;
 }
 
@@ -76,24 +75,24 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
   }, []);
 
   const refreshData = useCallback(async () => {
-    if (!verificationData?.userId) return;
+    if (!verificationData?.user_id) return;
 
     try {
-      const data = await VerificationService.loadVerificationData(verificationData.userId);
+      const data = await VerificationService.loadVerificationData(verificationData.user_id);
       if (data) {
         setVerificationData(data);
       }
     } catch (error) {
       console.error("[VerificationContext] Failed to refresh data:", error);
     }
-  }, [verificationData?.userId]);
+  }, [verificationData?.user_id]);
 
   const updatePersonalInfo = useCallback(async (personalInfo: Partial<PersonalInfo>) => {
-    if (!verificationData?.userId) throw new Error("No verification data");
+    if (!verificationData?.user_id) throw new Error("No verification data");
 
     try {
       setIsLoading(true);
-      await VerificationService.updatePersonalInfo(verificationData.userId, personalInfo);
+      await VerificationService.updatePersonalInfo(verificationData.user_id, personalInfo);
       await refreshData();
     } catch (error) {
       console.error("[VerificationContext] Failed to update personal info:", error);
@@ -101,14 +100,14 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [verificationData?.userId, refreshData]);
+  }, [verificationData?.user_id, refreshData]);
 
   const completeSelfieVerification = useCallback(async () => {
-    if (!verificationData?.userId) throw new Error("No verification data");
+    if (!verificationData?.user_id) throw new Error("No verification data");
 
     try {
       setIsLoading(true);
-      await VerificationService.completeSelfieVerification(verificationData.userId);
+      await VerificationService.completeSelfieVerification(verificationData.user_id);
       await refreshData();
     } catch (error) {
       console.error("[VerificationContext] Failed to complete selfie verification:", error);
@@ -116,14 +115,14 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [verificationData?.userId, refreshData]);
+  }, [verificationData?.user_id, refreshData]);
 
   const updatePhoneVerification = useCallback(async (phoneData: Partial<PhoneVerification>) => {
-    if (!verificationData?.userId) throw new Error("No verification data");
+    if (!verificationData?.user_id) throw new Error("No verification data");
 
     try {
       setIsLoading(true);
-      await VerificationService.updatePhoneVerification(verificationData.userId, phoneData);
+      await VerificationService.updatePhoneVerification(verificationData.user_id, phoneData);
       await refreshData();
     } catch (error) {
       console.error("[VerificationContext] Failed to update phone verification:", error);
@@ -131,14 +130,14 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [verificationData?.userId, refreshData]);
+  }, [verificationData?.user_id, refreshData]);
 
   const updateAddressConfirmation = useCallback(async (addressData: Partial<AddressConfirmation>) => {
-    if (!verificationData?.userId) throw new Error("No verification data");
+    if (!verificationData?.user_id) throw new Error("No verification data");
 
     try {
       setIsLoading(true);
-      await VerificationService.updateAddressConfirmation(verificationData.userId, addressData);
+      await VerificationService.updateAddressConfirmation(verificationData.user_id, addressData);
       await refreshData();
     } catch (error) {
       console.error("[VerificationContext] Failed to update address confirmation:", error);
@@ -146,14 +145,14 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [verificationData?.userId, refreshData]);
+  }, [verificationData?.user_id, refreshData]);
 
   const submitForReview = useCallback(async () => {
-    if (!verificationData?.userId) throw new Error("No verification data");
+    if (!verificationData?.user_id) throw new Error("No verification data");
 
     try {
       setIsLoading(true);
-      await VerificationService.submitForReview(verificationData.userId);
+      await VerificationService.submitForReview(verificationData.user_id);
       await refreshData();
     } catch (error) {
       console.error("[VerificationContext] Failed to submit for review:", error);
@@ -161,37 +160,40 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [verificationData?.userId, refreshData]);
+  }, [verificationData?.user_id, refreshData]);
 
   const navigateToStep = useCallback(async (step: VerificationStep) => {
-    if (!verificationData?.userId) throw new Error("No verification data");
+    if (!verificationData?.user_id) throw new Error("No verification data");
 
     try {
-      await VerificationService.navigateToStep(verificationData.userId, step);
+      await VerificationService.navigateToStep(verificationData.user_id, step);
       await refreshData();
     } catch (error) {
       console.error("[VerificationContext] Failed to navigate to step:", error);
       throw error;
     }
-  }, [verificationData?.userId, refreshData]);
+  }, [verificationData?.user_id, refreshData]);
 
   const canNavigateToStep = useCallback((step: VerificationStep): boolean => {
     if (!verificationData) return false;
 
     const steps = Object.values(VerificationStep);
-    const currentIndex = steps.indexOf(verificationData.currentStep);
+    const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
     const targetIndex = steps.indexOf(step);
 
-    // Can always go to current step or previous steps
     return targetIndex <= currentIndex;
   }, [verificationData]);
 
-  const getStepProgress = useCallback((): number => {
-    if (!verificationData) return 0;
+  const getStepProgress = useCallback(() => {
+    if (!verificationData) return { completed: 0, total: 8, percentage: 0 };
 
     const steps = Object.values(VerificationStep);
-    const currentIndex = steps.indexOf(verificationData.currentStep);
-    return Math.round(((currentIndex + 1) / steps.length) * 100);
+    const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
+    const completed = currentIndex + 1;
+    const total = steps.length;
+    const percentage = Math.round((completed / total) * 100);
+
+    return { completed, total, percentage };
   }, [verificationData]);
 
   const resetVerification = useCallback(() => {

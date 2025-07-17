@@ -23,23 +23,22 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
 }) => {
   const { verificationData, updatePersonalInfo, isLoading } = useVerification();
   const [formData, setFormData] = useState({
-    fullName: verificationData?.personalInfo?.fullName || "",
-    dateOfBirth: verificationData?.personalInfo?.dateOfBirth || "",
-    nationalIdNumber: verificationData?.personalInfo?.nationalIdNumber || "",
-    phoneNumber: verificationData?.personalInfo?.phoneNumber || "",
-    email: verificationData?.personalInfo?.email || "",
+    fullName: verificationData?.personal_info?.fullName || "",
+    dateOfBirth: verificationData?.personal_info?.dateOfBirth || "",
+    nationalIdNumber: verificationData?.personal_info?.nationalIdNumber || "",
+    phoneNumber: verificationData?.personal_info?.phoneNumber || "",
+    email: verificationData?.personal_info?.email || "",
     address: {
-      street: verificationData?.personalInfo?.address?.street || "",
-      area: verificationData?.personalInfo?.address?.area || "",
-      city: verificationData?.personalInfo?.address?.city || "",
-      postalCode: verificationData?.personalInfo?.address?.postalCode || "",
+      street: verificationData?.personal_info?.address?.street || "",
+      area: verificationData?.personal_info?.address?.area || "",
+      city: verificationData?.personal_info?.address?.city || "",
+      postalCode: verificationData?.personal_info?.address?.postalCode || "",
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
     if (!formData.fullName || !formData.dateOfBirth || !formData.nationalIdNumber) {
       toast.error("Please fill in all required fields");
       return;

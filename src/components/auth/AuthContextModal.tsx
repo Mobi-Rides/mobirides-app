@@ -1,120 +1,77 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SignUpForm } from "@/components/auth/SignUpForm";
+import { Button } from "@/components/ui/button";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { SignUpForm } from "@/components/auth/SignUpForm";
 
 interface AuthContextModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  context?: {
-    action: 'booking' | 'save_car' | 'contact_host';
-    title?: string;
-    description?: string;
-  };
-  defaultTab?: "signin" | "signup";
+  onOpenChange: (open: boolean) => void;
+  title?: string;
+  description?: string;
+  onSuccess?: () => void;
 }
 
-const getContextContent = (action?: string) => {
-  switch (action) {
-    case 'booking':
-      return {
-        title: 'Sign up to book this car',
-        description: 'Create an account to complete your booking and connect with the host.'
-      };
-    case 'save_car':
-      return {
-        title: 'Sign up to save cars',
-        description: 'Create an account to save your favorite cars and access them anytime.'
-      };
-    case 'contact_host':
-      return {
-        title: 'Sign up to contact host',
-        description: 'Create an account to message the host and ask questions about the car.'
-      };
-    default:
-      return {
-        title: 'Join Mobirides',
-        description: 'Sign up to access all features and start your car rental journey.'
-      };
-  }
-};
-
-export const AuthContextModal = ({ 
-  isOpen, 
-  onClose, 
-  context,
-  defaultTab = "signup" 
-}: AuthContextModalProps) => {
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">(defaultTab);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const contextContent = getContextContent(context?.action);
-
-  // Update URL when tab changes (only if we're not handling a pending action)
-  useEffect(() => {
-    if (isOpen && !context) {
-      navigate(`/?auth=${activeTab}`, { replace: true });
-    }
-  }, [activeTab, isOpen, navigate, context]);
-
-  // Close modal and reset URL when navigating away (only if no pending action)
-  useEffect(() => {
-    return () => {
-      if (isOpen && location.search.includes("auth=") && !context) {
-        navigate("/", { replace: true });
-      }
-    };
-  }, [isOpen, location.search, navigate, context]);
-
-  // Handle dialog close
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      onClose();
-      // Only navigate to home if we don't have a pending action context
-      if (!context) {
-        navigate("/", { replace: true });
-      }
-    }
-  };
+export const AuthContextModal: React.FC<AuthContextModalProps> = ({
+  isOpen,
+  onOpenChange,
+  title = "Sign in to continue",
+  description = "You need to be signed in to access this feature.",
+  onSuccess,
+}) => {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
 
   const handleSuccess = () => {
-    onClose();
-    // Don't navigate away - let the auth state change handle the pending action execution
-    // The components will stay on the same page to receive the events
+    onOpenChange(false);
+    onSuccess?.();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-xl font-bold">
-            {context?.title || contextContent.title}
-          </DialogTitle>
-          {(context?.description || contextContent.description) && (
-            <p className="text-center text-sm text-muted-foreground mt-2">
-              {context?.description || contextContent.description}
-            </p>
+          <DialogTitle>{title}</DialogTitle>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
           )}
         </DialogHeader>
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as "signin" | "signup")}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          <TabsContent value="signin" className="mt-4">
-            <SignInForm onSuccess={handleSuccess} />
-          </TabsContent>
-          <TabsContent value="signup" className="mt-4">
-            <SignUpForm onSuccess={handleSuccess} />
-          </TabsContent>
-        </Tabs>
+
+        <div className="space-y-4">
+          {mode === "signin" ? (
+            <>
+              <SignInForm onSuccess={handleSuccess} />
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Don't have an account?{" "}
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto"
+                    onClick={() => setMode("signup")}
+                  >
+                    Sign up
+                  </Button>
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <SignUpForm onSuccess={handleSuccess} />
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto"
+                    onClick={() => setMode("signin")}
+                  >
+                    Sign in
+                  </Button>
+                </p>
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
