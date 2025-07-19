@@ -41,7 +41,7 @@ const Verification = lazy(() => import("@/pages/Verification"));
 
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
-const RenterBookings = lazy(() => import("@/pages/Bookings"));
+const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
 const RoleAwareBookingsRedirect = lazy(() => import("@/components/RoleAwareBookingsRedirect"));
 
 const PageTransitionLoader = () => {
