@@ -14,13 +14,20 @@ export const RenterBookingStats = () => {
       
       const { data: bookings, error } = await supabase
         .from("bookings")
-        .select("status")
+        .select("status, start_date, end_date")
         .eq("renter_id", user.id);
 
       if (error) throw error;
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const total = bookings.length;
-      const active = bookings.filter(b => b.status === "confirmed").length;
+      const active = bookings.filter(b => 
+        b.status === "confirmed" && 
+        new Date(b.start_date) <= today && 
+        new Date(b.end_date) >= today
+      ).length;
       const completed = bookings.filter(b => b.status === "completed").length;
       const pending = bookings.filter(b => b.status === "pending").length;
 
