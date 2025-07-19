@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProfileLoading } from "@/components/profile/ProfileLoading";
 import { ProfileError } from "@/components/profile/ProfileError";
-import { ProfileMenu } from "@/components/profile/ProfileMenu";
-import { ProfileEditView } from "@/components/profile/ProfileEditView";
-import { RoleEditView } from "@/components/profile/RoleEditView";
+import { ProfileTabsView } from "@/components/profile/ProfileTabsView";
 import { Navigation } from "@/components/Navigation";
 import { useUserLocation } from "@/hooks/useUserLocation";
 
@@ -15,7 +13,6 @@ const Profile = () => {
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initialFormValues, setInitialFormValues] = useState({ full_name: "" });
-  const [activeView, setActiveView] = useState<'menu' | 'profile' | 'role'>('menu');
   const [userRole, setUserRole] = useState<string>('renter');
   const navigate = useNavigate();
   const { userLocation } = useUserLocation(null);
@@ -94,32 +91,15 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      {activeView === 'menu' && (
-        <ProfileMenu 
-          fullName={initialFormValues.full_name} 
-          avatarUrl={avatarUrl} 
-          setActiveView={setActiveView}
-          role={userRole}
-        />
-      )}
-
-      {activeView === 'profile' && (
-        <ProfileEditView 
-          avatarUrl={avatarUrl}
-          setAvatarUrl={setAvatarUrl}
-          initialFormValues={initialFormValues}
-          onBack={() => setActiveView('menu')}
-        />
-      )}
-
-      {activeView === 'role' && (
-        <RoleEditView
-          latitude={latitude}
-          longitude={longitude}
-          onBack={() => setActiveView('menu')}
-        />
-      )}
-
+      <ProfileTabsView
+        fullName={initialFormValues.full_name}
+        avatarUrl={avatarUrl}
+        setAvatarUrl={setAvatarUrl}
+        initialFormValues={initialFormValues}
+        role={userRole}
+        latitude={latitude}
+        longitude={longitude}
+      />
       <Navigation />
     </div>
   );
