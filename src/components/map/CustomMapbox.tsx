@@ -47,7 +47,9 @@ const CustomMapbox = ({
   const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
   const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
 
-  const handover = isHandoverMode ? useHandover() : null;
+  // Always call hooks - move conditional logic to usage
+  const handoverData = useHandover();
+  const handover = isHandoverMode ? handoverData : null;
 
   useEffect(() => {
     if (!returnLocation) {

@@ -46,7 +46,7 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
     searchQuery: "",
   });
 
-  const handleFilterChange = (key: keyof SearchFilters, value: any) => {
+  const handleFilterChange = (key: keyof SearchFilters, value: string | number | Date | undefined) => {
     console.log(`Updating filter ${key} with value:`, value);
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -62,6 +62,11 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
     onFiltersChange(filters);
     toast.success("Filters applied successfully");
   }, [filters, onFiltersChange]);
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    onFiltersChange(filters);
+  };
 
   return (
     <div className="w-full rounded-lg border bg-card shadow-sm my-5 relative">

@@ -31,13 +31,19 @@ interface CarFormData {
   seats: number;
 }
 
+interface DocumentStructure {
+  registration?: File;
+  insurance?: File;
+  additional?: FileList;
+}
+
 interface CarFormProps {
   initialData: CarFormData;
   selectedFeatures: string[];
   onFeaturesChange: (features: string[]) => void;
   isEdit?: boolean;
   carId?: string;
-  onSubmit: (formData: CarFormData, imageFile: File | null, documents: any, features: string[]) => Promise<void>;
+  onSubmit: (formData: CarFormData, imageFile: File | null, documents: DocumentStructure, features: string[]) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -51,11 +57,7 @@ export const CarForm = ({
 }: CarFormProps) => {
   const [formData, setFormData] = useState<CarFormData>(initialData);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [documents, setDocuments] = useState<{
-    registration?: File;
-    insurance?: File;
-    additional?: FileList;
-  }>({});
+  const [documents, setDocuments] = useState<DocumentStructure>({});
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

@@ -126,7 +126,7 @@ export interface StepCompletionData {
   step: VerificationStep;
   isValid: boolean;
   errors: ValidationError[];
-  data: any; // Step-specific data
+  data: Record<string, unknown>; // Step-specific data
 }
 
 // Progress tracking

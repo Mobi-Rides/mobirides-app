@@ -20,7 +20,7 @@ interface ProfileMenuProps {
 }
 
 interface MenuItem {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
   color?: string;

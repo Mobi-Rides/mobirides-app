@@ -21,18 +21,19 @@ export const updateUserLocation = async ({
       return false;
     }
 
-    return new Promise(async (resolve) => {
-      try {
-        console.log("Got coordinates:", lat, long);
-        const payload = createLocationUpdatePayload(true, {
-          latitude: lat,
-          longitude: long,
-        });
+    return new Promise((resolve) => {
+      (async () => {
+        try {
+          console.log("Got coordinates:", lat, long);
+          const payload = createLocationUpdatePayload(true, {
+            latitude: lat,
+            longitude: long,
+          });
 
-        const { error } = await supabase
-          .from("profiles")
-          .update(payload)
-          .eq("id", userId);
+          const { error } = await supabase
+            .from("profiles")
+            .update(payload)
+            .eq("id", userId);
 
         if (error) {
           console.error("Error updating location:", error);
@@ -41,14 +42,15 @@ export const updateUserLocation = async ({
           return;
         }
 
-        console.log("Location coordinates updated successfully");
-        toast.success("Location updated successfully");
-        resolve(true);
-      } catch (error) {
-        console.error("Error updating location:", error);
-        toast.error("Could not update your location");
-        resolve(false);
-      }
+          console.log("Location coordinates updated successfully");
+          toast.success("Location updated successfully");
+          resolve(true);
+        } catch (error) {
+          console.error("Error updating location:", error);
+          toast.error("Could not update your location");
+          resolve(false);
+        }
+      })();
     });
   } catch (error) {
     console.error("Error in updateUserLocation:", error);

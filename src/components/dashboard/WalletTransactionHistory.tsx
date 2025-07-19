@@ -9,6 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ArrowUpDown, TrendingUp, TrendingDown, RefreshCw, Minus, ExternalLink } from "lucide-react";
 
+interface WalletTransaction {
+  id: string;
+  booking_id?: string;
+  amount: number;
+  transaction_type: string;
+  description: string;
+  created_at: string;
+}
+
 export const WalletTransactionHistory = () => {
   const navigate = useNavigate();
 
@@ -75,14 +84,14 @@ export const WalletTransactionHistory = () => {
     }
   };
 
-  const handleTransactionClick = (transaction: any) => {
+  const handleTransactionClick = (transaction: WalletTransaction) => {
     // Navigate to booking details if it's a commission charge and has a booking_id
     if ((transaction.transaction_type === "commission_deduction" || transaction.transaction_type === "fee_deduction") && transaction.booking_id) {
       navigate(`/booking-request/${transaction.booking_id}`);
     }
   };
 
-  const isClickableTransaction = (transaction: any) => {
+  const isClickableTransaction = (transaction: WalletTransaction) => {
     return (transaction.transaction_type === "commission_deduction" || transaction.transaction_type === "fee_deduction") && transaction.booking_id;
   };
 
@@ -141,7 +150,7 @@ export const WalletTransactionHistory = () => {
                 ? "cursor-pointer hover:bg-muted/50 hover:border-primary/50" 
                 : "hover:bg-muted/30"
             }`}
-            onClick={() => handleTransactionClick(transaction)}
+            onClick={() => transaction.booking_id && handleTransactionClick(transaction)}
           >
             <div className="flex items-center gap-3 flex-1">
               <div className="p-2 rounded-full bg-muted">
