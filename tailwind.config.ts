@@ -19,6 +19,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'xs': '480px',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -73,12 +76,10 @@ export default {
         },
         "throb": {
           "0%, 100%": { 
-            transform: "scale(1)",
-            opacity: "1"
+            textShadow: "0 0 4px rgba(124, 58, 237, 0.3)",
           },
           "50%": { 
-            transform: "scale(1.02)",
-            opacity: "0.9"
+            textShadow: "0 0 8px rgba(124, 58, 237, 0.6), 0 0 12px rgba(124, 58, 237, 0.4)",
           },
         },
       },
