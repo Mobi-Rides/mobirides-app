@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const RoleAwareBookingsRedirect = () => {
+const RoleAwareBookingsRedirect = () => {
   const navigate = useNavigate();
   const { userRole, isLoadingRole } = useAuthStatus();
 
@@ -35,3 +35,5 @@ export const RoleAwareBookingsRedirect = () => {
 
   return null;
 };
+
+export default RoleAwareBookingsRedirect;
