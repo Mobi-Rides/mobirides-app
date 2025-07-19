@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "echo 'No tests found. Please add tests to this project.' && exit 0"
+    "test": "echo 'No tests found. Please add tests to this project.'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
