@@ -119,7 +119,16 @@ export const Navigation = () => {
   ];
 
   useEffect(() => {
-    const currentItem = items.find((item) => location.pathname === item.path);
+    const currentItem = items.find((item) => {
+      // Handle role-specific booking routes
+      if (item.path === "/bookings") {
+        return location.pathname === "/bookings" || 
+               location.pathname === "/host-bookings" || 
+               location.pathname === "/renter-bookings";
+      }
+      return location.pathname === item.path;
+    });
+    
     if (currentItem) {
       setActiveIndex(currentItem.activeIndex);
     }
@@ -134,9 +143,9 @@ export const Navigation = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center h-full transition-colors px-1 relative",
+                "flex flex-col items-center justify-center h-full transition-all duration-200 px-1 relative hover-scale",
                 activeIndex === item.activeIndex
-                  ? "text-primary dark:text-primary"
+                  ? "text-primary dark:text-primary animate-scale-in"
                   : "text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary"
               )}
               onClick={() => setActiveIndex(item.activeIndex)}
@@ -144,7 +153,7 @@ export const Navigation = () => {
               <div className="relative">
                 {item.icon}
                 {item.badge && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center p-0 text-xs">
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center p-0 text-xs animate-pulse">
                     {item.badge > 99 ? '99+' : item.badge}
                   </Badge>
                 )}
