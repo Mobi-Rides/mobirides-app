@@ -1,3 +1,4 @@
+
 /**
  * Processing Status Step Component
  * Shows real-time status of verification processing
@@ -7,12 +8,12 @@
 import React, { useState, useEffect } from "react";
 import { useVerification } from "@/contexts/VerificationContext";
 import { useAuth } from "@/hooks/useAuth";
-import { VerificationStatus } from "@/types/verification";
 import { VerificationService } from "@/services/verificationService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import {
   Clock,
   CheckCircle,
@@ -229,7 +230,7 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
 
   // Check if processing is complete
   const isProcessingComplete =
-    verificationData?.overallStatus === VerificationStatus.COMPLETED;
+    verificationData?.overall_status === "completed";
 
   // Track long processing time
   const [processingStartTime] = React.useState(Date.now());
@@ -379,8 +380,8 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
             <div>
               <p className="font-medium">Reference Number</p>
               <p className="text-muted-foreground font-mono">
-                {verificationData?.userId
-                  ? `VER-${verificationData.userId.slice(-8).toUpperCase()}`
+                {verificationData?.user_id
+                  ? `VER-${verificationData.user_id.slice(-8).toUpperCase()}`
                   : "Generating..."}
               </p>
             </div>
@@ -430,8 +431,8 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
                   Verification Submitted
                 </p>
                 <p className="text-sm text-green-600">
-                  {verificationData?.startedAt
-                    ? new Date(verificationData.startedAt).toLocaleString()
+                  {verificationData?.created_at
+                    ? new Date(verificationData.created_at).toLocaleString()
                     : "Just now"}
                 </p>
               </div>
@@ -482,24 +483,17 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
                 business days.
                 <br />
                 <span className="text-sm">
-                  Current progress: {processingProgress}%
+                  You can also manually complete the verification for testing.
                 </span>
               </div>
-              <div className="space-x-2">
-                <button
-                  onClick={handleCompleteVerification}
-                  disabled={isCompleting}
-                  className="px-3 py-1 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isCompleting ? "Completing..." : "Complete Now"}
-                </button>
-                <button
-                  onClick={() => onNext()}
-                  className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                >
-                  Skip to Next
-                </button>
-              </div>
+              <Button
+                onClick={handleCompleteVerification}
+                disabled={isCompleting}
+                size="sm"
+                className="ml-4"
+              >
+                {isCompleting ? "Completing..." : "Complete Now"}
+              </Button>
             </div>
           </AlertDescription>
         </Alert>

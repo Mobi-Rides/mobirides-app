@@ -20,6 +20,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'xs': '480px',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -72,10 +75,19 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "throb": {
+          "0%, 100%": { 
+            textShadow: "0 0 4px rgba(124, 58, 237, 0.3)",
+          },
+          "50%": { 
+            textShadow: "0 0 8px rgba(124, 58, 237, 0.6), 0 0 12px rgba(124, 58, 237, 0.4)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "throb": "throb 2s ease-in-out infinite",
       },
     },
   },

@@ -1,3 +1,4 @@
+
 /**
  * Verification Status Badge Component
  * Shows user's verification status in the UI
@@ -57,7 +58,7 @@ export const VerificationStatusBadge: React.FC<
 
     if (
       verificationData &&
-      verificationData.overallStatus === "pending_review"
+      verificationData.overall_status === "pending_review"
     ) {
       return {
         icon: <Clock className="h-3 w-3" />,
@@ -68,7 +69,7 @@ export const VerificationStatusBadge: React.FC<
       };
     }
 
-    if (verificationData && verificationData.currentStep) {
+    if (verificationData && verificationData.current_step) {
       return {
         icon: <AlertCircle className="h-3 w-3" />,
         text: "In Progress",

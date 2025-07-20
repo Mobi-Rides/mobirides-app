@@ -22,7 +22,6 @@ const CarDetails = lazy(() => import("@/pages/CarDetails"));
 const AddCar = lazy(() => import("@/pages/AddCar"));
 const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
-const Bookings = lazy(() => import("@/pages/Bookings"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
 const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
 const BookingRequestDetails = lazy(
@@ -39,6 +38,11 @@ const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Verification = lazy(() => import("@/pages/Verification"));
+
+// Role-specific booking pages
+const HostBookings = lazy(() => import("@/pages/HostBookings"));
+const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
+const RoleAwareBookingsRedirect = lazy(() => import("@/components/RoleAwareBookingsRedirect"));
 
 const PageTransitionLoader = () => {
   const location = useLocation();
@@ -152,11 +156,28 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           />
+          {/* Role-aware booking routing */}
           <Route
             path="/bookings"
             element={
               <ProtectedRoute>
-                <Bookings />
+                <RoleAwareBookingsRedirect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/host-bookings"
+            element={
+              <ProtectedRoute>
+                <HostBookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/renter-bookings"
+            element={
+              <ProtectedRoute>
+                <RenterBookings />
               </ProtectedRoute>
             }
           />

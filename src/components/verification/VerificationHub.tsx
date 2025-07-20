@@ -1,7 +1,7 @@
+
 /**
  * Verification Hub Component - Main Container
- * Manages the multi-step verification process with progress tracking
- * Provides navigation between verification steps and overall flow control
+ * Updated to work with actual database schema
  */
 
 import React, { useEffect, useState } from "react";
@@ -52,9 +52,6 @@ import { ReviewSubmitStep } from "./steps/ReviewSubmitStep";
 import { ProcessingStatusStep } from "./steps/ProcessingStatusStep";
 import { CompletionStep } from "./steps/CompletionStep";
 
-/**
- * Step configuration with metadata for display and navigation
- */
 const STEP_CONFIG = {
   [VerificationStep.PERSONAL_INFO]: {
     title: "Personal Information",
@@ -106,10 +103,6 @@ const STEP_CONFIG = {
   },
 };
 
-/**
- * Progress Stepper Component
- * Shows visual progress through verification steps
- */
 const ProgressStepper: React.FC<{
   currentStep: VerificationStep;
   stepStatuses: Record<VerificationStep, VerificationStatus>;
@@ -158,7 +151,6 @@ const ProgressStepper: React.FC<{
                     />
                   )}
 
-                  {/* Step number badge */}
                   <Badge
                     variant="secondary"
                     className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs"
@@ -179,7 +171,6 @@ const ProgressStepper: React.FC<{
                 </div>
               </div>
 
-              {/* Connector line */}
               {index < steps.length - 1 && (
                 <div
                   className={`
@@ -196,10 +187,6 @@ const ProgressStepper: React.FC<{
   );
 };
 
-/**
- * Main Verification Hub Component
- * Orchestrates the entire verification process
- */
 export const VerificationHub: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -218,94 +205,43 @@ export const VerificationHub: React.FC = () => {
   const [showDeveloperControls, setShowDeveloperControls] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  /**
-   * Initialize verification if not already started
-   * Uses authenticated user and their role from the profile
-   */
   useEffect(() => {
     if (!user?.id) {
-      console.log("[VerificationHub] No user ID available, user:", user);
+      console.log("[VerificationHub] No user ID available");
       return;
     }
 
-    console.log(
-      "[VerificationHub] User available:",
-      user.id,
-      "Metadata:",
-      user.user_metadata,
-    );
-
-    // Add timeout to prevent infinite loading states
-    const initTimeout = setTimeout(() => {
-      if (isLoading && !isInitialized && !verificationData) {
-        console.warn(
-          "[VerificationHub] Verification loading timeout, attempting manual initialization",
-        );
-        const userRole = user.user_metadata?.role || "renter";
-        initializeVerification(user.id, userRole).catch(console.error);
-      }
-    }, 5000);
-
     if (isInitialized || isLoading || verificationData) {
-      clearTimeout(initTimeout);
       return;
     }
 
     const initializeUserVerification = async () => {
       try {
-        // Get user role from profile - default to renter if not specified
         const userRole = user.user_metadata?.role || "renter";
-
-        console.log(
-          "[VerificationHub] Initializing verification for user:",
-          user.id,
-          "Role:",
-          userRole,
-        );
-
+        console.log("[VerificationHub] Initializing verification for user:", user.id, "Role:", userRole);
         await initializeVerification(user.id, userRole);
       } catch (error) {
-        console.error(
-          "[VerificationHub] Failed to initialize verification:",
-          error,
-        );
+        console.error("[VerificationHub] Failed to initialize verification:", error);
         toast.error("Failed to initialize verification process");
       }
     };
 
     initializeUserVerification();
+  }, [user?.id, isInitialized, isLoading, verificationData, initializeVerification]);
 
-    return () => clearTimeout(initTimeout);
-  }, [
-    user?.id,
-    isInitialized,
-    isLoading,
-    verificationData,
-    initializeVerification,
-  ]);
-
-  /**
-   * Handle step navigation
-   * Validates navigation permissions before allowing step change
-   */
   const handleStepNavigation = (step: VerificationStep) => {
     if (!canNavigateToStep(step)) {
       toast.error("Please complete the previous steps first");
       return;
     }
-
     navigateToStep(step);
   };
 
-  /**
-   * Handle next step navigation
-   * Moves to the next available step
-   */
   const handleNextStep = () => {
     if (!verificationData) return;
 
     const steps = Object.values(VerificationStep);
-    const currentIndex = steps.indexOf(verificationData.currentStep);
+    const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
 
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
@@ -313,15 +249,11 @@ export const VerificationHub: React.FC = () => {
     }
   };
 
-  /**
-   * Handle previous step navigation
-   * Moves to the previous step
-   */
   const handlePreviousStep = () => {
     if (!verificationData) return;
 
     const steps = Object.values(VerificationStep);
-    const currentIndex = steps.indexOf(verificationData.currentStep);
+    const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
 
     if (currentIndex > 0) {
       const previousStep = steps[currentIndex - 1];
@@ -329,47 +261,27 @@ export const VerificationHub: React.FC = () => {
     }
   };
 
-  /**
-   * Handle canceling verification process
-   * Navigates back to home page
-   */
   const handleCancelVerification = () => {
-    toast.info(
-      "Verification canceled. You can resume anytime from your profile.",
-    );
+    toast.info("Verification canceled. You can resume anytime from your profile.");
     navigate("/");
   };
 
-  /**
-   * Handle back to home navigation
-   * Quick navigation back to main app
-   */
   const handleBackToHome = () => {
     navigate("/");
   };
 
-  /**
-   * Get current step component
-   * Returns the appropriate step component to render
-   */
   const getCurrentStepComponent = () => {
     if (!verificationData) return null;
 
-    const StepComponent = STEP_CONFIG[verificationData.currentStep].component;
+    const StepComponent = STEP_CONFIG[verificationData.current_step as VerificationStep].component;
     return (
       <StepComponent onNext={handleNextStep} onPrevious={handlePreviousStep} />
     );
   };
 
-  /**
-   * Render error state
-   */
   if (error) {
     return (
-      <div
-        className="min-h-screen p-4 flex items-center justify-center"
-        style={{ backgroundColor: "#020817" }}
-      >
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{ backgroundColor: "#020817" }}>
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -384,22 +296,13 @@ export const VerificationHub: React.FC = () => {
     );
   }
 
-  /**
-   * Render loading state
-   */
   if (isLoading || !verificationData) {
     return (
-      <div
-        className="min-h-screen p-4 flex items-center justify-center"
-        style={{ backgroundColor: "#020817" }}
-      >
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{ backgroundColor: "#020817" }}>
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground mb-4">
-              Initializing verification...
-            </p>
-       
+            <p className="text-muted-foreground mb-4">Initializing verification...</p>
           </CardContent>
         </Card>
       </div>
@@ -407,7 +310,7 @@ export const VerificationHub: React.FC = () => {
   }
 
   const progress = getStepProgress();
-  const currentStepConfig = STEP_CONFIG[verificationData.currentStep];
+  const currentStepConfig = STEP_CONFIG[verificationData.current_step as VerificationStep];
 
   return (
     <div className="min-h-screen p-4" style={{ backgroundColor: "#020817" }}>
@@ -426,16 +329,11 @@ export const VerificationHub: React.FC = () => {
 
           <div className="flex items-center gap-2 text-white/80 text-sm">
             <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              Secure verification process
-            </span>
+            <span className="hidden sm:inline">Secure verification process</span>
             <span className="sm:hidden">Secure process</span>
           </div>
 
-          <AlertDialog
-            open={showCancelDialog}
-            onOpenChange={setShowCancelDialog}
-          >
+          <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
             <AlertDialogTrigger asChild>
               <Button
                 variant="outline"
@@ -450,16 +348,12 @@ export const VerificationHub: React.FC = () => {
               <AlertDialogHeader>
                 <AlertDialogTitle>Cancel Verification?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to cancel the verification process? Your
-                  progress will be saved and you can resume later from your
-                  profile.
+                  Are you sure you want to cancel the verification process? Your progress will be saved and you can resume later from your profile.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Continue Verification</AlertDialogCancel>
-                <AlertDialogAction onClick={handleCancelVerification}>
-                  Yes, Cancel
-                </AlertDialogAction>
+                <AlertDialogAction onClick={handleCancelVerification}>Yes, Cancel</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -467,20 +361,13 @@ export const VerificationHub: React.FC = () => {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white-900 mb-2">
-            Identity Verification
-          </h1>
-          <p className="text-lg text-muted-foreground mb-4">
-            Complete your verification to start using MobiRides
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">Identity Verification</h1>
+          <p className="text-lg text-muted-foreground mb-4">Complete your verification to start using MobiRides</p>
 
-          {/* Overall Progress */}
           <div className="bg-white rounded-lg p-4 shadow-sm mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Overall Progress</span>
-              <span className="text-sm text-muted-foreground">
-                {progress.completed} of {progress.total} steps
-              </span>
+              <span className="text-sm text-muted-foreground">{progress.completed} of {progress.total} steps</span>
             </div>
             <Progress value={progress.percentage} className="h-2" />
           </div>
@@ -488,8 +375,17 @@ export const VerificationHub: React.FC = () => {
 
         {/* Progress Stepper */}
         <ProgressStepper
-          currentStep={verificationData.currentStep}
-          stepStatuses={verificationData.stepStatuses}
+          currentStep={verificationData.current_step as VerificationStep}
+          stepStatuses={{
+            [VerificationStep.PERSONAL_INFO]: verificationData.personal_info_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.DOCUMENT_UPLOAD]: verificationData.documents_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.SELFIE_VERIFICATION]: verificationData.selfie_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.PHONE_VERIFICATION]: verificationData.phone_verified ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.ADDRESS_CONFIRMATION]: verificationData.address_confirmed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.REVIEW_SUBMIT]: VerificationStatus.NOT_STARTED,
+            [VerificationStep.PROCESSING_STATUS]: VerificationStatus.NOT_STARTED,
+            [VerificationStep.COMPLETION]: VerificationStatus.NOT_STARTED,
+          }}
           onStepClick={handleStepNavigation}
           canNavigateToStep={canNavigateToStep}
         />
@@ -501,16 +397,52 @@ export const VerificationHub: React.FC = () => {
               <currentStepConfig.icon className="h-6 w-6 text-primary" />
               <div>
                 <CardTitle>{currentStepConfig.title}</CardTitle>
-                <p className="text-muted-foreground">
-                  {currentStepConfig.description}
-                </p>
+                <p className="text-muted-foreground">{currentStepConfig.description}</p>
               </div>
             </div>
           </CardHeader>
           <CardContent>{getCurrentStepComponent()}</CardContent>
         </Card>
 
-     
+        {/* Development Controls */}
+        {process.env.NODE_ENV === "development" && (
+          <Card className="mt-6 border-orange-200">
+            <CardHeader>
+              <Button
+                variant="ghost"
+                onClick={() => setShowDeveloperControls(!showDeveloperControls)}
+                className="justify-start p-0 h-auto text-orange-600 hover:text-orange-700"
+              >
+                🛠️ Developer Controls {showDeveloperControls ? "▼" : "▶"}
+              </Button>
+            </CardHeader>
+            {showDeveloperControls && (
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {Object.values(VerificationStep).map((step) => (
+                      <Button
+                        key={step}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigateToStep(step)}
+                        className="text-xs"
+                      >
+                        {step.replace("_", " ")}
+                      </Button>
+                    ))}
+                  </div>
+                  <Separator />
+                  <div className="flex gap-2">
+                    <Button variant="destructive" size="sm" onClick={resetVerification}>
+                      Reset Verification
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   );

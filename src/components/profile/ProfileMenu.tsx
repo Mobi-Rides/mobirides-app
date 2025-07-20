@@ -25,6 +25,7 @@ interface MenuItem {
   onClick: () => void;
   color?: string;
   description?: string;
+  animate?: boolean;
 }
 
 export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter' }: ProfileMenuProps) => {
@@ -71,6 +72,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
       icon: CalendarClock,
       label: "My Bookings",
       onClick: () => navigate("/bookings"),
+      animate: true,
     },
   ];
 
@@ -186,7 +188,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
                 type="button"
                 onClick={item.onClick}
                 aria-label={item.label}
-                className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"}`}
+                className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${item.color || "text-foreground"} ${item.animate ? "animate-throb" : ""}`}
               >
                 <div className="flex items-center gap-3">
                   <item.icon className="h-5 w-5" />

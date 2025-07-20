@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { CarBasicInfo } from "@/components/add-car/CarBasicInfo";
-import { CarDetails } from "@/components/add-car/CarDetails";
+import { EnhancedCarDetails } from "@/components/add-car/EnhancedCarDetails";
 import { CarDescription } from "@/components/add-car/CarDescription";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { DocumentUpload } from "@/components/add-car/DocumentUpload";
@@ -29,6 +29,13 @@ interface CarFormData {
   transmission: string;
   fuel: string;
   seats: number;
+  engine_size?: number;
+  max_speed?: number;
+  fuel_efficiency?: number;
+  current_mileage?: number;
+  warranty_months?: number;
+  color?: string;
+  doors?: number;
 }
 
 interface DocumentStructure {
@@ -65,8 +72,10 @@ export const CarForm = ({
     const { name, value } = e.target;
     
     // Convert numeric inputs to the right type
-    if (name === 'year' || name === 'seats') {
+    if (name === 'year' || name === 'seats' || name === 'doors') {
       setFormData((prev) => ({ ...prev, [name]: parseInt(value) || 0 }));
+    } else if (name === 'engine_size' || name === 'max_speed' || name === 'fuel_efficiency' || name === 'current_mileage' || name === 'warranty_months') {
+      setFormData((prev) => ({ ...prev, [name]: parseFloat(value) || undefined }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -75,6 +84,8 @@ export const CarForm = ({
   const handleSelectChange = (name: string, value: string) => {
     if (name === 'vehicle_type') {
       setFormData((prev) => ({ ...prev, [name]: value as VehicleType }));
+    } else if (name === 'doors') {
+      setFormData((prev) => ({ ...prev, [name]: parseInt(value) || undefined }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -98,11 +109,17 @@ export const CarForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate seats range
+    if (formData.seats < 2 || formData.seats > 15) {
+      return;
+    }
+    
     await onSubmit(formData, imageFile, documents, selectedFeatures);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
       <FormSection 
         title="Basic Information" 
         description="Enter the fundamental details about your car"
@@ -118,7 +135,7 @@ export const CarForm = ({
         title="Vehicle Specifications" 
         description="Provide technical details and pricing information"
       >
-        <CarDetails
+        <EnhancedCarDetails
           formData={formData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
@@ -161,7 +178,11 @@ export const CarForm = ({
         </FormSection>
       )}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button 
+        type="submit" 
+        className="w-full hover-scale" 
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (isEdit ? "Updating Car..." : "Adding Car...") : (isEdit ? "Update Car" : "Add Car")}
       </Button>
     </form>

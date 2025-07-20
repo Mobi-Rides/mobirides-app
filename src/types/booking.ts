@@ -19,6 +19,8 @@ export interface BookingWithRelations {
   };
   renter?: {
     full_name: string;
+    avatar_url?: string;
+    phone_number?: string;
   };
   reviews?: {
     id: string;

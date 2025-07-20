@@ -1,6 +1,7 @@
+
 /**
  * Type definitions for the User Verification System
- * Includes Botswana-specific requirements and multi-step verification flow
+ * Updated to match actual database schema
  */
 
 // Verification steps enum for progress tracking
@@ -27,14 +28,14 @@ export enum VerificationStatus {
 
 // Document types required for Botswana standards
 export enum DocumentType {
-  NATIONAL_ID_FRONT = "national_id_front", // Omang front
-  NATIONAL_ID_BACK = "national_id_back", // Omang back
+  NATIONAL_ID_FRONT = "national_id_front",
+  NATIONAL_ID_BACK = "national_id_back",
   DRIVING_LICENSE_FRONT = "driving_license_front",
   DRIVING_LICENSE_BACK = "driving_license_back",
-  PROOF_OF_ADDRESS = "proof_of_address", // Utility bill/bank statement
-  VEHICLE_REGISTRATION = "vehicle_registration", // For hosts only
-  VEHICLE_OWNERSHIP = "vehicle_ownership", // For hosts only
-  PROOF_OF_INCOME = "proof_of_income", // Optional
+  PROOF_OF_ADDRESS = "proof_of_address",
+  VEHICLE_REGISTRATION = "vehicle_registration",
+  VEHICLE_OWNERSHIP = "vehicle_ownership",
+  PROOF_OF_INCOME = "proof_of_income",
   SELFIE_PHOTO = "selfie_photo",
 }
 
@@ -42,7 +43,7 @@ export enum DocumentType {
 export interface PersonalInfo {
   fullName: string;
   dateOfBirth: string;
-  nationalIdNumber: string; // Omang number
+  nationalIdNumber: string;
   phoneNumber: string;
   email: string;
   address: {
@@ -67,8 +68,8 @@ export interface DocumentUpload {
   uploadedAt: string;
   status: VerificationStatus;
   rejectionReason?: string;
-  expiryDate?: string; // For licenses and ID documents
-  documentNumber?: string; // License number, ID number, etc.
+  expiryDate?: string;
+  documentNumber?: string;
 }
 
 // Phone verification data
@@ -89,29 +90,37 @@ export interface AddressConfirmation {
   confirmationDate?: string;
 }
 
-// Complete verification data structure
+// Database verification data structure (matches actual DB schema)
 export interface VerificationData {
-  userId: string;
-  currentStep: VerificationStep;
-  overallStatus: VerificationStatus;
-  startedAt: string;
-  lastUpdatedAt: string;
-  completedAt?: string;
+  id: string;
+  user_id: string;
+  current_step: string;
+  overall_status: string;
+  created_at: string;
+  last_updated_at: string;
+  completed_at?: string;
+  
+  // Step completion flags (matches DB)
+  personal_info_completed: boolean;
+  documents_completed: boolean;
+  selfie_completed: boolean;
+  phone_verified: boolean;
+  address_confirmed: boolean;
+  
+  // Data storage
+  personal_info: any;
+  user_role: string;
+  
+  // Admin fields
+  admin_notes?: string;
+  rejection_reasons?: string[];
+}
 
-  // Step-specific data
-  personalInfo: Partial<PersonalInfo>;
-  documents: DocumentUpload[];
-  phoneVerification: Partial<PhoneVerification>;
-  addressConfirmation: Partial<AddressConfirmation>;
-
-  // Tracking and metadata
-  stepStatuses: Record<VerificationStep, VerificationStatus>;
-  adminNotes?: string;
-  rejectionReasons?: string[];
-
-  // Role-specific requirements
-  userRole: "renter" | "host";
-  isHostVerificationRequired: boolean;
+// Progress tracking interface
+export interface VerificationProgress {
+  completed: number;
+  total: number;
+  percentage: number;
 }
 
 // Validation error structure
@@ -136,6 +145,7 @@ export interface VerificationProgress {
   totalSteps: number;
   progressPercentage: number;
   estimatedTimeRemaining: string;
+  data: any;
 }
 
 // Local storage keys for development
@@ -147,7 +157,7 @@ export const STORAGE_KEYS = {
   PERSONAL_INFO: "mobirides_personal_info",
 } as const;
 
-// Configuration for document requirements
+// Document requirements configuration
 export interface DocumentRequirement {
   type: DocumentType;
   required: boolean;
@@ -157,7 +167,6 @@ export interface DocumentRequirement {
   botswanaSpecific?: boolean;
 }
 
-// Botswana-specific document requirements configuration
 export const BOTSWANA_DOCUMENT_REQUIREMENTS: DocumentRequirement[] = [
   {
     type: DocumentType.NATIONAL_ID_FRONT,
@@ -195,20 +204,6 @@ export const BOTSWANA_DOCUMENT_REQUIREMENTS: DocumentRequirement[] = [
     maxSizeMB: 5,
     allowedFormats: ["image/jpeg", "image/png", "application/pdf"],
     description: "Utility bill or bank statement (max 3 months old)",
-  },
-  {
-    type: DocumentType.VEHICLE_REGISTRATION,
-    required: false, // Only for hosts
-    maxSizeMB: 5,
-    allowedFormats: ["image/jpeg", "image/png", "application/pdf"],
-    description: "Vehicle Registration Certificate (for car owners only)",
-  },
-  {
-    type: DocumentType.VEHICLE_OWNERSHIP,
-    required: false, // Only for hosts
-    maxSizeMB: 5,
-    allowedFormats: ["image/jpeg", "image/png", "application/pdf"],
-    description: "Proof of Vehicle Ownership (for car owners only)",
   },
   {
     type: DocumentType.PROOF_OF_INCOME,
