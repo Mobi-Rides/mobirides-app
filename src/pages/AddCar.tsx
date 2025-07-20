@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,12 @@ import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database["public"]["Enums"]["vehicle_type"];
+
+interface DocumentStructure {
+  registration?: File;
+  insurance?: File;
+  additional?: FileList;
+}
 
 const AddCar = () => {
   const navigate = useNavigate();
@@ -107,11 +114,12 @@ const AddCar = () => {
   const handleSubmit = async (
     formData: CarFormData,
     imageFile: File | null,
-    documents: File[],
+    documents: DocumentStructure,
     features: string[],
   ) => {
     console.log("Starting car submission process...");
     console.log("Selected features:", features);
+    console.log("Documents received:", documents);
 
     if (!userId) {
       toast({
@@ -140,11 +148,9 @@ const AddCar = () => {
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-		  const { error: uploadError } = await supabase.storage
-			
+        const { error: uploadError } = await supabase.storage
           .from("car-images")
-		  .upload(filePath, imageFile);
-		  
+          .upload(filePath, imageFile);
 
         if (uploadError) {
           console.error("Error uploading car image:", uploadError);
@@ -159,8 +165,34 @@ const AddCar = () => {
         console.log("Car image uploaded successfully:", image_url);
       }
 
+      // Handle document uploads
+      const documentUrls: Record<string, string> = {};
+      
+      if (documents.registration) {
+        const url = await uploadDocument(documents.registration, "registration");
+        if (url) documentUrls.registration = url;
+      }
+      
+      if (documents.insurance) {
+        const url = await uploadDocument(documents.insurance, "insurance");
+        if (url) documentUrls.insurance = url;
+      }
+      
+      if (documents.additional && documents.additional.length > 0) {
+        const additionalUrls: string[] = [];
+        for (let i = 0; i < documents.additional.length; i++) {
+          const file = documents.additional[i];
+          const url = await uploadDocument(file, "additional");
+          if (url) additionalUrls.push(url);
+        }
+        if (additionalUrls.length > 0) {
+          documentUrls.additional = JSON.stringify(additionalUrls);
+        }
+      }
+
       console.log("Inserting car data into database...");
       console.log("Features to insert:", features);
+      console.log("Document URLs:", documentUrls);
 
       const { error: insertError } = await supabase.from("cars").insert({
         owner_id: userId,
