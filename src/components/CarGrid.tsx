@@ -1,9 +1,10 @@
 
 import React from "react";
 import { CarCard } from "@/components/CarCard";
+import type { Car } from "@/types/car";
 
 export interface CarGridProps {
-  cars: any[];
+  cars: Car[];
   hasMoreItems?: boolean;
   isLoading?: boolean;
   error?: Error | null;

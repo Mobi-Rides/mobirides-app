@@ -17,8 +17,10 @@ export interface LocationHandlers {
   handleError: (error: GeolocationPositionError) => void;
 }
 
+import type { Car } from "./car";
+
 export interface CarGridProps {
-  cars: any[];
+  cars: Car[];
   isLoading?: boolean;
   error?: Error | null;
   loadMoreRef?: React.RefObject<HTMLDivElement>;

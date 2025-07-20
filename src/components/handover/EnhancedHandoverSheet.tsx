@@ -111,14 +111,16 @@ export const EnhancedHandoverSheet = ({
     switch (stepName) {
       case "identity_verification":
         return true; // Can always proceed after identity verification
-      case "vehicle_inspection_exterior":
+      case "vehicle_inspection_exterior": {
         const exteriorPhotos = vehiclePhotos.filter(p => p.type.startsWith('exterior_'));
         return exteriorPhotos.length >= 4; // Front, back, left, right
-      case "vehicle_inspection_interior":
+      }
+      case "vehicle_inspection_interior": {
         const interiorPhotos = vehiclePhotos.filter(p => 
           p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)
         );
         return interiorPhotos.length >= 4; // Dashboard, seats, fuel gauge, odometer
+      }
       case "damage_documentation":
         return true; // Can proceed with or without damage reports
       case "fuel_mileage_check":
