@@ -1,4 +1,3 @@
-
 /**
  * Verification Service
  * Handles all verification-related database operations
@@ -20,6 +19,7 @@ interface ProfileData {
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
   role: string;
+  avatar_url: string | null;
 }
 
 export class VerificationService {
@@ -28,9 +28,11 @@ export class VerificationService {
    */
   static async fetchUserProfileData(userId: string): Promise<ProfileData | null> {
     try {
+      console.log("[VerificationService] Fetching profile data for user:", userId);
+      
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, phone_number, emergency_contact_name, emergency_contact_phone, role")
+        .select("full_name, phone_number, emergency_contact_name, emergency_contact_phone, role, avatar_url")
         .eq("id", userId)
         .maybeSingle();
 
@@ -39,6 +41,7 @@ export class VerificationService {
         return null;
       }
 
+      console.log("[VerificationService] Profile data fetched:", data);
       return data;
     } catch (error) {
       console.error("[VerificationService] Failed to fetch profile:", error);
@@ -50,9 +53,30 @@ export class VerificationService {
    * Map profile data to personal info structure
    */
   static mapProfileToPersonalInfo(profile: ProfileData | null, userEmail: string | null): Partial<PersonalInfo> {
-    if (!profile) return { email: userEmail || "" };
+    console.log("[VerificationService] Mapping profile to personal info:", { profile, userEmail });
+    
+    if (!profile) {
+      return { 
+        email: userEmail || "",
+        fullName: "",
+        phoneNumber: "",
+        dateOfBirth: "",
+        nationalIdNumber: "",
+        address: {
+          street: "",
+          area: "",
+          city: "",
+          postalCode: "",
+        },
+        emergencyContact: {
+          name: "",
+          relationship: "",
+          phoneNumber: "",
+        },
+      };
+    }
 
-    return {
+    const mappedData = {
       fullName: profile.full_name || "",
       phoneNumber: profile.phone_number || "",
       email: userEmail || "",
@@ -71,6 +95,9 @@ export class VerificationService {
         postalCode: "",
       },
     };
+
+    console.log("[VerificationService] Mapped personal info:", mappedData);
+    return mappedData;
   }
 
   /**
@@ -108,8 +135,36 @@ export class VerificationService {
         .maybeSingle();
 
       if (existing) {
-        console.log("[VerificationService] Verification already exists:", existing);
-        return existing as VerificationData;
+        console.log("[VerificationService] Verification already exists, refreshing with profile data");
+        
+        // Always refresh existing verification with latest profile data
+        const profileData = await this.fetchUserProfileData(userId);
+        const { data: { user } } = await supabase.auth.getUser();
+        const userEmail = user?.email || null;
+        
+        const personalInfo = this.mapProfileToPersonalInfo(profileData, userEmail);
+        const completionStatus = this.determineCompletionStatus(profileData);
+
+        // Update existing verification with fresh profile data
+        const { data: updated, error: updateError } = await supabase
+          .from("user_verifications")
+          .update({
+            personal_info: personalInfo,
+            personal_info_completed: completionStatus.personal_info_completed,
+            phone_verified: completionStatus.phone_verified,
+            last_updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error("[VerificationService] Error updating verification with profile data:", updateError);
+          return existing as VerificationData;
+        }
+
+        console.log("[VerificationService] Updated verification with profile data:", updated);
+        return updated as VerificationData;
       }
 
       // Fetch existing profile data
@@ -160,6 +215,48 @@ export class VerificationService {
     } catch (error) {
       console.error("[VerificationService] Failed to initialize verification:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Refresh verification data from current profile
+   */
+  static async refreshFromProfile(userId: string): Promise<boolean> {
+    try {
+      console.log("[VerificationService] Refreshing verification from profile for user:", userId);
+      
+      const profileData = await this.fetchUserProfileData(userId);
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email || null;
+
+      const personalInfo = this.mapProfileToPersonalInfo(profileData, userEmail);
+      const completionStatus = this.determineCompletionStatus(profileData);
+
+      console.log("[VerificationService] Updating verification with refreshed profile data:", {
+        personalInfo,
+        completionStatus
+      });
+
+      const { error } = await supabase
+        .from("user_verifications")
+        .update({
+          personal_info: personalInfo,
+          personal_info_completed: completionStatus.personal_info_completed,
+          phone_verified: completionStatus.phone_verified,
+          last_updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("[VerificationService] Failed to refresh from profile:", error);
+        return false;
+      }
+      
+      console.log("[VerificationService] Successfully refreshed verification from profile");
+      return true;
+    } catch (error) {
+      console.error("[VerificationService] Failed to refresh from profile:", error);
+      return false;
     }
   }
 
@@ -371,39 +468,6 @@ export class VerificationService {
       return true;
     } catch (error) {
       console.error("[VerificationService] Failed to navigate to step:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Refresh verification data from current profile
-   */
-  static async refreshFromProfile(userId: string): Promise<boolean> {
-    try {
-      const profileData = await this.fetchUserProfileData(userId);
-      const { data: { user } } = await supabase.auth.getUser();
-      const userEmail = user?.email || null;
-
-      const personalInfo = this.mapProfileToPersonalInfo(profileData, userEmail);
-      const completionStatus = this.determineCompletionStatus(profileData);
-
-      const { error } = await supabase
-        .from("user_verifications")
-        .update({
-          personal_info: personalInfo,
-          personal_info_completed: completionStatus.personal_info_completed,
-          phone_verified: completionStatus.phone_verified,
-          last_updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", userId);
-
-      if (error) {
-        console.error("[VerificationService] Failed to refresh from profile:", error);
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.error("[VerificationService] Failed to refresh from profile:", error);
       return false;
     }
   }
