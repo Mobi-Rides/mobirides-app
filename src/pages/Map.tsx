@@ -81,12 +81,12 @@ const Map = () => {
 
     try {
       const onlineHosts = await fetchOnlineHosts();
-      const getHandoverHost = await fetchHostById(hostId);
+      const getHandoverHost = hostId ? await fetchHostById(hostId) : null;
       if (!onlineHosts.length) {
         toast.info("No hosts are currently online");
       }
 
-      if (hostId) {
+      if (hostId && getHandoverHost) {
         return setOnlineHosts([getHandoverHost]);
       }
 
