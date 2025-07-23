@@ -30,6 +30,43 @@ export const RentalReview = () => {
     rental_experience: 0
   });
 
+  // UI state for enhanced UX
+  const [currentStep, setCurrentStep] = useState(1);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+
+  // Role-aware content
+  const getRoleSpecificContent = () => {
+    if (isRenter) {
+      return {
+        title: "Rate Your Host & Car Experience",
+        subtitle: "Help future renters by sharing your experience",
+        categories: {
+          cleanliness: "How clean was the car when you picked it up?",
+          punctuality: "Was the host on time for pickup and return?", 
+          responsiveness: "How quickly did the host respond to messages?",
+          car_condition: "How was the overall condition of the car?",
+          rental_experience: "How was your overall rental experience?"
+        },
+        placeholder: "Share details about your rental experience, the car condition, and interaction with the host..."
+      };
+    } else {
+      return {
+        title: "Rate Your Renter Experience", 
+        subtitle: "Help future hosts by sharing your experience",
+        categories: {
+          cleanliness: "How did the renter return the car?",
+          punctuality: "Was the renter on time for pickup and return?",
+          responsiveness: "How well did the renter communicate?", 
+          car_condition: "Did the renter take good care of your car?",
+          rental_experience: "How was your overall hosting experience?"
+        },
+        placeholder: "Share details about the renter's behavior, communication, and how they treated your car..."
+      };
+    }
+  };
+
+  const roleContent = getRoleSpecificContent();
+
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
     queryFn: async () => {
@@ -114,7 +151,41 @@ export const RentalReview = () => {
     if (e.target.files) {
       const fileList = Array.from(e.target.files);
       setImages(fileList);
+      
+      // Create preview URLs
+      const previewUrls = fileList.map(file => URL.createObjectURL(file));
+      setImagePreviewUrls(previewUrls);
     }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreviewUrls.filter((_, i) => i !== index);
+    
+    // Revoke the URL to free memory
+    URL.revokeObjectURL(imagePreviewUrls[index]);
+    
+    setImages(newImages);
+    setImagePreviewUrls(newPreviews);
+  };
+
+  // Calculate completion percentage
+  const getCompletionPercentage = () => {
+    let completed = 0;
+    if (rating > 0) completed += 20;
+    if (comment.trim().length > 0) completed += 20;
+    
+    const categoryCount = Object.values(categoryRatings).filter(r => r > 0).length;
+    completed += (categoryCount / 5) * 40;
+    
+    if (images.length > 0) completed += 20;
+    
+    return Math.min(completed, 100);
+  };
+
+  // Validation
+  const isFormValid = () => {
+    return rating > 0 && comment.trim().length >= 10;
   };
 
   const handleSubmitReview = async () => {
@@ -261,100 +332,213 @@ export const RentalReview = () => {
           <Separator />
         </CardHeader>
         <CardContent className="space-y-6">
-          <div>
-            <h3 className="font-medium mb-4 text-left text-2xl md:text-2xl text-gray-800 text-center">
-              How is Your Rental Experience?
-            </h3>
-            <Separator />
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium text-xl text-gray-800">
+                {roleContent.title}
+              </h3>
+              <div className="text-sm text-muted-foreground">
+                {Math.round(getCompletionPercentage())}% complete
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">{roleContent.subtitle}</p>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${getCompletionPercentage()}%` }}
+              />
+            </div>
+            <Separator className="mt-4" />
           </div>
 
-          <div className="space-y-2 text-left">
-            <h6 className="font-normal text-gray-400 text-sm md:text-base text-center">
-              Your Overall Rating
-            </h6>
-            <div className="flex gap-1 text-center justify-center">
+          <div className="space-y-3">
+            <div className="text-center">
+              <h6 className="font-medium text-lg mb-2">Overall Rating</h6>
+              <p className="text-sm text-muted-foreground mb-4">
+                Rate your overall {isRenter ? 'rental' : 'hosting'} experience
+              </p>
+            </div>
+            <div className="flex gap-2 justify-center">
               {[1, 2, 3, 4, 5].map((value) => (
                 <Button
                   key={value}
                   variant="ghost"
-                  size="sm"
-                  className={value <= rating ? "text-yellow-500" : ""}
+                  size="lg"
+                  className={`p-2 transition-all duration-200 ${
+                    value <= rating 
+                      ? "text-yellow-500 scale-110" 
+                      : "text-gray-300 hover:text-yellow-400 hover:scale-105"
+                  }`}
                   onClick={() => setRating(value)}
                 >
                   <Star
-                    className="h-8 w-8 "
+                    className="h-10 w-10"
                     fill={value <= rating ? "currentColor" : "none"}
-                    stroke={value <= rating ? "currentColor" : "currentColor"}
+                    stroke="currentColor"
                   />
                 </Button>
+              ))}
+            </div>
+            {rating > 0 && (
+              <p className="text-center text-sm font-medium text-primary">
+                {rating === 5 ? "Excellent!" : rating === 4 ? "Great!" : rating === 3 ? "Good" : rating === 2 ? "Fair" : "Poor"}
+              </p>
+            )}
+            <Separator />
+          </div>
+
+          {/* Enhanced Category Ratings */}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h6 className="font-medium text-lg mb-2">Detailed Ratings</h6>
+              <p className="text-sm text-muted-foreground">
+                Help others by rating specific aspects (optional)
+              </p>
+            </div>
+            
+            <div className="grid gap-4">
+              {Object.entries(roleContent.categories).map(([key, description]) => (
+                <div key={key} className="p-4 border rounded-lg bg-muted/30">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <Label className="font-medium capitalize">
+                        {key.replace('_', ' ')}
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {description}
+                      </p>
+                    </div>
+                    <div className="text-sm font-medium text-primary">
+                      {categoryRatings[key as keyof typeof categoryRatings] > 0 
+                        ? `${categoryRatings[key as keyof typeof categoryRatings]}/5` 
+                        : 'Not rated'}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 justify-center mt-3">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <Button
+                        key={value}
+                        variant="ghost"
+                        size="sm"
+                        className={`p-1 transition-all duration-200 ${
+                          value <= categoryRatings[key as keyof typeof categoryRatings]
+                            ? "text-yellow-500 scale-110" 
+                            : "text-gray-300 hover:text-yellow-400"
+                        }`}
+                        onClick={() => setCategoryRatings(prev => ({...prev, [key]: value}))}
+                      >
+                        <Star
+                          className="h-6 w-6"
+                          fill={value <= categoryRatings[key as keyof typeof categoryRatings] ? "currentColor" : "none"}
+                          stroke="currentColor"
+                        />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
             <Separator />
           </div>
 
-          {/* Category Ratings */}
           <div className="space-y-4">
-            <h6 className="font-medium text-center">Rate Specific Categories</h6>
-            
-            {Object.entries({
-              cleanliness: "Cleanliness",
-              punctuality: "Punctuality", 
-              responsiveness: "Responsiveness",
-              car_condition: "Car Condition",
-              rental_experience: "Overall Experience"
-            }).map(([key, label]) => (
-              <div key={key} className="space-y-2">
-                <Label className="text-sm font-medium">{label}</Label>
-                <div className="flex gap-1 justify-center">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <Button
-                      key={value}
-                      variant="ghost"
-                      size="sm"
-                      className={value <= categoryRatings[key as keyof typeof categoryRatings] ? "text-yellow-500" : ""}
-                      onClick={() => setCategoryRatings(prev => ({...prev, [key]: value}))}
-                    >
-                      <Star
-                        className="h-6 w-6"
-                        fill={value <= categoryRatings[key as keyof typeof categoryRatings] ? "currentColor" : "none"}
-                        stroke="currentColor"
-                      />
-                    </Button>
-                  ))}
-                </div>
+            <div>
+              <Label className="font-medium text-lg">Share Your Experience</Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Tell others about your experience (minimum 10 characters)
+              </p>
+            </div>
+            <div className="relative">
+              <Textarea
+                placeholder={roleContent.placeholder}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className={`min-h-[120px] bg-background rounded-lg p-4 resize-none transition-colors ${
+                  comment.trim().length < 10 && comment.length > 0
+                    ? "border-orange-300 focus:border-orange-500"
+                    : comment.trim().length >= 10
+                    ? "border-green-300 focus:border-green-500" 
+                    : ""
+                }`}
+                maxLength={500}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                {comment.length}/500
               </div>
-            ))}
-            <Separator />
-          </div>
-
-          <div className="space-y-2 text-left">
-            <h6 className="font-medium text-xs">Enter Detailed Review</h6>
-            <Textarea
-              placeholder={`Share your experience with this ${
-                isRenter ? "host" : "renter"
-              }...`}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[100px] bg-gray-200 rounded-2xl p-4 placeholder:text-xs"
-            />
-          </div>
-
-          <div className="space-y-2 text-left">
-            <ImageUpload onImageChange={handleImageChange} />
-            {images.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {images.length} photo(s) selected
+            </div>
+            {comment.length > 0 && comment.trim().length < 10 && (
+              <p className="text-sm text-orange-600">
+                Please write at least 10 characters for a meaningful review
               </p>
             )}
           </div>
 
-          <Button
-            onClick={handleSubmitReview}
-            disabled={rating === 0 || isSubmitting}
-            className="w-full"
-          >
-            {isSubmitting ? "Submitting..." : "Submit Review"}
-          </Button>
+          <div className="space-y-4">
+            <div>
+              <Label className="font-medium text-lg">Add Photos (Optional)</Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Share photos to help other users
+              </p>
+            </div>
+            
+            <ImageUpload onImageChange={handleImageChange} />
+            
+            {imagePreviewUrls.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">
+                  {imagePreviewUrls.length} photo(s) selected
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {imagePreviewUrls.map((url, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-lg border"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeImage(index)}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4">
+            <Button
+              onClick={handleSubmitReview}
+              disabled={!isFormValid() || isSubmitting}
+              className="w-full h-12 text-lg font-medium"
+              size="lg"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Publishing Review...
+                </div>
+              ) : (
+                `Publish ${isRenter ? 'Host' : 'Renter'} Review`
+              )}
+            </Button>
+            
+            {!isFormValid() && (
+              <div className="mt-3 p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground text-center">
+                  <span className="font-medium">Required to publish:</span>
+                  <br />
+                  {rating === 0 && "• Overall rating"}
+                  {rating > 0 && comment.trim().length < 10 && "• At least 10 characters in review"}
+                </p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
