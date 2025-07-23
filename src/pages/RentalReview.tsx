@@ -4,13 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Slash, Star } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { toast } from "sonner";
 import { FaStar } from "react-icons/fa";
-import { RxDividerHorizontal } from "react-icons/rx";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 
 export const RentalReview = () => {
   const { bookingId } = useParams();
@@ -20,6 +20,15 @@ export const RentalReview = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [isRenter, setIsRenter] = useState(false);
+  
+  // Category ratings state
+  const [categoryRatings, setCategoryRatings] = useState({
+    cleanliness: 0,
+    punctuality: 0,
+    responsiveness: 0,
+    car_condition: 0,
+    rental_experience: 0
+  });
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
@@ -130,7 +139,7 @@ export const RentalReview = () => {
         const filePath = `${booking?.id}/${fileName}`;
 
         const { error: uploadError, data } = await supabase.storage
-          .from("return-photos")
+          .from("handover-photos")
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
@@ -139,15 +148,20 @@ export const RentalReview = () => {
 
       const imageUrls = await Promise.all(uploadPromises);
 
-      // Create the review with image URLs
+      // Determine review type based on user role
+      const reviewType = isRenter ? "renter_to_host" : "host_to_renter";
+      
+      // Create the review with image URLs and category ratings
       const { error: reviewError } = await supabase.from("reviews").insert({
         booking_id: bookingId,
         reviewer_id: user.id,
         reviewee_id: revieweeId,
         rating,
         comment,
-        images: imageUrls,
-        review_type: "renter", // Always use 'renter' as per the database enum
+        review_images: imageUrls, // Use new column name
+        category_ratings: categoryRatings, // Add category ratings
+        review_type: reviewType, // Use role-specific review type
+        status: "published",
         updated_at: new Date().toISOString(),
       });
 
@@ -275,6 +289,41 @@ export const RentalReview = () => {
                 </Button>
               ))}
             </div>
+            <Separator />
+          </div>
+
+          {/* Category Ratings */}
+          <div className="space-y-4">
+            <h6 className="font-medium text-center">Rate Specific Categories</h6>
+            
+            {Object.entries({
+              cleanliness: "Cleanliness",
+              punctuality: "Punctuality", 
+              responsiveness: "Responsiveness",
+              car_condition: "Car Condition",
+              rental_experience: "Overall Experience"
+            }).map(([key, label]) => (
+              <div key={key} className="space-y-2">
+                <Label className="text-sm font-medium">{label}</Label>
+                <div className="flex gap-1 justify-center">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <Button
+                      key={value}
+                      variant="ghost"
+                      size="sm"
+                      className={value <= categoryRatings[key as keyof typeof categoryRatings] ? "text-yellow-500" : ""}
+                      onClick={() => setCategoryRatings(prev => ({...prev, [key]: value}))}
+                    >
+                      <Star
+                        className="h-6 w-6"
+                        fill={value <= categoryRatings[key as keyof typeof categoryRatings] ? "currentColor" : "none"}
+                        stroke="currentColor"
+                      />
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
             <Separator />
           </div>
 
