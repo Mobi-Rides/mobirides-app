@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -14,27 +15,17 @@ import "./App.css";
 
 const Index = lazy(() => import("@/pages/Index"));
 const Login = lazy(() => import("@/pages/Login"));
-const Register = lazy(() => import("@/pages/Register"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const CarDetails = lazy(() => import("@/pages/CarDetails"));
-const CarForm = lazy(() => import("@/pages/CarForm"));
 const Map = lazy(() => import("@/pages/Map"));
-const Booking = lazy(() => import("@/pages/Booking"));
 const Verification = lazy(() => import("@/pages/Verification"));
-const PasswordReset = lazy(() => import("@/pages/PasswordReset"));
-const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
-const CarManagement = lazy(() => import("@/pages/CarManagement"));
-const BookingManagement = lazy(() => import("@/pages/BookingManagement"));
-const UserManagement = lazy(() => import("@/pages/UserManagement"));
-const HostManagement = lazy(() => import("@/pages/HostManagement"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
       staleTime: 5 * 60 * 1000,
-      cacheTime: 10 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
     },
   },
 });
@@ -61,11 +52,6 @@ const App = () => {
                           <Login />
                         </Suspense>
                       } />
-                      <Route path="/register" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <Register />
-                        </Suspense>
-                      } />
                       <Route path="/profile" element={
                         <Suspense fallback={<LoadingView />}>
                           <ProtectedRoute>
@@ -78,23 +64,9 @@ const App = () => {
                           <CarDetails />
                         </Suspense>
                       } />
-                      <Route path="/cars/new" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <ProtectedRoute>
-                            <CarForm />
-                          </ProtectedRoute>
-                        </Suspense>
-                      } />
                       <Route path="/map" element={
                         <Suspense fallback={<LoadingView />}>
                           <Map />
-                        </Suspense>
-                      } />
-                      <Route path="/booking/:carId" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <ProtectedRoute>
-                            <Booking />
-                          </ProtectedRoute>
                         </Suspense>
                       } />
                       <Route path="/verify" element={
@@ -102,49 +74,14 @@ const App = () => {
                           <Verification />
                         </Suspense>
                       } />
-                      <Route path="/reset-password" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <PasswordReset />
-                        </Suspense>
-                      } />
-                      <Route path="/admin" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminDashboard />
-                          </ProtectedRoute>
-                        </Suspense>
-                      } />
-                      <Route path="/admin/cars" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <ProtectedRoute requiredRole="admin">
-                            <CarManagement />
-                          </ProtectedRoute>
-                        </Suspense>
-                      } />
-                      <Route path="/admin/bookings" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <ProtectedRoute requiredRole="admin">
-                            <BookingManagement />
-                          </ProtectedRoute>
-                        </Suspense>
-                      } />
-                      <Route path="/admin/users" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <ProtectedRoute requiredRole="admin">
-                            <UserManagement />
-                          </ProtectedRoute>
-                        </Suspense>
-                      } />
-                      <Route path="/admin/hosts" element={
-                        <Suspense fallback={<LoadingView />}>
-                          <ProtectedRoute requiredRole="admin">
-                            <HostManagement />
-                          </ProtectedRoute>
-                        </Suspense>
-                      } />
                       <Route path="*" element={
                         <Suspense fallback={<LoadingView />}>
-                          <NotFound />
+                          <div className="flex items-center justify-center min-h-screen">
+                            <div className="text-center">
+                              <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
+                              <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
+                            </div>
+                          </div>
                         </Suspense>
                       } />
                     </Routes>

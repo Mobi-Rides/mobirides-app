@@ -1,5 +1,5 @@
 
-import { SearchBox, SessionToken } from '@mapbox/search-js-core';
+import { SearchBoxCore } from '@mapbox/search-js-core';
 import { getMapboxToken } from '@/utils/mapbox';
 
 export interface SearchSuggestion {
@@ -22,8 +22,7 @@ export interface SearchResult {
 }
 
 class MapboxSearchService {
-  private searchBox: SearchBox | null = null;
-  private sessionToken: SessionToken | null = null;
+  private searchBox: SearchBoxCore | null = null;
   private isInitialized = false;
 
   async initialize(): Promise<void> {
@@ -35,14 +34,13 @@ class MapboxSearchService {
         throw new Error('Mapbox token not available');
       }
 
-      this.searchBox = new SearchBox({
+      this.searchBox = new SearchBoxCore({
         accessToken: token,
         language: 'en',
         limit: 5,
         country: 'BW', // Botswana
       });
 
-      this.sessionToken = new SessionToken();
       this.isInitialized = true;
       console.log('Mapbox Search JS initialized successfully');
     } catch (error) {
@@ -62,7 +60,6 @@ class MapboxSearchService {
 
     try {
       const response = await this.searchBox.suggest(query, {
-        sessionToken: this.sessionToken,
         proximity: [25.9087, -24.6541], // Gaborone, Botswana
       });
 
@@ -92,14 +89,12 @@ class MapboxSearchService {
       await this.initialize();
     }
 
-    if (!this.searchBox || !this.sessionToken) {
+    if (!this.searchBox) {
       return null;
     }
 
     try {
-      const response = await this.searchBox.retrieve(suggestionId, {
-        sessionToken: this.sessionToken,
-      });
+      const response = await this.searchBox.retrieve(suggestionId);
 
       if (response.features && response.features.length > 0) {
         const feature = response.features[0];
