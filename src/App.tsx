@@ -31,6 +31,15 @@ const queryClient = new QueryClient({
   },
 });
 
+// Component to conditionally wrap routes that need HandoverProvider
+const HandoverRoute = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <HandoverProvider>
+      {children}
+    </HandoverProvider>
+  );
+};
+
 const App = () => {
   return (
     <ErrorBoundary>
@@ -39,57 +48,57 @@ const App = () => {
           <MapboxTokenProvider>
             <LocationSearchProvider>
               <VerificationProvider>
-                <HandoverProvider>
-                  <TooltipProvider>
-                    <Toaster />
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <Index />
-                          </Suspense>
-                        } />
-                        <Route path="/login" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <Login />
-                          </Suspense>
-                        } />
-                        <Route path="/profile" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <Profile />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/cars/:carId" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <CarDetails />
-                          </Suspense>
-                        } />
-                        <Route path="/map" element={
-                          <Suspense fallback={<LoadingView />}>
+                <TooltipProvider>
+                  <Toaster />
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <Index />
+                        </Suspense>
+                      } />
+                      <Route path="/login" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <Login />
+                        </Suspense>
+                      } />
+                      <Route path="/profile" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/cars/:carId" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <CarDetails />
+                        </Suspense>
+                      } />
+                      <Route path="/map" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <HandoverRoute>
                             <Map />
-                          </Suspense>
-                        } />
-                        <Route path="/verify" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <Verification />
-                          </Suspense>
-                        } />
-                        <Route path="*" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <div className="flex items-center justify-center min-h-screen">
-                              <div className="text-center">
-                                <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
-                                <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
-                              </div>
+                          </HandoverRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/verify" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <Verification />
+                        </Suspense>
+                      } />
+                      <Route path="*" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <div className="flex items-center justify-center min-h-screen">
+                            <div className="text-center">
+                              <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
+                              <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
                             </div>
-                          </Suspense>
-                        } />
-                      </Routes>
-                    </BrowserRouter>
-                  </TooltipProvider>
-                </HandoverProvider>
+                          </div>
+                        </Suspense>
+                      } />
+                    </Routes>
+                  </BrowserRouter>
+                </TooltipProvider>
               </VerificationProvider>
             </LocationSearchProvider>
           </MapboxTokenProvider>

@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -7,7 +8,7 @@ import { toast } from "@/utils/toast-utils";
 import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
 import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
-import { HandoverProvider } from "@/contexts/HandoverContext";
+import { useHandover } from "@/contexts/HandoverContext";
 import { HandoverSheet } from "@/components/handover/HandoverSheet";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
@@ -156,37 +157,30 @@ const Map = () => {
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900">
-      {isHandoverMode ? (
-        <HandoverProvider>
-          <main className="pb-16">
-            <div className="h-[calc(100vh-4rem)]">{renderContent()}</div>
-            <div className="fixed bottom-20 left-0 right-0 z-10 flex justify-center">
-              <Button
-                className="shadow-lg"
-                onClick={() => setIsHandoverSheetOpen(true)}
-              >
-                <MapPin className="mr-2 h-4 w-4" />
-                Handover Details
-              </Button>
-            </div>
-          </main>
-          <HandoverSheet
-            isOpen={isHandoverSheetOpen}
-            onClose={() => setIsHandoverSheetOpen(false)}
-            getDestination={getDestination}
-            getHostID={getHostID}
-            isHostUser={toggleIsOwner}
-          />
-          <Navigation />
-        </HandoverProvider>
-      ) : (
-        <>
-          <main className="pb-16">
-            <div className="h-[calc(100vh-4rem)]">{renderContent()}</div>
-          </main>
-          <Navigation />
-        </>
+      <main className="pb-16">
+        <div className="h-[calc(100vh-4rem)]">{renderContent()}</div>
+        {isHandoverMode && (
+          <div className="fixed bottom-20 left-0 right-0 z-10 flex justify-center">
+            <Button
+              className="shadow-lg"
+              onClick={() => setIsHandoverSheetOpen(true)}
+            >
+              <MapPin className="mr-2 h-4 w-4" />
+              Handover Details
+            </Button>
+          </div>
+        )}
+      </main>
+      {isHandoverMode && (
+        <HandoverSheet
+          isOpen={isHandoverSheetOpen}
+          onClose={() => setIsHandoverSheetOpen(false)}
+          getDestination={getDestination}
+          getHostID={getHostID}
+          isHostUser={toggleIsOwner}
+        />
       )}
+      <Navigation />
     </div>
   );
 };
