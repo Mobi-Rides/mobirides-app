@@ -24,6 +24,7 @@ export interface SearchResult {
 class MapboxSearchService {
   private searchBox: SearchBoxCore | null = null;
   private isInitialized = false;
+  private sessionToken: string | null = null;
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -41,6 +42,9 @@ class MapboxSearchService {
         country: 'BW', // Botswana
       });
 
+      // Generate a session token for the search session
+      this.sessionToken = crypto.randomUUID();
+
       this.isInitialized = true;
       console.log('Mapbox Search JS initialized successfully');
     } catch (error) {
@@ -54,12 +58,13 @@ class MapboxSearchService {
       await this.initialize();
     }
 
-    if (!this.searchBox || !query.trim()) {
+    if (!this.searchBox || !query.trim() || !this.sessionToken) {
       return { suggestions: [], query };
     }
 
     try {
       const response = await this.searchBox.suggest(query, {
+        sessionToken: this.sessionToken,
         proximity: [25.9087, -24.6541], // Gaborone, Botswana
       });
 
@@ -67,7 +72,7 @@ class MapboxSearchService {
         id: suggestion.mapbox_id || suggestion.name,
         name: suggestion.name,
         full_address: suggestion.full_address || suggestion.place_formatted || suggestion.name,
-        coordinates: [suggestion.longitude, suggestion.latitude],
+        coordinates: [suggestion._geometry?.coordinates?.[0] || 0, suggestion._geometry?.coordinates?.[1] || 0],
         place_type: suggestion.feature_type || 'place',
         context: {
           country: suggestion.context?.country?.name,
@@ -89,12 +94,16 @@ class MapboxSearchService {
       await this.initialize();
     }
 
-    if (!this.searchBox) {
+    if (!this.searchBox || !this.sessionToken) {
       return null;
     }
 
     try {
-      const response = await this.searchBox.retrieve(suggestionId);
+      // Find the suggestion by ID first
+      const suggestion = { mapbox_id: suggestionId };
+      const response = await this.searchBox.retrieve(suggestion as any, {
+        sessionToken: this.sessionToken,
+      });
 
       if (response.features && response.features.length > 0) {
         const feature = response.features[0];
