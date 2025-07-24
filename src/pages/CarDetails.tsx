@@ -18,24 +18,24 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { AlertTriangle } from "lucide-react";
 
 const CarDetails = () => {
-  const { id } = useParams();
+  const { carId } = useParams();
   const { theme } = useTheme();
   const user = useUser();
 
   const { data: car, isLoading, error } = useQuery({
-    queryKey: ["car", id],
+    queryKey: ["car", carId],
     queryFn: async () => {
-      console.log("Fetching car details for ID:", id);
+      console.log("Fetching car details for ID:", carId);
       
       // Update coordinates for this specific car
-      if (id === "af67919d-012e-418a-a183-0d390caeef1f") {
+      if (carId === "af67919d-012e-418a-a183-0d390caeef1f") {
         const { error: updateError } = await supabase
           .from("cars")
           .update({
             latitude: -24.6527,
             longitude: 25.9088
           })
-          .eq("id", id);
+          .eq("id", carId);
 
         if (updateError) {
           console.error("Error updating car coordinates:", updateError);
@@ -51,7 +51,7 @@ const CarDetails = () => {
             avatar_url
           )
         `)
-        .eq("id", id)
+        .eq("id", carId)
         .maybeSingle();
 
       if (error) {
