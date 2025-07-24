@@ -18,11 +18,26 @@ export const ImageUpload = ({ onImageChange }: ImageUploadProps) => {
     // Create preview
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      console.log("File selected for preview:", file.name, file.type, file.size);
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        console.error("Invalid file type:", file.type);
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = () => {
+        console.log("FileReader loaded successfully");
         setPreviewUrl(reader.result as string);
       };
+      reader.onerror = (error) => {
+        console.error("FileReader error:", error);
+      };
       reader.readAsDataURL(file);
+    } else {
+      console.log("No file selected or files array is empty");
+      setPreviewUrl(null);
     }
   };
 
