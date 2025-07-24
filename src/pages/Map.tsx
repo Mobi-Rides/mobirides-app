@@ -9,8 +9,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
 import { HandoverProvider } from "@/contexts/HandoverContext";
 import { EnhancedHandoverSheet } from "@/components/handover/EnhancedHandoverSheet";
-import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { HandoverBookingButtons } from "@/components/map/HandoverBookingButtons";
 
 const Map = () => {
   const [searchParams] = useSearchParams();
@@ -158,19 +157,19 @@ const Map = () => {
     <div className="flex flex-col h-screen bg-background">
       <main className="flex-1 relative overflow-hidden">
         {renderContent()}
-        {isHandoverMode && (
-          <div className="absolute top-4 left-4 z-10">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setIsHandoverSheetOpen(true)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              Handover Details
-            </Button>
-          </div>
-        )}
+        <HandoverBookingButtons 
+          onBookingClick={(clickedBookingId) => {
+            // Update the current booking ID if different from URL
+            if (clickedBookingId !== bookingId) {
+              window.history.replaceState(
+                {}, 
+                '', 
+                `/map?mode=handover&bookingId=${clickedBookingId}`
+              );
+            }
+            setIsHandoverSheetOpen(true);
+          }}
+        />
       </main>
       {isHandoverMode && (
         <EnhancedHandoverSheet
