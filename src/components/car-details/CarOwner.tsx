@@ -1,11 +1,19 @@
 
 import { Button } from "@/components/ui/button";
-import { MessageCircle, User } from "lucide-react";
+import { MessageCircle, Star } from "lucide-react";
 import { useState } from "react";
 import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+interface UserStats {
+  host_rating: number;
+  renter_rating: number;
+  total_reviews: number;
+  overall_rating: number;
+}
 
 interface CarOwnerProps {
   ownerName: string;
@@ -16,6 +24,24 @@ interface CarOwnerProps {
 
 export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Fetch user rating stats
+  const { data: userStats } = useQuery<UserStats | null>({
+    queryKey: ["user-stats", ownerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_user_review_stats", {
+        user_uuid: ownerId,
+      });
+
+      if (error) {
+        console.error("Error fetching user stats:", error);
+        return null;
+      }
+
+      return data as unknown as UserStats;
+    },
+    enabled: !!ownerId,
+  });
 
   return (
     <>
@@ -43,9 +69,24 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
                   {ownerName || "Car Owner"}
                 </p>
 
-                <p className="text-xs md:text-sm text-muted-foreground ">
-                  Vehicle Host
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    Vehicle Host
+                  </p>
+                  {userStats?.overall_rating > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs font-medium text-gray-700 dark:text-white">
+                        {userStats.overall_rating.toFixed(1)}
+                      </span>
+                      {userStats.total_reviews > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          ({userStats.total_reviews} review{userStats.total_reviews !== 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <TooltipProvider>
