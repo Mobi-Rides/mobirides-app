@@ -345,10 +345,13 @@ export const EnhancedHandoverSheet = ({
   return (
     <>
       {isHandoverCompleted && (
-        <HandoverSuccessPopup 
-          isHost={isHost} 
-          onClose={handleSuccessPopupClose}
-        />
+        <>
+          {console.log("Rendering HandoverSuccessPopup with isHost:", isHost)}
+          <HandoverSuccessPopup 
+            isHost={isHost} 
+            onClose={handleSuccessPopupClose}
+          />
+        </>
       )}
       
       <div

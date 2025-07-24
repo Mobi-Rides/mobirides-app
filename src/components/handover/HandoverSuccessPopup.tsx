@@ -16,12 +16,20 @@ export const HandoverSuccessPopup = ({
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    console.log("HandoverSuccessPopup mounted with duration:", duration);
     const timer = setTimeout(() => {
+      console.log("HandoverSuccessPopup timer fired, setting invisible");
       setIsVisible(false);
-      setTimeout(onClose, 300); // Allow fade out animation to complete
+      setTimeout(() => {
+        console.log("HandoverSuccessPopup calling onClose");
+        onClose();
+      }, 300); // Allow fade out animation to complete
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => {
+      console.log("HandoverSuccessPopup cleanup");
+      clearTimeout(timer);
+    };
   }, [duration, onClose]);
 
   const message = isHost ? "See you soon!" : "Have a nice trip!";

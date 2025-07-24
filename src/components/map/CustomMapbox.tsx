@@ -110,18 +110,22 @@ const CustomMapbox = ({
         setMapInit(true);
         if (geolocateControlRef.current) {
           geolocateControlRef.current.on("geolocate", (e: any) => {
+            console.log("Geolocate event fired:", e.coords);
             const newLocation = {
               longitude: e.coords.longitude,
               latitude: e.coords.latitude,
             };
 
             setUserLocation(newLocation);
+            console.log("User location updated:", newLocation);
 
             if (isHandoverMode && handover) {
+              console.log("In handover mode, updating handover location...");
               fetchAddressFromCoordinates(
                 newLocation.latitude,
                 newLocation.longitude
               ).then((address) => {
+                console.log("Address fetched:", address);
                 handover.updateLocation({
                   latitude: newLocation.latitude,
                   longitude: newLocation.longitude,
