@@ -46,16 +46,29 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
     try {
       const { data, error } = await supabase
         .from("cars")
-        .select("*")
+        .select(`
+          *,
+          car_images!inner(
+            image_url,
+            is_primary
+          )
+        `)
         .eq("owner_id", hostId)
-        .eq("is_available", true);
+        .eq("is_available", true)
+        .eq("car_images.is_primary", true);
 
       if (error) {
         console.error("Error fetching host cars:", error);
         return;
       }
 
-      setCars(data || []);
+      // Transform the data to flatten the primary image
+      const transformedCars = data?.map(car => ({
+        ...car,
+        image_url: car.car_images?.[0]?.image_url || car.image_url
+      })) || [];
+
+      setCars(transformedCars);
     } catch (error) {
       console.error("Error in fetchHostCars:", error);
     } finally {
