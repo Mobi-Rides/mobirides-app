@@ -9,7 +9,7 @@ import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
 import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
 import { useHandover } from "@/contexts/HandoverContext";
-import { HandoverSheet } from "@/components/handover/HandoverSheet";
+import { EnhancedHandoverSheet } from "@/components/handover/EnhancedHandoverSheet";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 
@@ -172,12 +172,10 @@ const Map = () => {
         )}
       </main>
       {isHandoverMode && (
-        <HandoverSheet
+        <EnhancedHandoverSheet
           isOpen={isHandoverSheetOpen}
           onClose={() => setIsHandoverSheetOpen(false)}
-          getDestination={getDestination}
-          getHostID={getHostID}
-          isHostUser={toggleIsOwner}
+          handoverSessionId={bookingId || ""}
         />
       )}
       <Navigation />
