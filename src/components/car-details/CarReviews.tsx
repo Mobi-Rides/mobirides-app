@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Car } from "@/types/car";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 interface CarReviewsProps {
   car: Car;
@@ -42,6 +44,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         `)
         .eq("car_id", car.id)
         .eq("review_type", "car")
+        .eq("status", "published")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -51,6 +54,19 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
 
       console.log("Retrieved reviews:", data);
       return data;
+    },
+  });
+
+  // Fetch category ratings summary
+  const { data: categoryRatings } = useQuery({
+    queryKey: ["categoryRatings", car.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("calculate_category_ratings", {
+        car_uuid: car.id,
+      });
+
+      if (error) throw error;
+      return data as Record<string, number>;
     },
   });
 
@@ -98,6 +114,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
           rating,
           comment,
           review_type: "car",
+          status: "published",
           created_at: now,
           updated_at: now,
         });
@@ -135,6 +152,30 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Category Ratings Summary */}
+        {categoryRatings && Object.keys(categoryRatings).length > 1 && (
+          <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+            <h4 className="font-medium mb-3">Rating Breakdown</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {Object.entries(categoryRatings)
+                .filter(([key]) => key !== 'overall')
+                .map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <span className="text-sm capitalize">
+                      {key.replace('_', ' ')}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={(value / 5) * 100} className="w-16 h-2" />
+                      <span className="text-sm font-medium w-8">
+                        {value.toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           {reviews?.length === 0 && (
             <div className="text-center py-6">
@@ -168,8 +209,30 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
                   </span>
                 </div>
               </div>
+              
+              {/* Category ratings display */}
+              {review.category_ratings && Object.keys(review.category_ratings).length > 0 && (
+                <div className="mb-2">
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(review.category_ratings as Record<string, number>).map(([key, value]) => (
+                      <Badge key={key} variant="secondary" className="text-xs">
+                        {key.replace('_', ' ')}: {value}/5
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {review.comment && (
                 <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
+              )}
+              
+              {/* Response from reviewee */}
+              {review.response && (
+                <div className="mt-2 p-2 bg-muted/30 rounded text-sm">
+                  <p className="font-medium text-xs mb-1">Response from owner:</p>
+                  <p className="text-muted-foreground">{review.response}</p>
+                </div>
               )}
             </div>
           ))}
