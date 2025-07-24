@@ -93,7 +93,7 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
       />
       
       {/* Side Tray */}
-      <div className="fixed right-0 top-0 h-full w-80 bg-background border-l shadow-xl z-50 transform transition-transform duration-300">
+      <div className="fixed left-0 top-0 h-full w-80 bg-background border-r shadow-xl z-50 transform transition-transform duration-300">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-4 border-b">
