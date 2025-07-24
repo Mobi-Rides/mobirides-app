@@ -70,11 +70,22 @@ export const EnhancedHandoverSheet = ({
       
       // Load existing progress
       const steps = await getHandoverSteps(handoverId);
+      console.log("Loaded handover steps:", steps);
+      console.log("Steps completion status:", steps.map(s => ({ name: s.step_name, completed: s.is_completed })));
       setCompletedSteps(steps);
       
       // Find current step (first incomplete step)
       const firstIncomplete = steps.findIndex(step => !step.is_completed);
-      setCurrentStep(firstIncomplete >= 0 ? firstIncomplete : steps.length);
+      const calculatedCurrentStep = firstIncomplete >= 0 ? firstIncomplete : steps.length;
+      console.log("First incomplete step index:", firstIncomplete);
+      console.log("Setting current step to:", calculatedCurrentStep);
+      setCurrentStep(calculatedCurrentStep);
+      
+      // Show user progress if they have completed some steps
+      const completedCount = steps.filter(s => s.is_completed).length;
+      if (completedCount > 0) {
+        toast.success(`Continuing handover process - ${completedCount}/${steps.length} steps completed`);
+      }
       
       console.log("Handover initialized successfully");
     } catch (error) {
