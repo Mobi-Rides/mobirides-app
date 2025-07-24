@@ -115,10 +115,8 @@ const CarDetails = () => {
     );
   }
 
-  // Safely handle avatar URL
-  const avatarUrl = car.profiles?.avatar_url 
-    ? supabase.storage.from('avatars').getPublicUrl(car.profiles.avatar_url).data.publicUrl
-    : "/placeholder.svg";
+  // Pass the raw avatar_url to CarOwner component
+  const avatarUrl = car.profiles?.avatar_url || null;
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
