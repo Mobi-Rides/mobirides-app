@@ -45,12 +45,11 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
             avatar_url,
             phone_number
           ),
-          handover_sessions!inner (
+          handover_sessions (
             handover_completed
           )
         `)
         .eq("status", "confirmed")
-        .eq("handover_sessions.handover_completed", false)
         .gte("start_date", today)
         .lte("start_date", tomorrow);
 
@@ -68,7 +67,13 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
         return [];
       }
 
-      return data || [];
+      // Filter out bookings where handover is already completed
+      const filteredData = data?.filter(booking => {
+        const handoverSession = booking.handover_sessions?.[0];
+        return !handoverSession || !handoverSession.handover_completed;
+      }) || [];
+
+      return filteredData;
     },
     enabled: !!userId && !!userRole,
     refetchInterval: 30000, // Refetch every 30 seconds
