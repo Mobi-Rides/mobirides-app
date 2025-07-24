@@ -21,6 +21,7 @@ const Profile = lazy(() => import("@/pages/Profile"));
 const CarDetails = lazy(() => import("@/pages/CarDetails"));
 const Map = lazy(() => import("@/pages/Map"));
 const Verification = lazy(() => import("@/pages/Verification"));
+const RentalDetails = lazy(() => import("@/pages/RentalDetailsRefactored"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,6 +87,13 @@ const App = () => {
                       <Route path="/verify" element={
                         <Suspense fallback={<LoadingView />}>
                           <Verification />
+                        </Suspense>
+                      } />
+                      <Route path="/rental-details/:id" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <RentalDetails />
+                          </ProtectedRoute>
                         </Suspense>
                       } />
                       <Route path="*" element={
