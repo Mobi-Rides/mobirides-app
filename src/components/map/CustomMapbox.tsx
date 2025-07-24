@@ -180,10 +180,24 @@ const CustomMapbox = ({
   }, [mapStyle, mapInit]);
 
   const handleViewHostCars = (hostId: string) => {
-    const host = onlineHosts?.find(h => h.id === hostId) as Host;
+    console.log("Trying to view cars for host:", hostId);
+    const host = onlineHosts?.find(h => h.id === hostId);
+    console.log("Found host:", host);
     if (host) {
-      setSelectedHost(host);
+      // Convert ExtendedProfile to Host type
+      const hostData: Host = {
+        id: host.id,
+        full_name: host.full_name,
+        avatar_url: host.avatar_url,
+        latitude: host.latitude,
+        longitude: host.longitude,
+        updated_at: host.updated_at
+      };
+      console.log("Setting selected host:", hostData);
+      setSelectedHost(hostData);
       setIsHostTrayOpen(true);
+    } else {
+      console.log("No host found with ID:", hostId);
     }
   };
 
