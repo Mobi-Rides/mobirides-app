@@ -76,7 +76,9 @@ export const VehicleInspectionStep = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handlePhotoUpload(uploadingType!, file);
+    if (file && uploadingType) {
+      handlePhotoUpload(uploadingType, file);
+    }
   };
 
   const removePhoto = (photoId: string) => {
@@ -152,6 +154,7 @@ export const VehicleInspectionStep = ({
                         accept="image/*"
                         capture="environment"
                         onChange={handleFileChange}
+                        onClick={() => setUploadingType(requirement.type)}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         disabled={isUploading}
                       />
