@@ -132,12 +132,12 @@ export const EnhancedHandoverSheet = ({
       case "identity_verification":
         return true; // Can always proceed after identity verification
       case "vehicle_inspection_exterior": {
-        const exteriorPhotos = vehiclePhotos.filter(p => p.type.startsWith('exterior_'));
+        const exteriorPhotos = vehiclePhotos.filter(p => p.type && p.type.startsWith('exterior_'));
         return exteriorPhotos.length >= 4; // Front, back, left, right
       }
       case "vehicle_inspection_interior": {
         const interiorPhotos = vehiclePhotos.filter(p => 
-          p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)
+          p.type && (p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type))
         );
         return interiorPhotos.length >= 4; // Dashboard, seats, fuel gauge, odometer
       }
@@ -175,11 +175,11 @@ export const EnhancedHandoverSheet = ({
             handoverSessionId={handoverId || ""}
             inspectionType="exterior"
             onPhotosUpdate={(photos) => {
-              const filteredPhotos = vehiclePhotos.filter(p => !p.type.startsWith('exterior_'));
+              const filteredPhotos = vehiclePhotos.filter(p => p.type && !p.type.startsWith('exterior_'));
               setVehiclePhotos([...filteredPhotos, ...photos]);
             }}
             onStepComplete={() => handleStepComplete(step.name)}
-            initialPhotos={vehiclePhotos.filter(p => p.type.startsWith('exterior_'))}
+            initialPhotos={vehiclePhotos.filter(p => p.type && p.type.startsWith('exterior_'))}
           />
         );
         
@@ -189,11 +189,11 @@ export const EnhancedHandoverSheet = ({
             handoverSessionId={handoverId || ""}
             inspectionType="interior"
             onPhotosUpdate={(photos) => {
-              const filteredPhotos = vehiclePhotos.filter(p => !p.type.startsWith('interior_') && !['fuel_gauge', 'odometer'].includes(p.type));
+              const filteredPhotos = vehiclePhotos.filter(p => p.type && !p.type.startsWith('interior_') && !['fuel_gauge', 'odometer'].includes(p.type));
               setVehiclePhotos([...filteredPhotos, ...photos]);
             }}
             onStepComplete={() => handleStepComplete(step.name)}
-            initialPhotos={vehiclePhotos.filter(p => p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type))}
+            initialPhotos={vehiclePhotos.filter(p => p.type && (p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)))}
           />
         );
         
