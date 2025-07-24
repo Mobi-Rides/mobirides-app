@@ -45,6 +45,7 @@ export interface VehicleConditionReport {
   additional_notes?: string;
   digital_signature_data?: string;
   is_acknowledged: boolean;
+  reporter_id?: string;
 }
 
 export interface IdentityVerificationCheck {
@@ -258,7 +259,8 @@ export const createVehicleConditionReport = async (report: VehicleConditionRepor
       interior_condition_notes: report.interior_condition_notes,
       additional_notes: report.additional_notes,
       digital_signature_data: report.digital_signature_data,
-      is_acknowledged: report.is_acknowledged
+      is_acknowledged: report.is_acknowledged,
+      reporter_id: report.reporter_id || userData.user.id
     };
 
     const { data, error } = await supabase
