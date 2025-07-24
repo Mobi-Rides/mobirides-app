@@ -141,8 +141,14 @@ const CustomMapbox = ({
 
     return () => {
       if (map.current) {
-        map.current.remove();
-        map.current = null;
+        try {
+          map.current.remove();
+        } catch (error) {
+          console.warn("Error removing map:", error);
+        } finally {
+          map.current = null;
+          setMapInit(false);
+        }
       }
     };
   }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover]);
@@ -249,30 +255,34 @@ const CustomMapbox = ({
         );
         const data = await response.json();
 
-        if (data.routes && data.routes.length > 0) {
+        if (data.routes && data.routes.length > 0 && map.current) {
           const route = data.routes[0].geometry;
 
-          if (map.current.getSource("route")) {
-            (map.current.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
-          } else {
-            map.current.addSource("route", {
-              type: "geojson",
-              data: route,
-            });
+          try {
+            if (map.current.getSource("route")) {
+              (map.current.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
+            } else {
+              map.current.addSource("route", {
+                type: "geojson",
+                data: route,
+              });
 
-            map.current.addLayer({
-              id: "route",
-              type: "line",
-              source: "route",
-              layout: {
-                "line-join": "round",
-                "line-cap": "round",
-              },
-              paint: {
-                "line-color": "#3b82f6",
-                "line-width": 5,
-              },
-            });
+              map.current.addLayer({
+                id: "route",
+                type: "line",
+                source: "route",
+                layout: {
+                  "line-join": "round",
+                  "line-cap": "round",
+                },
+                paint: {
+                  "line-color": "#3b82f6",
+                  "line-width": 5,
+                },
+              });
+            }
+          } catch (error) {
+            console.warn("Error adding route to map:", error);
           }
         }
       } catch (error) {
@@ -283,12 +293,16 @@ const CustomMapbox = ({
     fetchRoute();
 
     return () => {
-      if (map.current) {
-        if (map.current.getStyle() && map.current.getLayer("route")) {
-          map.current.removeLayer("route");
-        }
-        if (map.current.getStyle() && map.current.getSource("route")) {
-          map.current.removeSource("route");
+      if (map.current && mapInit) {
+        try {
+          if (map.current.getLayer("route")) {
+            map.current.removeLayer("route");
+          }
+          if (map.current.getSource("route")) {
+            map.current.removeSource("route");
+          }
+        } catch (error) {
+          console.warn("Error cleaning up route layer:", error);
         }
       }
     };
