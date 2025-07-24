@@ -7,6 +7,10 @@ import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 import { ExtendedProfile } from "@/utils/profileTypes";
 import { useHandover } from "@/contexts/HandoverContext";
 import { HandoverLocation } from "@/services/handoverService";
+import { HostPopup } from "./HostPopup";
+import { HostCarsSideTray } from "./HostCarsSideTray";
+import { Host } from "@/services/hostService";
+import ReactDOM from "react-dom";
 
 interface CustomMapboxProps {
   mapbox_token: string;
@@ -46,6 +50,8 @@ const CustomMapbox = ({
   const [userLocation, setUserLocation] = useState({ latitude, longitude });
   const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
   const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
+  const [selectedHost, setSelectedHost] = useState<Host | null>(null);
+  const [isHostTrayOpen, setIsHostTrayOpen] = useState(false);
 
   // Always call hooks - move conditional logic to usage
   const handoverData = useHandover();
@@ -173,6 +179,14 @@ const CustomMapbox = ({
     }
   }, [mapStyle, mapInit]);
 
+  const handleViewHostCars = (hostId: string) => {
+    const host = onlineHosts?.find(h => h.id === hostId) as Host;
+    if (host) {
+      setSelectedHost(host);
+      setIsHostTrayOpen(true);
+    }
+  };
+
   useEffect(() => {
     if (!map.current || !mapInit || !onlineHosts?.length || isHandoverMode)
       return;
@@ -184,6 +198,7 @@ const CustomMapbox = ({
       .map((host) => {
         if (!host.latitude || !host.longitude) return null;
 
+        // Create marker element
         const el = document.createElement("div");
         el.className = "host-marker";
         el.style.width = "20px";
@@ -192,15 +207,49 @@ const CustomMapbox = ({
         el.style.backgroundColor = "#4ade80";
         el.style.border = "2px solid white";
         el.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+        el.style.cursor = "pointer";
 
+        // Create popup container
+        const popupDiv = document.createElement('div');
+        
+        // Create marker with custom popup
         const marker = new mapboxgl.Marker(el)
           .setLngLat([host.longitude, host.latitude])
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(
-              `<p class="font-medium">${host.full_name || "Host"}</p>`
-            )
-          )
           .addTo(map.current!);
+
+        // Add hover events
+        el.addEventListener('mouseenter', () => {
+          ReactDOM.render(
+            <HostPopup host={host as Host} onViewCars={handleViewHostCars} />,
+            popupDiv
+          );
+          
+          const popup = new mapboxgl.Popup({
+            offset: 25,
+            closeButton: false,
+            closeOnClick: false,
+            className: 'host-popup'
+          })
+          .setDOMContent(popupDiv)
+          .addTo(map.current!);
+
+          marker.setPopup(popup);
+          popup.addTo(map.current!);
+        });
+
+        el.addEventListener('mouseleave', () => {
+          setTimeout(() => {
+            const popup = marker.getPopup();
+            if (popup) {
+              popup.remove();
+            }
+          }, 100);
+        });
+
+        // Click to open side tray
+        el.addEventListener('click', () => {
+          handleViewHostCars(host.id);
+        });
 
         return marker;
       })
@@ -447,6 +496,7 @@ const CustomMapbox = ({
           </div>
         </div>
       )}
+      
       {dpad && (
         <Dpad
           onUp={onUp}
@@ -456,6 +506,12 @@ const CustomMapbox = ({
           onReset={onReset}
         />
       )}
+
+      <HostCarsSideTray
+        isOpen={isHostTrayOpen}
+        onClose={() => setIsHostTrayOpen(false)}
+        host={selectedHost}
+      />
     </div>
   );
 };
