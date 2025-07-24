@@ -44,32 +44,71 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
   const fetchHostCars = async (hostId: string) => {
     setLoading(true);
     console.log("Fetching cars for host:", hostId);
+    
     try {
+      // Step 1: Check if host has any cars at all
+      console.log("Step 1: Checking if host has any cars...");
+      const { data: allCars, error: allCarsError } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("owner_id", hostId);
+      
+      console.log("All cars for host:", allCars);
+      if (allCarsError) console.error("Error fetching all cars:", allCarsError);
+
+      // Step 2: Check available cars only
+      console.log("Step 2: Checking available cars...");
+      const { data: availableCars, error: availableError } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("owner_id", hostId)
+        .eq("is_available", true);
+      
+      console.log("Available cars for host:", availableCars);
+      if (availableError) console.error("Error fetching available cars:", availableError);
+
+      // Step 3: Check car images for available cars
+      if (availableCars && availableCars.length > 0) {
+        console.log("Step 3: Checking car images...");
+        const carIds = availableCars.map(car => car.id);
+        const { data: carImages, error: imagesError } = await supabase
+          .from("car_images")
+          .select("*")
+          .in("car_id", carIds);
+        
+        console.log("Car images:", carImages);
+        if (imagesError) console.error("Error fetching car images:", imagesError);
+      }
+
+      // Step 4: Try the original query with left join instead of inner join
+      console.log("Step 4: Trying with left join...");
       const { data, error } = await supabase
         .from("cars")
         .select(`
           *,
-          car_images!inner(
+          car_images(
             image_url,
             is_primary
           )
         `)
         .eq("owner_id", hostId)
-        .eq("is_available", true)
-        .eq("car_images.is_primary", true);
+        .eq("is_available", true);
 
       if (error) {
-        console.error("Error fetching host cars:", error);
+        console.error("Error fetching host cars with left join:", error);
         return;
       }
 
-      console.log("Raw car data:", data);
+      console.log("Cars with left join:", data);
 
       // Transform the data to flatten the primary image
-      const transformedCars = data?.map(car => ({
-        ...car,
-        image_url: car.car_images?.[0]?.image_url || car.image_url
-      })) || [];
+      const transformedCars = data?.map(car => {
+        const primaryImage = car.car_images?.find(img => img.is_primary);
+        return {
+          ...car,
+          image_url: primaryImage?.image_url || car.car_images?.[0]?.image_url || car.image_url
+        };
+      }) || [];
 
       console.log("Transformed cars:", transformedCars);
       setCars(transformedCars);
