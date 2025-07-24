@@ -17,11 +17,30 @@ import "./App.css";
 
 const Index = lazy(() => import("@/pages/Index"));
 const Login = lazy(() => import("@/pages/Login"));
+const Signup = lazy(() => import("@/pages/signup"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const CarDetails = lazy(() => import("@/pages/CarDetails"));
 const Map = lazy(() => import("@/pages/Map"));
 const Verification = lazy(() => import("@/pages/Verification"));
 const RentalDetails = lazy(() => import("@/pages/RentalDetailsRefactored"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const AddCar = lazy(() => import("@/pages/AddCar"));
+const CreateCar = lazy(() => import("@/pages/CreateCar"));
+const EditCar = lazy(() => import("@/pages/EditCar"));
+const EditProfile = lazy(() => import("@/pages/EditProfile"));
+const Bookings = lazy(() => import("@/pages/Bookings"));
+const HostBookings = lazy(() => import("@/pages/HostBookings"));
+const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
+const BookingRequestDetails = lazy(() => import("@/pages/BookingRequestDetails"));
+const Notifications = lazy(() => import("@/pages/Notifications"));
+const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
+const Wallet = lazy(() => import("@/pages/Wallet"));
+const SavedCars = lazy(() => import("@/pages/SavedCars"));
+const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const RentalReview = lazy(() => import("@/pages/RentalReview"));
+const More = lazy(() => import("@/pages/More"));
+const CarListing = lazy(() => import("@/pages/CarListing"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +84,16 @@ const App = () => {
                           <Login />
                         </Suspense>
                       } />
+                      <Route path="/signup" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <Signup />
+                        </Suspense>
+                      } />
+                      <Route path="/reset-password" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ResetPassword />
+                        </Suspense>
+                      } />
                       <Route path="/profile" element={
                         <Suspense fallback={<LoadingView />}>
                           <ProtectedRoute>
@@ -72,9 +101,126 @@ const App = () => {
                           </ProtectedRoute>
                         </Suspense>
                       } />
+                      <Route path="/edit-profile" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <EditProfile />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/dashboard" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
                       <Route path="/cars/:carId" element={
                         <Suspense fallback={<LoadingView />}>
                           <CarDetails />
+                        </Suspense>
+                      } />
+                      <Route path="/car-listing" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <CarListing />
+                        </Suspense>
+                      } />
+                      <Route path="/add-car" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <AddCar />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/create-car" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <CreateCar />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/edit-car/:carId" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <EditCar />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/bookings" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <Bookings />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/host-bookings" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <HostBookings />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/renter-bookings" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <RenterBookings />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/booking-requests/:id" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <BookingRequestDetails />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/notifications" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <Notifications />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/notification/:id" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <NotificationDetails />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/wallet" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <Wallet />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/saved-cars" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <SavedCars />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/driver-license" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <DriverLicense />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/rental-review/:id" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <RentalReview />
+                          </ProtectedRoute>
+                        </Suspense>
+                      } />
+                      <Route path="/more" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <ProtectedRoute>
+                            <More />
+                          </ProtectedRoute>
                         </Suspense>
                       } />
                       <Route path="/map" element={
