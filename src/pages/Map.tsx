@@ -159,14 +159,20 @@ const Map = () => {
         {renderContent()}
         <HandoverBookingButtons 
           onBookingClick={(clickedBookingId) => {
+            console.log("Map received booking click for:", clickedBookingId);
+            console.log("Current booking ID from URL:", bookingId);
+            console.log("Current handover sheet state:", isHandoverSheetOpen);
+            
             // Update the current booking ID if different from URL
             if (clickedBookingId !== bookingId) {
+              console.log("Updating URL with new booking ID");
               window.history.replaceState(
                 {}, 
                 '', 
                 `/map?mode=handover&bookingId=${clickedBookingId}`
               );
             }
+            console.log("Opening handover sheet");
             setIsHandoverSheetOpen(true);
           }}
         />

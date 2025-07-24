@@ -87,7 +87,11 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => onBookingClick(booking.id)}
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("Handover button clicked for booking:", booking.id);
+                onBookingClick(booking.id);
+              }}
               className={`
                 w-16 h-16 rounded-full border-4 border-primary/30 
                 overflow-hidden shadow-lg hover:shadow-xl
@@ -148,8 +152,11 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
   };
 
   if (!handoverBookings.length) {
+    console.log("No handover bookings found for user:", userId, "role:", userRole);
     return null;
   }
+
+  console.log("Rendering handover buttons for bookings:", handoverBookings.map(b => b.id));
 
   return (
     <div className="absolute top-4 left-4 z-10 flex flex-col">
