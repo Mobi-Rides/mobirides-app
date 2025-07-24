@@ -12,6 +12,7 @@ import { VerificationProvider } from "@/contexts/VerificationContext";
 import { HandoverProvider } from "@/contexts/HandoverContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingView } from "@/components/home/LoadingView";
+import { AuthProvider } from "@/hooks/useAuth";
 import "./App.css";
 
 const Index = lazy(() => import("@/pages/Index"));
@@ -44,11 +45,12 @@ const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <MapboxTokenProvider>
-            <LocationSearchProvider>
-              <VerificationProvider>
-                <TooltipProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <MapboxTokenProvider>
+              <LocationSearchProvider>
+                <VerificationProvider>
+                  <TooltipProvider>
                   <Toaster />
                   <BrowserRouter>
                     <Routes>
@@ -103,6 +105,7 @@ const App = () => {
             </LocationSearchProvider>
           </MapboxTokenProvider>
         </ThemeProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
