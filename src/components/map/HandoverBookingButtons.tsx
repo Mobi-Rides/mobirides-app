@@ -13,7 +13,7 @@ import { Calendar, MapPin, User, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 interface HandoverBookingButtonsProps {
-  onBookingClick: (bookingId: string) => void;
+  onBookingClick: (bookingId: string, handoverType: 'pickup' | 'return') => void;
 }
 
 export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButtonsProps) => {
@@ -82,6 +82,17 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
   const BookingButton = ({ booking, index }: { booking: BookingWithRelations; index: number }) => {
     const carImage = booking.cars?.image_url || "/placeholder.svg";
     
+    // Determine handover type based on date and handover session
+    const today = new Date();
+    const startDate = new Date(booking.start_date);
+    const endDate = new Date(booking.end_date);
+    const handoverSession = booking.handover_sessions?.[0];
+    
+    // If no handover session exists, it's a pickup
+    // If handover session exists but not completed, and we're past start date, it's likely a return
+    const isReturnHandover = handoverSession && !handoverSession.handover_completed && today >= startDate;
+    const handoverType: 'pickup' | 'return' = isReturnHandover ? 'return' : 'pickup';
+    
     return (
       <TooltipProvider key={booking.id}>
         <Tooltip>
@@ -89,8 +100,8 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
             <button
               onClick={(e) => {
                 e.preventDefault();
-                console.log("Handover button clicked for booking:", booking.id);
-                onBookingClick(booking.id);
+                console.log("Handover button clicked for booking:", booking.id, "type:", handoverType);
+                onBookingClick(booking.id, handoverType);
               }}
               className={`
                 w-16 h-16 rounded-full border-4 border-primary/30 

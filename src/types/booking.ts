@@ -25,6 +25,9 @@ export interface BookingWithRelations {
   reviews?: {
     id: string;
   }[];
+  handover_sessions?: {
+    handover_completed: boolean;
+  }[];
 }
 
 // Adding this type to resolve the import errors

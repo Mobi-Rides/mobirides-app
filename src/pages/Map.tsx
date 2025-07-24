@@ -158,11 +158,18 @@ const Map = () => {
       <main className="flex-1 relative overflow-hidden">
         {renderContent()}
         <HandoverBookingButtons 
-          onBookingClick={(clickedBookingId) => {
-            console.log("Map received booking click for:", clickedBookingId);
+          onBookingClick={(clickedBookingId, handoverType) => {
+            console.log("Map received booking click for:", clickedBookingId, "type:", handoverType);
             console.log("Current booking ID from URL:", bookingId);
             console.log("Current handover sheet state:", isHandoverSheetOpen);
             
+            if (handoverType === 'return') {
+              // Navigate to rental details page for return handovers
+              window.location.href = `/rental-details/${clickedBookingId}`;
+              return;
+            }
+            
+            // For pickup handovers, open the handover sheet
             // Update the current booking ID if different from URL
             if (clickedBookingId !== bookingId) {
               console.log("Updating URL with new booking ID");
@@ -177,27 +184,21 @@ const Map = () => {
           }}
         />
       </main>
-      {isHandoverMode && (
-        <EnhancedHandoverSheet
-          isOpen={isHandoverSheetOpen}
-          onClose={() => setIsHandoverSheetOpen(false)}
-          bookingId={bookingId || ""}
-        />
-      )}
+      <EnhancedHandoverSheet
+        isOpen={isHandoverSheetOpen}
+        onClose={() => setIsHandoverSheetOpen(false)}
+        bookingId={bookingId || ""}
+      />
       <Navigation />
     </div>
   );
 
-  // Wrap with HandoverProvider only in handover mode
-  if (isHandoverMode) {
-    return (
-      <HandoverProvider>
-        {content}
-      </HandoverProvider>
-    );
-  }
-
-  return content;
+  // Always wrap with HandoverProvider since we have handover buttons
+  return (
+    <HandoverProvider>
+      {content}
+    </HandoverProvider>
+  );
 };
 
 export default Map;
