@@ -26,9 +26,10 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Fetch user rating stats
-  const { data: userStats } = useQuery<UserStats | null>({
+  const { data: userStats, isLoading: statsLoading, error: statsError } = useQuery<UserStats | null>({
     queryKey: ["user-stats", ownerId],
     queryFn: async () => {
+      console.log("Fetching user stats for owner ID:", ownerId);
       const { data, error } = await supabase.rpc("get_user_review_stats", {
         user_uuid: ownerId,
       });
@@ -38,10 +39,13 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
         return null;
       }
 
+      console.log("User stats response:", data);
       return data as unknown as UserStats;
     },
     enabled: !!ownerId,
   });
+
+  console.log("User stats state:", { userStats, statsLoading, statsError });
 
   return (
     <>
@@ -73,11 +77,15 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
                   <p className="text-xs md:text-sm text-muted-foreground">
                     Vehicle Host
                   </p>
-                  {userStats?.overall_rating > 0 && (
+                  {/* Debug info */}
+                  {statsLoading && (
+                    <span className="text-xs text-blue-500">Loading rating...</span>
+                  )}
+                  {userStats && (
                     <div className="flex items-center gap-1">
                       <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                       <span className="text-xs font-medium text-gray-700 dark:text-white">
-                        {userStats.overall_rating.toFixed(1)}
+                        {userStats.overall_rating?.toFixed(1) || "0.0"}
                       </span>
                       {userStats.total_reviews > 0 && (
                         <span className="text-xs text-muted-foreground">
@@ -85,6 +93,9 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
                         </span>
                       )}
                     </div>
+                  )}
+                  {!userStats && !statsLoading && (
+                    <span className="text-xs text-gray-500">No rating yet</span>
                   )}
                 </div>
               </div>
