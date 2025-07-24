@@ -27,15 +27,15 @@ import { toast } from "@/utils/toast-utils";
 interface EnhancedHandoverSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  handoverSessionId: string;
+  bookingId: string; // Changed from handoverSessionId to bookingId to be clear
 }
 
 export const EnhancedHandoverSheet = ({
   isOpen,
   onClose,
-  handoverSessionId
+  bookingId
 }: EnhancedHandoverSheetProps) => {
-  const { isLoading, isHost, bookingDetails } = useHandover();
+  const { isLoading, isHandoverSessionLoading, isHost, bookingDetails, handoverId } = useHandover();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<HandoverStepCompletion[]>([]);
   const [vehiclePhotos, setVehiclePhotos] = useState<VehiclePhoto[]>([]);
@@ -45,29 +45,49 @@ export const EnhancedHandoverSheet = ({
   const [digitalSignature, setDigitalSignature] = useState<string>();
 
   useEffect(() => {
-    if (handoverSessionId && isOpen) {
+    if (handoverId && isOpen && !isHandoverSessionLoading) {
       initializeHandover();
     }
-  }, [handoverSessionId, isOpen]);
+  }, [handoverId, isOpen, isHandoverSessionLoading]);
 
   const initializeHandover = async () => {
-    // Initialize steps if not already done
-    await initializeHandoverSteps(handoverSessionId);
+    if (!handoverId) {
+      console.error("Cannot initialize handover: missing handover session ID");
+      toast.error("Handover session not found");
+      return;
+    }
+
+    console.log("Initializing handover for session:", handoverId);
     
-    // Load existing progress
-    const steps = await getHandoverSteps(handoverSessionId);
-    setCompletedSteps(steps);
-    
-    // Find current step (first incomplete step)
-    const firstIncomplete = steps.findIndex(step => !step.is_completed);
-    setCurrentStep(firstIncomplete >= 0 ? firstIncomplete : steps.length);
+    try {
+      // Initialize steps if not already done
+      await initializeHandoverSteps(handoverId);
+      
+      // Load existing progress
+      const steps = await getHandoverSteps(handoverId);
+      setCompletedSteps(steps);
+      
+      // Find current step (first incomplete step)
+      const firstIncomplete = steps.findIndex(step => !step.is_completed);
+      setCurrentStep(firstIncomplete >= 0 ? firstIncomplete : steps.length);
+      
+      console.log("Handover initialized successfully");
+    } catch (error) {
+      console.error("Error initializing handover:", error);
+      toast.error("Failed to initialize handover process");
+    }
   };
 
   const handleStepComplete = async (stepName: string, data?: any) => {
-    const success = await completeHandoverStep(handoverSessionId, stepName, data);
+    if (!handoverId) {
+      toast.error("Handover session not found");
+      return;
+    }
+
+    const success = await completeHandoverStep(handoverId, stepName, data);
     if (success) {
       // Refresh steps
-      const updatedSteps = await getHandoverSteps(handoverSessionId);
+      const updatedSteps = await getHandoverSteps(handoverId);
       setCompletedSteps(updatedSteps);
       
       // Move to next step
@@ -86,7 +106,7 @@ export const EnhancedHandoverSheet = ({
       // Create final vehicle condition report only if we have data
       if (vehiclePhotos.length > 0 || damageReports.length > 0 || fuelLevel || mileage) {
         await createVehicleConditionReport({
-          handover_session_id: handoverSessionId,
+          handover_session_id: handoverId,
           booking_id: bookingDetails?.id || "",
           car_id: bookingDetails?.car?.id || "",
           report_type: 'pickup', // This should be determined by handover type
@@ -141,7 +161,7 @@ export const EnhancedHandoverSheet = ({
       case "identity_verification":
         return (
           <IdentityVerificationStep
-            handoverSessionId={handoverSessionId}
+            handoverSessionId={handoverId || ""}
             otherUserId={otherUser?.id || ""}
             otherUserName={otherUser?.full_name || "User"}
             isHost={isHost}
@@ -152,7 +172,7 @@ export const EnhancedHandoverSheet = ({
       case "vehicle_inspection_exterior":
         return (
           <VehicleInspectionStep
-            handoverSessionId={handoverSessionId}
+            handoverSessionId={handoverId || ""}
             inspectionType="exterior"
             onPhotosUpdate={(photos) => {
               const filteredPhotos = vehiclePhotos.filter(p => !p.type.startsWith('exterior_'));
@@ -166,7 +186,7 @@ export const EnhancedHandoverSheet = ({
       case "vehicle_inspection_interior":
         return (
           <VehicleInspectionStep
-            handoverSessionId={handoverSessionId}
+            handoverSessionId={handoverId || ""}
             inspectionType="interior"
             onPhotosUpdate={(photos) => {
               const filteredPhotos = vehiclePhotos.filter(p => !p.type.startsWith('interior_') && !['fuel_gauge', 'odometer'].includes(p.type));
@@ -180,7 +200,7 @@ export const EnhancedHandoverSheet = ({
       case "damage_documentation":
         return (
           <DamageDocumentationStep
-            handoverSessionId={handoverSessionId}
+            handoverSessionId={handoverId || ""}
             onDamageReportsUpdate={setDamageReports}
             onStepComplete={() => handleStepComplete(step.name)}
             initialReports={damageReports}
@@ -190,7 +210,7 @@ export const EnhancedHandoverSheet = ({
       case "fuel_mileage_check":
         return (
           <FuelMileageStep
-            handoverSessionId={handoverSessionId}
+            handoverSessionId={handoverId || ""}
             onFuelLevelChange={setFuelLevel}
             onMileageChange={setMileage}
             onStepComplete={() => handleStepComplete(step.name, { fuel_level: fuelLevel, mileage })}
@@ -202,7 +222,7 @@ export const EnhancedHandoverSheet = ({
       case "key_transfer":
         return (
           <KeyTransferStep
-            handoverSessionId={handoverSessionId}
+            handoverSessionId={handoverId || ""}
             otherUserName={otherUser?.full_name || "User"}
             isHost={isHost}
             onStepComplete={() => handleStepComplete(step.name)}
@@ -212,7 +232,7 @@ export const EnhancedHandoverSheet = ({
       case "digital_signature":
         return (
           <DigitalSignatureStep
-            handoverSessionId={handoverSessionId}
+            handoverSessionId={handoverId || ""}
             onSignatureComplete={(signature) => {
               setDigitalSignature(signature);
               handleStepComplete(step.name, { signature });
@@ -241,14 +261,41 @@ export const EnhancedHandoverSheet = ({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isHandoverSessionLoading) {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
         <Card className="w-96">
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p>Loading handover process...</p>
+              <p>
+                {isHandoverSessionLoading 
+                  ? "Setting up handover session..." 
+                  : "Loading handover process..."
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error if handover session couldn't be loaded
+  if (!handoverId && !isHandoverSessionLoading) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+        <Card className="w-96">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Handover Session Not Found</h3>
+              <p className="text-muted-foreground mb-4">
+                Unable to load the handover session. Please try refreshing the page.
+              </p>
+              <Button onClick={onClose} variant="outline">
+                Close
+              </Button>
             </div>
           </CardContent>
         </Card>

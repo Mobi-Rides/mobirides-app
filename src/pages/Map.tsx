@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
@@ -8,7 +7,7 @@ import { toast } from "@/utils/toast-utils";
 import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
 import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
-import { useHandover } from "@/contexts/HandoverContext";
+import { HandoverProvider } from "@/contexts/HandoverContext";
 import { EnhancedHandoverSheet } from "@/components/handover/EnhancedHandoverSheet";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
@@ -155,17 +154,19 @@ const Map = () => {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-background dark:bg-gray-900">
-      <main className="pb-16">
-        <div className="h-[calc(100vh-4rem)]">{renderContent()}</div>
+  const content = (
+    <div className="flex flex-col h-screen bg-background">
+      <main className="flex-1 relative overflow-hidden">
+        {renderContent()}
         {isHandoverMode && (
-          <div className="fixed bottom-20 left-0 right-0 z-10 flex justify-center">
+          <div className="absolute top-4 left-4 z-10">
             <Button
-              className="shadow-lg"
+              variant="default"
+              size="sm"
               onClick={() => setIsHandoverSheetOpen(true)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <MapPin className="mr-2 h-4 w-4" />
+              <MapPin className="h-4 w-4 mr-2" />
               Handover Details
             </Button>
           </div>
@@ -175,12 +176,23 @@ const Map = () => {
         <EnhancedHandoverSheet
           isOpen={isHandoverSheetOpen}
           onClose={() => setIsHandoverSheetOpen(false)}
-          handoverSessionId={bookingId || ""}
+          bookingId={bookingId || ""}
         />
       )}
       <Navigation />
     </div>
   );
+
+  // Wrap with HandoverProvider only in handover mode
+  if (isHandoverMode) {
+    return (
+      <HandoverProvider>
+        {content}
+      </HandoverProvider>
+    );
+  }
+
+  return content;
 };
 
 export default Map;

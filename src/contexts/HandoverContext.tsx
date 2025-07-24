@@ -15,7 +15,8 @@ import {
   HandoverStatus, 
   HandoverLocation, 
   updateHandoverLocation, 
-  getHandoverSession 
+  getHandoverSession,
+  createHandoverSession
 } from "@/services/handoverService";
 
 interface HandoverContextType {
@@ -25,14 +26,16 @@ interface HandoverContextType {
     address: string;
   }): unknown;
   handoverStatus: HandoverStatus | null;
+  handoverId: string | null;
   isLoading: boolean;
+  isHandoverSessionLoading: boolean;
   isHost: boolean;
   bookingDetails: any;
   debugMode: boolean;
   toggleDebugMode: () => void;
   destination: { latitude: number; longitude: number } | null;
-  ownerId: string;
-  currentUserId: string;
+  ownerId: string | null;
+  currentUserId: string | null;
 }
 
 const HandoverContext = createContext<HandoverContextType | undefined>(
@@ -121,6 +124,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [handoverId, setHandoverId] = useState<string | null>(null);
   const [handoverStatus, setHandoverStatus] = useState<HandoverStatus | null>(null);
+  const [isHandoverSessionLoading, setIsHandoverSessionLoading] = useState(false);
 
   // Fetch destination from bookings table
   const fetchDestination = async () => {
@@ -188,28 +192,6 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     fetchCurrentUser();
   }, []);
 
-  // Fetch handover session if it exists
-  useEffect(() => {
-    const fetchHandoverSession = async () => {
-      if (!bookingId || !currentUserId) return;
-      
-      try {
-        const handoverData = await getHandoverSession(bookingId);
-        if (handoverData) {
-          setHandoverId(handoverData.id);
-          
-          // Use our conversion helper to ensure type safety
-          const convertedHandoverStatus = convertDatabaseHandoverToHandoverStatus(handoverData);
-          setHandoverStatus(convertedHandoverStatus);
-        }
-      } catch (error) {
-        console.error("Error fetching handover session:", error);
-      }
-    };
-    
-    fetchHandoverSession();
-  }, [bookingId, currentUserId]);
-
   // Fetch booking details
   const { data: bookingDetails, isLoading: isBookingLoading } = useQuery({
     queryKey: ["handover-booking", bookingId],
@@ -245,6 +227,59 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     enabled: !!bookingId,
   });
 
+  // Fetch or create handover session after booking details are loaded
+  useEffect(() => {
+    const fetchOrCreateHandoverSession = async () => {
+      if (!bookingId || !currentUserId || !ownerId || !bookingDetails) {
+        console.log("Missing requirements for handover session fetch:", { bookingId, currentUserId, ownerId, hasBookingDetails: !!bookingDetails });
+        return;
+      }
+      
+      console.log("Fetching handover session for booking:", bookingId);
+      setIsHandoverSessionLoading(true);
+      
+      try {
+        let handoverData = await getHandoverSession(bookingId);
+        
+        if (!handoverData) {
+          console.log("No handover session found, creating one...");
+          
+          // Get the renter ID from booking details
+          if (bookingDetails?.renter?.id) {
+            const renterId = bookingDetails.renter.id;
+            console.log("Creating handover session with:", { bookingId, hostId: ownerId, renterId });
+            
+            handoverData = await createHandoverSession(bookingId, ownerId, renterId);
+            
+            if (handoverData) {
+              console.log("Handover session created:", handoverData.id);
+            } else {
+              throw new Error("Failed to create handover session");
+            }
+          } else {
+            throw new Error("Cannot create handover session: missing renter information");
+          }
+        }
+        
+        if (handoverData) {
+          console.log("Handover session ready:", handoverData.id);
+          setHandoverId(handoverData.id);
+          
+          // Use our conversion helper to ensure type safety
+          const convertedHandoverStatus = convertDatabaseHandoverToHandoverStatus(handoverData);
+          setHandoverStatus(convertedHandoverStatus);
+        }
+      } catch (error) {
+        console.error("Error fetching/creating handover session:", error);
+        toast.error("Failed to setup handover session");
+      } finally {
+        setIsHandoverSessionLoading(false);
+      }
+    };
+    
+    fetchOrCreateHandoverSession();
+  }, [bookingId, currentUserId, ownerId, bookingDetails]);
+
   // Determine if current user is host or renter
   const isHost = currentUserId === ownerId;
 
@@ -260,8 +295,24 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     longitude: number; 
     address: string 
   }) => {
-    if (!handoverId || !currentUserId) {
-      toast.error("Cannot update location: missing handover session or user ID");
+    console.log("updateLocation called with:", { handoverId, currentUserId, isHost, latitude, longitude });
+    
+    // Check if handover session is still loading
+    if (isHandoverSessionLoading) {
+      console.log("Handover session still loading, cannot update location");
+      toast.error("Handover session is still loading, please wait...");
+      return false;
+    }
+    
+    if (!handoverId) {
+      console.log("Missing handover session ID");
+      toast.error("Handover session not found. Please refresh the page.");
+      return false;
+    }
+    
+    if (!currentUserId) {
+      console.log("Missing current user ID");
+      toast.error("User not authenticated. Please log in again.");
       return false;
     }
 
@@ -272,6 +323,8 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
       timestamp: Date.now()
     };
 
+    console.log("Updating location with data:", locationData);
+
     try {
       const success = await updateHandoverLocation(
         handoverId,
@@ -281,7 +334,10 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
       );
       
       if (success) {
+        console.log("Location updated successfully");
         toast.success("Location updated successfully");
+      } else {
+        console.log("Location update failed");
       }
       
       return success;
@@ -296,6 +352,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     <HandoverContext.Provider
       value={{
         isLoading: isBookingLoading,
+        isHandoverSessionLoading,
         isHost,
         bookingDetails,
         debugMode,
@@ -305,6 +362,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         ownerId,
         updateLocation,
         handoverStatus,
+        handoverId,
       }}
     >
       {children}
