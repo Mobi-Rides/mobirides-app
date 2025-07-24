@@ -44,9 +44,13 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
             full_name,
             avatar_url,
             phone_number
+          ),
+          handover_sessions!inner (
+            handover_completed
           )
         `)
         .eq("status", "confirmed")
+        .eq("handover_sessions.handover_completed", false)
         .gte("start_date", today)
         .lte("start_date", tomorrow);
 
