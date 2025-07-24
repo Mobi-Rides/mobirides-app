@@ -181,7 +181,7 @@ const App = () => {
                           </ProtectedRoute>
                         </Suspense>
                       } />
-                      <Route path="/notification/:id" element={
+                      <Route path="/notifications/:id" element={
                         <Suspense fallback={<LoadingView />}>
                           <ProtectedRoute>
                             <NotificationDetails />
