@@ -107,14 +107,17 @@ export const EnhancedHandoverSheet = ({
   };
 
   const handleHandoverComplete = async () => {
+    console.log("Starting handover completion...");
     try {
       // Complete the handover session
       if (handoverId) {
+        console.log("Completing handover session:", handoverId);
         await completeHandover(handoverId);
       }
 
       // Create final vehicle condition report only if we have meaningful data
       if (vehiclePhotos.length > 0 || damageReports.length > 0 || fuelLevel !== undefined || mileage !== undefined) {
+        console.log("Creating vehicle condition report...");
         const reportData = {
           handover_session_id: handoverId,
           booking_id: bookingDetails?.id || "",
@@ -133,9 +136,11 @@ export const EnhancedHandoverSheet = ({
         if (!result) {
           throw new Error("Failed to create vehicle condition report");
         }
+        console.log("Vehicle condition report created successfully");
       }
 
       // Show success popup and redirect
+      console.log("Setting handover completed to true, isHost:", isHost);
       setIsHandoverCompleted(true);
     } catch (error) {
       console.error("Error completing handover:", error);
@@ -144,13 +149,16 @@ export const EnhancedHandoverSheet = ({
   };
 
   const handleSuccessPopupClose = () => {
+    console.log("Success popup closing, isHost:", isHost);
     setIsHandoverCompleted(false);
     onClose();
     
     // Navigate to appropriate bookings page
     if (isHost) {
+      console.log("Navigating to host-bookings");
       navigate("/host-bookings");
     } else {
+      console.log("Navigating to renter-bookings");
       navigate("/renter-bookings");
     }
   };
