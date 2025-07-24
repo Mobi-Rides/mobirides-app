@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useHandover } from "@/contexts/HandoverContext";
+import { completeHandover } from "@/services/handoverService";
 import { 
   HANDOVER_STEPS, 
   initializeHandoverSteps, 
@@ -22,6 +24,7 @@ import { DamageDocumentationStep } from "./steps/DamageDocumentationStep";
 import { FuelMileageStep } from "./steps/FuelMileageStep";
 import { KeyTransferStep } from "./steps/KeyTransferStep";
 import { DigitalSignatureStep } from "./steps/DigitalSignatureStep";
+import { HandoverSuccessPopup } from "./HandoverSuccessPopup";
 import { toast } from "@/utils/toast-utils";
 
 interface EnhancedHandoverSheetProps {
@@ -35,7 +38,8 @@ export const EnhancedHandoverSheet = ({
   onClose,
   bookingId
 }: EnhancedHandoverSheetProps) => {
-  const { isLoading, isHandoverSessionLoading, isHost, bookingDetails, handoverId } = useHandover();
+  const navigate = useNavigate();
+  const { isLoading, isHandoverSessionLoading, isHost, bookingDetails, handoverId, currentUserId } = useHandover();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<HandoverStepCompletion[]>([]);
   const [vehiclePhotos, setVehiclePhotos] = useState<VehiclePhoto[]>([]);
@@ -43,6 +47,7 @@ export const EnhancedHandoverSheet = ({
   const [fuelLevel, setFuelLevel] = useState<number>();
   const [mileage, setMileage] = useState<number>();
   const [digitalSignature, setDigitalSignature] = useState<string>();
+  const [isHandoverCompleted, setIsHandoverCompleted] = useState(false);
 
   useEffect(() => {
     if (handoverId && isOpen && !isHandoverSessionLoading) {
@@ -103,27 +108,50 @@ export const EnhancedHandoverSheet = ({
 
   const handleHandoverComplete = async () => {
     try {
-      // Create final vehicle condition report only if we have data
-      if (vehiclePhotos.length > 0 || damageReports.length > 0 || fuelLevel || mileage) {
-        await createVehicleConditionReport({
+      // Complete the handover session
+      if (handoverId) {
+        await completeHandover(handoverId);
+      }
+
+      // Create final vehicle condition report only if we have meaningful data
+      if (vehiclePhotos.length > 0 || damageReports.length > 0 || fuelLevel !== undefined || mileage !== undefined) {
+        const reportData = {
           handover_session_id: handoverId,
           booking_id: bookingDetails?.id || "",
           car_id: bookingDetails?.car?.id || "",
-          report_type: 'pickup', // This should be determined by handover type
+          report_type: 'pickup' as const,
           vehicle_photos: vehiclePhotos,
           damage_reports: damageReports,
           fuel_level: fuelLevel,
           mileage: mileage,
           digital_signature_data: digitalSignature,
-          is_acknowledged: true
-        });
+          is_acknowledged: true,
+          reporter_id: currentUserId
+        };
+
+        const result = await createVehicleConditionReport(reportData);
+        if (!result) {
+          throw new Error("Failed to create vehicle condition report");
+        }
       }
 
-      toast.success("Handover completed successfully!");
-      onClose();
+      // Show success popup and redirect
+      setIsHandoverCompleted(true);
     } catch (error) {
       console.error("Error completing handover:", error);
-      toast.error("Failed to complete handover");
+      toast.error("Failed to complete handover. Please try again.");
+    }
+  };
+
+  const handleSuccessPopupClose = () => {
+    setIsHandoverCompleted(false);
+    onClose();
+    
+    // Navigate to appropriate bookings page
+    if (isHost) {
+      navigate("/host-bookings");
+    } else {
+      navigate("/renter-bookings");
     }
   };
 
@@ -307,16 +335,24 @@ export const EnhancedHandoverSheet = ({
   const currentStepData = HANDOVER_STEPS[currentStep];
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] pointer-events-none"
-      style={{ display: isOpen ? "block" : "none" }}
-    >
+    <>
+      {isHandoverCompleted && (
+        <HandoverSuccessPopup 
+          isHost={isHost} 
+          onClose={handleSuccessPopupClose}
+        />
+      )}
+      
       <div
-        className="absolute inset-0 bg-black/50 pointer-events-auto"
-        onClick={onClose}
-      />
-      <div className="absolute bottom-0 left-0 right-0 h-[90vh] bg-background rounded-t-xl shadow-lg overflow-y-auto pointer-events-auto">
-        <div className="p-6">
+        className="fixed inset-0 z-[9999] pointer-events-none"
+        style={{ display: isOpen ? "block" : "none" }}
+      >
+        <div
+          className="absolute inset-0 bg-black/50 pointer-events-auto"
+          onClick={onClose}
+        />
+        <div className="absolute bottom-0 left-0 right-0 h-[90vh] bg-background rounded-t-xl shadow-lg overflow-y-auto pointer-events-auto">
+          <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -401,8 +437,9 @@ export const EnhancedHandoverSheet = ({
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
