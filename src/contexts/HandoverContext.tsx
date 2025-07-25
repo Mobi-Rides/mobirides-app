@@ -259,6 +259,8 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
           } else {
             throw new Error("Cannot create handover session: missing renter information");
           }
+        } else {
+          console.log("Found existing handover session:", handoverData.id, "completed:", handoverData.handover_completed);
         }
         
         if (handoverData) {
