@@ -2,9 +2,13 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+<<<<<<< Updated upstream
 export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
+=======
+>>>>>>> Stashed changes
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
   ({ className, ...props }, ref) => {
     return (
       <textarea

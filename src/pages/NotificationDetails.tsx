@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { toast } from "sonner";
 import { updateCarLocation } from "@/services/carLocation";
+import { NotificationClassifier } from "@/utils/NotificationClassifier";
 
 const NotificationDetails = () => {
   const { id } = useParams();
@@ -183,72 +184,45 @@ const NotificationDetails = () => {
         </h1>
 
         {notification ? (
-          <div className="space-y-4">
-            <p className="text-gray-600 dark:text-gray-300">
-              {notification.content}
-            </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">
-              Received on:{" "}
-              {new Date(notification.created_at).toLocaleDateString()}
-            </p>
-
-            {notification.type === "booking_request" &&
-              notification.related_booking_id && (
-                <div className="space-y-2">
-                  <Button
-                    className="w-full"
-                    onClick={() =>
-                      navigate(
-                        `/booking-requests/${notification.related_booking_id}`
-                      )
-                    }
-                  >
-                    View Booking Request
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-
-                  {notification.content.includes(
-                    "requesting your location"
-                  ) && (
+          (() => {
+            const classification = NotificationClassifier.classifyNotification(notification);
+            return (
+              <div className="space-y-4">
+                <p className="text-gray-600 dark:text-gray-300">
+                  {notification.content}
+                </p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  Type: {classification.type} ({classification.confidence}%)
+                </p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  Received on: {new Date(notification.created_at).toLocaleDateString()}
+                </p>
+                {classification.type === "booking" && notification.related_booking_id && (
+                  <div className="space-y-2">
                     <Button
-                      variant="default"
-                      className="w-full bg-primary hover:bg-primary/90"
-                      onClick={handleLocationRequest}
+                      className="w-full"
+                      onClick={() =>
+                        navigate(`/booking-requests/${notification.related_booking_id}`)
+                      }
                     >
-                      Share Location & View Host
-                      <MapPin className="ml-2 h-4 w-4" />
+                      View Booking Request
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
-                  )}
-                </div>
-              )}
-
-            {notification.type === "message_received" &&
-              notification.related_booking_id &&
-              notification.content.includes("requesting your location") && (
-                <div className="space-y-2">
-                  <Button
-                    className="w-full"
-                    onClick={() =>
-                      navigate(
-                        `/rental-details/${notification.related_booking_id}`
-                      )
-                    }
-                  >
-                    View Booking
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    variant="default"
-                    className="w-full bg-primary hover:bg-primary/90"
-                    onClick={handleLocationRequest}
-                  >
-                    Share Location & View Host
-                    <MapPin className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-          </div>
+                    {notification.content.includes("requesting your location") && (
+                      <Button
+                        variant="default"
+                        className="w-full bg-primary hover:bg-primary/90"
+                        onClick={handleLocationRequest}
+                      >
+                        Share Location & View Host
+                        <MapPin className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()
         ) : (
           <p className="text-gray-600 dark:text-gray-300">
             Notification not found

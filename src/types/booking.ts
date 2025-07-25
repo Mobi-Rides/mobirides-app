@@ -28,7 +28,11 @@ export interface BookingWithRelations {
 }
 
 // Adding this type to resolve the import errors
+<<<<<<< Updated upstream
 export type Booking = BookingWithRelations;
+=======
+
+>>>>>>> Stashed changes
 
 // Add this enum for notifications related to bookings
 export enum BookingNotificationType {

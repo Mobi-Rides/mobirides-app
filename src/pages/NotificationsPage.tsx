@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-
-
+import { useMessages } from "@/hooks/useMessages";
+// ChatDrawer import removed
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -19,21 +19,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-
-
+import { ChatMessages } from "@/components/chat/ChatMessages";
+import { ChatInput } from "@/components/chat/ChatInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import SnoozeModal from "@/components/notifications/SnoozeModal";
 import { FixedSizeList as List } from 'react-window';
 import { useCallback } from 'react';
 import { NotificationClassifier, classifyType } from "@/utils/NotificationClassifier";
-
-
+import ConversationRow from "@/components/chat/ConversationRow";
+import MessageList from "@/components/chat/MessageList";
 
 const SectionHeader = ({ children }) => (
   <h2 className="text-lg font-bold mb-4 flex items-center gap-2">{children}</h2>
 );
 
-export default function Notifications() {
+export default function NotificationsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +41,15 @@ export default function Notifications() {
   // --- Split notifications into recent and old ---
   const [isRecentExpanded, setIsRecentExpanded] = useState(true);
   const [isOldExpanded, setIsOldExpanded] = useState(true);
-  
+  const [selectedChat, setSelectedChat] = useState<{
+    isOpen: boolean;
+    senderId: string;
+    senderName: string;
+  }>({
+    isOpen: false,
+    senderId: '',
+    senderName: '',
+  });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [autoMarkRead, setAutoMarkRead] = useState(false);
   const [soundNotifications, setSoundNotifications] = useState(true);
@@ -56,7 +64,48 @@ export default function Notifications() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [dummyState, setDummyState] = useState(0);
 
-  
+  // --- Real chat data for Messages tab ---
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const defaultReceiverId = "test-recipient-id"; // Replace with a real user id or add a selector if needed
+  useEffect(() => {
+    const fetchUserAndMessages = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setCurrentUserId(user.id);
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*, sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url)")
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .order("created_at", { ascending: true });
+      if (!error) setMessages(data || []);
+    };
+    if (tab === "messages") fetchUserAndMessages();
+  }, [tab]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !currentUserId) return;
+    const { error } = await supabase.from("messages").insert({
+      content: newMessage.trim(),
+      sender_id: currentUserId,
+      receiver_id: defaultReceiverId,
+    });
+    if (!error) {
+      setNewMessage("");
+      // Refetch messages after sending
+      const { data } = await supabase
+        .from("messages")
+        .select("*, sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url)")
+        .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
+        .order("created_at", { ascending: true });
+      setMessages(data || []);
+    }
+  };
+
+  const { messages: unreadMessages, markMessageAsRead, isLoading: messagesLoading } = useMessages();
+  const unreadCount = unreadMessages?.filter(msg => msg.status === 'sent').length || 0;
 
   // 1. Add state for pagination
   const [notificationsPage, setNotificationsPage] = useState(0);
@@ -248,7 +297,14 @@ export default function Notifications() {
     );
   }).length;
 
-  
+  const handleChatClick = async (senderId: string, senderName: string | null) => {
+    await markMessageAsRead(senderId);
+    setSelectedChat({
+      isOpen: true,
+      senderId,
+      senderName: senderName || 'Unknown User',
+    });
+  };
 
   const handleNotificationClick = (notificationId: string) => {
     console.log('Navigating to notification:', notificationId);
@@ -273,7 +329,18 @@ export default function Notifications() {
         return;
       }
 
-      
+      // Mark all messages as read
+      const { error: messageError } = await supabase
+        .from('messages')
+        .update({ status: 'read' })
+        .eq('receiver_id', user.id)
+        .eq('status', 'sent');
+
+      if (messageError) {
+        console.error("Error marking messages as read:", messageError);
+        toast.error("Couldn't mark messages as read");
+        return;
+      }
 
       // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -357,11 +424,100 @@ export default function Notifications() {
     }
   }, [autoMarkRead, isOldExpanded, limitedOldNotifications]);
 
-  // Messaging states removed
+  // --- Conversation state for Messages tab ---
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<any[]>([]); // [{ userId, name, avatar, lastMessage, lastDate }]
+  const [conversationMessages, setConversationMessages] = useState<any[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
 
-  // Fetch all messages and group by conversation (removed)
+  // Add state for forward modal, starred messages, and more
+  const [forwardingMsg, setForwardingMsg] = useState<any | null>(null);
+  const [forwardRecipient, setForwardRecipient] = useState("");
+  const [starredIds, setStarredIds] = useState<string[]>([]);
+  const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
 
-  
+  // Fetch all messages and group by conversation
+  useEffect(() => {
+    let channel: any = null;
+    let isMounted = true;
+    const fetchConversations = async () => {
+      setLoadingConversations(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // Fetch all messages where user is sender or receiver
+      const { data: messages, error } = await supabase
+        .from("messages")
+        .select("*, sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url)", { count: "exact" })
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .order("created_at", { ascending: false });
+      if (error) return;
+      // Group by other user
+      const convMap: Record<string, any> = {};
+      for (const msg of messages) {
+        const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+        if (!convMap[otherId] || new Date(msg.created_at) > new Date(convMap[otherId].lastDate)) {
+          convMap[otherId] = {
+            userId: otherId,
+            name: msg.sender_id === user.id ? (msg.sender?.full_name || otherId) : (msg.sender?.full_name || otherId),
+            avatar: msg.sender?.avatar_url || null,
+            lastMessage: msg.content,
+            lastDate: msg.created_at,
+            lastMsgObj: msg,
+          };
+        }
+      }
+      // Build conversation list
+      const userIds = Object.keys(convMap);
+      const convList = userIds.map(id => convMap[id]).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
+      if (isMounted) {
+        setConversations(convList);
+        setLoadingConversations(false);
+        // If no conversation selected, select the first
+        if (!selectedConversation && convList.length > 0) setSelectedConversation(convList[0].userId);
+      }
+    };
+    fetchConversations();
+    // Add real-time subscription for instant updates
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      channel = supabase
+        .channel('messages-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `receiver_id=eq.${user.id}`
+          },
+          (payload) => {
+            // New message for this user, refetch conversations
+            fetchConversations();
+          }
+        )
+        .subscribe();
+    });
+    return () => {
+      isMounted = false;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [selectedConversation]);
+
+  // Fetch messages for selected conversation
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !selectedConversation) return;
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("*, sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url)")
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .filter("sender_id", "eq", selectedConversation)
+        .order("created_at", { ascending: true });
+      setConversationMessages(msgs || []);
+    };
+    if (selectedConversation) fetchMessages();
+  }, [selectedConversation]);
 
   // Handler: Mark as Read/Unread
   const handleToggleRead = async (notification: any) => {
@@ -415,10 +571,54 @@ export default function Notifications() {
     }
   };
 
-  
-  
-  
-  
+  // Handler: Reply
+  const handleReply = (msg: any) => {
+    setSelectedChat({ isOpen: true, senderId: msg.sender_id, senderName: msg.sender?.full_name || msg.sender_id });
+  };
+  // Handler: Forward
+  const handleForward = (msg: any) => {
+    setForwardingMsg(msg);
+    setForwardRecipient("");
+  };
+  const handleSendForward = async () => {
+    if (!forwardingMsg || !forwardRecipient) return;
+    const { error } = await supabase.from("messages").insert({
+      content: forwardingMsg.content,
+      sender_id: currentUserId,
+      receiver_id: forwardRecipient,
+    });
+    if (!error) {
+      toast.success("Message forwarded");
+      setForwardingMsg(null);
+      setForwardRecipient("");
+    } else {
+      toast.error("Failed to forward message");
+    }
+  };
+  // Handler: Delete
+  const handleDeleteMsg = async (msg: any) => {
+    const { error } = await supabase.from("messages").delete().eq("id", msg.id);
+    if (!error) {
+      toast.success("Message deleted");
+      // Remove from UI
+      setConversations((prev) => prev.map(conv => ({
+        ...conv,
+        lastMsgObj: conv.lastMsgObj?.id === msg.id ? null : conv.lastMsgObj
+      })).filter(conv => conv.lastMsgObj));
+    } else {
+      toast.error("Failed to delete message");
+    }
+  };
+  // Handler: Star
+  const handleToggleStar = async (msg: any) => {
+    const isStarred = starredIds.includes(msg.id);
+    setStarredIds(ids => isStarred ? ids.filter(id => id !== msg.id) : [...ids, msg.id]);
+    // No DB update, just UI state
+  };
+  // Handler: More
+  const handleMore = (msg: any) => {
+    setMoreMenuId(moreMenuId === msg.id ? null : msg.id);
+  };
 
   // --- Message Notifications Section for Notifications tab ---
   const [contactingHost, setContactingHost] = useState(false);
@@ -437,9 +637,12 @@ export default function Notifications() {
       icon: 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white',
       badge: 'bg-gradient-to-br from-yellow-300 to-orange-400 text-white pulse-yellow',
     },
-    
+    messages: {
+      icon: 'bg-gradient-to-br from-teal-400 to-green-500 text-white',
+      badge: 'bg-gradient-to-br from-teal-300 to-green-400 text-white pulse-messages',
+    },
   };
-  const currentStyles = iconBadgeStyles[activeFilter] || iconBadgeStyles.all;
+  const currentStyles = tab === 'messages' ? iconBadgeStyles.messages : (iconBadgeStyles[activeFilter] || iconBadgeStyles.all);
 
   // Helper: toggle single selection
   const toggleSelect = (id: string) => {
@@ -731,6 +934,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
                 </span>
               )}
             </TabsTrigger>
+            
           </TabsList>
         </Tabs>
       </div>
@@ -1160,7 +1364,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
         </div>
               </div>
 
-      
+      {/* Chat drawer removed */}
             {/* Notification Settings Modal */}
             <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
               <DialogContent>
