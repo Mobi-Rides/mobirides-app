@@ -1,5 +1,5 @@
 import {
-  BrowserRouter as Router,
+  BrowserRouter,
   Routes,
   Route,
 } from "react-router-dom";
@@ -15,6 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
 import { LocationSearchProvider } from "@/contexts/LocationSearchContext";
 import { VerificationProvider } from "@/contexts/VerificationContext";
+import { HandoverProvider } from "@/contexts/HandoverContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { LoadingView } from "@/components/home/LoadingView";
@@ -29,6 +30,15 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Component to conditionally wrap routes that need HandoverProvider
+const HandoverRoute = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <HandoverProvider>
+      {children}
+    </HandoverProvider>
+  );
+};
 
 // Lazy load pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -81,12 +91,13 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <ThemeProvider>
             <MapboxTokenProvider>
               <LocationSearchProvider>
                 <VerificationProvider>
                   <TooltipProvider>
                     <Toaster />
-                    <Router>
+                    <BrowserRouter>
                       <Routes>
                         <Route path="/" element={
                           <Suspense fallback={<LoadingView />}>
@@ -153,13 +164,79 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
-                        <Route path="/edit-car/:carId" element={
+                        <Route path="/edit-car/:id" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <EditCar />
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        <Route path="/saved-cars" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <SavedCars />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/driver-license" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <DriverLicense />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/rental-review/:bookingId" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <RentalReview />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/rental-details/:id" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <RentalDetailsRefactored />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/verification" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Verification />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/notification-preferences" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <NotificationPreferencesPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/wallet" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Wallet />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/map" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HandoverRoute>
+                                <Map />
+                              </HandoverRoute>
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/more" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <More />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+
                         {/* Role-aware booking routing */}
                         <Route path="/bookings" element={
                           <Suspense fallback={<LoadingView />}>
@@ -210,68 +287,7 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
-                        <Route path="/wallet" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <Wallet />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/saved-cars" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <SavedCars />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/driver-license" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <DriverLicense />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/rental-review/:bookingId" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <RentalReview />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/more" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <More />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/map" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <Map />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/verification" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <Verification />
-                          </Suspense>
-                        } />
-                        <Route path="/rental-details/:id" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <RentalDetailsRefactored />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/notification-preferences" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <NotificationPreferencesPage />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        
+
                         {/* Admin Routes */}
                         <Route path="/admin" element={
                           <Suspense fallback={<LoadingView />}>
@@ -331,11 +347,12 @@ function App() {
                       
                       <ShadcnToaster />
                       <SonnerToaster position="top-center" />
-                    </Router>
+                    </BrowserRouter>
                   </TooltipProvider>
                 </VerificationProvider>
               </LocationSearchProvider>
             </MapboxTokenProvider>
+          </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
