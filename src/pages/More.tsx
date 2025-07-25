@@ -34,7 +34,7 @@ const More = () => {
     {
       icon: Bell,
       label: "Notification Preferences",
-      onClick: () => toast.info("Notification settings coming soon"),
+      onClick: () => navigate("/notification-preferences"),
     },
     {
       icon: Shield,

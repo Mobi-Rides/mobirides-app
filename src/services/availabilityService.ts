@@ -70,7 +70,7 @@ export const getBookedDates = async (carId: string): Promise<Date[]> => {
       const end = parseISO(booking.end_date);
       
       // For each day between start and end (inclusive), add to bookedDates
-      const currentDate = new Date(start);
+      let currentDate = new Date(start);
       while (currentDate <= end) {
         bookedDates.push(new Date(currentDate));
         currentDate.setDate(currentDate.getDate() + 1);

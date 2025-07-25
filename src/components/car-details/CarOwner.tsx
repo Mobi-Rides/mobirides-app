@@ -1,21 +1,22 @@
 
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, User } from "lucide-react";
-import { useState } from "react";
-import { ChatDrawer } from "@/components/chat/ChatDrawer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CarOwnerProps {
   ownerName: string;
   avatarUrl: string;
   ownerId: string;
-  carId: string;
 }
 
-export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps) => {
-  const [isChatOpen, setIsChatOpen] = useState(false);
+export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
+  const navigate = useNavigate();
+
+  const handleContactClick = () => {
+    navigate("/messages", { state: { recipientId: ownerId, recipientName: ownerName } });
+  };
 
   return (
     <>
@@ -31,8 +32,7 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
               <img
                 src={
                   avatarUrl
-                    ? supabase.storage.from("avatars").getPublicUrl(avatarUrl)
-                        .data.publicUrl
+                    ? avatarUrl
                     : "/placeholder.svg"
                 }
                 alt={ownerName || "Car Owner"}
@@ -51,7 +51,7 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button className="gap-2" onClick={() => setIsChatOpen(true)}>
+                  <Button className="gap-2" onClick={handleContactClick}>
                     <MessageCircle className="h-4 w-4" />
                     <span className="hidden sm:inline">Contact</span>
                   </Button>
@@ -64,14 +64,6 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId }: CarOwnerProps
           </div>
         </CardContent>
       </Card>
-
-      <ChatDrawer
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        receiverId={ownerId}
-        receiverName={ownerName}
-        carId={carId}
-      />
     </>
   );
 };

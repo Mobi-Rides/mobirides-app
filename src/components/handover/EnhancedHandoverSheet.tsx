@@ -111,16 +111,14 @@ export const EnhancedHandoverSheet = ({
     switch (stepName) {
       case "identity_verification":
         return true; // Can always proceed after identity verification
-      case "vehicle_inspection_exterior": {
+      case "vehicle_inspection_exterior":
         const exteriorPhotos = vehiclePhotos.filter(p => p.type.startsWith('exterior_'));
         return exteriorPhotos.length >= 4; // Front, back, left, right
-      }
-      case "vehicle_inspection_interior": {
+      case "vehicle_inspection_interior":
         const interiorPhotos = vehiclePhotos.filter(p => 
           p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)
         );
         return interiorPhotos.length >= 4; // Dashboard, seats, fuel gauge, odometer
-      }
       case "damage_documentation":
         return true; // Can proceed with or without damage reports
       case "fuel_mileage_check":
@@ -138,7 +136,7 @@ export const EnhancedHandoverSheet = ({
     const otherUser = isHost ? bookingDetails?.renter : bookingDetails?.car?.owner;
     
     switch (step.name) {
-      case "identity_verification":
+      case "identity_verification": {
         return (
           <IdentityVerificationStep
             handoverSessionId={handoverSessionId}
@@ -148,8 +146,10 @@ export const EnhancedHandoverSheet = ({
             onStepComplete={() => handleStepComplete(step.name)}
           />
         );
+      }
         
-      case "vehicle_inspection_exterior":
+      case "vehicle_inspection_exterior": {
+        const exteriorPhotos = vehiclePhotos.filter(p => p.type.startsWith('exterior_'));
         return (
           <VehicleInspectionStep
             handoverSessionId={handoverSessionId}
@@ -162,8 +162,12 @@ export const EnhancedHandoverSheet = ({
             initialPhotos={vehiclePhotos.filter(p => p.type.startsWith('exterior_'))}
           />
         );
+      }
         
-      case "vehicle_inspection_interior":
+      case "vehicle_inspection_interior": {
+        const interiorPhotos = vehiclePhotos.filter(p => 
+          p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)
+        );
         return (
           <VehicleInspectionStep
             handoverSessionId={handoverSessionId}
@@ -176,8 +180,9 @@ export const EnhancedHandoverSheet = ({
             initialPhotos={vehiclePhotos.filter(p => p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type))}
           />
         );
+      }
         
-      case "damage_documentation":
+      case "damage_documentation": {
         return (
           <DamageDocumentationStep
             handoverSessionId={handoverSessionId}
@@ -186,8 +191,9 @@ export const EnhancedHandoverSheet = ({
             initialReports={damageReports}
           />
         );
+      }
 
-      case "fuel_mileage_check":
+      case "fuel_mileage_check": {
         return (
           <FuelMileageStep
             handoverSessionId={handoverSessionId}
@@ -198,8 +204,9 @@ export const EnhancedHandoverSheet = ({
             initialMileage={mileage}
           />
         );
+      }
 
-      case "key_transfer":
+      case "key_transfer": {
         return (
           <KeyTransferStep
             handoverSessionId={handoverSessionId}
@@ -208,8 +215,9 @@ export const EnhancedHandoverSheet = ({
             onStepComplete={() => handleStepComplete(step.name)}
           />
         );
+      }
 
-      case "digital_signature":
+      case "digital_signature": {
         return (
           <DigitalSignatureStep
             handoverSessionId={handoverSessionId}
@@ -220,6 +228,7 @@ export const EnhancedHandoverSheet = ({
             initialSignature={digitalSignature}
           />
         );
+      }
         
       default:
         return (

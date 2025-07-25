@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, User, RefreshCw, Info } from "lucide-react";
 import { toast } from "sonner";
+import { VerificationService } from "@/services/verificationService";
 
 interface PersonalInfoStepProps {
   onNext: () => void;
@@ -21,7 +22,7 @@ interface PersonalInfoStepProps {
 export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
   onNext,
 }) => {
-  const { verificationData, updatePersonalInfo, isLoading, refreshFromProfile } = useVerification();
+  const { verificationData, updatePersonalInfo, isLoading, refreshData } = useVerification();
   const [formData, setFormData] = useState({
     fullName: "",
     dateOfBirth: "",
@@ -36,16 +37,11 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
     },
   });
   const [hasPrefilledData, setHasPrefilledData] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Update form data when verification data changes
   useEffect(() => {
-    console.log("[PersonalInfoStep] Verification data updated:", verificationData);
-    
     if (verificationData?.personal_info) {
       const personalInfo = verificationData.personal_info;
-      console.log("[PersonalInfoStep] Setting form data from personal_info:", personalInfo);
-      
       const newFormData = {
         fullName: personalInfo.fullName || "",
         dateOfBirth: personalInfo.dateOfBirth || "",
@@ -60,12 +56,10 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
         },
       };
       
-      console.log("[PersonalInfoStep] New form data:", newFormData);
       setFormData(newFormData);
       
       // Check if we have pre-filled data from profile
       const hasData = personalInfo.fullName || personalInfo.phoneNumber || personalInfo.email;
-      console.log("[PersonalInfoStep] Has prefilled data:", hasData);
       setHasPrefilledData(!!hasData);
     }
   }, [verificationData]);
@@ -110,15 +104,16 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
     if (!verificationData?.user_id) return;
     
     try {
-      setIsRefreshing(true);
-      console.log("[PersonalInfoStep] Refreshing from profile");
-      await refreshFromProfile();
-      toast.success("Profile data refreshed successfully!");
+      const success = await VerificationService.refreshFromProfile(verificationData.user_id);
+      if (success) {
+        await refreshData();
+        toast.success("Profile data refreshed successfully!");
+      } else {
+        toast.error("Failed to refresh profile data");
+      }
     } catch (error) {
       console.error("Failed to refresh from profile:", error);
       toast.error("Failed to refresh profile data");
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
@@ -131,35 +126,33 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
         </p>
       </div>
 
-      <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-        <CardContent className="pt-6">
-          <div className="flex items-start space-x-3">
-            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                {hasPrefilledData ? "Profile Data Available" : "Import Profile Data"}
-              </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                {hasPrefilledData 
-                  ? "Some fields have been pre-filled from your profile. You can refresh or update as needed."
-                  : "Click to import available data from your profile to speed up the process."
-                }
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleRefreshFromProfile}
-                disabled={isRefreshing}
-                className="text-blue-700 border-blue-300 hover:bg-blue-100 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-900"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-                {isRefreshing ? 'Refreshing...' : 'Refresh from Profile'}
-              </Button>
+      {hasPrefilledData && (
+        <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+          <CardContent className="pt-6">
+            <div className="flex items-start space-x-3">
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Profile Data Imported
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  We've pre-filled some fields from your profile. Please review and update as needed.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefreshFromProfile}
+                  className="text-blue-700 border-blue-300 hover:bg-blue-100 dark:text-blue-300 dark:border-blue-700 dark:hover:bg-blue-900"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh from Profile
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

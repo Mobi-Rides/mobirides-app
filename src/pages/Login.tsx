@@ -187,7 +187,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-poppins">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <img
@@ -195,10 +195,10 @@ const Login = () => {
             alt="Mobirides Logo"
             className="mx-auto h-48 w-48"
           />
-          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900 font-poppins">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Welcome to <span className="text-[#7C3AED]">Mobirides</span>
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 font-poppins">
+          <p className="mt-2 text-center text-sm text-gray-600">
             Sign in to start sharing or renting cars
           </p>
         </div>
@@ -214,12 +214,6 @@ const Login = () => {
                     brand: "#7C3AED",
                     brandAccent: "#6D28D9",
                   },
-                  fonts: {
-                    bodyFontFamily: "Poppins, sans-serif",
-                    buttonFontFamily: "Poppins, sans-serif",
-                    inputFontFamily: "Poppins, sans-serif",
-                    labelFontFamily: "Poppins, sans-serif",
-                  },
                 },
               },
             }}
@@ -233,11 +227,11 @@ const Login = () => {
               },
             }}
           />
-          <p className="mt-4 text-center text-sm text-gray-600 font-poppins">
+          <p className="mt-4 text-center text-sm text-gray-600">
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}
-              className="text-[#7C3AED] hover:text-[#6D28D9] font-medium"
+              className="text-[#7C3AED] hover:text-[#6D28D9]"
             >
               Sign up
             </button>
@@ -246,13 +240,13 @@ const Login = () => {
       </div>
 
       <Dialog open={showProfilePrompt} onOpenChange={setShowProfilePrompt}>
-        <DialogContent className="max-w-3xl rounded-2xl font-poppins">
+        <DialogContent className="max-w-3xl rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-semibold">Complete Your Profile</DialogTitle>
+            <DialogTitle>Complete Your Profile</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="full_name" className="font-medium">Full Name</Label>
+              <Label htmlFor="full_name">Full Name</Label>
               <Input
                 id="full_name"
                 placeholder="Enter your full name"
@@ -263,11 +257,10 @@ const Login = () => {
                     full_name: e.target.value,
                   }))
                 }
-                className="font-poppins"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone" className="font-medium">Phone Number</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <div className="flex gap-2">
                 <Select
                   value={profileData.country_code}
@@ -275,12 +268,12 @@ const Login = () => {
                     setProfileData((prev) => ({ ...prev, country_code: value }))
                   }
                 >
-                  <SelectTrigger className="w-[140px] font-poppins">
+                  <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Country" />
                   </SelectTrigger>
                   <SelectContent>
                     {countryCodes.map(({ code, country }) => (
-                      <SelectItem key={code} value={code} className="font-poppins">
+                      <SelectItem key={code} value={code}>
                         {country} ({code})
                       </SelectItem>
                     ))}
@@ -297,12 +290,12 @@ const Login = () => {
                       phone_number: formatPhoneNumber(e.target.value),
                     }))
                   }
-                  className="flex-1 font-poppins"
+                  className="flex-1"
                 />
               </div>
             </div>
             <Button
-              className="w-full font-medium"
+              className="w-full"
               onClick={handleProfileUpdate}
               disabled={
                 isUpdating ||

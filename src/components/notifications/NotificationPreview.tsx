@@ -1,0 +1,19 @@
+import React from "react";
+import { NotificationClassifier } from "@/utils/NotificationClassifier";
+import { BookingNotificationPreview } from "./BookingNotificationPreview";
+import { PaymentNotificationPreview } from "./PaymentNotificationPreview";
+import { GenericNotificationPreview } from "./GenericNotificationPreview";
+
+// Main NotificationPreview component
+export function NotificationPreview({ notification }) {
+  const classification = NotificationClassifier.classifyNotification(notification);
+  switch (classification.type) {
+    case "booking":
+      return <BookingNotificationPreview notification={notification} confidence={classification.confidence} />;
+    case "payment":
+      return <PaymentNotificationPreview notification={notification} confidence={classification.confidence} />;
+    case "other":
+    default:
+      return <GenericNotificationPreview notification={notification} confidence={classification.confidence} />;
+  }
+}

@@ -22,7 +22,7 @@ export const useHostLocation = (map: mapboxgl.Map | null, mode: string | null, h
 
     console.log("Setting up location subscription for host:", hostId);
 
-    const channel = supabase.channel('car-location')
+    let channel = supabase.channel('car-location')
       .on(
         'postgres_changes',
         {

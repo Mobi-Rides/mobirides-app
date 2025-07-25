@@ -122,22 +122,34 @@ const ProgressStepper: React.FC<{
           const isCompleted = status === VerificationStatus.COMPLETED;
           const canNavigate = canNavigateToStep(step);
 
+          // Color logic
+          let stepBg = "bg-gray-700";
+          let iconColor = "text-gray-300";
+          let ring = "";
+          let badgeBg = "bg-white";
+          let badgeText = "text-gray-700";
+          if (isCompleted) {
+            stepBg = "bg-green-500 hover:bg-green-600";
+            iconColor = "text-white";
+            badgeBg = "bg-white";
+            badgeText = "text-green-700";
+          } else if (isCurrent) {
+            stepBg = "bg-blue-600";
+            iconColor = "text-white";
+            ring = "ring-2 ring-blue-400 ring-offset-2";
+            badgeBg = "bg-white";
+            badgeText = "text-blue-700";
+          }
+
           return (
             <div key={step} className="contents">
               <div className="flex flex-col items-center">
                 <Button
-                  variant={
-                    isCurrent
-                      ? "default"
-                      : isCompleted
-                        ? "secondary"
-                        : "outline"
-                  }
+                  variant="outline"
                   size="icon"
                   className={`
                     relative h-12 w-12 rounded-full mb-2
-                    ${isCurrent ? "ring-2 ring-primary ring-offset-2" : ""}
-                    ${isCompleted ? "bg-green-500 hover:bg-green-600" : ""}
+                    ${stepBg} ${iconColor} ${ring}
                     ${!canNavigate && !isCurrent && !isCompleted ? "opacity-50 cursor-not-allowed" : ""}
                   `}
                   onClick={() => canNavigate && onStepClick(step)}
@@ -146,14 +158,12 @@ const ProgressStepper: React.FC<{
                   {isCompleted ? (
                     <CheckCircle className="h-6 w-6 text-white" />
                   ) : (
-                    <Icon
-                      className={`h-6 w-6 ${isCurrent ? "text-white" : ""}`}
-                    />
+                    <Icon className={`h-6 w-6 ${iconColor}`} />
                   )}
 
                   <Badge
                     variant="secondary"
-                    className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs"
+                    className={`absolute -top-2 -right-2 h-5 w-5 p-0 text-xs ${badgeBg} ${badgeText}`}
                   >
                     {index + 1}
                   </Badge>
@@ -161,7 +171,7 @@ const ProgressStepper: React.FC<{
 
                 <div className="text-center max-w-[80px]">
                   <p
-                    className={`text-xs font-medium ${isCurrent ? "text-primary" : "text-muted-foreground"}`}
+                    className={`text-xs font-medium ${isCurrent ? "text-blue-600" : isCompleted ? "text-green-600" : "text-gray-400"}`}
                   >
                     {config.title}
                   </p>
@@ -175,7 +185,7 @@ const ProgressStepper: React.FC<{
                 <div
                   className={`
                   flex-1 h-0.5 mx-2 mb-8
-                  ${isCompleted ? "bg-green-500" : "bg-muted"}
+                  ${isCompleted ? "bg-green-500" : isCurrent ? "bg-blue-600" : "bg-gray-700"}
                 `}
                 />
               )}
