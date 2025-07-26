@@ -32,7 +32,9 @@ const useAdminUsers = () => {
     queryFn: async (): Promise<Profile[]> => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, role, phone_number, created_at")
+        .select(`
+          id, full_name, role, phone_number, created_at
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -59,6 +61,15 @@ export const UserManagementTable = () => {
       case "admin": return "destructive";
       case "host": return "default";
       case "renter": return "secondary";
+      default: return "outline";
+    }
+  };
+
+  const getKYCBadgeVariant = (status: string) => {
+    switch (status) {
+      case "verified": return "default";
+      case "pending": return "secondary";
+      case "rejected": return "destructive";
       default: return "outline";
     }
   };
@@ -122,6 +133,8 @@ export const UserManagementTable = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Account Status</TableHead>
+                  <TableHead>KYC Status</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Actions</TableHead>
@@ -136,6 +149,14 @@ export const UserManagementTable = () => {
                     <TableCell>
                       <Badge variant={getRoleBadgeVariant(user.role)}>
                         {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="default">Active</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getKYCBadgeVariant("not_started")}>
+                        not started
                       </Badge>
                     </TableCell>
                     <TableCell>{user.phone_number || "N/A"}</TableCell>
