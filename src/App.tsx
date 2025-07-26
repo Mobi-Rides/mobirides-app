@@ -42,6 +42,9 @@ const RentalReview = lazy(() => import("@/pages/RentalReview"));
 const More = lazy(() => import("@/pages/More"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
 
+// Admin pages
+const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -242,6 +245,14 @@ const App = () => {
                           </ProtectedRoute>
                         </Suspense>
                       } />
+                      
+                      {/* Admin Routes */}
+                      <Route path="/admin" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <AdminDashboard />
+                        </Suspense>
+                      } />
+                      
                       <Route path="*" element={
                         <Suspense fallback={<LoadingView />}>
                           <div className="flex items-center justify-center min-h-screen">

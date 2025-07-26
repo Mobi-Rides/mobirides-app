@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
-  const [userRole, setUserRole] = useState<"host" | "renter" | null>(null);
+  const [userRole, setUserRole] = useState<"host" | "renter" | "admin" | null>(null);
 
   useEffect(() => {
     const getUserRole = async () => {
@@ -57,7 +57,16 @@ const Dashboard = () => {
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 pb-20">
         <DashboardHeader />
         <div className="mt-2">
-          {userRole === "renter" ? <RenterDashboard /> : <HostDashboard />}
+          {userRole === "renter" ? (
+            <RenterDashboard />
+          ) : userRole === "admin" ? (
+            <div className="text-center py-8">
+              <h2 className="text-lg font-semibold">Admin Dashboard</h2>
+              <p className="text-muted-foreground">Access admin panel at /admin</p>
+            </div>
+          ) : (
+            <HostDashboard />
+          )}
         </div>
         <Navigation />  
       </div>
