@@ -20,7 +20,7 @@ interface ProfileMenuProps {
 }
 
 interface MenuItem {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: any;
   label: string;
   onClick: () => void;
   color?: string;
@@ -86,7 +86,13 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     }
   ] : [];
 
-  const vehicleAndBookingsItems = [...baseMenuItems.slice(1), ...hostOnlyItems];
+  const vehicleAndBookingsItems = [...baseMenuItems.slice(1), ...hostOnlyItems, {
+    icon: Bell,
+    label: "Notifications",
+    onClick: () => navigate("/notifications"),
+    description: "View your latest notifications",
+    animate: true,
+  }];
 
   const settingsItems: MenuItem[] = [
     {
@@ -96,8 +102,8 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     },
     {
       icon: Bell,
-      label: "Notification Preferences",
-      onClick: () => toast("Notification settings coming soon"),
+      label: "Notifications",
+      onClick: () => navigate("/notifications"),
     },
     {
       icon: Shield,

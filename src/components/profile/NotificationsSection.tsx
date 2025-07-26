@@ -4,7 +4,7 @@ import { Bell, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatDrawer } from "@/components/chat/ChatDrawer";
+// ChatDrawer import removed
 import { useMessages } from "@/hooks/useMessages";
 import { MessageList } from "./MessageList";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -140,12 +140,7 @@ export const NotificationsSection = () => {
         </TabsContent>
       </Tabs>
 
-      <ChatDrawer
-        isOpen={selectedChat.isOpen}
-        onClose={() => setSelectedChat({ isOpen: false, senderId: '', senderName: '' })}
-        receiverId={selectedChat.senderId}
-        receiverName={selectedChat.senderName}
-      />
+      {/* Chat drawer removed */}
     </div>
   );
 };

@@ -714,52 +714,37 @@ export type Database = {
         Row: {
           booking_id: string | null
           car_id: string | null
-          category_ratings: Json | null
           comment: string | null
           created_at: string
           id: string
           rating: number
-          response: string | null
-          response_at: string | null
-          review_images: string[] | null
           review_type: Database["public"]["Enums"]["review_type"]
           reviewee_id: string
           reviewer_id: string
-          status: string | null
           updated_at: string
         }
         Insert: {
           booking_id?: string | null
           car_id?: string | null
-          category_ratings?: Json | null
           comment?: string | null
           created_at?: string
           id?: string
           rating: number
-          response?: string | null
-          response_at?: string | null
-          review_images?: string[] | null
           review_type: Database["public"]["Enums"]["review_type"]
           reviewee_id: string
           reviewer_id: string
-          status?: string | null
           updated_at?: string
         }
         Update: {
           booking_id?: string | null
           car_id?: string | null
-          category_ratings?: Json | null
           comment?: string | null
           created_at?: string
           id?: string
           rating?: number
-          response?: string | null
-          response_at?: string | null
-          review_images?: string[] | null
           review_type?: Database["public"]["Enums"]["review_type"]
           reviewee_id?: string
           reviewer_id?: string
-          status?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1056,10 +1041,6 @@ export type Database = {
         Args: { car_uuid: string }
         Returns: number
       }
-      calculate_category_ratings: {
-        Args: { car_uuid: string }
-        Returns: Json
-      }
       calculate_commission: {
         Args: { booking_total: number; rate?: number }
         Returns: number
@@ -1071,10 +1052,6 @@ export type Database = {
       check_host_wallet_balance: {
         Args: { host_uuid: string; required_commission: number }
         Returns: boolean
-      }
-      get_user_review_stats: {
-        Args: { user_uuid: string }
-        Returns: Json
       }
     }
     Enums: {
@@ -1091,7 +1068,7 @@ export type Database = {
         | "booking_request"
         | "message_received"
         | "booking_reminder"
-      review_type: "car" | "renter" | "host_to_renter" | "renter_to_host"
+      review_type: "car" | "renter"
       user_role: "host" | "renter"
       vehicle_type:
         | "Basic"
@@ -1243,7 +1220,7 @@ export const Constants = {
         "message_received",
         "booking_reminder",
       ],
-      review_type: ["car", "renter", "host_to_renter", "renter_to_host"],
+      review_type: ["car", "renter"],
       user_role: ["host", "renter"],
       vehicle_type: [
         "Basic",

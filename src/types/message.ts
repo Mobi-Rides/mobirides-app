@@ -1,14 +1,42 @@
+export interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+  status: 'online' | 'offline' | 'away';
+  lastSeen?: Date;
+}
+
 export interface Message {
   id: string;
   content: string;
-  sender_id: string;
-  receiver_id: string;
-  related_car_id?: string;
-  created_at: string;
-  status?: 'sent' | 'delivered' | 'read';
-  sender?: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-  };
+  senderId: string;
+  conversationId: string;
+  timestamp: Date;
+  type: 'text' | 'image' | 'file';
+  edited?: boolean;
+  editedAt?: Date;
+  reactions?: MessageReaction[];
+}
+
+export interface MessageReaction {
+  emoji: string;
+  userId: string;
+  timestamp: Date;
+}
+
+export interface Conversation {
+  id: string;
+  title?: string;
+  participants: User[];
+  lastMessage?: Message;
+  unreadCount: number;
+  type: 'direct' | 'group';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TypingIndicator {
+  conversationId: string;
+  userId: string;
+  timestamp: Date;
 }

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, MapPin, CalendarClock, Bell, User, Search } from "lucide-react";
+import { Home, MapPin, CalendarClock, Bell, User, Search, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,7 +104,7 @@ export const Navigation = () => {
     { path: "/map", label: "Map", icon: <MapPin className="w-5 h-5" />, activeIndex: 1 },
     { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 2 },
     { 
-      path: "/notifications", 
+      path: "/messages", 
       label: "Inbox", 
       icon: <Bell className="w-5 h-5" />, 
       activeIndex: 3,

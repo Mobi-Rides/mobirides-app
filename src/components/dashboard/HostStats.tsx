@@ -4,6 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { StatsCard } from "./StatsCard";
 import { CalendarClock, CarFront, CheckCircle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, XAxis, YAxis, CartesianGrid, Bar, Legend } from "recharts";
+
+const chartConfig = {
+  total: { label: "Total Bookings", color: "hsl(var(--primary))" },
+  confirmed: { label: "Confirmed", color: "hsl(var(--chart-1))" },
+  pending: { label: "Pending", color: "hsl(var(--chart-2))" },
+  completed: { label: "Completed", color: "hsl(var(--chart-3))" },
+  cancelled: { label: "Cancelled", color: "hsl(var(--chart-4))" },
+};
 
 export const HostStats = () => {
   const { data: stats, isLoading } = useQuery({
@@ -52,31 +62,60 @@ export const HostStats = () => {
     );
   }
 
+  const chartData = [
+    { name: "Total", value: stats?.total || 0, fill: "var(--color-total)" },
+    { name: "Confirmed", value: stats?.confirmed || 0, fill: "var(--color-confirmed)" },
+    { name: "Pending", value: stats?.pending || 0, fill: "var(--color-pending)" },
+    { name: "Completed", value: stats?.completed || 0, fill: "var(--color-completed)" },
+    { name: "Cancelled", value: stats?.cancelled || 0, fill: "var(--color-cancelled)" },
+  ];
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <StatsCard 
-        title="Total Bookings" 
-        value={stats?.total || 0}
-        icon={CarFront}
-      />
-      <StatsCard 
-        title="Active Rentals" 
-        value={stats?.confirmed || 0}
-        icon={CalendarClock}
-        iconClassName="bg-blue-500"
-      />
-      <StatsCard 
-        title="Completed" 
-        value={stats?.completed || 0}
-        icon={CheckCircle}
-        iconClassName="bg-green-500"
-      />
-      <StatsCard 
-        title="Pending Requests" 
-        value={stats?.pending || 0}
-        icon={Clock}
-        iconClassName="bg-amber-500"
-      />
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatsCard 
+          title="Total Bookings" 
+          value={stats?.total || 0}
+          icon={CarFront}
+        />
+        <StatsCard 
+          title="Active Rentals" 
+          value={stats?.confirmed || 0}
+          icon={CalendarClock}
+          iconClassName="bg-blue-500"
+        />
+        <StatsCard 
+          title="Completed" 
+          value={stats?.completed || 0}
+          icon={CheckCircle}
+          iconClassName="bg-green-500"
+        />
+        <StatsCard 
+          title="Pending Requests" 
+          value={stats?.pending || 0}
+          icon={Clock}
+          iconClassName="bg-amber-500"
+        />
+      </div>
+
+      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+        <BarChart accessibilityLayer data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="name"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            tickFormatter={(value) => value.slice(0, 3)}
+          />
+          <YAxis tickLine={false} tickMargin={10} axisLine={false} />
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <Bar dataKey="value" radius={8} />
+        </BarChart>
+      </ChartContainer>
     </div>
   );
 };

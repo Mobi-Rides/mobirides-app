@@ -42,6 +42,7 @@ export const VerificationStatusBadge: React.FC<
         icon: <Clock className="h-3 w-3" />,
         text: "Checking...",
         variant: "outline" as const,
+        className: "border-blue-300 text-blue-600 hover:bg-blue-50",
         clickable: false,
       };
     }
@@ -83,7 +84,7 @@ export const VerificationStatusBadge: React.FC<
       icon: <Shield className="h-3 w-3" />,
       text: "Not Verified",
       variant: "outline" as const,
-      className: "border-orange-300 text-orange-600 hover:bg-orange-50",
+      className: "border-gray-300 text-gray-600 hover:bg-gray-50",
       clickable: true,
     };
   };
