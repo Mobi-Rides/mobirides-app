@@ -44,6 +44,12 @@ const CarListing = lazy(() => import("@/pages/CarListing"));
 
 // Admin pages
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
+const AdminCars = lazy(() => import("@/pages/admin/AdminCars"));
+const AdminBookings = lazy(() => import("@/pages/admin/AdminBookings"));
+const AdminTransactions = lazy(() => import("@/pages/admin/AdminTransactions"));
+const AdminVerifications = lazy(() => import("@/pages/admin/AdminVerifications"));
+const AdminMessages = lazy(() => import("@/pages/admin/AdminMessages"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -250,6 +256,36 @@ const App = () => {
                       <Route path="/admin" element={
                         <Suspense fallback={<LoadingView />}>
                           <AdminDashboard />
+                        </Suspense>
+                      } />
+                      <Route path="/admin/users" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <AdminUsers />
+                        </Suspense>
+                      } />
+                      <Route path="/admin/cars" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <AdminCars />
+                        </Suspense>
+                      } />
+                      <Route path="/admin/bookings" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <AdminBookings />
+                        </Suspense>
+                      } />
+                      <Route path="/admin/transactions" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <AdminTransactions />
+                        </Suspense>
+                      } />
+                      <Route path="/admin/verifications" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <AdminVerifications />
+                        </Suspense>
+                      } />
+                      <Route path="/admin/messages" element={
+                        <Suspense fallback={<LoadingView />}>
+                          <AdminMessages />
                         </Suspense>
                       } />
                       

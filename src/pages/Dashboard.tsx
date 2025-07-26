@@ -1,6 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Navigation } from "@/components/Navigation";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { RenterDashboard } from "@/components/dashboard/RenterDashboard";
@@ -10,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const [userRole, setUserRole] = useState<"host" | "renter" | "admin" | null>(null);
+  const { isAdmin } = useIsAdmin();
 
   useEffect(() => {
     const getUserRole = async () => {
@@ -59,10 +61,13 @@ const Dashboard = () => {
         <div className="mt-2">
           {userRole === "renter" ? (
             <RenterDashboard />
-          ) : userRole === "admin" ? (
+          ) : userRole === "admin" || isAdmin ? (
             <div className="text-center py-8">
-              <h2 className="text-lg font-semibold">Admin Dashboard</h2>
-              <p className="text-muted-foreground">Access admin panel at /admin</p>
+              <h2 className="text-lg font-semibold mb-2">Admin Access Detected</h2>
+              <p className="text-muted-foreground mb-4">Access the full admin panel for platform management</p>
+              <a href="/admin" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                Open Admin Dashboard
+              </a>
             </div>
           ) : (
             <HostDashboard />
