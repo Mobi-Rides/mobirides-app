@@ -1076,6 +1076,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: Json
       }
+      is_admin: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       booking_status:
