@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { PaginatedTable } from "./PaginatedTable";
 
 interface PendingCar {
   id: string;
@@ -53,7 +54,15 @@ const usePendingCars = () => {
   });
 };
 
-export const CarVerificationTable = () => {
+interface CarVerificationTableProps {
+  isPreview?: boolean;
+  maxItems?: number;
+}
+
+export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({ 
+  isPreview = false, 
+  maxItems = 5 
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { data: cars, isLoading, error, refetch } = usePendingCars();
 
@@ -62,6 +71,8 @@ export const CarVerificationTable = () => {
     car.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
     car.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  const displayCars = isPreview ? filteredCars.slice(0, maxItems) : filteredCars;
 
   const handleApproveCar = async (carId: string) => {
     try {
@@ -97,6 +108,39 @@ export const CarVerificationTable = () => {
     }
   };
 
+  const renderCarRow = (car: PendingCar) => (
+    <TableRow key={car.id}>
+      <TableCell className="font-medium">{car.brand}</TableCell>
+      <TableCell>{car.model}</TableCell>
+      <TableCell>{car.year}</TableCell>
+      <TableCell>{car.profiles?.full_name || "Unknown"}</TableCell>
+      <TableCell>
+        {new Date(car.created_at).toLocaleDateString()}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleApproveCar(car.id)}
+          >
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleRejectCar(car.id)}
+          >
+            <XCircle className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+
   if (error) {
     return (
       <Card>
@@ -107,95 +151,106 @@ export const CarVerificationTable = () => {
     );
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle>Car Verification Queue ({filteredCars.length})</CardTitle>
-          <div className="relative max-w-sm">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search cars..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
+  if (!isPreview) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>Car Verification Queue ({filteredCars.length})</CardTitle>
+            <div className="relative max-w-sm">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search cars..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-4 w-[100px]" />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-12" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[200px]" />
+                    <Skeleton className="h-4 w-[100px]" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Make</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Seller</TableHead>
-                  <TableHead>Submitted At</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCars.map((car) => (
-                  <TableRow key={car.id}>
-                    <TableCell className="font-medium">{car.brand}</TableCell>
-                    <TableCell>{car.model}</TableCell>
-                    <TableCell>{car.year}</TableCell>
-                    <TableCell>{car.profiles?.full_name || "Unknown"}</TableCell>
-                    <TableCell>
-                      {new Date(car.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleApproveCar(car.id)}
-                        >
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRejectCar(car.id)}
-                        >
-                          <XCircle className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-        
-        {!isLoading && filteredCars.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No pending car verifications
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          ) : (
+            <PaginatedTable
+              data={displayCars}
+              itemsPerPage={10}
+              renderItem={(car) => renderCarRow(car)}
+              renderHeader={() => (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Make</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead>Year</TableHead>
+                      <TableHead>Seller</TableHead>
+                      <TableHead>Submitted At</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody />
+                </Table>
+              )}
+              className="overflow-x-auto"
+            />
+          )}
+          
+          {!isLoading && filteredCars.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No pending car verifications
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Preview mode
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (displayCars.length === 0) {
+    return (
+      <p className="text-center text-muted-foreground py-4">
+        No pending car verifications
+      </p>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Make</TableHead>
+            <TableHead>Model</TableHead>
+            <TableHead>Year</TableHead>
+            <TableHead>Seller</TableHead>
+            <TableHead>Submitted At</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {displayCars.map((car) => renderCarRow(car))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };

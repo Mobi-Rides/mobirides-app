@@ -53,7 +53,15 @@ const useRecentTransactions = () => {
   });
 };
 
-export const RecentTransactionsTable = () => {
+interface RecentTransactionsTableProps {
+  isPreview?: boolean;
+  maxItems?: number;
+}
+
+export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = ({ 
+  isPreview = false, 
+  maxItems = 5 
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { data: transactions, isLoading, error } = useRecentTransactions();
 
@@ -62,6 +70,8 @@ export const RecentTransactionsTable = () => {
     transaction.transaction_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.description?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  const displayTransactions = isPreview ? filteredTransactions.slice(0, maxItems) : filteredTransactions;
 
   const getTransactionIcon = (type: string) => {
     return type === "credit" || type === "top_up" ? (
@@ -75,6 +85,38 @@ export const RecentTransactionsTable = () => {
     return type === "credit" || type === "top_up" ? "text-green-600" : "text-red-600";
   };
 
+  const renderTransactionRow = (transaction: Transaction) => (
+    <TableRow key={transaction.id}>
+      <TableCell className="font-medium">
+        {transaction.host_wallets?.profiles?.full_name || "Unknown"}
+      </TableCell>
+      <TableCell>
+        {new Date(transaction.created_at).toLocaleDateString()}
+      </TableCell>
+      <TableCell>
+        {transaction.description || transaction.transaction_type}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {getTransactionIcon(transaction.transaction_type)}
+          <Badge variant={
+            transaction.transaction_type === "credit" || transaction.transaction_type === "top_up" 
+              ? "default" 
+              : "destructive"
+          }>
+            {transaction.transaction_type === "commission_deduction" ? "Debit" : "Credit"}
+          </Badge>
+        </div>
+      </TableCell>
+      <TableCell>
+        <span className={`font-semibold ${getTransactionColor(transaction.transaction_type)}`}>
+          {transaction.transaction_type === "commission_deduction" ? "-" : "+"}
+          P{Math.abs(transaction.amount).toFixed(2)}
+        </span>
+      </TableCell>
+    </TableRow>
+  );
+
   if (error) {
     return (
       <Card>
@@ -85,91 +127,101 @@ export const RecentTransactionsTable = () => {
     );
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle>Recent Transactions ({filteredTransactions.length})</CardTitle>
-          <div className="relative max-w-sm">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search transactions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
+  if (!isPreview) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>Recent Transactions ({filteredTransactions.length})</CardTitle>
+            <div className="relative max-w-sm">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search transactions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-6 w-6" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-4 w-[100px]" />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-6 w-6" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[200px]" />
+                    <Skeleton className="h-4 w-[100px]" />
+                  </div>
+                  <Skeleton className="h-4 w-[80px] ml-auto" />
                 </div>
-                <Skeleton className="h-4 w-[80px] ml-auto" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-medium">
-                      {transaction.host_wallets?.profiles?.full_name || "Unknown"}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(transaction.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {transaction.description || transaction.transaction_type}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getTransactionIcon(transaction.transaction_type)}
-                        <Badge variant={
-                          transaction.transaction_type === "credit" || transaction.transaction_type === "top_up" 
-                            ? "default" 
-                            : "destructive"
-                        }>
-                          {transaction.transaction_type === "commission_deduction" ? "Debit" : "Credit"}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`font-semibold ${getTransactionColor(transaction.transaction_type)}`}>
-                        {transaction.transaction_type === "commission_deduction" ? "-" : "+"}
-                        P{Math.abs(transaction.amount).toFixed(2)}
-                      </span>
-                    </TableCell>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Amount</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-        
-        {!isLoading && filteredTransactions.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No recent transactions
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                </TableHeader>
+                <TableBody>
+                  {displayTransactions.map((transaction) => renderTransactionRow(transaction))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          
+          {!isLoading && filteredTransactions.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No recent transactions
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Preview mode
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (displayTransactions.length === 0) {
+    return (
+      <p className="text-center text-muted-foreground py-4">
+        No recent transactions
+      </p>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Amount</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {displayTransactions.map((transaction) => renderTransactionRow(transaction))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };

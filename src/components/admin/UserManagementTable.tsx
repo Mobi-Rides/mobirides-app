@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserEditDialog } from "./UserEditDialog";
+import { PaginatedTable } from "./PaginatedTable";
 import { Search, Eye, Edit, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
 

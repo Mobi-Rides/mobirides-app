@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
 import { AdminStats } from "@/components/admin/AdminStats";
@@ -6,8 +7,11 @@ import { CarVerificationTable } from "@/components/admin/CarVerificationTable";
 import { UserManagementTable } from "@/components/admin/UserManagementTable";
 import { KYCVerificationTable } from "@/components/admin/KYCVerificationTable";
 import { RecentTransactionsTable } from "@/components/admin/RecentTransactionsTable";
+import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+
   return (
     <AdminProtectedRoute>
       <AdminLayout>
@@ -22,15 +26,41 @@ const AdminDashboard = () => {
           {/* Stats Overview */}
           <AdminStats />
           
-          {/* Management Tables Grid */}
+          {/* Management Sections with Collapsible Views */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <CarVerificationTable />
-            <KYCVerificationTable />
+            <CollapsibleSection
+              title="Car Verification Queue"
+              onViewAll={() => navigate("/admin/cars")}
+              previewContent={<CarVerificationTable isPreview maxItems={3} />}
+            >
+              <CarVerificationTable />
+            </CollapsibleSection>
+            
+            <CollapsibleSection
+              title="KYC Verification"
+              onViewAll={() => navigate("/admin/verifications")}
+              previewContent={<KYCVerificationTable isPreview maxItems={3} />}
+            >
+              <KYCVerificationTable />
+            </CollapsibleSection>
           </div>
           
           <div className="grid gap-6 lg:grid-cols-2">
-            <UserManagementTable />
-            <RecentTransactionsTable />
+            <CollapsibleSection
+              title="User Management"
+              onViewAll={() => navigate("/admin/users")}
+              previewContent={<UserManagementTable isPreview maxItems={3} />}
+            >
+              <UserManagementTable />
+            </CollapsibleSection>
+            
+            <CollapsibleSection
+              title="Recent Transactions"
+              onViewAll={() => navigate("/admin/transactions")}
+              previewContent={<RecentTransactionsTable isPreview maxItems={3} />}
+            >
+              <RecentTransactionsTable />
+            </CollapsibleSection>
           </div>
         </div>
       </AdminLayout>
