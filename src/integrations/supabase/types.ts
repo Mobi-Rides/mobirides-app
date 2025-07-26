@@ -1092,7 +1092,7 @@ export type Database = {
         | "message_received"
         | "booking_reminder"
       review_type: "car" | "renter" | "host_to_renter" | "renter_to_host"
-      user_role: "host" | "renter"
+      user_role: "host" | "renter" | "admin"
       vehicle_type:
         | "Basic"
         | "Standard"
@@ -1244,7 +1244,7 @@ export const Constants = {
         "booking_reminder",
       ],
       review_type: ["car", "renter", "host_to_renter", "renter_to_host"],
-      user_role: ["host", "renter"],
+      user_role: ["host", "renter", "admin"],
       vehicle_type: [
         "Basic",
         "Standard",
