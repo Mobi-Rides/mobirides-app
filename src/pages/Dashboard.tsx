@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Navigation } from "@/components/Navigation";
+import { Header } from "@/components/Header";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { RenterDashboard } from "@/components/dashboard/RenterDashboard";
 import { HostDashboard } from "@/components/dashboard/HostDashboard";
@@ -15,6 +16,7 @@ type DashboardView = "renter" | "host" | "admin";
 const Dashboard = () => {
   const [userRole, setUserRole] = useState<"host" | "renter" | "admin" | null>(null);
   const [currentView, setCurrentView] = useState<DashboardView>("renter");
+  const [searchQuery, setSearchQuery] = useState("");
   const { isAdmin } = useIsAdmin();
 
   useEffect(() => {
@@ -49,6 +51,15 @@ const Dashboard = () => {
 
   const handleViewChange = (view: DashboardView) => {
     setCurrentView(view);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFiltersChange = (filters: any) => {
+    // Dashboard doesn't need filter functionality, but Header requires it
+    console.log("Filters changed:", filters);
   };
 
   const renderDashboardContent = () => {
@@ -98,6 +109,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header 
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onFiltersChange={handleFiltersChange}
+      />
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 pb-20">
         <DashboardHeader 
           currentView={currentView}

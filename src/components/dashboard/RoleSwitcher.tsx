@@ -11,8 +11,8 @@ interface RoleSwitcherProps {
 
 export const RoleSwitcher = ({ currentView, onViewChange, isAdmin }: RoleSwitcherProps) => {
   const views = [
-    { id: "renter" as const, label: "Buying", icon: ShoppingBag },
-    { id: "host" as const, label: "Selling", icon: Car },
+    { id: "renter" as const, label: "Renter", icon: ShoppingBag },
+    { id: "host" as const, label: "Host", icon: Car },
     ...(isAdmin ? [{ id: "admin" as const, label: "Admin", icon: Shield }] : []),
   ];
 
