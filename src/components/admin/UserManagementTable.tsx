@@ -27,6 +27,11 @@ interface Profile {
   created_at: string;
 }
 
+interface UserManagementTableProps {
+  isPreview?: boolean;
+  maxItems?: number;
+}
+
 const useAdminUsers = () => {
   return useQuery({
     queryKey: ["admin-users"],
@@ -44,7 +49,10 @@ const useAdminUsers = () => {
   });
 };
 
-export const UserManagementTable = () => {
+export const UserManagementTable: React.FC<UserManagementTableProps> = ({ 
+  isPreview = false, 
+  maxItems = 5 
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -56,6 +64,8 @@ export const UserManagementTable = () => {
     user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone_number?.includes(searchTerm)
   ) || [];
+
+  const displayUsers = isPreview ? filteredUsers.slice(0, maxItems) : filteredUsers;
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -87,6 +97,42 @@ export const UserManagementTable = () => {
     toast.success("User updated successfully");
   };
 
+  const renderUserRow = (user: Profile) => (
+    <TableRow key={user.id}>
+      <TableCell className="font-medium">
+        {user.full_name || "No name"}
+      </TableCell>
+      <TableCell>
+        <Badge variant={getRoleBadgeVariant(user.role)}>
+          {user.role}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <Badge variant="default">Active</Badge>
+      </TableCell>
+      <TableCell>
+        <Badge variant={getKYCBadgeVariant("not_started")}>
+          not started
+        </Badge>
+      </TableCell>
+      <TableCell>{user.phone_number || "N/A"}</TableCell>
+      <TableCell>
+        {new Date(user.created_at).toLocaleDateString()}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEditUser(user)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+
   if (error) {
     return (
       <Card>
@@ -97,23 +143,22 @@ export const UserManagementTable = () => {
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-      </div>
-
+  if (!isPreview) {
+    return (
       <Card>
         <CardHeader>
-          <CardTitle>Users ({filteredUsers.length})</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>Users ({filteredUsers.length})</CardTitle>
+            <div className="relative max-w-sm">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -129,59 +174,79 @@ export const UserManagementTable = () => {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Account Status</TableHead>
-                  <TableHead>KYC Status</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {user.full_name || "No name"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getRoleBadgeVariant(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="default">Active</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getKYCBadgeVariant("not_started")}>
-                        not started
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{user.phone_number || "N/A"}</TableCell>
-                    <TableCell>
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditUser(user)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <PaginatedTable
+              data={displayUsers}
+              itemsPerPage={10}
+              renderItem={(user) => renderUserRow(user)}
+              renderHeader={() => (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Account Status</TableHead>
+                      <TableHead>KYC Status</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody />
+                </Table>
+              )}
+              className="overflow-x-auto"
+            />
+          )}
+          
+          {!isLoading && filteredUsers.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No users found
+            </div>
           )}
         </CardContent>
       </Card>
+    );
+  }
+
+  // Preview mode
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (displayUsers.length === 0) {
+    return (
+      <p className="text-center text-muted-foreground py-4">
+        No users found
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Account Status</TableHead>
+              <TableHead>KYC Status</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Joined</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {displayUsers.map((user) => renderUserRow(user))}
+          </TableBody>
+        </Table>
+      </div>
 
       {selectedUser && (
         <UserEditDialog
@@ -191,6 +256,6 @@ export const UserManagementTable = () => {
           onSuccess={handleUpdateSuccess}
         />
       )}
-    </div>
+    </>
   );
 };
