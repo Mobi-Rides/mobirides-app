@@ -23,60 +23,84 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
   const { data: handoverBookings = [] } = useQuery<BookingWithRelations[]>({
     queryKey: ["handover-bookings", userId, userRole],
     queryFn: async () => {
-      if (!userId) return [];
+      try {
+        if (!userId || !userRole) {
+          console.log("HandoverBookingButtons: No userId or userRole");
+          return [];
+        }
 
-      const today = new Date().toISOString().split('T')[0];
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      let query = supabase
-        .from("bookings")
-        .select(`
-          *,
-          cars (
-            brand,
-            model,
-            location,
-            image_url,
-            owner_id,
-            price_per_day
-          ),
-          renter:profiles!renter_id (
-            full_name,
-            avatar_url,
-            phone_number
-          ),
-          handover_sessions (
-            handover_completed
-          )
-        `)
-        .eq("status", "confirmed")
-        .gte("start_date", today)
-        .lte("start_date", tomorrow);
+        console.log("HandoverBookingButtons: Fetching bookings", { userId, userRole, today, tomorrow });
 
-      // Filter based on user role
-      if (userRole === "renter") {
-        query = query.eq("renter_id", userId);
-      } else if (userRole === "host") {
-        query = query.eq("cars.owner_id", userId);
-      }
+        let query = supabase
+          .from("bookings")
+          .select(`
+            *,
+            cars (
+              brand,
+              model,
+              location,
+              image_url,
+              owner_id,
+              price_per_day
+            ),
+            renter:profiles!renter_id (
+              full_name,
+              avatar_url,
+              phone_number
+            ),
+            handover_sessions (
+              handover_completed
+            )
+          `)
+          .eq("status", "confirmed")
+          .gte("start_date", today)
+          .lte("start_date", tomorrow);
 
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error("Error fetching handover bookings:", error);
+        // Filter based on user role
+        if (userRole === "renter") {
+          query = query.eq("renter_id", userId);
+        } else if (userRole === "host") {
+          query = query.eq("cars.owner_id", userId);
+        }
+
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error("HandoverBookingButtons: Error fetching bookings:", error);
+          throw new Error(`Failed to fetch handover bookings: ${error.message}`);
+        }
+
+        if (!data) {
+          console.log("HandoverBookingButtons: No data returned");
+          return [];
+        }
+
+        console.log("HandoverBookingButtons: Raw bookings data", data);
+
+        // Filter out bookings where handover is already completed
+        const filteredData = data.filter(booking => {
+          const handoverSession = booking.handover_sessions?.[0];
+          return !handoverSession || !handoverSession.handover_completed;
+        });
+
+        console.log("HandoverBookingButtons: Filtered bookings", filteredData);
+        return filteredData;
+      } catch (error) {
+        console.error('HandoverBookingButtons: Query failed:', error);
+        // Return empty array instead of throwing to prevent UI crashes
         return [];
       }
-
-      // Filter out bookings where handover is already completed
-      const filteredData = data?.filter(booking => {
-        const handoverSession = booking.handover_sessions?.[0];
-        return !handoverSession || !handoverSession.handover_completed;
-      }) || [];
-
-      return filteredData;
     },
     enabled: !!userId && !!userRole,
     refetchInterval: 30000, // Refetch every 30 seconds
+    retry: (failureCount, error) => {
+      console.warn("HandoverBookingButtons: Query failed, retry attempt", { failureCount, error });
+      return failureCount < 2; // Only retry twice
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const BookingButton = ({ booking, index }: { booking: BookingWithRelations; index: number }) => {

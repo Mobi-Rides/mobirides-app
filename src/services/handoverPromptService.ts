@@ -20,13 +20,20 @@ export interface HandoverPrompt {
 
 export class HandoverPromptService {
   static async detectHandoverPrompts(userId: string, userRole: 'host' | 'renter'): Promise<HandoverPrompt[]> {
-    console.log(`Detecting handover prompts for ${userRole}:`, userId);
+    const { logger } = await import("@/utils/logger");
     
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-
     try {
+      if (!userId || !userRole) {
+        logger.debug("detectHandoverPrompts: No userId or userRole provided");
+        return [];
+      }
+      
+      logger.debug(`Detecting handover prompts for ${userRole}:`, userId);
+    
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
       let query = supabase
         .from('bookings')
         .select(`
@@ -72,12 +79,12 @@ export class HandoverPromptService {
       const { data: bookings, error } = await query;
 
       if (error) {
-        console.error('Error fetching handover prompts:', error);
-        return [];
+        logger.error('Error fetching handover prompts:', error);
+        throw new Error(`Failed to fetch handover prompts: ${error.message}`);
       }
 
       if (!bookings?.length) {
-        console.log('No bookings found for handover prompts');
+        logger.debug('No bookings found for handover prompts');
         return [];
       }
 
@@ -161,10 +168,11 @@ export class HandoverPromptService {
         }
       }
 
-      console.log(`Found ${prompts.length} handover prompts for ${userRole}`);
+      logger.debug(`Found ${prompts.length} handover prompts for ${userRole}`);
       return prompts;
     } catch (error) {
-      console.error('Error in detectHandoverPrompts:', error);
+      logger.error('Error in detectHandoverPrompts:', error);
+      // Return empty array instead of throwing to prevent UI crashes
       return [];
     }
   }

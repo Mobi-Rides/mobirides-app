@@ -10,11 +10,14 @@ import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
 import { HandoverProvider } from "@/contexts/HandoverContext";
 import { EnhancedHandoverSheet } from "@/components/handover/EnhancedHandoverSheet";
 import { HandoverBookingButtons } from "@/components/map/HandoverBookingButtons";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useAuth } from "@/hooks/useAuth";
 
 const Map = () => {
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode");
   const bookingId = searchParams.get("bookingId");
+  const { user } = useAuth();
 
   const [mapToken, setMapToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -153,36 +156,43 @@ const Map = () => {
     );
   };
 
+  // Only load handover functionality for authenticated users
+  const shouldLoadHandover = !!user;
+
   const content = (
     <div className="flex flex-col h-screen bg-background">
       <main className="flex-1 relative overflow-hidden">
         {renderContent()}
-        <HandoverBookingButtons 
-          onBookingClick={(clickedBookingId, handoverType) => {
-            console.log("Map received booking click for:", clickedBookingId, "type:", handoverType);
-            console.log("Current booking ID from URL:", bookingId);
-            console.log("Current handover sheet state:", isHandoverSheetOpen);
-            
-            if (handoverType === 'return') {
-              // Navigate to rental details page for return handovers
-              window.location.href = `/rental-details/${clickedBookingId}`;
-              return;
-            }
-            
-            // For pickup handovers, open the handover sheet
-            // Update the current booking ID if different from URL
-            if (clickedBookingId !== bookingId) {
-              console.log("Updating URL with new booking ID");
-              window.history.replaceState(
-                {}, 
-                '', 
-                `/map?mode=handover&bookingId=${clickedBookingId}`
-              );
-            }
-            console.log("Opening handover sheet");
-            setIsHandoverSheetOpen(true);
-          }}
-        />
+        {shouldLoadHandover && (
+          <ErrorBoundary fallback={null}>
+            <HandoverBookingButtons 
+              onBookingClick={(clickedBookingId, handoverType) => {
+                console.log("Map received booking click for:", clickedBookingId, "type:", handoverType);
+                console.log("Current booking ID from URL:", bookingId);
+                console.log("Current handover sheet state:", isHandoverSheetOpen);
+                
+                if (handoverType === 'return') {
+                  // Navigate to rental details page for return handovers
+                  window.location.href = `/rental-details/${clickedBookingId}`;
+                  return;
+                }
+                
+                // For pickup handovers, open the handover sheet
+                // Update the current booking ID if different from URL
+                if (clickedBookingId !== bookingId) {
+                  console.log("Updating URL with new booking ID");
+                  window.history.replaceState(
+                    {}, 
+                    '', 
+                    `/map?mode=handover&bookingId=${clickedBookingId}`
+                  );
+                }
+                console.log("Opening handover sheet");
+                setIsHandoverSheetOpen(true);
+              }}
+            />
+          </ErrorBoundary>
+        )}
       </main>
       <EnhancedHandoverSheet
         isOpen={isHandoverSheetOpen}
@@ -193,11 +203,16 @@ const Map = () => {
     </div>
   );
 
-  // Always wrap with HandoverProvider since we have handover buttons
   return (
-    <HandoverProvider>
-      {content}
-    </HandoverProvider>
+    <ErrorBoundary>
+      {shouldLoadHandover ? (
+        <HandoverProvider>
+          {content}
+        </HandoverProvider>
+      ) : (
+        content
+      )}
+    </ErrorBoundary>
   );
 };
 
