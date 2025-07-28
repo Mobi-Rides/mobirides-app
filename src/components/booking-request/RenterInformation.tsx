@@ -1,5 +1,6 @@
 
-import { Star } from "lucide-react";
+import { Star, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RenterInformationProps {
@@ -8,9 +9,18 @@ interface RenterInformationProps {
     avatar_url?: string;
   };
   renterRating?: number | null;
+  renterId?: string;
+  isCarOwner?: boolean;
+  onContactRenter?: () => void;
 }
 
-export const RenterInformation = ({ renter, renterRating }: RenterInformationProps) => {
+export const RenterInformation = ({ 
+  renter, 
+  renterRating, 
+  renterId, 
+  isCarOwner, 
+  onContactRenter 
+}: RenterInformationProps) => {
   return (
     <div className="bg-card rounded-lg p-4 border">
       <h2 className="text-lg font-semibold mb-4 flex items-center">
@@ -19,21 +29,35 @@ export const RenterInformation = ({ renter, renterRating }: RenterInformationPro
         </span>
         Renter Information
       </h2>
-      <div className="flex items-center gap-4">
-        <img 
-          src={renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(renter.avatar_url).data.publicUrl : "/placeholder.svg"} 
-          alt={renter.full_name} 
-          className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-        />
-        <div>
-          <p className="font-medium text-foreground">{renter.full_name}</p>
-          {typeof renterRating === 'number' && (
-            <div className="flex items-center gap-1 text-yellow-500 mt-1">
-              <Star className="h-4 w-4 fill-current" />
-              <span>{renterRating.toFixed(1)}</span>
-            </div>
-          )}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <img 
+            src={renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(renter.avatar_url).data.publicUrl : "/placeholder.svg"} 
+            alt={renter.full_name} 
+            className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+          />
+          <div>
+            <p className="font-medium text-foreground">{renter.full_name}</p>
+            {typeof renterRating === 'number' && (
+              <div className="flex items-center gap-1 text-yellow-500 mt-1">
+                <Star className="h-4 w-4 fill-current" />
+                <span>{renterRating.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
         </div>
+        
+        {isCarOwner && onContactRenter && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onContactRenter}
+            className="flex items-center gap-2"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Contact Renter
+          </Button>
+        )}
       </div>
     </div>
   );

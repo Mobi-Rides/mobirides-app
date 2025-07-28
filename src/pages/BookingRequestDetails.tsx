@@ -152,6 +152,59 @@ const BookingRequestDetails = () => {
     updateBookingStatus.mutate({ status: 'cancelled' });
   };
 
+  const handleContactRenter = async () => {
+    if (!booking?.renter_id) return;
+    
+    try {
+      // Create or find existing conversation
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('type', 'direct')
+        .single();
+
+      let conversationId = existingConversation?.id;
+
+      if (!conversationId) {
+        // Create new conversation
+        const { data: newConversation, error: convError } = await supabase
+          .from('conversations')
+          .insert({
+            type: 'direct',
+            created_by: userId
+          })
+          .select('id')
+          .single();
+
+        if (convError) throw convError;
+        conversationId = newConversation.id;
+
+        // Add participants
+        await supabase
+          .from('conversation_participants')
+          .insert([
+            { conversation_id: conversationId, user_id: userId },
+            { conversation_id: conversationId, user_id: booking.renter_id }
+          ]);
+      }
+
+      // Navigate to messages
+      navigate('/messages');
+      
+      toast({
+        title: "Opening conversation",
+        description: `Starting conversation with ${booking.renter.full_name}`
+      });
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -191,7 +244,10 @@ const BookingRequestDetails = () => {
           <CardContent className="p-6 space-y-8">
             <RenterInformation 
               renter={booking.renter} 
-              renterRating={renterRating} 
+              renterRating={renterRating}
+              renterId={booking.renter_id}
+              isCarOwner={isCarOwner}
+              onContactRenter={handleContactRenter}
             />
             <CarInformation car={booking.car} />
             <BookingDates 
