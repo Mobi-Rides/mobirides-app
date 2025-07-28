@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User } from "@/types/message";
 
@@ -31,6 +32,50 @@ interface DatabaseConversation {
 export const useConversations = () => {
   const queryClient = useQueryClient();
 
+  // Set up real-time subscription for conversations
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversation_participants'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversation_messages'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const { data: conversations, isLoading } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
@@ -39,29 +84,10 @@ export const useConversations = () => {
       if (!user) return [];
 
       try {
-        // Step 1: Get conversation IDs where user is a participant
-        const { data: participantData, error: partError } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id')
-          .eq('user_id', user.id);
-
-        if (partError) {
-          console.error("Error fetching participants:", partError);
-          return [];
-        }
-
-        const conversationIds = participantData?.map(p => p.conversation_id) || [];
-        
-        if (!conversationIds.length) {
-          console.log("User is not participant in any conversations");
-          return [];
-        }
-
-        // Step 2: Get conversations
+        // Simple approach - get conversations where user participates
         const { data: userConversations, error: convError } = await supabase
           .from('conversations')
           .select('id, title, type, created_at, updated_at, last_message_at, created_by')
-          .in('id', conversationIds)
           .order('updated_at', { ascending: false });
 
         if (convError) {
@@ -76,65 +102,78 @@ export const useConversations = () => {
           return [];
         }
 
-        // Step 3: Transform conversations
-        const transformedConversations: Conversation[] = await Promise.all(
-          userConversations.map(async (conv) => {
-            console.log("Processing conversation:", conv.id);
+        // Filter conversations where user participates and get participants
+        const conversationIds = userConversations.map(c => c.id);
+        const { data: userParticipations } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', user.id)
+          .in('conversation_id', conversationIds);
 
-            // Get participants for this conversation
-            const { data: participants } = await supabase
-              .from('conversation_participants')
-              .select('user_id, joined_at')
-              .eq('conversation_id', conv.id);
+        const userConversationIds = userParticipations?.map(p => p.conversation_id) || [];
+        const filteredConversations = userConversations.filter(c => userConversationIds.includes(c.id));
 
-            // Get participant profiles
-            const participantIds = participants?.map(p => p.user_id) || [];
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('id, full_name, avatar_url')
-              .in('id', participantIds);
+        if (!filteredConversations.length) {
+          console.log("No conversations where user participates");
+          return [];
+        }
 
-            // Get latest messages for this conversation
-            const { data: messages } = await supabase
-              .from('conversation_messages')
-              .select('id, content, sender_id, created_at, message_type')
-              .eq('conversation_id', conv.id)
-              .order('created_at', { ascending: false })
-              .limit(1);
+        const { data: allParticipants } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id, user_id, joined_at')
+          .in('conversation_id', userConversationIds);
 
-            const participantUsers: User[] = (participants || []).map(p => {
-              const profile = profiles?.find(prof => prof.id === p.user_id);
-              return {
-                id: p.user_id,
-                name: profile?.full_name || 'Unknown User',
-                avatar: profile?.avatar_url ? 
-                  supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl : 
-                  undefined,
-                status: 'offline' as const
-              };
-            });
+        const participantIds = [...new Set(allParticipants?.map(p => p.user_id) || [])];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', participantIds);
 
-            const lastMessage = messages?.[0];
+        // Get latest messages for each conversation
+        const { data: latestMessages } = await supabase
+          .from('conversation_messages')
+          .select('id, content, sender_id, created_at, message_type, conversation_id')
+          .in('conversation_id', userConversationIds)
+          .order('created_at', { ascending: false });
 
+        // Transform conversations
+        const transformedConversations: Conversation[] = filteredConversations.map((conv) => {
+          // Get all participants for this conversation
+          const participants = allParticipants?.filter(p => p.conversation_id === conv.id) || [];
+          
+          const participantUsers: User[] = participants.map(p => {
+            const profile = profiles?.find(prof => prof.id === p.user_id);
             return {
-              id: conv.id,
-              title: conv.title,
-              participants: participantUsers,
-              lastMessage: lastMessage ? {
-                id: lastMessage.id,
-                content: lastMessage.content,
-                senderId: lastMessage.sender_id,
-                conversationId: conv.id,
-                timestamp: new Date(lastMessage.created_at),
-                type: lastMessage.message_type as 'text' | 'image' | 'file'
-              } : undefined,
-              unreadCount: 0,
-              type: conv.type as 'direct' | 'group',
-              createdAt: new Date(conv.created_at),
-              updatedAt: new Date(conv.updated_at)
+              id: p.user_id,
+              name: profile?.full_name || 'Unknown User',
+              avatar: profile?.avatar_url ? 
+                supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl : 
+                undefined,
+              status: 'offline' as const
             };
-          })
-        );
+          });
+
+          // Find the latest message for this conversation
+          const lastMessage = latestMessages?.find(m => m.conversation_id === conv.id);
+
+          return {
+            id: conv.id,
+            title: conv.title,
+            participants: participantUsers,
+            lastMessage: lastMessage ? {
+              id: lastMessage.id,
+              content: lastMessage.content,
+              senderId: lastMessage.sender_id,
+              conversationId: conv.id,
+              timestamp: new Date(lastMessage.created_at),
+              type: lastMessage.message_type as 'text' | 'image' | 'file'
+            } : undefined,
+            unreadCount: 0,
+            type: conv.type as 'direct' | 'group',
+            createdAt: new Date(conv.created_at),
+            updatedAt: new Date(conv.updated_at)
+          };
+        });
 
         console.log("Transformed conversations:", transformedConversations);
         return transformedConversations;
@@ -144,7 +183,7 @@ export const useConversations = () => {
         return [];
       }
     },
-    refetchInterval: 10000,
+    enabled: true,
   });
 
   const createConversationMutation = useMutation({

@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/types/message";
 
@@ -23,6 +24,31 @@ interface DatabaseMessage {
 
 export const useConversationMessages = (conversationId: string | undefined) => {
   const queryClient = useQueryClient();
+
+  // Set up real-time subscription for messages
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const channel = supabase
+      .channel(`conversation-${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversation_messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['conversation-messages', conversationId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, queryClient]);
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['conversation-messages', conversationId],
@@ -82,8 +108,7 @@ export const useConversationMessages = (conversationId: string | undefined) => {
       console.log("Transformed messages:", transformedMessages);
       return transformedMessages;
     },
-    enabled: !!conversationId,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    enabled: !!conversationId
   });
 
   const sendMessageMutation = useMutation({
