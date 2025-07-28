@@ -79,7 +79,6 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ThemeProvider>
             <MapboxTokenProvider>
               <LocationSearchProvider>
                 <VerificationProvider>
@@ -326,7 +325,6 @@ function App() {
                 </VerificationProvider>
               </LocationSearchProvider>
             </MapboxTokenProvider>
-          </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
