@@ -86,7 +86,6 @@ const RentalDetailsRefactored = () => {
               ownerName={booking.car.owner.full_name}
               avatarUrl={booking.car.owner.avatar_url}
               ownerId={booking.car.owner.id}
-              carId={booking.car.id}
             />
           ) : (
             <RentalUserCard 

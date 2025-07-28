@@ -44,7 +44,9 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
     >
       <div className="w-10 h-10">
         {avatar ? (
-          <Avatar src={avatar} alt={name} className="w-10 h-10" />
+          <Avatar className="w-10 h-10">
+            <img src={avatar} alt={name} />
+          </Avatar>
         ) : (
           <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700 text-lg">
             {getInitials(name)}

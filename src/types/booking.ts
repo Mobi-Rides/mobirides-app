@@ -30,7 +30,8 @@ export interface BookingWithRelations {
   }[];
 }
 
-// Adding this type to resolve the import errors
+// Export Booking type alias for components
+export type Booking = BookingWithRelations;
 
 
 // Add this enum for notifications related to bookings

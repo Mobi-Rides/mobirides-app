@@ -16,6 +16,14 @@ export interface Message {
   edited?: boolean;
   editedAt?: Date;
   reactions?: MessageReaction[];
+  status?: 'sent' | 'delivered' | 'read';
+  sender?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+  };
+  sender_id?: string;
+  created_at?: string;
 }
 
 export interface MessageReaction {

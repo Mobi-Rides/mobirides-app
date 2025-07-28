@@ -37,7 +37,19 @@ export const useMessages = () => {
       }
 
       console.log("Messages fetched:", messages);
-      return messages as Message[];
+      // Transform to match Message interface
+      return messages.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        senderId: msg.sender_id,
+        conversationId: '', // Will be updated when we implement conversation support
+        timestamp: new Date(msg.created_at),
+        type: 'text' as const,
+        status: msg.status,
+        sender: msg.sender,
+        sender_id: msg.sender_id,
+        created_at: msg.created_at
+      })) as Message[];
     },
     refetchInterval: 5000, // Refetch every 5 seconds
   });

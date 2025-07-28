@@ -25,7 +25,7 @@ export const MessageList = ({ messages, onMessageClick }: MessageListProps) => {
           <div className="flex items-center gap-2">
             <span className="font-medium">{message.sender?.full_name || 'Unknown User'}</span>
             <span className="text-sm text-muted-foreground">
-              {message.created_at.toLocaleDateString()}
+              {new Date(message.created_at).toLocaleDateString()}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">{message.content}</p>

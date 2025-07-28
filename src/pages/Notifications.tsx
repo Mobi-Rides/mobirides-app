@@ -850,7 +850,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
                                     /(received|pending)/i.test(notification.content) && (
                                       <span className="flex gap-2 ml-2">
                                         <Button
-                                          size="xs"
+                    size="sm"
                                           className="px-2 py-1 text-xs"
                                           variant="default"
                                           disabled={notification._actionLoading === 'accept'}
@@ -875,7 +875,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
                                           {notification._actionLoading === 'accept' ? 'Accepting...' : 'Accept'}
                                         </Button>
                                         <Button
-                                          size="xs"
+                                          size="sm"
                                           className="px-2 py-1 text-xs"
                                           variant="destructive"
                                           disabled={notification._actionLoading === 'decline'}

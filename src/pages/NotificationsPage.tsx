@@ -82,7 +82,7 @@ export default function NotificationsPage() {
         .order("created_at", { ascending: true });
       if (!error) setMessages(data || []);
     };
-    if (tab === "messages") fetchUserAndMessages();
+    if (tab === "active") fetchUserAndMessages(); // Changed from "messages" to "active"
   }, [tab]);
 
   const handleSendMessage = async () => {
@@ -642,7 +642,7 @@ export default function NotificationsPage() {
       badge: 'bg-gradient-to-br from-teal-300 to-green-400 text-white pulse-messages',
     },
   };
-  const currentStyles = tab === 'messages' ? iconBadgeStyles.messages : (iconBadgeStyles[activeFilter] || iconBadgeStyles.all);
+  const currentStyles = tab === 'active' ? iconBadgeStyles.messages : (iconBadgeStyles[activeFilter] || iconBadgeStyles.all); // Changed from 'messages' to 'active'
 
   // Helper: toggle single selection
   const toggleSelect = (id: string) => {
@@ -1165,7 +1165,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
                                     /(received|pending)/i.test(notification.content) && (
                                       <span className="flex gap-2 ml-2">
                                         <Button
-                                          size="xs"
+                    size="sm"
                                           className="px-2 py-1 text-xs"
                                           variant="default"
                                           disabled={notification._actionLoading === 'accept'}
@@ -1190,7 +1190,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
                                           {notification._actionLoading === 'accept' ? 'Accepting...' : 'Accept'}
                                         </Button>
                                         <Button
-                                          size="xs"
+                                          size="sm"
                                           className="px-2 py-1 text-xs"
                                           variant="destructive"
                                           disabled={notification._actionLoading === 'decline'}

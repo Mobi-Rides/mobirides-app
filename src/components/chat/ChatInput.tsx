@@ -31,7 +31,7 @@ export const ChatInput = ({
         <div className="bg-muted p-2 rounded mb-2 flex items-center justify-between">
           <div>
             <span className="text-xs text-muted-foreground">Replying to: </span>
-            <span className="font-semibold">{replyingTo.sender?.full_name || replyingTo.sender_id}</span>
+            <span className="font-semibold">{replyingTo.senderName}</span>
             <span className="ml-2 text-xs text-muted-foreground">{replyingTo.content}</span>
           </div>
           <button className="ml-2 text-xs text-primary underline" onClick={onCancelReply}>Cancel</button>

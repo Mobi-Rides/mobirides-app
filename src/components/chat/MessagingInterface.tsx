@@ -3,7 +3,9 @@ import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
-import supabase from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
+import { useConversations } from '@/hooks/useConversations';
+import { useConversationMessages } from '@/hooks/useConversationMessages';
 
 interface MessagingInterfaceProps {
   className?: string;
@@ -12,6 +14,11 @@ interface MessagingInterfaceProps {
 }
 
 export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
+  const { conversations, isLoading: conversationsLoading, createConversation } = useConversations();
+  const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
+  const { messages, sendMessage, isSendingMessage } = useConversationMessages(selectedConversationId);
+  const [searchTerm, setSearchTerm] = useState('');
+  
   // Use a placeholder user initially, will be updated with real user data
   const [currentUser, setCurrentUser] = useState<User>({
     id: 'user-1',
@@ -50,143 +57,31 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     fetchCurrentUser();
   }, []);
 
-  const [conversations, setConversations] = useState<Conversation[]>([
-    {
-      id: 'conv-1',
-      title: 'John Doe',
-      participants: [
-        currentUser,
-        { id: 'user-2', name: 'John Doe', avatar: 'https://i.pravatar.cc/150?img=60', status: 'online' },
-      ],
-      lastMessage: {
-        id: 'msg-1',
-        content: 'Hey there!',
-        senderId: 'user-2',
-        conversationId: 'conv-1',
-        timestamp: new Date(Date.now() - 60 * 1000),
-        type: 'text',
-      },
-      unreadCount: 1,
-      type: 'direct',
-      createdAt: new Date(Date.now() - 3600 * 1000),
-      updatedAt: new Date(Date.now() - 60 * 1000),
-    },
-    {
-      id: 'conv-2',
-      title: 'Jane Smith',
-      participants: [
-        currentUser,
-        { id: 'user-3', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/150?img=47', status: 'away' },
-      ],
-      lastMessage: {
-        id: 'msg-2',
-        content: 'Are we still on for tomorrow?',
-        senderId: 'user-1',
-        conversationId: 'conv-2',
-        timestamp: new Date(Date.now() - 120 * 1000),
-        type: 'text',
-      },
-      unreadCount: 0,
-      type: 'direct',
-      createdAt: new Date(Date.now() - 7200 * 1000),
-      updatedAt: new Date(Date.now() - 120 * 1000),
-    },
-    {
-      id: 'conv-3',
-      title: 'Team Alpha',
-      participants: [
-        currentUser,
-        { id: 'user-4', name: 'Alice', avatar: 'https://i.pravatar.cc/150?img=20', status: 'online' },
-        { id: 'user-5', name: 'Bob', avatar: 'https://i.pravatar.cc/150?img=10', status: 'offline' },
-      ],
-      lastMessage: {
-        id: 'msg-3',
-        content: 'Meeting at 10 AM.',
-        senderId: 'user-4',
-        conversationId: 'conv-3',
-        timestamp: new Date(Date.now() - 300 * 1000),
-        type: 'text',
-      },
-      unreadCount: 5,
-      type: 'group',
-      createdAt: new Date(Date.now() - 10800 * 1000),
-      updatedAt: new Date(Date.now() - 300 * 1000),
-    },
-  ]);
-
-  const [messages, setMessages] = useState<{ [conversationId: string]: Message[] }>({
-    'conv-1': [
-      {
-        id: 'msg-1',
-        content: 'Hey there!',
-        senderId: 'user-2',
-        conversationId: 'conv-1',
-        timestamp: new Date(Date.now() - 60 * 1000),
-        type: 'text',
-      },
-    ],
-    'conv-2': [
-      {
-        id: 'msg-2',
-        content: 'Are we still on for tomorrow?',
-        senderId: 'user-1',
-        conversationId: 'conv-2',
-        timestamp: new Date(Date.now() - 120 * 1000),
-        type: 'text',
-      },
-    ],
-    'conv-3': [
-      {
-        id: 'msg-3',
-        content: 'Meeting at 10 AM.',
-        senderId: 'user-4',
-        conversationId: 'conv-3',
-        timestamp: new Date(Date.now() - 300 * 1000),
-        type: 'text',
-      },
-    ],
-  });
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>(
-    conversations.length > 0 ? conversations[0].id : undefined
-  );
-
+  // Auto-select first conversation if none selected
   useEffect(() => {
-    // If recipientId is provided, check if a conversation with this recipient already exists
-    if (recipientId && recipientName) {
+    if (!selectedConversationId && conversations.length > 0) {
+      setSelectedConversationId(conversations[0].id);
+    }
+  }, [conversations, selectedConversationId]);
+
+  // Handle recipient-based conversation creation/selection
+  useEffect(() => {
+    if (recipientId && recipientName && currentUser.id !== 'user-1') {
       const existingConversation = conversations.find(conv => 
         conv.participants.some(p => p.id === recipientId)
       );
       
       if (existingConversation) {
-        // If conversation exists, select it
         setSelectedConversationId(existingConversation.id);
       } else {
-        // If no conversation exists, create a new one with the recipient
-        const newConversationId = `conv-${Date.now()}`;
-        const newConversation: Conversation = {
-          id: newConversationId,
-          title: recipientName,
-          participants: [
-            currentUser,
-            { id: recipientId, name: recipientName, status: 'offline' },
-          ],
-          unreadCount: 0,
-          type: 'direct',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
-        setConversations(prevConversations => [...prevConversations, newConversation]);
-        setMessages(prevMessages => ({ ...prevMessages, [newConversationId]: [] }));
-        setSelectedConversationId(newConversationId);
+        // Create new conversation
+        createConversation({ 
+          participantIds: [recipientId], 
+          title: recipientName 
+        });
       }
-    } else if (!selectedConversationId && conversations.length > 0) {
-      // Default behavior when no recipient is specified
-      setSelectedConversationId(conversations[0].id);
     }
-  }, [conversations, selectedConversationId, recipientId, recipientName, currentUser]);
+  }, [recipientId, recipientName, conversations, currentUser.id, createConversation]);
 
   const filteredConversations = conversations.filter(conv => {
     const title = conv.title || conv.participants
@@ -199,48 +94,16 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   });
 
   const selectedConversation = filteredConversations.find(c => c.id === selectedConversationId);
-  const conversationMessages = selectedConversationId ? messages[selectedConversationId] || [] : [];
 
-  const handleSendMessage = (conversationId: string, content: string) => {
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      content,
-      senderId: currentUser.id,
-      conversationId,
-      timestamp: new Date(),
-      type: 'text',
-    };
-
-    setMessages(prevMessages => ({
-      ...prevMessages,
-      [conversationId]: [...(prevMessages[conversationId] || []), newMessage],
-    }));
-
-    setConversations(prevConversations =>
-      prevConversations.map(conv =>
-        conv.id === conversationId ? { ...conv, lastMessage: newMessage, updatedAt: new Date() } : conv
-      )
-    );
+  const handleSendMessage = (content: string) => {
+    if (selectedConversationId) {
+      sendMessage({ content });
+    }
   };
 
   const handleNewConversation = () => {
-    const newConversationId = `conv-${Date.now()}`;
-    const newConversation: Conversation = {
-      id: newConversationId,
-      title: `New Chat ${conversations.length + 1}`,
-      participants: [
-        currentUser,
-        { id: `user-${Date.now()}-new`, name: `New User ${conversations.length + 1}`, status: 'offline' },
-      ],
-      unreadCount: 0,
-      type: 'direct',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    setConversations(prevConversations => [...prevConversations, newConversation]);
-    setMessages(prevMessages => ({ ...prevMessages, [newConversationId]: [] }));
-    setSelectedConversationId(newConversationId);
+    // For now, we'll just log this - in a real app, you'd open a contact picker
+    console.log('Start new conversation');
   };
 
   return (
@@ -263,7 +126,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
         {selectedConversation ? (
           <ChatWindow
             conversation={selectedConversation}
-            messages={conversationMessages}
+            messages={messages}
             currentUser={currentUser}
             typingUsers={[]} // Will be implemented with real-time features
             onSendMessage={handleSendMessage}
