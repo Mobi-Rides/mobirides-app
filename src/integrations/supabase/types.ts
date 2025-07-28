@@ -733,6 +733,54 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          booking_notifications: boolean | null
+          created_at: string | null
+          email_notifications: boolean | null
+          id: string
+          marketing_notifications: boolean | null
+          notification_frequency: string | null
+          payment_notifications: boolean | null
+          push_notifications: boolean | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          sms_notifications: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_notifications?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          marketing_notifications?: boolean | null
+          notification_frequency?: string | null
+          payment_notifications?: boolean | null
+          push_notifications?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_notifications?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          marketing_notifications?: boolean | null
+          notification_frequency?: string | null
+          payment_notifications?: boolean | null
+          push_notifications?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           content: string
@@ -1208,6 +1256,23 @@ export type Database = {
         Args: { host_uuid: string; required_commission: number }
         Returns: boolean
       }
+      create_booking_notification: {
+        Args: {
+          p_booking_id: string
+          p_notification_type: string
+          p_content: string
+        }
+        Returns: undefined
+      }
+      create_wallet_notification: {
+        Args: {
+          p_host_id: string
+          p_type: string
+          p_amount: number
+          p_description?: string
+        }
+        Returns: undefined
+      }
       get_user_conversation_ids: {
         Args: { user_uuid?: string }
         Returns: {
@@ -1249,6 +1314,11 @@ export type Database = {
         | "booking_request"
         | "message_received"
         | "booking_reminder"
+        | "wallet_topup"
+        | "wallet_deduction"
+        | "handover_ready"
+        | "payment_received"
+        | "payment_failed"
       review_type: "car" | "renter" | "host_to_renter" | "renter_to_host"
       user_role: "host" | "renter" | "admin"
       vehicle_type:
@@ -1400,6 +1470,11 @@ export const Constants = {
         "booking_request",
         "message_received",
         "booking_reminder",
+        "wallet_topup",
+        "wallet_deduction",
+        "handover_ready",
+        "payment_received",
+        "payment_failed",
       ],
       review_type: ["car", "renter", "host_to_renter", "renter_to_host"],
       user_role: ["host", "renter", "admin"],
