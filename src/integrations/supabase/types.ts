@@ -252,6 +252,138 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          edited: boolean | null
+          edited_at: string | null
+          id: string
+          message_type: string
+          metadata: Json | null
+          related_car_id: string | null
+          reply_to_message_id: string | null
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          edited?: boolean | null
+          edited_at?: string | null
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          related_car_id?: string | null
+          reply_to_message_id?: string | null
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          edited?: boolean | null
+          edited_at?: string | null
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          related_car_id?: string | null
+          reply_to_message_id?: string | null
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_related_car_id_fkey"
+            columns: ["related_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          id: string
+          is_admin: boolean | null
+          joined_at: string
+          last_read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          is_admin?: boolean | null
+          joined_at?: string
+          last_read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          is_admin?: boolean | null
+          joined_at?: string
+          last_read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          last_message_at: string | null
+          title: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_message_at?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_message_at?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       handover_sessions: {
         Row: {
           booking_id: string
