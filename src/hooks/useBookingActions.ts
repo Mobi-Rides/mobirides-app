@@ -7,6 +7,7 @@ export const useBookingActions = () => {
 
   const mutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: string; status: 'confirmed' | 'cancelled' }) => {
+      // Update booking status - this will trigger the notification via database trigger
       const { error } = await supabase
         .from('bookings')
         .update({ status })

@@ -17,11 +17,11 @@ class WalletService {
     const result = await topUpWallet(hostId, request);
     
     if (result) {
-      // Create notification for successful top-up
-      await notificationService.createNotification(
+      // Create notification for successful top-up using new method
+      await notificationService.createWalletNotification(
         hostId,
-        "wallet_topup",
-        `Your wallet has been topped up with P${request.amount.toFixed(2)}`
+        "topup",
+        request.amount
       );
     }
     
