@@ -51,7 +51,7 @@ export const useConversations = () => {
           conversation_participants!inner (
             user_id,
             joined_at,
-            profiles (
+            profiles!conversation_participants_user_id_fkey (
               id,
               full_name,
               avatar_url
