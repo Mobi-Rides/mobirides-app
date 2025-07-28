@@ -1208,6 +1208,12 @@ export type Database = {
         Args: { host_uuid: string; required_commission: number }
         Returns: boolean
       }
+      get_user_conversation_ids: {
+        Args: { user_uuid?: string }
+        Returns: {
+          conversation_id: string
+        }[]
+      }
       get_user_review_stats: {
         Args: { user_uuid: string }
         Returns: Json
@@ -1215,6 +1221,10 @@ export type Database = {
       is_admin: {
         Args: { user_uuid: string }
         Returns: boolean
+      }
+      migrate_legacy_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       validate_step_dependencies: {
         Args: {
