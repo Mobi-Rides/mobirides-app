@@ -80,12 +80,12 @@ export const RentalReview = () => {
             model,
             owner_id,
             vehicle_type,
-            image_url
+            image_url,
+            owner:profiles!owner_id(
+              full_name
+            )
           ),
           renter:profiles!renter_id(
-            full_name
-          ),
-          owner:profiles(
             full_name
           )
         `
@@ -103,7 +103,7 @@ export const RentalReview = () => {
       // Make sure we have the reviewer's name
       if (
         userIsRenter &&
-        (!bookingData.owner || !bookingData.owner.full_name)
+        (!bookingData.cars.owner || !bookingData.cars.owner.full_name)
       ) {
         const { data: ownerData, error: ownerError } = await supabase
           .from("profiles")
@@ -112,7 +112,7 @@ export const RentalReview = () => {
           .single();
 
         if (!ownerError && ownerData) {
-          bookingData.owner = ownerData;
+          bookingData.cars.owner = ownerData;
         }
       } else if (
         !userIsRenter &&
