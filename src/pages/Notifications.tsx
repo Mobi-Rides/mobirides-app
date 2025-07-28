@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, Mail, Search, Grid, Hash, User, Check, Settings, ChevronDown, AlertTriangle, Eye, Trash2, CheckCircle, Circle, Reply, Share2, Star, MoreHorizontal, ArchiveIcon, InboxIcon, Clock } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bell, Mail, Search, Grid, Hash, User, Settings, ChevronDown, AlertTriangle, Eye, Trash2, CheckCircle, ArchiveIcon, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -18,7 +18,6 @@ import React, { useRef, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
 
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,9 +28,6 @@ import { NotificationClassifier, classifyType } from "@/utils/NotificationClassi
 
 
 
-const SectionHeader = ({ children }) => (
-  <h2 className="text-lg font-bold mb-4 flex items-center gap-2">{children}</h2>
-);
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -152,6 +148,8 @@ export default function Notifications() {
         setLocalNotifications(prev => [...prev]); // This will trigger re-computation of filters
       }
     }, 60000); // Check every minute
+    
+    return () => clearInterval(interval);
   }, [localNotifications]); // <-- closes the useEffect
 
   // Filter notifications by archive/snooze state
@@ -201,27 +199,8 @@ export default function Notifications() {
   };
   const currentSection = sectionMap[activeFilter];
 
-  // --- Animation logic ---
-  const prevSection = useRef(activeFilter);
-  const [animateSection, setAnimateSection] = React.useState(false);
-  const [animateBadge, setAnimateBadge] = React.useState(false);
-  const prevCount = useRef(currentSection.count);
-
-  useEffect(() => {
-    if (prevSection.current !== activeFilter) {
-      setAnimateSection(true);
-      prevSection.current = activeFilter;
-      setTimeout(() => setAnimateSection(false), 400);
-    }
-    if (prevCount.current !== currentSection.count) {
-      setAnimateBadge(true);
-      prevCount.current = currentSection.count;
-      setTimeout(() => setAnimateBadge(false), 400);
-    }
-  }, [activeFilter, currentSection.count]);
 
   const unreadNotifications = localNotifications?.filter(n => !n.is_read).length || 0;
-  const totalNotifications = localNotifications?.length || 0;
 
   // Enhanced status counting with classification
   const confirmedCount = filteredNotifications.filter(n => {
@@ -420,26 +399,7 @@ export default function Notifications() {
   
   
 
-  // --- Message Notifications Section for Notifications tab ---
-  const [contactingHost, setContactingHost] = useState(false);
 
-  // Define color classes for each filter
-  const iconBadgeStyles = {
-    all: {
-      icon: 'bg-gradient-to-br from-purple-400 to-purple-600 text-white',
-      badge: 'bg-gradient-to-br from-pink-400 to-red-400 text-white pulse-red',
-    },
-    payments: {
-      icon: 'bg-gradient-to-br from-blue-400 to-blue-600 text-white',
-      badge: 'bg-gradient-to-br from-blue-300 to-blue-500 text-white pulse-blue',
-    },
-    bookings: {
-      icon: 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white',
-      badge: 'bg-gradient-to-br from-yellow-300 to-orange-400 text-white pulse-yellow',
-    },
-    
-  };
-  const currentStyles = iconBadgeStyles[activeFilter] || iconBadgeStyles.all;
 
   // Helper: toggle single selection
   const toggleSelect = (id: string) => {
@@ -605,24 +565,16 @@ export default function Notifications() {
   const prioritizedOld = limitedOldNotifications.map(n => prioritizeNotification(n, userBehavior))
     .sort((a, b) => getPriorityValue(b.priority) - getPriorityValue(a.priority));
 
-  // Prioritize and sort active notifications before rendering
-  const prioritizedActive = activeNotifications.map(n => prioritizeNotification(n, userBehavior))
-    .sort((a, b) => getPriorityValue(b.priority) - getPriorityValue(a.priority));
   const prioritizedSnoozed = snoozedNotifications.map(n => prioritizeNotification(n, userBehavior))
     .sort((a, b) => getPriorityValue(b.priority) - getPriorityValue(a.priority));
 const prioritizedArchived = archivedNotifications.map(n => prioritizeNotification(n, userBehavior))
   .sort((a, b) => getPriorityValue(b.priority) - getPriorityValue(a.priority));
 
-  // Archive search state
-  const [archiveSearch, setArchiveSearch] = useState("");
 
   function handleUnsnooze(notification) {
     setLocalNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, snoozedUntil: null } : n));
   }
 
-  // 5. Memoize notification arrays
-  const memoizedRecent = useMemo(() => prioritizedRecent, [prioritizedRecent]);
-  const memoizedOlder = useMemo(() => prioritizedOld, [prioritizedOld]);
 
   // Memoize archive and snoozed arrays to always show all archived/snoozed notifications, regardless of filter
   const memoizedArchived = useMemo(() => {
@@ -636,69 +588,6 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
     setActiveFilter(value);
   };
 
-  // Reply-to state and refs for Messages tab
-  const [replyToMessage, setReplyToMessage] = useState<any | null>(null);
-  const messageRefs = useRef<Record<string, HTMLLIElement | null>>({});
-  // Handler for reply button
-  const handleReplyToMessage = (msg: any) => setReplyToMessage(msg);
-  // Handler for jump to original message
-  const handleJumpToMessage = (id: string) => {
-    const el = messageRefs.current[id];
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-  // Enhanced messages with ref assignment
-  const enhancedMessages = messages.map(msg => ({
-    id: msg.id,
-    senderId: msg.sender_id,
-    receiverId: msg.receiver_id, // Add this line
-    senderName: msg.sender?.full_name || msg.sender_id,
-    senderAvatarUrl: msg.sender?.avatar_url,
-    content: msg.content,
-    createdAt: msg.created_at,
-    read: msg.status === 'read' || msg.read || false,
-    replyToId: msg.reply_to_id,
-    ref: (el: HTMLLIElement | null) => { messageRefs.current[msg.id] = el; },
-  }));
-  // Modified send handler
-  const handleSend = async () => {
-    if (!newMessage.trim() || !currentUserId) return;
-    const payload: any = {
-      content: newMessage.trim(),
-      sender_id: currentUserId,
-      receiver_id: defaultReceiverId,
-    };
-    if (replyToMessage) payload.reply_to_id = replyToMessage.id;
-    const { error } = await supabase.from("messages").insert(payload);
-    if (!error) {
-      setNewMessage("");
-      setReplyToMessage(null);
-      // Refetch messages after sending
-      const { data } = await supabase
-        .from("messages")
-        .select("*, sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url)")
-        .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
-        .order("created_at", { ascending: true });
-      setMessages(data || []);
-    }
-  };
-
-  const [replyTarget, setReplyTarget] = useState<any | null>(null);
-
-  // Filtered messages for Messages tab search
-  const filteredMessages = enhancedMessages.filter(
-    m =>
-      m.senderName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Filter messages for the selected chat
-  const drawerMessages = selectedChat.isOpen
-    ? filteredMessages.filter(
-        m =>
-          (m.senderId === selectedChat.senderId && m.receiverId === currentUserId) ||
-          (m.senderId === currentUserId && m.receiverId === selectedChat.senderId)
-      )
-    : [];
 
   return (
     <div className="min-h-screen bg-background">
