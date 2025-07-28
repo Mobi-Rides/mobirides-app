@@ -157,8 +157,8 @@ const Map = () => {
     );
   };
 
-  // Only load handover functionality for authenticated users
-  const shouldLoadHandover = !!user;
+  // Only load handover functionality when actually in handover mode
+  const shouldLoadHandover = !!user && isHandoverMode;
 
   const content = (
     <div className="flex flex-col h-screen bg-background">
