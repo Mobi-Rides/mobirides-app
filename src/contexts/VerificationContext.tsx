@@ -59,6 +59,12 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
   const [isInitialized, setIsInitialized] = useState(false);
 
   const initializeVerification = useCallback(async (userId: string, userRole: "renter" | "host") => {
+    // Prevent multiple concurrent initializations
+    if (isLoading || isInitialized) {
+      console.log("[VerificationContext] Skipping initialization - already loading or initialized");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -73,7 +79,7 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isLoading, isInitialized]);
 
   const refreshData = useCallback(async () => {
     if (!verificationData?.user_id) return;

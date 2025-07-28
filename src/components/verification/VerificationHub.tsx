@@ -227,7 +227,7 @@ export const VerificationHub: React.FC = () => {
     };
 
     initializeUserVerification();
-  }, [user?.id, isInitialized, isLoading, verificationData, initializeVerification]);
+  }, [user?.id, isInitialized, isLoading, verificationData]);
 
   const handleStepNavigation = (step: VerificationStep) => {
     if (!canNavigateToStep(step)) {
