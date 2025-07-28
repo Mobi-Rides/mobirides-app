@@ -2,20 +2,37 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useLocation,
 } from "react-router-dom";
-import { useState, useEffect, Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { BarLoader } from "react-spinners";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import "./App.css";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
+import { LocationSearchProvider } from "@/contexts/LocationSearchContext";
+import { VerificationProvider } from "@/contexts/VerificationContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { LoadingView } from "@/components/home/LoadingView";
+
+// Create query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Lazy load pages
 const Index = lazy(() => import("@/pages/Index"));
+const Login = lazy(() => import("@/pages/Login"));
+const Signup = lazy(() => import("@/pages/signup"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Map = lazy(() => import("@/pages/Map"));
 const More = lazy(() => import("@/pages/More"));
@@ -29,246 +46,290 @@ const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
 );
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
+const Notifications = lazy(() => import("@/pages/Notifications"));
 const Messages = lazy(() => import("@/pages/Messages"));
 const RentalReview = lazy(() => import("./pages/RentalReview"));
 const RentalDetailsRefactored = lazy(
   () => import("./pages/RentalDetailsRefactored"),
 );
-const Signup = lazy(() => import("./pages/signup"));
-const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Verification = lazy(() => import("@/pages/Verification"));
 const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPreferencesPage"));
+const CreateCar = lazy(() => import("@/pages/CreateCar"));
+const EditProfile = lazy(() => import("@/pages/EditProfile"));
+const CarListing = lazy(() => import("@/pages/CarListing"));
+
+// Admin pages
+const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
+const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
+const AdminCars = lazy(() => import("@/pages/admin/AdminCars"));
+const AdminBookings = lazy(() => import("@/pages/admin/AdminBookings"));
+const AdminTransactions = lazy(() => import("@/pages/admin/AdminTransactions"));
+const AdminVerifications = lazy(() => import("@/pages/admin/AdminVerifications"));
+const AdminMessages = lazy(() => import("@/pages/admin/AdminMessages"));
 
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
 const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
 const RoleAwareBookingsRedirect = lazy(() => import("@/components/RoleAwareBookingsRedirect"));
 
-const PageTransitionLoader = () => {
-  const location = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
-
-  if (!isLoading) return null;
-
-  return (
-    <div className="fixed top-0 left-0 w-full z-50 bg-background/80">
-      <div className="flex flex-col items-center justify-center py-3">
-        <BarLoader color="#7c3aed" width={150} />
-      </div>
-    </div>
-  );
-};
-
-const AppRoutes = () => {
-  return (
-    <>
-      <PageTransitionLoader />
-      <Suspense
-        fallback={
-          <div className="fixed top-0 left-0 w-full z-50 bg-background/80">
-            <div className="flex flex-col items-center justify-center py-3">
-              <BarLoader color="#7c3aed" width={150} />
-            </div>
-          </div>
-        }
-      >
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/wallet"
-            element={
-              <ProtectedRoute>
-                <Wallet />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/map"
-            element={
-              <ProtectedRoute>
-                <Map />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/more"
-            element={
-              <ProtectedRoute>
-                <More />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cars/:id"
-            element={
-              <ProtectedRoute>
-                <CarDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-car"
-            element={
-              <ProtectedRoute>
-                <AddCar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/driver-license"
-            element={
-              <ProtectedRoute>
-                <DriverLicense />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/edit-car/:id"
-            element={
-              <ProtectedRoute>
-                <EditCar />
-              </ProtectedRoute>
-            }
-          />
-          {/* Role-aware booking routing */}
-          <Route
-            path="/bookings"
-            element={
-              <ProtectedRoute>
-                <RoleAwareBookingsRedirect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/host-bookings"
-            element={
-              <ProtectedRoute>
-                <HostBookings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/renter-bookings"
-            element={
-              <ProtectedRoute>
-                <RenterBookings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <Messages />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/saved-cars"
-            element={
-              <ProtectedRoute>
-                <SavedCars />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications/:id"
-            element={
-              <ProtectedRoute>
-                <NotificationDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/booking-requests/:id"
-            element={
-              <ProtectedRoute>
-                <BookingRequestDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/rental-review/:bookingId" element={<RentalReview />} />
-          <Route
-            path="/rental-details/:id"
-            element={
-              <ProtectedRoute>
-                <RentalDetailsRefactored />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/verification"
-            element={
-              <ProtectedRoute>
-                <Verification />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notification-preferences"
-            element={
-              <ProtectedRoute>
-                <NotificationPreferencesPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </Suspense>
-    </>
-  );
-};
-
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <ErrorBoundary>
-            <AppRoutes />
-          </ErrorBoundary>
-          <ShadcnToaster />
-          <SonnerToaster position="top-center" />
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider>
+            <MapboxTokenProvider>
+              <LocationSearchProvider>
+                <VerificationProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Router>
+                      <Routes>
+                        <Route path="/" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <Index />
+                          </Suspense>
+                        } />
+                        <Route path="/login" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <Login />
+                          </Suspense>
+                        } />
+                        <Route path="/signup" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <Signup />
+                          </Suspense>
+                        } />
+                        <Route path="/reset-password" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ResetPassword />
+                          </Suspense>
+                        } />
+                        <Route path="/profile" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Profile />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/edit-profile" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <EditProfile />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/dashboard" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Dashboard />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/cars/:carId" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <CarDetails />
+                          </Suspense>
+                        } />
+                        <Route path="/car-listing" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <CarListing />
+                          </Suspense>
+                        } />
+                        <Route path="/add-car" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <AddCar />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/create-car" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <CreateCar />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/edit-car/:carId" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <EditCar />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        {/* Role-aware booking routing */}
+                        <Route path="/bookings" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <RoleAwareBookingsRedirect />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/host-bookings" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HostBookings />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/renter-bookings" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <RenterBookings />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/booking-requests/:id" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <BookingRequestDetails />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/notifications" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Notifications />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/notifications/:id" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <NotificationDetails />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/messages" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Messages />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/wallet" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Wallet />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/saved-cars" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <SavedCars />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/driver-license" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <DriverLicense />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/rental-review/:bookingId" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <RentalReview />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/more" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <More />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/map" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <Map />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/verification" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <Verification />
+                          </Suspense>
+                        } />
+                        <Route path="/rental-details/:id" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <RentalDetailsRefactored />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/notification-preferences" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <NotificationPreferencesPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        
+                        {/* Admin Routes */}
+                        <Route path="/admin" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminDashboard />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/users" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminUsers />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/cars" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminCars />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/bookings" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminBookings />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/transactions" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminTransactions />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/verifications" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminVerifications />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/messages" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminMessages />
+                          </Suspense>
+                        } />
+                        
+                        <Route path="*" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <div className="flex items-center justify-center min-h-screen">
+                              <div className="text-center">
+                                <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
+                                <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
+                              </div>
+                            </div>
+                          </Suspense>
+                        } />
+                      </Routes>
+                      <ShadcnToaster />
+                      <SonnerToaster position="top-center" />
+                    </Router>
+                  </TooltipProvider>
+                </VerificationProvider>
+              </LocationSearchProvider>
+            </MapboxTokenProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

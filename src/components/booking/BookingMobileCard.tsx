@@ -27,15 +27,15 @@ export const BookingMobileCard = ({ booking, onCancelBooking }: BookingMobileCar
   const getStatusBadge = () => {
     switch (booking.status) {
       case "pending":
-        return <Badge variant="outline" className="flex items-center gap-1 w-24  h-2 text-xs "><Clock className="h-3 w-3" /> Pending</Badge>;
+        return <Badge variant="outline" className="flex items-center gap-1 text-xs px-2 py-1"><Clock className="h-3 w-3" /> Pending</Badge>;
       case "confirmed":
-        return <Badge variant="success" className="bg-green-100 text-green-800 flex items-center gap-1 w-24  h-2text-xs"><Check className="h-3 w-3" /> Confirmed</Badge>;
+        return <Badge variant="success" className="bg-green-100 text-green-800 flex items-center gap-1 text-xs px-2 py-1"><Check className="h-3 w-3" /> Confirmed</Badge>;
       case "cancelled":
-        return <Badge variant="destructive" className="flex items-center gap-1 w-24  h-2text-xs"><X className="h-3 w-3" /> Cancelled</Badge>;
+        return <Badge variant="destructive" className="flex items-center gap-1 text-xs px-2 py-1"><X className="h-3 w-3" /> Cancelled</Badge>;
       case "completed":
-        return <Badge variant="default" className="flex items-center gap-1 w-24  h-2text-xs"><Check className="h-3 w-3" /> Completed</Badge>;
+        return <Badge variant="default" className="flex items-center gap-1 text-xs px-2 py-1"><Check className="h-3 w-3" /> Completed</Badge>;
       default:
-        return <Badge>{booking.status}</Badge>;
+        return <Badge className="text-xs px-2 py-1">{booking.status}</Badge>;
     }
   };
 
@@ -50,39 +50,33 @@ export const BookingMobileCard = ({ booking, onCancelBooking }: BookingMobileCar
             <img
               src={booking.cars.image_url || "/placeholder.svg"}
               alt={`${booking.cars.brand} ${booking.cars.model}`}
-              className="w-20 h-20 object-cover rounded-md flex-shrink-0"
+              className="w-16 h-16 object-cover rounded-md flex-shrink-0"
             />
-            <div className="flex-1 min-w-0">
-              <div className="mb-3">{getStatusBadge()}</div>
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium truncate">
-                    {booking.cars.brand} {booking.cars.model}
-                  </h3>
-                </div>
+            <div className="flex-1 min-w-0 space-y-1">
+              <div className="flex justify-between items-start gap-2">
+                <h3 className="font-medium text-sm leading-tight">
+                  {booking.cars.brand} {booking.cars.model}
+                </h3>
+                {getStatusBadge()}
               </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <MapPin size={10} className="text-red-500 flex-shrink-0" />
+                <span className="truncate">{booking.cars.location}</span>
+              </p>
             </div>
           </div>
 
           <div className="text-sm space-y-2">
-            <p className="text-xs text-muted-foreground truncate mb-1 flex items-center gap-1">
-              <MapPin size={12} className="text-red-500" />{" "}
-              {booking.cars.location}
-            </p>
-            <div className="flex flex-col justify-start items-start">
-              <span className="font-medium flex gap-1">
-                <span className="flex items-center gap-1">
-                  <CalendarDays size={12} className="text-blue-500" />{" "}
-                  {format(new Date(booking.start_date), "PP")} -
-                </span>{" "}
-                <span className="flex items-center gap-1">
-                  <CalendarDays size={12} className="text-blue-500" />{" "}
-                  {format(new Date(booking.end_date), "PP")}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1 text-xs">
+                <CalendarDays size={10} className="text-blue-500 flex-shrink-0" />
+                <span className="font-medium">
+                  {format(new Date(booking.start_date), "MMM dd")} - {format(new Date(booking.end_date), "MMM dd, yyyy")}
                 </span>
-              </span>
+              </div>
             </div>
             <div className="flex justify-end items-center">
-              <span className="font-medium text-base text-primary">BWP {booking.total_price}</span>
+              <span className="font-semibold text-lg text-primary">BWP {booking.total_price.toLocaleString()}</span>
             </div>
           </div>
 

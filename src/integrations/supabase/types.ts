@@ -1045,12 +1045,32 @@ export type Database = {
         Args: { booking_total: number; rate?: number }
         Returns: number
       }
+      calculate_handover_progress: {
+        Args: { handover_session_id_param: string }
+        Returns: Json
+      }
       calculate_user_rating: {
         Args: { user_uuid: string }
         Returns: number
       }
       check_host_wallet_balance: {
         Args: { host_uuid: string; required_commission: number }
+        Returns: boolean
+      }
+      get_user_review_stats: {
+        Args: { user_uuid: string }
+        Returns: Json
+      }
+      is_admin: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      validate_step_dependencies: {
+        Args: {
+          handover_session_id_param: string
+          step_name_param: string
+          step_order_param: number
+        }
         Returns: boolean
       }
     }
@@ -1068,8 +1088,8 @@ export type Database = {
         | "booking_request"
         | "message_received"
         | "booking_reminder"
-      review_type: "car" | "renter"
-      user_role: "host" | "renter"
+      review_type: "car" | "renter" | "host_to_renter" | "renter_to_host"
+      user_role: "host" | "renter" | "admin"
       vehicle_type:
         | "Basic"
         | "Standard"
@@ -1220,8 +1240,8 @@ export const Constants = {
         "message_received",
         "booking_reminder",
       ],
-      review_type: ["car", "renter"],
-      user_role: ["host", "renter"],
+      review_type: ["car", "renter", "host_to_renter", "renter_to_host"],
+      user_role: ["host", "renter", "admin"],
       vehicle_type: [
         "Basic",
         "Standard",

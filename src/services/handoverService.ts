@@ -151,7 +151,9 @@ export const getHandoverSession = async (bookingId: string) => {
       .from("handover_sessions")
       .select("*")
       .eq("booking_id", bookingId)
-      .single();
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) throw error;
     return data;

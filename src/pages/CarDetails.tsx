@@ -18,17 +18,15 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { AlertTriangle } from "lucide-react";
 
 const CarDetails = () => {
-  const { id } = useParams();
+  const { carId } = useParams();
   const { theme } = useTheme();
   const user = useUser();
 
   const { data: car, isLoading, error } = useQuery({
-    queryKey: ["car", id],
+    queryKey: ["car", carId],
     queryFn: async () => {
-      console.log("Fetching car details for ID:", id);
+      console.log("Fetching car details for ID:", carId);
       
-      
-
       const { data, error } = await supabase
         .from("cars")
         .select(`
@@ -38,7 +36,7 @@ const CarDetails = () => {
             avatar_url
           )
         `)
-        .eq("id", id)
+        .eq("id", carId)
         .maybeSingle();
 
       if (error) {
@@ -102,10 +100,8 @@ const CarDetails = () => {
     );
   }
 
-  // Safely handle avatar URL
-  const avatarUrl = car.profiles?.avatar_url 
-    ? supabase.storage.from('avatars').getPublicUrl(car.profiles.avatar_url).data.publicUrl
-    : "/placeholder.svg";
+  // Pass the raw avatar_url to CarOwner component
+  const avatarUrl = car.profiles?.avatar_url || null;
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">

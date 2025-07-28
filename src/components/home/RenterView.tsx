@@ -6,6 +6,11 @@ import { CarGrid } from "@/components/CarGrid";
 import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
+import { HandoverBanner } from "@/components/handover/HandoverBanner";
+import { useHandoverPrompts } from "@/hooks/useHandoverPrompts";
+import { useNavigate } from "react-router-dom";
+import { createHandoverSession } from "@/services/handoverService";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 
@@ -24,6 +29,15 @@ export const RenterView = ({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { ref: inViewRef, inView } = useInView();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  
+  // Get handover prompts for this renter
+  const { 
+    handoverPrompts, 
+    hasHandoverPrompts, 
+    hasUrgentPrompts,
+    refetch: refetchPrompts 
+  } = useHandoverPrompts();
 
   // For combining the inView ref with our loadMoreRef
   const setRefs = (node: HTMLDivElement | null) => {
@@ -116,8 +130,56 @@ export const RenterView = ({
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
+  const handleStartHandover = async (bookingId: string) => {
+    try {
+      console.log("Starting handover for booking:", bookingId);
+      
+      // Get booking details to find host and renter IDs
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          renter_id,
+          cars!inner(owner_id)
+        `)
+        .eq('id', bookingId)
+        .single();
+
+      if (bookingError) throw bookingError;
+      if (!booking) throw new Error('Booking not found');
+
+      const hostId = booking.cars.owner_id;
+      const renterId = booking.renter_id;
+
+      // Create handover session
+      const session = await createHandoverSession(bookingId, hostId, renterId, 'pickup');
+      
+      if (session) {
+        toast.success("Handover process started");
+        // Navigate to map with handover mode
+        navigate(`/map?bookingId=${bookingId}&mode=handover&role=renter`);
+        refetchPrompts(); // Refresh prompts
+      }
+    } catch (error) {
+      console.error("Error starting handover:", error);
+      toast.error("Failed to start handover process");
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Handover Prompts */}
+      {hasHandoverPrompts && (
+        <div className="space-y-3">
+          {handoverPrompts.map((prompt) => (
+            <HandoverBanner
+              key={prompt.id}
+              prompt={prompt}
+              onStartHandover={handleStartHandover}
+            />
+          ))}
+        </div>
+      )}
       <div className="flex justify-end">
         <Button
           variant={sortOrder ? "secondary" : "outline"}

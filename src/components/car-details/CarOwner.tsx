@@ -1,9 +1,18 @@
 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MessageCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MessageCircle, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+interface UserStats {
+  host_rating: number;
+  renter_rating: number;
+  total_reviews: number;
+  overall_rating: number;
+}
 
 interface CarOwnerProps {
   ownerName: string;
@@ -17,6 +26,28 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
   const handleContactClick = () => {
     navigate("/messages", { state: { recipientId: ownerId, recipientName: ownerName } });
   };
+
+  // Fetch user rating stats
+  const { data: userStats, isLoading: statsLoading, error: statsError } = useQuery<UserStats | null>({
+    queryKey: ["user-stats", ownerId],
+    queryFn: async () => {
+      console.log("Fetching user stats for owner ID:", ownerId);
+      const { data, error } = await supabase.rpc("get_user_review_stats", {
+        user_uuid: ownerId,
+      });
+
+      if (error) {
+        console.error("Error fetching user stats:", error);
+        return null;
+      }
+
+      console.log("User stats response:", data);
+      return data as unknown as UserStats;
+    },
+    enabled: !!ownerId,
+  });
+
+  console.log("User stats state:", { userStats, statsLoading, statsError });
 
   return (
     <>
@@ -43,9 +74,31 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
                   {ownerName || "Car Owner"}
                 </p>
 
-                <p className="text-xs md:text-sm text-muted-foreground ">
-                  Vehicle Host
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    Vehicle Host
+                  </p>
+                  {/* Debug info */}
+                  {statsLoading && (
+                    <span className="text-xs text-blue-500">Loading rating...</span>
+                  )}
+                  {userStats && (
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs font-medium text-gray-700 dark:text-white">
+                        {userStats.overall_rating?.toFixed(1) || "0.0"}
+                      </span>
+                      {userStats.total_reviews > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          ({userStats.total_reviews} review{userStats.total_reviews !== 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {!userStats && !statsLoading && (
+                    <span className="text-xs text-gray-500">No rating yet</span>
+                  )}
+                </div>
               </div>
             </div>
             <TooltipProvider>

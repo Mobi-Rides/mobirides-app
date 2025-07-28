@@ -7,6 +7,7 @@
 import React from "react";
 import { VerificationProvider } from "@/contexts/VerificationContext";
 import { VerificationHub } from "@/components/verification/VerificationHub";
+import { VerificationErrorBoundary } from "@/components/verification/VerificationErrorBoundary";
 
 /**
  * Verification Page Component
@@ -14,9 +15,11 @@ import { VerificationHub } from "@/components/verification/VerificationHub";
  */
 const Verification: React.FC = () => {
   return (
-    <VerificationProvider>
-      <VerificationHub />
-    </VerificationProvider>
+    <VerificationErrorBoundary>
+      <VerificationProvider>
+        <VerificationHub />
+      </VerificationProvider>
+    </VerificationErrorBoundary>
   );
 };
 

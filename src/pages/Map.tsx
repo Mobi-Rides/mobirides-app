@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import CustomMapbox from "@/components/map/CustomMapbox";
@@ -8,47 +8,122 @@ import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
 import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
 import { HandoverProvider } from "@/contexts/HandoverContext";
-import { HandoverSheet } from "@/components/handover/HandoverSheet";
-import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { EnhancedHandoverSheet } from "@/components/handover/EnhancedHandoverSheet";
+import { HandoverBookingButtons } from "@/components/map/HandoverBookingButtons";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { HandoverErrorBoundary } from "@/components/handover/HandoverErrorBoundary";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Map = () => {
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode");
   const bookingId = searchParams.get("bookingId");
+  const { user } = useAuth();
 
   const [mapToken, setMapToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [onlineHosts, setOnlineHosts] = useState([]);
   const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(false);
-  const [destination, setDestination] = useState({
+  const [destination] = useState({
     latitude: null,
     longitude: null,
   });
   const { theme } = useTheme();
 
-  const isHandoverMode = Boolean(mode === "handover" && bookingId);
-  const [hostId, setHostId] = useState<string | null>(null);
-  const [isHost, setIsHost] = useState(false);
+  const [isHandoverMode, setIsHandoverMode] = useState(false);
+  const [isValidatingHandover, setIsValidatingHandover] = useState(false);
+  const [hostId] = useState<string | null>(null);
 
-  const getDestination = useCallback((latitude: number, longitude: number) => {
-    console.log("Setting destination", latitude, longitude);
-    setDestination({ latitude, longitude });
-  }, []);
+  // Validate booking for handover mode
+  const validateBooking = async (bookingId: string) => {
+    try {
+      const { data: booking, error } = await supabase
+        .from('bookings')
+        .select(`
+          id, 
+          status, 
+          start_date, 
+          end_date, 
+          renter_id,
+          cars!inner (
+            owner_id
+          )
+        `)
+        .eq('id', bookingId)
+        .eq('status', 'confirmed')
+        .single();
 
-  const getHostID = useCallback((hostId: string) => {
-    console.log("Handover host", hostId);
-    setHostId(hostId);
-  }, []);
+      if (error || !booking) {
+        console.log('Booking not found or not confirmed:', bookingId);
+        return false;
+      }
 
-  const toggleIsOwner = useCallback((isHost: boolean) => {
-    console.log("Is user host?", isHost);
-    setIsHost(isHost);
-  }, []);
+      // Check if user has permission to access this booking
+      const hostId = booking.cars?.owner_id;
+      if (!user || (user.id !== booking.renter_id && user.id !== hostId)) {
+        console.log('User does not have permission to access booking:', bookingId);
+        return false;
+      }
+
+      // Check if booking is eligible for handover today
+      const today = new Date().toISOString().split('T')[0];
+      const isStartDate = booking.start_date === today;
+      const isEndDate = booking.end_date === today;
+
+      if (!isStartDate && !isEndDate) {
+        console.log('Booking is not eligible for handover today:', bookingId);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating booking:', error);
+      return false;
+    }
+  };
+
+  // Handle handover mode detection and validation
+  useEffect(() => {
+    const handleHandoverMode = async () => {
+      const hasHandoverParams = mode === "handover" && bookingId;
+      
+      if (!hasHandoverParams) {
+        setIsHandoverMode(false);
+        return;
+      }
+
+      if (!user) {
+        // Wait for user to be loaded
+        return;
+      }
+
+      setIsValidatingHandover(true);
+      
+      const isValid = await validateBooking(bookingId);
+      
+      if (!isValid) {
+        // Clear URL parameters and fall back to standard map mode
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('mode');
+        currentUrl.searchParams.delete('bookingId');
+        window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+        
+        toast.info("Invalid handover request - showing standard map");
+        setIsHandoverMode(false);
+      } else {
+        setIsHandoverMode(true);
+      }
+      
+      setIsValidatingHandover(false);
+    };
+
+    handleHandoverMode();
+  }, [mode, bookingId, user]);
 
   useEffect(() => {
-    // Open handover sheet automatically in handover mode
-    if (isHandoverMode) {
+    // Open handover sheet automatically in handover mode, but only once
+    if (isHandoverMode && !isHandoverSheetOpen) {
       setIsHandoverSheetOpen(true);
     }
   }, [isHandoverMode]);
@@ -114,11 +189,11 @@ const Map = () => {
   };
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading || isValidatingHandover) {
       return (
         <div className="flex flex-col items-center justify-center h-full w-full bg-muted/20 dark:bg-gray-800/20">
           <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">
-            Loading map...
+            {isValidatingHandover ? "Validating handover..." : "Loading map..."}
           </p>
           <BarLoader color="#7c3aed" width={100} />
         </div>
@@ -154,40 +229,70 @@ const Map = () => {
     );
   };
 
+  // Only load handover functionality when actually in handover mode
+  const shouldLoadHandover = !!user && isHandoverMode;
+
+  const content = (
+    <div className="flex flex-col h-screen bg-background">
+      <main className="flex-1 relative overflow-hidden">
+        {renderContent()}
+        {shouldLoadHandover && (
+          <HandoverErrorBoundary>
+            <HandoverBookingButtons 
+              onBookingClick={(clickedBookingId, handoverType) => {
+                console.log("Map received booking click for:", clickedBookingId, "type:", handoverType);
+                console.log("Current booking ID from URL:", bookingId);
+                console.log("Current handover sheet state:", isHandoverSheetOpen);
+                
+                if (handoverType === 'return') {
+                  // Navigate to rental details page for return handovers
+                  window.location.href = `/rental-details/${clickedBookingId}`;
+                  return;
+                }
+                
+                // For pickup handovers, open the handover sheet
+                // Update the current booking ID if different from URL
+                if (clickedBookingId !== bookingId) {
+                  console.log("Updating URL with new booking ID");
+                  window.history.replaceState(
+                    {}, 
+                    '', 
+                    `/map?mode=handover&bookingId=${clickedBookingId}`
+                  );
+                }
+                console.log("Opening handover sheet");
+                setIsHandoverSheetOpen(true);
+              }}
+            />
+            <EnhancedHandoverSheet
+              isOpen={isHandoverSheetOpen}
+              onClose={() => {
+                setIsHandoverSheetOpen(false);
+                // Clear URL parameters when closing
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('mode');
+                currentUrl.searchParams.delete('bookingId');
+                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+              }}
+              bookingId={bookingId || ""}
+            />
+          </HandoverErrorBoundary>
+        )}
+      </main>
+      <Navigation />
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900">
-      {isHandoverMode ? (
+    <ErrorBoundary>
+      {shouldLoadHandover ? (
         <HandoverProvider>
-          <main className="pb-16">
-            <div className="h-[calc(100vh-4rem)]">{renderContent()}</div>
-            <div className="fixed bottom-20 left-0 right-0 z-10 flex justify-center">
-              <Button
-                className="shadow-lg"
-                onClick={() => setIsHandoverSheetOpen(true)}
-              >
-                <MapPin className="mr-2 h-4 w-4" />
-                Handover Details
-              </Button>
-            </div>
-          </main>
-          <HandoverSheet
-            isOpen={isHandoverSheetOpen}
-            onClose={() => setIsHandoverSheetOpen(false)}
-            getDestination={getDestination}
-            getHostID={getHostID}
-            isHostUser={toggleIsOwner}
-          />
-          <Navigation />
+          {content}
         </HandoverProvider>
       ) : (
-        <>
-          <main className="pb-16">
-            <div className="h-[calc(100vh-4rem)]">{renderContent()}</div>
-          </main>
-          <Navigation />
-        </>
+        content
       )}
-    </div>
+    </ErrorBoundary>
   );
 };
 

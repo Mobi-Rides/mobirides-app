@@ -11,10 +11,22 @@ import { WalletBalanceIndicator } from "./WalletBalanceIndicator";
 import { walletService } from "@/services/walletService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { HandoverNotificationCard } from "@/components/handover/HandoverNotificationCard";
+import { useHandoverPrompts } from "@/hooks/useHandoverPrompts";
+import { createHandoverSession } from "@/services/handoverService";
+import { toast } from "sonner";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  
+  // Get handover prompts
+  const { 
+    handoverPrompts, 
+    hasHandoverPrompts, 
+    hasUrgentPrompts,
+    refetch: refetchPrompts 
+  } = useHandoverPrompts();
   
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["host-bookings"],
@@ -121,9 +133,59 @@ export const HostDashboard = () => {
   const currentBalance = walletBalance?.balance || 0;
   const showLowBalanceWarning = currentBalance < 50; // Show warning if balance is below P50
 
+  const handleStartHandover = async (bookingId: string) => {
+    try {
+      console.log("Starting handover for booking:", bookingId);
+      
+      // Get booking details to find host and renter IDs
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          renter_id,
+          cars!inner(owner_id)
+        `)
+        .eq('id', bookingId)
+        .single();
+
+      if (bookingError) throw bookingError;
+      if (!booking) throw new Error('Booking not found');
+
+      const hostId = booking.cars.owner_id;
+      const renterId = booking.renter_id;
+
+      // Create handover session
+      const session = await createHandoverSession(bookingId, hostId, renterId, 'pickup');
+      
+      if (session) {
+        toast.success("Handover process started");
+        // Navigate to map with handover mode
+        navigate(`/map?bookingId=${bookingId}&mode=handover&role=host`);
+        refetchPrompts(); // Refresh prompts
+      }
+    } catch (error) {
+      console.error("Error starting handover:", error);
+      toast.error("Failed to start handover process");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <HostStats />
+      
+      {/* Handover Prompts */}
+      {hasHandoverPrompts && (
+        <div className="space-y-3">
+          <h3 className="font-semibold text-lg">Action Required</h3>
+          {handoverPrompts.map((prompt) => (
+            <HandoverNotificationCard
+              key={prompt.id}
+              prompt={prompt}
+              onStartHandover={handleStartHandover}
+            />
+          ))}
+        </div>
+      )}
       
       {/* Low Balance Warning */}
       {showLowBalanceWarning && (

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Camera, Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +40,7 @@ export const VehicleInspectionStep = ({
   const [photos, setPhotos] = useState<VehiclePhoto[]>(initialPhotos);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const requirements = PHOTO_REQUIREMENTS[inspectionType];
   const requiredPhotos = requirements.filter(req => req.required);
@@ -74,6 +75,22 @@ export const VehicleInspectionStep = ({
     }
   };
 
+  const handlePhotoUploadClick = (photoType: string) => {
+    const input = fileInputRefs.current[photoType];
+    if (input) {
+      setUploadingType(photoType);
+      input.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, photoType: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handlePhotoUpload(photoType, file);
+    }
+    // Reset the input value to allow re-uploading the same file
+    e.target.value = '';
+  };
   const removePhoto = (photoId: string) => {
     const updatedPhotos = photos.filter(photo => photo.id !== photoId);
     setPhotos(updatedPhotos);
@@ -140,32 +157,30 @@ export const VehicleInspectionStep = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg h-32 flex flex-col items-center justify-center">
-                    <div className="relative w-full h-full">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handlePhotoUpload(requirement.type, file);
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={isUploading}
-                      />
-                      <div className="flex flex-col items-center justify-center h-full">
-                        {isUploading ? (
-                          <>
-                            <Upload className="h-6 w-6 animate-spin text-gray-400 mb-2" />
-                            <span className="text-xs text-gray-500">Uploading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="h-6 w-6 text-gray-400 mb-2" />
-                            <span className="text-xs text-gray-500">Add Photo</span>
-                          </>
-                        )}
-                      </div>
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-lg h-32 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+                    onClick={() => handlePhotoUploadClick(requirement.type)}
+                  >
+                    <input
+                      ref={(el) => (fileInputRefs.current[requirement.type] = el)}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => handleFileChange(e, requirement.type)}
+                      className="hidden"
+                    />
+                    <div className="flex flex-col items-center justify-center h-full">
+                      {isUploading && uploadingType === requirement.type ? (
+                        <>
+                          <Upload className="h-6 w-6 animate-spin text-gray-400 mb-2" />
+                          <span className="text-xs text-gray-500">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-6 w-6 text-gray-400 mb-2" />
+                          <span className="text-xs text-gray-500">Add Photo</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
