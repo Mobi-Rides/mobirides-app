@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessagingInterface } from '../components/chat/MessagingInterface';
+import { Header } from '../components/Header';
+import { Navigation } from '../components/Navigation';
 
 const Messages = () => {
   const location = useLocation();
@@ -19,12 +21,20 @@ const Messages = () => {
   const recipientName = location.state?.recipientName;
 
   return (
-    <div className="h-screen flex flex-col">
-      <MessagingInterface 
-        className="flex-1" 
-        recipientId={recipientId}
-        recipientName={recipientName}
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header 
+        searchQuery=""
+        onSearchChange={() => {}}
+        onFiltersChange={() => {}}
       />
+      <div className="flex-1 flex flex-col">
+        <MessagingInterface 
+          className="flex-1" 
+          recipientId={recipientId}
+          recipientName={recipientName}
+        />
+      </div>
+      <Navigation />
     </div>
   );
 };

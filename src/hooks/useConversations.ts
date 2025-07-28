@@ -38,86 +38,113 @@ export const useConversations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data: conversations, error } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          title,
-          type,
-          created_at,
-          updated_at,
-          last_message_at,
-          created_by,
-          conversation_participants!inner (
-            user_id,
-            joined_at
-          ),
-          conversation_messages (
-            id,
-            content,
-            sender_id,
-            created_at,
-            message_type
-          )
-        `)
-        .eq('conversation_participants.user_id', user.id)
-        .order('updated_at', { ascending: false });
+      try {
+        // Step 1: Get conversation IDs where user is a participant
+        const { data: participantData, error: partError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', user.id);
 
-      if (error) {
-        console.error("Error fetching conversations:", error);
+        if (partError) {
+          console.error("Error fetching participants:", partError);
+          return [];
+        }
+
+        const conversationIds = participantData?.map(p => p.conversation_id) || [];
+        
+        if (!conversationIds.length) {
+          console.log("User is not participant in any conversations");
+          return [];
+        }
+
+        // Step 2: Get conversations
+        const { data: userConversations, error: convError } = await supabase
+          .from('conversations')
+          .select('id, title, type, created_at, updated_at, last_message_at, created_by')
+          .in('id', conversationIds)
+          .order('updated_at', { ascending: false });
+
+        if (convError) {
+          console.error("Error fetching conversations:", convError);
+          return [];
+        }
+
+        console.log("Fetched conversations:", userConversations);
+
+        if (!userConversations?.length) {
+          console.log("No conversations found");
+          return [];
+        }
+
+        // Step 3: Transform conversations
+        const transformedConversations: Conversation[] = await Promise.all(
+          userConversations.map(async (conv) => {
+            console.log("Processing conversation:", conv.id);
+
+            // Get participants for this conversation
+            const { data: participants } = await supabase
+              .from('conversation_participants')
+              .select('user_id, joined_at')
+              .eq('conversation_id', conv.id);
+
+            // Get participant profiles
+            const participantIds = participants?.map(p => p.user_id) || [];
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, avatar_url')
+              .in('id', participantIds);
+
+            // Get latest messages for this conversation
+            const { data: messages } = await supabase
+              .from('conversation_messages')
+              .select('id, content, sender_id, created_at, message_type')
+              .eq('conversation_id', conv.id)
+              .order('created_at', { ascending: false })
+              .limit(1);
+
+            const participantUsers: User[] = (participants || []).map(p => {
+              const profile = profiles?.find(prof => prof.id === p.user_id);
+              return {
+                id: p.user_id,
+                name: profile?.full_name || 'Unknown User',
+                avatar: profile?.avatar_url ? 
+                  supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl : 
+                  undefined,
+                status: 'offline' as const
+              };
+            });
+
+            const lastMessage = messages?.[0];
+
+            return {
+              id: conv.id,
+              title: conv.title,
+              participants: participantUsers,
+              lastMessage: lastMessage ? {
+                id: lastMessage.id,
+                content: lastMessage.content,
+                senderId: lastMessage.sender_id,
+                conversationId: conv.id,
+                timestamp: new Date(lastMessage.created_at),
+                type: lastMessage.message_type as 'text' | 'image' | 'file'
+              } : undefined,
+              unreadCount: 0,
+              type: conv.type as 'direct' | 'group',
+              createdAt: new Date(conv.created_at),
+              updatedAt: new Date(conv.updated_at)
+            };
+          })
+        );
+
+        console.log("Transformed conversations:", transformedConversations);
+        return transformedConversations;
+
+      } catch (error) {
+        console.error("Error in conversation fetch:", error);
         return [];
       }
-
-      console.log("Raw conversations fetched:", conversations);
-      
-      // Transform to UI format and fetch participant profiles
-      const transformedConversations: Conversation[] = await Promise.all(
-        (conversations as any[]).map(async (conv: any) => {
-          // Get all participant IDs for this conversation
-          const participantIds = conv.conversation_participants.map(p => p.user_id);
-          
-          // Fetch profiles for all participants
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, full_name, avatar_url')
-            .in('id', participantIds);
-
-          const participants: User[] = (profiles || []).map(profile => ({
-            id: profile.id,
-            name: profile.full_name || 'Unknown User',
-            avatar: profile.avatar_url ? 
-              supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl : 
-              undefined,
-            status: 'offline' as const
-          }));
-
-          const lastMessage = conv.conversation_messages.length > 0 ? 
-            conv.conversation_messages[conv.conversation_messages.length - 1] : undefined;
-
-          return {
-            id: conv.id,
-            title: conv.title,
-            participants,
-            lastMessage: lastMessage ? {
-              id: lastMessage.id,
-              content: lastMessage.content,
-              senderId: lastMessage.sender_id,
-              conversationId: conv.id,
-              timestamp: new Date(lastMessage.created_at),
-              type: lastMessage.message_type as 'text' | 'image' | 'file'
-            } : undefined,
-            unreadCount: 0, // TODO: Implement unread count
-            type: conv.type,
-            createdAt: new Date(conv.created_at),
-            updatedAt: new Date(conv.updated_at)
-          };
-        })
-      );
-
-      console.log("Transformed conversations:", transformedConversations);
-      return transformedConversations;
     },
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 10000,
   });
 
   const createConversationMutation = useMutation({
