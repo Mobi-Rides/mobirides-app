@@ -245,9 +245,6 @@ const BookingRequestDetails = () => {
             <RenterInformation 
               renter={booking.renter} 
               renterRating={renterRating}
-              renterId={booking.renter_id}
-              isCarOwner={isCarOwner}
-              onContactRenter={handleContactRenter}
             />
             <CarInformation car={booking.car} />
             <BookingDates 
@@ -271,6 +268,7 @@ const BookingRequestDetails = () => {
               canApproveBooking={canApproveBooking}
               onApprove={handleApprove}
               onCancel={handleCancel}
+              onContact={handleContactRenter}
               isLoading={updateBookingStatus.isPending}
             />
           )}
