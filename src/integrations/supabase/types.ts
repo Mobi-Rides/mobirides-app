@@ -1064,6 +1064,10 @@ export type Database = {
         Args: { booking_total: number; rate?: number }
         Returns: number
       }
+      calculate_handover_progress: {
+        Args: { handover_session_id_param: string }
+        Returns: Json
+      }
       calculate_user_rating: {
         Args: { user_uuid: string }
         Returns: number
@@ -1078,6 +1082,14 @@ export type Database = {
       }
       is_admin: {
         Args: { user_uuid: string }
+        Returns: boolean
+      }
+      validate_step_dependencies: {
+        Args: {
+          handover_session_id_param: string
+          step_name_param: string
+          step_order_param: number
+        }
         Returns: boolean
       }
     }

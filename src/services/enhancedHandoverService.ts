@@ -121,7 +121,7 @@ export const getHandoverSteps = async (handoverSessionId: string) => {
   }
 };
 
-// Complete a handover step with validation
+// Complete a handover step with validation and real-time updates
 export const completeHandoverStep = async (
   handoverSessionId: string,
   stepName: string,
@@ -131,6 +131,18 @@ export const completeHandoverStep = async (
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) throw new Error("User not authenticated");
 
+    // Get current step info to validate order
+    const { data: stepInfo } = await supabase
+      .from("handover_step_completion")
+      .select("step_order")
+      .eq("handover_session_id", handoverSessionId)
+      .eq("step_name", stepName)
+      .single();
+
+    if (!stepInfo) {
+      throw new Error("Step not found");
+    }
+
     // Validate step completion based on step type
     const validationResult = await validateStepCompletion(handoverSessionId, stepName, completionData);
     if (!validationResult.isValid) {
@@ -138,6 +150,7 @@ export const completeHandoverStep = async (
       return false;
     }
 
+    // The database trigger will enforce dependency validation
     const { error } = await supabase
       .from("handover_step_completion")
       .update({
@@ -149,13 +162,26 @@ export const completeHandoverStep = async (
       .eq("handover_session_id", handoverSessionId)
       .eq("step_name", stepName);
 
-    if (error) throw error;
+    if (error) {
+      // Handle dependency validation errors
+      if (error.message.includes("Previous steps must be completed")) {
+        toast.error("Please complete previous steps first");
+      } else {
+        throw error;
+      }
+      return false;
+    }
     
     console.log(`Step ${stepName} completed successfully`);
+    toast.success(`${stepName.replace('_', ' ')} completed`);
     return true;
   } catch (error) {
     console.error("Error completing handover step:", error);
-    toast.error("Failed to complete handover step");
+    if (error.message.includes("Previous steps must be completed")) {
+      toast.error("Please complete previous steps in order");
+    } else {
+      toast.error("Failed to complete handover step");
+    }
     return false;
   }
 };

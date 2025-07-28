@@ -25,6 +25,8 @@ import { FuelMileageStep } from "./steps/FuelMileageStep";
 import { KeyTransferStep } from "./steps/KeyTransferStep";
 import { DigitalSignatureStep } from "./steps/DigitalSignatureStep";
 import { HandoverSuccessPopup } from "./HandoverSuccessPopup";
+import { HandoverProgressIndicator } from "./HandoverProgressIndicator";
+import { useRealtimeHandover } from "@/hooks/useRealtimeHandover";
 import { toast } from "@/utils/toast-utils";
 
 interface EnhancedHandoverSheetProps {
@@ -40,6 +42,7 @@ export const EnhancedHandoverSheet = ({
 }: EnhancedHandoverSheetProps) => {
   const navigate = useNavigate();
   const { isLoading, isHandoverSessionLoading, isHost, bookingDetails, handoverId, currentUserId } = useHandover();
+  const { handoverProgress } = useRealtimeHandover(handoverId);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<HandoverStepCompletion[]>([]);
   const [vehiclePhotos, setVehiclePhotos] = useState<VehiclePhoto[]>([]);
@@ -100,9 +103,10 @@ export const EnhancedHandoverSheet = ({
       return;
     }
 
+    console.log(`Attempting to complete step: ${stepName}`);
     const success = await completeHandoverStep(handoverId, stepName, data);
     if (success) {
-      // Refresh steps
+      // Refresh steps to get updated state
       const updatedSteps = await getHandoverSteps(handoverId);
       setCompletedSteps(updatedSteps);
       
@@ -110,9 +114,16 @@ export const EnhancedHandoverSheet = ({
       const nextIncomplete = updatedSteps.findIndex(step => !step.is_completed);
       if (nextIncomplete >= 0) {
         setCurrentStep(nextIncomplete);
+        console.log(`Moving to next step: ${nextIncomplete}`);
       } else {
-        // All steps completed
-        await handleHandoverComplete();
+        // All steps completed - the database trigger will handle session completion
+        console.log("All steps completed, checking if handover should be finalized");
+        
+        // Check if handover session is now marked as completed
+        const allCompleted = updatedSteps.every(step => step.is_completed);
+        if (allCompleted) {
+          await handleHandoverComplete();
+        }
       }
     }
   };
@@ -398,15 +409,12 @@ export const EnhancedHandoverSheet = ({
             </button>
           </div>
 
-          {/* Progress */}
+          {/* Progress Indicator */}
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">Progress</span>
-              <span className="text-sm text-muted-foreground">
-                {completedSteps.filter(s => s.is_completed).length} of {HANDOVER_STEPS.length} steps
-              </span>
-            </div>
-            <Progress value={progress} className="h-2" />
+            <HandoverProgressIndicator 
+              handoverSessionId={handoverId} 
+              showDetailed={false}
+            />
           </div>
 
           {/* Steps Overview */}

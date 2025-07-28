@@ -11,6 +11,7 @@ import { HandoverProvider } from "@/contexts/HandoverContext";
 import { EnhancedHandoverSheet } from "@/components/handover/EnhancedHandoverSheet";
 import { HandoverBookingButtons } from "@/components/map/HandoverBookingButtons";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { HandoverErrorBoundary } from "@/components/handover/HandoverErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 
 const Map = () => {
@@ -164,7 +165,7 @@ const Map = () => {
       <main className="flex-1 relative overflow-hidden">
         {renderContent()}
         {shouldLoadHandover && (
-          <ErrorBoundary fallback={null}>
+          <HandoverErrorBoundary>
             <HandoverBookingButtons 
               onBookingClick={(clickedBookingId, handoverType) => {
                 console.log("Map received booking click for:", clickedBookingId, "type:", handoverType);
@@ -191,21 +192,23 @@ const Map = () => {
                 setIsHandoverSheetOpen(true);
               }}
             />
-          </ErrorBoundary>
+          </HandoverErrorBoundary>
         )}
       </main>
-      <EnhancedHandoverSheet
-        isOpen={isHandoverSheetOpen}
-        onClose={() => {
-          setIsHandoverSheetOpen(false);
-          // Clear URL parameters when closing
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.delete('mode');
-          currentUrl.searchParams.delete('bookingId');
-          window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
-        }}
-        bookingId={bookingId || ""}
-      />
+      <HandoverErrorBoundary>
+        <EnhancedHandoverSheet
+          isOpen={isHandoverSheetOpen}
+          onClose={() => {
+            setIsHandoverSheetOpen(false);
+            // Clear URL parameters when closing
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete('mode');
+            currentUrl.searchParams.delete('bookingId');
+            window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+          }}
+          bookingId={bookingId || ""}
+        />
+      </HandoverErrorBoundary>
       <Navigation />
     </div>
   );
