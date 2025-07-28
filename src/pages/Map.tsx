@@ -49,8 +49,8 @@ const Map = () => {
   }, []);
 
   useEffect(() => {
-    // Open handover sheet automatically in handover mode
-    if (isHandoverMode) {
+    // Open handover sheet automatically in handover mode, but only once
+    if (isHandoverMode && !isHandoverSheetOpen) {
       setIsHandoverSheetOpen(true);
     }
   }, [isHandoverMode]);
@@ -196,7 +196,14 @@ const Map = () => {
       </main>
       <EnhancedHandoverSheet
         isOpen={isHandoverSheetOpen}
-        onClose={() => setIsHandoverSheetOpen(false)}
+        onClose={() => {
+          setIsHandoverSheetOpen(false);
+          // Clear URL parameters when closing
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.delete('mode');
+          currentUrl.searchParams.delete('bookingId');
+          window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+        }}
         bookingId={bookingId || ""}
       />
       <Navigation />

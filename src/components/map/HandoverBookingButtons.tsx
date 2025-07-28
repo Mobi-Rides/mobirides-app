@@ -29,6 +29,7 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
           return [];
         }
 
+        const now = new Date();
         const today = new Date().toISOString().split('T')[0];
         const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
@@ -52,12 +53,12 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
               phone_number
             ),
             handover_sessions (
-              handover_completed
+              handover_completed,
+              created_at
             )
           `)
           .eq("status", "confirmed")
-          .gte("start_date", today)
-          .lte("start_date", tomorrow);
+          .or(`start_date.eq.${today},start_date.eq.${tomorrow},end_date.eq.${today}`);
 
         // Filter based on user role
         if (userRole === "renter") {
@@ -80,10 +81,26 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
 
         console.log("HandoverBookingButtons: Raw bookings data", data);
 
-        // Filter out bookings where handover is already completed
+        // Filter for bookings that actually need handover actions
         const filteredData = data.filter(booking => {
+          const startDate = new Date(booking.start_date);
+          const endDate = new Date(booking.end_date);
           const handoverSession = booking.handover_sessions?.[0];
-          return !handoverSession || !handoverSession.handover_completed;
+          
+          // If handover is completed, don't show button
+          if (handoverSession?.handover_completed) {
+            return false;
+          }
+          
+          // For pickup: show on start date if no handover session exists
+          const isPickupDay = startDate.toDateString() === now.toDateString();
+          const needsPickup = isPickupDay && !handoverSession;
+          
+          // For return: show on end date if handover session exists but not completed
+          const isReturnDay = endDate.toDateString() === now.toDateString();
+          const needsReturn = isReturnDay && handoverSession && !handoverSession.handover_completed;
+          
+          return needsPickup || needsReturn;
         });
 
         console.log("HandoverBookingButtons: Filtered bookings", filteredData);
@@ -112,10 +129,17 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
     const endDate = new Date(booking.end_date);
     const handoverSession = booking.handover_sessions?.[0];
     
-    // If no handover session exists, it's a pickup
-    // If handover session exists but not completed, and we're past start date, it's likely a return
-    const isReturnHandover = handoverSession && !handoverSession.handover_completed && today >= startDate;
-    const handoverType: 'pickup' | 'return' = isReturnHandover ? 'return' : 'pickup';
+    // Determine handover type more accurately
+    const isPickupDay = startDate.toDateString() === today.toDateString();
+    const isReturnDay = endDate.toDateString() === today.toDateString();
+    
+    let handoverType: 'pickup' | 'return' = 'pickup';
+    
+    if (isReturnDay && handoverSession && !handoverSession.handover_completed) {
+      handoverType = 'return';
+    } else if (isPickupDay && !handoverSession) {
+      handoverType = 'pickup';
+    }
     
     return (
       <TooltipProvider key={booking.id}>

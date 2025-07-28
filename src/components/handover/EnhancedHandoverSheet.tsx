@@ -162,6 +162,13 @@ export const EnhancedHandoverSheet = ({
   const handleSuccessPopupClose = () => {
     console.log("Success popup closing, isHost:", isHost);
     setIsHandoverCompleted(false);
+    
+    // Clear URL parameters first
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete('mode');
+    currentUrl.searchParams.delete('bookingId');
+    window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+    
     onClose();
     
     // Navigate to appropriate bookings page
