@@ -239,7 +239,7 @@ const App = () => {
                           </HandoverRoute>
                         </Suspense>
                       } />
-                      <Route path="/verify" element={
+                      <Route path="/verification" element={
                         <Suspense fallback={<LoadingView />}>
                           <Verification />
                         </Suspense>
