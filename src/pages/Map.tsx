@@ -280,23 +280,21 @@ const Map = () => {
                 setIsHandoverSheetOpen(true);
               }}
             />
+            <EnhancedHandoverSheet
+              isOpen={isHandoverSheetOpen}
+              onClose={() => {
+                setIsHandoverSheetOpen(false);
+                // Clear URL parameters when closing
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('mode');
+                currentUrl.searchParams.delete('bookingId');
+                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+              }}
+              bookingId={bookingId || ""}
+            />
           </HandoverErrorBoundary>
         )}
       </main>
-      <HandoverErrorBoundary>
-        <EnhancedHandoverSheet
-          isOpen={isHandoverSheetOpen}
-          onClose={() => {
-            setIsHandoverSheetOpen(false);
-            // Clear URL parameters when closing
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.delete('mode');
-            currentUrl.searchParams.delete('bookingId');
-            window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
-          }}
-          bookingId={bookingId || ""}
-        />
-      </HandoverErrorBoundary>
       <Navigation />
     </div>
   );
