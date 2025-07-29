@@ -94,8 +94,10 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   };
 
   const handleViewUser = (user: Profile) => {
+    console.log("handleViewUser called with user:", user);
     setSelectedUser(user);
     setIsDetailDialogOpen(true);
+    console.log("Detail dialog should be opening, isDetailDialogOpen:", true);
   };
 
   const handleUpdateSuccess = () => {
@@ -112,7 +114,14 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   };
 
   const renderUserRow = (user: Profile) => (
-    <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleViewUser(user)}>
+    <TableRow 
+      key={user.id} 
+      className="cursor-pointer hover:bg-muted/50" 
+      onClick={(e) => {
+        console.log("Row clicked for user:", user.full_name);
+        handleViewUser(user);
+      }}
+    >
       <TableCell className="font-medium">
         {user.full_name || "No name"}
       </TableCell>
