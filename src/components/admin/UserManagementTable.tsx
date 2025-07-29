@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserEditDialog } from "./UserEditDialog";
+import { UserDetailDialog } from "./UserDetailDialog";
 import { PaginatedTable } from "./PaginatedTable";
 import { Search, Eye, Edit, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ interface Profile {
   role: "renter" | "host" | "admin";
   phone_number: string | null;
   created_at: string;
+  avatar_url: string | null;
 }
 
 interface UserManagementTableProps {
@@ -39,7 +41,7 @@ const useAdminUsers = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select(`
-          id, full_name, role, phone_number, created_at
+          id, full_name, role, phone_number, created_at, avatar_url
         `)
         .order("created_at", { ascending: false });
 
@@ -56,6 +58,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
   const { data: users, isLoading, error, refetch } = useAdminUsers();
 
@@ -90,15 +93,26 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
     setIsEditDialogOpen(true);
   };
 
+  const handleViewUser = (user: Profile) => {
+    setSelectedUser(user);
+    setIsDetailDialogOpen(true);
+  };
+
   const handleUpdateSuccess = () => {
     refetch();
     setIsEditDialogOpen(false);
+    setIsDetailDialogOpen(false);
     setSelectedUser(null);
     toast.success("User updated successfully");
   };
 
+  const handleCloseDetailDialog = () => {
+    setIsDetailDialogOpen(false);
+    setSelectedUser(null);
+  };
+
   const renderUserRow = (user: Profile) => (
-    <TableRow key={user.id}>
+    <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleViewUser(user)}>
       <TableCell className="font-medium">
         {user.full_name || "No name"}
       </TableCell>
@@ -124,7 +138,22 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleEditUser(user)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewUser(user);
+            }}
+            title="View User Details"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditUser(user);
+            }}
+            title="Edit User"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -249,12 +278,23 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
       </div>
 
       {selectedUser && (
-        <UserEditDialog
-          user={selectedUser}
-          isOpen={isEditDialogOpen}
-          onClose={() => setIsEditDialogOpen(false)}
-          onSuccess={handleUpdateSuccess}
-        />
+        <>
+          <UserEditDialog
+            user={selectedUser}
+            isOpen={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            onSuccess={handleUpdateSuccess}
+          />
+          <UserDetailDialog
+            user={selectedUser}
+            isOpen={isDetailDialogOpen}
+            onClose={handleCloseDetailDialog}
+            onUserUpdate={() => {
+              refetch();
+              handleUpdateSuccess();
+            }}
+          />
+        </>
       )}
     </>
   );
