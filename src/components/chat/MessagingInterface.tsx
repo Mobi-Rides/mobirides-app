@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
+import { NewConversationModal } from './NewConversationModal';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +19,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
   const { messages, sendMessage, isSendingMessage } = useConversationMessages(selectedConversationId);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   
   // Use a placeholder user initially, will be updated with real user data
   const [currentUser, setCurrentUser] = useState<User>({
@@ -102,8 +104,19 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   };
 
   const handleNewConversation = () => {
-    // For now, we'll just log this - in a real app, you'd open a contact picker
-    console.log('Start new conversation');
+    setIsNewConversationModalOpen(true);
+  };
+
+  const handleStartConversation = async (participant: User) => {
+    try {
+      await createConversation({ 
+        participantIds: [participant.id], 
+        title: participant.name 
+      });
+      setIsNewConversationModalOpen(false);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
   };
 
   return (
@@ -161,6 +174,14 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
           </div>
         )}
       </div>
+
+      {/* New Conversation Modal */}
+      <NewConversationModal
+        isOpen={isNewConversationModalOpen}
+        onClose={() => setIsNewConversationModalOpen(false)}
+        onStartConversation={handleStartConversation}
+        currentUser={currentUser}
+      />
     </div>
   );
 }
