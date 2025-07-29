@@ -352,6 +352,31 @@ export class VerificationService {
   }
 
   /**
+   * Complete document upload step
+   */
+  static async completeDocumentUpload(userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("user_verifications")
+        .update({
+          documents_completed: true,
+          current_step: VerificationStep.SELFIE_VERIFICATION,
+          last_updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("[VerificationService] Failed to complete document upload:", error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("[VerificationService] Failed to complete document upload:", error);
+      return false;
+    }
+  }
+
+  /**
    * Navigate to specific step
    */
   static async navigateToStep(userId: string, step: VerificationStep): Promise<boolean> {

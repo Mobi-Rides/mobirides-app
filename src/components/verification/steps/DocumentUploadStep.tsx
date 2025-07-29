@@ -6,6 +6,7 @@
 
 import React, { useState } from "react";
 import { useVerification } from "@/contexts/VerificationContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, ArrowLeft, FileText, Upload, CheckCircle } from "lucide-react";
@@ -20,7 +21,8 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
   onNext,
   onPrevious,
 }) => {
-  const { isLoading } = useVerification();
+  const { isLoading, completeDocumentUpload } = useVerification();
+  const { user } = useAuth();
   const [uploadedDocs, setUploadedDocs] = useState<string[]>([]);
 
   const requiredDocuments = [
@@ -54,12 +56,29 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
     }, 1000);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (uploadedDocs.length < requiredDocuments.length) {
       toast.error("Please upload all required documents");
       return;
     }
-    onNext();
+
+    if (!user?.id) {
+      toast.error("User not authenticated");
+      return;
+    }
+
+    try {
+      const success = await completeDocumentUpload(user.id);
+      if (success) {
+        toast.success("Documents verified successfully!");
+        onNext();
+      } else {
+        toast.error("Failed to complete document upload. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error completing document upload:", error);
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
   return (

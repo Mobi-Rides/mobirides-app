@@ -26,6 +26,7 @@ interface VerificationContextType {
   refreshData: () => Promise<void>;
   refreshFromProfile: () => Promise<void>;
   updatePersonalInfo: (personalInfo: Partial<PersonalInfo>) => Promise<void>;
+  completeDocumentUpload: (userId: string) => Promise<boolean>;
   completeSelfieVerification: () => Promise<void>;
   updatePhoneVerification: (phoneData: Partial<PhoneVerification>) => Promise<void>;
   updateAddressConfirmation: (addressData: Partial<AddressConfirmation>) => Promise<void>;
@@ -124,6 +125,22 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     }
   }, [verificationData?.user_id, refreshData]);
 
+  const completeDocumentUpload = useCallback(async (userId: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const success = await VerificationService.completeDocumentUpload(userId);
+      if (success) {
+        await refreshData();
+      }
+      return success;
+    } catch (error) {
+      console.error("Failed to complete document upload:", error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refreshData]);
+
   const completeSelfieVerification = useCallback(async () => {
     if (!verificationData?.user_id) throw new Error("No verification data");
 
@@ -196,14 +213,26 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     }
   }, [verificationData?.user_id, refreshData]);
 
-  const canNavigateToStep = useCallback((step: VerificationStep): boolean => {
+  const canNavigateToStep = useCallback((step: VerificationStep) => {
     if (!verificationData) return false;
 
-    const steps = Object.values(VerificationStep);
-    const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
-    const targetIndex = steps.indexOf(step);
-
-    return targetIndex <= currentIndex;
+    // Check actual completion status for each step
+    switch (step) {
+      case VerificationStep.PERSONAL_INFO:
+        return true; // Can always access first step
+      case VerificationStep.DOCUMENT_UPLOAD:
+        return verificationData.personal_info_completed;
+      case VerificationStep.SELFIE_VERIFICATION:
+        return verificationData.personal_info_completed && verificationData.documents_completed;
+      case VerificationStep.PHONE_VERIFICATION:
+        return verificationData.personal_info_completed && verificationData.documents_completed && verificationData.selfie_completed;
+      case VerificationStep.ADDRESS_CONFIRMATION:
+        return verificationData.personal_info_completed && verificationData.documents_completed && verificationData.selfie_completed && verificationData.phone_verified;
+      case VerificationStep.REVIEW_SUBMIT:
+        return verificationData.personal_info_completed && verificationData.documents_completed && verificationData.selfie_completed && verificationData.phone_verified && verificationData.address_confirmed;
+      default:
+        return false;
+    }
   }, [verificationData]);
 
   const getStepProgress = useCallback(() => {
@@ -237,6 +266,7 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     refreshData,
     refreshFromProfile,
     updatePersonalInfo,
+    completeDocumentUpload,
     completeSelfieVerification,
     updatePhoneVerification,
     updateAddressConfirmation,
