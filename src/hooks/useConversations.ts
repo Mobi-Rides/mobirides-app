@@ -81,10 +81,34 @@ export const useConversations = () => {
     queryFn: async () => {
       console.log("Fetching conversations");
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) {
+        console.log("No authenticated user");
+        return [];
+      }
 
       try {
-        // Use RLS-compliant approach - fetch conversations the user participates in
+        // Use direct query approach that works with RLS
+        // First get conversations where user is a participant
+        const { data: userParticipations, error: participationError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', user.id);
+
+        if (participationError) {
+          console.error("Error fetching user participations:", participationError);
+          return [];
+        }
+
+        console.log("User participations:", userParticipations);
+
+        if (!userParticipations || userParticipations.length === 0) {
+          console.log("No conversations found for user");
+          return [];
+        }
+
+        const convIds = userParticipations.map(p => p.conversation_id);
+
+        // Now fetch the conversations
         const { data: userConversations, error: convError } = await supabase
           .from('conversations')
           .select(`
@@ -94,17 +118,9 @@ export const useConversations = () => {
             created_at, 
             updated_at, 
             last_message_at, 
-            created_by,
-            conversation_participants!inner (
-              user_id,
-              joined_at,
-              profiles (
-                id,
-                full_name,
-                avatar_url
-              )
-            )
+            created_by
           `)
+          .in('id', convIds)
           .order('updated_at', { ascending: false });
 
         if (convError) {
@@ -115,28 +131,52 @@ export const useConversations = () => {
         console.log("Fetched conversations:", userConversations);
 
         if (!userConversations?.length) {
-          console.log("No conversations found");
+          console.log("No conversation data found");
           return [];
         }
 
+        // Fetch participants for these conversations
+        const { data: participants, error: participantsError } = await supabase
+          .from('conversation_participants')
+          .select(`
+            conversation_id,
+            user_id,
+            joined_at,
+            profiles (
+              id,
+              full_name,
+              avatar_url
+            )
+          `)
+          .in('conversation_id', convIds);
+
+        if (participantsError) {
+          console.error("Error fetching participants:", participantsError);
+          return [];
+        }
+
+        console.log("Fetched participants:", participants);
+
         // Get latest messages for each conversation
-        const conversationIds = userConversations.map(c => c.id);
         const { data: latestMessages } = await supabase
           .from('conversation_messages')
           .select('id, content, sender_id, created_at, message_type, conversation_id')
-          .in('conversation_id', conversationIds)
+          .in('conversation_id', convIds)
           .order('created_at', { ascending: false });
 
         // Transform conversations
         const transformedConversations: Conversation[] = userConversations.map((conv: any) => {
-          const participantUsers: User[] = conv.conversation_participants?.map((p: any) => ({
+          // Find participants for this conversation
+          const conversationParticipants = participants?.filter(p => p.conversation_id === conv.id) || [];
+          
+          const participantUsers: User[] = conversationParticipants.map((p: any) => ({
             id: p.user_id,
             name: p.profiles?.full_name || 'Unknown User',
             avatar: p.profiles?.avatar_url ? 
               supabase.storage.from('avatars').getPublicUrl(p.profiles.avatar_url).data.publicUrl : 
               undefined,
             status: 'offline' as const
-          })) || [];
+          }));
 
           // Find the latest message for this conversation
           const lastMessage = latestMessages?.find(m => m.conversation_id === conv.id);
