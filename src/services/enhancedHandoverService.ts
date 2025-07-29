@@ -3,14 +3,15 @@ import { toast } from "@/utils/toast-utils";
 
 // Enhanced handover step definitions
 export const HANDOVER_STEPS = [
-  { name: "identity_verification", order: 1, title: "Identity Verification", description: "Verify each other's identity" },
-  { name: "vehicle_inspection_exterior", order: 2, title: "Exterior Inspection", description: "Document vehicle exterior condition" },
-  { name: "vehicle_inspection_interior", order: 3, title: "Interior Inspection", description: "Document vehicle interior condition" },
-  { name: "damage_documentation", order: 4, title: "Damage Documentation", description: "Record any existing damage" },
-  { name: "fuel_mileage_check", order: 5, title: "Fuel & Mileage", description: "Record current fuel level and mileage" },
-  { name: "key_transfer", order: 6, title: "Key Transfer", description: "Physical transfer of vehicle keys" },
-  { name: "digital_signature", order: 7, title: "Digital Acknowledgment", description: "Sign handover agreement" },
-  { name: "completion", order: 8, title: "Handover Complete", description: "Finalize the handover process" }
+  { name: "navigation", order: 1, title: "Navigate to Location", description: "Get directions to the handover location" },
+  { name: "identity_verification", order: 2, title: "Identity Verification", description: "Verify each other's identity" },
+  { name: "vehicle_inspection_exterior", order: 3, title: "Exterior Inspection", description: "Document vehicle exterior condition" },
+  { name: "vehicle_inspection_interior", order: 4, title: "Interior Inspection", description: "Document vehicle interior condition" },
+  { name: "damage_documentation", order: 5, title: "Damage Documentation", description: "Record any existing damage" },
+  { name: "fuel_mileage_check", order: 6, title: "Fuel & Mileage", description: "Record current fuel level and mileage" },
+  { name: "key_transfer", order: 7, title: "Key Transfer", description: "Physical transfer of vehicle keys" },
+  { name: "digital_signature", order: 8, title: "Digital Acknowledgment", description: "Sign handover agreement" },
+  { name: "completion", order: 9, title: "Handover Complete", description: "Finalize the handover process" }
 ];
 
 export interface VehiclePhoto {

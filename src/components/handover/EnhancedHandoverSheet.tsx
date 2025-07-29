@@ -24,6 +24,7 @@ import { DamageDocumentationStep } from "./steps/DamageDocumentationStep";
 import { FuelMileageStep } from "./steps/FuelMileageStep";
 import { KeyTransferStep } from "./steps/KeyTransferStep";
 import { DigitalSignatureStep } from "./steps/DigitalSignatureStep";
+import { HandoverNavigationStep } from "./steps/HandoverNavigationStep";
 import { HandoverSuccessPopup } from "./HandoverSuccessPopup";
 import { HandoverProgressIndicator } from "./HandoverProgressIndicator";
 import { useRealtimeHandover } from "@/hooks/useRealtimeHandover";
@@ -194,6 +195,8 @@ export const EnhancedHandoverSheet = ({
 
   const canProceedToNextStep = (stepName: string) => {
     switch (stepName) {
+      case "navigation":
+        return true; // Can always proceed after navigation (arrival is confirmed within the step)
       case "identity_verification":
         return true; // Can always proceed after identity verification
       case "vehicle_inspection_exterior": {
@@ -222,6 +225,26 @@ export const EnhancedHandoverSheet = ({
     const otherUser = isHost ? bookingDetails?.renter : bookingDetails?.car?.owner;
     
     switch (step.name) {
+      case "navigation": {
+        // Get destination location (preset or user location)
+        const destinationLocation = {
+          latitude: bookingDetails?.latitude || bookingDetails?.car?.latitude || -24.65451,
+          longitude: bookingDetails?.longitude || bookingDetails?.car?.longitude || 25.90859,
+          address: bookingDetails?.car?.location || "Handover Location"
+        };
+        
+        return (
+          <HandoverNavigationStep
+            handoverSessionId={handoverId || ""}
+            destinationLocation={destinationLocation}
+            otherUserName={otherUser?.full_name || "User"}
+            isHost={isHost}
+            onStepComplete={() => handleStepComplete(step.name)}
+            onNavigationStart={() => toast.info("Navigation started. Follow the directions to reach the handover location.")}
+          />
+        );
+      }
+
       case "identity_verification": {
         return (
           <IdentityVerificationStep
