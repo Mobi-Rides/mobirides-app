@@ -4,11 +4,13 @@
  * Confirms user's residential address
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useVerification } from "@/contexts/VerificationContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, ArrowLeft, MapPin, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowRight, ArrowLeft, MapPin, CheckCircle, Edit3 } from "lucide-react";
 import { toast } from "sonner";
 
 interface AddressConfirmationStepProps {
@@ -20,17 +22,48 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
   onNext,
   onPrevious,
 }) => {
-  const { verificationData, updateAddressConfirmation, isLoading } = useVerification();
+  const { verificationData, updateAddressConfirmation, updatePersonalInfo, isLoading } = useVerification();
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [addressData, setAddressData] = useState({
+    street: "",
+    area: "",
+    city: "",
+    postalCode: "",
+  });
+
+  // Initialize address data from verification data
+  useEffect(() => {
+    if (verificationData?.personal_info?.address) {
+      setAddressData(verificationData.personal_info.address);
+    }
+  }, [verificationData]);
+
+  const handleSaveAddress = async () => {
+    try {
+      // Update personal info with new address
+      await updatePersonalInfo({
+        ...verificationData?.personal_info,
+        address: addressData,
+      });
+      setIsEditing(false);
+      toast.success("Address updated successfully!");
+    } catch (error) {
+      console.error("Failed to update address:", error);
+      toast.error("Failed to update address");
+    }
+  };
+
+  const handleAddressChange = (field: string, value: string) => {
+    setAddressData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   const handleConfirmAddress = async () => {
     await updateAddressConfirmation({
-      currentAddress: verificationData?.personal_info?.address || {
-        street: "",
-        area: "",
-        city: "",
-        postalCode: "",
-      },
+      currentAddress: addressData,
       confirmationMethod: "document",
       isConfirmed: true,
       confirmationDate: new Date().toISOString(),
@@ -65,14 +98,90 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-muted p-4 rounded-lg">
-            <div className="space-y-2">
-              <p><strong>Street:</strong> {verificationData?.personal_info?.address?.street || "Not provided"}</p>
-              <p><strong>Area:</strong> {verificationData?.personal_info?.address?.area || "Not provided"}</p>
-              <p><strong>City:</strong> {verificationData?.personal_info?.address?.city || "Not provided"}</p>
-              <p><strong>Postal Code:</strong> {verificationData?.personal_info?.address?.postalCode || "Not provided"}</p>
+          {!isEditing ? (
+            <div className="bg-muted p-4 rounded-lg">
+              <div className="space-y-2">
+                <p><strong>Street:</strong> {addressData.street || "Not provided"}</p>
+                <p><strong>Area:</strong> {addressData.area || "Not provided"}</p>
+                <p><strong>City:</strong> {addressData.city || "Not provided"}</p>
+                <p><strong>Postal Code:</strong> {addressData.postalCode || "Not provided"}</p>
+              </div>
+              <div className="mt-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit Address
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-street">Street Address</Label>
+                  <Input
+                    id="edit-street"
+                    value={addressData.street}
+                    onChange={(e) => handleAddressChange("street", e.target.value)}
+                    placeholder="Street address"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-area">Area/Suburb</Label>
+                  <Input
+                    id="edit-area"
+                    value={addressData.area}
+                    onChange={(e) => handleAddressChange("area", e.target.value)}
+                    placeholder="Area or suburb"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-city">City</Label>
+                  <Input
+                    id="edit-city"
+                    value={addressData.city}
+                    onChange={(e) => handleAddressChange("city", e.target.value)}
+                    placeholder="City"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-postalCode">Postal Code</Label>
+                  <Input
+                    id="edit-postalCode"
+                    value={addressData.postalCode}
+                    onChange={(e) => handleAddressChange("postalCode", e.target.value)}
+                    placeholder="Postal code"
+                  />
+                </div>
+              </div>
+
+              <div className="flex space-x-2">
+                <Button onClick={handleSaveAddress} disabled={isLoading}>
+                  Save Changes
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditing(false);
+                    setAddressData(verificationData?.personal_info?.address || {
+                      street: "",
+                      area: "",
+                      city: "",
+                      postalCode: "",
+                    });
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="text-sm text-muted-foreground">
             <p>
