@@ -1,5 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Car, CreditCard, AlertTriangle } from "lucide-react";
@@ -42,6 +43,7 @@ const useAdminStats = () => {
 
 export const AdminStats = () => {
   const { data: stats, isLoading, error } = useAdminStats();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -77,38 +79,47 @@ export const AdminStats = () => {
       title: "Total Users",
       value: stats?.totalUsers || 0,
       icon: Users,
-      description: "Registered users"
+      description: "Registered users",
+      onClick: () => navigate("/admin/users")
     },
     {
       title: "Total Cars",
       value: stats?.totalCars || 0,
       icon: Car,
-      description: "Listed vehicles"
+      description: "Listed vehicles",
+      onClick: () => navigate("/admin/cars")
     },
     {
       title: "Total Bookings",
       value: stats?.totalBookings || 0,
       icon: CreditCard,
-      description: "All bookings"
+      description: "All bookings",
+      onClick: () => navigate("/admin/bookings")
     },
     {
       title: "Pending Verifications",
       value: stats?.pendingVerifications || 0,
       icon: AlertTriangle,
-      description: "Awaiting review"
+      description: "Awaiting review",
+      onClick: () => navigate("/admin/verifications")
     },
     {
       title: "Total Revenue",
       value: `P${(stats?.totalRevenue || 0).toFixed(2)}`,
       icon: CreditCard,
-      description: "Platform revenue"
+      description: "Platform revenue",
+      onClick: () => navigate("/admin/transactions")
     }
   ];
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {statCards.map((stat, index) => (
-        <Card key={index}>
+        <Card 
+          key={index} 
+          className="cursor-pointer hover:shadow-md transition-shadow duration-200"
+          onClick={stat.onClick}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               {stat.title}
@@ -116,7 +127,9 @@ export const AdminStats = () => {
             <stat.icon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
+            <div className="text-2xl font-bold hover:text-primary transition-colors">
+              {stat.value}
+            </div>
             <p className="text-xs text-muted-foreground">
               {stat.description}
             </p>
