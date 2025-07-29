@@ -73,7 +73,7 @@ export const useConversationMessages = (conversationId: string | undefined) => {
           reply_to_message_id,
           related_car_id,
           metadata,
-          sender:profiles!conversation_messages_sender_id_fkey (
+          sender:profiles (
             id,
             full_name,
             avatar_url
@@ -138,7 +138,7 @@ export const useConversationMessages = (conversationId: string | undefined) => {
           reply_to_message_id,
           related_car_id,
           metadata,
-          sender:profiles!conversation_messages_sender_id_fkey (
+          sender:profiles (
             id,
             full_name,
             avatar_url

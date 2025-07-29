@@ -96,6 +96,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   });
 
   const selectedConversation = filteredConversations.find(c => c.id === selectedConversationId);
+  
 
   const handleSendMessage = (content: string) => {
     if (selectedConversationId) {

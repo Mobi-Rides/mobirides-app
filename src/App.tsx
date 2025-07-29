@@ -18,6 +18,7 @@ import { VerificationProvider } from "@/contexts/VerificationContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { LoadingView } from "@/components/home/LoadingView";
+import { ChatManager } from "@/components/chat/ChatManager";
 
 // Create query client
 const queryClient = new QueryClient({
@@ -318,6 +319,10 @@ function App() {
                           </Suspense>
                         } />
                       </Routes>
+                      
+                      {/* Global Chat Manager */}
+                      <ChatManager />
+                      
                       <ShadcnToaster />
                       <SonnerToaster position="top-center" />
                     </Router>

@@ -191,7 +191,22 @@ export const useConversations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Create conversation
+      // Check if direct conversation already exists
+      if (participantIds.length === 1) {
+        const existingConversation = conversations.find(conv => 
+          conv.type === 'direct' && 
+          conv.participants.length === 2 &&
+          conv.participants.some(p => p.id === participantIds[0]) &&
+          conv.participants.some(p => p.id === user.id)
+        );
+        
+        if (existingConversation) {
+          console.log('Using existing conversation:', existingConversation.id);
+          return existingConversation;
+        }
+      }
+
+      // Create new conversation
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .insert({
