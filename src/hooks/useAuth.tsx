@@ -82,6 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
     } catch (error) {
       console.error('[AuthProvider] Sign out failed:', error);
+      toast.error('An error occurred while signing out');
       throw error;
     } finally {
       setIsLoading(false);

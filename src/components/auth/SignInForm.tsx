@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 interface SignInFormProps {
   onSuccess?: () => void;
@@ -15,6 +16,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +32,13 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
       });
 
       if (error) {
-        setError(error.message);
+        if (error.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please check your credentials and try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          setError("Please check your email and click the confirmation link before signing in.");
+        } else {
+          setError(error.message);
+        }
         return;
       }
 
@@ -39,6 +48,33 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please enter your email address first");
+      return;
+    }
+
+    setIsResettingPassword(true);
+    setError("");
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      toast.success("Password reset email sent! Check your inbox.");
+    } catch (error) {
+      setError("Failed to send reset email. Please try again.");
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -64,19 +100,50 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
 
       <div className="space-y-2">
         <Label htmlFor="signin-password">Password</Label>
-        <Input
-          id="signin-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
-          required
-        />
+        <div className="relative">
+          <Input
+            id="signin-password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            className="pr-10"
+            required
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+            <span className="sr-only">
+              {showPassword ? "Hide password" : "Show password"}
+            </span>
+          </Button>
+        </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? "Signing in..." : "Sign In"}
       </Button>
+
+      <div className="text-center">
+        <Button
+          type="button"
+          variant="link"
+          className="text-sm text-muted-foreground hover:text-primary"
+          onClick={handleForgotPassword}
+          disabled={isResettingPassword}
+        >
+          {isResettingPassword ? "Sending reset email..." : "Forgot your password?"}
+        </Button>
+      </div>
     </form>
   );
 };
