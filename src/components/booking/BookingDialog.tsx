@@ -285,8 +285,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           start_time: startTime,
           end_time: endTime,
           total_price: totalPrice,
-          pickup_latitude: pickupLocation.latitude,
-          pickup_longitude: pickupLocation.longitude,
+          latitude: pickupLocation.latitude,
+          longitude: pickupLocation.longitude,
           status: "pending", // Explicitly set status to a valid enum value
         })
         .select()
