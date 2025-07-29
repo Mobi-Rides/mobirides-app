@@ -10,7 +10,9 @@ import {
   Settings, 
   CheckCircle, 
   Filter,
-  RefreshCw
+  RefreshCw,
+  Car,
+  Clock
 } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useBookingActions } from "@/hooks/useBookingActions";
@@ -42,6 +44,12 @@ export default function NotificationsRefactored() {
     if (!matchesSearch) return false;
     
     if (activeFilter === "all") return true;
+    
+    if (activeFilter === "active_rentals") {
+      return (notification.type === 'pickup_reminder' || 
+              notification.type === 'return_reminder' || 
+              notification.type === 'handover_ready');
+    }
     
     const classification = NotificationClassifier.classifyNotification(notification);
     return classification.type === activeFilter;
@@ -95,10 +103,18 @@ export default function NotificationsRefactored() {
       return classification.type === 'payment' && !n.is_read;
     }).length;
 
-    return { bookingCount, paymentCount };
+    const activeRentalCount = notifications.filter(n => {
+      const classification = NotificationClassifier.classifyNotification(n);
+      return (classification.type === 'booking' && 
+              (n.type === 'pickup_reminder' || 
+               n.type === 'return_reminder' || 
+               n.type === 'handover_ready')) && !n.is_read;
+    }).length;
+
+    return { bookingCount, paymentCount, activeRentalCount };
   };
 
-  const { bookingCount, paymentCount } = getFilterCounts();
+  const { bookingCount, paymentCount, activeRentalCount } = getFilterCounts();
 
   if (isLoading) {
     return (
@@ -193,6 +209,15 @@ export default function NotificationsRefactored() {
                 {paymentCount > 0 && (
                   <Badge variant="secondary" className="ml-2 text-xs">
                     {paymentCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="active_rentals" className="relative">
+                <Car className="h-4 w-4 mr-1" />
+                Active Rentals
+                {activeRentalCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    {activeRentalCount}
                   </Badge>
                 )}
               </TabsTrigger>

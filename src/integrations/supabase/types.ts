@@ -1332,6 +1332,9 @@ export type Database = {
         | "handover_ready"
         | "payment_received"
         | "payment_failed"
+        | "booking_request_sent"
+        | "pickup_reminder"
+        | "return_reminder"
       review_type: "car" | "renter" | "host_to_renter" | "renter_to_host"
       user_role: "host" | "renter" | "admin"
       vehicle_type:
@@ -1488,6 +1491,9 @@ export const Constants = {
         "handover_ready",
         "payment_received",
         "payment_failed",
+        "booking_request_sent",
+        "pickup_reminder",
+        "return_reminder",
       ],
       review_type: ["car", "renter", "host_to_renter", "renter_to_host"],
       user_role: ["host", "renter", "admin"],
