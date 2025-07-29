@@ -319,6 +319,14 @@ export const VerificationHub: React.FC = () => {
     );
   }
 
+  // If verification is already completed, redirect to completion step
+  if (verificationData.overall_status === "completed" && verificationData.current_step !== "completion") {
+    // Update the current step to completion and trigger re-render
+    React.useEffect(() => {
+      navigateToStep(VerificationStep.COMPLETION);
+    }, []);
+  }
+
   const progress = getStepProgress();
   const currentStepConfig = STEP_CONFIG[verificationData.current_step as VerificationStep];
 
