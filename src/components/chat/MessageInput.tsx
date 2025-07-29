@@ -138,6 +138,19 @@ export function MessageInput({
             variant="ghost"
             className="h-9 w-9 p-0 flex-shrink-0 rounded-full hover:bg-primary/10 transition-colors duration-200"
             disabled={disabled}
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '*/*';
+              input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) {
+                  console.log('Selected file:', file.name);
+                  // TODO: Implement file upload
+                }
+              };
+              input.click();
+            }}
           >
             <Paperclip className="w-4 h-4 text-primary" />
           </Button>
@@ -166,6 +179,19 @@ export function MessageInput({
                 variant="ghost"
                 className="h-6 w-6 p-0 rounded-full hover:bg-primary/10 transition-colors duration-200"
                 disabled={disabled}
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      console.log('Selected image:', file.name);
+                      // TODO: Implement image upload
+                    }
+                  };
+                  input.click();
+                }}
               >
                 <Image className="w-4 h-4 text-primary" />
               </Button>
@@ -175,6 +201,10 @@ export function MessageInput({
                 variant="ghost"
                 className="h-6 w-6 p-0 rounded-full hover:bg-primary/10 transition-colors duration-200"
                 disabled={disabled}
+                onClick={() => {
+                  console.log('Emoji picker clicked');
+                  // TODO: Implement emoji picker
+                }}
               >
                 <Smile className="w-4 h-4 text-primary" />
               </Button>
@@ -197,6 +227,10 @@ export function MessageInput({
               variant="ghost"
               className="h-9 w-9 p-0 flex-shrink-0 rounded-full hover:bg-primary/10 transition-colors duration-200"
               disabled={disabled}
+              onClick={() => {
+                console.log('Voice recording clicked');
+                // TODO: Implement voice recording
+              }}
             >
               <Mic className="w-4 h-4 text-primary" />
             </Button>

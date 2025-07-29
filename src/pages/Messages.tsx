@@ -27,7 +27,7 @@ const Messages = () => {
         onSearchChange={() => {}}
         onFiltersChange={() => {}}
       />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col pb-16">
         <MessagingInterface 
           className="flex-1" 
           recipientId={recipientId}
