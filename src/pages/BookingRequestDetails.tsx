@@ -21,6 +21,7 @@ import { BookingDates } from "@/components/booking-request/BookingDates";
 import { BookingPrice } from "@/components/booking-request/BookingPrice";
 import { WalletCommissionSection } from "@/components/booking-request/WalletCommissionSection";
 import { BookingActions } from "@/components/booking-request/BookingActions";
+import { PostConfirmationGuidance } from "@/components/booking/PostConfirmationGuidance";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
@@ -249,7 +250,9 @@ const BookingRequestDetails = () => {
             <CarInformation car={booking.car} />
             <BookingDates 
               startDate={booking.start_date} 
-              endDate={booking.end_date} 
+              endDate={booking.end_date}
+              startTime={booking.start_time}
+              endTime={booking.end_time}
             />
             <BookingPrice totalPrice={booking.total_price} />
           </CardContent>
@@ -270,6 +273,15 @@ const BookingRequestDetails = () => {
               onCancel={handleCancel}
               onContact={handleContactRenter}
               isLoading={updateBookingStatus.isPending}
+            />
+          )}
+
+          {booking.status === 'confirmed' && (
+            <PostConfirmationGuidance
+              userRole={isCarOwner ? "host" : "renter"}
+              startDate={booking.start_date}
+              startTime={booking.start_time}
+              carName={`${booking.car.brand} ${booking.car.model}`}
             />
           )}
         </Card>

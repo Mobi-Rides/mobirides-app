@@ -51,6 +51,7 @@ export type Database = {
           commission_status: string | null
           created_at: string
           end_date: string
+          end_time: string | null
           host_preparation_completed: boolean | null
           id: string
           latitude: number | null
@@ -59,6 +60,7 @@ export type Database = {
           renter_id: string
           renter_preparation_completed: boolean | null
           start_date: string
+          start_time: string | null
           status: Database["public"]["Enums"]["booking_status"]
           total_price: number
           updated_at: string
@@ -69,6 +71,7 @@ export type Database = {
           commission_status?: string | null
           created_at?: string
           end_date: string
+          end_time?: string | null
           host_preparation_completed?: boolean | null
           id?: string
           latitude?: number | null
@@ -77,6 +80,7 @@ export type Database = {
           renter_id: string
           renter_preparation_completed?: boolean | null
           start_date: string
+          start_time?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           total_price: number
           updated_at?: string
@@ -87,6 +91,7 @@ export type Database = {
           commission_status?: string | null
           created_at?: string
           end_date?: string
+          end_time?: string | null
           host_preparation_completed?: boolean | null
           id?: string
           latitude?: number | null
@@ -95,6 +100,7 @@ export type Database = {
           renter_id?: string
           renter_preparation_completed?: boolean | null
           start_date?: string
+          start_time?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           total_price?: number
           updated_at?: string

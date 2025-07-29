@@ -5,9 +5,11 @@ import { format } from "date-fns";
 interface BookingDatesProps {
   startDate: string;
   endDate: string;
+  startTime?: string;
+  endTime?: string;
 }
 
-export const BookingDates = ({ startDate, endDate }: BookingDatesProps) => {
+export const BookingDates = ({ startDate, endDate, startTime, endTime }: BookingDatesProps) => {
   return (
     <div className="bg-card rounded-lg p-4 border">
       <h2 className="text-lg font-semibold mb-4 flex items-center">
@@ -22,6 +24,7 @@ export const BookingDates = ({ startDate, endDate }: BookingDatesProps) => {
           <p className="font-medium flex items-center">
             <Calendar className="h-4 w-4 mr-2 text-primary" />
             {format(new Date(startDate), 'PPP')}
+            {startTime && ` at ${startTime}`}
           </p>
         </div>
         <div className="p-3 rounded-md bg-background">
@@ -29,6 +32,7 @@ export const BookingDates = ({ startDate, endDate }: BookingDatesProps) => {
           <p className="font-medium flex items-center">
             <Calendar className="h-4 w-4 mr-2 text-primary" />
             {format(new Date(endDate), 'PPP')}
+            {endTime && ` at ${endTime}`}
           </p>
         </div>
       </div>

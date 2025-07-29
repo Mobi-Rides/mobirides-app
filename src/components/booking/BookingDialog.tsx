@@ -35,6 +35,8 @@ interface BookingDialogProps {
 export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("18:00");
   const [isLoading, setIsLoading] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -257,9 +259,11 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           renter_id: session.session.user.id,
           start_date: format(startDate, "yyyy-MM-dd"),
           end_date: format(endDate, "yyyy-MM-dd"),
+          start_time: startTime,
+          end_time: endTime,
           total_price: totalPrice,
-          latitude: pickupLocation.latitude,
-          longitude: pickupLocation.longitude,
+          pickup_latitude: pickupLocation.latitude,
+          pickup_longitude: pickupLocation.longitude,
           status: "pending", // Explicitly set status to a valid enum value
         })
         .select()

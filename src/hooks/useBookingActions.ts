@@ -1,9 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { EnhancedBookingService } from "@/services/enhancedBookingService";
+import { useAuth } from "./useAuth";
 
 export const useBookingActions = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const mutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: string; status: 'confirmed' | 'cancelled' }) => {
@@ -17,6 +20,12 @@ export const useBookingActions = () => {
     onSuccess: (_, variables) => {
       const action = variables.status === 'confirmed' ? 'approved' : 'cancelled';
       toast.success(`Booking ${action}`);
+      
+      // Send post-confirmation guidance
+      if (variables.status === 'confirmed' && user) {
+        EnhancedBookingService.sendPostConfirmationGuidance(variables.bookingId, 'host');
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['booking-request', variables.bookingId] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });

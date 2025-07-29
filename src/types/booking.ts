@@ -3,6 +3,8 @@ export interface BookingWithRelations {
   id: string;
   start_date: string;
   end_date: string;
+  start_time?: string;
+  end_time?: string;
   status: string;
   car_id: string;
   renter_id?: string;
