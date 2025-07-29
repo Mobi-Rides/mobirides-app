@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { NewConversationModal } from './NewConversationModal';
@@ -15,7 +15,7 @@ interface MessagingInterfaceProps {
 }
 
 export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
-  const { conversations, isLoading: conversationsLoading, createConversation } = useConversations();
+  const { conversations, isLoading: conversationsLoading, createConversation, isCreatingConversation } = useConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
   const { messages, sendMessage, isSendingMessage } = useConversationMessages(selectedConversationId);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,16 +66,26 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     }
   }, [conversations, selectedConversationId]);
 
+  // Memoize the createConversation function to prevent infinite loops
+  const handleCreateConversation = useCallback((params: { participantIds: string[], title?: string }) => {
+    if (!isCreatingConversation) {
+      createConversation(params);
+    }
+  }, [createConversation, isCreatingConversation]);
+
   // Handle recipient-based conversation creation/selection
   useEffect(() => {
     console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
     
-    if (recipientId && recipientName && currentUser.id !== 'user-1') {
+    if (recipientId && recipientName && currentUser.id !== 'user-1' && !conversationsLoading) {
       console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
       console.log("MessagingInterface: Current conversations:", conversations);
       
       const existingConversation = conversations.find(conv => 
-        conv.participants.some(p => p.id === recipientId)
+        conv.type === 'direct' && 
+        conv.participants.length === 2 &&
+        conv.participants.some(p => p.id === recipientId) &&
+        conv.participants.some(p => p.id === currentUser.id)
       );
       
       console.log("MessagingInterface: Existing conversation found:", existingConversation);
@@ -83,18 +93,17 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       if (existingConversation) {
         console.log("MessagingInterface: Selecting existing conversation:", existingConversation.id);
         setSelectedConversationId(existingConversation.id);
-      } else {
+      } else if (!isCreatingConversation) {
         console.log("MessagingInterface: Creating new conversation with:", { participantIds: [recipientId], title: recipientName });
-        // Create new conversation
-        createConversation({ 
+        handleCreateConversation({ 
           participantIds: [recipientId], 
           title: recipientName 
         });
       }
     } else {
-      console.log("MessagingInterface: Missing required data or user not loaded yet");
+      console.log("MessagingInterface: Missing required data, user not loaded, or conversations loading");
     }
-  }, [recipientId, recipientName, conversations, currentUser.id, createConversation]);
+  }, [recipientId, recipientName, conversations, currentUser.id, conversationsLoading, isCreatingConversation, handleCreateConversation]);
 
   const filteredConversations = conversations.filter(conv => {
     const title = conv.title || conv.participants
@@ -121,7 +130,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   const handleStartConversation = async (participant: User) => {
     try {
-      await createConversation({ 
+      handleCreateConversation({ 
         participantIds: [participant.id], 
         title: participant.name 
       });
