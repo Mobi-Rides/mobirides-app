@@ -16,7 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserEditDialog } from "./UserEditDialog";
 import { UserDetailDialog } from "./UserDetailDialog";
-import { PaginatedTable } from "./PaginatedTable";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Search, Eye, Edit, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,7 +75,18 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
     user.phone_number?.includes(searchTerm)
   ) || [];
 
-  const displayUsers = isPreview ? filteredUsers.slice(0, maxItems) : filteredUsers;
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  const displayUsers = isPreview 
+    ? filteredUsers.slice(0, maxItems) 
+    : filteredUsers;
+    
+  const paginatedUsers = isPreview 
+    ? displayUsers 
+    : displayUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    
+  const totalPages = Math.ceil(displayUsers.length / itemsPerPage);
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -94,10 +112,8 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   };
 
   const handleViewUser = (user: Profile) => {
-    console.log("handleViewUser called with user:", user);
     setSelectedUser(user);
     setIsDetailDialogOpen(true);
-    console.log("Detail dialog should be opening, isDetailDialogOpen:", true);
   };
 
   const handleUpdateSuccess = () => {
@@ -117,10 +133,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
     <TableRow 
       key={user.id} 
       className="cursor-pointer hover:bg-muted/50" 
-      onClick={(e) => {
-        console.log("Row clicked for user:", user.full_name);
-        handleViewUser(user);
-      }}
+      onClick={() => handleViewUser(user)}
     >
       <TableCell className="font-medium">
         {user.full_name || "No name"}
@@ -212,11 +225,8 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
               ))}
             </div>
           ) : (
-            <PaginatedTable
-              data={displayUsers}
-              itemsPerPage={10}
-              renderItem={(user) => renderUserRow(user)}
-              renderHeader={() => (
+            <>
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -229,11 +239,49 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody />
+                  <TableBody>
+                    {paginatedUsers.map((user) => renderUserRow(user))}
+                  </TableBody>
                 </Table>
+              </div>
+              
+              {!isPreview && totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(pageNum)}
+                              isActive={currentPage === pageNum}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               )}
-              className="overflow-x-auto"
-            />
+            </>
           )}
           
           {!isLoading && filteredUsers.length === 0 && (

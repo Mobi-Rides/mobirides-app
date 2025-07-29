@@ -28,8 +28,6 @@ interface UserDetailDialogProps {
 export const UserDetailDialog = ({ user, isOpen, onClose, onUserUpdate }: UserDetailDialogProps) => {
   const [activeTab, setActiveTab] = useState("overview");
 
-  console.log("UserDetailDialog rendered with:", { user: user?.full_name, isOpen });
-
   if (!user) return null;
 
   return (
