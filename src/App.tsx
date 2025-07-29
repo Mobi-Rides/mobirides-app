@@ -69,6 +69,7 @@ const AdminBookings = lazy(() => import("@/pages/admin/AdminBookings"));
 const AdminTransactions = lazy(() => import("@/pages/admin/AdminTransactions"));
 const AdminVerifications = lazy(() => import("@/pages/admin/AdminVerifications"));
 const AdminMessages = lazy(() => import("@/pages/admin/AdminMessages"));
+const AdminManagement = lazy(() => import("@/pages/admin/AdminManagement"));
 
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
@@ -305,6 +306,11 @@ function App() {
                         <Route path="/admin/messages" element={
                           <Suspense fallback={<LoadingView />}>
                             <AdminMessages />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/management" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminManagement />
                           </Suspense>
                         } />
                         

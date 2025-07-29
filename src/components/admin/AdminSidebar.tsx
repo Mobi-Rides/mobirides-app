@@ -8,7 +8,8 @@ import {
   ClipboardCheck,
   Settings,
   Home,
-  MessageSquare
+  MessageSquare,
+  UserCog
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ const adminMenuItems = [
   { title: "Transactions", url: "/admin/transactions", icon: CreditCard },
   { title: "Verifications", url: "/admin/verifications", icon: ClipboardCheck },
   { title: "Messages", url: "/admin/messages", icon: MessageSquare },
+  { title: "Admin Management", url: "/admin/management", icon: UserCog },
 ];
 
 const appMenuItems = [
