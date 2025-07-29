@@ -323,6 +323,13 @@ export type Database = {
             referencedRelation: "conversation_messages"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_conversation_messages_sender_id"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       conversation_participants: {
