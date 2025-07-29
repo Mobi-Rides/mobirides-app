@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface UserStats {
   host_rating: number;
@@ -22,9 +24,39 @@ interface CarOwnerProps {
 
 export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   const handleContactClick = () => {
-    navigate("/messages", { state: { recipientId: ownerId, recipientName: ownerName } });
+    console.log("Contact button clicked! Owner ID:", ownerId, "Owner Name:", ownerName);
+    console.log("Current user authenticated:", isAuthenticated, "User ID:", user?.id);
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      console.log("User not authenticated, showing toast");
+      toast.error("Please sign in to message the car owner");
+      return;
+    }
+    
+    // Check if trying to message themselves
+    if (user?.id === ownerId) {
+      console.log("User trying to message themselves");
+      toast.error("You cannot message yourself");
+      return;
+    }
+    
+    if (!ownerId) {
+      console.error("No owner ID provided");
+      toast.error("Unable to contact car owner");
+      return;
+    }
+    
+    console.log("Navigating to messages with recipient data");
+    navigate("/messages", { 
+      state: { 
+        recipientId: ownerId, 
+        recipientName: ownerName 
+      } 
+    });
   };
 
   // Fetch user rating stats

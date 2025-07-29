@@ -68,20 +68,31 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   // Handle recipient-based conversation creation/selection
   useEffect(() => {
+    console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
+    
     if (recipientId && recipientName && currentUser.id !== 'user-1') {
+      console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
+      console.log("MessagingInterface: Current conversations:", conversations);
+      
       const existingConversation = conversations.find(conv => 
         conv.participants.some(p => p.id === recipientId)
       );
       
+      console.log("MessagingInterface: Existing conversation found:", existingConversation);
+      
       if (existingConversation) {
+        console.log("MessagingInterface: Selecting existing conversation:", existingConversation.id);
         setSelectedConversationId(existingConversation.id);
       } else {
+        console.log("MessagingInterface: Creating new conversation with:", { participantIds: [recipientId], title: recipientName });
         // Create new conversation
         createConversation({ 
           participantIds: [recipientId], 
           title: recipientName 
         });
       }
+    } else {
+      console.log("MessagingInterface: Missing required data or user not loaded yet");
     }
   }, [recipientId, recipientName, conversations, currentUser.id, createConversation]);
 
