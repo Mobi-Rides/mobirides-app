@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getMapboxToken } from "@/utils/mapbox";
 import { useTheme } from "next-themes";
 import CustomMapbox from "../map/CustomMapbox";
+import { LocationSelectionMarker } from "./LocationSelectionMarker";
 
 interface BookingLocationPickerProps {
   isOpen: boolean;
@@ -75,7 +76,10 @@ export const BookingLocationPicker = ({
   }, []);
 
   const confirmLocation = () => {
-    if (location) {
+    if (selectedLocation) {
+      onLocationSelected(selectedLocation.lat, selectedLocation.lng);
+      onClose();
+    } else if (location.lat !== 0 || location.long !== 0) {
       onLocationSelected(location.lat, location.long);
       onClose();
     } else {
@@ -84,8 +88,17 @@ export const BookingLocationPicker = ({
   };
 
   const getUserLocation = () => {
-    setSelectedLocation({ lat: location.lat, lng: location.long });
+    if (location.lat !== 0 || location.long !== 0) {
+      setSelectedLocation({ lat: location.lat, lng: location.long });
+    }
   };
+
+  // Update selected location when map location changes
+  useEffect(() => {
+    if (location.lat !== 0 || location.long !== 0) {
+      setSelectedLocation({ lat: location.lat, lng: location.long });
+    }
+  }, [location]);
 
   // Reset when dialog opens/closes
   useEffect(() => {
@@ -179,6 +192,11 @@ export const BookingLocationPicker = ({
               dpad={true}
               returnLocation={returnLocation}
             />
+            <LocationSelectionMarker
+              map={map.current}
+              coordinates={selectedLocation}
+              onLocationChange={(coords) => setSelectedLocation(coords)}
+            />
             {selectedLocation && (
               <div className="absolute top-2 left-2 bg-background/90 p-2 rounded-md shadow-sm border border-border text-xs">
                 <p>Latitude: {selectedLocation.lat.toFixed(6)}</p>
@@ -216,7 +234,10 @@ export const BookingLocationPicker = ({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={confirmLocation} disabled={!location}>
+          <Button 
+            onClick={confirmLocation} 
+            disabled={!selectedLocation && (location.lat === 0 && location.long === 0)}
+          >
             Confirm Location
           </Button>
         </div>

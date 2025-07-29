@@ -145,6 +145,14 @@ const CustomMapbox = ({
         console.error("Map error:", e);
         toast.error("Error loading map. Please refresh.");
       });
+
+      // Add click handler for location selection if returnLocation is provided
+      if (returnLocation) {
+        map.current.on("click", (e) => {
+          console.log("Map clicked at coordinates:", e.lngLat);
+          returnLocation(e.lngLat.lng, e.lngLat.lat);
+        });
+      }
     }
 
     return () => {

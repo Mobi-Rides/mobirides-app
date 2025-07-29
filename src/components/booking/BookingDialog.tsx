@@ -25,6 +25,8 @@ import { BookingStatus } from "@/types/booking";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import { VerificationRequiredDialog } from "@/components/verification/VerificationRequiredDialog";
 import { BookingLocationPicker } from "./BookingLocationPicker";
+import { BookingBreadcrumbs } from "./BookingBreadcrumbs";
+import { BookingSuccessModal } from "./BookingSuccessModal";
 
 interface BookingDialogProps {
   car: Car;
@@ -50,6 +52,15 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   } | null>(null);
   const [isVerificationDialogOpen, setIsVerificationDialogOpen] =
     useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successBookingData, setSuccessBookingData] = useState<{
+    id: string;
+    carBrand: string;
+    carModel: string;
+    startDate: string;
+    endDate: string;
+    totalPrice: number;
+  } | null>(null);
   const mountedRef = useRef(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -178,7 +189,19 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   };
 
   const handleBooking = async () => {
-    // Check verification status first
+    // Check session validity first
+    const { data: session, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session.session?.user) {
+      toast({
+        title: "Session expired",
+        description: "Please sign in again to continue with your booking",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    // Check verification status
     if (!isVerified && !isVerificationLoading) {
       setIsVerificationDialogOpen(true);
       return;
@@ -319,16 +342,21 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (!mountedRef.current) return;
 
       console.log(
-        "[BookingDialog] Booking flow completed successfully, closing modal...",
+        "[BookingDialog] Booking flow completed successfully, showing success modal...",
       );
 
-      toast({
-        title: "Success",
-        description: "Your booking request has been submitted!",
+      // Set success modal data
+      setSuccessBookingData({
+        id: booking.id,
+        carBrand: car.brand,
+        carModel: car.model,
+        startDate: format(startDate, "PPP"),
+        endDate: format(endDate, "PPP"),
+        totalPrice: totalPrice,
       });
 
       onClose();
-      navigate("/bookings");
+      setIsSuccessModalOpen(true);
     } catch (error) {
       if (!mountedRef.current) return;
 
@@ -387,15 +415,17 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              Book {car.brand} {car.model}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Select your rental dates below
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto p-0">
+          <BookingBreadcrumbs currentStep="confirmation" />
+          <div className="p-6">
+            <DialogHeader>
+              <DialogTitle>
+                Book {car.brand} {car.model}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Select your rental dates and pickup location
+              </DialogDescription>
+            </DialogHeader>
 
           {isOwner && (
             <Alert variant="destructive" className="mb-4">
@@ -489,8 +519,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 </div>
               </div>
             )}
-          </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
+           </div>
+           <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
             <Button
               variant="outline"
               onClick={onClose}
@@ -528,7 +558,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     : !isVerified
                       ? "Start Verification"
                       : "Confirm"}
-            </Button>
+              </Button>
+           </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -544,6 +575,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         isOpen={isLocationPickerOpen}
         onClose={() => setIsLocationPickerOpen(false)}
         onLocationSelected={handleLocationSelected}
+      />
+
+      <BookingSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        bookingData={successBookingData}
       />
     </>
   );
