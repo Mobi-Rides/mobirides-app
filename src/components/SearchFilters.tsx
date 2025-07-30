@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { LocationSearchProvider } from "@/contexts/LocationSearchContext";
+import { LocationSearchInput } from "@/components/location/LocationSearchInput";
+import { SearchSuggestion } from "@/services/mapboxSearchService";
 
 export type VehicleType = "Basic" | "Standard" | "Executive" | "4x4" | "SUV" | "Electric" | "Exotic";
 
@@ -22,6 +25,7 @@ export interface SearchFilters {
   endDate: Date | undefined;
   vehicleType: VehicleType | undefined;
   location: string;
+  locationCoordinates?: [number, number];
   sortBy: "price" | "distance";
   sortOrder: "asc" | "desc";
   model?: string;
@@ -37,6 +41,7 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
     endDate: undefined,
     vehicleType: undefined,
     location: "",
+    locationCoordinates: undefined,
     sortBy: "distance",
     sortOrder: "asc",
     model: undefined,
@@ -46,10 +51,19 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
     searchQuery: "",
   });
 
-  const handleFilterChange = (key: keyof SearchFilters, value: any) => {
+  const handleFilterChange = (key: keyof SearchFilters, value: string | number | Date | undefined | [number, number]) => {
     console.log(`Updating filter ${key} with value:`, value);
     setFilters(prev => ({ ...prev, [key]: value }));
   };
+
+  const handleLocationSelect = useCallback((suggestion: SearchSuggestion) => {
+    setFilters(prev => ({
+      ...prev,
+      location: suggestion.name,
+      locationCoordinates: suggestion.coordinates,
+    }));
+    console.log("Location selected:", suggestion);
+  }, []);
 
   const handleApplyFilters = useCallback(() => {
     console.log("Applying filters:", filters);
@@ -64,7 +78,8 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
   }, [filters, onFiltersChange]);
 
   return (
-    <div className="w-full rounded-lg border bg-card shadow-sm my-5 relative">
+    <LocationSearchProvider>
+      <div className="w-full rounded-lg border bg-card shadow-sm my-5 relative">
       <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-background to-transparent z-10" />
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="flex flex-col gap-4 p-4">
@@ -158,13 +173,11 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
           </Select>
 
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
+            <LocationSearchInput
               placeholder="Enter pickup location"
-              className="w-full pl-10 pr-4 py-2 border rounded-md"
+              onLocationSelect={handleLocationSelect}
               value={filters.location}
-              onChange={(e) => handleFilterChange("location", e.target.value)}
+              className="w-full"
             />
           </div>
 
@@ -201,5 +214,6 @@ export const SearchFilters = ({ onFiltersChange }: SearchFiltersProps) => {
       </ScrollArea>
       <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-background z-10" />
     </div>
+    </LocationSearchProvider>
   );
 };

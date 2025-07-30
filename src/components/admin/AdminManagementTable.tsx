@@ -98,7 +98,7 @@ export const AdminManagementTable = () => {
       setSelectedUserId("");
       setIsSuperAdmin(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to add admin: ${error.message}`);
     },
   });
@@ -118,7 +118,7 @@ export const AdminManagementTable = () => {
       toast.success("Admin removed successfully");
       setAdminToDelete(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to remove admin: ${error.message}`);
     },
   });

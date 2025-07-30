@@ -239,6 +239,13 @@ export const VerificationHub: React.FC = () => {
     initializeUserVerification();
   }, [user?.id, isInitialized, isLoading, verificationData]);
 
+  // Handle automatic redirect to completion step
+  React.useEffect(() => {
+    if (verificationData.overall_status === "completed" && verificationData.current_step !== "completion") {
+      navigateToStep(VerificationStep.COMPLETION);
+    }
+  }, [verificationData.overall_status, verificationData.current_step, navigateToStep]);
+
   const handleStepNavigation = (step: VerificationStep) => {
     if (!canNavigateToStep(step)) {
       toast.error("Please complete the previous steps first");
@@ -319,13 +326,7 @@ export const VerificationHub: React.FC = () => {
     );
   }
 
-  // If verification is already completed, redirect to completion step
-  if (verificationData.overall_status === "completed" && verificationData.current_step !== "completion") {
-    // Update the current step to completion and trigger re-render
-    React.useEffect(() => {
-      navigateToStep(VerificationStep.COMPLETION);
-    }, []);
-  }
+  // Completion redirect is now handled in useEffect above
 
   const progress = getStepProgress();
   const currentStepConfig = STEP_CONFIG[verificationData.current_step as VerificationStep];

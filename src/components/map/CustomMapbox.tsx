@@ -53,7 +53,9 @@ const CustomMapbox = ({
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
   const [isHostTrayOpen, setIsHostTrayOpen] = useState(false);
 
-  const handover = isHandoverMode ? useHandover() : null;
+  // Always call hooks - move conditional logic to usage
+  const handoverData = useHandover();
+  const handover = isHandoverMode ? handoverData : null;
 
   useEffect(() => {
     if (!returnLocation) {

@@ -21,8 +21,8 @@ import {
 
 interface HandoverContextType {
   updateLocation(arg0: {
-    latitude: any;
-    longitude: any;
+    latitude: number;
+    longitude: number;
     address: string;
   }): unknown;
   handoverStatus: HandoverStatus | null;
@@ -30,7 +30,7 @@ interface HandoverContextType {
   isLoading: boolean;
   isHandoverSessionLoading: boolean;
   isHost: boolean;
-  bookingDetails: any;
+  bookingDetails: Record<string, unknown> | null;
   debugMode: boolean;
   toggleDebugMode: () => void;
   destination: { latitude: number; longitude: number } | null;

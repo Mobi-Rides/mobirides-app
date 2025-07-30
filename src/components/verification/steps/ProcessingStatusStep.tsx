@@ -305,9 +305,9 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
     return () => clearInterval(checkLongWait);
   }, [processingStartTime]);
 
-  if (isProcessingComplete) {
-    // Auto-advance to completion step
-    React.useEffect(() => {
+  // Handle auto-advance when processing is complete
+  React.useEffect(() => {
+    if (isProcessingComplete) {
       const timeout = setTimeout(() => {
         console.log(
           "[ProcessingStatusStep] Verification already complete, advancing",
@@ -315,7 +315,11 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
         onNext();
       }, 1000);
       return () => clearTimeout(timeout);
-    }, [onNext]);
+    }
+  }, [isProcessingComplete, onNext]);
+
+  if (isProcessingComplete) {
+    // Auto-advance handled in useEffect above
 
     return (
       <div className="text-center p-8">
