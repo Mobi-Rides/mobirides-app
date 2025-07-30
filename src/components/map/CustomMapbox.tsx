@@ -272,9 +272,64 @@ const CustomMapbox = ({
           }, 100);
         });
 
-        // Click to open side tray
+        // Click to open side tray and show route
         el.addEventListener('click', () => {
           handleViewHostCars(host.id);
+          
+          // Add route to this host
+          if (map.current && mapInit) {
+            const fetchRouteToHost = async () => {
+              try {
+                const response = await fetch(
+                  `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${host.longitude},${host.latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+                );
+                const data = await response.json();
+
+                if (data.routes && data.routes.length > 0) {
+                  const route = data.routes[0].geometry;
+
+                  // Remove existing route
+                  if (map.current!.getSource("route")) {
+                    (map.current!.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
+                  } else {
+                    map.current!.addSource("route", {
+                      type: "geojson",
+                      data: route,
+                    });
+
+                    map.current!.addLayer({
+                      id: "route",
+                      type: "line",
+                      source: "route",
+                      layout: {
+                        "line-join": "round",
+                        "line-cap": "round",
+                      },
+                      paint: {
+                        "line-color": "#3b82f6",
+                        "line-width": 5,
+                      },
+                    });
+                  }
+
+                  // Fit map to show both user and host location
+                  const bounds = new mapboxgl.LngLatBounds()
+                    .extend([userLocation.longitude, userLocation.latitude])
+                    .extend([host.longitude, host.latitude]);
+                  
+                  map.current!.fitBounds(bounds, {
+                    padding: 50,
+                    maxZoom: 15,
+                  });
+                }
+              } catch (error) {
+                console.error("Error fetching route to host:", error);
+                toast.error("Unable to calculate route");
+              }
+            };
+
+            fetchRouteToHost();
+          }
         });
 
         return marker;
