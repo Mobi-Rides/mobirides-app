@@ -118,27 +118,37 @@ export class HandoverPromptService {
 
       for (const booking of bookings) {
         const sessions = bookingSessionMap.get(booking.id) || [];
-        
-        // Check pickup completion (first session)
-        const pickupSession = sessions[0];
-        const pickupCompleted = pickupSession && (
-          pickupSession.handover_completed || 
-          (pickupSession.handover_step_completion?.length > 0 && 
-           pickupSession.handover_step_completion.every(step => step.is_completed))
-        );
-        
-        // Check return completion (second session)
-        const returnSession = sessions[1];
-        const returnCompleted = returnSession && (
-          returnSession.handover_completed || 
-          (returnSession.handover_step_completion?.length > 0 && 
-           returnSession.handover_step_completion.every(step => step.is_completed))
-        );
-
         const startDate = new Date(booking.start_date);
         const endDate = new Date(booking.end_date);
         const isPickupDay = isToday(startDate);
         const isReturnDay = isToday(endDate);
+        
+        // Separate pickup and return sessions based on creation date relative to booking dates
+        const pickupSessions = sessions.filter(session => {
+          const sessionDate = new Date(session.created_at);
+          // Pickup sessions are created on or before the rental period
+          return sessionDate <= new Date(endDate.getTime() + 24 * 60 * 60 * 1000); // Allow day after end for late sessions
+        });
+        
+        const returnSessions = sessions.filter(session => {
+          const sessionDate = new Date(session.created_at);
+          // Return sessions are created on or after the end date
+          return sessionDate >= new Date(endDate.getTime());
+        });
+        
+        // Check pickup completion - any pickup session that's completed
+        const pickupCompleted = pickupSessions.some(session => 
+          session.handover_completed || 
+          (session.handover_step_completion?.length > 0 && 
+           session.handover_step_completion.every(step => step.is_completed))
+        );
+        
+        // Check return completion - any return session that's completed  
+        const returnCompleted = returnSessions.some(session => 
+          session.handover_completed || 
+          (session.handover_step_completion?.length > 0 && 
+           session.handover_step_completion.every(step => step.is_completed))
+        );
 
         // Skip if both handovers are completed
         if (pickupCompleted && returnCompleted) {
