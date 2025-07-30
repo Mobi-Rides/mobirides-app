@@ -144,10 +144,10 @@ export const HandoverSheet = ({
                 <div>
                   <h4 className="font-medium">Vehicle</h4>
                   <p className="text-sm mt-1">
-                    {bookingDetails?.car?.brand} {bookingDetails?.car?.model}
+                    {(bookingDetails as any)?.car?.brand} {(bookingDetails as any)?.car?.model}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {bookingDetails?.car?.year} • {bookingDetails?.car?.color}
+                    {(bookingDetails as any)?.car?.year} • {(bookingDetails as any)?.car?.color}
                   </p>
                 </div>
               </div>

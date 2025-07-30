@@ -143,8 +143,8 @@ export const EnhancedHandoverSheet = ({
         console.log("Creating vehicle condition report...");
         const reportData = {
           handover_session_id: handoverId,
-          booking_id: bookingDetails?.id || "",
-          car_id: bookingDetails?.car?.id || "",
+          booking_id: (bookingDetails as any)?.id || "",
+          car_id: (bookingDetails as any)?.car?.id || "",
           report_type: 'pickup' as const,
           vehicle_photos: vehiclePhotos,
           damage_reports: damageReports,
@@ -222,15 +222,15 @@ export const EnhancedHandoverSheet = ({
   };
 
   const getStepComponent = (step: typeof HANDOVER_STEPS[0], stepIndex: number) => {
-    const otherUser = isHost ? bookingDetails?.renter : bookingDetails?.car?.owner;
+    const otherUser = isHost ? (bookingDetails as any)?.renter : (bookingDetails as any)?.car?.owner;
     
     switch (step.name) {
       case "navigation": {
         // Get destination location (preset or user location)
         const destinationLocation = {
-          latitude: bookingDetails?.latitude || bookingDetails?.car?.latitude || -24.65451,
-          longitude: bookingDetails?.longitude || bookingDetails?.car?.longitude || 25.90859,
-          address: bookingDetails?.car?.location || "Handover Location"
+          latitude: (bookingDetails as any)?.latitude || (bookingDetails as any)?.car?.latitude || -24.65451,
+          longitude: (bookingDetails as any)?.longitude || (bookingDetails as any)?.car?.longitude || 25.90859,
+          address: (bookingDetails as any)?.car?.location || "Handover Location"
         };
         
         return (
@@ -431,7 +431,7 @@ export const EnhancedHandoverSheet = ({
             <div>
               <h2 className="text-xl font-semibold">Vehicle Handover</h2>
               <p className="text-sm text-muted-foreground">
-                {bookingDetails?.car?.brand} {bookingDetails?.car?.model}
+                {(bookingDetails as any)?.car?.brand} {(bookingDetails as any)?.car?.model}
               </p>
             </div>
             <button

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, Mail, Search, Grid, Hash, User, Settings, ChevronDown, AlertTriangle, Eye, Trash2, CheckCircle, ArchiveIcon, Clock } from "lucide-react";
+import { Bell, Mail, Search, Grid, Hash, User, Settings, ChevronDown, AlertTriangle, Eye, Trash2, CheckCircle, ArchiveIcon, Clock, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -129,6 +129,10 @@ export default function Notifications() {
       return classification.type === 'payment';
     } else if (activeFilter === 'bookings') {
       return classification.type === 'booking';
+    } else if (activeFilter === 'active_rentals') {
+      return (notification.type === 'pickup_reminder' || 
+              notification.type === 'return_reminder' || 
+              notification.type === 'handover_ready');
     }
     
     // For 'all', show all
@@ -190,12 +194,19 @@ export default function Notifications() {
     const classification = NotificationClassifier.classifyNotification(n);
     return classification.type === 'booking';
   }).length || 0;
+  const unreadActiveRentals = localNotifications?.filter(n => {
+    if (n.is_read) return false;
+    return (n.type === 'pickup_reminder' || 
+            n.type === 'return_reminder' || 
+            n.type === 'handover_ready');
+  }).length || 0;
 
   // --- Section name and count logic ---
   const sectionMap = {
     all: { label: 'All Notifications', count: unreadAll },
     payments: { label: 'Payments', count: unreadPayments },
     bookings: { label: 'Bookings', count: unreadBookings },
+    active_rentals: { label: 'Active Rentals', count: unreadActiveRentals },
   };
   const currentSection = sectionMap[activeFilter];
 
@@ -697,6 +708,15 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
             <TabsTrigger value="bookings" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Bookings
+            </TabsTrigger>
+            <TabsTrigger value="active_rentals" className="flex items-center gap-2 relative">
+              <Car className="h-4 w-4" />
+              Active Rentals
+              {unreadActiveRentals > 0 && (
+                <Badge variant="secondary" className="ml-2 text-xs">
+                  {unreadActiveRentals}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
         </Tabs>
