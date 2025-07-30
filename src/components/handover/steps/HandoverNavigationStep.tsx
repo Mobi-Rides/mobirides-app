@@ -163,6 +163,12 @@ export const HandoverNavigationStep = ({
     toast.success("Ready to begin handover process");
   };
 
+  const handleManualArrival = () => {
+    setHasArrived(true);
+    setIsNavigating(false);
+    toast.success("Marked as arrived - ready for handover!");
+  };
+
   const currentStep = route[currentStepIndex] || null;
   const progressPercentage = hasArrived ? 100 : (currentStepIndex / Math.max(route.length - 1, 1)) * 100;
 
@@ -275,7 +281,9 @@ export const HandoverNavigationStep = ({
           onToggleVoice={toggleVoice}
           isVoiceEnabled={isVoiceEnabled}
           onStopNavigation={stopNavigation}
+          onArrived={handleManualArrival}
           destination={destinationLocation.address}
+          showArrivedButton={true}
         />
       )}
 
