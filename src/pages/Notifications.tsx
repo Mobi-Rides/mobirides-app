@@ -130,9 +130,12 @@ export default function Notifications() {
     } else if (activeFilter === 'bookings') {
       return classification.type === 'booking';
     } else if (activeFilter === 'active_rentals') {
+      // Active rentals include handover-related notifications and in-progress rental notifications
       return (notification.type === 'pickup_reminder' || 
               notification.type === 'return_reminder' || 
-              notification.type === 'handover_ready');
+              notification.type === 'handover_ready' ||
+              notification.type === 'message_received' && 
+              notification.content?.toLowerCase().includes('handover'));
     }
     
     // For 'all', show all

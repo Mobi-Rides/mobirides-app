@@ -88,83 +88,71 @@ export class HandoverPromptService {
         return [];
       }
 
-      // Check if handover sessions already exist for these bookings
+      // Check handover session states for these bookings
       const bookingIds = bookings.map(b => b.id);
-      const { data: existingSessions } = await supabase
+      const { data: handoverSessions } = await supabase
         .from('handover_sessions')
-        .select('booking_id, handover_completed')
-        .in('booking_id', bookingIds);
+        .select(`
+          booking_id, 
+          handover_completed,
+          created_at,
+          handover_step_completion (
+            step_name,
+            is_completed,
+            step_order
+          )
+        `)
+        .in('booking_id', bookingIds)
+        .order('created_at', { ascending: true });
 
-      const existingSessionMap = new Map(
-        existingSessions?.map(session => [session.booking_id, session]) || []
-      );
+      // Group sessions by booking_id and determine states
+      const bookingSessionMap = new Map();
+      handoverSessions?.forEach(session => {
+        if (!bookingSessionMap.has(session.booking_id)) {
+          bookingSessionMap.set(session.booking_id, []);
+        }
+        bookingSessionMap.get(session.booking_id).push(session);
+      });
 
       const prompts: HandoverPrompt[] = [];
 
       for (const booking of bookings) {
-        const existingSession = existingSessionMap.get(booking.id);
+        const sessions = bookingSessionMap.get(booking.id) || [];
         
-        // Skip if handover is already completed
-        if (existingSession?.handover_completed) {
-          continue;
-        }
+        // Check pickup completion (first session)
+        const pickupSession = sessions[0];
+        const pickupCompleted = pickupSession && (
+          pickupSession.handover_completed || 
+          (pickupSession.handover_step_completion?.length > 0 && 
+           pickupSession.handover_step_completion.every(step => step.is_completed))
+        );
+        
+        // Check return completion (second session)
+        const returnSession = sessions[1];
+        const returnCompleted = returnSession && (
+          returnSession.handover_completed || 
+          (returnSession.handover_step_completion?.length > 0 && 
+           returnSession.handover_step_completion.every(step => step.is_completed))
+        );
 
         const startDate = new Date(booking.start_date);
         const endDate = new Date(booking.end_date);
         const isPickupDay = isToday(startDate);
         const isReturnDay = isToday(endDate);
 
-        if (isPickupDay || isReturnDay) {
-          const handoverType = isPickupDay ? 'pickup' : 'return';
-          const now = new Date();
-          
-          // Determine urgency based on time proximity
-          const targetTime = isPickupDay ? startDate : endDate;
-          const hoursUntil = (targetTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-          
-          let urgencyLevel: 'morning' | 'soon' | 'immediate' = 'morning';
-          let isUrgent = false;
+        // Skip if both handovers are completed
+        if (pickupCompleted && returnCompleted) {
+          continue;
+        }
 
-          if (hoursUntil <= 0.5) {
-            urgencyLevel = 'immediate';
-            isUrgent = true;
-          } else if (hoursUntil <= 2) {
-            urgencyLevel = 'soon';
-            isUrgent = true;
-          } else if (hoursUntil <= 8) {
-            urgencyLevel = 'morning';
-            isUrgent = false;
-          }
-
-          // Determine who should initiate based on handover type and role
-          let shouldInitiate = false;
-          if (handoverType === 'pickup' && userRole === 'renter') {
-            shouldInitiate = true; // Renter initiates pickup
-          } else if (handoverType === 'return' && userRole === 'renter') {
-            shouldInitiate = true; // Renter initiates return
-          }
-
-          // Get the other party's name
-          const otherPartyName = userRole === 'renter' 
-            ? booking.host?.[0]?.owner?.full_name || 'Host'
-            : booking.renter?.full_name || 'Renter';
-
-          prompts.push({
-            id: booking.id,
-            bookingId: booking.id,
-            carId: booking.car_id,
-            handoverType,
-            isUrgent,
-            urgencyLevel,
-            carBrand: booking.cars.brand,
-            carModel: booking.cars.model,
-            startDate,
-            endDate,
-            userRole,
-            shouldInitiate,
-            otherPartyName,
-            location: booking.cars.location
-          });
+        // Show pickup prompt if it's pickup day and pickup not completed
+        if (isPickupDay && !pickupCompleted) {
+          prompts.push(this.createHandoverPrompt(booking, 'pickup', userRole));
+        }
+        
+        // Show return prompt if it's return day and pickup completed but return not completed
+        if (isReturnDay && pickupCompleted && !returnCompleted) {
+          prompts.push(this.createHandoverPrompt(booking, 'return', userRole));
         }
       }
 
@@ -175,6 +163,60 @@ export class HandoverPromptService {
       // Return empty array instead of throwing to prevent UI crashes
       return [];
     }
+  }
+
+  private static createHandoverPrompt(booking: any, handoverType: 'pickup' | 'return', userRole: 'host' | 'renter'): HandoverPrompt {
+    const startDate = new Date(booking.start_date);
+    const endDate = new Date(booking.end_date);
+    const now = new Date();
+    
+    // Determine urgency based on time proximity
+    const targetTime = handoverType === 'pickup' ? startDate : endDate;
+    const hoursUntil = (targetTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    let urgencyLevel: 'morning' | 'soon' | 'immediate' = 'morning';
+    let isUrgent = false;
+
+    if (hoursUntil <= 0.5) {
+      urgencyLevel = 'immediate';
+      isUrgent = true;
+    } else if (hoursUntil <= 2) {
+      urgencyLevel = 'soon';
+      isUrgent = true;
+    } else if (hoursUntil <= 8) {
+      urgencyLevel = 'morning';
+      isUrgent = false;
+    }
+
+    // Determine who should initiate based on handover type and role
+    let shouldInitiate = false;
+    if (handoverType === 'pickup' && userRole === 'renter') {
+      shouldInitiate = true; // Renter initiates pickup
+    } else if (handoverType === 'return' && userRole === 'renter') {
+      shouldInitiate = true; // Renter initiates return
+    }
+
+    // Get the other party's name
+    const otherPartyName = userRole === 'renter' 
+      ? booking.host?.[0]?.owner?.full_name || 'Host'
+      : booking.renter?.full_name || 'Renter';
+
+    return {
+      id: booking.id,
+      bookingId: booking.id,
+      carId: booking.car_id,
+      handoverType,
+      isUrgent,
+      urgencyLevel,
+      carBrand: booking.cars.brand,
+      carModel: booking.cars.model,
+      startDate,
+      endDate,
+      userRole,
+      shouldInitiate,
+      otherPartyName,
+      location: booking.cars.location
+    };
   }
 
   static getUrgencyMessage(prompt: HandoverPrompt): string {
