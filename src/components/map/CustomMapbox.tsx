@@ -213,8 +213,65 @@ const CustomMapbox = ({
     }
   };
 
+  // Function to show route to a specific host
+  const showRouteToHost = (host: any) => {
+    if (!map.current || !mapInit || !userLocation.latitude || !userLocation.longitude) return;
+
+    const fetchRouteToHost = async () => {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${host.longitude},${host.latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+        );
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0].geometry;
+
+          // Remove existing route
+          if (map.current!.getSource("host-route")) {
+            (map.current!.getSource("host-route") as mapboxgl.GeoJSONSource).setData(route);
+          } else {
+            map.current!.addSource("host-route", {
+              type: "geojson",
+              data: route,
+            });
+
+            map.current!.addLayer({
+              id: "host-route",
+              type: "line",
+              source: "host-route",
+              layout: {
+                "line-join": "round",
+                "line-cap": "round",
+              },
+              paint: {
+                "line-color": host.isActiveHandover ? "#ef4444" : "#3b82f6",
+                "line-width": host.isActiveHandover ? 6 : 4,
+              },
+            });
+          }
+
+          // Fit map to show both user and host location
+          const bounds = new mapboxgl.LngLatBounds()
+            .extend([userLocation.longitude, userLocation.latitude])
+            .extend([host.longitude, host.latitude]);
+          
+          map.current!.fitBounds(bounds, {
+            padding: 50,
+            maxZoom: 15,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching route to host:", error);
+        toast.error("Unable to calculate route");
+      }
+    };
+
+    fetchRouteToHost();
+  };
+
   useEffect(() => {
-    if (!map.current || !mapInit || !onlineHosts?.length || isHandoverMode)
+    if (!map.current || !mapInit || !onlineHosts?.length)
       return;
 
     markers.forEach((marker) => marker.remove());
@@ -227,13 +284,20 @@ const CustomMapbox = ({
         // Create marker element
         const el = document.createElement("div");
         el.className = "host-marker";
-        el.style.width = "20px";
-        el.style.height = "20px";
+        el.style.width = host.isActiveHandover ? "24px" : "20px";
+        el.style.height = host.isActiveHandover ? "24px" : "20px";
         el.style.borderRadius = "50%";
-        el.style.backgroundColor = "#4ade80";
-        el.style.border = "2px solid white";
-        el.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
+        el.style.backgroundColor = host.isActiveHandover ? "#ef4444" : "#4ade80";
+        el.style.border = host.isActiveHandover ? "3px solid white" : "2px solid white";
+        el.style.boxShadow = host.isActiveHandover 
+          ? "0 0 15px rgba(239, 68, 68, 0.5)" 
+          : "0 0 10px rgba(0, 0, 0, 0.3)";
         el.style.cursor = "pointer";
+        
+        // Add pulsing animation for active handover
+        if (host.isActiveHandover) {
+          el.style.animation = "pulse 2s infinite";
+        }
 
         // Create popup container
         const popupDiv = document.createElement('div');
@@ -337,7 +401,15 @@ const CustomMapbox = ({
       .filter(Boolean) as mapboxgl.Marker[];
 
     setMarkers(newMarkers);
-  }, [onlineHosts, mapInit, isHandoverMode]);
+    
+    // Auto-show route to active handover host
+    const activeHandoverHost = onlineHosts?.find(host => host.isActiveHandover);
+    if (activeHandoverHost && userLocation.latitude && userLocation.longitude) {
+      setTimeout(() => {
+        showRouteToHost(activeHandoverHost);
+      }, 1000);
+    }
+  }, [onlineHosts, mapInit, isHandoverMode, userLocation]);
 
   useEffect(() => {
     if (!map.current || !mapInit || !destination) return;

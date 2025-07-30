@@ -150,23 +150,84 @@ const Map = () => {
     fetchToken();
   }, []);
 
+  // Fetch active handover host location from Supabase
+  const fetchActiveHandoverHost = async () => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('handover_sessions')
+        .select(`
+          host_id,
+          host_location,
+          bookings!inner(
+            car_id,
+            cars!inner(
+              owner_id,
+              profiles!owner_id(id, full_name, avatar_url, latitude, longitude)
+            )
+          )
+        `)
+        .eq('renter_id', user.id)
+        .eq('handover_completed', false)
+        .single();
+
+      if (error || !data) {
+        console.log("No active handover session found");
+        return null;
+      }
+
+      const hostProfile = data.bookings?.cars?.profiles;
+      if (hostProfile?.latitude && hostProfile?.longitude) {
+        return {
+          id: hostProfile.id,
+          full_name: hostProfile.full_name,
+          avatar_url: hostProfile.avatar_url,
+          latitude: hostProfile.latitude,
+          longitude: hostProfile.longitude,
+          updated_at: null,
+          isActiveHandover: true
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching active handover host:", error);
+    }
+    return null;
+  };
+
   // get host locations
   const fetchHostLocations = async () => {
     console.log("Fetching host locations...");
 
     try {
+      // Always fetch online hosts
       const onlineHosts = await fetchOnlineHosts();
-      const getHandoverHost = await fetchHostById(hostId);
-      if (!onlineHosts.length) {
+      console.log("Online hosts fetched:", onlineHosts);
+      
+      // Check for active handover host
+      const activeHandoverHost = await fetchActiveHandoverHost();
+      console.log("Active handover host:", activeHandoverHost);
+
+      let allHosts = [...onlineHosts];
+      
+      // Add active handover host if it exists and isn't already in the list
+      if (activeHandoverHost) {
+        const existingHostIndex = allHosts.findIndex(h => h.id === activeHandoverHost.id);
+        if (existingHostIndex >= 0) {
+          // Replace existing host with handover-marked version
+          allHosts[existingHostIndex] = activeHandoverHost;
+        } else {
+          // Add the handover host
+          allHosts.push(activeHandoverHost);
+        }
+      }
+
+      if (!allHosts.length) {
         toast.info("No hosts are currently online");
       }
 
-      if (hostId) {
-        return setOnlineHosts([getHandoverHost]);
-      }
-
-      console.log("Host locations", onlineHosts);
-      setOnlineHosts(onlineHosts);
+      console.log("All host locations to display:", allHosts);
+      setOnlineHosts(allHosts);
     } catch (error) {
       console.error("Error fetching host locations:", error);
       toast.error("Failed to fetch host locations");

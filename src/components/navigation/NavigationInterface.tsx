@@ -20,7 +20,9 @@ interface NavigationInterfaceProps {
   onToggleVoice: () => void;
   isVoiceEnabled: boolean;
   onStopNavigation: () => void;
+  onArrived?: () => void;
   destination: string;
+  showArrivedButton?: boolean;
 }
 
 export const NavigationInterface = ({
@@ -31,7 +33,9 @@ export const NavigationInterface = ({
   onToggleVoice,
   isVoiceEnabled,
   onStopNavigation,
-  destination
+  onArrived,
+  destination,
+  showArrivedButton = false
 }: NavigationInterfaceProps) => {
   const [eta, setEta] = useState<string>("");
 
@@ -143,6 +147,24 @@ export const NavigationInterface = ({
             </div>
           )}
         </div>
+
+        {/* Arrived button for edge cases */}
+        {showArrivedButton && onArrived && (
+          <div className="mt-4 pt-4 border-t border-muted">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-2">
+                Used alternative navigation or already arrived?
+              </p>
+              <Button 
+                onClick={onArrived}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                size="sm"
+              >
+                I've Arrived
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

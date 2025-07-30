@@ -15,6 +15,9 @@ export interface ExtendedProfile {
   latitude?: number;
   longitude?: number;
   phone_number?: string;
+  
+  // Added for active handover identification
+  isActiveHandover?: boolean;
 }
 
 // Type guard function to check if location sharing fields exist
