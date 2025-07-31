@@ -241,10 +241,10 @@ export const VerificationHub: React.FC = () => {
 
   // Handle automatic redirect to completion step
   React.useEffect(() => {
-    if (verificationData.overall_status === "completed" && verificationData.current_step !== "completion") {
+    if (verificationData && verificationData.overall_status === "completed" && verificationData.current_step !== "completion") {
       navigateToStep(VerificationStep.COMPLETION);
     }
-  }, [verificationData.overall_status, verificationData.current_step, navigateToStep]);
+  }, [verificationData?.overall_status, verificationData?.current_step, navigateToStep]);
 
   const handleStepNavigation = (step: VerificationStep) => {
     if (!canNavigateToStep(step)) {
@@ -329,7 +329,7 @@ export const VerificationHub: React.FC = () => {
   // Completion redirect is now handled in useEffect above
 
   const progress = getStepProgress();
-  const currentStepConfig = STEP_CONFIG[verificationData.current_step as VerificationStep];
+  const currentStepConfig = STEP_CONFIG[verificationData?.current_step as VerificationStep];
 
   return (
     <div className="min-h-screen p-4" style={{ backgroundColor: "#020817" }}>
@@ -394,13 +394,13 @@ export const VerificationHub: React.FC = () => {
 
         {/* Progress Stepper */}
         <ProgressStepper
-          currentStep={verificationData.current_step as VerificationStep}
+          currentStep={verificationData?.current_step as VerificationStep}
           stepStatuses={{
-            [VerificationStep.PERSONAL_INFO]: verificationData.personal_info_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.DOCUMENT_UPLOAD]: verificationData.documents_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.SELFIE_VERIFICATION]: verificationData.selfie_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.PHONE_VERIFICATION]: verificationData.phone_verified ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.ADDRESS_CONFIRMATION]: verificationData.address_confirmed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.PERSONAL_INFO]: verificationData?.personal_info_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.DOCUMENT_UPLOAD]: verificationData?.documents_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.SELFIE_VERIFICATION]: verificationData?.selfie_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.PHONE_VERIFICATION]: verificationData?.phone_verified ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
+            [VerificationStep.ADDRESS_CONFIRMATION]: verificationData?.address_confirmed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
             [VerificationStep.REVIEW_SUBMIT]: VerificationStatus.NOT_STARTED,
             [VerificationStep.PROCESSING_STATUS]: VerificationStatus.NOT_STARTED,
             [VerificationStep.COMPLETION]: VerificationStatus.NOT_STARTED,
