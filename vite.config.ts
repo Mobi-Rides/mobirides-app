@@ -19,4 +19,21 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for large libraries
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'query-vendor': ['@tanstack/react-query'],
+          'mapbox-vendor': ['mapbox-gl'],
+          'form-vendor': ['react-hook-form', 'zod'],
+          'date-vendor': ['date-fns'],
+          'supabase-vendor': ['@supabase/supabase-js']
+        }
+      }
+    },
+    // Increase chunk size warning limit to 1000kb to reduce warnings
+    chunkSizeWarningLimit: 1000,
+  }
 }));

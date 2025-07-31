@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { PersonalInfo } from "@/types/verification";
 
 interface PendingVerification {
   id: string;
@@ -23,7 +24,7 @@ interface PendingVerification {
   overall_status: string;
   current_step: string;
   created_at: string;
-  personal_info: any;
+  personal_info: unknown;
 }
 
 const usePendingVerifications = () => {

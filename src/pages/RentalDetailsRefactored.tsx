@@ -16,10 +16,12 @@ import { RentalActions } from "@/components/rental-details/RentalActions";
 import { RentalUserCard } from "@/components/rental-details/RentalUserCard";
 import { RentalDetailsSkeleton } from "@/components/rental-details/RentalDetailsSkeleton";
 import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetailsNotFound";
+import { ExtensionStatusCard } from "@/components/rental-details/ExtensionStatus";
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [refreshKey, setRefreshKey] = useState(0);
   const {
     booking,
     isBookingLoading,
@@ -35,6 +37,10 @@ const RentalDetailsRefactored = () => {
     handleInitiateHandover,
     id
   } = useRentalDetails();
+
+  const handleExtensionUpdate = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const onInitiateHandover = async () => {
     const session = await handleInitiateHandover();
@@ -112,9 +118,17 @@ const RentalDetailsRefactored = () => {
           totalPrice={booking.total_price} 
         />
 
+        {/* Extension Status */}
+        <ExtensionStatusCard 
+          bookingId={booking.id}
+          isRenter={isRenter}
+          onExtensionUpdate={handleExtensionUpdate}
+        />
+
         {/* Actions */}
         <RentalActions 
           bookingId={booking.id}
+          booking={booking}
           canHandover={canHandover}
           handoverType={handoverType}
           isInitiatingHandover={isInitiatingHandover}
@@ -122,6 +136,7 @@ const RentalDetailsRefactored = () => {
           isActiveRental={isActiveRental}
           isRenter={isRenter}
           onHandoverInitiate={onInitiateHandover}
+          onExtensionRequested={handleExtensionUpdate}
         />
       </div>
 

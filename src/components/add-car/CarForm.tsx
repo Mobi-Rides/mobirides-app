@@ -44,7 +44,7 @@ interface CarFormProps {
   onFeaturesChange: (features: string[]) => void;
   isEdit?: boolean;
   carId?: string;
-  onSubmit: (formData: CarFormData, imageFile: File | null, documents: any, features: string[]) => Promise<void>;
+  onSubmit: (formData: CarFormData, imageFile: File | null, documents: Record<string, File | FileList>, features: string[]) => Promise<void>;
   isSubmitting: boolean;
 }
 

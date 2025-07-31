@@ -85,7 +85,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value: any) => setRole(value)}>
+            <Select value={role} onValueChange={(value: "renter" | "host" | "admin") => setRole(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>

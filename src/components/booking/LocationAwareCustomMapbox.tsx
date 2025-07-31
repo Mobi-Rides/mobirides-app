@@ -57,7 +57,7 @@ export const LocationAwareCustomMapbox = ({
     onGeolocateRef(geolocateControl);
 
     // Handle geolocation events
-    geolocateControl.on("geolocate", (e: any) => {
+    geolocateControl.on("geolocate", (e: { coords: { latitude: number; longitude: number } }) => {
       console.log("Geolocate event:", e.coords);
       onUserLocationUpdate({
         latitude: e.coords.latitude,
@@ -65,7 +65,7 @@ export const LocationAwareCustomMapbox = ({
       });
     });
 
-    geolocateControl.on("error", (e: any) => {
+    geolocateControl.on("error", (e: GeolocationPositionError) => {
       console.error("Geolocation error:", e);
       toast.error("Unable to access your location. Please check permissions.");
     });
