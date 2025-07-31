@@ -157,47 +157,21 @@ const BookingRequestDetails = () => {
     if (!booking?.renter_id) return;
     
     try {
-      // Create or find existing conversation
-      const { data: existingConversation } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('type', 'direct')
-        .single();
-
-      let conversationId = existingConversation?.id;
-
-      if (!conversationId) {
-        // Create new conversation
-        const { data: newConversation, error: convError } = await supabase
-          .from('conversations')
-          .insert({
-            type: 'direct',
-            created_by: userId
-          })
-          .select('id')
-          .single();
-
-        if (convError) throw convError;
-        conversationId = newConversation.id;
-
-        // Add participants
-        await supabase
-          .from('conversation_participants')
-          .insert([
-            { conversation_id: conversationId, user_id: userId },
-            { conversation_id: conversationId, user_id: booking.renter_id }
-          ]);
-      }
-
-      // Navigate to messages
-      navigate('/messages');
+      // Simply navigate to messages with recipient info
+      // Let MessagingInterface handle conversation creation
+      navigate('/messages', {
+        state: {
+          recipientId: booking.renter_id,
+          recipientName: booking.renter.full_name
+        }
+      });
       
       toast({
         title: "Opening conversation",
         description: `Starting conversation with ${booking.renter.full_name}`
       });
     } catch (error) {
-      console.error('Error creating conversation:', error);
+      console.error('Error navigating to messages:', error);
       toast({
         title: "Error",
         description: "Failed to start conversation. Please try again.",

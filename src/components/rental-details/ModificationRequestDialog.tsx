@@ -47,7 +47,7 @@ export const ModificationRequestDialog = ({
 
   // Reset form when dialog opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && booking) {
       setModificationType(ModificationType.TIME_CHANGE);
       setNewStartTime(booking.start_time || "");
       setNewEndTime(booking.end_time || "");
@@ -318,4 +318,4 @@ export const ModificationRequestDialog = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};

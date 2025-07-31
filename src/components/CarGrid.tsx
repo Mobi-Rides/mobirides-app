@@ -1,10 +1,10 @@
 
 import React from "react";
 import { CarCard } from "@/components/CarCard";
-import { Car } from "@/types/car";
+import { SafeCar } from "@/types/car"; // Changed from Car to SafeCar
 
 export interface CarGridProps {
-  cars: Car[];
+  cars: SafeCar[]; // Changed from Car[] to SafeCar[]
   hasMoreItems?: boolean;
   isLoading?: boolean;
   error?: Error | null;
@@ -44,17 +44,7 @@ export const CarGrid = ({ cars, hasMoreItems, isLoading, error, loadMoreRef, onL
       {cars.map((car) => (
         <CarCard 
           key={car.id} 
-          id={car.id}
-          brand={car.brand}
-          model={car.model}
-          price_per_day={car.price_per_day}
-          image_url={car.image_url}
-          transmission={car.transmission}
-          fuel={car.fuel}
-          seats={car.seats}
-          location={car.location}
-          year={car.year}
-          isSaved={car.isSaved}
+          car={car}  // Pass the entire car object instead of individual props
         />
       ))}
       {loadMoreRef && (

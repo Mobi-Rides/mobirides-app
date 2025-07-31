@@ -11,6 +11,7 @@ export interface BookingWithRelations {
   total_price: number;
   pickup_latitude?: number;
   pickup_longitude?: number;
+  created_at: string;
   cars: {
     brand: string;
     model: string;
@@ -18,8 +19,16 @@ export interface BookingWithRelations {
     image_url: string;
     owner_id: string;
     price_per_day: number;
+    description?: string;
+    year?: number;
+    owner?: {
+      id: string;
+      full_name: string;
+      avatar_url?: string;
+    };
   };
   renter?: {
+    id: string;
     full_name: string;
     avatar_url?: string;
     phone_number?: string;
@@ -28,7 +37,14 @@ export interface BookingWithRelations {
     id: string;
   }[];
   handover_sessions?: {
+    id: string;
     handover_completed: boolean;
+    created_at: string;
+    handover_step_completion?: {
+      step_name: string;
+      is_completed: boolean;
+      step_order: number;
+    }[];
   }[];
 }
 

@@ -73,18 +73,21 @@ export const fetchCars = async ({
   }
 
   console.log("Executing Supabase query...");
+  // Enhanced fetchCars to ensure data integrity
   const { data, error, count } = await query;
-
+  
   if (error) {
     console.error("Error fetching cars:", error);
     throw error;
   }
-
-  console.log("Cars fetched successfully:", { count, dataLength: data?.length });
+  
+  // Ensure we always return valid car objects
+  const validCars = (data || []).filter(car => car && car.id && car.brand && car.model);
+  console.log("Valid cars fetched:", validCars.length, "from", data?.length || 0);
   
   return { 
-    data: data || [], 
-    nextPage: data && data.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
+    data: validCars, 
+    nextPage: validCars.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
     count 
   };
 };
