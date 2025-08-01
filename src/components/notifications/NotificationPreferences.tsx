@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -36,13 +36,7 @@ export default function NotificationPreferences() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadPreferences();
-    }
-  }, [user?.id]);
-
-  const loadPreferences = async () => {
+  const loadPreferences = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('notification_preferences')
@@ -73,7 +67,13 @@ export default function NotificationPreferences() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadPreferences();
+    }
+  }, [user?.id, loadPreferences]);
 
   const savePreferences = async () => {
     if (!user?.id) return;
@@ -102,7 +102,7 @@ export default function NotificationPreferences() {
     }
   };
 
-  const updatePreference = (key: keyof NotificationPreferences, value: any) => {
+  const updatePreference = (key: keyof NotificationPreferences, value: boolean | 'instant' | 'hourly' | 'daily' | string) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
   };
 

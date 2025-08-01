@@ -12,6 +12,13 @@ import { HostCarsSideTray } from "./HostCarsSideTray";
 import { Host } from "@/services/hostService";
 import ReactDOM from "react-dom";
 
+// Host interface for route calculations
+interface HostLocation {
+  longitude?: number;
+  latitude?: number;
+  isActiveHandover?: boolean;
+}
+
 interface CustomMapboxProps {
   mapbox_token: string;
   longitude: number;
@@ -92,7 +99,7 @@ const CustomMapbox = ({
       map.current.addControl(geolocateControl, "top-right");
       geolocateControlRef.current = geolocateControl;
 
-      geolocateControl.on("error", (e: any) => {
+      geolocateControl.on("error", (e: GeolocationPositionError) => {
         console.error("Geolocation error:", e);
         toast.error(
           "Unable to access your location. Please check your browser permissions."
@@ -109,7 +116,7 @@ const CustomMapbox = ({
         console.log("Map loaded successfully");
         setMapInit(true);
         if (geolocateControlRef.current) {
-          geolocateControlRef.current.on("geolocate", (e: any) => {
+          geolocateControlRef.current.on("geolocate", (e: { coords: { latitude: number; longitude: number } }) => {
             console.log("Geolocate event fired:", e.coords);
             const newLocation = {
               longitude: e.coords.longitude,
@@ -214,7 +221,7 @@ const CustomMapbox = ({
   };
 
   // Function to show route to a specific host
-  const showRouteToHost = (host: any) => {
+  const showRouteToHost = (host: HostLocation) => {
     if (!map.current || !mapInit || !userLocation.latitude || !userLocation.longitude) return;
 
     const fetchRouteToHost = async () => {

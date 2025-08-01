@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { format, addDays, parseISO } from "date-fns";
 import {
   Dialog,
@@ -43,14 +43,7 @@ export const ExtensionRequestDialog = ({
   const minDate = addDays(currentEndDate, 1);
   const maxDate = addDays(currentEndDate, 30); // Max 30 days extension
 
-  // Calculate extension cost when date changes
-  useEffect(() => {
-    if (selectedDate && isOpen) {
-      calculateExtension();
-    }
-  }, [selectedDate, isOpen]);
-
-  const calculateExtension = async () => {
+  const calculateExtension = useCallback(async () => {
     if (!selectedDate) return;
 
     setIsCalculating(true);
@@ -73,7 +66,14 @@ export const ExtensionRequestDialog = ({
     } finally {
       setIsCalculating(false);
     }
-  };
+  }, [selectedDate, booking.id]);
+
+  // Calculate extension cost when date changes
+  useEffect(() => {
+    if (selectedDate && isOpen) {
+      calculateExtension();
+    }
+  }, [selectedDate, isOpen, calculateExtension]);
 
   const handleSubmit = async () => {
     if (!selectedDate || !calculation || !calculation.available) {

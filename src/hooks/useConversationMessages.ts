@@ -3,18 +3,19 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/types/message";
 
+// Database message structure from Supabase
 interface DatabaseMessage {
   id: string;
   content: string;
   sender_id: string;
   created_at: string;
   updated_at: string;
-  message_type: 'text' | 'image' | 'file';
+  message_type: string;
   edited: boolean;
-  edited_at?: string;
+  edited_at: string | null;
   reply_to_message_id?: string;
   related_car_id?: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   sender: {
     id: string;
     full_name: string;
@@ -90,19 +91,16 @@ export const useConversationMessages = (conversationId: string | undefined) => {
       console.log("Raw messages fetched:", messages);
       
       // Transform to UI format
-      const transformedMessages: Message[] = (messages as any[]).map((msg: any) => ({
+      const transformedMessages: Message[] = (messages as DatabaseMessage[]).map((msg: DatabaseMessage) => ({
         id: msg.id,
         content: msg.content,
         senderId: msg.sender_id,
         conversationId,
         timestamp: new Date(msg.created_at),
-        type: msg.message_type,
+        type: msg.message_type as 'text' | 'image' | 'file',
         edited: msg.edited,
         editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
-        // Additional properties for compatibility
-        sender: msg.sender,
-        sender_id: msg.sender_id,
-        created_at: msg.created_at
+        sender: msg.sender
       }));
 
       console.log("Transformed messages:", transformedMessages);

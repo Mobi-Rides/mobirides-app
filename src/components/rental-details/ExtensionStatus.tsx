@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import { Clock, CheckCircle, XCircle, AlertCircle, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,11 +34,7 @@ export const ExtensionStatusCard = ({
   const [isLoading, setIsLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadExtensions();
-  }, [bookingId]);
-
-  const loadExtensions = async () => {
+  const loadExtensions = useCallback(async () => {
     setIsLoading(true);
     try {
       const extensionList = await RentalExtensionService.getBookingExtensions(bookingId);
@@ -48,7 +44,11 @@ export const ExtensionStatusCard = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bookingId]);
+
+  useEffect(() => {
+    loadExtensions();
+  }, [bookingId, loadExtensions]);
 
   const handleCancelExtension = async (extensionId: string) => {
     setCancellingId(extensionId);

@@ -73,12 +73,12 @@ const convertDatabaseLocationToHandoverLocation = (
     } 
     // If it's already an object
     else if (typeof location === 'object' && location !== null) {
-      const locationObj = location as Record<string, any>;
+      const locationObj = location as Record<string, unknown>;
       return {
-        latitude: locationObj.latitude,
-        longitude: locationObj.longitude,
-        address: locationObj.address || '',
-        timestamp: locationObj.timestamp || Date.now(),
+        latitude: locationObj.latitude as number,
+        longitude: locationObj.longitude as number,
+        address: (locationObj.address as string) || '',
+        timestamp: (locationObj.timestamp as number) || Date.now(),
       };
     }
     return null;
@@ -90,22 +90,25 @@ const convertDatabaseLocationToHandoverLocation = (
 
 // Helper function to convert database handover session to our HandoverStatus type
 const convertDatabaseHandoverToHandoverStatus = (
-  data: any
+  data: Record<string, unknown>
 ): HandoverStatus | null => {
   if (!data) return null;
   
   return {
-    id: data.id,
-    booking_id: data.booking_id,
-    host_id: data.host_id,
-    renter_id: data.renter_id,
-    host_ready: !!data.host_ready,
-    renter_ready: !!data.renter_ready,
+    id: data.id as string,
+    user_id: data.user_id as string,
+    booking_id: data.booking_id as string,
+    handover_type: data.handover_type as string,
+    status: data.status as string,
+    pickup_location: data.pickup_location 
+      ? convertDatabaseLocationToHandoverLocation(data.pickup_location)
+      : null,
+    return_location: data.return_location
+      ? convertDatabaseLocationToHandoverLocation(data.return_location)
+      : null,
     host_location: convertDatabaseLocationToHandoverLocation(data.host_location),
     renter_location: convertDatabaseLocationToHandoverLocation(data.renter_location),
     handover_completed: !!data.handover_completed,
-    handover_type: data.handover_type || null,
-    status: data.status || null,
     created_at: data.created_at,
     updated_at: data.updated_at,
   };
