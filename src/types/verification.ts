@@ -108,7 +108,7 @@ export interface VerificationData {
   address_confirmed: boolean;
   
   // Data storage
-  personal_info: any;
+  personal_info: Record<string, unknown>;
   user_role: string;
   
   // Admin fields
@@ -135,7 +135,7 @@ export interface StepCompletionData {
   step: VerificationStep;
   isValid: boolean;
   errors: ValidationError[];
-  data: any;
+  data: Record<string, unknown>;
 }
 
 // Local storage keys for development

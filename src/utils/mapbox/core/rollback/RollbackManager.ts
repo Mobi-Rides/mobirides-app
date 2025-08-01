@@ -5,6 +5,7 @@ import { resourceManager } from '../resource/ResourceManager';
 import { mapCore } from '../MapCore';
 import { eventBus } from '../eventBus';
 import { stateManager } from '../stateManager';
+import { ResourceType } from '../resource/resourceTypes';
 
 export class RollbackManager {
   private static instance: RollbackManager;
@@ -147,7 +148,7 @@ export class RollbackManager {
     if (!domResource) throw new Error('DOM resource not available');
     
     const container = domResource.getState().status === 'ready' ? 
-      (resourceManager as any).resources.get('dom').container : 
+      (resourceManager as { resources: Map<ResourceType, { container: HTMLElement }> }).resources.get('dom')?.container : 
       null;
     
     if (!container) throw new Error('DOM container not available');
@@ -164,7 +165,7 @@ export class RollbackManager {
     const currentResources = Object.keys(stateManager.getResourceState());
     for (const resource of currentResources) {
       if (!retainResources.includes(resource)) {
-        await resourceManager.releaseResource(resource as any);
+        await resourceManager.releaseResource(resource as ResourceType);
       }
     }
 
@@ -174,7 +175,7 @@ export class RollbackManager {
       const resourceKey = resource as keyof typeof resourceState;
       
       if (!resourceState[resourceKey]) {
-        await resourceManager.acquireResource(resource as any);
+        await resourceManager.acquireResource(resource as ResourceType);
       }
     }
   }

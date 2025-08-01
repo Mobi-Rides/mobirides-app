@@ -117,6 +117,6 @@ export const mockPaymentService = new MockPaymentService();
 
 // Development helpers - available in console
 if (typeof window !== 'undefined') {
-  (window as any).mockPaymentService = mockPaymentService;
+  (window as Window & { mockPaymentService?: typeof mockPaymentService }).mockPaymentService = mockPaymentService;
   console.log('MockPaymentService available in console for testing');
 }

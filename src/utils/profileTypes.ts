@@ -21,7 +21,7 @@ export interface ExtendedProfile {
 }
 
 // Type guard function to check if location sharing fields exist
-export const hasLocationFields = (profile: any): boolean => {
+export const hasLocationFields = (profile: unknown): boolean => {
   return profile && 
     'is_sharing_location' in profile && 
     'location_sharing_scope' in profile;
@@ -32,7 +32,12 @@ export const createLocationUpdatePayload = (
   isSharing: boolean, 
   coords?: { latitude: number; longitude: number }
 ) => {
-  const payload: any = {
+  const payload: {
+    is_sharing_location: boolean;
+    updated_at: string;
+    latitude?: number;
+    longitude?: number;
+  } = {
     is_sharing_location: isSharing,
     updated_at: new Date().toISOString()
   };

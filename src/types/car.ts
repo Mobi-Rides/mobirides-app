@@ -48,7 +48,7 @@ export const toSafeCar = (car: Car): SafeCar => {
 };
 
 // Type guard for Car
-export const isValidCar = (car: any): car is Car => {
+export const isValidCar = (car: unknown): car is Car => {
   return car && 
     typeof car.id === 'string' && 
     typeof car.brand === 'string' && 

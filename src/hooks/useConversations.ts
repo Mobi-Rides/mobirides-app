@@ -165,11 +165,18 @@ export const useConversations = () => {
           .order('created_at', { ascending: false });
 
         // Transform conversations
-        const transformedConversations: Conversation[] = userConversations.map((conv: any) => {
+        const transformedConversations: Conversation[] = userConversations.map((conv: {
+          id: string;
+          name: string;
+          last_message_at: string;
+        }) => {
           // Find participants for this conversation
           const conversationParticipants = participants?.filter(p => p.conversation_id === conv.id) || [];
           
-          const participantUsers: User[] = conversationParticipants.map((p: any) => ({
+          const participantUsers: User[] = conversationParticipants.map((p: {
+            user_id: string;
+            profiles?: { full_name?: string; avatar_url?: string };
+          }) => ({
             id: p.user_id,
             name: p.profiles?.full_name || 'Unknown User',
             avatar: p.profiles?.avatar_url ? 

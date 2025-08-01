@@ -13,6 +13,6 @@ export interface ValidationResult {
 
 declare global {
   interface Window {
-    mapboxgl?: any;
+    mapboxgl?: typeof import('mapbox-gl');
   }
 }

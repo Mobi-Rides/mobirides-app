@@ -23,6 +23,13 @@
  *   See src/utils/NotificationClassifier.test.ts for comprehensive test cases.
  *   Run tests with: npm test
  */
+
+// Interface for notification objects
+interface NotificationLike {
+  content?: string;
+  type?: string;
+}
+
 // Advanced Notification Classification System (Full 9-Layer, Priority-Weighted, Backend-Agnostic, Context-Aware)
 export class NotificationClassifier {
   private static readonly PAYMENT_KEYWORDS = [
@@ -53,7 +60,7 @@ export class NotificationClassifier {
     /tomorrow/i, /today/i, /yesterday/i, /\d{1,2}:\d{2}\s*(am|pm)/i, /\d{1,2}\/\d{1,2}\/\d{4}/, /\d{4}-\d{2}-\d{2}/, /monday|tuesday|wednesday|thursday|friday|saturday|sunday/i, /january|february|march|april|may|june|july|august|september|october|november|december/i
   ];
 
-  public static classifyNotification(notification: any): { type: 'payment' | 'booking' | 'other', confidence: number, reasons: string[] } {
+  public static classifyNotification(notification: NotificationLike): { type: 'payment' | 'booking' | 'other', confidence: number, reasons: string[] } {
     const content = (notification.content || '').toLowerCase();
     const type = (notification.type || '').toLowerCase();
     let paymentScore = 0;
@@ -191,7 +198,7 @@ export class NotificationClassifier {
   }
 }
 
-export function classifyType(notification: any): 'payment' | 'booking' | 'other' {
+export function classifyType(notification: NotificationLike): 'payment' | 'booking' | 'other' {
   const classification = NotificationClassifier.classifyNotification(notification);
   return classification.type;
 } 
