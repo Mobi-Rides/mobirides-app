@@ -8,12 +8,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
+import { Database } from "@/integrations/supabase/types";
+
+type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 
 interface SnoozeModalProps {
   open: boolean;
   onClose: () => void;
   onSnooze: (snoozeUntil: Date) => void;
-  notification: any;
+  notification: Notification;
 }
 
 const PRESETS = [

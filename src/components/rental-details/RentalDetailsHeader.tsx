@@ -13,7 +13,7 @@ interface RentalDetailsHeaderProps {
 export const RentalDetailsHeader = ({ status, onBack }: RentalDetailsHeaderProps) => {
   // Generate status badge
   const getStatusBadge = () => {
-    let variant = "outline";
+    let variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "danger" | "info" = "outline";
     let icon = <HelpCircle className="h-3 w-3 mr-1" />;
     
     switch(status) {
@@ -36,7 +36,7 @@ export const RentalDetailsHeader = ({ status, onBack }: RentalDetailsHeaderProps
     }
     
     return (
-      <Badge variant={variant as any} className="flex items-center">
+      <Badge variant={variant} className="flex items-center">
         {icon}
         <span className="capitalize">{status}</span>
       </Badge>

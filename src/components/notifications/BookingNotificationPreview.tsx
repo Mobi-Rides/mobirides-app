@@ -1,6 +1,9 @@
 import React from "react";
+import { Database } from "@/integrations/supabase/types";
 
-export function BookingNotificationPreview({ notification, confidence }: { notification: any; confidence?: number }) {
+type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+
+export function BookingNotificationPreview({ notification, confidence }: { notification: Notification; confidence?: number }) {
   let badgeColor = "bg-green-500";
   if (typeof confidence === 'number') {
     if (confidence < 70) badgeColor = "bg-red-500";

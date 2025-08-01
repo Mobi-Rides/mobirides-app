@@ -30,6 +30,9 @@ const PHOTO_REQUIREMENTS = {
   ]
 };
 
+// Define the valid photo types
+type PhotoType = VehiclePhoto['type'];
+
 export const VehicleInspectionStep = ({
   handoverSessionId,
   inspectionType,
@@ -48,7 +51,7 @@ export const VehicleInspectionStep = ({
     photos.some(photo => photo.type === req.type)
   );
 
-  const handlePhotoUpload = async (photoType: string, file: File) => {
+  const handlePhotoUpload = async (photoType: PhotoType, file: File) => {
     setIsUploading(true);
     setUploadingType(photoType);
     
@@ -57,7 +60,7 @@ export const VehicleInspectionStep = ({
       if (photoUrl) {
         const newPhoto: VehiclePhoto = {
           id: `${Date.now()}-${photoType}`,
-          type: photoType as any,
+          type: photoType, // Remove the 'as any' cast
           url: photoUrl,
           timestamp: new Date().toISOString()
         };
@@ -86,7 +89,7 @@ export const VehicleInspectionStep = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, photoType: string) => {
     const file = e.target.files?.[0];
     if (file) {
-      handlePhotoUpload(photoType, file);
+      handlePhotoUpload(photoType as PhotoType, file);
     }
     // Reset the input value to allow re-uploading the same file
     e.target.value = '';
