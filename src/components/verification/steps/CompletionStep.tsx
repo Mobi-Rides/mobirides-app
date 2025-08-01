@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { triggerVerificationCompletionEvent } from "@/hooks/useVerificationStatus";
+import { VerificationData } from "@/types/verification";
 
 interface CompletionStepProps {
   onNext: () => void;
@@ -37,7 +38,7 @@ interface CompletionStepProps {
  * Shows verification details and certificate information
  */
 const VerificationCertificate: React.FC<{
-  verificationData: any;
+  verificationData: VerificationData;
 }> = ({ verificationData }) => {
   const verificationId = verificationData?.user_id
     ? `VER-${verificationData.user_id.slice(-8).toUpperCase()}`

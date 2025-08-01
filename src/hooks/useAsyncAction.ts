@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
-export const useAsyncAction = <T extends any[], R>(
+export const useAsyncAction = <T extends unknown[], R>(
   action: (...args: T) => Promise<R>,
   options?: {
     onSuccess?: (result: R) => void;

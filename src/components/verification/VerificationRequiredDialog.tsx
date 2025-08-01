@@ -25,12 +25,13 @@ import {
   Phone,
   X,
 } from "lucide-react";
+import { Car } from "@/types/car";
 
 interface VerificationRequiredDialogProps {
   isOpen: boolean;
   onClose: () => void;
   action: "booking" | "listing" | "general";
-  carData?: any; // Car data for booking context
+  carData?: Car; // Car data for booking context
   title?: string;
   description?: string;
 }
