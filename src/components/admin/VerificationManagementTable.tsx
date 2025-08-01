@@ -16,28 +16,23 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { VerificationData } from "@/types/verification";
 
-interface Verification {
-  id: string;
-  user_id: string;
-  overall_status: string;
-  current_step: string;
-  personal_info_completed: boolean;
-  documents_completed: boolean;
-  selfie_completed: boolean;
-  phone_verified: boolean;
-  address_confirmed: boolean;
-  created_at: string;
+// Extended verification type for admin table with profile data
+interface AdminVerificationData extends Pick<VerificationData, 
+  'id' | 'user_id' | 'overall_status' | 'current_step' | 'personal_info_completed' | 
+  'documents_completed' | 'selfie_completed' | 'phone_verified' | 'address_confirmed' | 'created_at'
+> {
   profiles?: {
-    full_name: string | null;
+    full_name: string;
     role: string;
-  } | null;
+  };
 }
 
 const useAdminVerifications = () => {
   return useQuery({
     queryKey: ["admin-verifications"],
-    queryFn: async (): Promise<any[]> => {
+    queryFn: async (): Promise<AdminVerificationData[]> => {
       const { data, error } = await supabase
         .from("user_verifications")
         .select(`
@@ -111,7 +106,7 @@ export const VerificationManagementTable = () => {
     }
   };
 
-  const getCompletionPercentage = (verification: Verification) => {
+  const getCompletionPercentage = (verification: AdminVerificationData) => {
     const steps = [
       verification.personal_info_completed,
       verification.documents_completed,

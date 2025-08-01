@@ -7,6 +7,14 @@ import { MapPin, Check, Car, X } from "lucide-react";
 import { useHandover } from "@/contexts/HandoverContext";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/utils/toast-utils";
+import { BookingWithRelations } from "@/types/booking";
+
+// Extended booking type for handover with additional car data
+interface HandoverBookingDetails extends BookingWithRelations {
+  cars: BookingWithRelations['cars'] & {
+    color?: string;
+  };
+}
 
 interface HandoverSheetProps {
   isOpen: boolean;
@@ -144,10 +152,10 @@ export const HandoverSheet = ({
                 <div>
                   <h4 className="font-medium">Vehicle</h4>
                   <p className="text-sm mt-1">
-                    {(bookingDetails as any)?.car?.brand} {(bookingDetails as any)?.car?.model}
+                    {(bookingDetails as unknown as HandoverBookingDetails)?.cars?.brand} {(bookingDetails as unknown as HandoverBookingDetails)?.cars?.model}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {(bookingDetails as any)?.car?.year} • {(bookingDetails as any)?.car?.color}
+                    {(bookingDetails as unknown as HandoverBookingDetails)?.cars?.year} • {(bookingDetails as unknown as HandoverBookingDetails)?.cars?.color}
                   </p>
                 </div>
               </div>

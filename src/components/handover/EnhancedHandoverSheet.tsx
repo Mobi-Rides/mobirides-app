@@ -29,6 +29,22 @@ import { HandoverSuccessPopup } from "./HandoverSuccessPopup";
 import { HandoverProgressIndicator } from "./HandoverProgressIndicator";
 import { useRealtimeHandover } from "@/hooks/useRealtimeHandover";
 import { toast } from "@/utils/toast-utils";
+import { BookingWithRelations } from "@/types/booking";
+
+// Extended booking type for handover with additional location data
+interface HandoverBookingDetails extends BookingWithRelations {
+  latitude?: number;
+  longitude?: number;
+  cars: BookingWithRelations['cars'] & {
+    latitude?: number;
+    longitude?: number;
+    owner?: {
+      id: string;
+      full_name: string;
+      avatar_url?: string;
+    };
+  };
+}
 
 interface EnhancedHandoverSheetProps {
   isOpen: boolean;
@@ -143,8 +159,8 @@ export const EnhancedHandoverSheet = ({
         console.log("Creating vehicle condition report...");
         const reportData = {
           handover_session_id: handoverId,
-          booking_id: (bookingDetails as Record<string, unknown>)?.id as string || "",
-          car_id: ((bookingDetails as Record<string, unknown>)?.car as Record<string, unknown>)?.id as string || "",
+          booking_id: (bookingDetails as unknown as HandoverBookingDetails)?.id as string || "",
+          car_id: (bookingDetails as unknown as HandoverBookingDetails)?.car_id as string || "",
           report_type: 'pickup' as const,
           vehicle_photos: vehiclePhotos,
           damage_reports: damageReports,
@@ -223,15 +239,16 @@ export const EnhancedHandoverSheet = ({
   };
 
   const getStepComponent = (step: typeof HANDOVER_STEPS[0], stepIndex: number) => {
-    const otherUser = isHost ? (bookingDetails as any)?.renter : (bookingDetails as any)?.car?.owner;
+    const bookingData = bookingDetails as unknown as HandoverBookingDetails | null;
+    const otherUser = isHost ? bookingData?.renter : bookingData?.cars?.owner;
     
     switch (step.name) {
       case "navigation": {
         // Get destination location (preset or user location)
         const destinationLocation = {
-          latitude: (bookingDetails as any)?.latitude || (bookingDetails as any)?.car?.latitude || -24.65451,
-          longitude: (bookingDetails as any)?.longitude || (bookingDetails as any)?.car?.longitude || 25.90859,
-          address: (bookingDetails as any)?.car?.location || "Handover Location"
+          latitude: bookingData?.latitude || bookingData?.cars?.latitude || -24.65451,
+          longitude: bookingData?.longitude || bookingData?.cars?.longitude || 25.90859,
+          address: bookingData?.cars?.location || "Handover Location"
         };
         
         return (
@@ -432,7 +449,7 @@ export const EnhancedHandoverSheet = ({
             <div>
               <h2 className="text-xl font-semibold">Vehicle Handover</h2>
               <p className="text-sm text-muted-foreground">
-                {(bookingDetails as any)?.car?.brand} {(bookingDetails as any)?.car?.model}
+                {(bookingDetails as unknown as HandoverBookingDetails)?.cars?.brand} {(bookingDetails as unknown as HandoverBookingDetails)?.cars?.model}
               </p>
             </div>
             <button

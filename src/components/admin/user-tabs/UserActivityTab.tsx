@@ -6,6 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, Car, Calendar, MessageCircle, AlertTriangle, DollarSign } from "lucide-react";
 
+// Activity interface for user activity tracking
+interface UserActivity {
+  id: string;
+  type: 'booking' | 'car' | 'transaction' | 'verification' | 'message';
+  title: string;
+  description: string;
+  timestamp: string;
+  status: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
 interface UserActivityTabProps {
   userId: string;
 }
@@ -15,7 +26,7 @@ const useUserActivity = (userId: string) => {
     queryKey: ["user-activity", userId],
     queryFn: async () => {
       // Get recent activities from multiple sources
-      const activities: any[] = [];
+      const activities: UserActivity[] = [];
 
       try {
         // Bookings activity
