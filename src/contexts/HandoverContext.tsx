@@ -96,21 +96,16 @@ const convertDatabaseHandoverToHandoverStatus = (
   
   return {
     id: data.id as string,
-    user_id: data.user_id as string,
     booking_id: data.booking_id as string,
-    handover_type: data.handover_type as string,
-    status: data.status as string,
-    pickup_location: data.pickup_location 
-      ? convertDatabaseLocationToHandoverLocation(data.pickup_location)
-      : null,
-    return_location: data.return_location
-      ? convertDatabaseLocationToHandoverLocation(data.return_location)
-      : null,
+    host_id: data.host_id as string,
+    renter_id: data.renter_id as string,
+    host_ready: !!data.host_ready,
+    renter_ready: !!data.renter_ready,
     host_location: convertDatabaseLocationToHandoverLocation(data.host_location),
     renter_location: convertDatabaseLocationToHandoverLocation(data.renter_location),
     handover_completed: !!data.handover_completed,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
+    created_at: data.created_at as string,
+    updated_at: data.updated_at as string,
   };
 };
 

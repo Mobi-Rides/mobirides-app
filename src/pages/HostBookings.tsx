@@ -60,6 +60,7 @@ export const HostBookings = () => {
             price_per_day
           ),
           renter:profiles!renter_id (
+            id,
             full_name,
             avatar_url,
             phone_number

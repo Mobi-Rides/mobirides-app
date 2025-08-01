@@ -48,11 +48,13 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
               price_per_day
             ),
             renter:profiles!renter_id (
+              id,
               full_name,
               avatar_url,
               phone_number
             ),
             handover_sessions (
+              id,
               handover_completed,
               created_at
             )

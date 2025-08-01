@@ -107,7 +107,7 @@ const AddCar = () => {
   const handleSubmit = async (
     formData: CarFormData,
     imageFile: File | null,
-    documents: File[],
+    documents: Record<string, File | FileList>,
     features: string[],
   ) => {
     console.log("Starting car submission process...");

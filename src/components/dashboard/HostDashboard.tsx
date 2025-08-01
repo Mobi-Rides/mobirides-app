@@ -58,6 +58,7 @@ export const HostDashboard = () => {
             price_per_day
           ),
           renter:profiles!renter_id (
+            id,
             full_name
           )
         `)

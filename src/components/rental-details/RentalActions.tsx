@@ -4,8 +4,7 @@ import { KeyRound, MapPin, Star, Clock, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
-import { ExtensionRequestDialog } from "./ExtensionRequestDialog";
-import { ModificationRequestDialog } from "./ModificationRequestDialog";
+// Note: Extension and modification dialogs removed for simplification
 import { Booking } from "@/types/booking";
 
 interface RentalActionsProps {
@@ -153,21 +152,7 @@ export const RentalActions = ({
         )}
       </TooltipProvider>
 
-      {/* Extension Request Dialog */}
-      <ExtensionRequestDialog
-        isOpen={isExtensionDialogOpen}
-        onClose={() => setIsExtensionDialogOpen(false)}
-        booking={booking}
-        onExtensionRequested={handleExtensionRequested}
-      />
-
-      {/* Modification Request Dialog */}
-      <ModificationRequestDialog
-        isOpen={isModificationDialogOpen}
-        onClose={() => setIsModificationDialogOpen(false)}
-        booking={booking}
-        onModificationRequested={handleModificationRequested}
-      />
+      {/* Extension and modification dialogs removed for simplification */}
     </div>
   );
 };

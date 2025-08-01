@@ -16,7 +16,7 @@ import { RentalActions } from "@/components/rental-details/RentalActions";
 import { RentalUserCard } from "@/components/rental-details/RentalUserCard";
 import { RentalDetailsSkeleton } from "@/components/rental-details/RentalDetailsSkeleton";
 import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetailsNotFound";
-import { ExtensionStatusCard } from "@/components/rental-details/ExtensionStatus";
+// Extension status removed for simplification
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
@@ -124,14 +124,7 @@ const RentalDetailsRefactored = () => {
           />
         )}
 
-        {/* Extension Status with null check */}
-        {booking?.id && (
-          <ExtensionStatusCard 
-            bookingId={booking.id}
-            isRenter={isRenter}
-            onExtensionUpdate={handleExtensionUpdate}
-          />
-        )}
+        {/* Extension Status removed for simplification */}
 
         {/* Actions with null check */}
         {booking?.id && (
