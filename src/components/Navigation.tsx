@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, MapPin, CalendarClock, Bell, User, Search, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -99,7 +99,7 @@ export const Navigation = () => {
 
   const totalUnreadCount = unreadCount + unreadNotifications;
 
-  const items: NavigationItem[] = [
+  const items: NavigationItem[] = useMemo(() => [
     { path: "/", label: "Explore", icon: <Search className="w-5 h-5" />, activeIndex: 0 },
     { path: "/map", label: "Map", icon: <MapPin className="w-5 h-5" />, activeIndex: 1 },
     { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 2 },
@@ -116,7 +116,7 @@ export const Navigation = () => {
       icon: <User className="w-5 h-5" />, 
       activeIndex: 4 
     },
-  ];
+  ], [totalUnreadCount]);
 
   useEffect(() => {
     const currentItem = items.find((item) => {
@@ -132,7 +132,7 @@ export const Navigation = () => {
     if (currentItem) {
       setActiveIndex(currentItem.activeIndex);
     }
-  }, [location.pathname]);
+  }, [location.pathname, items]);
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">

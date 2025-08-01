@@ -56,7 +56,7 @@ export const RenterView = ({
       ...filters,
       sortOrder: sortOrder,
     });
-  }, [sortOrder, onFiltersChange]);
+  }, [sortOrder, onFiltersChange, filters]);
 
   // Update filters when brand selection changes
   const handleBrandSelect = (brand: string | null) => {

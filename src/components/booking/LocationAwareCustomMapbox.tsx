@@ -96,7 +96,7 @@ export const LocationAwareCustomMapbox = ({
         onGeolocateRef(null);
       }
     };
-  }, [mapboxToken, mapStyle]);
+  }, [mapboxToken, mapStyle, onMapRef, onGeolocateRef, onUserLocationUpdate, onMapClick]);
 
   // Update marker when selected location changes
   useEffect(() => {
@@ -157,7 +157,7 @@ export const LocationAwareCustomMapbox = ({
         essential: true,
       });
     }
-  }, [selectedLocation, mapInitialized]);
+  }, [selectedLocation, mapInitialized, onMapClick]);
 
   return (
     <div className="relative w-full h-full">

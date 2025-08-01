@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,13 +69,7 @@ export const EnhancedHandoverSheet = ({
   const [digitalSignature, setDigitalSignature] = useState<string>();
   const [isHandoverCompleted, setIsHandoverCompleted] = useState(false);
 
-  useEffect(() => {
-    if (handoverId && isOpen && !isHandoverSessionLoading) {
-      initializeHandover();
-    }
-  }, [handoverId, isOpen, isHandoverSessionLoading]);
-
-  const initializeHandover = async () => {
+  const initializeHandover = useCallback(async () => {
     if (!handoverId) {
       console.error("Cannot initialize handover: missing handover session ID");
       toast.error("Handover session not found");
@@ -112,7 +106,13 @@ export const EnhancedHandoverSheet = ({
       console.error("Error initializing handover:", error);
       toast.error("Failed to initialize handover process");
     }
-  };
+  }, [handoverId]);
+
+  useEffect(() => {
+    if (handoverId && isOpen && !isHandoverSessionLoading) {
+      initializeHandover();
+    }
+  }, [handoverId, isOpen, isHandoverSessionLoading, initializeHandover]);
 
   const handleStepComplete = async (stepName: string, data?: Record<string, unknown>) => {
     if (!handoverId) {

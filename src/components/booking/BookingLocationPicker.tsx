@@ -44,20 +44,8 @@ export const BookingLocationPicker = ({
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { theme } = useTheme();
 
-  // Handle map click for location selection
-  const handleMapClick = useCallback((lng: number, lat: number) => {
-    console.log("Map clicked at:", { lat, lng });
-    setSelectedLocation({ lat, lng });
-    fetchAddressFromCoordinates(lat, lng);
-  }, []);
-
-  // Handle map reference
-  const handleMapRef = useCallback((mapInstance: mapboxgl.Map | null) => {
-    mapRef.current = mapInstance;
-  }, []);
-
   // Fetch address from coordinates
-  const fetchAddressFromCoordinates = async (lat: number, lng: number) => {
+  const fetchAddressFromCoordinates = useCallback(async (lat: number, lng: number) => {
     if (!mapboxToken) return;
     
     try {
@@ -72,7 +60,19 @@ export const BookingLocationPicker = ({
     } catch (error) {
       console.error("Error fetching address:", error);
     }
-  };
+  }, [mapboxToken, setSelectedAddress]);
+
+  // Handle map click for location selection
+  const handleMapClick = useCallback((lng: number, lat: number) => {
+    console.log("Map clicked at:", { lat, lng });
+    setSelectedLocation({ lat, lng });
+    fetchAddressFromCoordinates(lat, lng);
+  }, [fetchAddressFromCoordinates]);
+
+  // Handle map reference
+  const handleMapRef = useCallback((mapInstance: mapboxgl.Map | null) => {
+    mapRef.current = mapInstance;
+  }, []);
 
   // Map style based on theme
   const getMapStyle = () => {
@@ -125,7 +125,7 @@ export const BookingLocationPicker = ({
     setUserLocation({ lat: location.latitude, lng: location.longitude });
     setSelectedLocation({ lat: location.latitude, lng: location.longitude });
     fetchAddressFromCoordinates(location.latitude, location.longitude);
-  }, []);
+  }, [fetchAddressFromCoordinates]);
 
   // Handle search location selection
   const handleSearchLocationSelect = (suggestion: SearchSuggestion) => {

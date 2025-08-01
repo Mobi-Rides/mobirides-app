@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,8 +31,16 @@ export const BookingSuccessModal = ({
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(5);
 
+  const handleViewBookings = useCallback(() => {
+    onClose();
+    navigate("/bookings");
+  }, [onClose, navigate]);
+
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setCountdown(5);
+      return;
+    }
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -45,12 +53,7 @@ export const BookingSuccessModal = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen]);
-
-  const handleViewBookings = () => {
-    onClose();
-    navigate("/bookings");
-  };
+  }, [isOpen, handleViewBookings]);
 
   const handleCloseModal = () => {
     onClose();

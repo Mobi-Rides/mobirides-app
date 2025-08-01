@@ -48,7 +48,7 @@ export const HandoverSheet = ({
     if (isHost == undefined) return;
     getHostID(ownerId);
     isHostUser(isHost);
-  }, []);
+  }, [getHostID, isHostUser, ownerId, isHost]);
 
   // Handle completing handover
   const handleCompleteHandover = () => {
