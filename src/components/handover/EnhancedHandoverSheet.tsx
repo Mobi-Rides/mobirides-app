@@ -98,7 +98,7 @@ export const EnhancedHandoverSheet = ({
     }
   };
 
-  const handleStepComplete = async (stepName: string, data?: any) => {
+  const handleStepComplete = async (stepName: string, data?: Record<string, unknown>) => {
     if (!handoverId) {
       toast.error("Handover session not found");
       return;
@@ -143,8 +143,8 @@ export const EnhancedHandoverSheet = ({
         console.log("Creating vehicle condition report...");
         const reportData = {
           handover_session_id: handoverId,
-          booking_id: (bookingDetails as any)?.id || "",
-          car_id: (bookingDetails as any)?.car?.id || "",
+          booking_id: (bookingDetails as Record<string, unknown>)?.id as string || "",
+          car_id: ((bookingDetails as Record<string, unknown>)?.car as Record<string, unknown>)?.id as string || "",
           report_type: 'pickup' as const,
           vehicle_photos: vehiclePhotos,
           damage_reports: damageReports,
@@ -203,11 +203,12 @@ export const EnhancedHandoverSheet = ({
         const exteriorPhotos = vehiclePhotos.filter(p => p.type && p.type.startsWith('exterior_'));
         return exteriorPhotos.length >= 4; // Front, back, left, right
       }
-      case "vehicle_inspection_interior":
+      case "vehicle_inspection_interior": {
         const interiorPhotos = vehiclePhotos.filter(p => 
           p.type && (p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type))
         );
         return interiorPhotos.length >= 4; // Dashboard, seats, fuel gauge, odometer
+      }
       case "damage_documentation":
         return true; // Can proceed with or without damage reports
       case "fuel_mileage_check":

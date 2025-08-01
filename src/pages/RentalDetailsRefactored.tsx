@@ -16,10 +16,12 @@ import { RentalActions } from "@/components/rental-details/RentalActions";
 import { RentalUserCard } from "@/components/rental-details/RentalUserCard";
 import { RentalDetailsSkeleton } from "@/components/rental-details/RentalDetailsSkeleton";
 import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetailsNotFound";
+import { ExtensionStatusCard } from "@/components/rental-details/ExtensionStatus";
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [refreshKey, setRefreshKey] = useState(0);
   const {
     booking,
     isBookingLoading,
@@ -35,6 +37,10 @@ const RentalDetailsRefactored = () => {
     handleInitiateHandover,
     id
   } = useRentalDetails();
+
+  const handleExtensionUpdate = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const onInitiateHandover = async () => {
     const session = await handleInitiateHandover();
@@ -56,7 +62,7 @@ const RentalDetailsRefactored = () => {
   return (
     <div className="container mx-auto px-4 py-8 pb-20 animate-fade-in">
       <RentalDetailsHeader 
-        status={booking.status} 
+        status={booking?.status || 'unknown'} 
         onBack={() => navigate(-1)} 
       />
 
@@ -76,53 +82,72 @@ const RentalDetailsRefactored = () => {
           )}
         </div>
 
-        {/* Car Info */}
-        <RentalCarInfoCard car={booking.car} />
+        {/* Car Info with null check */}
+        {booking?.cars && <RentalCarInfoCard car={booking.cars} />}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Person Card - Conditionally show host or renter */}
-          {isRenter ? (
+          {/* Person Card - Conditionally show host or renter with null checks */}
+          {isRenter && booking?.cars?.owner ? (
             <CarOwner
-              ownerName={booking.car.owner.full_name}
-              avatarUrl={booking.car.owner.avatar_url}
-              ownerId={booking.car.owner.id}
+              ownerName={booking.cars.owner?.full_name || 'Unknown Owner'}
+              avatarUrl={booking.cars.owner?.avatar_url || ''}
+              ownerId={booking.cars.owner?.id || ''}
             />
-          ) : (
+          ) : booking?.renter ? (
             <RentalUserCard 
               user={booking.renter} 
               role="Renter" 
             />
-          )}
+          ) : null}
 
-          {/* Rental Duration Card */}
-          <RentalDurationCard 
-            startDate={booking.start_date} 
-            endDate={booking.end_date} 
-            durationDays={rentalDurationDays} 
-          />
+          {/* Rental Duration Card with null checks */}
+          {booking?.start_date && booking?.end_date && (
+            <RentalDurationCard 
+              startDate={booking.start_date} 
+              endDate={booking.end_date} 
+              durationDays={rentalDurationDays} 
+            />
+          )}
         </div>
 
-        {/* Description */}
-        <CarDescription description={booking.car.description} />
+        {/* Description with null check */}
+        {booking?.cars?.description && (
+          <CarDescription description={booking.cars.description} />
+        )}
 
-        {/* Payment Details Card */}
-        <RentalPaymentDetails 
-          pricePerDay={booking.car.price_per_day} 
-          durationDays={rentalDurationDays} 
-          totalPrice={booking.total_price} 
-        />
+        {/* Payment Details Card with null checks */}
+        {booking?.cars?.price_per_day && booking?.total_price && (
+          <RentalPaymentDetails 
+            pricePerDay={booking.cars.price_per_day} 
+            durationDays={rentalDurationDays} 
+            totalPrice={booking.total_price} 
+          />
+        )}
 
-        {/* Actions */}
-        <RentalActions 
-          bookingId={booking.id}
-          canHandover={canHandover}
-          handoverType={handoverType}
-          isInitiatingHandover={isInitiatingHandover}
-          isCompletedRental={isCompletedRental}
-          isActiveRental={isActiveRental}
-          isRenter={isRenter}
-          onHandoverInitiate={onInitiateHandover}
-        />
+        {/* Extension Status with null check */}
+        {booking?.id && (
+          <ExtensionStatusCard 
+            bookingId={booking.id}
+            isRenter={isRenter}
+            onExtensionUpdate={handleExtensionUpdate}
+          />
+        )}
+
+        {/* Actions with null check */}
+        {booking?.id && (
+          <RentalActions 
+            bookingId={booking.id}
+            booking={booking}
+            canHandover={canHandover}
+            handoverType={handoverType}
+            isInitiatingHandover={isInitiatingHandover}
+            isCompletedRental={isCompletedRental}
+            isActiveRental={isActiveRental}
+            isRenter={isRenter}
+            onHandoverInitiate={onInitiateHandover}
+            onExtensionRequested={handleExtensionUpdate}
+          />
+        )}
       </div>
 
       <Navigation />

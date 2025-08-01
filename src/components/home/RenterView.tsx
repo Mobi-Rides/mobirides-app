@@ -13,6 +13,7 @@ import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
+import { toSafeCar } from '@/types/car'; // Ensure this import is present
 
 interface RenterViewProps {
   searchQuery: string;
@@ -112,12 +113,15 @@ export const RenterView = ({
 
   const savedCarsSet = savedCarIds || new Set<string>();
 
+  // Remove duplicate import comments and ensure proper car conversion:
   const allAvailableCars =
     availableCars?.pages.flatMap((page) =>
-      page.data.map((car) => ({
-        ...car,
-        isSaved: savedCarsSet.has(car.id),
-      })),
+      page.data
+        .filter(car => car && typeof car === 'object' && car.id)
+        .map((car) => ({
+          ...toSafeCar(car),
+          isSaved: savedCarsSet.has(car.id),
+        })),
     ) || [];
 
   useEffect(() => {

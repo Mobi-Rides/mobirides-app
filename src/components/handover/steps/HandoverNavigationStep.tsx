@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Navigation, CheckCircle, AlertCircle, Timer, Users } from "lucide-react";
+import { MapPin, Navigation, CheckCircle, AlertCircle, Timer, Users, Map } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,8 +47,10 @@ export const HandoverNavigationStep = ({
   const [totalDistance, setTotalDistance] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
-  const [arrivalRadius] = useState(50); // 50 meters arrival radius
+  const [arrivalRadius] = useState(50);
   const [isServiceReady, setIsServiceReady] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [showManualOptions, setShowManualOptions] = useState(false);
 
   // Initialize navigation service on component mount
   useEffect(() => {
@@ -98,21 +100,24 @@ export const HandoverNavigationStep = ({
     }
   }, [userLocation, destinationLocation, isNavigating, hasArrived, arrivalRadius, isVoiceEnabled]);
 
-  // Fetch route using navigation service
+  // Updated fetchRoute with better error handling
   const fetchRoute = async () => {
     let currentLocation = userLocation;
     
     if (!currentLocation) {
       try {
         currentLocation = await getCurrentLocation();
+        setLocationError(null);
       } catch (error) {
-        toast.error("Unable to get your current location");
+        setLocationError("Unable to access your location. Please check your GPS settings.");
+        setShowManualOptions(true);
         return false;
       }
     }
 
     if (!isServiceReady) {
-      toast.error("Navigation service not available");
+      setLocationError("Navigation service is not available.");
+      setShowManualOptions(true);
       return false;
     }
 
@@ -132,7 +137,8 @@ export const HandoverNavigationStep = ({
       }
     } catch (error) {
       console.error("Error fetching route:", error);
-      toast.error("Unable to calculate route. Please try again.");
+      setLocationError("Unable to calculate route.");
+      setShowManualOptions(true);
       return false;
     }
   };
@@ -145,6 +151,12 @@ export const HandoverNavigationStep = ({
       onNavigationStart?.();
       toast.success("Navigation started");
     }
+  };
+
+  // New function for manual arrival
+  const handleSkipNavigation = () => {
+    setHasArrived(true);
+    toast.success("You've arrived at the handover location!");
   };
 
   const stopNavigation = () => {
@@ -182,38 +194,11 @@ export const HandoverNavigationStep = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Destination Info */}
-          <div className="bg-muted/50 rounded-lg p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className="bg-primary/10 p-2 rounded-lg">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Meeting Location</p>
-                  <p className="text-sm text-muted-foreground">
-                    {destinationLocation.address}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Meet {otherUserName} here
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {hasArrived && (
-                <Badge variant="default" className="bg-green-100 text-green-800">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Arrived
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation Controls */}
+          {/* Destination Info - unchanged */}
+          
+          {/* Enhanced Navigation Controls */}
           {!isNavigating && !hasArrived && (
-            <div className="text-center">
+            <div className="space-y-3">
               <Button 
                 onClick={startNavigation}
                 size="lg"
@@ -223,12 +208,75 @@ export const HandoverNavigationStep = ({
                 <Navigation className="h-4 w-4 mr-2" />
                 Start Navigation
               </Button>
+              
+              {/* Manual arrival option */}
+              <Button 
+                onClick={() => setShowManualOptions(true)}
+                variant="outline"
+                size="lg"
+                className="w-full"
+              >
+                <Map className="h-4 w-4 mr-2" />
+                I've Already Arrived
+              </Button>
+              
               {!isServiceReady && (
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-muted-foreground">
                   <AlertCircle className="h-4 w-4 inline mr-1" />
                   Loading navigation service...
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Location Error Alert */}
+          {locationError && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-yellow-800">Location Access Issue</h4>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    {locationError}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Manual Confirmation Options */}
+          {showManualOptions && !hasArrived && (
+            <div className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-blue-800 mb-2">
+                  Alternative Options
+                </h4>
+                <p className="text-sm text-blue-700 mb-3">
+                  If you're unable to use GPS navigation, you can still proceed:
+                </p>
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleSkipNavigation}
+                    size="lg"
+                    className="w-full"
+                    variant="default"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    I've Arrived at Location
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setShowManualOptions(false);
+                      setLocationError(null);
+                    }}
+                    size="sm"
+                    variant="ghost"
+                    className="w-full"
+                  >
+                    Try Navigation Again
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
 

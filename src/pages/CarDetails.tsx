@@ -17,6 +17,48 @@ import type { Car } from "@/types/car";
 import { useTheme } from "@/contexts/ThemeContext";
 import { AlertTriangle } from "lucide-react";
 
+interface CarWithProfiles extends Car {
+  profiles?: {
+    full_name?: string;
+    avatar_url?: string;
+  };
+}
+
+interface SafeCarWithProfiles extends Car {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  price_per_day: number;
+  location: string;
+  transmission: string;
+  fuel: string;
+  seats: number;
+  description: string;
+  features: string[];
+  image_url: string;
+  latitude: number;
+  longitude: number;
+  is_available: boolean;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    full_name?: string;
+    avatar_url?: string;
+  };
+}
+
+const toSafeCarWithProfiles = (car: CarWithProfiles): SafeCarWithProfiles => ({
+  ...car,
+  description: car.description ?? "No description available",
+  features: car.features ?? [],
+  image_url: car.image_url ?? "/placeholder-car.jpg",
+  latitude: car.latitude ?? 0,
+  longitude: car.longitude ?? 0,
+  is_available: car.is_available ?? true,
+});
+
 const CarDetails = () => {
   const { carId } = useParams();
   const { theme } = useTheme();
@@ -25,35 +67,16 @@ const CarDetails = () => {
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", carId],
     queryFn: async () => {
-      console.log("Fetching car details for ID:", carId);
-      
       const { data, error } = await supabase
         .from("cars")
-        .select(`
-          *,
-          profiles:owner_id (
-            full_name,
-            avatar_url
-          )
-        `)
+        .select(`*, profiles:owner_id (full_name, avatar_url)`)
         .eq("id", carId)
         .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching car:", error);
-        throw error;
-      }
-
-      console.log("Car details fetched:", data);
+  
+      if (error) throw error;
+      if (!data) throw new Error("Car not found");
       
-      // Debug ownership
-      if (user) {
-        console.log("Current user ID:", user.id);
-        console.log("Car owner ID:", data.owner_id);
-        console.log("Is owner check:", user.id === data.owner_id);
-      }
-      
-      return data as Car & { profiles: { full_name: string; avatar_url: string | null } };
+      return toSafeCarWithProfiles(data as CarWithProfiles);
     },
   });
 
@@ -68,7 +91,6 @@ const CarDetails = () => {
             <BarLoader color="#7c3aed" width={100} />
           </div>
           
-          {/* Keep some skeleton UI to show page structure */}
           <div className="space-y-4 p-4 mt-4">
             <Skeleton className="h-64 w-full bg-gray-200 dark:bg-gray-700" />
             <Skeleton className="h-8 w-3/4 bg-gray-200 dark:bg-gray-700" />
@@ -100,7 +122,6 @@ const CarDetails = () => {
     );
   }
 
-  // Pass the raw avatar_url to CarOwner component
   const avatarUrl = car.profiles?.avatar_url || null;
 
   return (

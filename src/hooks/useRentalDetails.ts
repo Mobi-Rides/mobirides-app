@@ -29,7 +29,7 @@ export const useRentalDetails = () => {
             full_name,
             avatar_url
           ),
-          car:cars (
+          cars (
             *,
             owner:profiles!owner_id (
               id,
@@ -51,8 +51,12 @@ export const useRentalDetails = () => {
         )
         .eq("id", id)
         .single();
-
-      if (error) throw error;
+  
+      if (error) {
+        console.error("Rental details fetch error:", error);
+        throw error;
+      }
+      console.log("Rental details fetched successfully:", data);
       return data;
     },
   });
@@ -80,7 +84,7 @@ export const useRentalDetails = () => {
 
   // Calculate rental details
   const isRenter = booking && currentUser && booking.renter_id === currentUser.id;
-  const isOwner = booking && currentUser && booking.car.owner_id === currentUser.id;
+  const isOwner = booking && currentUser && booking.cars?.owner_id === currentUser.id;
   
   // Determine handover session states
   const handoverSessions = booking?.handover_sessions || [];
@@ -172,7 +176,7 @@ export const useRentalDetails = () => {
       // Create or get existing handover session
       const session = await createHandoverSession(
         booking.id,
-        booking.car.owner_id,
+        booking.cars?.owner_id,
         booking.renter_id
       );
 

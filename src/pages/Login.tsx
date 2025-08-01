@@ -45,23 +45,52 @@ const Login = () => {
     return number.replace(/[^\d+]/g, "");
   };
 
+  // In the checkUserProfile function, replace the existing query with:
   const checkUserProfile = async (userId: string) => {
     try {
       console.log("Checking profile for user:", userId);
+      
+      // First, check if the user has a profile
       const { data, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("full_name, phone_number")
         .eq("id", userId)
         .single();
-
+  
       if (profileError) {
         console.error("Error fetching profile:", profileError);
+        
+        // If profile doesn't exist, create it
+        if (profileError.code === 'PGRST116') { // Not found
+          console.log("Profile not found, creating new profile...");
+          const { error: createError } = await supabase
+            .from("profiles")
+            .insert([
+              {
+                id: userId,
+                full_name: null,
+                phone_number: null,
+                role: "renter",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+            ]);
+  
+          if (createError) {
+            console.error("Error creating profile:", createError);
+            // Continue anyway, profile will be created later
+            navigate("/");
+            return;
+          }
+        }
+        
+        setShowProfilePrompt(true);
         return;
       }
-
+  
       const profile = data as ExtendedProfile | null;
       console.log("Profile data:", profile);
-
+  
       if (!profile?.full_name || !profile?.phone_number) {
         setShowProfilePrompt(true);
       } else {
@@ -69,6 +98,8 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Error checking profile:", error);
+      // Continue to home page if there's an error
+      navigate("/");
     }
   };
 

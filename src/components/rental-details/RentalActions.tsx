@@ -1,11 +1,16 @@
 
-import { KeyRound, MapPin, Star, Clock } from "lucide-react";
+import React, { useState } from "react";
+import { KeyRound, MapPin, Star, Clock, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
+import { ExtensionRequestDialog } from "./ExtensionRequestDialog";
+import { ModificationRequestDialog } from "./ModificationRequestDialog";
+import { Booking } from "@/types/booking";
 
 interface RentalActionsProps {
   bookingId: string;
+  booking: Booking;
   canHandover: boolean;
   handoverType: "pickup" | "return";
   isInitiatingHandover: boolean;
@@ -13,10 +18,12 @@ interface RentalActionsProps {
   isActiveRental: boolean;
   isRenter: boolean;
   onHandoverInitiate: () => void;
+  onExtensionRequested?: () => void;
 }
 
 export const RentalActions = ({
   bookingId,
+  booking,
   canHandover,
   handoverType,
   isInitiatingHandover,
@@ -24,13 +31,26 @@ export const RentalActions = ({
   isActiveRental,
   isRenter,
   onHandoverInitiate,
+  onExtensionRequested,
 }: RentalActionsProps) => {
   const navigate = useNavigate();
+  const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false);
+  const [isModificationDialogOpen, setIsModificationDialogOpen] = useState(false);
 
   const handleExtendRental = () => {
-    // TODO: Implement extend rental functionality
-    console.log("Extend rental clicked for booking:", bookingId);
-    // This would open a modal or navigate to extend rental page
+    setIsExtensionDialogOpen(true);
+  };
+
+  const handleModifyBooking = () => {
+    setIsModificationDialogOpen(true);
+  };
+
+  const handleExtensionRequested = () => {
+    onExtensionRequested?.();
+  };
+
+  const handleModificationRequested = () => {
+    onExtensionRequested?.(); // Use same refresh function
   };
 
   return (
@@ -69,6 +89,25 @@ export const RentalActions = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>Request to extend your rental period</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Modify booking option for confirmed/active rentals (only renters) */}
+        {(isActiveRental || booking.status === 'confirmed') && isRenter && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="w-full sm:w-auto flex items-center gap-2"
+                variant="outline"
+                onClick={handleModifyBooking}
+              >
+                <Edit3 className="h-4 w-4" />
+                Modify Booking
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Change pickup time or location</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -113,6 +152,22 @@ export const RentalActions = ({
           </Tooltip>
         )}
       </TooltipProvider>
+
+      {/* Extension Request Dialog */}
+      <ExtensionRequestDialog
+        isOpen={isExtensionDialogOpen}
+        onClose={() => setIsExtensionDialogOpen(false)}
+        booking={booking}
+        onExtensionRequested={handleExtensionRequested}
+      />
+
+      {/* Modification Request Dialog */}
+      <ModificationRequestDialog
+        isOpen={isModificationDialogOpen}
+        onClose={() => setIsModificationDialogOpen(false)}
+        booking={booking}
+        onModificationRequested={handleModificationRequested}
+      />
     </div>
   );
 };

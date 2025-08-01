@@ -134,7 +134,7 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
   };
 
   const handleCarClick = (carId: string) => {
-    navigate(`/car/${carId}`);
+    navigate(`/cars/${carId}`);  // ✅ Correct: /cars/ (plural)
     onClose();
   };
 
