@@ -8,6 +8,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { RenterDashboard } from "@/components/dashboard/RenterDashboard";
 import { HostDashboard } from "@/components/dashboard/HostDashboard";
 import { AdminStats } from "@/components/admin/AdminStats";
+import { SearchFilters as Filters } from "@/components/SearchFilters";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -57,7 +58,7 @@ const Dashboard = () => {
     setSearchQuery(query);
   };
 
-  const handleFiltersChange = (filters: any) => {
+  const handleFiltersChange = (filters: Filters) => {
     // Dashboard doesn't need filter functionality, but Header requires it
     console.log("Filters changed:", filters);
   };

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format, isToday, isAfter, isBefore, addHours, subHours } from "date-fns";
+import { BookingWithRelations } from "@/types/booking";
 
 export interface HandoverPrompt {
   id: string;
@@ -175,7 +176,7 @@ export class HandoverPromptService {
     }
   }
 
-  private static createHandoverPrompt(booking: any, handoverType: 'pickup' | 'return', userRole: 'host' | 'renter'): HandoverPrompt {
+  private static createHandoverPrompt(booking: BookingWithRelations, handoverType: 'pickup' | 'return', userRole: 'host' | 'renter'): HandoverPrompt {
     const startDate = new Date(booking.start_date);
     const endDate = new Date(booking.end_date);
     const now = new Date();

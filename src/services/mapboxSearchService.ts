@@ -100,8 +100,8 @@ class MapboxSearchService {
 
     try {
       // Find the suggestion by ID first
-      const suggestion = { mapbox_id: suggestionId };
-      const response = await this.searchBox.retrieve(suggestion as any, {
+      const suggestion: { mapbox_id: string } = { mapbox_id: suggestionId };
+      const response = await this.searchBox.retrieve(suggestion, {
         sessionToken: this.sessionToken,
       });
 

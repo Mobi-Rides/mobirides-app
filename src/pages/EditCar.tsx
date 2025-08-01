@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { CarForm } from "@/components/add-car/CarForm";
+import type { CarFormData } from "@/types/location";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
@@ -57,7 +58,7 @@ const EditCar = () => {
     }
   }, [car]);
 
-  const handleSubmit = async (formData: any, imageFile: File | null) => {
+  const handleSubmit = async (formData: CarFormData, imageFile: File | null) => {
     setIsSubmitting(true);
 
     try {

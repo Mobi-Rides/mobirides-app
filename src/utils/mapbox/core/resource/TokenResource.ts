@@ -1,6 +1,6 @@
 
 import { ResourceBase } from './ResourceBase';
-import { ResourceType, ResourceState } from './resourceTypes';
+import { ResourceType, ResourceState, TokenResourceConfig } from './resourceTypes';
 import { mapboxTokenManager } from '@/utils/mapbox';
 
 /**
@@ -81,7 +81,7 @@ export class TokenResource extends ResourceBase {
    * Configures the token resource.
    * @returns A promise that resolves to true if configuration is successful, false otherwise.
    */
-  async configure<T extends ResourceType>(config: any): Promise<boolean> {
+  async configure<T extends ResourceType>(config: TokenResourceConfig): Promise<boolean> {
     // No special configuration needed for token resource
     return true;
   }

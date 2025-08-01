@@ -13,7 +13,7 @@ class WalletService {
     return getWalletBalance(hostId);
   }
 
-  async topUpWallet(hostId: string, request: any) {
+  async topUpWallet(hostId: string, request: TopUpRequest) {
     const result = await topUpWallet(hostId, request);
     
     if (result) {
@@ -72,6 +72,6 @@ export const walletService = new WalletService();
 
 // Development helpers - available in console
 if (typeof window !== 'undefined') {
-  (window as any).walletService = walletService;
+  (window as Window & { walletService?: typeof walletService }).walletService = walletService;
   console.log('WalletService available in console for testing');
 }

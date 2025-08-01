@@ -1,6 +1,6 @@
 
 import { ResourceBase } from './ResourceBase';
-import { ResourceType, ResourceState } from './resourceTypes';
+import { ResourceType, ResourceState, ModuleResourceConfig } from './resourceTypes';
 import { mapboxTokenManager } from '@/utils/mapbox';
 import mapboxgl from 'mapbox-gl';
 
@@ -82,7 +82,7 @@ export class ModuleResource extends ResourceBase {
     return false;
   }
 
-  async configure<T extends ResourceType>(config: any): Promise<boolean> {
+  async configure<T extends ResourceType>(config: ModuleResourceConfig): Promise<boolean> {
     // No special configuration needed for module resource
     return true;
   }

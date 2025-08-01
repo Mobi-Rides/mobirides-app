@@ -15,7 +15,7 @@ interface LocationUpdate {
 }
 
 // Map to store active subscriptions by car ID
-const activeSubscriptions = new Map<string, { subscription: any, userId: string }>();
+const activeSubscriptions = new Map<string, { subscription: ReturnType<typeof supabase.channel>, userId: string }>();
 
 /**
  * Subscribe to real-time location updates for a specific car

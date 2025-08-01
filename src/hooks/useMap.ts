@@ -29,7 +29,7 @@ export const useMap = ({
   const mountedRef = useRef(true);
   const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
   const loadListenerRef = useRef<(() => void) | null>(null);
-  const errorListenerRef = useRef<((e: any) => void) | null>(null);
+  const errorListenerRef = useRef<((e: ErrorEvent) => void) | null>(null);
   
   // Get token on mount
   useEffect(() => {

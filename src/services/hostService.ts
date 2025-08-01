@@ -49,7 +49,14 @@ const checkLocationColumns = async (): Promise<boolean> => {
 };
 
 // Safely create a Host object from database data
-const createSafeHost = (item: any): Host | null => {
+const createSafeHost = (item: {
+  id?: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  updated_at?: string | null;
+} | null | undefined): Host | null => {
   if (!item || typeof item !== 'object') return null;
 
   return {
