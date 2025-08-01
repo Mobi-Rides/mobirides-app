@@ -3,12 +3,17 @@ import { Location } from "@/utils/mapbox/location/LocationManager";
 import { eventBus } from "@/utils/mapbox/core/eventBus";
 import { locationStateManager } from "@/utils/mapbox/location/LocationStateManager";
 
+interface LocationEvent {
+  type: string;
+  payload: Location;
+}
+
 export const useUserLocation = (current: unknown) => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
 
   useEffect(() => {
     const eventSubscriber = {
-      onEvent: (event: any) => {
+      onEvent: (event: LocationEvent) => {
         if (event.type === "locationUpdate" && event.payload.latitude) {
           setUserLocation(event.payload);
         }

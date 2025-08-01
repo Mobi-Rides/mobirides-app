@@ -13,7 +13,7 @@ const formatError = (error: string | Error | unknown): string => {
     return error.message;
   }
   if (error && typeof error === "object" && "message" in error) {
-    return String((error as any).message);
+    return String((error as { message: unknown }).message);
   }
   return "An unexpected error occurred";
 };

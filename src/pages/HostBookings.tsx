@@ -76,7 +76,7 @@ export const HostBookings = () => {
   const filteredAndSortedBookings = useMemo(() => {
     if (!bookings) return [];
 
-    let filtered = bookings.filter(booking => {
+    const filtered = bookings.filter(booking => {
       const matchesSearch = searchQuery === "" || 
         booking.cars.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
         booking.cars.model.toLowerCase().includes(searchQuery.toLowerCase()) ||

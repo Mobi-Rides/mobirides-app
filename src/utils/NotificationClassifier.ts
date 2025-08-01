@@ -181,7 +181,7 @@ export class NotificationClassifier {
       finalType = 'other';
     }
     const total = paymentScore + bookingScore;
-    let confidence = total > 0 ? Math.round((Math.max(paymentScore, bookingScore) / total) * 100) : 0;
+    const confidence = total > 0 ? Math.round((Math.max(paymentScore, bookingScore) / total) * 100) : 0;
     // If confidence is low, mark as other
     if (confidence < 60) {
       reasons.push('Low confidence: marked as other');

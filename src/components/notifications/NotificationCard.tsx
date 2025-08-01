@@ -16,9 +16,22 @@ import {
 } from "lucide-react";
 import { NotificationClassifier } from "@/utils/NotificationClassifier";
 import { useNavigate } from "react-router-dom";
+import { Database } from "@/integrations/supabase/types";
+
+type Notification = Database["public"]["Tables"]["notifications"]["Row"] & {
+  bookings?: {
+    id: string;
+    start_date: string;
+    end_date: string;
+    cars: {
+      brand: string;
+      model: string;
+    };
+  };
+};
 
 interface NotificationCardProps {
-  notification: any;
+  notification: Notification;
   onMarkAsRead?: (id: string) => void;
   onDelete?: (id: string) => void;
   onAcceptBooking?: (bookingId: string) => void;

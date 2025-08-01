@@ -20,7 +20,7 @@ interface ProfileMenuProps {
 }
 
 interface MenuItem {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
   color?: string;
@@ -86,7 +86,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     }
   ] : [];
 
-  const vehicleAndBookingsItems = [...baseMenuItems.slice(1), ...hostOnlyItems, {
+  const vehicleAndBookingsItems: MenuItem[] = [...baseMenuItems.slice(1), ...hostOnlyItems, {
     icon: Bell,
     label: "Notifications",
     onClick: () => navigate("/notifications"),

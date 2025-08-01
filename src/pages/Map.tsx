@@ -208,7 +208,7 @@ const Map = () => {
       const activeHandoverHost = await fetchActiveHandoverHost();
       console.log("Active handover host:", activeHandoverHost);
 
-      let allHosts = [...onlineHosts];
+      const allHosts = [...onlineHosts];
       
       // Add active handover host if it exists and isn't already in the list
       if (activeHandoverHost) {

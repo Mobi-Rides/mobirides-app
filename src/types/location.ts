@@ -1,5 +1,6 @@
 
 import mapboxgl from 'mapbox-gl';
+import { Car } from './car';
 
 export interface LocationState {
   watchId: number | null;
@@ -18,7 +19,7 @@ export interface LocationHandlers {
 }
 
 export interface CarGridProps {
-  cars: any[];
+  cars: Car[];
   isLoading?: boolean;
   error?: Error | null;
   loadMoreRef?: React.RefObject<HTMLDivElement>;

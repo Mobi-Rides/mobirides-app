@@ -1,6 +1,6 @@
 interface PendingAction {
   type: 'booking' | 'save_car' | 'contact_host';
-  payload: any;
+  payload: Record<string, unknown>;
   context?: string;
 }
 

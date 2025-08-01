@@ -56,7 +56,7 @@ interface HandoverProviderProps {
 
 // Helper function to safely convert database JSON to our typed format
 const convertDatabaseLocationToHandoverLocation = (
-  location: any
+  location: unknown
 ): HandoverLocation | null => {
   if (!location) return null;
   
@@ -72,12 +72,13 @@ const convertDatabaseLocationToHandoverLocation = (
       };
     } 
     // If it's already an object
-    else if (typeof location === 'object') {
+    else if (typeof location === 'object' && location !== null) {
+      const locationObj = location as Record<string, any>;
       return {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        address: location.address || '',
-        timestamp: location.timestamp || Date.now(),
+        latitude: locationObj.latitude,
+        longitude: locationObj.longitude,
+        address: locationObj.address || '',
+        timestamp: locationObj.timestamp || Date.now(),
       };
     }
     return null;
@@ -167,7 +168,9 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
       setOwnerId(data.owner_id);
 
       return;
-    } catch (error) {}
+    } catch (error) {
+      console.error('Error fetching destination:', error);
+    }
   };
 
   useEffect(() => {
