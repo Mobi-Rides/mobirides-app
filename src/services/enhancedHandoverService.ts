@@ -67,7 +67,7 @@ export interface HandoverStepCompletion {
   step_order: number;
   completed_by?: string;
   is_completed: boolean;
-  completion_data?: any;
+  completion_data?: Record<string, unknown>;
 }
 
 // Initialize handover steps for a session
@@ -126,7 +126,7 @@ export const getHandoverSteps = async (handoverSessionId: string) => {
 export const completeHandoverStep = async (
   handoverSessionId: string,
   stepName: string,
-  completionData?: any
+  completionData?: Record<string, unknown>
 ) => {
   try {
     const { data: userData } = await supabase.auth.getUser();
@@ -191,7 +191,7 @@ export const completeHandoverStep = async (
 const validateStepCompletion = async (
   handoverSessionId: string,
   stepName: string,
-  completionData?: any
+  completionData?: Record<string, unknown>
 ): Promise<{ isValid: boolean; message: string }> => {
   switch (stepName) {
     case "fuel_mileage_check":
@@ -313,7 +313,7 @@ export const updateVehicleConditionReport = async (
 ) => {
   try {
     // Convert arrays to JSON if they exist in updates
-    const dbUpdates: any = { ...updates };
+    const dbUpdates: Record<string, unknown> = { ...updates };
     if (updates.vehicle_photos) {
       dbUpdates.vehicle_photos = JSON.stringify(updates.vehicle_photos);
     }

@@ -28,8 +28,73 @@ import { useCallback } from 'react';
 import { NotificationClassifier, classifyType } from "@/utils/NotificationClassifier";
 import ConversationRow from "@/components/chat/ConversationRow";
 import MessageList from "@/components/chat/MessageList";
+import { Database } from "@/integrations/supabase/types";
 
-const SectionHeader = ({ children }) => (
+// Type definitions
+type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+
+interface EnhancedNotification extends Notification {
+  priority?: 'high' | 'medium' | 'low';
+  score?: number;
+  classifiedType?: string;
+  archived?: boolean;
+  snoozedUntil?: string | null;
+  _actionLoading?: 'accept' | 'decline' | null;
+  _actionTaken?: 'accepted' | 'declined' | null;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender_id: string;
+  receiver_id: string;
+  created_at: string;
+  status?: string;
+  read?: boolean;
+  reply_to_id?: string;
+  sender?: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
+interface EnhancedMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  senderName: string;
+  senderAvatarUrl: string | null;
+  content: string;
+  createdAt: string;
+  read: boolean;
+  replyToId?: string;
+  ref: (el: HTMLLIElement | null) => void;
+}
+
+interface Conversation {
+  userId: string;
+  name: string;
+  avatar: string | null;
+  lastMessage: string;
+  lastDate: string;
+  lastMsgObj: Message;
+}
+
+interface UserBehavior {
+  opens: Record<string, number>;
+  deletes: Record<string, number>;
+  important: Record<string, number>;
+  favorites: string[];
+}
+
+interface ChatState {
+  isOpen: boolean;
+  senderId: string;
+  senderName: string;
+}
+
+const SectionHeader = ({ children }: { children: React.ReactNode }) => (
   <h2 className="text-lg font-bold mb-4 flex items-center gap-2">{children}</h2>
 );
 
@@ -41,11 +106,7 @@ export default function NotificationsPage() {
   // --- Split notifications into recent and old ---
   const [isRecentExpanded, setIsRecentExpanded] = useState(true);
   const [isOldExpanded, setIsOldExpanded] = useState(true);
-  const [selectedChat, setSelectedChat] = useState<{
-    isOpen: boolean;
-    senderId: string;
-    senderName: string;
-  }>({
+  const [selectedChat, setSelectedChat] = useState<ChatState>({
     isOpen: false,
     senderId: '',
     senderName: '',
@@ -66,7 +127,7 @@ export default function NotificationsPage() {
 
   // --- Real chat data for Messages tab ---
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const defaultReceiverId = "test-recipient-id"; // Replace with a real user id or add a selector if needed
@@ -163,7 +224,7 @@ export default function NotificationsPage() {
   // }} />
 
   // Add state to track notifications locally for instant UI updates
-  const [localNotifications, setLocalNotifications] = useState<any[]>([]);
+  const [localNotifications, setLocalNotifications] = useState<EnhancedNotification[]>([]);
   useEffect(() => {
     // Initialize with empty array, will be populated by fetchNotificationsPage
     setLocalNotifications([]);
@@ -366,7 +427,7 @@ export default function NotificationsPage() {
     return date.toLocaleDateString();
   };
 
-  const getNotificationColor = (notification: any) => {
+  const getNotificationColor = (notification: EnhancedNotification) => {
     const classification = NotificationClassifier.classifyNotification(notification);
     
     if (classification.type === 'payment') {
@@ -409,36 +470,40 @@ export default function NotificationsPage() {
   const limitedOldNotifications = oldNotifications.slice(0, maxNotifications);
 
   // Auto mark as read logic
+  const handleNotificationClickCallback = useCallback((id: string) => {
+    handleNotificationClick(id);
+  }, []);
+
   useEffect(() => {
     if (autoMarkRead && isRecentExpanded && limitedRecentNotifications.length > 0) {
       limitedRecentNotifications.forEach(n => {
-        if (!n.is_read) handleNotificationClick(n.id);
+        if (!n.is_read) handleNotificationClickCallback(n.id);
       });
     }
-  }, [autoMarkRead, isRecentExpanded, limitedRecentNotifications]);
+  }, [autoMarkRead, isRecentExpanded, limitedRecentNotifications, handleNotificationClickCallback]);
   useEffect(() => {
     if (autoMarkRead && isOldExpanded && limitedOldNotifications.length > 0) {
       limitedOldNotifications.forEach(n => {
-        if (!n.is_read) handleNotificationClick(n.id);
+        if (!n.is_read) handleNotificationClickCallback(n.id);
       });
     }
-  }, [autoMarkRead, isOldExpanded, limitedOldNotifications]);
+  }, [autoMarkRead, isOldExpanded, limitedOldNotifications, handleNotificationClickCallback]);
 
   // --- Conversation state for Messages tab ---
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<any[]>([]); // [{ userId, name, avatar, lastMessage, lastDate }]
-  const [conversationMessages, setConversationMessages] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationMessages, setConversationMessages] = useState<Message[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
 
   // Add state for forward modal, starred messages, and more
-  const [forwardingMsg, setForwardingMsg] = useState<any | null>(null);
+  const [forwardingMsg, setForwardingMsg] = useState<Message | null>(null);
   const [forwardRecipient, setForwardRecipient] = useState("");
   const [starredIds, setStarredIds] = useState<string[]>([]);
   const [moreMenuId, setMoreMenuId] = useState<string | null>(null);
 
   // Fetch all messages and group by conversation
   useEffect(() => {
-    let channel: any = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
     let isMounted = true;
     const fetchConversations = async () => {
       setLoadingConversations(true);
@@ -452,7 +517,7 @@ export default function NotificationsPage() {
         .order("created_at", { ascending: false });
       if (error) return;
       // Group by other user
-      const convMap: Record<string, any> = {};
+      const convMap: Record<string, Conversation> = {};
       for (const msg of messages) {
         const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
         if (!convMap[otherId] || new Date(msg.created_at) > new Date(convMap[otherId].lastDate)) {
@@ -520,7 +585,7 @@ export default function NotificationsPage() {
   }, [selectedConversation]);
 
   // Handler: Mark as Read/Unread
-  const handleToggleRead = async (notification: any) => {
+  const handleToggleRead = async (notification: EnhancedNotification) => {
     const { error } = await supabase
       .from('notifications')
       .update({ is_read: !notification.is_read })
@@ -539,7 +604,7 @@ export default function NotificationsPage() {
       toast.error('Failed to update notification');
     }
   };
-  const handleDeleteNotification = async (notification) => {
+  const handleDeleteNotification = async (notification: EnhancedNotification) => {
     if (!window.confirm('Are you sure you want to delete this notification?')) return;
     
     try {
@@ -572,11 +637,11 @@ export default function NotificationsPage() {
   };
 
   // Handler: Reply
-  const handleReply = (msg: any) => {
+  const handleReply = (msg: Message) => {
     setSelectedChat({ isOpen: true, senderId: msg.sender_id, senderName: msg.sender?.full_name || msg.sender_id });
   };
   // Handler: Forward
-  const handleForward = (msg: any) => {
+  const handleForward = (msg: Message) => {
     setForwardingMsg(msg);
     setForwardRecipient("");
   };
@@ -596,7 +661,7 @@ export default function NotificationsPage() {
     }
   };
   // Handler: Delete
-  const handleDeleteMsg = async (msg: any) => {
+  const handleDeleteMsg = async (msg: Message) => {
     const { error } = await supabase.from("messages").delete().eq("id", msg.id);
     if (!error) {
       toast.success("Message deleted");
@@ -610,13 +675,13 @@ export default function NotificationsPage() {
     }
   };
   // Handler: Star
-  const handleToggleStar = async (msg: any) => {
+  const handleToggleStar = async (msg: Message) => {
     const isStarred = starredIds.includes(msg.id);
     setStarredIds(ids => isStarred ? ids.filter(id => id !== msg.id) : [...ids, msg.id]);
     // No DB update, just UI state
   };
   // Handler: More
-  const handleMore = (msg: any) => {
+  const handleMore = (msg: Message) => {
     setMoreMenuId(moreMenuId === msg.id ? null : msg.id);
   };
 
@@ -649,13 +714,13 @@ export default function NotificationsPage() {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
   // Helper: select all in a list
-  const selectAll = (list: any[]) => {
+  const selectAll = (list: EnhancedNotification[]) => {
     setSelectedIds(list.map(n => n.id));
   };
   // Helper: deselect all
   const deselectAll = () => setSelectedIds([]);
   // Helper: toggle select all
-  const toggleSelectAll = (list: any[]) => {
+  const toggleSelectAll = (list: EnhancedNotification[]) => {
     if (selectedIds.length === list.length) deselectAll();
     else selectAll(list);
   };
@@ -715,27 +780,27 @@ export default function NotificationsPage() {
   }
 
   // Archive/unarchive logic
-  function handleArchive(notification) {
+  function handleArchive(notification: EnhancedNotification) {
     setLocalNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, archived: true } : n));
     setDummyState(s => s + 1); // Force re-render
   }
-  function handleUnarchive(notification) {
+  function handleUnarchive(notification: EnhancedNotification) {
     setLocalNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, archived: false } : n));
     setDummyState(s => s + 1); // Force re-render
   }
 
   // 2. Add state for modal
   const [snoozeModalOpen, setSnoozeModalOpen] = useState(false);
-  const [snoozeTarget, setSnoozeTarget] = useState(null);
+  const [snoozeTarget, setSnoozeTarget] = useState<EnhancedNotification | null>(null);
 
   // 3. Update handleSnooze to open modal
-  function handleSnooze(notification) {
+  function handleSnooze(notification: EnhancedNotification) {
     setSnoozeTarget(notification);
     setSnoozeModalOpen(true);
   }
 
   // 4. Add handler for modal snooze
-  function handleModalSnooze(snoozeUntil) {
+  function handleModalSnooze(snoozeUntil: string) {
     setLocalNotifications(prev => prev.map(n => n.id === snoozeTarget.id ? { ...n, snoozedUntil: snoozeUntil } : n));
     setSnoozeModalOpen(false);
     setSnoozeTarget(null);
@@ -752,14 +817,14 @@ export default function NotificationsPage() {
   });
 
   // User behavior tracking (in-memory for demo)
-  const [userBehavior, setUserBehavior] = useState({
+  const [userBehavior, setUserBehavior] = useState<UserBehavior>({
     opens: {},
     deletes: {},
     important: {},
     favorites: []
   });
 
-  function logUserAction(action, notification) {
+  function logUserAction(action: string, notification: EnhancedNotification) {
     setUserBehavior(prev => {
       const updated = { ...prev };
       if (action === "favorite") {
@@ -773,13 +838,13 @@ export default function NotificationsPage() {
     });
   }
 
-  function isSoon(notification) {
+  function isSoon(notification: EnhancedNotification) {
     if (notification.type !== "booking" || !notification.startDate) return false;
     const start = new Date(notification.startDate);
     return (start.getTime() - new Date().getTime()) < 24 * 60 * 60 * 1000;
   }
 
-  function prioritizeNotification(notification, userBehavior) {
+  function prioritizeNotification(notification: EnhancedNotification, userBehavior: UserBehavior): EnhancedNotification {
     const classifiedType = classifyType(notification);
     let score = 0;
     if (classifiedType === "payment") score += 3;
@@ -819,7 +884,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
   // Archive search state
   const [archiveSearch, setArchiveSearch] = useState("");
 
-  function handleUnsnooze(notification) {
+  function handleUnsnooze(notification: EnhancedNotification) {
     setLocalNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, snoozedUntil: null } : n));
   }
 
@@ -840,10 +905,10 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
   };
 
   // Reply-to state and refs for Messages tab
-  const [replyToMessage, setReplyToMessage] = useState<any | null>(null);
+  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const messageRefs = useRef<Record<string, HTMLLIElement | null>>({});
   // Handler for reply button
-  const handleReplyToMessage = (msg: any) => setReplyToMessage(msg);
+  const handleReplyToMessage = (msg: Message) => setReplyToMessage(msg);
   // Handler for jump to original message
   const handleJumpToMessage = (id: string) => {
     const el = messageRefs.current[id];
@@ -865,7 +930,12 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
   // Modified send handler
   const handleSend = async () => {
     if (!newMessage.trim() || !currentUserId) return;
-    const payload: any = {
+    const payload: {
+      content: string;
+      sender_id: string;
+      receiver_id: string;
+      reply_to_id?: string;
+    } = {
       content: newMessage.trim(),
       sender_id: currentUserId,
       receiver_id: defaultReceiverId,
@@ -885,7 +955,7 @@ const prioritizedArchived = archivedNotifications.map(n => prioritizeNotificatio
     }
   };
 
-  const [replyTarget, setReplyTarget] = useState<any | null>(null);
+  const [replyTarget, setReplyTarget] = useState<Message | null>(null);
 
   // Filtered messages for Messages tab search
   const filteredMessages = enhancedMessages.filter(

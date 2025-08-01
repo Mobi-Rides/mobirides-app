@@ -25,8 +25,18 @@ import SnoozeModal from "@/components/notifications/SnoozeModal";
 import { FixedSizeList as List } from 'react-window';
 import { useCallback } from 'react';
 import { NotificationClassifier, classifyType } from "@/utils/NotificationClassifier";
+import { Database } from "@/integrations/supabase/types";
 
+// Type definitions
+type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
 
+interface EnhancedNotification extends NotificationRow {
+  priority?: string;
+  score?: number;
+  classifiedType?: string;
+  archived?: boolean;
+  snoozedUntil?: string | null;
+}
 
 
 export default function Notifications() {
@@ -110,7 +120,7 @@ export default function Notifications() {
   // }} />
 
   // Add state to track notifications locally for instant UI updates
-  const [localNotifications, setLocalNotifications] = useState<any[]>([]);
+  const [localNotifications, setLocalNotifications] = useState<EnhancedNotification[]>([]);
   useEffect(() => {
     // Initialize with empty array, will be populated by fetchNotificationsPage
     setLocalNotifications([]);
@@ -292,7 +302,7 @@ export default function Notifications() {
     return date.toLocaleDateString();
   };
 
-  const getNotificationColor = (notification: any) => {
+  const getNotificationColor = (notification: EnhancedNotification) => {
     const classification = NotificationClassifier.classifyNotification(notification);
     
     if (classification.type === 'payment') {
@@ -357,7 +367,7 @@ export default function Notifications() {
   
 
   // Handler: Mark as Read/Unread
-  const handleToggleRead = async (notification: any) => {
+  const handleToggleRead = async (notification: EnhancedNotification) => {
     const { error } = await supabase
       .from('notifications')
       .update({ is_read: !notification.is_read })
@@ -420,13 +430,13 @@ export default function Notifications() {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
   // Helper: select all in a list
-  const selectAll = (list: any[]) => {
+  const selectAll = (list: EnhancedNotification[]) => {
     setSelectedIds(list.map(n => n.id));
   };
   // Helper: deselect all
   const deselectAll = () => setSelectedIds([]);
   // Helper: toggle select all
-  const toggleSelectAll = (list: any[]) => {
+  const toggleSelectAll = (list: EnhancedNotification[]) => {
     if (selectedIds.length === list.length) deselectAll();
     else selectAll(list);
   };

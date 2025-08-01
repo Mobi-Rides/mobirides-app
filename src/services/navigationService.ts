@@ -2,7 +2,7 @@ import { getMapboxToken } from "@/utils/mapbox";
 import { toast } from "@/utils/toast-utils";
 
 export interface NavigationRoute {
-  geometry: any; // GeoJSON geometry
+  geometry: GeoJSON.Geometry; // GeoJSON geometry
   distance: number;
   duration: number;
   steps: NavigationStep[];
@@ -14,7 +14,7 @@ export interface NavigationStep {
   duration: number;
   maneuver: string;
   road_name?: string;
-  geometry: any;
+  geometry: GeoJSON.Geometry;
 }
 
 export interface RouteRequest {
@@ -84,7 +84,13 @@ export class NavigationService {
         geometry: route.geometry,
         distance: route.distance,
         duration: route.duration,
-        steps: route.legs[0].steps.map((step: any) => ({
+        steps: route.legs[0].steps.map((step: {
+          maneuver: { instruction: string; type: string };
+          distance: number;
+          duration: number;
+          name: string;
+          geometry: GeoJSON.Geometry;
+        }) => ({
           instruction: step.maneuver.instruction,
           distance: step.distance,
           duration: step.duration,
