@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import App from "./App.tsx";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient(); // Force fresh build trigger
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

@@ -42,8 +42,8 @@ export const MapContainer = ({
     const eventSubscriber: EventSubscriber = {
       onEvent: (event: MapStateEvent) => {
         if (event.type === 'error') {
-          onMapError?.(new Error(event.payload));
-          toast.error(event.payload);
+          onMapError?.(new Error(String(event.payload)));
+          toast.error(String(event.payload));
         }
       }
     };

@@ -86,7 +86,7 @@ export const EnhancedHandoverSheet = ({
       const steps = await getHandoverSteps(handoverId);
       console.log("Loaded handover steps:", steps);
       console.log("Steps completion status:", steps.map(s => ({ name: s.step_name, completed: s.is_completed })));
-      setCompletedSteps(steps);
+      setCompletedSteps(steps as any);
       
       // Find current step (first incomplete step)
       const firstIncomplete = steps.findIndex(step => !step.is_completed);
@@ -125,7 +125,7 @@ export const EnhancedHandoverSheet = ({
     if (success) {
       // Refresh steps to get updated state
       const updatedSteps = await getHandoverSteps(handoverId);
-      setCompletedSteps(updatedSteps);
+      setCompletedSteps(updatedSteps as any);
       
       // Move to next step
       const nextIncomplete = updatedSteps.findIndex(step => !step.is_completed);
