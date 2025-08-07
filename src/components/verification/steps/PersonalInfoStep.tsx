@@ -43,16 +43,16 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
     if (verificationData?.personal_info) {
       const personalInfo = verificationData.personal_info;
       const newFormData = {
-        fullName: personalInfo.fullName || "",
-        dateOfBirth: personalInfo.dateOfBirth || "",
-        nationalIdNumber: personalInfo.nationalIdNumber || "",
-        phoneNumber: personalInfo.phoneNumber || "",
-        email: personalInfo.email || "",
+        fullName: String((personalInfo as any)?.fullName || ""),
+        dateOfBirth: String((personalInfo as any)?.dateOfBirth || ""),
+        nationalIdNumber: String((personalInfo as any)?.nationalIdNumber || ""),
+        phoneNumber: String((personalInfo as any)?.phoneNumber || ""),
+        email: String((personalInfo as any)?.email || ""),
         address: {
-          street: personalInfo.address?.street || "",
-          area: personalInfo.address?.area || "",
-          city: personalInfo.address?.city || "",
-          postalCode: personalInfo.address?.postalCode || "",
+          street: String((personalInfo as any)?.address?.street || ""),
+          area: String((personalInfo as any)?.address?.area || ""),
+          city: String((personalInfo as any)?.address?.city || ""),
+          postalCode: String((personalInfo as any)?.address?.postalCode || ""),
         },
       };
       

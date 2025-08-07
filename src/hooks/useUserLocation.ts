@@ -13,8 +13,8 @@ export const useUserLocation = (current: unknown) => {
 
   useEffect(() => {
     const eventSubscriber = {
-      onEvent: (event: LocationEvent) => {
-        if (event.type === "locationUpdate" && event.payload.latitude) {
+      onEvent: (event: any) => {
+        if (event.type === "locationUpdate" && event.payload?.latitude) {
           setUserLocation(event.payload);
         }
       }

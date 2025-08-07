@@ -165,18 +165,11 @@ export const useConversations = () => {
           .order('created_at', { ascending: false });
 
         // Transform conversations
-        const transformedConversations: Conversation[] = userConversations.map((conv: {
-          id: string;
-          name: string;
-          last_message_at: string;
-        }) => {
+        const transformedConversations: Conversation[] = userConversations.map((conv: any) => {
           // Find participants for this conversation
           const conversationParticipants = participants?.filter(p => p.conversation_id === conv.id) || [];
           
-          const participantUsers: User[] = conversationParticipants.map((p: {
-            user_id: string;
-            profiles?: { full_name?: string; avatar_url?: string };
-          }) => ({
+          const participantUsers: User[] = conversationParticipants.map((p: any) => ({
             id: p.user_id,
             name: p.profiles?.full_name || 'Unknown User',
             avatar: p.profiles?.avatar_url ? 
@@ -190,7 +183,7 @@ export const useConversations = () => {
 
           return {
             id: conv.id,
-            title: conv.title,
+            title: conv.title || conv.name || 'Direct Message',
             participants: participantUsers,
             lastMessage: lastMessage ? {
               id: lastMessage.id,
@@ -201,9 +194,9 @@ export const useConversations = () => {
               type: lastMessage.message_type as 'text' | 'image' | 'file'
             } : undefined,
             unreadCount: 0,
-            type: conv.type as 'direct' | 'group',
-            createdAt: new Date(conv.created_at),
-            updatedAt: new Date(conv.updated_at)
+            type: (conv.type || 'direct') as 'direct' | 'group',
+            createdAt: new Date(conv.created_at || new Date().toISOString()),
+            updatedAt: new Date(conv.updated_at || conv.last_message_at || new Date().toISOString())
           };
         });
 

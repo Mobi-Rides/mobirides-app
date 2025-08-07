@@ -157,7 +157,7 @@ export const completeHandoverStep = async (
       .update({
         is_completed: true,
         completed_by: userData.user.id,
-        completion_data: completionData,
+        completion_data: completionData as any,
         completed_at: new Date().toISOString()
       })
       .eq("handover_session_id", handoverSessionId)
