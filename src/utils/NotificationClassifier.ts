@@ -28,6 +28,14 @@
 interface NotificationLike {
   content?: string;
   type?: string;
+  related_booking_id?: string | null;
+  related_car_id?: string | null;
+  metadata?: any;
+  // Extended properties for enhanced classification
+  amount?: number;
+  currency?: string;
+  currency_code?: string;
+  sender_role?: string;
 }
 
 // Advanced Notification Classification System (Full 9-Layer, Priority-Weighted, Backend-Agnostic, Context-Aware)
