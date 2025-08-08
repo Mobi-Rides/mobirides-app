@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { NewConversationModal } from './NewConversationModal';
+import { MigrationStatusBanner } from './MigrationStatusBanner';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useConversations } from '@/hooks/useConversations';
+import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
 import { useConversationMessages } from '@/hooks/useConversationMessages';
 
 interface MessagingInterfaceProps {
@@ -15,7 +16,7 @@ interface MessagingInterfaceProps {
 }
 
 export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
-  const { conversations, isLoading: conversationsLoading, createConversation, isCreatingConversation } = useConversations();
+  const { conversations, isLoading: conversationsLoading, createConversation, isCreatingConversation } = useOptimizedConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
   const { messages, sendMessage, isSendingMessage } = useConversationMessages(selectedConversationId);
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,19 +142,23 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   };
 
   return (
-    <div className={cn("flex h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>
-      {/* Conversation List */}
-      <div className="w-80 flex-shrink-0">
-        <ConversationList
-          conversations={filteredConversations}
-          selectedConversationId={selectedConversationId}
-          currentUser={currentUser}
-          onSelectConversation={setSelectedConversationId}
-          onNewConversation={handleNewConversation}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-        />
-      </div>
+    <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>
+      {/* Migration Status Banner */}
+      <MigrationStatusBanner />
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* Conversation List */}
+        <div className="w-80 flex-shrink-0">
+          <ConversationList
+            conversations={filteredConversations}
+            selectedConversationId={selectedConversationId}
+            currentUser={currentUser}
+            onSelectConversation={setSelectedConversationId}
+            onNewConversation={handleNewConversation}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
+        </div>
 
       {/* Chat Window */}
       <div className="flex-1">
@@ -194,6 +199,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* New Conversation Modal */}

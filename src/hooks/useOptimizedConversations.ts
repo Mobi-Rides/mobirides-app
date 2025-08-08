@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User } from "@/types/message";
 
@@ -29,62 +29,60 @@ interface DatabaseConversation {
   }>;
 }
 
-export const useConversations = () => {
+/**
+ * Optimized conversation hook with better real-time performance and batching
+ */
+export const useOptimizedConversations = () => {
   const queryClient = useQueryClient();
 
-  // Set up optimized real-time subscriptions for conversations
+  // Optimized real-time subscription with targeted filters
   useEffect(() => {
+    let conversationIds: string[] = [];
+
     const setupSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-    // Create a single channel for all conversation-related real-time updates
-    const channel = supabase
-      .channel(`user-conversations-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversations'
-        },
-        (payload) => {
-          console.log('Conversation changed:', payload);
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversation_participants',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('User participation changed:', payload);
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversation_messages'
-        },
-        (payload) => {
-          console.log('Message changed:', payload);
-          queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          // Also invalidate specific conversation messages if available
-          if (payload.new && typeof payload.new === 'object' && 'conversation_id' in payload.new) {
-            queryClient.invalidateQueries({ 
-              queryKey: ['conversation-messages', payload.new.conversation_id] 
-            });
+      // Get user's conversation IDs first
+      const { data: userParticipations } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', user.id);
+
+      conversationIds = userParticipations?.map(p => p.conversation_id) || [];
+
+      const channel = supabase
+        .channel(`optimized-conversations-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'conversation_messages',
+            filter: conversationIds.length > 0 ? `conversation_id=in.(${conversationIds.join(',')})` : 'conversation_id=eq.never'
+          },
+          (payload) => {
+            console.log('Optimized message update:', payload);
+            // Batch invalidation to prevent excessive queries
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+            }, 100);
           }
-        }
-      )
-      .subscribe();
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'conversation_participants',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Optimized participation update:', payload);
+            queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+          }
+        )
+        .subscribe();
 
       return () => {
         supabase.removeChannel(channel);
@@ -93,14 +91,14 @@ export const useConversations = () => {
 
     const cleanup = setupSubscription();
     return () => {
-      cleanup.then(cleanupFn => cleanupFn?.());
+      cleanup.then(fn => fn?.());
     };
   }, [queryClient]);
 
   const { data: conversations, isLoading } = useQuery({
-    queryKey: ['conversations'],
+    queryKey: ['optimized-conversations'],
     queryFn: async () => {
-      console.log("Fetching conversations");
+      console.log("Fetching optimized conversations");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.log("No authenticated user");
@@ -108,8 +106,7 @@ export const useConversations = () => {
       }
 
       try {
-        // Use direct query approach that works with RLS
-        // First get conversations where user is a participant
+        // Get user's conversation IDs with a single query
         const { data: userParticipations, error: participationError } = await supabase
           .from('conversation_participants')
           .select('conversation_id')
@@ -120,8 +117,6 @@ export const useConversations = () => {
           return [];
         }
 
-        console.log("User participations:", userParticipations);
-
         if (!userParticipations || userParticipations.length === 0) {
           console.log("No conversations found for user");
           return [];
@@ -129,66 +124,58 @@ export const useConversations = () => {
 
         const convIds = userParticipations.map(p => p.conversation_id);
 
-        // Now fetch the conversations
-        const { data: userConversations, error: convError } = await supabase
-          .from('conversations')
-          .select(`
-            id, 
-            title, 
-            type, 
-            created_at, 
-            updated_at, 
-            last_message_at, 
-            created_by
-          `)
-          .in('id', convIds)
-          .order('updated_at', { ascending: false });
+        // Batch fetch all conversation data
+        const [conversationsResult, participantsResult, messagesResult] = await Promise.all([
+          supabase
+            .from('conversations')
+            .select('id, title, type, created_at, updated_at, last_message_at, created_by')
+            .in('id', convIds)
+            .order('updated_at', { ascending: false }),
+          
+          supabase
+            .from('conversation_participants')
+            .select(`
+              conversation_id,
+              user_id,
+              joined_at,
+              profiles (id, full_name, avatar_url)
+            `)
+            .in('conversation_id', convIds),
+          
+          supabase
+            .from('conversation_messages')
+            .select('id, content, sender_id, created_at, message_type, conversation_id')
+            .in('conversation_id', convIds)
+            .order('created_at', { ascending: false })
+        ]);
 
-        if (convError) {
-          console.error("Error fetching conversations:", convError);
+        const { data: userConversations, error: convError } = conversationsResult;
+        const { data: participants, error: participantsError } = participantsResult;
+        const { data: latestMessages, error: messagesError } = messagesResult;
+
+        if (convError || participantsError || messagesError) {
+          console.error("Error in batch fetch:", { convError, participantsError, messagesError });
           return [];
         }
 
-        console.log("Fetched conversations:", userConversations);
+        // Transform conversations with optimized lookups
+        const participantsByConv = new Map();
+        participants?.forEach(p => {
+          if (!participantsByConv.has(p.conversation_id)) {
+            participantsByConv.set(p.conversation_id, []);
+          }
+          participantsByConv.get(p.conversation_id).push(p);
+        });
 
-        if (!userConversations?.length) {
-          console.log("No conversation data found");
-          return [];
-        }
+        const messagesByConv = new Map();
+        latestMessages?.forEach(m => {
+          if (!messagesByConv.has(m.conversation_id)) {
+            messagesByConv.set(m.conversation_id, m);
+          }
+        });
 
-        // Fetch participants for these conversations
-        const { data: participants, error: participantsError } = await supabase
-          .from('conversation_participants')
-          .select(`
-            conversation_id,
-            user_id,
-            joined_at,
-            profiles (
-              id,
-              full_name,
-              avatar_url
-            )
-          `)
-          .in('conversation_id', convIds);
-
-        if (participantsError) {
-          console.error("Error fetching participants:", participantsError);
-          return [];
-        }
-
-        console.log("Fetched participants:", participants);
-
-        // Get latest messages for each conversation
-        const { data: latestMessages } = await supabase
-          .from('conversation_messages')
-          .select('id, content, sender_id, created_at, message_type, conversation_id')
-          .in('conversation_id', convIds)
-          .order('created_at', { ascending: false });
-
-        // Transform conversations
-        const transformedConversations: Conversation[] = userConversations.map((conv: any) => {
-          // Find participants for this conversation
-          const conversationParticipants = participants?.filter(p => p.conversation_id === conv.id) || [];
+        const transformedConversations: Conversation[] = userConversations?.map((conv: any) => {
+          const conversationParticipants = participantsByConv.get(conv.id) || [];
           
           const participantUsers: User[] = conversationParticipants.map((p: any) => ({
             id: p.user_id,
@@ -199,8 +186,7 @@ export const useConversations = () => {
             status: 'offline' as const
           }));
 
-          // Find the latest message for this conversation
-          const lastMessage = latestMessages?.find(m => m.conversation_id === conv.id);
+          const lastMessage = messagesByConv.get(conv.id);
 
           return {
             id: conv.id,
@@ -219,17 +205,19 @@ export const useConversations = () => {
             createdAt: new Date(conv.created_at || new Date().toISOString()),
             updatedAt: new Date(conv.updated_at || conv.last_message_at || new Date().toISOString())
           };
-        });
+        }) || [];
 
-        console.log("Transformed conversations:", transformedConversations);
+        console.log("Optimized conversations transformed:", transformedConversations);
         return transformedConversations;
 
       } catch (error) {
-        console.error("Error in conversation fetch:", error);
+        console.error("Error in optimized conversation fetch:", error);
         return [];
       }
     },
     enabled: true,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
 
   const createConversationMutation = useMutation({
@@ -239,7 +227,7 @@ export const useConversations = () => {
 
       // Check if direct conversation already exists
       if (participantIds.length === 1) {
-        const existingConversation = conversations.find(conv => 
+        const existingConversation = conversations?.find(conv => 
           conv.type === 'direct' && 
           conv.participants.length === 2 &&
           conv.participants.some(p => p.id === participantIds[0]) &&
@@ -281,12 +269,14 @@ export const useConversations = () => {
       return conversation;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
     }
   });
 
+  const memoizedConversations = useMemo(() => conversations || [], [conversations]);
+
   return {
-    conversations: conversations || [],
+    conversations: memoizedConversations,
     isLoading,
     createConversation: createConversationMutation.mutate,
     isCreatingConversation: createConversationMutation.isPending

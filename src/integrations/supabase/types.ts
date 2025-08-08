@@ -696,6 +696,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          migrated_to_conversation_id: string | null
           receiver_id: string
           related_car_id: string | null
           sender_id: string
@@ -706,6 +707,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          migrated_to_conversation_id?: string | null
           receiver_id: string
           related_car_id?: string | null
           sender_id: string
@@ -716,6 +718,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          migrated_to_conversation_id?: string | null
           receiver_id?: string
           related_car_id?: string | null
           sender_id?: string
@@ -723,6 +726,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_migrated_to_conversation_id_fkey"
+            columns: ["migrated_to_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_receiver_id_fkey"
             columns: ["receiver_id"]
@@ -1301,6 +1311,10 @@ export type Database = {
         Returns: boolean
       }
       migrate_legacy_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      migrate_legacy_messages_to_conversations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
