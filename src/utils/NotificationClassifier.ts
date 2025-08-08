@@ -45,7 +45,7 @@ export class NotificationClassifier {
     'charge', 'billing', 'invoice', 'receipt', 'transfer', 'settlement', 'payout', 'revenue', 'income', 'profit', 'fee', 'cost', 'amount', 'dollar', 'usd', '$', 'peso', 'pesos', 'p₱', '₱'
   ];
   private static readonly BOOKING_KEYWORDS = [
-    'booking', 'rental', 'car', 'vehicle', 'reservation', 'pickup', 'return', 'host', 'renter', 'trip', 'journey', 'drive', 'start', 'end', 'schedule', 'cancel', 'request', 'appointment', 'time', 'date', 'duration', 'location', 'address', 'dropoff', 'handover', 'inspection'
+    'booking', 'rental', 'car', 'vehicle', 'reservation', 'pickup', 'return', 'host', 'renter', 'trip', 'journey', 'drive', 'start', 'end', 'schedule', 'cancel', 'request', 'appointment', 'time', 'date', 'duration', 'location', 'address', 'dropoff', 'handover', 'inspection', 'confirmed', 'approved', 'pending', 'reminder'
   ];
   private static readonly PAYMENT_ACTIONS = [
     'topped up', 'deducted', 'received', 'processed', 'sent', 'withdrawn', 'credited', 'debited', 'completed', 'successful', 'failed', 'pending', 'approved', 'rejected', 'settled', 'transferred', 'deposited'
@@ -74,14 +74,33 @@ export class NotificationClassifier {
     let paymentScore = 0;
     let bookingScore = 0;
     const reasons: string[] = [];
+    
+    // Check if this is a role-specific notification type
+    const hasRoleSpecificType = type.includes('_host') || type.includes('_renter') || 
+                               type.includes('_received') || type.includes('_sent');
 
-    // 1. Backend type as a WEAK hint (2 points only)
+    // 1. Enhanced backend type classification (5 points for role-specific types)
     if (type.includes('booking')) {
-      bookingScore += 2;
-      reasons.push("Type contains 'booking' (weak hint)");
+      // Role-specific booking notifications get higher scores
+      if (hasRoleSpecificType) {
+        bookingScore += 5;
+        reasons.push("Role-specific booking type detected (strong hint)");
+      } else {
+        bookingScore += 2;
+        reasons.push("Type contains 'booking' (weak hint)");
+      }
     } else if (type.includes('wallet') || type.includes('payment')) {
       paymentScore += 2;
       reasons.push("Type contains 'wallet' or 'payment' (weak hint)");
+    } else if (type.includes('reminder')) {
+      // Reminder types are typically booking-related
+      if (type.includes('pickup') || type.includes('return')) {
+        bookingScore += 4;
+        reasons.push("Pickup/return reminder type (booking hint)");
+      } else {
+        bookingScore += 2;
+        reasons.push("Generic reminder type (weak booking hint)");
+      }
     }
 
     // 2. Currency pattern (priority 12)
@@ -134,7 +153,7 @@ export class NotificationClassifier {
       reasons.push('Semantic: rental logistics context');
     }
 
-    // 9. Contextual clues from metadata/fields
+    // 9. Enhanced contextual clues from metadata/fields and role-based targeting
     if (notification.related_booking_id) {
       bookingScore += 10;
       reasons.push('related_booking_id present (strong booking clue)');
@@ -151,29 +170,51 @@ export class NotificationClassifier {
       paymentScore += 5;
       reasons.push('currency field present (payment clue)');
     }
-    // Sender/receiver roles (if available)
-    if (notification.sender_role === 'host' && content.includes('payment')) {
-      paymentScore += 2;
-      reasons.push('sender_role host with payment context');
+    
+    // Enhanced role-based targeting analysis
+    if (notification.sender_role === 'host') {
+      if (content.includes('payment') || content.includes('earned') || content.includes('commission')) {
+        paymentScore += 3;
+        reasons.push('host role with payment context');
+      } else if (content.includes('booking') || content.includes('confirmed')) {
+        bookingScore += 3;
+        reasons.push('host role with booking context');
+      }
     }
-    if (notification.sender_role === 'renter' && content.includes('booking')) {
-      bookingScore += 2;
-      reasons.push('sender_role renter with booking context');
+    if (notification.sender_role === 'renter') {
+      if (content.includes('booking') || content.includes('confirmed') || content.includes('reminder')) {
+        bookingScore += 3;
+        reasons.push('renter role with booking context');
+      } else if (content.includes('payment') || content.includes('charged')) {
+        paymentScore += 2;
+        reasons.push('renter role with payment context');
+      }
+    }
+    
+    // Role-specific notification type detection
+    if (type.includes('_host') || type.includes('_renter')) {
+      if (type.includes('confirmed') || type.includes('cancelled') || type.includes('reminder') || type.includes('request')) {
+        bookingScore += 8;
+        reasons.push('Role-specific booking notification type (very strong clue)');
+      }
     }
 
     // 10. Negative signals: if payment words are present, reduce booking score, and vice versa
-    if (paymentKeywordCount > 0) {
+    // BUT: role-specific types should override negative signals
+    
+    if (paymentKeywordCount > 0 && !hasRoleSpecificType) {
       bookingScore -= paymentKeywordCount * 1.5;
       reasons.push(`Booking score penalized by payment keywords: -${paymentKeywordCount * 1.5}`);
       bookingScore = Math.max(0, bookingScore); // Ensure score doesn't go below 0
     }
-    if (bookingKeywordCount > 0) {
+    if (bookingKeywordCount > 0 && !hasRoleSpecificType) {
       paymentScore -= bookingKeywordCount * 1.5;
       reasons.push(`Payment score penalized by booking keywords: -${bookingKeywordCount * 1.5}`);
       paymentScore = Math.max(0, paymentScore); // Ensure score doesn't go below 0
     }
-    // If both payment and booking scores are high, mark as ambiguous
-    if (paymentScore > 10 && bookingScore > 10) {
+    
+    // If both payment and booking scores are high, mark as ambiguous UNLESS we have role-specific type
+    if (paymentScore > 10 && bookingScore > 10 && !hasRoleSpecificType) {
       reasons.push('Both payment and booking clues are strong: ambiguous');
       return { type: 'other', confidence: 50, reasons };
     }
@@ -186,22 +227,48 @@ export class NotificationClassifier {
       return { type: 'booking', confidence: 50, reasons };
     }
 
-    // Final scoring and confidence
+    // Final scoring and confidence with role-specific type priority
     let finalType: 'payment' | 'booking' | 'other';
-    if (paymentScore > bookingScore && paymentScore > 0) {
-      finalType = 'payment';
-    } else if (bookingScore > paymentScore && bookingScore > 0) {
-      finalType = 'booking';
+    
+    // Role-specific types get priority even with mixed signals
+    if (hasRoleSpecificType) {
+      if (type.includes('booking') || type.includes('reminder') || type.includes('confirmed') || 
+          type.includes('cancelled') || type.includes('request')) {
+        finalType = 'booking';
+        reasons.push('Role-specific type overrides mixed signals');
+      } else if (type.includes('payment') || type.includes('wallet')) {
+        finalType = 'payment';
+        reasons.push('Role-specific payment type detected');
+      } else {
+        // Fallback to score comparison for role-specific types
+        finalType = paymentScore > bookingScore ? 'payment' : 'booking';
+      }
     } else {
-      finalType = 'other';
+      // Standard score-based classification for non-role-specific types
+      if (paymentScore > bookingScore && paymentScore > 0) {
+        finalType = 'payment';
+      } else if (bookingScore > paymentScore && bookingScore > 0) {
+        finalType = 'booking';
+      } else {
+        finalType = 'other';
+      }
     }
+    
     const total = paymentScore + bookingScore;
-    const confidence = total > 0 ? Math.round((Math.max(paymentScore, bookingScore) / total) * 100) : 0;
-    // If confidence is low, mark as other
-    if (confidence < 60) {
+    let confidence = total > 0 ? Math.round((Math.max(paymentScore, bookingScore) / total) * 100) : 0;
+    
+    // Boost confidence for role-specific types
+    if (hasRoleSpecificType && confidence > 50) {
+      confidence = Math.min(100, confidence + 10);
+      reasons.push('Confidence boosted for role-specific type');
+    }
+    
+    // If confidence is low and not role-specific, mark as other
+    if (confidence < 60 && !hasRoleSpecificType) {
       reasons.push('Low confidence: marked as other');
       finalType = 'other';
     }
+    
     return { type: finalType, confidence, reasons };
   }
 }
