@@ -14,32 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activity_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_sessions: {
+        Row: {
+          admin_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          is_active: boolean
+          last_activity: string
+          session_token: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          last_activity?: string
+          session_token: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          last_activity?: string
+          session_token?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_sessions_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admins: {
         Row: {
           created_at: string
           email: string
+          failed_login_attempts: number | null
           full_name: string | null
           id: string
           is_super_admin: boolean | null
           last_sign_in_at: string | null
+          locked_until: string | null
+          must_change_password: boolean | null
+          password_changed_at: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
+          failed_login_attempts?: number | null
           full_name?: string | null
           id: string
           is_super_admin?: boolean | null
           last_sign_in_at?: string | null
+          locked_until?: string | null
+          must_change_password?: boolean | null
+          password_changed_at?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
+          failed_login_attempts?: number | null
           full_name?: string | null
           id?: string
           is_super_admin?: boolean | null
           last_sign_in_at?: string | null
+          locked_until?: string | null
+          must_change_password?: boolean | null
+          password_changed_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1279,6 +1379,10 @@ export type Database = {
         Args: { host_uuid: string; required_commission: number }
         Returns: boolean
       }
+      cleanup_expired_admin_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_booking_notification: {
         Args: {
           p_booking_id: string
@@ -1310,6 +1414,16 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      log_admin_activity: {
+        Args: {
+          p_admin_id: string
+          p_action: string
+          p_resource_type?: string
+          p_resource_id?: string
+          p_details?: Json
+        }
+        Returns: undefined
+      }
       migrate_legacy_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1317,6 +1431,10 @@ export type Database = {
       migrate_legacy_messages_to_conversations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      validate_admin_session: {
+        Args: { p_session_token: string }
+        Returns: boolean
       }
       validate_step_dependencies: {
         Args: {

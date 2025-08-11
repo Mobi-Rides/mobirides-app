@@ -5,8 +5,14 @@ import { transactionHistory } from "./wallet/transactionHistory";
 import { notificationService } from "./wallet/notificationService";
 
 export type { WalletBalance } from "./wallet/walletBalance";
-export type { TopUpRequest } from "./wallet/walletTopUp";
 export type { WalletTransaction } from "./wallet/transactionHistory";
+
+// Re-export TopUpRequest from walletTopUp with proper interface
+export interface TopUpRequest {
+  amount: number;
+  payment_method: string;
+  payment_reference?: string;
+}
 
 class WalletService {
   async getWalletBalance(hostId: string) {

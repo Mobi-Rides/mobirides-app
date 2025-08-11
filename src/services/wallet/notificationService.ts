@@ -50,7 +50,7 @@ export class NotificationService {
 
       const { error } = await supabase.from("notifications").insert({
         user_id: hostId,
-        type: dbType,
+        type: dbType as any,
         content: content,
         related_booking_id: relatedBookingId,
         is_read: false,
