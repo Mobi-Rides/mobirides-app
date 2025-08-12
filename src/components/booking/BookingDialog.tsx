@@ -295,9 +295,88 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (bookingError) throw bookingError;
 
       console.log("[BookingDialog] Booking created successfully:", booking.id);
-      console.log("[BookingDialog] Creating notifications...");
+      console.log("[BookingDialog] Creating notifications and sending Twilio alerts...");
 
-      // Create notifications (non-blocking - don't let notification failures block the booking flow)
+      // Get user details for notifications (using existing columns for now)
+      const { data: renterProfile } = await supabase
+        .from("profiles")
+        .select("full_name, phone_number")
+        .eq("id", session.session.user.id)
+        .single();
+
+      const { data: hostProfile } = await supabase
+        .from("profiles")
+        .select("full_name, phone_number")
+        .eq("id", car.owner_id)
+        .single();
+
+      // Import notification service
+      const { TwilioNotificationService } = await import("@/services/notificationService");
+      const notificationService = TwilioNotificationService.getInstance();
+
+      // Prepare booking data for notifications
+      const bookingNotificationData = {
+        bookingId: booking.id,
+        customerName: renterProfile?.full_name || "Customer",
+        hostName: hostProfile?.full_name || "Host", 
+        carBrand: car.brand,
+        carModel: car.model,
+        pickupDate: format(startDate, "PPP"),
+        pickupTime: startTime,
+        pickupLocation: car.location || "Pickup location",
+        dropoffLocation: car.location || "Return location",
+        totalAmount: totalPrice,
+        bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`
+      };
+
+      // Send Twilio notifications (non-blocking)
+      if (renterProfile) {
+        try {
+          const renterNotificationResult = await notificationService.sendBookingConfirmation(
+            {
+              id: session.session.user.id,
+              name: renterProfile.full_name || "Customer",
+              email: session.session.user.email,
+              phone: renterProfile.phone_number,
+              whatsappEnabled: true, // Default to enabled for now
+              emailEnabled: true
+            },
+            bookingNotificationData
+          );
+          
+          console.log("✅ Renter Twilio notifications sent:", renterNotificationResult);
+        } catch (error) {
+          console.error("❌ Failed to send renter Twilio notifications:", error);
+        }
+      }
+
+      if (hostProfile) {
+        try {
+          // Get host email from auth system
+          const { data: hostAuth } = await supabase.auth.admin.getUserById(car.owner_id);
+          
+          const hostNotificationResult = await notificationService.sendBookingConfirmation(
+            {
+              id: car.owner_id,
+              name: hostProfile.full_name || "Host",
+              email: hostAuth.user?.email,
+              phone: hostProfile.phone_number,
+              whatsappEnabled: true, // Default to enabled for now
+              emailEnabled: true
+            },
+            {
+              ...bookingNotificationData,
+              customerName: hostProfile.full_name || "Host" // Adjust message for host
+            }
+          );
+          
+          console.log("✅ Host Twilio notifications sent:", hostNotificationResult);
+        } catch (error) {
+          console.error("❌ Failed to send host Twilio notifications:", error);
+        }
+      }
+
+      // Create legacy database notifications (non-blocking - don't let notification failures block the booking flow)
       try {
         // Create notification for renter
         await createNotification(
