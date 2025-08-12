@@ -98,7 +98,7 @@ export function NotificationCard({
     } else if (classification.type === 'payment') {
       navigate('/wallet');
     } else {
-      navigate(`/notifications/${notification.id}`);
+      navigate(`/notifications/${notification.id?.toString()}`);
     }
   };
 

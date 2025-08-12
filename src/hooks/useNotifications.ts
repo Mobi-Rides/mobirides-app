@@ -20,7 +20,16 @@ export const useNotifications = () => {
       const { data, error } = await supabase
         .from('notifications')
         .select(`
-          *,
+          id,
+          user_id,
+          type,
+          title,
+          description,
+          content,
+          is_read,
+          created_at,
+          related_booking_id,
+          related_car_id,
           bookings:related_booking_id (
             id,
             start_date,

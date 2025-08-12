@@ -57,7 +57,7 @@ const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
 );
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Notifications = lazy(() => import("@/pages/Notifications"));
+const NotificationsRefactored = lazy(() => import("@/pages/NotificationsRefactored"));
 const Messages = lazy(() => import("@/pages/Messages"));
 const RentalReview = lazy(() => import("./pages/RentalReview"));
 const RentalDetailsRefactored = lazy(
@@ -269,7 +269,7 @@ function App() {
                         <Route path="/notifications" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
-                              <Notifications />
+                              <NotificationsRefactored />
                             </ProtectedRoute>
                           </Suspense>
                         } />

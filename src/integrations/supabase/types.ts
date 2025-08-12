@@ -906,13 +906,64 @@ export type Database = {
       }
       notifications: {
         Row: {
+          content: string | null
+          created_at: string | null
+          description: string | null
+          expires_at: string | null
+          id: number
+          is_read: boolean | null
+          metadata: Json | null
+          related_booking_id: string | null
+          related_car_id: string | null
+          role_target: Database["public"]["Enums"]["notification_role"] | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: never
+          is_read?: boolean | null
+          metadata?: Json | null
+          related_booking_id?: string | null
+          related_car_id?: string | null
+          role_target?: Database["public"]["Enums"]["notification_role"] | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: never
+          is_read?: boolean | null
+          metadata?: Json | null
+          related_booking_id?: string | null
+          related_car_id?: string | null
+          role_target?: Database["public"]["Enums"]["notification_role"] | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      notifications_backup: {
+        Row: {
           content: string
           created_at: string
           id: string
           is_read: boolean | null
           related_booking_id: string | null
           related_car_id: string | null
-          type: Database["public"]["Enums"]["notification_type"]
+          type: Database["public"]["Enums"]["old_notification_type"]
           updated_at: string
           user_id: string
         }
@@ -923,7 +974,7 @@ export type Database = {
           is_read?: boolean | null
           related_booking_id?: string | null
           related_car_id?: string | null
-          type: Database["public"]["Enums"]["notification_type"]
+          type: Database["public"]["Enums"]["old_notification_type"]
           updated_at?: string
           user_id: string
         }
@@ -934,7 +985,7 @@ export type Database = {
           is_read?: boolean | null
           related_booking_id?: string | null
           related_car_id?: string | null
-          type?: Database["public"]["Enums"]["notification_type"]
+          type?: Database["public"]["Enums"]["old_notification_type"]
           updated_at?: string
           user_id?: string
         }
@@ -1383,6 +1434,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      count_unread_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_booking_notification: {
         Args: {
           p_booking_id: string
@@ -1400,15 +1455,52 @@ export type Database = {
         }
         Returns: undefined
       }
+      delete_old_notifications: {
+        Args: { p_days_old?: number }
+        Returns: number
+      }
       get_user_conversation_ids: {
         Args: { user_uuid?: string }
         Returns: {
           conversation_id: string
         }[]
       }
+      get_user_conversations: {
+        Args: { p_page?: number; p_page_size?: number; p_search_term?: string }
+        Returns: {
+          conversation_id: string
+          title: string
+          type: string
+          last_message_at: string
+          participants: Json
+          last_message: string
+        }[]
+      }
+      get_user_notifications: {
+        Args: { p_page?: number; p_page_size?: number; p_only_unread?: boolean }
+        Returns: {
+          id: number
+          type: Database["public"]["Enums"]["notification_type"]
+          role_target: Database["public"]["Enums"]["notification_role"]
+          title: string
+          description: string
+          is_read: boolean
+          created_at: string
+          expires_at: string
+          metadata: Json
+        }[]
+      }
       get_user_review_stats: {
         Args: { user_uuid: string }
         Returns: Json
+      }
+      initialize_conversation: {
+        Args: {
+          p_title?: string
+          p_type?: string
+          p_participant_ids?: string[]
+        }
+        Returns: string
       }
       is_admin: {
         Args: { user_uuid: string }
@@ -1424,6 +1516,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_notifications_read: {
+        Args: { p_notification_ids: number[] }
+        Returns: number
+      }
       migrate_legacy_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1431,6 +1527,17 @@ export type Database = {
       migrate_legacy_messages_to_conversations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      send_conversation_message: {
+        Args: {
+          p_conversation_id: string
+          p_content: string
+          p_message_type?: string
+          p_related_car_id?: string
+          p_reply_to_message_id?: string
+          p_metadata?: Json
+        }
+        Returns: string
       }
       validate_admin_session: {
         Args: { p_session_token: string }
@@ -1453,7 +1560,19 @@ export type Database = {
         | "completed"
         | "expired"
       message_status: "sent" | "delivered" | "read"
+      notification_role: "host_only" | "renter_only" | "system_wide"
       notification_type:
+        | "booking_request_received"
+        | "booking_request_sent"
+        | "booking_confirmed_host"
+        | "booking_confirmed_renter"
+        | "booking_cancelled_host"
+        | "booking_cancelled_renter"
+        | "pickup_reminder_host"
+        | "pickup_reminder_renter"
+        | "return_reminder_host"
+        | "return_reminder_renter"
+      old_notification_type:
         | "booking_cancelled"
         | "booking_confirmed"
         | "booking_request"
@@ -1612,7 +1731,20 @@ export const Constants = {
         "expired",
       ],
       message_status: ["sent", "delivered", "read"],
+      notification_role: ["host_only", "renter_only", "system_wide"],
       notification_type: [
+        "booking_request_received",
+        "booking_request_sent",
+        "booking_confirmed_host",
+        "booking_confirmed_renter",
+        "booking_cancelled_host",
+        "booking_cancelled_renter",
+        "pickup_reminder_host",
+        "pickup_reminder_renter",
+        "return_reminder_host",
+        "return_reminder_renter",
+      ],
+      old_notification_type: [
         "booking_cancelled",
         "booking_confirmed",
         "booking_request",
