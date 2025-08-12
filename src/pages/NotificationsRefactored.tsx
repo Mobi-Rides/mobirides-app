@@ -1,29 +1,21 @@
-import { useState } from "react";
-import { Navigation } from "@/components/Navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Bell, 
-  Search, 
-  Settings, 
-  CheckCircle, 
-  Filter,
-  RefreshCw,
-  Car,
-  Clock
-} from "lucide-react";
+import React, { useState } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useBookingActions } from "@/hooks/useBookingActions";
+import { Navigation } from "@/components/Navigation";
 import { NotificationCard } from "@/components/notifications/NotificationCard";
-import { NotificationClassifier } from "@/utils/NotificationClassifier";
-import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import NotificationPreferences from "@/components/notifications/NotificationPreferences";
+import { Skeleton } from "@/components/ui/skeleton";
+import { NotificationClassifier } from "@/utils/NotificationClassifier";
+import { Database } from "@/integrations/supabase/types";
 
-export default function NotificationsRefactored() {
+type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+
+const NotificationsRefactored: React.FC = () => {
   const { 
     notifications, 
     unreadCount, 
@@ -33,16 +25,35 @@ export default function NotificationsRefactored() {
     deleteNotification 
   } = useNotifications();
   
-  const { acceptBooking, declineBooking, isLoading: bookingActionLoading } = useBookingActions();
-  
+  const { acceptBooking, declineBooking } = useBookingActions();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
 
-  // Filter notifications
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesSearch = notification.content.toLowerCase().includes(searchQuery.toLowerCase());
-    if (!matchesSearch) return false;
+  // Helper function to normalize notifications data for filtering
+  const normalizeNotification = (notification: Notification) => {
+    return {
+      ...notification,
+      // Provide defaults for missing properties to match expected schema
+      content: notification.content || notification.description || notification.title || '',
+      expires_at: notification.expires_at || null,
+      metadata: notification.metadata || {},
+      role_target: notification.role_target || 'system_wide',
+      updated_at: notification.updated_at || notification.created_at || new Date().toISOString()
+    };
+  };
+
+  // Filter notifications based on search and active filter
+  const filteredNotifications = notifications.filter((notification) => {
+    // Normalize the notification for consistent filtering
+    const normalizedNotification = normalizeNotification(notification);
     
+    // Search filter
+    const searchContent = `${normalizedNotification.content} ${normalizedNotification.title || ''}`.toLowerCase();
+    if (searchQuery && !searchContent.includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+
+    // Category filter
     if (activeFilter === "all") return true;
     
     if (activeFilter === "active_rentals") {
@@ -51,10 +62,10 @@ export default function NotificationsRefactored() {
               notification.type.includes('return_reminder') || 
               notification.type === 'handover_ready' ||
               (notification.type === 'message_received' &&
-               notification.content?.toLowerCase().includes('handover')));
+               normalizedNotification.content?.toLowerCase().includes('handover')));
     }
     
-    const classification = NotificationClassifier.classifyNotification(notification);
+    const classification = NotificationClassifier.classifyNotification(normalizedNotification as any);
     return classification.type === activeFilter;
   });
 
@@ -62,74 +73,65 @@ export default function NotificationsRefactored() {
   const unreadNotifications = filteredNotifications.filter(n => !n.is_read);
   const readNotifications = filteredNotifications.filter(n => n.is_read);
 
-  const handleMarkAsRead = async (id: string) => {
-    const { error } = await markAsRead(id);
-    if (error) {
-      toast.error("Failed to mark notification as read");
-    }
+  // Event handlers
+  const handleMarkAsRead = async (notificationId: string) => {
+    await markAsRead(notificationId);
   };
 
-  const handleDelete = async (id: string) => {
-    const { error } = await deleteNotification(id);
-    if (error) {
-      toast.error("Failed to delete notification");
-    } else {
-      toast.success("Notification deleted");
-    }
+  const handleDelete = async (notificationId: string) => {
+    await deleteNotification(notificationId);
   };
 
   const handleMarkAllAsRead = async () => {
-    const { error } = await markAllAsRead();
-    if (error) {
-      toast.error("Failed to mark all notifications as read");
-    } else {
-      toast.success("All notifications marked as read");
-    }
+    await markAllAsRead();
   };
 
   const handleAcceptBooking = async (bookingId: string) => {
-    acceptBooking(bookingId);
+    await acceptBooking(bookingId);
   };
 
   const handleDeclineBooking = async (bookingId: string) => {
-    declineBooking(bookingId);
+    await declineBooking(bookingId);
   };
 
+  // Helper function to get filter counts
   const getFilterCounts = () => {
-    const bookingCount = notifications.filter(n => {
-      const classification = NotificationClassifier.classifyNotification(n);
-      return classification.type === 'booking' && !n.is_read;
-    }).length;
+    const counts = {
+      all: notifications.length,
+      booking: 0,
+      payment: 0,
+      active_rentals: 0
+    };
 
-    const paymentCount = notifications.filter(n => {
-      const classification = NotificationClassifier.classifyNotification(n);
-      return classification.type === 'payment' && !n.is_read;
-    }).length;
+    notifications.forEach(notification => {
+      const normalizedNotification = normalizeNotification(notification);
+      const classification = NotificationClassifier.classifyNotification(normalizedNotification as any);
+      
+      if (classification.type === 'booking') counts.booking++;
+      if (classification.type === 'payment') counts.payment++;
+      if (NotificationClassifier.isActiveRentalNotification(normalizedNotification as any)) {
+        counts.active_rentals++;
+      }
+    });
 
-    const activeRentalCount = notifications.filter(n => {
-      const classification = NotificationClassifier.classifyNotification(n);
-      return (classification.type === 'booking' && 
-              (n.type === 'pickup_reminder' || 
-               n.type === 'return_reminder' || 
-               n.type === 'handover_ready')) && !n.is_read;
-    }).length;
-
-    return { bookingCount, paymentCount, activeRentalCount };
+    return counts;
   };
 
-  const { bookingCount, paymentCount, activeRentalCount } = getFilterCounts();
+  const filterCounts = getFilterCounts();
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/3"></div>
-            <div className="space-y-3">
-              <div className="h-20 bg-muted rounded"></div>
-              <div className="h-20 bg-muted rounded"></div>
-              <div className="h-20 bg-muted rounded"></div>
-            </div>
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
           </div>
         </div>
         <Navigation />
@@ -139,11 +141,11 @@ export default function NotificationsRefactored() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 pb-24">
+      <div className="p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Bell className="h-6 w-6" />
+            <Bell className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">Notifications</h1>
             {unreadCount > 0 && (
               <Badge variant="destructive" className="ml-2">
@@ -156,138 +158,129 @@ export default function NotificationsRefactored() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Preferences
+                  <Settings className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Notification Preferences</DialogTitle>
+                  <DialogTitle>Notification Settings</DialogTitle>
                 </DialogHeader>
-                <NotificationPreferences />
+                <div className="p-4">
+                  <p className="text-muted-foreground">Notification preferences coming soon...</p>
+                </div>
               </DialogContent>
             </Dialog>
             
             {unreadCount > 0 && (
-              <Button onClick={handleMarkAllAsRead} size="sm">
-                <CheckCircle className="h-4 w-4 mr-2" />
+              <Button onClick={handleMarkAllAsRead} variant="outline" size="sm">
                 Mark all read
               </Button>
             )}
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search notifications..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-auto">
-            <TabsList>
-              <TabsTrigger value="all" className="relative">
-                All
-                {unreadCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="booking" className="relative">
-                Bookings
-                {bookingCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {bookingCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="payment" className="relative">
-                Payments
-                {paymentCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {paymentCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="active_rentals" className="relative">
-                <Car className="h-4 w-4 mr-1" />
-                Active Rentals
-                {activeRentalCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {activeRentalCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+        {/* Search */}
+        <div className="mb-4">
+          <Input
+            placeholder="Search notifications..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full"
+          />
         </div>
 
-        {/* Notifications List */}
-        <div className="space-y-6">
-          {/* Unread Notifications */}
-          {unreadNotifications.length > 0 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                Unread ({unreadNotifications.length})
-              </h2>
-              <div className="space-y-3">
-                {unreadNotifications.map((notification) => (
-                  <NotificationCard
-                    key={notification.id}
-                    notification={notification}
-                    onMarkAsRead={handleMarkAsRead}
-                    onDelete={handleDelete}
-                    onAcceptBooking={handleAcceptBooking}
-                    onDeclineBooking={handleDeclineBooking}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Filter Tabs */}
+        <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-full mb-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              All
+              <Badge variant="secondary" className="text-xs">
+                {filterCounts.all}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="booking" className="flex items-center gap-2">
+              Bookings
+              <Badge variant="secondary" className="text-xs">
+                {filterCounts.booking}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="payment" className="flex items-center gap-2">
+              Payments
+              <Badge variant="secondary" className="text-xs">
+                {filterCounts.payment}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="active_rentals" className="flex items-center gap-2">
+              Active Rentals
+              <Badge variant="secondary" className="text-xs">
+                {filterCounts.active_rentals}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Read Notifications */}
-          {readNotifications.length > 0 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">
-                Earlier
-              </h2>
-              <div className="space-y-3">
-                {readNotifications.map((notification) => (
-                  <NotificationCard
-                    key={notification.id}
-                    notification={notification}
-                    onDelete={handleDelete}
-                    compact
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <TabsContent value={activeFilter} className="mt-4">
+            <div className="space-y-4">
+              {/* Unread Notifications */}
+              {unreadNotifications.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Unread ({unreadNotifications.length})
+                  </h3>
+                  {unreadNotifications.map((notification) => (
+                    <NotificationCard
+                      key={`unread-${notification.id}`}
+                      notification={normalizeNotification(notification) as any}
+                      onMarkAsRead={handleMarkAsRead}
+                      onDelete={handleDelete}
+                      onAcceptBooking={handleAcceptBooking}
+                      onDeclineBooking={handleDeclineBooking}
+                    />
+                  ))}
+                </div>
+              )}
 
-          {/* Empty State */}
-          {filteredNotifications.length === 0 && (
-            <div className="text-center py-12">
-              <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No notifications</h3>
-              <p className="text-muted-foreground">
-                {searchQuery 
-                  ? "No notifications match your search criteria"
-                  : "You're all caught up! New notifications will appear here."
-                }
-              </p>
+              {/* Read Notifications */}
+              {readNotifications.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Read ({readNotifications.length})
+                  </h3>
+                  {readNotifications.map((notification) => (
+                    <NotificationCard
+                      key={`read-${notification.id}`}
+                      notification={normalizeNotification(notification) as any}
+                      onMarkAsRead={handleMarkAsRead}
+                      onDelete={handleDelete}
+                      onAcceptBooking={handleAcceptBooking}
+                      onDeclineBooking={handleDeclineBooking}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {filteredNotifications.length === 0 && (
+                <div className="text-center py-12">
+                  <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No notifications found</h3>
+                  <p className="text-muted-foreground">
+                    {searchQuery 
+                      ? "Try adjusting your search terms"
+                      : activeFilter === "all" 
+                        ? "You're all caught up!"
+                        : `No ${activeFilter} notifications found`
+                    }
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
-      
+
       <Navigation />
     </div>
   );
-}
+};
+
+export default NotificationsRefactored;

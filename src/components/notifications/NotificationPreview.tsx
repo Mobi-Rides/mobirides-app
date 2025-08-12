@@ -12,7 +12,7 @@ export function NotificationPreview({ notification }) {
       return <BookingNotificationPreview notification={notification} confidence={classification.confidence} />;
     case "payment":
       return <PaymentNotificationPreview notification={notification} confidence={classification.confidence} />;
-    case "other":
+    case "system":
     default:
       return <GenericNotificationPreview notification={notification} confidence={classification.confidence} />;
   }

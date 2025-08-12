@@ -73,13 +73,11 @@ export const createBookingReminders = async () => {
     if (upcomingBookings && upcomingBookings.length > 0) {
       // Create notifications for each booking
       for (const booking of upcomingBookings) {
-        // Notify the car owner - use string literal for Supabase
-        await supabase.from("notifications").insert({
-          user_id: booking.car.owner_id,
-          type: "booking_reminder", // Using string literal to match DB enum
-          content: `Reminder: A booking for your ${booking.car.brand} ${booking.car.model} starts tomorrow.`,
-          related_car_id: booking.car_id,
-          related_booking_id: booking.id,
+        // Use database function for proper schema handling
+        await supabase.rpc('create_booking_notification', {
+          p_booking_id: booking.id,
+          p_notification_type: 'pickup_reminder',
+          p_content: `Reminder: A booking for your ${booking.car.brand} ${booking.car.model} starts tomorrow.`
         });
       }
 

@@ -52,7 +52,7 @@ const AddCar = lazy(() => import("@/pages/AddCar"));
 const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
-const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
+
 const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
 );
@@ -270,13 +270,6 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <NotificationsRefactored />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/notifications/:id" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <NotificationDetails />
                             </ProtectedRoute>
                           </Suspense>
                         } />
