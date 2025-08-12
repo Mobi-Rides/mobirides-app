@@ -64,8 +64,8 @@ export function NotificationCard({
   const getIconColor = () => {
     switch (classification.type) {
       case 'booking':
-        if (notification.type === 'booking_confirmed') return 'text-green-600';
-        if (notification.type === 'booking_cancelled') return 'text-red-600';
+        if (notification.type.includes('booking_confirmed')) return 'text-green-600';
+        if (notification.type.includes('booking_cancelled')) return 'text-red-600';
         return 'text-blue-600';
       case 'payment':
         return 'text-emerald-600';
@@ -77,8 +77,8 @@ export function NotificationCard({
   const getBadgeVariant = () => {
     switch (classification.type) {
       case 'booking':
-        if (notification.type === 'booking_confirmed') return 'default';
-        if (notification.type === 'booking_cancelled') return 'destructive';
+        if (notification.type.includes('booking_confirmed')) return 'default';
+        if (notification.type.includes('booking_cancelled')) return 'destructive';
         return 'secondary';
       case 'payment':
         return 'default';
@@ -89,7 +89,7 @@ export function NotificationCard({
 
   const handleClick = () => {
     if (!notification.is_read && onMarkAsRead) {
-      onMarkAsRead(notification.id);
+      onMarkAsRead(notification.id?.toString() || "");
     }
 
     // Navigate based on notification type
@@ -103,7 +103,7 @@ export function NotificationCard({
   };
 
   const showBookingActions = 
-    notification.type === 'booking_request' && 
+    notification.type.includes('booking_request') && 
     !notification.is_read &&
     onAcceptBooking && 
     onDeclineBooking;
@@ -181,7 +181,7 @@ export function NotificationCard({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => onMarkAsRead(notification.id)}
+                    onClick={() => onMarkAsRead(notification.id?.toString() || "")}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     Mark as read
@@ -192,7 +192,7 @@ export function NotificationCard({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => onDelete(notification.id)}
+                    onClick={() => onDelete(notification.id?.toString() || "")}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete

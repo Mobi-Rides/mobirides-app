@@ -169,13 +169,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       carId,
       bookingId,
     });
-    const { error } = await supabase.from("notifications").insert({
-      user_id: userId,
-      type, // This will be a string literal for DB compatibility
-      content,
-      related_car_id: carId,
-      related_booking_id: bookingId,
+    // Use the database function instead of direct insert to avoid schema mismatches
+    const { error } = await supabase.rpc('create_booking_notification', {
+      p_booking_id: bookingId,
+      p_notification_type: 'booking_request',
+      p_content: content
     });
+
 
     if (error) {
       console.error(

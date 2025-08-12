@@ -47,10 +47,10 @@ export default function NotificationsRefactored() {
     
     if (activeFilter === "active_rentals") {
       // Active rentals include handover-related notifications and in-progress rental notifications
-      return (notification.type === 'pickup_reminder' || 
-              notification.type === 'return_reminder' || 
+      return (notification.type.includes('pickup_reminder') || 
+              notification.type.includes('return_reminder') || 
               notification.type === 'handover_ready' ||
-              (notification.type === 'message_received' && 
+              (notification.type === 'message_received' &&
                notification.content?.toLowerCase().includes('handover')));
     }
     
