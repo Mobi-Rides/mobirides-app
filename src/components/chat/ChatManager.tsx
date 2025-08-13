@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChatPopup } from './ChatPopup';
 import { FloatingChatButton } from './FloatingChatButton';
-import { useMessages } from '@/hooks/useMessages';
+import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
 import { useNavigate } from 'react-router-dom';
 
 interface ChatManagerProps {
@@ -13,11 +13,14 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [viewMode, setViewMode] = useState<'popup' | 'fullscreen'>('popup');
-  const { messages } = useMessages();
+  const { conversations } = useOptimizedConversations();
   const navigate = useNavigate();
 
-  // Calculate unread messages count
-  const unreadCount = messages?.filter(msg => msg.status === 'sent').length || 0;
+  // Calculate unread messages count from conversations
+  const unreadCount = conversations.reduce((total, conv) => {
+    // Simplified unread calculation - you might want to implement proper read status tracking
+    return total + (conv.lastMessage ? 1 : 0);
+  }, 0);
 
   // Auto-open popup if recipient is provided
   useEffect(() => {

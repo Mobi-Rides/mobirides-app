@@ -136,7 +136,7 @@ export const Header = ({
           error: null,
         });
       } catch (error) {
-        console.error("IP Location error:", error);
+        // Silently fall back to default location when IP geolocation fails (e.g., CORS issues)
         setLocationData((prev) => ({
           ...prev,
           loading: false,
@@ -339,6 +339,7 @@ export const Header = ({
         isOpen={isAuthModalOpen}
         onClose={handleCloseModal}
         defaultTab={defaultTab}
+        idPrefix="header"
       />
     </header>
   );

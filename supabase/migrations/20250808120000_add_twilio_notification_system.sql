@@ -1,6 +1,23 @@
 -- Add notification logging for Twilio integration
 -- This allows us to track WhatsApp and Email notification delivery
 
+-- First ensure is_admin function exists
+CREATE OR REPLACE FUNCTION public.is_admin(user_uuid uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 
+        FROM profiles 
+        WHERE id = user_uuid 
+        AND role = 'admin'
+    );
+END;
+$$;
+
 CREATE TABLE IF NOT EXISTS notification_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,

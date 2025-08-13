@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -10,9 +10,10 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: "signin" | "signup";
+  idPrefix?: string;
 }
 
-export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalProps) => {
+export const AuthModal = ({ isOpen, onClose, defaultTab = "signin", idPrefix = "auth" }: AuthModalProps) => {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">(defaultTab);
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,6 +49,9 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalP
           <DialogTitle className="text-center text-2xl font-bold">
             Welcome to <span className="text-primary">Mobirides</span>
           </DialogTitle>
+          <DialogDescription className="text-center">
+            Access your account to book cars, manage reservations, and explore our services.
+          </DialogDescription>
         </DialogHeader>
         <Tabs
           value={activeTab}
@@ -59,7 +63,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }: AuthModalP
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="signin" className="mt-4">
-            <SignInForm onSuccess={onClose} />
+            <SignInForm onSuccess={onClose} idPrefix={`${idPrefix}-signin`} />
           </TabsContent>
           <TabsContent value="signup" className="mt-4">
             <SignUpForm />

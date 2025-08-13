@@ -321,8 +321,8 @@ SELECT
     p.full_name,
     p.role as profile_role,
     CASE 
-        WHEN n.type LIKE '%_host' OR n.type = 'booking_request_received' THEN 'host'
-        WHEN n.type LIKE '%_renter' OR n.type = 'booking_request_sent' THEN 'renter'
+        WHEN n.type::text LIKE '%_host' OR n.type = 'booking_request_received' THEN 'host'
+        WHEN n.type::text LIKE '%_renter' OR n.type = 'booking_request_sent' THEN 'renter'
         ELSE 'generic'
     END as notification_role,
     n.type as notification_type,
