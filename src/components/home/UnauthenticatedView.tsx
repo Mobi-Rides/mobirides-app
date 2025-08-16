@@ -51,7 +51,8 @@ export const UnauthenticatedView = () => {
       <AuthModal 
         isOpen={isOpen} 
         onClose={close} 
-        defaultTab={defaultTab} 
+        defaultTab={defaultTab}
+        idPrefix="home"
       />
     </div>
   );

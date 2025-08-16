@@ -10,9 +10,10 @@ import { Eye, EyeOff } from "lucide-react";
 
 interface SignInFormProps {
   onSuccess?: () => void;
+  idPrefix?: string;
 }
 
-export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
+export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "signin" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +33,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
       });
 
       if (error) {
+        
         if (error.message.includes("Invalid login credentials")) {
           setError("Invalid email or password. Please check your credentials and try again.");
         } else if (error.message.includes("Email not confirmed")) {
@@ -45,6 +47,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
       toast.success("Signed in successfully!");
       onSuccess?.();
     } catch (error) {
+      console.error("SignInForm: Unexpected error", error);
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
@@ -87,9 +90,9 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="signin-email">Email</Label>
+        <Label htmlFor={`${idPrefix}-email`}>Email</Label>
         <Input
-          id="signin-email"
+          id={`${idPrefix}-email`}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -99,10 +102,10 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess }) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="signin-password">Password</Label>
+        <Label htmlFor={`${idPrefix}-password`}>Password</Label>
         <div className="relative">
           <Input
-            id="signin-password"
+            id={`${idPrefix}-password`}
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}

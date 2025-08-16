@@ -4,9 +4,7 @@ import { Bell, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-// ChatDrawer import removed
-import { useMessages } from "@/hooks/useMessages";
-import { MessageList } from "./MessageList";
+import { useOptimizedConversations } from "@/hooks/useOptimizedConversations";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -25,8 +23,14 @@ export const NotificationsSection = () => {
     senderName: '',
   });
 
-  const { messages, markMessageAsRead } = useMessages();
-  const unreadCount = messages?.filter(msg => msg.status === 'sent').length || 0;
+  const { conversations, isLoading: conversationsLoading } = useOptimizedConversations();
+  
+  // Calculate unread messages from conversations
+  const unreadCount = conversations.reduce((total, conv) => {
+    // Count unread messages in each conversation
+    // This is a simplified calculation - you might want to implement actual read status tracking
+    return total + (conv.lastMessage ? 1 : 0);
+  }, 0);
 
   const { data: notifications } = useQuery({
     queryKey: ['notifications'],
@@ -72,13 +76,9 @@ export const NotificationsSection = () => {
     setupRealtimeSubscription();
   }, [queryClient]);
 
-  const handleChatClick = async (senderId: string, senderName: string | null) => {
-    await markMessageAsRead(senderId);
-    setSelectedChat({
-      isOpen: true,
-      senderId,
-      senderName: senderName || 'Unknown User',
-    });
+  const handleChatClick = async (conversationId: string, participantName: string) => {
+    // Navigate to the conversation
+    navigate(`/messages?conversation=${conversationId}`);
   };
 
   const handleNotificationClick = (notificationId: string) => {
@@ -108,10 +108,44 @@ export const NotificationsSection = () => {
         </TabsList>
 
         <TabsContent value="inbox">
-          <MessageList 
-            messages={messages || []}
-            onMessageClick={handleChatClick}
-          />
+          <ScrollArea className="h-[300px] rounded-md border p-4">
+            {conversationsLoading ? (
+              <p className="text-center text-muted-foreground">Loading conversations...</p>
+            ) : conversations.length > 0 ? (
+              <div className="space-y-4">
+                {conversations.map((conversation) => {
+                  const otherParticipant = conversation.participants.find(p => p.id !== conversation.participants[0]?.id);
+                  const participantName = otherParticipant?.name || conversation.title || 'Unknown User';
+                  
+                  return (
+                    <div 
+                      key={conversation.id} 
+                      className="p-4 rounded-lg border bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => handleChatClick(conversation.id, participantName)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{participantName}</h4>
+                          {conversation.lastMessage && (
+                            <p className="text-sm text-gray-600 mt-1 truncate">
+                              {conversation.lastMessage.content}
+                            </p>
+                          )}
+                        </div>
+                        {conversation.lastMessage && (
+                          <span className="text-xs text-gray-400">
+                            {new Date(conversation.lastMessage.createdAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">No conversations yet</p>
+            )}
+          </ScrollArea>
         </TabsContent>
 
         <TabsContent value="notifications">
