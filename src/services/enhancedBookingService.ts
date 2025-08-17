@@ -80,19 +80,27 @@ export class EnhancedBookingService {
           // Notification for renter
           await supabase.from('notifications').insert({
             user_id: booking.renter_id,
-            type: 'booking_reminder',
+            type: 'pickup_reminder_renter',
+            title: 'Pickup Reminder',
+            description: `Your rental of ${carTitle} starts tomorrow at ${booking.start_time}. Please prepare for pickup.`,
             content: `Your rental of ${carTitle} starts tomorrow at ${booking.start_time}. Please prepare for pickup.`,
             related_booking_id: booking.id,
-            related_car_id: booking.cars.id
+            related_car_id: booking.cars.id,
+            role_target: 'renter_only',
+            metadata: {}
           });
 
           // Notification for host
           await supabase.from('notifications').insert({
             user_id: booking.cars.owner_id,
-            type: 'booking_reminder',
+            type: 'pickup_reminder_host',
+            title: 'Pickup Reminder',
+            description: `Your ${carTitle} rental starts tomorrow at ${booking.start_time}. Please prepare for handover.`,
             content: `Your ${carTitle} rental starts tomorrow at ${booking.start_time}. Please prepare for handover.`,
             related_booking_id: booking.id,
-            related_car_id: booking.cars.id
+            related_car_id: booking.cars.id,
+            role_target: 'host_only',
+            metadata: {}
           });
 
           // Mark reminder as sent
@@ -116,19 +124,27 @@ export class EnhancedBookingService {
             // Notification for renter
             await supabase.from('notifications').insert({
               user_id: booking.renter_id,
-              type: 'booking_reminder',
+              type: 'pickup_reminder_renter',
+              title: '2 Hour Pickup Reminder',
+              description: `Your rental of ${carTitle} starts in 2 hours at ${booking.start_time}. Time to head to pickup location!`,
               content: `Your rental of ${carTitle} starts in 2 hours at ${booking.start_time}. Time to head to pickup location!`,
               related_booking_id: booking.id,
-              related_car_id: booking.cars.id
+              related_car_id: booking.cars.id,
+              role_target: 'renter_only',
+              metadata: {}
             });
 
             // Notification for host
             await supabase.from('notifications').insert({
               user_id: booking.cars.owner_id,
-              type: 'booking_reminder',
+              type: 'pickup_reminder_host',
+              title: '2 Hour Pickup Reminder',
+              description: `Your ${carTitle} handover is in 2 hours at ${booking.start_time}. Please ensure the car is ready.`,
               content: `Your ${carTitle} handover is in 2 hours at ${booking.start_time}. Please ensure the car is ready.`,
               related_booking_id: booking.id,
-              related_car_id: booking.cars.id
+              related_car_id: booking.cars.id,
+              role_target: 'host_only',
+              metadata: {}
             });
           }
         }
@@ -147,19 +163,27 @@ export class EnhancedBookingService {
             // Notification for renter
             await supabase.from('notifications').insert({
               user_id: booking.renter_id,
-              type: 'booking_reminder',
+              type: 'pickup_reminder_renter',
+              title: '30 Minute Pickup Reminder',
+              description: `Your rental of ${carTitle} starts in 30 minutes! Time for final preparations.`,
               content: `Your rental of ${carTitle} starts in 30 minutes! Time for final preparations.`,
               related_booking_id: booking.id,
-              related_car_id: booking.cars.id
+              related_car_id: booking.cars.id,
+              role_target: 'renter_only',
+              metadata: {}
             });
 
             // Notification for host
             await supabase.from('notifications').insert({
               user_id: booking.cars.owner_id,
-              type: 'booking_reminder',
+              type: 'pickup_reminder_host',
+              title: '30 Minute Pickup Reminder',
+              description: `Your ${carTitle} handover is in 30 minutes! Please be ready at the pickup location.`,
               content: `Your ${carTitle} handover is in 30 minutes! Please be ready at the pickup location.`,
               related_booking_id: booking.id,
-              related_car_id: booking.cars.id
+              related_car_id: booking.cars.id,
+              role_target: 'host_only',
+              metadata: {}
             });
           }
         }
@@ -201,19 +225,27 @@ export class EnhancedBookingService {
         // Guidance for host
         await supabase.from('notifications').insert({
           user_id: booking.cars.owner_id,
-          type: 'booking_reminder',
+          type: 'booking_confirmed_host',
+          title: 'Booking Confirmed - Next Steps',
+          description: `Booking confirmed! Next steps: 1) Prepare your ${carTitle} for handover on ${startDateTime}. 2) Ensure fuel tank is full. 3) Clean the vehicle. 4) Be ready 15 minutes early.`,
           content: `Booking confirmed! Next steps: 1) Prepare your ${carTitle} for handover on ${startDateTime}. 2) Ensure fuel tank is full. 3) Clean the vehicle. 4) Be ready 15 minutes early.`,
           related_booking_id: booking.id,
-          related_car_id: booking.cars.id
+          related_car_id: booking.cars.id,
+          role_target: 'host_only',
+          metadata: {}
         });
       } else {
         // Guidance for renter
         await supabase.from('notifications').insert({
           user_id: booking.renter_id,
-          type: 'booking_reminder',
+          type: 'booking_confirmed_renter',
+          title: 'Booking Confirmed - Next Steps',
+          description: `Booking confirmed! Next steps: 1) Prepare for pickup on ${startDateTime}. 2) Bring your driver's license. 3) Complete any required verification. 4) Arrive 15 minutes early.`,
           content: `Booking confirmed! Next steps: 1) Prepare for pickup on ${startDateTime}. 2) Bring your driver's license. 3) Complete any required verification. 4) Arrive 15 minutes early.`,
           related_booking_id: booking.id,
-          related_car_id: booking.cars.id
+          related_car_id: booking.cars.id,
+          role_target: 'renter_only',
+          metadata: {}
         });
       }
 

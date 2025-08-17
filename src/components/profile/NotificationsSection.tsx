@@ -134,7 +134,7 @@ export const NotificationsSection = () => {
                         </div>
                         {conversation.lastMessage && (
                           <span className="text-xs text-gray-400">
-                            {new Date(conversation.lastMessage.createdAt).toLocaleDateString()}
+                            {new Date(conversation.lastMessage.created_at).toLocaleDateString()}
                           </span>
                         )}
                       </div>

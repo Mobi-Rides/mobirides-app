@@ -11,6 +11,7 @@ import { Bell, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationClassifier } from "@/utils/NotificationClassifier";
+import { normalizeNotification } from "@/utils/notificationHelpers";
 import { Database } from "@/integrations/supabase/types";
 
 type Notification = Database["public"]["Tables"]["notifications"]["Row"];
@@ -29,18 +30,7 @@ const NotificationsRefactored: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
 
-  // Helper function to normalize notifications data for filtering
-  const normalizeNotification = (notification: Notification) => {
-    return {
-      ...notification,
-      // Provide defaults for missing properties to match expected schema
-      content: notification.content || notification.description || notification.title || '',
-      expires_at: notification.expires_at || null,
-      metadata: notification.metadata || {},
-      role_target: notification.role_target || 'system_wide',
-      updated_at: notification.updated_at || notification.created_at || new Date().toISOString()
-    };
-  };
+  // Use the normalized notification helper
 
   // Filter notifications based on search and active filter
   const filteredNotifications = notifications.filter((notification) => {
@@ -59,10 +49,7 @@ const NotificationsRefactored: React.FC = () => {
     if (activeFilter === "active_rentals") {
       // Active rentals include handover-related notifications and in-progress rental notifications
       return (notification.type.includes('pickup_reminder') || 
-              notification.type.includes('return_reminder') || 
-              notification.type === 'handover_ready' ||
-              (notification.type === 'message_received' &&
-               normalizedNotification.content?.toLowerCase().includes('handover')));
+              notification.type.includes('return_reminder'));
     }
     
     const classification = NotificationClassifier.classifyNotification(normalizedNotification as any);
@@ -227,14 +214,14 @@ const NotificationsRefactored: React.FC = () => {
                     Unread ({unreadNotifications.length})
                   </h3>
                   {unreadNotifications.map((notification) => (
-                    <NotificationCard
-                      key={`unread-${notification.id}`}
-                      notification={normalizeNotification(notification) as any}
-                      onMarkAsRead={handleMarkAsRead}
-                      onDelete={handleDelete}
-                      onAcceptBooking={handleAcceptBooking}
-                      onDeclineBooking={handleDeclineBooking}
-                    />
+                     <NotificationCard
+                       key={`unread-${notification.id}`}
+                       notification={normalizeNotification(notification)}
+                       onMarkAsRead={handleMarkAsRead}
+                       onDelete={handleDelete}
+                       onAcceptBooking={handleAcceptBooking}
+                       onDeclineBooking={handleDeclineBooking}
+                     />
                   ))}
                 </div>
               )}
@@ -246,14 +233,14 @@ const NotificationsRefactored: React.FC = () => {
                     Read ({readNotifications.length})
                   </h3>
                   {readNotifications.map((notification) => (
-                    <NotificationCard
-                      key={`read-${notification.id}`}
-                      notification={normalizeNotification(notification) as any}
-                      onMarkAsRead={handleMarkAsRead}
-                      onDelete={handleDelete}
-                      onAcceptBooking={handleAcceptBooking}
-                      onDeclineBooking={handleDeclineBooking}
-                    />
+                     <NotificationCard
+                       key={`read-${notification.id}`}
+                       notification={normalizeNotification(notification)}
+                       onMarkAsRead={handleMarkAsRead}
+                       onDelete={handleDelete}
+                       onAcceptBooking={handleAcceptBooking}
+                       onDeclineBooking={handleDeclineBooking}
+                     />
                   ))}
                 </div>
               )}

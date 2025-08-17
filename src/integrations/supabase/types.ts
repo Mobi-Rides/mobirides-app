@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1441,17 +1441,17 @@ export type Database = {
       create_booking_notification: {
         Args: {
           p_booking_id: string
-          p_notification_type: string
           p_content: string
+          p_notification_type: string
         }
         Returns: undefined
       }
       create_wallet_notification: {
         Args: {
-          p_host_id: string
-          p_type: string
           p_amount: number
           p_description?: string
+          p_host_id: string
+          p_type: string
         }
         Returns: undefined
       }
@@ -1469,25 +1469,25 @@ export type Database = {
         Args: { p_page?: number; p_page_size?: number; p_search_term?: string }
         Returns: {
           conversation_id: string
-          title: string
-          type: string
+          last_message: string
           last_message_at: string
           participants: Json
-          last_message: string
+          title: string
+          type: string
         }[]
       }
       get_user_notifications: {
-        Args: { p_page?: number; p_page_size?: number; p_only_unread?: boolean }
+        Args: { p_only_unread?: boolean; p_page?: number; p_page_size?: number }
         Returns: {
+          created_at: string
+          description: string
+          expires_at: string
           id: number
-          type: Database["public"]["Enums"]["notification_type"]
+          is_read: boolean
+          metadata: Json
           role_target: Database["public"]["Enums"]["notification_role"]
           title: string
-          description: string
-          is_read: boolean
-          created_at: string
-          expires_at: string
-          metadata: Json
+          type: Database["public"]["Enums"]["notification_type"]
         }[]
       }
       get_user_review_stats: {
@@ -1496,9 +1496,9 @@ export type Database = {
       }
       initialize_conversation: {
         Args: {
+          p_participant_ids?: string[]
           p_title?: string
           p_type?: string
-          p_participant_ids?: string[]
         }
         Returns: string
       }
@@ -1508,11 +1508,11 @@ export type Database = {
       }
       log_admin_activity: {
         Args: {
-          p_admin_id: string
           p_action: string
-          p_resource_type?: string
-          p_resource_id?: string
+          p_admin_id: string
           p_details?: Json
+          p_resource_id?: string
+          p_resource_type?: string
         }
         Returns: undefined
       }
@@ -1530,12 +1530,12 @@ export type Database = {
       }
       send_conversation_message: {
         Args: {
-          p_conversation_id: string
           p_content: string
+          p_conversation_id: string
           p_message_type?: string
+          p_metadata?: Json
           p_related_car_id?: string
           p_reply_to_message_id?: string
-          p_metadata?: Json
         }
         Returns: string
       }
