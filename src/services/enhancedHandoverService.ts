@@ -198,10 +198,10 @@ const validateStepCompletion = async (
       if (!completionData?.fuel_level || !completionData?.mileage) {
         return { isValid: false, message: "Fuel level and mileage are required" };
       }
-      if (completionData.fuel_level < 0 || completionData.fuel_level > 100) {
+      if (Number(completionData.fuel_level) < 0 || Number(completionData.fuel_level) > 100) {
         return { isValid: false, message: "Fuel level must be between 0 and 100%" };
       }
-      if (completionData.mileage < 0) {
+      if (Number(completionData.mileage) < 0) {
         return { isValid: false, message: "Mileage must be a positive number" };
       }
       break;

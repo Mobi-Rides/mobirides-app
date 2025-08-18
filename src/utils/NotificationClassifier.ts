@@ -1,8 +1,8 @@
-import { Database } from "@/integrations/supabase/types";
+import { NormalizedNotification } from "./notificationHelpers";
 
-type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+type Notification = NormalizedNotification;
 
-export interface NotificationClassification {
+interface NotificationClassification {
   type: 'booking' | 'payment' | 'handover' | 'system' | 'message';
   confidence: number;
   details: string;
@@ -10,71 +10,64 @@ export interface NotificationClassification {
 
 export class NotificationClassifier {
   static classifyNotification(notification: Notification): NotificationClassification {
-    const type = notification.type;
-    const content = notification.content || '';
+    const type = String(notification.type);
     
-    // Map new database enum types to frontend categories
-    if (type.includes('booking_request') || 
-        type.includes('booking_confirmed') || 
-        type.includes('booking_cancelled') ||
-        type.includes('pickup_reminder') ||
-        type.includes('return_reminder')) {
+    // Booking-related notifications
+    if (type.includes('booking') || type.includes('request') || type.includes('confirmed') || type.includes('cancelled')) {
       return {
         type: 'booking',
         confidence: 95,
-        details: 'Booking-related notification'
+        details: `Classified as booking notification based on type: ${type}`
       };
     }
     
-    if (type === 'wallet_topup' || 
-        type === 'wallet_deduction' || 
-        type === 'payment_received' || 
-        type === 'payment_failed') {
+    // Payment/wallet notifications  
+    if (type.includes('wallet') || type.includes('payment') || type.includes('topup') || type.includes('deduction')) {
       return {
         type: 'payment',
         confidence: 95,
-        details: 'Payment-related notification'
+        details: `Classified as payment notification based on type: ${type}`
       };
     }
     
-    if (type === 'handover_ready' || content.toLowerCase().includes('handover')) {
+    // Handover/pickup/return notifications
+    if (type.includes('pickup') || type.includes('return') || type.includes('handover')) {
       return {
         type: 'handover',
         confidence: 90,
-        details: 'Handover-related notification'
+        details: `Classified as handover notification based on type: ${type}`
       };
     }
     
-    if (type === 'message_received') {
+    // Message notifications
+    if (type.includes('message')) {
       return {
         type: 'message',
-        confidence: 95,
-        details: 'Message notification'
+        confidence: 90,
+        details: `Classified as message notification based on type: ${type}`
       };
     }
     
-    // Fallback for unknown types
+    // Default to system
     return {
       type: 'system',
       confidence: 50,
-      details: 'System notification'
+      details: `Default classification for type: ${type}`
     };
   }
-  
+
   static isBookingNotification(notification: Notification): boolean {
-    const classification = this.classifyNotification(notification);
-    return classification.type === 'booking';
+    const type = String(notification.type);
+    return type.includes('booking') || type.includes('request') || type.includes('confirmed') || type.includes('cancelled');
   }
-  
+
   static isPaymentNotification(notification: Notification): boolean {
-    const classification = this.classifyNotification(notification);
-    return classification.type === 'payment';
+    const type = String(notification.type);
+    return type.includes('wallet') || type.includes('payment') || type.includes('topup') || type.includes('deduction');
   }
-  
+
   static isActiveRentalNotification(notification: Notification): boolean {
-    const type = notification.type;
-    return type.includes('pickup_reminder') || 
-           type.includes('return_reminder') || 
-           type === 'handover_ready';
+    const type = String(notification.type);
+    return type.includes('pickup') || type.includes('return') || type.includes('handover');
   }
 }

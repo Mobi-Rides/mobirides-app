@@ -102,7 +102,8 @@ export const createHandoverSession = async (
             .from("notifications")
             .insert({
               user_id: renterId,
-              type: "message_received",
+              type: "pickup_reminder_renter",
+              title: "Location Request",
               content: notificationContent,
               related_car_id: carId,
               related_booking_id: bookingId,

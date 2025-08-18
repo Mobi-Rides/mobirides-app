@@ -39,18 +39,19 @@ export class NotificationService {
         wallet_deduction: "wallet_deduction", 
         wallet_created: "wallet_topup",
         wallet_reset: "wallet_deduction",
-        booking_confirmed: "booking_confirmed",
-        booking_cancelled: "booking_cancelled",
-        booking_request: "booking_request",
-        message_received: "message_received",
-        booking_reminder: "booking_reminder"
+        booking_confirmed: "booking_confirmed_host",
+        booking_cancelled: "booking_cancelled_host",
+        booking_request: "booking_request_received",
+        message_received: "pickup_reminder_renter",
+        booking_reminder: "pickup_reminder_host"
       };
 
-      const dbType = typeMapping[type] || "booking_confirmed";
+      const dbType = typeMapping[type] || "pickup_reminder_host";
 
       const { error } = await supabase.from("notifications").insert({
         user_id: hostId,
         type: dbType as any,
+        title: 'Notification',
         content: content,
         related_booking_id: relatedBookingId,
         is_read: false,

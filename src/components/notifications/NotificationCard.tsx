@@ -121,9 +121,9 @@ export function NotificationCard({
                 </p>
                 
                 {/* Car/Booking details if available */}
-                {notification.bookings?.cars && (
+                {notification.bookings && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {notification.bookings.cars.brand} {notification.bookings.cars.model}
+                    {notification.bookings.brand} {notification.bookings.model}
                   </p>
                 )}
               </div>
