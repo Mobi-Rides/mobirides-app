@@ -1439,20 +1439,48 @@ export type Database = {
         Returns: number
       }
       create_booking_notification: {
-        Args: {
-          p_booking_id: string
-          p_content: string
-          p_notification_type: string
-        }
+        Args:
+          | {
+              p_booking_id: string
+              p_content: string
+              p_notification_type: string
+            }
+          | {
+              p_booking_id: string
+              p_description: string
+              p_host_notification_type: Database["public"]["Enums"]["notification_type"]
+              p_metadata?: Json
+              p_renter_notification_type: Database["public"]["Enums"]["notification_type"]
+              p_role_target?: Database["public"]["Enums"]["notification_role"]
+              p_title: string
+            }
+          | {
+              p_booking_id: string
+              p_description: string
+              p_host_notification_type: Database["public"]["Enums"]["notification_type"]
+              p_metadata?: Json
+              p_renter_notification_type: Database["public"]["Enums"]["notification_type"]
+              p_title: string
+            }
         Returns: undefined
       }
       create_wallet_notification: {
-        Args: {
-          p_amount: number
-          p_description?: string
-          p_host_id: string
-          p_type: string
-        }
+        Args:
+          | {
+              p_amount: number
+              p_description?: string
+              p_host_id: string
+              p_type: string
+            }
+          | {
+              p_description: string
+              p_metadata?: Json
+              p_role_target?: Database["public"]["Enums"]["notification_role"]
+              p_title: string
+              p_type: Database["public"]["Enums"]["notification_type"]
+              p_user_id: string
+              p_wallet_transaction_id: string
+            }
         Returns: undefined
       }
       delete_old_notifications: {
