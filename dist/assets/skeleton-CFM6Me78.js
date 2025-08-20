@@ -1,0 +1,1 @@
+import{j as m}from"./query-vendor-BOSMW7hd.js";import{R as o}from"./index-BZNlRMb5.js";function n({className:e,...t}){return m.jsx("div",{className:o("animate-pulse rounded-md bg-muted",e),...t})}export{n as S};

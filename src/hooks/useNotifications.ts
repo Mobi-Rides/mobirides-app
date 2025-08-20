@@ -7,6 +7,8 @@ export const useNotifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+
+
   // Fetch notifications
   const {
     data: notifications = [],
@@ -15,7 +17,9 @@ export const useNotifications = () => {
   } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        return [];
+      }
       
       const { data, error } = await supabase
         .from('notifications')
@@ -44,7 +48,10 @@ export const useNotifications = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
+      
       return data || [];
     },
     enabled: !!user?.id,
@@ -52,6 +59,8 @@ export const useNotifications = () => {
 
   // Count unread notifications
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  
+
 
   // Set up real-time subscription
   useEffect(() => {

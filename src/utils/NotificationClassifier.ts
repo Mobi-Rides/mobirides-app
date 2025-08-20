@@ -3,7 +3,7 @@ import { NormalizedNotification } from "./notificationHelpers";
 type Notification = NormalizedNotification;
 
 interface NotificationClassification {
-  type: 'booking' | 'payment' | 'handover' | 'system' | 'message';
+  type: 'booking' | 'payment' | 'handover' | 'system';
   confidence: number;
   details: string;
 }
@@ -22,7 +22,7 @@ export class NotificationClassifier {
     }
     
     // Payment/wallet notifications  
-    if (type.includes('wallet') || type.includes('payment') || type.includes('topup') || type.includes('deduction')) {
+    if (type.includes('wallet') || type.includes('payment') || type.includes('topup') || type.includes('deduction') || type === 'payment_received' || type === 'payment_failed') {
       return {
         type: 'payment',
         confidence: 95,
@@ -30,8 +30,8 @@ export class NotificationClassifier {
       };
     }
     
-    // Handover/pickup/return notifications
-    if (type.includes('pickup') || type.includes('return') || type.includes('handover')) {
+    // Handover/pickup/return/navigation/arrival notifications
+    if (type.includes('pickup') || type.includes('return') || type.includes('handover') || type.includes('navigation') || type.includes('arrival') || type.includes('location_shared')) {
       return {
         type: 'handover',
         confidence: 90,
@@ -39,12 +39,13 @@ export class NotificationClassifier {
       };
     }
     
-    // Message notifications
-    if (type.includes('message')) {
+    
+    // System notifications (explicit system types)
+    if (type === 'system_notification' || type.includes('system')) {
       return {
-        type: 'message',
-        confidence: 90,
-        details: `Classified as message notification based on type: ${type}`
+        type: 'system',
+        confidence: 95,
+        details: `Classified as system notification based on type: ${type}`
       };
     }
     
@@ -63,11 +64,16 @@ export class NotificationClassifier {
 
   static isPaymentNotification(notification: Notification): boolean {
     const type = String(notification.type);
-    return type.includes('wallet') || type.includes('payment') || type.includes('topup') || type.includes('deduction');
+    return type.includes('wallet') || type.includes('payment') || type.includes('topup') || type.includes('deduction') || type === 'payment_received' || type === 'payment_failed';
   }
 
   static isActiveRentalNotification(notification: Notification): boolean {
     const type = String(notification.type);
-    return type.includes('pickup') || type.includes('return') || type.includes('handover');
+    return type.includes('pickup') || type.includes('return') || type.includes('handover') || type.includes('navigation') || type.includes('arrival') || type.includes('location_shared');
+  }
+
+  static isSystemNotification(notification: Notification): boolean {
+    const type = String(notification.type);
+    return type === 'system_notification' || type.includes('system');
   }
 }

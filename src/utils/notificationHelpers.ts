@@ -15,7 +15,7 @@ export interface NormalizedNotification {
   created_at: string;
   updated_at: string;
   expires_at: string | null;
-  metadata: any;
+  metadata: Record<string, unknown>;
   role_target: NotificationRole;
   related_booking_id: string | null;
   related_car_id: string | null;
@@ -26,7 +26,7 @@ export interface NormalizedNotification {
   } | null;
 }
 
-export function normalizeNotification(notification: any): NormalizedNotification {
+export function normalizeNotification(notification: DatabaseNotification & { bookings?: { cars?: { brand: string; model: string } } }): NormalizedNotification {
   return {
     id: notification.id,
     user_id: notification.user_id || '',

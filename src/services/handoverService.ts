@@ -107,6 +107,7 @@ export const createHandoverSession = async (
               content: notificationContent,
               related_car_id: carId,
               related_booking_id: bookingId,
+              role_target: "renter_only",
             });
 
           if (notificationError) {

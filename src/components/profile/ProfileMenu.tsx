@@ -217,12 +217,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
             <CardDescription className="text-left">Manage your preferences and account security</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 pt-0">
-            <button
-              type="button"
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
-              onClick={toggleTheme}
-              aria-label={`Toggle dark mode, currently ${theme === 'dark' ? 'on' : 'off'}`}
-            >
+            <div className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 transition-colors">
               <div className="flex items-center gap-3">
                 {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 <span>Dark Mode</span>
@@ -230,9 +225,9 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
               <Switch
                 checked={theme === 'dark'}
                 onCheckedChange={toggleTheme}
-                aria-label="Toggle dark mode"
+                aria-label={`Toggle dark mode, currently ${theme === 'dark' ? 'on' : 'off'}`}
               />
-            </button>
+            </div>
 
             {settingsItems.map((item, idx) => (
               <button

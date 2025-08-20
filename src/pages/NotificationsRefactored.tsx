@@ -14,6 +14,7 @@ import { NotificationClassifier } from "@/utils/NotificationClassifier";
 import { normalizeNotification } from "@/utils/notificationHelpers";
 import { Database } from "@/integrations/supabase/types";
 
+
 type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 
 const NotificationsRefactored: React.FC = () => {
@@ -48,17 +49,18 @@ const NotificationsRefactored: React.FC = () => {
     
     if (activeFilter === "active_rentals") {
       // Active rentals include handover-related notifications and in-progress rental notifications
-      return (notification.type.includes('pickup_reminder') || 
-              notification.type.includes('return_reminder'));
+      return NotificationClassifier.isActiveRentalNotification(normalizedNotification);
     }
     
-    const classification = NotificationClassifier.classifyNotification(normalizedNotification as any);
+    const classification = NotificationClassifier.classifyNotification(normalizedNotification);
     return classification.type === activeFilter;
   });
 
   // Group notifications
   const unreadNotifications = filteredNotifications.filter(n => !n.is_read);
   const readNotifications = filteredNotifications.filter(n => n.is_read);
+  
+
 
   // Event handlers
   const handleMarkAsRead = async (notificationId: string) => {
@@ -87,16 +89,18 @@ const NotificationsRefactored: React.FC = () => {
       all: notifications.length,
       booking: 0,
       payment: 0,
-      active_rentals: 0
+      active_rentals: 0,
+      system: 0
     };
 
     notifications.forEach(notification => {
       const normalizedNotification = normalizeNotification(notification);
-      const classification = NotificationClassifier.classifyNotification(normalizedNotification as any);
+      const classification = NotificationClassifier.classifyNotification(normalizedNotification);
       
       if (classification.type === 'booking') counts.booking++;
       if (classification.type === 'payment') counts.payment++;
-      if (NotificationClassifier.isActiveRentalNotification(normalizedNotification as any)) {
+      if (classification.type === 'system') counts.system++;
+      if (NotificationClassifier.isActiveRentalNotification(normalizedNotification)) {
         counts.active_rentals++;
       }
     });
@@ -129,6 +133,8 @@ const NotificationsRefactored: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="p-4">
+
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -178,7 +184,7 @@ const NotificationsRefactored: React.FC = () => {
 
         {/* Filter Tabs */}
         <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-full mb-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all" className="flex items-center gap-2">
               All
               <Badge variant="secondary" className="text-xs">
@@ -198,9 +204,15 @@ const NotificationsRefactored: React.FC = () => {
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="active_rentals" className="flex items-center gap-2">
-              Active Rentals
+              Rentals
               <Badge variant="secondary" className="text-xs">
                 {filterCounts.active_rentals}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center gap-2">
+              System
+              <Badge variant="secondary" className="text-xs">
+                {filterCounts.system}
               </Badge>
             </TabsTrigger>
           </TabsList>

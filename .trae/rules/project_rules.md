@@ -71,4 +71,8 @@ supabase start       # Start local Supabase
 1. Complete Stripe payment integration
 2. Implement Supabase file storage
 3. Add push notifications
-4. Optimize for production deployment
+4. Optimize for production deployment[byterover-mcp]
+
+# important 
+always use byterover-retrieve-knowledge tool to get the related context before any tasks 
+always use byterover-store-knowledge to store all the critical informations after sucessful tasks
