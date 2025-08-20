@@ -44,6 +44,10 @@ export function NotificationCard({
         return <Car className="h-5 w-5" />;
       case 'payment':
         return <CreditCard className="h-5 w-5" />;
+      case 'handover':
+        return <Calendar className="h-5 w-5" />;
+      case 'message':
+        return <MessageSquare className="h-5 w-5" />;
       default:
         return <Bell className="h-5 w-5" />;
     }
@@ -57,6 +61,10 @@ export function NotificationCard({
         return 'text-blue-600';
       case 'payment':
         return 'text-emerald-600';
+      case 'handover':
+        return 'text-orange-600';
+      case 'message':
+        return 'text-purple-600';
       default:
         return 'text-gray-600';
     }
@@ -70,6 +78,10 @@ export function NotificationCard({
         return 'secondary';
       case 'payment':
         return 'default';
+      case 'handover':
+        return 'secondary';
+      case 'message':
+        return 'outline';
       default:
         return 'outline';
     }
@@ -77,16 +89,36 @@ export function NotificationCard({
 
   const handleClick = () => {
     if (!notification.is_read && onMarkAsRead) {
-      onMarkAsRead(notification.id?.toString() || "");
+      onMarkAsRead(notification.id);
     }
 
-    // Navigate based on notification type
-    if (notification.related_booking_id) {
+    // Intelligent routing based on notification type and classification
+    if (NotificationClassifier.isHandoverNotification(notification)) {
+      // Route handover notifications to map with booking context
+      if (notification.related_booking_id) {
+        navigate(`/map?booking=${notification.related_booking_id}&handover=true`);
+      } else {
+        navigate('/map');
+      }
+    } else if (NotificationClassifier.isActiveRentalNotification(notification)) {
+      // Active rental notifications go to rental details
+      if (notification.related_booking_id) {
+        navigate(`/rental-details/${notification.related_booking_id}`);
+      } else {
+        navigate(`/notifications/${notification.id}`);
+      }
+    } else if (classification.type === 'booking' && notification.related_booking_id) {
+      // Booking notifications go to booking details
       navigate(`/bookings/${notification.related_booking_id}`);
-    } else if (classification.type === 'payment') {
+    } else if (classification.type === 'payment' || NotificationClassifier.isPaymentNotification(notification)) {
+      // Payment notifications go to wallet
       navigate('/wallet');
+    } else if (NotificationClassifier.isMessageNotification(notification)) {
+      // Message notifications go to messages
+      navigate('/messages');
     } else {
-      navigate(`/notifications/${notification.id?.toString()}`);
+      // Default to notification details
+      navigate(`/notifications/${notification.id}`);
     }
   };
 
@@ -169,7 +201,7 @@ export function NotificationCard({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => onMarkAsRead(notification.id?.toString() || "")}
+                    onClick={() => onMarkAsRead(notification.id)}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     Mark as read
@@ -180,7 +212,7 @@ export function NotificationCard({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => onDelete(notification.id?.toString() || "")}
+                    onClick={() => onDelete(notification.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete

@@ -71,7 +71,7 @@ export const NotificationsSection = () => {
                 className={`p-4 rounded-lg border ${
                   notification.is_read ? 'bg-white' : 'bg-blue-50'
                 } cursor-pointer hover:bg-gray-50 transition-colors`}
-                onClick={() => handleNotificationClick(notification.id?.toString())}
+                onClick={() => handleNotificationClick(notification.id?.toString() || "")}
               >
                 <p className="text-sm text-gray-600">{notification.content}</p>
                 <span className="text-xs text-gray-400 mt-2 block">

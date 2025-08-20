@@ -5,7 +5,7 @@ type NotificationType = Database["public"]["Enums"]["notification_type"];
 type NotificationRole = Database["public"]["Enums"]["notification_role"];
 
 export interface NormalizedNotification {
-  id: number;
+  id: string;
   user_id: string;
   type: NotificationType;
   title: string;
@@ -28,7 +28,7 @@ export interface NormalizedNotification {
 
 export function normalizeNotification(notification: DatabaseNotification & { bookings?: { cars?: { brand: string; model: string } } }): NormalizedNotification {
   return {
-    id: notification.id,
+    id: notification.id.toString(),
     user_id: notification.user_id || '',
     type: notification.type,
     title: notification.title || '',

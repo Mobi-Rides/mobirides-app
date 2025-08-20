@@ -4,9 +4,14 @@ import { BookingNotificationPreview } from "./BookingNotificationPreview";
 import { PaymentNotificationPreview } from "./PaymentNotificationPreview";
 import { HandoverNotificationPreview } from "./HandoverNotificationPreview";
 import { GenericNotificationPreview } from "./GenericNotificationPreview";
+import type { NormalizedNotification } from "@/utils/notificationHelpers";
+
+interface NotificationPreviewProps {
+  notification: NormalizedNotification;
+}
 
 // Main NotificationPreview component
-export function NotificationPreview({ notification }) {
+export function NotificationPreview({ notification }: NotificationPreviewProps) {
   const classification = NotificationClassifier.classifyNotification(notification);
   switch (classification.type) {
     case "booking":
