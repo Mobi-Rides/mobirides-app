@@ -1,45 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useBookingActions } from "@/hooks/useBookingActions";
+import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { NotificationCard } from "@/components/notifications/NotificationCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Settings } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Bell, Settings, Trash2, Filter } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationClassifier } from "@/utils/NotificationClassifier";
 import { normalizeNotification } from "@/utils/notificationHelpers";
 import { Database } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 
 type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 
 const NotificationsRefactored: React.FC = () => {
+  const { user } = useAuth();
+  const [includeExpired, setIncludeExpired] = useState(false);
+  const [roleBasedFilter, setRoleBasedFilter] = useState(false);
+  
   const { 
     notifications, 
     unreadCount, 
     isLoading, 
     markAsRead, 
     markAllAsRead, 
-    deleteNotification 
-  } = useNotifications();
+    deleteNotification,
+    cleanupExpiredNotifications,
+    getUserRoleNotifications
+  } = useNotifications({ includeExpired });
   
   const { acceptBooking, declineBooking } = useBookingActions();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [roleFilteredNotifications, setRoleFilteredNotifications] = useState(notifications);
 
-  // Use the normalized notification helper
+  // Apply role-based filtering when enabled
+  useEffect(() => {
+    const applyRoleFilter = async () => {
+      if (roleBasedFilter) {
+        const filtered = await getUserRoleNotifications();
+        setRoleFilteredNotifications(filtered);
+      } else {
+        setRoleFilteredNotifications(notifications);
+      }
+    };
+    
+    applyRoleFilter();
+  }, [roleBasedFilter, notifications, getUserRoleNotifications]);
 
   // Filter notifications based on search and active filter
-  const filteredNotifications = notifications.filter((notification) => {
+  const filteredNotifications = roleFilteredNotifications.filter((notification) => {
     // Normalize the notification for consistent filtering
     const normalizedNotification = normalizeNotification(notification);
     
     // Search filter
-    const searchContent = `${normalizedNotification.content} ${normalizedNotification.title || ''}`.toLowerCase();
+    const searchContent = `${normalizedNotification.title || ''} ${normalizedNotification.description || ''}`.toLowerCase();
     if (searchQuery && !searchContent.includes(searchQuery.toLowerCase())) {
       return false;
     }
@@ -63,11 +86,11 @@ const NotificationsRefactored: React.FC = () => {
 
 
   // Event handlers
-  const handleMarkAsRead = async (notificationId: string) => {
+  const handleMarkAsRead = async (notificationId: number) => {
     await markAsRead(notificationId);
   };
 
-  const handleDelete = async (notificationId: string) => {
+  const handleDelete = async (notificationId: number) => {
     await deleteNotification(notificationId);
   };
 
@@ -83,17 +106,30 @@ const NotificationsRefactored: React.FC = () => {
     await declineBooking(bookingId);
   };
 
+  const handleCleanupExpired = async () => {
+    try {
+      const { error } = await cleanupExpiredNotifications();
+      if (error) {
+        toast.error('Failed to cleanup expired notifications');
+      } else {
+        toast.success('Expired notifications cleaned up successfully');
+      }
+    } catch (error) {
+      toast.error('Failed to cleanup expired notifications');
+    }
+  };
+
   // Helper function to get filter counts
   const getFilterCounts = () => {
     const counts = {
-      all: notifications.length,
+      all: roleFilteredNotifications.length,
       booking: 0,
       payment: 0,
       active_rentals: 0,
       system: 0
     };
 
-    notifications.forEach(notification => {
+    roleFilteredNotifications.forEach(notification => {
       const normalizedNotification = normalizeNotification(notification);
       const classification = NotificationClassifier.classifyNotification(normalizedNotification);
       
@@ -158,17 +194,65 @@ const NotificationsRefactored: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle>Notification Settings</DialogTitle>
                 </DialogHeader>
-                <div className="p-4">
-                  <p className="text-muted-foreground">Notification preferences coming soon...</p>
+                <div className="p-4 space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="include-expired">Include Expired Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Show notifications that have passed their expiration date
+                        </p>
+                      </div>
+                      <Switch
+                        id="include-expired"
+                        checked={includeExpired}
+                        onCheckedChange={setIncludeExpired}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="role-filter">Role-Based Filtering</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Only show notifications relevant to your role
+                        </p>
+                      </div>
+                      <Switch
+                        id="role-filter"
+                        checked={roleBasedFilter}
+                        onCheckedChange={setRoleBasedFilter}
+                      />
+                    </div>
+                    
+                    <div className="pt-4 border-t">
+                      <Button 
+                        onClick={handleCleanupExpired}
+                        variant="outline"
+                        className="w-full"
+                        disabled={isLoading}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Cleanup Expired Notifications
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
             
-            {unreadCount > 0 && (
-              <Button onClick={handleMarkAllAsRead} variant="outline" size="sm">
-                Mark all read
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {roleBasedFilter && (
+                <Badge variant="outline" className="text-xs">
+                  <Filter className="h-3 w-3 mr-1" />
+                  Role Filtered
+                </Badge>
+              )}
+              {unreadCount > 0 && (
+                <Button onClick={handleMarkAllAsRead} variant="outline" size="sm">
+                  Mark all read
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

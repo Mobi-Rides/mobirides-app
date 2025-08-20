@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 
 export class NotificationService {
   async createWalletNotification(
@@ -50,7 +51,7 @@ export class NotificationService {
 
       const { error } = await supabase.from("notifications").insert({
         user_id: hostId,
-        type: dbType as any,
+        type: dbType as Database['public']['Enums']['notification_type'],
         title: 'Notification',
         content: content,
         related_booking_id: relatedBookingId,

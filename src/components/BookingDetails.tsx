@@ -65,7 +65,7 @@ export const BookingDetails: React.FC = () => {
 
   // Check if user has permission to view this booking
   const isRenter = user?.id === booking.renter_id;
-  const isHost = user?.id === booking.host_id;
+  const isHost = user?.id === booking.cars?.owner_id;
   
   if (!isRenter && !isHost) {
     return <Navigate to="/bookings" replace />;
@@ -140,7 +140,7 @@ export const BookingDetails: React.FC = () => {
                 <DollarSign className="h-4 w-4" />
                 Total Amount:
               </span>
-              <span className="font-bold text-lg">P{booking.total_amount}</span>
+              <span className="font-bold text-lg">P{booking.total_price}</span>
             </div>
           </CardContent>
         </Card>
@@ -156,25 +156,21 @@ export const BookingDetails: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="font-semibold text-lg">
-                  {booking.cars.year} {booking.cars.make} {booking.cars.model}
-                </h3>
-                <p className="text-muted-foreground">{booking.cars.color}</p>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium">License Plate:</span>
-                <span className="font-mono">{booking.cars.license_plate}</span>
-              </div>
+                  <h3 className="font-semibold text-lg">
+                    {booking.cars.year} {booking.cars.brand} {booking.cars.model}
+                  </h3>
+                </div>
+
               <div className="flex justify-between items-center">
                 <span className="font-medium">Daily Rate:</span>
-                <span>P{booking.cars.daily_rate}/day</span>
+                <span>P{booking.cars.price_per_day}/day</span>
               </div>
-              {booking.pickup_location && (
+              {booking.cars?.location && (
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 mt-1" />
                   <div>
                     <span className="font-medium">Pickup Location:</span>
-                    <p className="text-sm text-muted-foreground">{booking.pickup_location}</p>
+                    <p className="text-sm text-muted-foreground">{booking.cars.location}</p>
                   </div>
                 </div>
               )}
@@ -191,30 +187,9 @@ export const BookingDetails: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {isRenter && booking.host && (
-              <>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Name:</span>
-                  <span>{booking.host.full_name}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Phone:</span>
-                  <span>{booking.host.phone_number || 'Not provided'}</span>
-                </div>
-              </>
-            )}
-            {isHost && booking.renter && (
-              <>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Name:</span>
-                  <span>{booking.renter.full_name}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Phone:</span>
-                  <span>{booking.renter.phone_number || 'Not provided'}</span>
-                </div>
-              </>
-            )}
+            <div className="text-center text-muted-foreground">
+              <p>Contact information will be available once the booking is confirmed.</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -234,12 +209,7 @@ export const BookingDetails: React.FC = () => {
                 <span className="text-sm">{formatDate(booking.updated_at)}</span>
               </div>
             )}
-            {booking.notes && (
-              <div>
-                <span className="font-medium">Notes:</span>
-                <p className="text-sm text-muted-foreground mt-1">{booking.notes}</p>
-              </div>
-            )}
+
           </CardContent>
         </Card>
       </div>

@@ -25,10 +25,13 @@ export const NotificationDetails: React.FC = () => {
     queryFn: async () => {
       if (!id) throw new Error('Notification ID is required');
       
+      const numericId = parseInt(id, 10);
+      if (isNaN(numericId)) throw new Error('Invalid notification ID');
+      
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('id', id)
+        .eq('id', numericId)
         .single();
 
       if (error) throw error;
@@ -44,7 +47,7 @@ export const NotificationDetails: React.FC = () => {
         await supabase
           .from('notifications')
           .update({ is_read: true })
-          .eq('id', parseInt(notification.id));
+          .eq('id', notification.id);
       };
       markAsRead();
     }

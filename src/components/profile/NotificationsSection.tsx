@@ -73,7 +73,8 @@ export const NotificationsSection = () => {
                 } cursor-pointer hover:bg-gray-50 transition-colors`}
                 onClick={() => handleNotificationClick(notification.id?.toString() || "")}
               >
-                <p className="text-sm text-gray-600">{notification.content}</p>
+                <h4 className="text-sm font-medium text-gray-800">{notification.title}</h4>
+                <p className="text-xs text-gray-600 mt-1">{notification.description}</p>
                 <span className="text-xs text-gray-400 mt-2 block">
                   {new Date(notification.created_at).toLocaleDateString()}
                 </span>

@@ -12,16 +12,20 @@ import {
   X,
   Eye,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  Wallet,
+  RefreshCw,
+  MapPin
 } from "lucide-react";
 import { NotificationClassifier } from "@/utils/NotificationClassifier";
 import { NormalizedNotification } from "@/utils/notificationHelpers";
+import { formatMetadataForDisplay } from "@/utils/notificationMetadataHandler";
 import { useNavigate } from "react-router-dom";
 
 interface NotificationCardProps {
   notification: NormalizedNotification;
-  onMarkAsRead?: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onMarkAsRead?: (id: number) => void;
+  onDelete?: (id: number) => void;
   onAcceptBooking?: (bookingId: string) => void;
   onDeclineBooking?: (bookingId: string) => void;
   compact?: boolean;
@@ -37,6 +41,7 @@ export function NotificationCard({
 }: NotificationCardProps) {
   const navigate = useNavigate();
   const classification = NotificationClassifier.classifyNotification(notification);
+  const { summary, actions, metadata } = formatMetadataForDisplay(notification);
 
   const getIcon = () => {
     switch (classification.type) {
@@ -122,11 +127,65 @@ export function NotificationCard({
     }
   };
 
-  const showBookingActions = 
-    notification.type.includes('booking_request') && 
-    !notification.is_read &&
-    onAcceptBooking && 
-    onDeclineBooking;
+  // Removed showBookingActions - all actions now handled through metadata-driven system
+
+  const handleMetadataAction = (action: string) => {
+    switch (action) {
+      case 'accept_booking':
+        if (onAcceptBooking && notification.related_booking_id) {
+          onAcceptBooking(notification.related_booking_id);
+        }
+        break;
+      case 'decline_booking':
+        if (onDeclineBooking && notification.related_booking_id) {
+          onDeclineBooking(notification.related_booking_id);
+        }
+        break;
+      case 'view_booking':
+        if (notification.related_booking_id) {
+          navigate(`/bookings/${notification.related_booking_id}`);
+        }
+        break;
+      case 'view_wallet':
+        navigate('/wallet');
+        break;
+      case 'view_messages':
+        navigate('/messages');
+        break;
+      case 'view_map':
+        if (notification.related_booking_id) {
+          navigate(`/map?booking=${notification.related_booking_id}&handover=true`);
+        } else {
+          navigate('/map');
+        }
+        break;
+      case 'view_rental':
+        if (notification.related_booking_id) {
+          navigate(`/rental-details/${notification.related_booking_id}`);
+        }
+        break;
+      case 'retry_payment':
+        // Handle payment retry logic
+        navigate('/wallet');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const getActionIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Check': return <Check className="h-4 w-4" />;
+      case 'X': return <X className="h-4 w-4" />;
+      case 'Eye': return <Eye className="h-4 w-4" />;
+      case 'Wallet': return <Wallet className="h-4 w-4" />;
+      case 'RefreshCw': return <RefreshCw className="h-4 w-4" />;
+      case 'MapPin': return <MapPin className="h-4 w-4" />;
+      case 'MessageSquare': return <MessageSquare className="h-4 w-4" />;
+      case 'Car': return <Car className="h-4 w-4" />;
+      default: return null;
+    }
+  };
 
   return (
     <Card 
@@ -148,12 +207,27 @@ export function NotificationCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
-                <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''}`}>
-                  {notification.content}
+                <h4 className={`text-sm ${!notification.is_read ? 'font-semibold' : 'font-medium'}`}>
+                  {notification.title}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {notification.description}
                 </p>
                 
-                {/* Car/Booking details if available */}
-                {notification.bookings && (
+                {/* Enhanced metadata display */}
+                {summary.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {summary.map((item, index) => (
+                      <p key={index} className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span className="w-1 h-1 bg-muted-foreground rounded-full" />
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Fallback: Car/Booking details if available and no metadata summary */}
+                {summary.length === 0 && notification.bookings && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {notification.bookings.brand} {notification.bookings.model}
                   </p>
@@ -171,56 +245,78 @@ export function NotificationCard({
               </div>
             </div>
 
-            {/* Booking Actions */}
-            {showBookingActions && (
-              <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  size="sm"
-                  onClick={() => onAcceptBooking(notification.related_booking_id)}
-                  className="flex-1"
-                >
-                  <Check className="h-4 w-4 mr-1" />
-                  Accept
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onDeclineBooking(notification.related_booking_id)}
-                  className="flex-1"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Decline
-                </Button>
-              </div>
-            )}
+            {/* Booking Actions removed - now handled through metadata-driven actions */}
 
-            {/* Quick Actions */}
+            {/* Enhanced Actions */}
             {!compact && (
-              <div className="flex items-center gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
-                {!notification.is_read && onMarkAsRead && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onMarkAsRead(notification.id)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Mark as read
-                  </Button>
+              <div className="space-y-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                {/* Metadata-driven action buttons */}
+                {actions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {actions.slice(0, 2).map((action, index) => (
+                      <Button
+                        key={index}
+                        size="sm"
+                        variant={action.variant || 'outline'}
+                        onClick={() => handleMetadataAction(action.action)}
+                        className="flex-1 min-w-0"
+                      >
+                        {action.icon && getActionIcon(action.icon)}
+                        {action.icon && <span className="ml-1" />}
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
                 )}
                 
-                {onDelete && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDelete(notification.id)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
-                  </Button>
+                {/* Additional actions if more than 2 */}
+                {actions.length > 2 && (
+                  <div className="flex flex-wrap gap-2">
+                    {actions.slice(2).map((action, index) => (
+                      <Button
+                        key={index + 2}
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleMetadataAction(action.action)}
+                        className="flex-1 min-w-0"
+                      >
+                        {action.icon && getActionIcon(action.icon)}
+                        {action.icon && <span className="ml-1" />}
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
                 )}
+                
+                {/* Standard actions - only show if not already in metadata actions */}
+                {(actions.length === 0 || (!actions.some(a => a.action === 'mark_as_read') && !actions.some(a => a.action === 'delete'))) && (
+                  <div className="flex items-center gap-2">
+                    {!notification.is_read && onMarkAsRead && !actions.some(a => a.action === 'mark_as_read') && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onMarkAsRead(notification.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Mark as read
+                      </Button>
+                    )}
+                    
+                    {onDelete && !actions.some(a => a.action === 'delete') && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onDelete(notification.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    )}
 
-                <div className="flex-1" />
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex-1" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
               </div>
             )}
           </div>

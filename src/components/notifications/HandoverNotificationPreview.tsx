@@ -39,7 +39,10 @@ export function HandoverNotificationPreview({ notification, confidence }: { noti
             {getTypeLabel()}
           </span>
         </div>
-        <div className="text-sm">{notification.content || notification.description || notification.title}</div>
+        <div>
+          <h4 className="text-sm font-medium">{notification.title}</h4>
+          <p className="text-xs text-muted-foreground mt-1">{notification.description}</p>
+        </div>
         {typeof confidence === 'number' && (
           <div className="flex items-center gap-2 mt-2">
             <span

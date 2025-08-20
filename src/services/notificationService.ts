@@ -86,7 +86,7 @@ export class TwilioNotificationService {
   private async sendEmail(
     to: string,
     templateId: string,
-    dynamicData: Record<string, any>,
+    dynamicData: Record<string, unknown>,
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
@@ -123,8 +123,8 @@ export class TwilioNotificationService {
   async sendBookingConfirmation(
     recipient: NotificationRecipient,
     bookingData: BookingNotificationData
-  ): Promise<{ whatsapp?: any; email?: any }> {
-    const results: { whatsapp?: any; email?: any } = {};
+  ): Promise<{ whatsapp?: { success: boolean; messageId?: string; error?: string }; email?: { success: boolean; messageId?: string; error?: string } }> {
+    const results: { whatsapp?: { success: boolean; messageId?: string; error?: string }; email?: { success: boolean; messageId?: string; error?: string } } = {};
 
     // WhatsApp notification
     if (recipient.whatsappEnabled && recipient.phone) {
@@ -175,8 +175,8 @@ export class TwilioNotificationService {
     recipient: NotificationRecipient,
     bookingData: BookingNotificationData,
     hoursUntilPickup: number
-  ): Promise<{ whatsapp?: any; email?: any }> {
-    const results: { whatsapp?: any; email?: any } = {};
+  ): Promise<{ whatsapp?: { success: boolean; messageId?: string; error?: string }; email?: { success: boolean; messageId?: string; error?: string } }> {
+    const results: { whatsapp?: { success: boolean; messageId?: string; error?: string }; email?: { success: boolean; messageId?: string; error?: string } } = {};
     const timeText = hoursUntilPickup === 24 ? 'tomorrow' : `in ${hoursUntilPickup} hours`;
 
     // WhatsApp notification
