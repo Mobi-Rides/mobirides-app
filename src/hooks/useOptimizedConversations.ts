@@ -144,7 +144,19 @@ export const useOptimizedConversations = () => {
           
           supabase
             .from('conversation_messages')
-            .select('id, content, sender_id, created_at, message_type, conversation_id')
+            .select(`
+              id, 
+              content, 
+              sender_id, 
+              created_at, 
+              message_type, 
+              conversation_id,
+              sender:profiles (
+                id,
+                full_name,
+                avatar_url
+              )
+            `)
             .in('conversation_id', convIds)
             .order('created_at', { ascending: false })
         ]);
@@ -198,7 +210,8 @@ export const useOptimizedConversations = () => {
               senderId: lastMessage.sender_id,
               conversationId: conv.id,
               timestamp: new Date(lastMessage.created_at),
-              type: lastMessage.message_type as 'text' | 'image' | 'file'
+              type: lastMessage.message_type as 'text' | 'image' | 'file',
+              sender: lastMessage.sender
             } : undefined,
             unreadCount: 0,
             type: (conv.type || 'direct') as 'direct' | 'group',

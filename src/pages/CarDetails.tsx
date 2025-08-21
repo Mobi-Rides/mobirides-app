@@ -137,6 +137,7 @@ const CarDetails = () => {
               year={car.year}
               location={car.location}
               pricePerDay={car.price_per_day}
+              ownerId={car.owner_id}
             />
             
             <CarSpecs

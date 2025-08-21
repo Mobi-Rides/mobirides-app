@@ -64,7 +64,7 @@ export function MessageBubble({
           <Avatar className="w-8 h-8">
             <AvatarImage src={sender.avatar} />
             <AvatarFallback className="text-xs">
-              {sender.name.charAt(0).toUpperCase()}
+              {sender.name ? sender.name.charAt(0).toUpperCase() : 'U'}
             </AvatarFallback>
           </Avatar>
         ) : (
@@ -80,7 +80,7 @@ export function MessageBubble({
         {/* Sender name (only in group chats and not own messages) */}
         {isGroupChat && !isOwnMessage && showAvatar && (
           <p className="text-xs font-medium text-primary mb-1">
-            {sender.name}
+            {sender.name || 'Unknown User'}
           </p>
         )}
 

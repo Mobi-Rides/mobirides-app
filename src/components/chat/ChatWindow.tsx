@@ -109,11 +109,18 @@ export function ChatWindow({
   const handleReply = (messageId: string) => {
     const message = messages.find(m => m.id === messageId);
     if (message) {
-      const sender = conversation.participants.find(p => p.id === message.senderId);
+      // First try to use the sender data from the message itself
+      let sender = message.sender;
+      
+      // If not available, try to find from conversation participants
+      if (!sender) {
+        sender = conversation.participants.find(p => p.id === message.senderId);
+      }
+      
       setReplyToMessage({
         id: messageId,
         content: message.content,
-        senderName: sender?.name || 'Unknown'
+        senderName: sender?.name || 'Unknown User'
       });
     }
   };
@@ -215,7 +222,22 @@ export function ChatWindow({
           ) : (
             <>
               {messages.map((message, index) => {
-                const sender = conversation.participants.find(p => p.id === message.senderId)!;
+                // First try to use the sender data from the message itself
+                let sender = message.sender;
+                
+                // If not available, try to find from conversation participants
+                if (!sender) {
+                  sender = conversation.participants.find(p => p.id === message.senderId);
+                }
+                
+                // Provide a default fallback if still not found
+                if (!sender) {
+                  sender = {
+                    id: message.senderId,
+                    name: 'Unknown User',
+                    avatar: undefined
+                  };
+                }
                 
                 return (
                   <div key={message.id}>

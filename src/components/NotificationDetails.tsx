@@ -80,7 +80,7 @@ export const NotificationDetails: React.FC = () => {
 
   const getNotificationIcon = (notification: NormalizedNotification) => {
     const classification = NotificationClassifier.classifyNotification(notification);
-    switch (classification) {
+    switch (classification.type) {
       case 'booking':
         return <Car className="h-5 w-5" />;
       case 'payment':
@@ -96,7 +96,7 @@ export const NotificationDetails: React.FC = () => {
 
   const getNotificationColor = (notification: NormalizedNotification) => {
     const classification = NotificationClassifier.classifyNotification(notification);
-    switch (classification) {
+    switch (classification.type) {
       case 'booking':
         return 'bg-blue-100 text-blue-800';
       case 'payment':
@@ -151,7 +151,7 @@ export const NotificationDetails: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <span>Notification</span>
                 <Badge className={getNotificationColor(notification)}>
-                  {NotificationClassifier.classifyNotification(notification)}
+                  {NotificationClassifier.classifyNotification(notification).type}
                 </Badge>
                 {!notification.is_read && (
                   <Badge variant="secondary">New</Badge>

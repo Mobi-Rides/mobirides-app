@@ -97,9 +97,20 @@ const useUserActivity = (userId: string) => {
 
         // Messages activity
         const { data: messages } = await supabase
-          .from("messages")
-          .select("id, content, created_at, status")
-          .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+          .from("conversation_messages")
+          .select(`
+            id, 
+            content, 
+            created_at, 
+            message_type,
+            sender_id,
+            conversation:conversations!conversation_id (
+              participants:conversation_participants (
+                user_id
+              )
+            )
+          `)
+          .eq('sender_id', userId)
           .order("created_at", { ascending: false })
           .limit(5);
 
@@ -107,12 +118,50 @@ const useUserActivity = (userId: string) => {
           activities.push({
             id: `message-${message.id}`,
             type: "message",
-            title: "Message activity",
+            title: "Message sent",
             description: message.content.substring(0, 50) + "...",
             timestamp: message.created_at,
-            status: message.status,
+            status: message.message_type,
             icon: MessageCircle,
           });
+        });
+
+        // Also get messages where user is a participant (received messages)
+        const { data: receivedMessages } = await supabase
+          .from("conversation_messages")
+          .select(`
+            id, 
+            content, 
+            created_at, 
+            message_type,
+            sender_id,
+            conversation:conversations!conversation_id (
+              participants:conversation_participants (
+                user_id
+              )
+            )
+          `)
+          .neq('sender_id', userId)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        receivedMessages?.forEach(message => {
+          // Check if user is a participant in this conversation
+          const isParticipant = message.conversation?.participants?.some(
+            p => p.user_id === userId
+          );
+          
+          if (isParticipant) {
+            activities.push({
+              id: `received-message-${message.id}`,
+              type: "message",
+              title: "Message received",
+              description: message.content.substring(0, 50) + "...",
+              timestamp: message.created_at,
+              status: message.message_type,
+              icon: MessageCircle,
+            });
+          }
         });
 
         // Sort all activities by timestamp

@@ -1,16 +1,18 @@
-import { Link } from "react-router-dom";
-import { CalendarDays, Info, Edit, MapPin, Calendar, Share2, CalendarCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { CalendarDays, Info, Edit, MapPin, Calendar, Share2, CalendarCheck, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { 
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
 
 interface CarHeaderProps {
   brand: string;
@@ -18,13 +20,17 @@ interface CarHeaderProps {
   year: number;
   location: string;
   pricePerDay: number;
+  ownerId?: string;
 }
 
-export const CarHeader = ({ brand, model, year, location, pricePerDay }: CarHeaderProps) => {
+export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }: CarHeaderProps) => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOwner, setIsOwner] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const { createConversation, isCreatingConversation } = useOptimizedConversations();
   
   useEffect(() => {
     const checkOwnership = async () => {
@@ -47,7 +53,7 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay }: CarHead
           .eq("id", id)
           .single();
           
-        setIsOwner(carData?.owner_id === userId);
+        setIsOwner(carData?.owner_id === userId || ownerId === userId);
       } catch (error) {
         console.error("Error checking car ownership:", error);
         setIsOwner(false);
@@ -89,6 +95,71 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay }: CarHead
     } catch (error) {
       console.error("Error sharing:", error);
       toast.error("Failed to share. Please try again.");
+    }
+  };
+
+  const handleContactOwner = async () => {
+    console.log("🔍 Contact button clicked - Starting debug logs");
+    console.log("👤 User authentication status:", {
+      isAuthenticated: !!user,
+      userId: user?.id,
+      userEmail: user?.email
+    });
+    
+    if (!user) {
+      console.log("❌ User not authenticated");
+      toast.error("Please log in to contact the owner.");
+      return;
+    }
+
+    console.log("🎯 Owner ID validation:", {
+      ownerId,
+      isValidOwnerId: !!ownerId,
+      ownerIdType: typeof ownerId
+    });
+    
+    if (!ownerId) {
+      console.log("❌ Owner ID not available");
+      toast.error("Owner information not available.");
+      return;
+    }
+
+    console.log("🚀 Starting conversation creation process");
+    
+    try {
+      const conversationParams = {
+        type: 'direct' as const,
+        participantIds: [ownerId],
+        title: `Chat about ${brand} ${model}`
+      };
+      
+      console.log("📞 Calling createConversation with params:", conversationParams);
+      console.log("🔧 createConversation function:", typeof createConversation);
+      
+      const conversation = await createConversation(conversationParams);
+      
+      console.log("✅ createConversation response:", {
+        conversation,
+        conversationType: typeof conversation,
+        conversationId: conversation?.id
+      });
+
+      if (conversation) {
+        console.log("🧭 Attempting navigation to /messages");
+        navigate('/messages');
+        console.log("🎉 Navigation completed, showing success toast");
+        toast.success("Conversation started!");
+      } else {
+        console.log("⚠️ Conversation creation returned falsy value");
+        toast.error("Failed to create conversation. Please try again.");
+      }
+    } catch (error) {
+      console.error("💥 Error creating conversation:", {
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined
+      });
+      toast.error("Failed to start conversation. Please try again.");
     }
   };
   
@@ -177,6 +248,23 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay }: CarHead
               </span>
             </Link>
           </Button>
+          
+          {!isOwner && ownerId && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
+              onClick={handleContactOwner}
+              disabled={isCreatingConversation}
+            >
+              <MessageSquare className="h-4 w-4 text-[#581CFA] dark:text-white" />
+              <span className="hidden md:inline-block">
+                <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
+                  {isCreatingConversation ? 'Connecting...' : 'Contact'}
+                </p>
+              </span>
+            </Button>
+          )}
         </div>
       </div>
     </div>
