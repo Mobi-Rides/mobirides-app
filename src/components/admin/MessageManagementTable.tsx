@@ -88,7 +88,9 @@ export const MessageManagementTable = () => {
   const filteredMessages = messages?.filter(message =>
     message.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.sender?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    message.receiver?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    message.conversation?.participants?.some(p => 
+      p.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   ) || [];
 
   const getMessageTypeBadgeVariant = (messageType: string) => {
@@ -238,7 +240,7 @@ export const MessageManagementTable = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => flagMessage(message.id)}
-                          disabled={message.status === "flagged"}
+                          disabled={false}
                         >
                           <Flag className="h-4 w-4" />
                         </Button>

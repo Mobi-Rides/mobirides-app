@@ -50,10 +50,15 @@ export const toSafeCar = (car: Car): SafeCar => {
 // Type guard for Car
 export const isValidCar = (car: unknown): car is Car => {
   return car && 
-    typeof car.id === 'string' && 
-    typeof car.brand === 'string' && 
-    typeof car.model === 'string' &&
-    typeof car.price_per_day === 'number';
+    typeof car === 'object' &&
+    'id' in car &&
+    'brand' in car &&
+    'model' in car &&
+    'price_per_day' in car &&
+    typeof (car as any).id === 'string' && 
+    typeof (car as any).brand === 'string' && 
+    typeof (car as any).model === 'string' &&
+    typeof (car as any).price_per_day === 'number';
 };
 
 export interface CarQueryResponse {

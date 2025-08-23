@@ -39,19 +39,7 @@ export function NotificationDebugTest() {
       console.log('🔍 Fetching notifications for user:', user.id);
       const { data: notifications, error: notifError } = await supabase
         .from('notifications')
-        .select(`
-          *,
-          bookings:related_booking_id (
-            id,
-            brand,
-            model
-          ),
-          cars:related_car_id (
-            id,
-            brand,
-            model
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -82,9 +70,9 @@ export function NotificationDebugTest() {
           .from('notifications')
           .insert({
             user_id: user.id,
-            type: 'test_notification',
+            type: 'system_notification',
             title: 'Debug Test Notification',
-            content: 'This is a test notification created for debugging purposes.',
+            description: 'This is a test notification created for debugging purposes.',
             is_read: false
           })
           .select()

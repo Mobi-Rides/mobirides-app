@@ -14,7 +14,6 @@ import type { Database } from '@/integrations/supabase/types';
 type Booking = Database['public']['Tables']['bookings']['Row'] & {
   cars: Database['public']['Tables']['cars']['Row'] | null;
   renter: Database['public']['Tables']['profiles']['Row'] | null;
-  host: Database['public']['Tables']['profiles']['Row'] | null;
 };
 
 export const BookingDetails: React.FC = () => {
@@ -31,8 +30,7 @@ export const BookingDetails: React.FC = () => {
         .select(`
           *,
           cars (*),
-          renter:profiles!bookings_renter_id_fkey (*),
-          host:profiles!bookings_host_id_fkey (*)
+          renter:profiles!renter_id (*)
         `)
         .eq('id', id)
         .single();

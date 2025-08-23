@@ -180,9 +180,9 @@ export const useNotifications = (options?: {
   const getUserRoleNotifications = async () => {
     if (!user?.id) return [];
 
-    // Get user's role from the users table
+    // Get user's role from the profiles table
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -201,10 +201,10 @@ export const useNotifications = (options?: {
       // System-wide notifications are visible to everyone
       if (roleTarget === 'system_wide') return true;
       
-      // Role-specific filtering
+      // Role-specific filtering  
       if (roleTarget === 'host_only' && userRole === 'host') return true;
       if (roleTarget === 'renter_only' && userRole === 'renter') return true;
-      if (roleTarget === 'admin_only' && (userRole === 'admin')) return true;
+      // Note: admin_only notifications would need admin role support in profiles table
       
       return false;
     });

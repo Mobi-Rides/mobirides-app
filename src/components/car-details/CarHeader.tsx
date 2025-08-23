@@ -136,25 +136,35 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
       console.log("📞 Calling createConversation with params:", conversationParams);
       console.log("🔧 createConversation function:", typeof createConversation);
       
-      const conversation = await createConversation(conversationParams);
-      
-      console.log("✅ createConversation response:", {
-        conversation,
-        conversationType: typeof conversation,
-        conversationId: conversation?.id
-      });
+      createConversation(conversationParams, {
+        onSuccess: (conversation) => {
+          console.log("✅ createConversation success:", {
+            conversation,
+            conversationType: typeof conversation,
+            conversationId: conversation?.id
+          });
 
-      if (conversation) {
-        console.log("🧭 Attempting navigation to /messages");
-        navigate('/messages');
-        console.log("🎉 Navigation completed, showing success toast");
-        toast.success("Conversation started!");
-      } else {
-        console.log("⚠️ Conversation creation returned falsy value");
-        toast.error("Failed to create conversation. Please try again.");
-      }
+          if (conversation?.id) {
+            console.log("🧭 Attempting navigation to /messages");
+            navigate('/messages');
+            console.log("🎉 Navigation completed, showing success toast");
+            toast.success("Conversation started!");
+          } else {
+            console.log("⚠️ Conversation creation returned falsy value");
+            toast.error("Failed to create conversation. Please try again.");
+          }
+        },
+        onError: (error) => {
+          console.error("💥 Error creating conversation:", {
+            error,
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            errorStack: error instanceof Error ? error.stack : undefined
+          });
+          toast.error("Failed to start conversation. Please try again.");
+        }
+      });
     } catch (error) {
-      console.error("💥 Error creating conversation:", {
+      console.error("💥 Error in handleStartConversation:", {
         error,
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
         errorStack: error instanceof Error ? error.stack : undefined
