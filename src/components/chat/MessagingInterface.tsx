@@ -6,8 +6,7 @@ import { MigrationStatusBanner } from './MigrationStatusBanner';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
-import { useConversationMessages } from '@/hooks/useConversationMessages';
+import { useMessaging } from '@/hooks/useMessaging';
 
 interface MessagingInterfaceProps {
   className?: string;
@@ -16,9 +15,21 @@ interface MessagingInterfaceProps {
 }
 
 export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
-  const { conversations, isLoading: conversationsLoading, createConversation, isCreatingConversation } = useOptimizedConversations();
+  const { 
+    conversations, 
+    isLoading: conversationsLoading, 
+    createConversation, 
+    isCreatingConversation,
+    getConversationMessages,
+    sendMessage,
+    isSendingMessage
+  } = useMessaging();
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
-  const { messages, sendMessage, isSendingMessage } = useConversationMessages(selectedConversationId);
+  
+  // Get messages for selected conversation
+  const { data: messages = [] } = selectedConversationId ? 
+    getConversationMessages(selectedConversationId) : 
+    { data: [] };
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   
@@ -121,7 +132,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   const handleSendMessage = (content: string) => {
     if (selectedConversationId) {
-      sendMessage({ content });
+      sendMessage({ conversationId: selectedConversationId, content });
     }
   };
 

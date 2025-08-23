@@ -363,42 +363,63 @@ export type Database = {
           content: string
           conversation_id: string
           created_at: string
+          delivered_at: string | null
+          delivery_status: Database["public"]["Enums"]["message_delivery_status"]
           edited: boolean | null
           edited_at: string | null
+          encrypted_content: string | null
+          encryption_key_id: string | null
           id: string
+          is_encrypted: boolean | null
           message_type: string
           metadata: Json | null
+          read_at: string | null
           related_car_id: string | null
           reply_to_message_id: string | null
           sender_id: string
+          sent_at: string
           updated_at: string
         }
         Insert: {
           content: string
           conversation_id: string
           created_at?: string
+          delivered_at?: string | null
+          delivery_status?: Database["public"]["Enums"]["message_delivery_status"]
           edited?: boolean | null
           edited_at?: string | null
+          encrypted_content?: string | null
+          encryption_key_id?: string | null
           id?: string
+          is_encrypted?: boolean | null
           message_type?: string
           metadata?: Json | null
+          read_at?: string | null
           related_car_id?: string | null
           reply_to_message_id?: string | null
           sender_id: string
+          sent_at?: string
           updated_at?: string
         }
         Update: {
           content?: string
           conversation_id?: string
           created_at?: string
+          delivered_at?: string | null
+          delivery_status?: Database["public"]["Enums"]["message_delivery_status"]
           edited?: boolean | null
           edited_at?: string | null
+          encrypted_content?: string | null
+          encryption_key_id?: string | null
           id?: string
+          is_encrypted?: boolean | null
           message_type?: string
           metadata?: Json | null
+          read_at?: string | null
           related_car_id?: string | null
           reply_to_message_id?: string | null
           sender_id?: string
+          sent_at?: string
           updated_at?: string
         }
         Relationships: [
@@ -465,6 +486,13 @@ export type Database = {
             referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "conversation_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       conversations: {
@@ -495,7 +523,59 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conversations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_encryption: {
+        Row: {
+          created_at: string | null
+          encryption_key_encrypted: string
+          file_hash: string
+          file_id: string
+          file_size: number
+          id: string
+          message_id: string | null
+          mime_type: string
+          original_filename: string
+        }
+        Insert: {
+          created_at?: string | null
+          encryption_key_encrypted: string
+          file_hash: string
+          file_id: string
+          file_size: number
+          id?: string
+          message_id?: string | null
+          mime_type: string
+          original_filename: string
+        }
+        Update: {
+          created_at?: string | null
+          encryption_key_encrypted?: string
+          file_hash?: string
+          file_id?: string
+          file_size?: number
+          id?: string
+          message_id?: string | null
+          mime_type?: string
+          original_filename?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_encryption_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       handover_sessions: {
         Row: {
@@ -649,6 +729,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      identity_keys: {
+        Row: {
+          created_at: string | null
+          id: string
+          private_identity_key_encrypted: string
+          public_identity_key: string
+          registration_id: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          private_identity_key_encrypted: string
+          public_identity_key: string
+          registration_id: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          private_identity_key_encrypted?: string
+          public_identity_key?: string
+          registration_id?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       identity_verification_checks: {
         Row: {
@@ -856,6 +966,54 @@ export type Database = {
           },
         ]
       }
+      notification_cleanup_log: {
+        Row: {
+          cleanup_details: Json | null
+          created_at: string | null
+          deleted_count: number
+          id: number
+        }
+        Insert: {
+          cleanup_details?: Json | null
+          created_at?: string | null
+          deleted_count?: number
+          id?: number
+        }
+        Update: {
+          cleanup_details?: Json | null
+          created_at?: string | null
+          deleted_count?: number
+          id?: number
+        }
+        Relationships: []
+      }
+      notification_expiration_policies: {
+        Row: {
+          auto_cleanup_enabled: boolean | null
+          created_at: string | null
+          default_expiration_hours: number | null
+          id: number
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          auto_cleanup_enabled?: boolean | null
+          created_at?: string | null
+          default_expiration_hours?: number | null
+          id?: number
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          auto_cleanup_enabled?: boolean | null
+          created_at?: string | null
+          default_expiration_hours?: number | null
+          id?: number
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           booking_notifications: boolean | null
@@ -953,7 +1111,22 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_car_id_fkey"
+            columns: ["related_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications_backup: {
         Row: {
@@ -1012,6 +1185,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pre_keys: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_signed: boolean | null
+          is_used: boolean | null
+          key_id: number
+          private_key_encrypted: string
+          public_key: string
+          signature: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_signed?: boolean | null
+          is_used?: boolean | null
+          key_id: number
+          private_key_encrypted: string
+          public_key: string
+          signature?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_signed?: boolean | null
+          is_used?: boolean | null
+          key_id?: number
+          private_key_encrypted?: string
+          public_key?: string
+          signature?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1182,6 +1391,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      signal_sessions: {
+        Row: {
+          contact_user_id: string
+          created_at: string | null
+          id: string
+          identity_key: string
+          one_time_pre_keys: string[] | null
+          session_data: Json
+          signed_pre_key: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_user_id: string
+          created_at?: string | null
+          id?: string
+          identity_key: string
+          one_time_pre_keys?: string[] | null
+          session_data: Json
+          signed_pre_key: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_user_id?: string
+          created_at?: string | null
+          id?: string
+          identity_key?: string
+          one_time_pre_keys?: string[] | null
+          session_data?: Json
+          signed_pre_key?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_public_keys: {
+        Row: {
+          created_at: string | null
+          id: string
+          public_key: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          public_key: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          public_key?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_verifications: {
         Row: {
@@ -1406,6 +1675,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      analyze_conversation_query_performance: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          estimated_cost: number
+          index_usage: string
+          query_type: string
+          recommendations: string
+          table_name: string
+        }[]
+      }
       calculate_car_rating: {
         Args: { car_uuid: string }
         Returns: number
@@ -1426,6 +1705,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      check_conversation_access: {
+        Args: { p_conversation_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       check_host_wallet_balance: {
         Args: { host_uuid: string; required_commission: number }
         Returns: boolean
@@ -1433,6 +1716,15 @@ export type Database = {
       cleanup_expired_admin_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      cleanup_expired_notifications_enhanced: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          cleanup_details: Json
+          expired_by_policy: number
+          expired_by_timestamp: number
+          total_deleted: number
+        }[]
       }
       count_unread_notifications: {
         Args: Record<PropertyKey, never>
@@ -1464,6 +1756,82 @@ export type Database = {
             }
         Returns: undefined
       }
+      create_handover_notification: {
+        Args:
+          | {
+              p_booking_id: string
+              p_handover_type: string
+              p_location?: string
+              p_user_id: string
+            }
+          | {
+              p_car_make: string
+              p_car_model: string
+              p_handover_type: string
+              p_location: string
+              p_progress_percentage?: number
+              p_status?: string
+              p_step_name?: string
+              p_user_id: string
+            }
+        Returns: undefined
+      }
+      create_handover_progress_notification: {
+        Args: { p_handover_session_id: string }
+        Returns: undefined
+      }
+      create_handover_step_notification: {
+        Args: {
+          p_completed_by: string
+          p_handover_session_id: string
+          p_step_name: string
+        }
+        Returns: undefined
+      }
+      create_message_notification: {
+        Args: {
+          p_message_preview?: string
+          p_recipient_id: string
+          p_sender_name: string
+        }
+        Returns: undefined
+      }
+      create_notification_with_expiration: {
+        Args: {
+          p_content?: string
+          p_custom_expiration_hours?: number
+          p_description?: string
+          p_metadata?: Json
+          p_priority?: number
+          p_related_booking_id?: string
+          p_related_car_id?: string
+          p_related_user_id?: string
+          p_role_target?: Database["public"]["Enums"]["notification_role"]
+          p_title?: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
+        }
+        Returns: number
+      }
+      create_payment_notification: {
+        Args: {
+          p_amount: number
+          p_booking_id?: string
+          p_description?: string
+          p_payment_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      create_system_notification: {
+        Args: {
+          p_description: string
+          p_metadata?: Json
+          p_title: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       create_wallet_notification: {
         Args:
           | {
@@ -1487,21 +1855,38 @@ export type Database = {
         Args: { p_days_old?: number }
         Returns: number
       }
-      get_user_conversation_ids: {
-        Args: { user_uuid?: string }
+      get_conversation_messages: {
+        Args: { p_conversation_id: string; p_user_id?: string }
         Returns: {
-          conversation_id: string
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+          updated_at: string
+        }[]
+      }
+      get_notification_expiration_info: {
+        Args: {
+          p_notification_type: Database["public"]["Enums"]["notification_type"]
+        }
+        Returns: {
+          auto_cleanup_enabled: boolean
+          default_expiration_hours: number
+          estimated_expiration: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
         }[]
       }
       get_user_conversations: {
-        Args: { p_page?: number; p_page_size?: number; p_search_term?: string }
+        Args:
+          | { p_page?: number; p_page_size?: number; p_search_term?: string }
+          | { p_user_id?: string }
         Returns: {
           conversation_id: string
-          last_message: string
-          last_message_at: string
-          participants: Json
+          created_at: string
+          is_creator: boolean
+          is_participant: boolean
           title: string
-          type: string
+          updated_at: string
         }[]
       }
       get_user_notifications: {
@@ -1567,6 +1952,14 @@ export type Database = {
         }
         Returns: string
       }
+      update_notification_expiration_policy: {
+        Args: {
+          p_auto_cleanup_enabled?: boolean
+          p_expiration_hours?: number
+          p_notification_type: Database["public"]["Enums"]["notification_type"]
+        }
+        Returns: boolean
+      }
       validate_admin_session: {
         Args: { p_session_token: string }
         Returns: boolean
@@ -1579,6 +1972,30 @@ export type Database = {
         }
         Returns: boolean
       }
+      verify_conversation_policies: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          details: string
+          status: string
+          test_name: string
+        }[]
+      }
+      verify_no_recursion_policies: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          has_cross_references: boolean
+          policy_count: number
+          table_name: string
+        }[]
+      }
+      verify_no_recursive_policies: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          policy_definition: string
+          policy_name: string
+          table_name: string
+        }[]
+      }
     }
     Enums: {
       booking_status:
@@ -1587,6 +2004,7 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "expired"
+      message_delivery_status: "sent" | "delivered" | "read"
       message_status: "sent" | "delivered" | "read"
       notification_role: "host_only" | "renter_only" | "system_wide"
       notification_type:
@@ -1600,6 +2018,17 @@ export type Database = {
         | "pickup_reminder_renter"
         | "return_reminder_host"
         | "return_reminder_renter"
+        | "wallet_topup"
+        | "wallet_deduction"
+        | "message_received"
+        | "handover_ready"
+        | "payment_received"
+        | "payment_failed"
+        | "system_notification"
+        | "navigation_started"
+        | "pickup_location_shared"
+        | "return_location_shared"
+        | "arrival_notification"
       old_notification_type:
         | "booking_cancelled"
         | "booking_confirmed"
@@ -1758,6 +2187,7 @@ export const Constants = {
         "completed",
         "expired",
       ],
+      message_delivery_status: ["sent", "delivered", "read"],
       message_status: ["sent", "delivered", "read"],
       notification_role: ["host_only", "renter_only", "system_wide"],
       notification_type: [
@@ -1771,6 +2201,17 @@ export const Constants = {
         "pickup_reminder_renter",
         "return_reminder_host",
         "return_reminder_renter",
+        "wallet_topup",
+        "wallet_deduction",
+        "message_received",
+        "handover_ready",
+        "payment_received",
+        "payment_failed",
+        "system_notification",
+        "navigation_started",
+        "pickup_location_shared",
+        "return_location_shared",
+        "arrival_notification",
       ],
       old_notification_type: [
         "booking_cancelled",

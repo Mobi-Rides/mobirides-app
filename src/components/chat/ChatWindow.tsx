@@ -109,18 +109,21 @@ export function ChatWindow({
   const handleReply = (messageId: string) => {
     const message = messages.find(m => m.id === messageId);
     if (message) {
-      // First try to use the sender data from the message itself
-      let sender = message.sender;
+      // Transform sender data to match expected format
+      let senderName = 'Unknown User';
       
-      // If not available, try to find from conversation participants
-      if (!sender) {
-        sender = conversation.participants.find(p => p.id === message.senderId);
+      if (message.sender?.full_name) {
+        senderName = message.sender.full_name;
+      } else {
+        // Fallback to finding from conversation participants
+        const sender = conversation.participants.find(p => p.id === message.senderId);
+        senderName = sender?.name || 'Unknown User';
       }
       
       setReplyToMessage({
         id: messageId,
         content: message.content,
-        senderName: sender?.name || 'Unknown User'
+        senderName
       });
     }
   };
@@ -222,20 +225,25 @@ export function ChatWindow({
           ) : (
             <>
               {messages.map((message, index) => {
-                // First try to use the sender data from the message itself
-                let sender = message.sender;
+                // Transform sender data to match MessageBubble expectations
+                let senderForBubble;
                 
-                // If not available, try to find from conversation participants
-                if (!sender) {
-                  sender = conversation.participants.find(p => p.id === message.senderId);
-                }
-                
-                // Provide a default fallback if still not found
-                if (!sender) {
-                  sender = {
+                if (message.sender?.full_name) {
+                  // Use sender data from message
+                  senderForBubble = {
+                    id: message.sender.id,
+                    name: message.sender.full_name,
+                    avatar: message.sender.avatar_url,
+                    status: 'offline' as const
+                  };
+                } else {
+                  // Fallback to conversation participants
+                  const participantSender = conversation.participants.find(p => p.id === message.senderId);
+                  senderForBubble = participantSender || {
                     id: message.senderId,
                     name: 'Unknown User',
-                    avatar: undefined
+                    avatar: undefined,
+                    status: 'offline' as const
                   };
                 }
                 
@@ -255,7 +263,7 @@ export function ChatWindow({
                     {/* Message */}
                     <MessageBubble
                       message={message}
-                      sender={sender}
+                      sender={senderForBubble}
                       currentUser={currentUser}
                       isGroupChat={conversation.type === 'group'}
                       showAvatar={shouldShowAvatar(message, index)}

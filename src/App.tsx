@@ -8,8 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import "./App.css";
-import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "sonner";
+import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
@@ -17,7 +16,6 @@ import { LocationSearchProvider } from "@/contexts/LocationSearchContext";
 import { VerificationProvider } from "@/contexts/VerificationContext";
 import { HandoverProvider } from "@/contexts/HandoverContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/toaster";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
 
@@ -98,7 +96,6 @@ function App() {
               <LocationSearchProvider>
                 <VerificationProvider>
                   <TooltipProvider>
-                    <Toaster />
                     <BrowserRouter>
                       <Routes>
                         <Route path="/" element={
@@ -354,8 +351,7 @@ function App() {
                       {/* Global Chat Manager */}
                       <ChatManager />
                       
-                      <ShadcnToaster />
-                      <SonnerToaster position="top-center" />
+                      <Toaster position="top-center" />
                     </BrowserRouter>
                   </TooltipProvider>
                 </VerificationProvider>

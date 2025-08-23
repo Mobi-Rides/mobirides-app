@@ -1,10 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import App from "./App.tsx";
 import "./index.css";
-
-const queryClient = new QueryClient(); // Force fresh build trigger
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -18,10 +14,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(
-  <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </ThemeProvider>
-);
+createRoot(document.getElementById("root")!).render(<App />);
