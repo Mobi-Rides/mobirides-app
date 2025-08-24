@@ -8,4 +8,22 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Enhanced client with proper auth configuration for RLS context
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'mobirides-auth-token',
+    debug: process.env.NODE_ENV === 'development',
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'x-client-info': 'mobirides-web-app'
+    }
+  }
+});
+
+// Re-export enhanced auth utilities
+export { supabaseAuthClient, AuthContextVerifier, SessionRecovery } from './auth-config';
