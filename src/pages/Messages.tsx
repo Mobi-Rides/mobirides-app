@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessagingInterface } from '../components/chat/MessagingInterface';
+import { MessagingErrorBoundary } from '../components/chat/MessagingErrorBoundary';
 import { Header } from '../components/Header';
 import { Navigation } from '../components/Navigation';
 
@@ -28,11 +29,13 @@ const Messages = () => {
         onFiltersChange={() => {}}
       />
       <div className="flex-1 flex flex-col pb-16">
-        <MessagingInterface 
-          className="flex-1" 
-          recipientId={recipientId}
-          recipientName={recipientName}
-        />
+        <MessagingErrorBoundary>
+          <MessagingInterface 
+            className="flex-1" 
+            recipientId={recipientId}
+            recipientName={recipientName}
+          />
+        </MessagingErrorBoundary>
       </div>
       <Navigation />
     </div>

@@ -81,8 +81,14 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   // Auto-select first conversation if none selected
   useEffect(() => {
-    if (!selectedConversationId && (conversations || []).length > 0 && !conversationsLoading) {
-      setSelectedConversationId(conversations[0].id);
+    try {
+      console.log("MessagingInterface: Auto-select effect, conversations:", conversations?.length);
+      if (!selectedConversationId && Array.isArray(conversations) && conversations.length > 0 && !conversationsLoading) {
+        console.log("MessagingInterface: Auto-selecting first conversation:", conversations[0]?.id);
+        setSelectedConversationId(conversations[0]?.id);
+      }
+    } catch (error) {
+      console.error("MessagingInterface: Error in auto-select:", error);
     }
   }, [conversations, selectedConversationId, conversationsLoading]);
 
@@ -98,18 +104,20 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   
   // Handle recipient-based conversation creation/selection
   useEffect(() => {
-    console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
-    
-    if (recipientId && recipientName && currentUser?.id && currentUser.id !== 'user-1' && !conversationsLoading) {
-      console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
-      console.log("MessagingInterface: Current conversations:", conversations);
+    try {
+      console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
       
-      const existingConversation = (conversations || []).find(conv => 
-        conv.type === 'direct' && 
-        (conv.participants || []).length === 2 &&
-        (conv.participants || []).some(p => p.id === recipientId) &&
-        (conv.participants || []).some(p => p.id === currentUser.id)
-      );
+      if (recipientId && recipientName && currentUser?.id && currentUser.id !== 'user-1' && !conversationsLoading) {
+        console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
+        console.log("MessagingInterface: Current conversations:", Array.isArray(conversations) ? conversations.length : 'not array');
+        
+        const existingConversation = Array.isArray(conversations) ? conversations.find(conv => 
+          conv?.type === 'direct' && 
+          Array.isArray(conv?.participants) &&
+          conv.participants.length === 2 &&
+          conv.participants.some(p => p?.id === recipientId) &&
+          conv.participants.some(p => p?.id === currentUser.id)
+        ) : null;
       
       console.log("MessagingInterface: Existing conversation found:", existingConversation);
       
@@ -140,20 +148,24 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
           console.warn("MessagingInterface: Max creation attempts reached for recipient:", recipientId);
         }
       }
-    } else {
-      console.log("MessagingInterface: Missing required data, user not loaded, or conversations loading");
+      } else {
+        console.log("MessagingInterface: Missing required data, user not loaded, or conversations loading");
+      }
+    } catch (error) {
+      console.error("MessagingInterface: Error in recipient handling:", error);
     }
   }, [recipientId, recipientName, conversations, currentUser?.id, conversationsLoading, isCreatingConversation]);
 
-  const filteredConversations = (conversations || []).filter(conv => {
-    const title = conv.title || (conv.participants || [])
-      .filter(p => p.id !== currentUser.id)
-      .map(p => p.name)
+  const filteredConversations = Array.isArray(conversations) ? conversations.filter(conv => {
+    if (!conv) return false;
+    const title = conv.title || (Array.isArray(conv.participants) ? conv.participants : [])
+      .filter(p => p?.id !== currentUser?.id)
+      .map(p => p?.name || 'Unknown')
       .join(', ');
     
     return title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (conv.lastMessage && conv.lastMessage.content.toLowerCase().includes(searchTerm.toLowerCase()));
-  });
+           (conv.lastMessage?.content && conv.lastMessage.content.toLowerCase().includes(searchTerm.toLowerCase()));
+  }) : [];
 
   const selectedConversation = filteredConversations.find(c => c.id === selectedConversationId);
   

@@ -103,13 +103,14 @@ export const useOptimizedConversations = () => {
   const { data: conversations = [], isLoading, error } = useQuery({
     queryKey: ['optimized-conversations'],
     queryFn: async () => {
-      console.log("Fetching optimized conversations");
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.user) {
-        console.log("No valid session for conversation fetch");
-        return [];
-      }
-      const user = session.user;
+      try {
+        console.log("Fetching optimized conversations");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session?.user) {
+          console.log("No valid session for conversation fetch");
+          return [];
+        }
+        const user = session.user;
 
       try {
         // Get user's conversation IDs with a single query
@@ -192,10 +193,10 @@ export const useOptimizedConversations = () => {
           }
         });
 
-        const transformedConversations: Conversation[] = userConversations?.map((conv: any) => {
-          const conversationParticipants = participantsByConv.get(conv.id) || [];
+        const transformedConversations: Conversation[] = (userConversations || []).map((conv: any) => {
+          const conversationParticipants = participantsByConv.get(conv?.id) || [];
           
-          const participantUsers: User[] = conversationParticipants.map((p: any) => ({
+          const participantUsers: User[] = (conversationParticipants || []).map((p: any) => ({
             id: p.user_id,
             name: p.profiles?.full_name || 'Unknown User',
             avatar: p.profiles?.avatar_url ? 
@@ -227,10 +228,14 @@ export const useOptimizedConversations = () => {
         }) || [];
 
         console.log("Optimized conversations transformed:", transformedConversations);
-        return transformedConversations;
+        return transformedConversations || [];
 
       } catch (error) {
         console.error("Error in optimized conversation fetch:", error);
+        return [];
+      }
+      } catch (queryError) {
+        console.error("Critical error in conversation query:", queryError);
         return [];
       }
     },
