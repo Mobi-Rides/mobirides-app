@@ -4,11 +4,28 @@
 This plan addresses the inconsistent foreign key relationships in the MobiRides database where multiple tables incorrectly reference `auth.users(id)` directly instead of following the standard Supabase pattern of referencing `profiles(id)`.
 
 ## Affected Tables & Columns
-- `user_verifications` - `user_id` column
-- `vehicle_condition_reports` - `reporter_id` column  
-- `conversations` - `created_by` column
-- `conversation_participants` - `user_id` column
-- `notifications` - `user_id` column
+- `user_verifications` - `user_id` column ⏳ **PENDING**
+- `vehicle_condition_reports` - `reporter_id` column ⏳ **PENDING**
+- `conversations` - `created_by` column ✅ **COMPLETED** (2025-01-24)
+- `conversation_participants` - `user_id` column ✅ **COMPLETED** (2025-01-24)
+- `notifications` - `user_id` column ⏳ **PENDING**
+
+## Completion Status
+
+### ✅ Completed Steps
+- **Step 3**: `conversations` table foreign key standardization
+  - Added `fk_conversations_profiles` constraint
+  - Updated RLS policy `conversations_authenticated_insert`
+- **Step 4**: `conversation_participants` table foreign key standardization  
+  - Added `fk_conversation_participants_profiles` constraint
+  - Reviewed RLS policies (existing policies compatible)
+
+### ⏳ Pending Steps
+- **Step 1**: `user_verifications` table
+- **Step 2**: `vehicle_condition_reports` table  
+- **Step 5**: `notifications` table
+- **Phase 3**: Complete RLS policy review and updates
+- **Phase 4**: Comprehensive testing and validation
 
 ## Migration Strategy: Zero-Downtime Approach
 
@@ -70,28 +87,28 @@ SELECT COUNT(*) FROM vehicle_condition_reports vcr
 JOIN profiles p ON vcr.reporter_id = p.id;
 ```
 
-#### Step 3: Update `conversations` table
+#### Step 3: Update `conversations` table ✅ **COMPLETED**
 ```sql
--- 3.1: Add foreign key constraint
+-- 3.1: Add foreign key constraint ✅ DONE
 ALTER TABLE conversations 
 ADD CONSTRAINT fk_conversations_profiles 
 FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL;
 
--- 3.2: Update RLS policies to use profiles table
+-- 3.2: Update RLS policies to use profiles table ✅ DONE
 DROP POLICY IF EXISTS "conversations_authenticated_insert" ON conversations;
 CREATE POLICY "conversations_authenticated_insert" ON conversations
 FOR INSERT WITH CHECK (created_by = auth.uid());
 ```
 
-#### Step 4: Update `conversation_participants` table
+#### Step 4: Update `conversation_participants` table ✅ **COMPLETED**
 ```sql
--- 4.1: Add foreign key constraint
+-- 4.1: Add foreign key constraint ✅ DONE
 ALTER TABLE conversation_participants 
 ADD CONSTRAINT fk_conversation_participants_profiles 
 FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
 
--- 4.2: Update RLS policies
--- Review and update participant-related policies
+-- 4.2: Update RLS policies ✅ DONE
+-- Reviewed existing policies - they are compatible with new constraints
 ```
 
 #### Step 5: Update `notifications` table
@@ -185,12 +202,15 @@ ALTER TABLE notifications DROP CONSTRAINT IF EXISTS fk_notifications_profiles;
 3. Re-run migration with fixes
 
 ## Success Criteria
-- [ ] All foreign key constraints successfully added
-- [ ] No orphaned records in any table
-- [ ] All RLS policies function correctly
-- [ ] Frontend messaging system works without errors
-- [ ] Performance remains acceptable
-- [ ] All tests pass
+- [x] ✅ Conversations foreign key constraint successfully added
+- [x] ✅ Conversation participants foreign key constraint successfully added
+- [x] ✅ Messaging RLS policies function correctly
+- [x] ✅ Frontend messaging system architectural issues resolved
+- [ ] ⏳ All remaining foreign key constraints successfully added
+- [ ] ⏳ No orphaned records in any table
+- [ ] ⏳ All remaining RLS policies function correctly
+- [ ] ⏳ Performance remains acceptable
+- [ ] ⏳ All tests pass
 
 ## Timeline
 - **Day 1**: Preparation & validation
@@ -214,4 +234,11 @@ ALTER TABLE notifications DROP CONSTRAINT IF EXISTS fk_notifications_profiles;
 
 ---
 
-**Next Steps**: After approval, we'll implement this plan starting with Phase 1 preparation and validation.
+**Current Status**: ✅ Conversation module foreign key standardization completed (2025-01-24)
+
+**Next Steps**: Continue with remaining tables in this order:
+1. `user_verifications` table (Step 1)
+2. `vehicle_condition_reports` table (Step 2) 
+3. `notifications` table (Step 5)
+4. Complete RLS policy review and updates (Phase 3)
+5. Comprehensive testing and validation (Phase 4)
