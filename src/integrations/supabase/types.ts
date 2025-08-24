@@ -1756,6 +1756,15 @@ export type Database = {
             }
         Returns: undefined
       }
+      create_conversation_secure: {
+        Args: {
+          p_created_by_id?: string
+          p_participant_ids?: string[]
+          p_title?: string
+          p_type?: string
+        }
+        Returns: Json
+      }
       create_conversation_with_participants: {
         Args: {
           p_created_by: string

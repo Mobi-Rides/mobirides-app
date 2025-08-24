@@ -317,7 +317,7 @@ export const useOptimizedConversations = () => {
         }
       }
 
-      // Phase 2: Enhanced conversation creation with retry logic
+      // Phase 2 & 3: Enhanced conversation creation with RPC fallback
       let conversation, convError;
       const maxRetries = 2;
       
@@ -331,26 +331,58 @@ export const useOptimizedConversations = () => {
             console.log('Using fresh session for retry, user:', freshSession.user.id);
           }
           
-          const result = await supabase
-            .from('conversations')
-            .insert({
-              title,
-              type: participantIds.length > 1 ? 'group' : 'direct',
-              created_by: user.id
-            })
-            .select()
-            .single();
+          // Try direct table insertion first (fastest method)
+          if (attempt === 0) {
+            const result = await supabase
+              .from('conversations')
+              .insert({
+                title,
+                type: participantIds.length > 1 ? 'group' : 'direct',
+                created_by: user.id
+              })
+              .select()
+              .single();
+            
+            conversation = result.data;
+            convError = result.error;
+            
+            if (!convError) {
+              console.log('Conversation created successfully via direct insertion');
+              break;
+            }
+          }
           
-          conversation = result.data;
-          convError = result.error;
-          
-          if (!convError) {
-            console.log('Conversation created successfully on attempt', attempt + 1);
-            break;
+          // Phase 3: Fallback to secure RPC function for RLS issues
+          if (convError?.code === '42501' || attempt > 0) {
+            console.log(`Attempting RPC fallback method on attempt ${attempt + 1}`);
+            
+            const rpcResult = await supabase.rpc('create_conversation_secure', {
+              p_title: title,
+              p_type: participantIds.length > 1 ? 'group' : 'direct',
+              p_participant_ids: participantIds,
+              p_created_by_id: user.id
+            });
+            
+            if (rpcResult.error) {
+              convError = rpcResult.error;
+              console.error('RPC method failed:', rpcResult.error);
+            } else {
+              // Convert RPC result to conversation format
+              conversation = rpcResult.data;
+              convError = null;
+              console.log('Conversation created successfully via RPC method');
+              
+              // If existing conversation was found, skip participant addition
+              if (conversation.exists) {
+                console.log('Using existing conversation, skipping participant addition');
+                return conversation;
+              }
+              break;
+            }
           }
           
           // If it's an RLS error and we have retries left, try again
-          if (convError.code === '42501' && attempt < maxRetries) {
+          if (convError?.code === '42501' && attempt < maxRetries) {
             console.warn(`RLS error on attempt ${attempt + 1}, retrying...`);
             await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
             continue;
@@ -399,20 +431,28 @@ export const useOptimizedConversations = () => {
         throw convError;
       }
 
-      // Add participants
-      const participantsToAdd = [user.id, ...participantIds.filter(id => id !== user.id)];
-      const { error: participantsError } = await supabase
-        .from('conversation_participants')
-        .insert(
-          participantsToAdd.map(userId => ({
-            conversation_id: conversation.id,
-            user_id: userId
-          }))
-        );
+      // Add participants (only if we used direct insertion, not RPC)
+      if (conversation && !conversation.exists) {
+        const participantsToAdd = [user.id, ...participantIds.filter(id => id !== user.id)];
+        
+        // Only add participants if we didn't use RPC (RPC handles this internally)
+        if (!conversation.created_by_rpc) {
+          const { error: participantsError } = await supabase
+            .from('conversation_participants')
+            .insert(
+              participantsToAdd.map(userId => ({
+                conversation_id: conversation.id,
+                user_id: userId
+              }))
+            );
 
-      if (participantsError) {
-        console.error('Error adding participants:', participantsError);
-        throw participantsError;
+          if (participantsError) {
+            console.error('Error adding participants:', participantsError);
+            throw participantsError;
+          }
+        } else {
+          console.log('Skipping participant addition - handled by RPC method');
+        }
       }
 
       return conversation;
