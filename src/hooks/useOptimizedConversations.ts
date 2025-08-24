@@ -444,7 +444,7 @@ export const useOptimizedConversations = () => {
     },
   });
 
-  // Send message mutation
+  // Send message mutation with comprehensive auth and error handling
   const sendMessageMutation = useMutation({
     mutationFn: async ({ conversationId, content, type = 'text' }: { 
       conversationId: string; 
@@ -453,67 +453,101 @@ export const useOptimizedConversations = () => {
     }) => {
       console.log("📤 [SEND_MESSAGE] Starting send operation:", { conversationId, content, type });
       
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session?.user) {
-        console.error("❌ [SEND_MESSAGE] Authentication failed:", sessionError);
-        throw new Error('Not authenticated');
-      }
-      const user = session.user;
-      console.log("✅ [SEND_MESSAGE] User authenticated:", user.id);
+      // Establish stable session with retries
+      const session = await waitForStableSession();
+      console.log("✅ [SEND_MESSAGE] Authenticated user:", session.user.id);
 
-      console.log("📋 [SEND_MESSAGE] Attempting database insert...");
-      const { data: message, error: messageError } = await supabase
+      // Verify user has access to the conversation
+      const { data: participationCheck, error: participationError } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (participationError || !participationCheck) {
+        console.error("❌ [SEND_MESSAGE] User not authorized for conversation:", conversationId);
+        throw new Error('You are not authorized to send messages in this conversation');
+      }
+      
+      console.log("🔄 [SEND_MESSAGE] Inserting message into database");
+      const { data, error } = await supabase
         .from('conversation_messages')
         .insert({
           conversation_id: conversationId,
-          sender_id: user.id,
-          content,
-          message_type: type
+          sender_id: session.user.id,
+          content: content.trim(),
+          message_type: type || 'text',
+          sent_at: new Date().toISOString(),
+          delivery_status: 'sent',
+          is_encrypted: false,
+          edited: false
         })
         .select(`
           id,
           content,
           sender_id,
+          conversation_id,
           created_at,
-          updated_at,
-          message_type,
-          edited,
-          edited_at,
-          reply_to_message_id,
-          related_car_id,
-          metadata
+          sent_at,
+          delivery_status,
+          message_type
         `)
         .single();
 
-      console.log("💾 [SEND_MESSAGE] Database response:", { message, error: messageError });
-      
-      if (messageError) {
-        console.error("❌ [SEND_MESSAGE] Database error:", messageError);
-        throw messageError;
+      if (error) {
+        console.error("❌ [SEND_MESSAGE] Database insert failed:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          conversationId,
+          userId: session.user.id
+        });
+        
+        // Provide user-friendly error messages
+        if (error.message?.includes('row-level security')) {
+          throw new Error('You are not authorized to send messages in this conversation. Please refresh and try again.');
+        } else if (error.message?.includes('violates check constraint')) {
+          throw new Error('Message content is invalid. Please check your message and try again.');
+        } else if (error.code === '23503') {
+          throw new Error('Conversation not found. Please refresh the page and try again.');
+        } else {
+          throw new Error(`Failed to send message: ${error.message}`);
+        }
       }
       
-      console.log("✅ [SEND_MESSAGE] Message saved successfully:", message);
-      return message;
+      if (!data) {
+        console.error("❌ [SEND_MESSAGE] No data returned from insert");
+        throw new Error('Message was not created properly');
+      }
+      
+      console.log("✅ [SEND_MESSAGE] Message sent successfully:", data.id);
+      return data;
     },
-    onSuccess: (data, variables) => {
-      console.log("🎉 [SEND_MESSAGE] Success callback triggered:", data);
-      queryClient.invalidateQueries({ queryKey: ['conversation-messages', variables.conversationId] });
+    onSuccess: (data) => {
+      console.log("✅ [SEND_MESSAGE] Mutation successful, invalidating queries");
+      queryClient.invalidateQueries({ queryKey: ['conversation-messages'] });
       queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+      toast.success('Message sent successfully');
     },
-    onError: (error, variables) => {
-      console.error("💥 [SEND_MESSAGE] Error callback triggered:", { error, variables });
-    }
+    onError: (error: any) => {
+      console.error("❌ [SEND_MESSAGE] Mutation failed:", error);
+      const errorMessage = error?.message || 'Failed to send message';
+      toast.error(errorMessage);
+    },
   });
 
-  const memoizedConversations = useMemo(() => conversations || [], [conversations]);
-
   return {
-    conversations: memoizedConversations,
+    conversations,
     isLoading,
+    error,
     createConversation: createConversationMutation.mutate,
     isCreatingConversation: createConversationMutation.isPending,
     sendMessage: sendMessageMutation.mutate,
-    isSendingMessage: sendMessageMutation.isPending
+    isSendingMessage: sendMessageMutation.isPending,
+    sendMessageError: sendMessageMutation.error,
+    sendMessageSuccess: sendMessageMutation.isSuccess,
   };
 };
 

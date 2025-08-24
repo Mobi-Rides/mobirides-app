@@ -24,7 +24,9 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     createConversation,
     isCreatingConversation,
     sendMessage,
-    isSendingMessage
+    isSendingMessage,
+    sendMessageError,
+    sendMessageSuccess
   } = useOptimizedConversations();
   
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
@@ -188,23 +190,18 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   const selectedConversation = filteredConversations.find(c => c.id === selectedConversationId);
   
 
-  const handleSendMessage = (content: string) => {
-    console.log("🚀 [MESSAGING] Send message triggered:", { 
-      content, 
-      selectedConversationId, 
-      hasSendMessage: !!sendMessage 
-    });
-    
+  const handleSendMessage = useCallback((content: string) => {
     if (selectedConversationId && content.trim()) {
-      console.log("✅ [MESSAGING] Calling sendMessage...");
-      sendMessage({ conversationId: selectedConversationId, content: content.trim() });
-    } else {
-      console.warn("⚠️ [MESSAGING] Cannot send message:", { 
-        hasSelectedConversation: !!selectedConversationId, 
-        hasContent: !!content.trim() 
+      console.log('Sending message:', { conversationId: selectedConversationId, content });
+      sendMessage({
+        conversationId: selectedConversationId,
+        content: content.trim(),
+        type: 'text'
       });
+    } else {
+      console.warn('Cannot send message:', { selectedConversationId, hasContent: !!content.trim() });
     }
-  };
+  }, [selectedConversationId, sendMessage]);
 
   const handleNewConversation = () => {
     setIsNewConversationModalOpen(true);
@@ -267,15 +264,11 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
         {selectedConversation ? (
           <ChatWindow
             conversation={selectedConversation}
-            messages={messages}
+            messages={messages || []}
             currentUser={currentUser}
-            typingUsers={[]} // Will be implemented with real-time features
+            typingUsers={[]}
             onSendMessage={handleSendMessage}
-            onEditMessage={(messageId) => console.log('Edit message:', messageId)}
-            onDeleteMessage={(messageId) => console.log('Delete message:', messageId)}
-            onReactToMessage={(messageId, emoji) => console.log('React to message:', messageId, emoji)}
-            onStartTyping={() => console.log('Start typing')}
-            onStopTyping={() => console.log('Stop typing')}
+            isLoading={isSendingMessage}
           />
         ) : (
           <div className="flex items-center justify-center h-full">

@@ -31,6 +31,7 @@ interface ChatWindowProps {
   onReactToMessage?: (messageId: string, emoji: string) => void;
   onStartTyping?: () => void;
   onStopTyping?: () => void;
+  isLoading?: boolean;
 }
 
 export function ChatWindow({
@@ -43,7 +44,8 @@ export function ChatWindow({
   onDeleteMessage,
   onReactToMessage,
   onStartTyping,
-  onStopTyping
+  onStopTyping,
+  isLoading = false
 }: ChatWindowProps) {
   const [replyToMessage, setReplyToMessage] = useState<{
     id: string;
@@ -304,6 +306,7 @@ export function ChatWindow({
         onStopTyping={onStopTyping}
         replyToMessage={replyToMessage}
         onCancelReply={() => setReplyToMessage(null)}
+        isLoading={isLoading}
       />
     </div>
   );
