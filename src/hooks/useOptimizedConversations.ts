@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
@@ -294,15 +294,27 @@ export const useOptimizedConversations = () => {
     throw new Error('Failed to establish stable session after retries');
   };
 
+  // Circuit breaker for repeated failures
+  const conversationAttempts = useRef(new Map<string, { count: number, lastAttempt: number }>());
+  
   const createConversationMutation = useMutation({
     mutationFn: async ({ participantIds, title }: { participantIds: string[], title?: string }) => {
+      const attemptKey = participantIds.sort().join(',');
+      const now = Date.now();
+      const attempt = conversationAttempts.current.get(attemptKey);
+      
+      // Circuit breaker: prevent spam for same participant combination
+      if (attempt && attempt.count >= 3 && (now - attempt.lastAttempt) < 30000) {
+        throw new Error('Too many attempts. Please wait 30 seconds before trying again.');
+      }
+      
       console.log('Creating conversation - establishing stable session...');
       
       // Phase 2: Implement session stability checks
       const session = await waitForStableSession();
       const user = session.user;
 
-      // Check if direct conversation already exists
+      // Check if direct conversation already exists in current data
       if (participantIds.length === 1) {
         const existingConversation = conversations?.find(conv => 
           conv.type === 'direct' && 
@@ -313,164 +325,71 @@ export const useOptimizedConversations = () => {
         
         if (existingConversation) {
           console.log('Using existing conversation:', existingConversation.id);
+          // Reset attempt counter on success
+          conversationAttempts.current.delete(attemptKey);
           return existingConversation;
         }
       }
 
-      // Phase 2 & 3: Enhanced conversation creation with RPC fallback
-      let conversation, convError;
-      const maxRetries = 2;
-      
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          console.log(`Conversation creation attempt ${attempt + 1}`);
-          
-          // Ensure fresh session for each retry
-          if (attempt > 0) {
-            const freshSession = await waitForStableSession(1);
-            console.log('Using fresh session for retry, user:', freshSession.user.id);
-          }
-          
-          // Try direct table insertion first (fastest method)
-          if (attempt === 0) {
-            const result = await supabase
-              .from('conversations')
-              .insert({
-                title,
-                type: participantIds.length > 1 ? 'group' : 'direct',
-                created_by: user.id
-              })
-              .select()
-              .single();
-            
-            conversation = result.data;
-            convError = result.error;
-            
-            if (!convError) {
-              console.log('Conversation created successfully via direct insertion');
-              break;
-            }
-          }
-          
-          // Phase 3: Fallback to secure RPC function for RLS issues
-          if (convError?.code === '42501' || attempt > 0) {
-            console.log(`Attempting RPC fallback method on attempt ${attempt + 1}`);
-            
-            const rpcResult = await supabase.rpc('create_conversation_secure', {
-              p_title: title,
-              p_type: participantIds.length > 1 ? 'group' : 'direct',
-              p_participant_ids: participantIds,
-              p_created_by_id: user.id
-            });
-            
-            if (rpcResult.error) {
-              convError = rpcResult.error;
-              console.error('RPC method failed:', rpcResult.error);
-            } else {
-              // Convert RPC result to conversation format
-              conversation = rpcResult.data;
-              convError = null;
-              console.log('Conversation created successfully via RPC method');
-              
-              // If existing conversation was found, skip participant addition
-              if (conversation.exists) {
-                console.log('Using existing conversation, skipping participant addition');
-                return conversation;
-              }
-              break;
-            }
-          }
-          
-          // If it's an RLS error and we have retries left, try again
-          if (convError?.code === '42501' && attempt < maxRetries) {
-            console.warn(`RLS error on attempt ${attempt + 1}, retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-            continue;
-          }
-          
-          break;
-        } catch (error) {
-          console.error(`Attempt ${attempt + 1} failed with error:`, error);
-          convError = error;
-          
-          if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-            continue;
-          }
-          
-          break;
-        }
-      }
-
-      if (convError) {
-        console.error('Final error creating conversation:', convError);
-        console.error('User ID used:', user.id);
-        console.error('Session details:', { 
-          userId: session.user.id,
-          accessToken: session.access_token ? 'present' : 'missing',
-          refreshToken: session.refresh_token ? 'present' : 'missing',
-          sessionExpiry: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
+      // Use secure RPC method with circuit breaker tracking
+      try {
+        // Update attempt counter
+        const currentAttempt = conversationAttempts.current.get(attemptKey) || { count: 0, lastAttempt: 0 };
+        conversationAttempts.current.set(attemptKey, { count: currentAttempt.count + 1, lastAttempt: now });
+        
+        console.log('Using RPC method for conversation creation');
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('create_conversation_secure', {
+          p_title: title,
+          p_type: participantIds.length > 1 ? 'group' : 'direct',
+          p_participant_ids: participantIds,
+          p_created_by_id: user.id
         });
         
-        if (convError.code === '42501') {
-          // Phase 3: Enhanced error handling
-          console.error('RLS Policy violation - auth context issue detected');
-          toast.error('Authentication issue detected. Please refresh the page and try again.');
-          throw new Error('RLS authentication context failure - session refresh required');
+        if (rpcError) {
+          console.error('RPC method failed:', rpcError);
+          throw rpcError;
         }
         
-        // Phase 3: User-friendly error messages
-        if (convError.message?.includes('duplicate')) {
-          toast.error('Conversation already exists with this user.');
-        } else if (convError.message?.includes('network')) {
-          toast.error('Network error. Please check your connection and try again.');
-        } else {
-          toast.error('Failed to create conversation. Please try again.');
-        }
-        
-        throw convError;
-      }
-
-      // Add participants (only if we used direct insertion, not RPC)
-      if (conversation && !conversation.exists) {
-        const participantsToAdd = [user.id, ...participantIds.filter(id => id !== user.id)];
-        
-        // Only add participants if we didn't use RPC (RPC handles this internally)
-        if (!conversation.created_by_rpc) {
-          const { error: participantsError } = await supabase
-            .from('conversation_participants')
-            .insert(
-              participantsToAdd.map(userId => ({
-                conversation_id: conversation.id,
-                user_id: userId
-              }))
-            );
-
-          if (participantsError) {
-            console.error('Error adding participants:', participantsError);
-            throw participantsError;
-          }
-        } else {
-          console.log('Skipping participant addition - handled by RPC method');
-        }
-      }
-
-      return conversation;
-    },
-    onSuccess: () => {
+         console.log('Conversation created via RPC:', rpcResult);
+         
+         // Reset attempt counter on success
+         conversationAttempts.current.delete(attemptKey);
+         
+         // Cast RPC result and return the conversation in the expected format
+         const conversation = rpcResult as any;
+         return {
+           id: conversation.id,
+           title: conversation.title || title,
+           type: conversation.type,
+           participants: [
+             { id: user.id, name: user.email || 'You' },
+             ...participantIds.map(id => ({ id, name: 'User' }))
+           ],
+           lastMessage: null,
+           unreadCount: 0,
+           createdAt: new Date(conversation.created_at || new Date().toISOString()),
+           updatedAt: new Date(conversation.updated_at || new Date().toISOString())
+         };
+       } catch (error) {
+         console.error('Final error creating conversation:', error);
+         console.error('User ID used:', user.id);
+         console.error('Session details:', {
+           userId: session.user.id,
+           accessToken: session.access_token ? 'present' : 'missing',
+           refreshToken: session.refresh_token ? 'present' : 'missing',
+           sessionExpiry: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
+         });
+         throw error;
+       }
+     },
+    onSuccess: (newConversation) => {
+      console.log('Conversation created successfully:', newConversation);
+      // Immediately refetch conversations to show the new one
       queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
     },
     onError: (error) => {
       console.error('Conversation creation failed:', error);
-      
-      if (error.message.includes('Authentication context mismatch')) {
-        toast.error('Session expired. Please refresh the page and try again.');
-      } else if (error.message.includes('Not authenticated')) {
-        toast.error('Please log in to start a conversation.');
-      } else {
-        toast.error('Failed to create conversation. Please try again.');
-      }
-    }
+    },
   });
 
   // Enhanced message operations

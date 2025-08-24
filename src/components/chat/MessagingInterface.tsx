@@ -85,6 +85,9 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     }
   }, [createConversation, isCreatingConversation]);
 
+  // Debounced conversation creation to prevent spam
+  const [creationAttempts, setCreationAttempts] = useState(new Map<string, number>());
+  
   // Handle recipient-based conversation creation/selection
   useEffect(() => {
     console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
@@ -105,17 +108,34 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       if (existingConversation) {
         console.log("MessagingInterface: Selecting existing conversation:", existingConversation.id);
         setSelectedConversationId(existingConversation.id);
-      } else if (!isCreatingConversation) {
-        console.log("MessagingInterface: Creating new conversation with:", { participantIds: [recipientId], title: recipientName });
-        handleCreateConversation({ 
-          participantIds: [recipientId], 
-          title: recipientName 
+        // Clear any creation attempts for this recipient
+        setCreationAttempts(prev => {
+          const updated = new Map(prev);
+          updated.delete(recipientId);
+          return updated;
         });
+      } else if (!isCreatingConversation) {
+        // Circuit breaker: limit creation attempts per recipient
+        const attempts = creationAttempts.get(recipientId) || 0;
+        if (attempts < 3) {
+          console.log("MessagingInterface: Creating new conversation with:", { participantIds: [recipientId], title: recipientName });
+          setCreationAttempts(prev => {
+            const updated = new Map(prev);
+            updated.set(recipientId, attempts + 1);
+            return updated;
+          });
+          handleCreateConversation({ 
+            participantIds: [recipientId], 
+            title: recipientName 
+          });
+        } else {
+          console.warn("MessagingInterface: Max creation attempts reached for recipient:", recipientId);
+        }
       }
     } else {
       console.log("MessagingInterface: Missing required data, user not loaded, or conversations loading");
     }
-  }, [recipientId, recipientName, conversations, currentUser.id, conversationsLoading, isCreatingConversation, handleCreateConversation]);
+  }, [recipientId, recipientName, conversations, currentUser.id, conversationsLoading, isCreatingConversation, handleCreateConversation, creationAttempts]);
 
   const filteredConversations = conversations.filter(conv => {
     const title = conv.title || conv.participants
