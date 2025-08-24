@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useCallback, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, AuthContextVerifier, SessionRecovery } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
 

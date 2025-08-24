@@ -1685,6 +1685,14 @@ export type Database = {
           table_name: string
         }[]
       }
+      auth_uid_test: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          current_user_id: string
+          is_authenticated: boolean
+          session_info: string
+        }[]
+      }
       calculate_car_rating: {
         Args: { car_uuid: string }
         Returns: number
