@@ -19,6 +19,7 @@ export interface Message {
   status?: 'sent' | 'delivered' | 'read';
   sender?: {
     id: string;
+    full_name?: string;
     avatar_url?: string;
   };
   sender_id?: string;
