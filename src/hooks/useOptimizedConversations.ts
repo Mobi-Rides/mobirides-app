@@ -451,9 +451,15 @@ export const useOptimizedConversations = () => {
       content: string; 
       type?: 'text' | 'image' | 'file' 
     }) => {
+      console.log("📤 [SEND_MESSAGE] Starting send operation:", { conversationId, content, type });
+      
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session?.user) throw new Error('Not authenticated');
+      if (sessionError || !session?.user) {
+        console.error("❌ [SEND_MESSAGE] Authentication failed:", sessionError);
+        throw new Error('Not authenticated');
+      }
       const user = session.user;
+      console.log("✅ [SEND_MESSAGE] User authenticated:", user.id);
 
       const { data: message, error: messageError } = await supabase
         .from('conversation_messages')

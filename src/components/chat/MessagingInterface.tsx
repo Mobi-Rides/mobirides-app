@@ -189,8 +189,20 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   
 
   const handleSendMessage = (content: string) => {
-    if (selectedConversationId) {
-      sendMessage({ conversationId: selectedConversationId, content });
+    console.log("🚀 [MESSAGING] Send message triggered:", { 
+      content, 
+      selectedConversationId, 
+      hasSendMessage: !!sendMessage 
+    });
+    
+    if (selectedConversationId && content.trim()) {
+      console.log("✅ [MESSAGING] Calling sendMessage...");
+      sendMessage({ conversationId: selectedConversationId, content: content.trim() });
+    } else {
+      console.warn("⚠️ [MESSAGING] Cannot send message:", { 
+        hasSelectedConversation: !!selectedConversationId, 
+        hasContent: !!content.trim() 
+      });
     }
   };
 
