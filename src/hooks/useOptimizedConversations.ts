@@ -197,11 +197,11 @@ export const useOptimizedConversations = (userId?: string) => {
                 created_at, 
                 message_type, 
                 conversation_id,
-          profiles!conversation_messages_sender_id_fkey (
-            id,
-            full_name,
-            avatar_url
-          )
+                sender:profiles!sender_id (
+                  id,
+                  full_name,
+                  avatar_url
+                )
               `)
               .in('conversation_id', convIds)
               .order('created_at', { ascending: false })
@@ -541,9 +541,15 @@ export const useOptimizedConversations = (userId?: string) => {
     }) => {
       console.log('📤 [SEND MESSAGE] Starting send process:', { conversationId, contentLength: content.length, type });
       
-      // Basic authentication check
+      // Enhanced authentication check with explicit null handling
       if (!userId) {
-        throw new Error('User not authenticated');
+        console.error('❌ [SEND MESSAGE] No authenticated user - auth.uid() is null');
+        throw new Error('User not authenticated - please log in');
+      }
+      
+      if (!content.trim()) {
+        console.warn('❌ [SEND MESSAGE] Empty content provided');
+        throw new Error('Message content cannot be empty');
       }
 
       console.log('💬 [SEND MESSAGE] Sending message to conversation:', conversationId);
@@ -576,7 +582,7 @@ export const useOptimizedConversations = (userId?: string) => {
         })
         .select(`
           *,
-          profiles!conversation_messages_sender_id_fkey (
+          sender:profiles!sender_id (
             id,
             full_name,
             avatar_url
@@ -682,7 +688,7 @@ export const useConversationMessages = (conversationId?: string) => {
           message_type,
           edited,
           edited_at,
-          profiles!conversation_messages_sender_id_fkey (
+          sender:profiles!sender_id (
             id,
             full_name,
             avatar_url
