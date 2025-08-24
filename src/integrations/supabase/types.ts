@@ -493,13 +493,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_conversation_participants_profiles"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       conversations: {
@@ -533,13 +526,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "conversations_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_conversations_profiles"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
