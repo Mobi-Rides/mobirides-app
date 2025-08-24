@@ -3,6 +3,7 @@ import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { NewConversationModal } from './NewConversationModal';
 import { MigrationStatusBanner } from './MigrationStatusBanner';
+import { Button } from '@/components/ui/button';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +16,8 @@ interface MessagingInterfaceProps {
 }
 
 export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
+  console.log("MessagingInterface: Loading with", { recipientId, recipientName });
+  
   const {
     conversations,
     isLoading: conversationsLoading,
@@ -24,6 +27,11 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     sendMessage,
     isSendingMessage
   } = useOptimizedConversations();
+  
+  console.log("MessagingInterface: Hook state", { 
+    conversationsCount: conversations?.length || 0, 
+    conversationsLoading 
+  });
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
   
   // Get messages for selected conversation
@@ -73,10 +81,10 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   // Auto-select first conversation if none selected
   useEffect(() => {
-    if (!selectedConversationId && conversations.length > 0) {
+    if (!selectedConversationId && (conversations || []).length > 0 && !conversationsLoading) {
       setSelectedConversationId(conversations[0].id);
     }
-  }, [conversations, selectedConversationId]);
+  }, [conversations, selectedConversationId, conversationsLoading]);
 
   // Memoize the createConversation function to prevent infinite loops
   const handleCreateConversation = useCallback((params: { participantIds: string[], title?: string }) => {
@@ -96,11 +104,11 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
       console.log("MessagingInterface: Current conversations:", conversations);
       
-      const existingConversation = conversations.find(conv => 
+      const existingConversation = (conversations || []).find(conv => 
         conv.type === 'direct' && 
-        conv.participants.length === 2 &&
-        conv.participants.some(p => p.id === recipientId) &&
-        conv.participants.some(p => p.id === currentUser.id)
+        (conv.participants || []).length === 2 &&
+        (conv.participants || []).some(p => p.id === recipientId) &&
+        (conv.participants || []).some(p => p.id === currentUser.id)
       );
       
       console.log("MessagingInterface: Existing conversation found:", existingConversation);
@@ -137,8 +145,8 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     }
   }, [recipientId, recipientName, conversations, currentUser?.id, conversationsLoading, isCreatingConversation]);
 
-  const filteredConversations = conversations.filter(conv => {
-    const title = conv.title || conv.participants
+  const filteredConversations = (conversations || []).filter(conv => {
+    const title = conv.title || (conv.participants || [])
       .filter(p => p.id !== currentUser.id)
       .map(p => p.name)
       .join(', ');
@@ -171,6 +179,18 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       console.error('Error creating conversation:', error);
     }
   };
+
+  // Show loading state
+  if (conversationsLoading && currentUser.id === 'user-1') {
+    return (
+      <div className={cn("flex items-center justify-center h-full bg-card rounded-lg border border-notification-border", className)}>
+        <div className="text-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="text-muted-foreground">Loading conversations...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>

@@ -100,7 +100,7 @@ export const useOptimizedConversations = () => {
     };
   }, [queryClient]);
 
-  const { data: conversations, isLoading } = useQuery({
+  const { data: conversations = [], isLoading, error } = useQuery({
     queryKey: ['optimized-conversations'],
     queryFn: async () => {
       console.log("Fetching optimized conversations");
