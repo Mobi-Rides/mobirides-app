@@ -239,22 +239,67 @@ export const useOptimizedConversations = () => {
     gcTime: 300000, // Keep in cache for 5 minutes
   });
 
+  // Phase 2: Session stability and retry logic
+  const waitForStableSession = async (retries = 3): Promise<any> => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.warn(`Session check attempt ${i + 1} failed:`, error);
+          if (i === retries - 1) throw error;
+          await new Promise(resolve => setTimeout(resolve, 500 * (i + 1))); // Exponential backoff
+          continue;
+        }
+        
+        if (!session?.user) {
+          console.warn(`No session on attempt ${i + 1}, refreshing...`);
+          
+          // Attempt session refresh
+          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError) {
+            console.warn('Session refresh failed:', refreshError);
+            if (i === retries - 1) throw new Error('Unable to establish valid session');
+            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+            continue;
+          }
+          
+          if (!refreshedSession?.user) {
+            if (i === retries - 1) throw new Error('No authenticated user after session refresh');
+            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+            continue;
+          }
+          
+          return refreshedSession;
+        }
+        
+        // Verify session is actually valid by making a test call
+        try {
+          await supabase.from('profiles').select('id').eq('id', session.user.id).limit(1);
+          console.log(`Session validated on attempt ${i + 1}, user:`, session.user.id);
+          return session;
+        } catch (testError) {
+          console.warn(`Session validation failed on attempt ${i + 1}:`, testError);
+          if (i === retries - 1) throw new Error('Session validation failed');
+          await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+        }
+      } catch (error) {
+        console.error(`Session establishment attempt ${i + 1} failed:`, error);
+        if (i === retries - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+      }
+    }
+    
+    throw new Error('Failed to establish stable session after retries');
+  };
+
   const createConversationMutation = useMutation({
     mutationFn: async ({ participantIds, title }: { participantIds: string[], title?: string }) => {
-      console.log('Creating conversation - checking session...');
-      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('Creating conversation - establishing stable session...');
       
-      if (error) {
-        console.error('Session error in conversation creation:', error);
-        throw new Error('Authentication session error');
-      }
-      
-      if (!session?.user) {
-        console.error('No valid session for conversation creation');
-        throw new Error('Not authenticated - no valid session');
-      }
-      
-      console.log('Session validated, user:', session.user.id);
+      // Phase 2: Implement session stability checks
+      const session = await waitForStableSession();
       const user = session.user;
 
       // Check if direct conversation already exists
@@ -272,29 +317,83 @@ export const useOptimizedConversations = () => {
         }
       }
 
-      // Create new conversation
-      const { data: conversation, error: convError } = await supabase
-        .from('conversations')
-        .insert({
-          title,
-          type: participantIds.length > 1 ? 'group' : 'direct',
-          created_by: user.id
-        })
-        .select()
-        .single();
+      // Phase 2: Enhanced conversation creation with retry logic
+      let conversation, convError;
+      const maxRetries = 2;
+      
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`Conversation creation attempt ${attempt + 1}`);
+          
+          // Ensure fresh session for each retry
+          if (attempt > 0) {
+            const freshSession = await waitForStableSession(1);
+            console.log('Using fresh session for retry, user:', freshSession.user.id);
+          }
+          
+          const result = await supabase
+            .from('conversations')
+            .insert({
+              title,
+              type: participantIds.length > 1 ? 'group' : 'direct',
+              created_by: user.id
+            })
+            .select()
+            .single();
+          
+          conversation = result.data;
+          convError = result.error;
+          
+          if (!convError) {
+            console.log('Conversation created successfully on attempt', attempt + 1);
+            break;
+          }
+          
+          // If it's an RLS error and we have retries left, try again
+          if (convError.code === '42501' && attempt < maxRetries) {
+            console.warn(`RLS error on attempt ${attempt + 1}, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            continue;
+          }
+          
+          break;
+        } catch (error) {
+          console.error(`Attempt ${attempt + 1} failed with error:`, error);
+          convError = error;
+          
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            continue;
+          }
+          
+          break;
+        }
+      }
 
       if (convError) {
-        console.error('Error creating conversation:', convError);
+        console.error('Final error creating conversation:', convError);
         console.error('User ID used:', user.id);
         console.error('Session details:', { 
           userId: session.user.id,
           accessToken: session.access_token ? 'present' : 'missing',
-          refreshToken: session.refresh_token ? 'present' : 'missing'
+          refreshToken: session.refresh_token ? 'present' : 'missing',
+          sessionExpiry: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
         });
         
         if (convError.code === '42501') {
-          toast.error('Unable to create conversation. Please try logging out and back in.');
-          throw new Error('Authentication context mismatch - please refresh your session');
+          // Phase 3: Enhanced error handling
+          console.error('RLS Policy violation - auth context issue detected');
+          toast.error('Authentication issue detected. Please refresh the page and try again.');
+          throw new Error('RLS authentication context failure - session refresh required');
+        }
+        
+        // Phase 3: User-friendly error messages
+        if (convError.message?.includes('duplicate')) {
+          toast.error('Conversation already exists with this user.');
+        } else if (convError.message?.includes('network')) {
+          toast.error('Network error. Please check your connection and try again.');
+        } else {
+          toast.error('Failed to create conversation. Please try again.');
         }
         
         throw convError;
