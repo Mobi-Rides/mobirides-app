@@ -576,7 +576,7 @@ export const useOptimizedConversations = (userId?: string) => {
         })
         .select(`
           *,
-          sender:profiles(
+          profiles!conversation_messages_sender_id_fkey (
             id,
             full_name,
             avatar_url
@@ -682,7 +682,7 @@ export const useConversationMessages = (conversationId?: string) => {
           message_type,
           edited,
           edited_at,
-          sender:profiles(
+          profiles!conversation_messages_sender_id_fkey (
             id,
             full_name,
             avatar_url
