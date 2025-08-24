@@ -541,36 +541,49 @@ export const useOptimizedConversations = (userId?: string) => {
     }) => {
       console.log('📤 [SEND MESSAGE] Starting send process:', { conversationId, contentLength: content.length, type });
       
-      // Phase 4: Use provided userId or establish session
-      let user;
-      if (userId) {
-        user = { id: userId };
-      } else {
-        const session = await waitForStableSession();
-        user = session.user;
+      // Get fresh session and verify authentication context
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.user) {
+        console.error('❌ [SEND MESSAGE] Session error:', sessionError);
+        throw new Error('Authentication session invalid. Please refresh the page and try again.');
+      }
+      
+      console.log('✅ [SEND MESSAGE] Session verified, user:', session.user.id);
+
+      // Test RLS access with actual database query to verify auth context
+      const { data: accessCheck, error: accessError } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (accessError) {
+        console.error('❌ [SEND MESSAGE] RLS access check failed:', accessError);
+        if (accessError.code === 'PGRST116') {
+          throw new Error('You do not have access to this conversation');
+        }
+        throw new Error(`Database access error: ${accessError.message}`);
       }
 
-      // Verify user has access to this conversation
-      const hasAccess = Array.isArray(conversations) && conversations.some(conv => 
-        conv.id === conversationId && 
-        conv.participants.some(p => p.id === user.id)
-      );
-
-      if (!hasAccess) {
-        throw new Error('You do not have permission to send messages to this conversation');
-      }
-
-      console.log('📤 [SEND MESSAGE] User authorized, inserting message...');
+      console.log('✅ [SEND MESSAGE] RLS access verified, proceeding with message insert...');
 
       const { data, error } = await supabase
         .from('conversation_messages')
         .insert({
           conversation_id: conversationId,
-          sender_id: user.id,
+          sender_id: session.user.id,
           content: content.trim(),
           message_type: type
         })
-        .select()
+        .select(`
+          *,
+          profiles!conversation_messages_sender_id_fkey (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
         .single();
 
       if (error) {
