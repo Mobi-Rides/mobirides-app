@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Conversation, User } from "@/types/message";
+import { Conversation, User, Message } from "@/types/message";
 
 interface DatabaseConversation {
   id: string;
@@ -286,12 +286,123 @@ export const useOptimizedConversations = () => {
     }
   });
 
+  // Enhanced message operations
+  const getConversationMessages = useCallback((conversationId: string) => {
+    return useQuery({
+      queryKey: ['conversation-messages', conversationId],
+      queryFn: async () => {
+        if (!conversationId) return [];
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data: messages, error } = await supabase
+          .from('conversation_messages')
+          .select(`
+            id,
+            content,
+            sender_id,
+            created_at,
+            updated_at,
+            message_type,
+            edited,
+            edited_at,
+            reply_to_message_id,
+            related_car_id,
+            metadata,
+            sender:profiles (
+              id,
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error("Error fetching messages:", error);
+          return [];
+        }
+        
+        // Transform to UI format
+        const transformedMessages: Message[] = messages?.map((msg: any) => ({
+          id: msg.id,
+          content: msg.content,
+          senderId: msg.sender_id,
+          conversationId,
+          timestamp: new Date(msg.created_at),
+          type: msg.message_type as 'text' | 'image' | 'file',
+          edited: msg.edited,
+          editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
+          sender: msg.sender ? {
+            id: msg.sender.id,
+            full_name: msg.sender.full_name,
+            avatar_url: msg.sender.avatar_url
+          } : undefined
+        })) || [];
+
+        return transformedMessages;
+      },
+      enabled: !!conversationId
+    });
+  }, []);
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ conversationId, content, type = 'text' }: { 
+      conversationId: string; 
+      content: string; 
+      type?: 'text' | 'image' | 'file' 
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: message, error } = await supabase
+        .from('conversation_messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          content,
+          message_type: type
+        })
+        .select(`
+          id,
+          content,
+          sender_id,
+          created_at,
+          updated_at,
+          message_type,
+          edited,
+          edited_at,
+          reply_to_message_id,
+          related_car_id,
+          metadata,
+          sender:profiles (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+      return message;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['conversation-messages', variables.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+    }
+  });
+
   const memoizedConversations = useMemo(() => conversations || [], [conversations]);
 
   return {
     conversations: memoizedConversations,
     isLoading,
     createConversation: createConversationMutation.mutate,
-    isCreatingConversation: createConversationMutation.isPending
+    isCreatingConversation: createConversationMutation.isPending,
+    getConversationMessages,
+    sendMessage: sendMessageMutation.mutate,
+    isSendingMessage: sendMessageMutation.isPending
   };
 };

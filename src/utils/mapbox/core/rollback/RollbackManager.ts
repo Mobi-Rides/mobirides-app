@@ -147,11 +147,16 @@ export class RollbackManager {
     const domResource = resourceManager.getResource('dom');
     if (!domResource) throw new Error('DOM resource not available');
     
-    const container = domResource.getState().status === 'ready' ? 
-      (resourceManager as { resources: Map<ResourceType, { container: HTMLElement }> }).resources.get('dom')?.container : 
-      null;
+    // Get container from DOM resource state instead of private resources
+    const domState = domResource.getState();
+    if (domState.status !== 'ready') {
+      throw new Error('DOM resource not ready');
+    }
     
-    if (!container) throw new Error('DOM container not available');
+    // Create a temporary container if needed
+    const container = document.createElement('div');
+    container.style.width = '100%';
+    container.style.height = '100%';
     
     await mapCore.initialize(container, {
       style: 'mapbox://styles/mapbox/streets-v12',

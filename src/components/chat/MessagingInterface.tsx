@@ -6,7 +6,7 @@ import { MigrationStatusBanner } from './MigrationStatusBanner';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useMessaging } from '@/hooks/useMessaging';
+import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
 
 interface MessagingInterfaceProps {
   className?: string;
@@ -23,7 +23,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     getConversationMessages,
     sendMessage,
     isSendingMessage
-  } = useMessaging();
+  } = useOptimizedConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
   
   // Get messages for selected conversation

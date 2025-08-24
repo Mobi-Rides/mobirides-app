@@ -99,8 +99,26 @@ class MapboxSearchService {
     }
 
     try {
-      // Find the suggestion by ID first
-      const suggestion: { mapbox_id: string } = { mapbox_id: suggestionId };
+      // Create a minimal suggestion object for retrieval
+      const suggestion: any = { 
+        mapbox_id: suggestionId,
+        name: '',
+        name_preferred: '',
+        feature_type: 'poi',
+        address: '',
+        full_address: '',
+        place_formatted: '',
+        context: {},
+        language: 'en',
+        maki: '',
+        poi_category: [],
+        poi_category_ids: [],
+        brand: [],
+        brand_id: '',
+        external_ids: {},
+        metadata: {},
+        _geometry: { coordinates: [0, 0] }
+      };
       const response = await this.searchBox.retrieve(suggestion, {
         sessionToken: this.sessionToken,
       });

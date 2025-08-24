@@ -445,7 +445,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_conversation_messages_sender_id"
+            foreignKeyName: "conversation_messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1705,6 +1705,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      can_read_profile_in_conversation: {
+        Args: { profile_user_id: string; requesting_user_id: string }
+        Returns: boolean
+      }
       check_conversation_access: {
         Args: { p_conversation_id: string; p_user_id?: string }
         Returns: boolean
@@ -1755,6 +1759,22 @@ export type Database = {
               p_title: string
             }
         Returns: undefined
+      }
+      create_conversation_with_participants: {
+        Args: {
+          p_created_by: string
+          p_participant_ids: string[]
+          p_title?: string
+          p_type?: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          title: string
+          type: string
+          updated_at: string
+        }[]
       }
       create_handover_notification: {
         Args:
@@ -1876,6 +1896,14 @@ export type Database = {
           notification_type: Database["public"]["Enums"]["notification_type"]
         }[]
       }
+      get_public_profile: {
+        Args: { user_uuid: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+        }[]
+      }
       get_user_conversations: {
         Args:
           | { p_page?: number; p_page_size?: number; p_search_term?: string }
@@ -1917,6 +1945,10 @@ export type Database = {
       }
       is_admin: {
         Args: { user_uuid: string }
+        Returns: boolean
+      }
+      is_conversation_participant: {
+        Args: { conversation_uuid: string; user_uuid: string }
         Returns: boolean
       }
       log_admin_activity: {

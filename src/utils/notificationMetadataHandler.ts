@@ -165,7 +165,7 @@ export class NotificationMetadataHandler {
             { label: 'Decline', action: 'decline_booking', variant: 'outline', icon: 'X' }
           );
         }
-        if (metadata.booking_id) {
+        if ((metadata as BookingMetadata).booking_id || notification.related_booking_id) {
           actions.push({ label: 'View Booking', action: 'view_booking', variant: 'outline', icon: 'Eye' });
         }
         break;
