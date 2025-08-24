@@ -28,11 +28,14 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     isSendingMessage
   } = useOptimizedConversations();
   
-  console.log("MessagingInterface: Hook state", { 
-    conversationsCount: conversations?.length || 0, 
-    conversationsLoading 
-  });
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
+  
+  console.log("🖥️ [MESSAGING] Hook state", { 
+    conversationsCount: conversations?.length || 0, 
+    conversationsLoading,
+    hasConversations: Array.isArray(conversations),
+    selectedConversationId
+  });
   
   // Get messages for selected conversation
   const { data: messages = [] } = selectedConversationId ? 
@@ -52,9 +55,14 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   // Fetch the current user from Supabase
   useEffect(() => {
     const fetchCurrentUser = async () => {
+      console.log("👤 [MESSAGING] Fetching current user");
       try {
+        const userStart = Date.now();
         const { data: { user } } = await supabase.auth.getUser();
+        console.log(`⏱️ [MESSAGING] User fetch took ${Date.now() - userStart}ms`);
+        
         if (user) {
+          console.log(`✅ [MESSAGING] User found: ${user.id}`);
           // Fetch user profile data
           const { data: profileData } = await supabase
             .from('profiles')
@@ -62,17 +70,22 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             .eq('id', user.id)
             .single();
           
-          setCurrentUser({
+          const newUser = {
             id: user.id,
             name: profileData?.full_name || user.email?.split('@')[0] || 'You',
             avatar: profileData?.avatar_url ? 
               supabase.storage.from('avatars').getPublicUrl(profileData.avatar_url).data.publicUrl : 
               'https://i.pravatar.cc/150?img=32',
-            status: 'online',
-          });
+            status: 'online' as const,
+          };
+          
+          console.log("👤 [MESSAGING] Setting current user:", newUser.id, newUser.name);
+          setCurrentUser(newUser);
+        } else {
+          console.warn("⚠️ [MESSAGING] No user found in auth");
         }
       } catch (error) {
-        console.error('Error fetching current user:', error);
+        console.error('❌ [MESSAGING] Error fetching current user:', error);
       }
     };
     
@@ -82,13 +95,21 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   // Auto-select first conversation if none selected
   useEffect(() => {
     try {
-      console.log("MessagingInterface: Auto-select effect, conversations:", conversations?.length);
+      console.log("🔄 [MESSAGING] Auto-select effect triggered", {
+        selectedConversationId,
+        conversationsLength: conversations?.length,
+        conversationsLoading,
+        isArray: Array.isArray(conversations)
+      });
+      
       if (!selectedConversationId && Array.isArray(conversations) && conversations.length > 0 && !conversationsLoading) {
-        console.log("MessagingInterface: Auto-selecting first conversation:", conversations[0]?.id);
+        console.log("✅ [MESSAGING] Auto-selecting first conversation:", conversations[0]?.id);
         setSelectedConversationId(conversations[0]?.id);
+      } else {
+        console.log("⏸️ [MESSAGING] Auto-select conditions not met");
       }
     } catch (error) {
-      console.error("MessagingInterface: Error in auto-select:", error);
+      console.error("❌ [MESSAGING] Error in auto-select:", error);
     }
   }, [conversations, selectedConversationId, conversationsLoading]);
 
@@ -194,6 +215,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   // Show loading state
   if (conversationsLoading && currentUser.id === 'user-1') {
+    console.log("🔄 [MESSAGING] Showing loading state - user not loaded yet");
     return (
       <div className={cn("flex items-center justify-center h-full bg-card rounded-lg border border-notification-border", className)}>
         <div className="text-center p-8">
@@ -203,6 +225,14 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       </div>
     );
   }
+
+  console.log("🎯 [MESSAGING] Rendering interface", {
+    conversationsLoading,
+    filteredConversationsCount: filteredConversations.length,
+    selectedConversationId,
+    currentUserId: currentUser.id,
+    messagesCount: messages?.length || 0
+  });
 
   return (
     <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>

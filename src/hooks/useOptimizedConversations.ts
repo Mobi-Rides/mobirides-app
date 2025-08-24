@@ -104,13 +104,19 @@ export const useOptimizedConversations = () => {
     queryKey: ['optimized-conversations'],
     queryFn: async () => {
       try {
-        console.log("Fetching optimized conversations");
+        console.log("🔄 [CONVERSATIONS] Starting fetch process");
+        const sessionStart = Date.now();
+        
         const { data: { session }, error } = await supabase.auth.getSession();
+        console.log(`⏱️ [CONVERSATIONS] Session fetch took ${Date.now() - sessionStart}ms`);
+        
         if (error || !session?.user) {
-          console.log("No valid session for conversation fetch");
+          console.warn("❌ [CONVERSATIONS] No valid session:", { error: error?.message, hasUser: !!session?.user });
           return [];
         }
+        
         const user = session.user;
+        console.log(`✅ [CONVERSATIONS] Valid session for user: ${user.id}`);
 
       try {
         // Get user's conversation IDs with a single query
@@ -125,13 +131,17 @@ export const useOptimizedConversations = () => {
         }
 
         if (!userParticipations || userParticipations.length === 0) {
-          console.log("No conversations found for user");
+          console.log("📭 [CONVERSATIONS] No conversations found for user");
           return [];
         }
 
         const convIds = userParticipations.map(p => p.conversation_id);
+        console.log(`📊 [CONVERSATIONS] Found ${convIds.length} conversation IDs:`, convIds);
 
         // Batch fetch all conversation data
+        const batchStart = Date.now();
+        console.log("🔄 [CONVERSATIONS] Starting batch fetch for conversations, participants, and messages");
+        
         const [conversationsResult, participantsResult, messagesResult] = await Promise.all([
           supabase
             .from('conversations')
@@ -172,8 +182,15 @@ export const useOptimizedConversations = () => {
         const { data: participants, error: participantsError } = participantsResult;
         const { data: latestMessages, error: messagesError } = messagesResult;
 
+        console.log(`⏱️ [CONVERSATIONS] Batch fetch completed in ${Date.now() - batchStart}ms`);
+        console.log(`📋 [CONVERSATIONS] Batch results:`, {
+          conversations: userConversations?.length || 0,
+          participants: participants?.length || 0, 
+          messages: latestMessages?.length || 0
+        });
+
         if (convError || participantsError || messagesError) {
-          console.error("Error in batch fetch:", { convError, participantsError, messagesError });
+          console.error("❌ [CONVERSATIONS] Error in batch fetch:", { convError, participantsError, messagesError });
           return [];
         }
 
@@ -193,8 +210,12 @@ export const useOptimizedConversations = () => {
           }
         });
 
+        console.log("🔄 [CONVERSATIONS] Starting transformation process");
+        const transformStart = Date.now();
+        
         const transformedConversations: Conversation[] = (userConversations || []).map((conv: any) => {
           const conversationParticipants = participantsByConv.get(conv?.id) || [];
+          console.log(`👥 [CONVERSATIONS] Conv ${conv?.id}: ${conversationParticipants.length} participants found`);
           
           const participantUsers: User[] = (conversationParticipants || []).map((p: any) => ({
             id: p.user_id,
@@ -227,7 +248,15 @@ export const useOptimizedConversations = () => {
           };
         }) || [];
 
-        console.log("Optimized conversations transformed:", transformedConversations);
+        console.log(`✅ [CONVERSATIONS] Transformation completed in ${Date.now() - transformStart}ms`);
+        console.log(`📊 [CONVERSATIONS] Final result: ${transformedConversations.length} conversations transformed`);
+        console.log("🎯 [CONVERSATIONS] Detailed conversations:", transformedConversations.map(c => ({
+          id: c.id,
+          participantCount: c.participants?.length || 0,
+          hasLastMessage: !!c.lastMessage,
+          type: c.type
+        })));
+        
         return transformedConversations || [];
 
       } catch (error) {
@@ -242,6 +271,10 @@ export const useOptimizedConversations = () => {
     enabled: true,
     staleTime: 30000, // Cache for 30 seconds
     gcTime: 300000, // Keep in cache for 5 minutes
+    retry: (failureCount, error) => {
+      console.log(`🔄 [CONVERSATIONS] Query retry ${failureCount}:`, error);
+      return failureCount < 3;
+    }
   });
 
   // Phase 2: Session stability and retry logic
