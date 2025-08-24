@@ -152,6 +152,42 @@ export const useOptimizedConversations = () => {
           console.error("🚨 [DEBUG] Simple profiles query failed:", JSON.stringify(testError, null, 2));
         }
 
+        // Test session state before complex queries
+        console.log("🔍 [DEBUG] Testing session state...");
+        const { data: sessionCheck, error: sessionError } = await supabase.auth.getSession();
+        console.log("🔍 [DEBUG] Current session state:", {
+          hasSession: !!sessionCheck.session,
+          hasUser: !!sessionCheck.session?.user,
+          userId: sessionCheck.session?.user?.id,
+          tokenPresent: !!sessionCheck.session?.access_token,
+          error: sessionError
+        });
+
+        // Test RLS function directly
+        console.log("🔍 [DEBUG] Testing is_conversation_participant function...");
+        if (convIds.length > 0) {
+          try {
+            const { data: rlsTest, error: rlsError } = await supabase
+              .rpc('is_conversation_participant', {
+                conversation_uuid: convIds[0],
+                user_uuid: user.id
+              });
+            console.log("🔍 [DEBUG] RLS function test result:", { rlsTest, rlsError });
+          } catch (rlsTestError) {
+            console.error("🚨 [DEBUG] RLS function test failed:", rlsTestError);
+          }
+        }
+
+        // Test basic conversation_participants query
+        console.log("🔍 [DEBUG] Testing basic conversation_participants query...");
+        const { data: basicParticipants, error: basicError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id, user_id')
+          .eq('user_id', user.id)
+          .limit(1);
+        
+        console.log("🔍 [DEBUG] Basic participants test result:", { basicParticipants, basicError });
+
         // Batch fetch all conversation data
         const batchStart = Date.now();
         console.log("🔄 [CONVERSATIONS] Starting batch fetch for conversations, participants, and messages");
