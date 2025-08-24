@@ -321,12 +321,24 @@ export const useOptimizedConversations = () => {
 
       // Check if direct conversation already exists in current data
       if (participantIds.length === 1 && conversations) {
-        const existingConversation = conversations.find(conv => 
-          conv.type === 'direct' && 
-          conv.participants?.length === 2 &&
-          conv.participants.some(p => p.id === participantIds[0]) &&
-          conv.participants.some(p => p.id === user.id)
-        );
+        console.log('Checking existing conversations:', conversations.length);
+        
+        const existingConversation = conversations.find(conv => {
+          // Add comprehensive validation and logging
+          if (!conv.participants) {
+            console.warn('Conversation missing participants:', conv.id);
+            return false;
+          }
+          
+          if (conv.participants.length !== 2) {
+            return false;
+          }
+          
+          const hasRecipient = conv.participants.some(p => p.id === participantIds[0]);
+          const hasCurrentUser = conv.participants.some(p => p.id === user.id);
+          
+          return conv.type === 'direct' && hasRecipient && hasCurrentUser;
+        });
         
         if (existingConversation) {
           console.log('Using existing conversation:', existingConversation.id);
@@ -334,6 +346,8 @@ export const useOptimizedConversations = () => {
           conversationAttempts.current.delete(attemptKey);
           return existingConversation;
         }
+        
+        console.log('No existing direct conversation found, creating new one');
       }
 
       // Use secure RPC method with circuit breaker tracking
