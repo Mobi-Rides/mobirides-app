@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useCallback, useRef, useState } from "react";
-import { supabase, AuthContextVerifier, SessionRecovery } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
 
@@ -541,71 +541,64 @@ export const useOptimizedConversations = (userId?: string) => {
     }) => {
       console.log('📤 [SEND MESSAGE] Starting send process:', { conversationId, contentLength: content.length, type });
       
-      // Use session recovery wrapper for reliable auth context
-      return await SessionRecovery.withAuthRetry(async () => {
-        // Verify auth context with enhanced verifier
-        const authVerifier = AuthContextVerifier.getInstance();
-        const authCheck = await authVerifier.verifyAuthContext();
-        
-        if (!authCheck.isValid) {
-          throw new Error(`Authentication failed: ${authCheck.error}`);
+      // Basic authentication check
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('💬 [SEND MESSAGE] Sending message to conversation:', conversationId);
+      
+      // Test RLS access with actual database query
+      const { data: accessCheck, error: accessError } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .eq('user_id', userId)
+        .single();
+
+      if (accessError) {
+        console.error('❌ [SEND MESSAGE] RLS access check failed:', accessError);
+        if (accessError.code === 'PGRST116') {
+          throw new Error('You do not have access to this conversation');
         }
+        throw new Error(`Database access error: ${accessError.message}`);
+      }
+
+      console.log('✅ [SEND MESSAGE] RLS access verified, proceeding with message insert...');
+
+      const { data, error } = await supabase
+        .from('conversation_messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: userId,
+          content: content.trim(),
+          message_type: type
+        })
+        .select(`
+          *,
+          profiles!conversation_messages_sender_id_fkey (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) {
+        console.error('❌ [SEND MESSAGE] Database error:', error);
         
-        console.log('✅ [SEND MESSAGE] Auth context verified, user:', authCheck.userId);
-
-        // Test RLS access with actual database query
-        const { data: accessCheck, error: accessError } = await supabase
-          .from('conversation_participants')
-          .select('user_id')
-          .eq('conversation_id', conversationId)
-          .eq('user_id', authCheck.userId)
-          .single();
-
-        if (accessError) {
-          console.error('❌ [SEND MESSAGE] RLS access check failed:', accessError);
-          if (accessError.code === 'PGRST116') {
-            throw new Error('You do not have access to this conversation');
-          }
-          throw new Error(`Database access error: ${accessError.message}`);
+        // Enhanced error messages for common issues
+        if (error.code === '23503') {
+          throw new Error('Invalid conversation or user reference');
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied - you may not have access to this conversation');
+        } else {
+          throw new Error(`Failed to send message: ${error.message}`);
         }
+      }
 
-        console.log('✅ [SEND MESSAGE] RLS access verified, proceeding with message insert...');
-
-        const { data, error } = await supabase
-          .from('conversation_messages')
-          .insert({
-            conversation_id: conversationId,
-            sender_id: authCheck.userId!,
-            content: content.trim(),
-            message_type: type
-          })
-          .select(`
-            *,
-            profiles!conversation_messages_sender_id_fkey (
-              id,
-              full_name,
-              avatar_url
-            )
-          `)
-          .single();
-
-        if (error) {
-          console.error('❌ [SEND MESSAGE] Database error:', error);
-          
-          // Enhanced error messages for common issues
-          if (error.code === '23503') {
-            throw new Error('Invalid conversation or user reference');
-          } else if (error.code === '42501') {
-            throw new Error('Permission denied - you may not have access to this conversation');
-          } else {
-            throw new Error(`Failed to send message: ${error.message}`);
-          }
-        }
-
-        console.log('✅ [SEND MESSAGE] Message sent successfully:', data?.id);
-        return data;
-        
-      }, 'Send Message Operation');
+      console.log('✅ [SEND MESSAGE] Message sent successfully:', data?.id);
+      return data;
     },
     onSuccess: (data) => {
       console.log('✅ [CONVERSATIONS] Message sent successfully:', data);
