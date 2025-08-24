@@ -461,6 +461,7 @@ export const useOptimizedConversations = () => {
       const user = session.user;
       console.log("✅ [SEND_MESSAGE] User authenticated:", user.id);
 
+      console.log("📋 [SEND_MESSAGE] Attempting database insert...");
       const { data: message, error: messageError } = await supabase
         .from('conversation_messages')
         .insert({
@@ -489,12 +490,23 @@ export const useOptimizedConversations = () => {
         `)
         .single();
 
-      if (messageError) throw messageError;
+      console.log("💾 [SEND_MESSAGE] Database response:", { message, error: messageError });
+      
+      if (messageError) {
+        console.error("❌ [SEND_MESSAGE] Database error:", messageError);
+        throw messageError;
+      }
+      
+      console.log("✅ [SEND_MESSAGE] Message saved successfully:", message);
       return message;
     },
     onSuccess: (data, variables) => {
+      console.log("🎉 [SEND_MESSAGE] Success callback triggered:", data);
       queryClient.invalidateQueries({ queryKey: ['conversation-messages', variables.conversationId] });
       queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+    },
+    onError: (error, variables) => {
+      console.error("💥 [SEND_MESSAGE] Error callback triggered:", { error, variables });
     }
   });
 
