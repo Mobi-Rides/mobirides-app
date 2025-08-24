@@ -138,6 +138,20 @@ export const useOptimizedConversations = () => {
         const convIds = userParticipations.map(p => p.conversation_id);
         console.log(`📊 [CONVERSATIONS] Found ${convIds.length} conversation IDs:`, convIds);
 
+        // Test simple query first to isolate the issue
+        console.log("🔍 [DEBUG] Testing simple profiles query...");
+        const { data: testProfile, error: testError } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        console.log("🔍 [DEBUG] Simple profiles test result:", { testProfile, testError });
+        
+        if (testError) {
+          console.error("🚨 [DEBUG] Simple profiles query failed:", JSON.stringify(testError, null, 2));
+        }
+
         // Batch fetch all conversation data
         const batchStart = Date.now();
         console.log("🔄 [CONVERSATIONS] Starting batch fetch for conversations, participants, and messages");
@@ -190,7 +204,12 @@ export const useOptimizedConversations = () => {
         });
 
         if (convError || participantsError || messagesError) {
-          console.error("❌ [CONVERSATIONS] Error in batch fetch:", { convError, participantsError, messagesError });
+          console.error("❌ [CONVERSATIONS] Error in batch fetch:");
+          console.error("🚨 [CONVERSATIONS ERROR] Raw errors:", JSON.stringify({ convError, participantsError, messagesError }, null, 2));
+          
+          if (convError) console.error("🚨 [CONV ERROR] Details:", convError);
+          if (participantsError) console.error("🚨 [PARTICIPANTS ERROR] Details:", participantsError);
+          if (messagesError) console.error("🚨 [MESSAGES ERROR] Details:", messagesError);
           return [];
         }
 
