@@ -197,11 +197,11 @@ export const useOptimizedConversations = (userId?: string) => {
                 created_at, 
                 message_type, 
                 conversation_id,
-                profiles!conversation_messages_sender_id_fkey (
-                  id,
-                  full_name,
-                  avatar_url
-                )
+          profiles!conversation_messages_sender_id_fkey (
+            id,
+            full_name,
+            avatar_url
+          )
               `)
               .in('conversation_id', convIds)
               .order('created_at', { ascending: false })
@@ -576,7 +576,7 @@ export const useOptimizedConversations = (userId?: string) => {
         })
         .select(`
           *,
-          profiles!conversation_messages_sender_id_fkey (
+          sender:profiles(
             id,
             full_name,
             avatar_url
@@ -682,7 +682,7 @@ export const useConversationMessages = (conversationId?: string) => {
           message_type,
           edited,
           edited_at,
-          profiles!conversation_messages_sender_id_fkey (
+          sender:profiles(
             id,
             full_name,
             avatar_url
