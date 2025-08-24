@@ -315,10 +315,10 @@ export const useOptimizedConversations = () => {
       const user = session.user;
 
       // Check if direct conversation already exists in current data
-      if (participantIds.length === 1) {
-        const existingConversation = conversations?.find(conv => 
+      if (participantIds.length === 1 && conversations) {
+        const existingConversation = conversations.find(conv => 
           conv.type === 'direct' && 
-          conv.participants.length === 2 &&
+          conv.participants?.length === 2 &&
           conv.participants.some(p => p.id === participantIds[0]) &&
           conv.participants.some(p => p.id === user.id)
         );
@@ -339,9 +339,9 @@ export const useOptimizedConversations = () => {
         
         console.log('Using RPC method for conversation creation');
         const { data: rpcResult, error: rpcError } = await supabase.rpc('create_conversation_secure', {
-          p_title: title,
+          p_title: title || null,
           p_type: participantIds.length > 1 ? 'group' : 'direct',
-          p_participant_ids: participantIds,
+          p_participant_ids: participantIds.filter(id => id && typeof id === 'string'),
           p_created_by_id: user.id
         });
         

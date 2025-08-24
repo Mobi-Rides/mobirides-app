@@ -92,7 +92,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   useEffect(() => {
     console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
     
-    if (recipientId && recipientName && currentUser.id !== 'user-1' && !conversationsLoading) {
+    if (recipientId && recipientName && currentUser?.id && currentUser.id !== 'user-1' && !conversationsLoading) {
       console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
       console.log("MessagingInterface: Current conversations:", conversations);
       
@@ -135,7 +135,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     } else {
       console.log("MessagingInterface: Missing required data, user not loaded, or conversations loading");
     }
-  }, [recipientId, recipientName, conversations, currentUser.id, conversationsLoading, isCreatingConversation, handleCreateConversation, creationAttempts]);
+  }, [recipientId, recipientName, conversations, currentUser?.id, conversationsLoading, isCreatingConversation]);
 
   const filteredConversations = conversations.filter(conv => {
     const title = conv.title || conv.participants
