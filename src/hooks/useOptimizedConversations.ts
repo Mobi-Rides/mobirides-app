@@ -2,6 +2,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
+import { toast } from "sonner";
 
 interface DatabaseConversation {
   id: string;
@@ -40,8 +41,12 @@ export const useOptimizedConversations = () => {
     let conversationIds: string[] = [];
 
     const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session?.user) {
+        console.log('No valid session for subscription setup');
+        return;
+      }
+      const user = session.user;
 
       // Get user's conversation IDs first
       const { data: userParticipations } = await supabase
@@ -99,11 +104,12 @@ export const useOptimizedConversations = () => {
     queryKey: ['optimized-conversations'],
     queryFn: async () => {
       console.log("Fetching optimized conversations");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log("No authenticated user");
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session?.user) {
+        console.log("No valid session for conversation fetch");
         return [];
       }
+      const user = session.user;
 
       try {
         // Get user's conversation IDs with a single query
@@ -235,8 +241,21 @@ export const useOptimizedConversations = () => {
 
   const createConversationMutation = useMutation({
     mutationFn: async ({ participantIds, title }: { participantIds: string[], title?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      console.log('Creating conversation - checking session...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session error in conversation creation:', error);
+        throw new Error('Authentication session error');
+      }
+      
+      if (!session?.user) {
+        console.error('No valid session for conversation creation');
+        throw new Error('Not authenticated - no valid session');
+      }
+      
+      console.log('Session validated, user:', session.user.id);
+      const user = session.user;
 
       // Check if direct conversation already exists
       if (participantIds.length === 1) {
@@ -266,6 +285,18 @@ export const useOptimizedConversations = () => {
 
       if (convError) {
         console.error('Error creating conversation:', convError);
+        console.error('User ID used:', user.id);
+        console.error('Session details:', { 
+          userId: session.user.id,
+          accessToken: session.access_token ? 'present' : 'missing',
+          refreshToken: session.refresh_token ? 'present' : 'missing'
+        });
+        
+        if (convError.code === '42501') {
+          toast.error('Unable to create conversation. Please try logging out and back in.');
+          throw new Error('Authentication context mismatch - please refresh your session');
+        }
+        
         throw convError;
       }
 
@@ -292,6 +323,14 @@ export const useOptimizedConversations = () => {
     },
     onError: (error) => {
       console.error('Conversation creation failed:', error);
+      
+      if (error.message.includes('Authentication context mismatch')) {
+        toast.error('Session expired. Please refresh the page and try again.');
+      } else if (error.message.includes('Not authenticated')) {
+        toast.error('Please log in to start a conversation.');
+      } else {
+        toast.error('Failed to create conversation. Please try again.');
+      }
     }
   });
 
@@ -302,10 +341,10 @@ export const useOptimizedConversations = () => {
       queryFn: async () => {
         if (!conversationId) return [];
         
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return [];
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.user) return [];
 
-        const { data: messages, error } = await supabase
+        const { data: messages, error: messagesError } = await supabase
           .from('conversation_messages')
           .select(`
             id,
@@ -328,8 +367,8 @@ export const useOptimizedConversations = () => {
           .eq('conversation_id', conversationId)
           .order('created_at', { ascending: true });
 
-        if (error) {
-          console.error("Error fetching messages:", error);
+        if (messagesError) {
+          console.error("Error fetching messages:", messagesError);
           return [];
         }
         
@@ -363,10 +402,11 @@ export const useOptimizedConversations = () => {
       content: string; 
       type?: 'text' | 'image' | 'file' 
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.user) throw new Error('Not authenticated');
+      const user = session.user;
 
-      const { data: message, error } = await supabase
+      const { data: message, error: messageError } = await supabase
         .from('conversation_messages')
         .insert({
           conversation_id: conversationId,
@@ -394,7 +434,7 @@ export const useOptimizedConversations = () => {
         `)
         .single();
 
-      if (error) throw error;
+      if (messageError) throw messageError;
       return message;
     },
     onSuccess: (data, variables) => {
