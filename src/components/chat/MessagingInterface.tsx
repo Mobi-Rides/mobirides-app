@@ -18,58 +18,45 @@ interface MessagingInterfaceProps {
 export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
   console.log("MessagingInterface: Loading with", { recipientId, recipientName });
   
-  const {
-    conversations,
-    isLoading: conversationsLoading,
-    createConversation,
-    isCreatingConversation,
-    sendMessage,
-    isSendingMessage,
-    sendMessageError,
-    sendMessageSuccess
-  } = useOptimizedConversations();
+  // Phase 1: Authentication state management
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   
-  const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
-  
-  console.log("🖥️ [MESSAGING] Hook state", { 
-    conversationsCount: conversations?.length || 0, 
-    conversationsLoading,
-    hasConversations: Array.isArray(conversations),
-    selectedConversationId
-  });
-  
-  // Get messages for selected conversation using the stable hook
-  const { data: messages = [], isLoading: isLoadingMessages, error: messagesError } = useConversationMessages(selectedConversationId);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
-  
-  // Use a placeholder user initially, will be updated with real user data
-  const [currentUser, setCurrentUser] = useState<User>({
-    id: 'user-1',
-    name: 'You',
-    avatar: 'https://i.pravatar.cc/150?img=32',
-    status: 'online',
-  });
-  
-  // Fetch the current user from Supabase
+  // Fetch the current user from Supabase with proper error handling
   useEffect(() => {
     const fetchCurrentUser = async () => {
       console.log("👤 [MESSAGING] Fetching current user");
+      setAuthLoading(true);
+      setAuthError(null);
+      
       try {
         const userStart = Date.now();
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
         console.log(`⏱️ [MESSAGING] User fetch took ${Date.now() - userStart}ms`);
+        
+        if (userError) {
+          console.error('❌ [MESSAGING] Auth error:', userError);
+          setAuthError('Authentication failed');
+          setAuthLoading(false);
+          return;
+        }
         
         if (user) {
           console.log(`✅ [MESSAGING] User found: ${user.id}`);
-          // Fetch user profile data
-          const { data: profileData } = await supabase
+          
+          // Fetch user profile data with error handling
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('full_name, avatar_url')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
           
-          const newUser = {
+          if (profileError) {
+            console.warn('⚠️ [MESSAGING] Profile fetch error:', profileError);
+          }
+          
+          const newUser: User = {
             id: user.id,
             name: profileData?.full_name || user.email?.split('@')[0] || 'You',
             avatar: profileData?.avatar_url ? 
@@ -82,21 +69,53 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
           setCurrentUser(newUser);
         } else {
           console.warn("⚠️ [MESSAGING] No user found in auth");
+          setAuthError('No authenticated user');
         }
       } catch (error) {
         console.error('❌ [MESSAGING] Error fetching current user:', error);
+        setAuthError('Failed to load user data');
+      } finally {
+        setAuthLoading(false);
       }
     };
     
     fetchCurrentUser();
   }, []);
 
+  // Phase 1: Only initialize conversations hook after auth is complete
+  const {
+    conversations,
+    isLoading: conversationsLoading,
+    createConversation,
+    isCreatingConversation,
+    sendMessage,
+    isSendingMessage,
+    sendMessageError,
+    sendMessageSuccess
+  } = useOptimizedConversations(currentUser?.id); // Pass user ID to hook
+  
+  const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
+  
+    console.log("🖥️ [MESSAGING] Hook state", { 
+      conversationsCount: Array.isArray(conversations) ? conversations.length : 0, 
+      conversationsLoading,
+      hasConversations: Array.isArray(conversations),
+      selectedConversationId,
+      currentUserId: currentUser?.id,
+      authLoading
+    });
+  
+  // Get messages for selected conversation using the stable hook
+  const { data: messages = [], isLoading: isLoadingMessages, error: messagesError } = useConversationMessages(selectedConversationId);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
+
   // Auto-select first conversation if none selected
   useEffect(() => {
     try {
       console.log("🔄 [MESSAGING] Auto-select effect triggered", {
         selectedConversationId,
-        conversationsLength: conversations?.length,
+        conversationsLength: Array.isArray(conversations) ? conversations.length : 0,
         conversationsLoading,
         isArray: Array.isArray(conversations)
       });
@@ -127,7 +146,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     try {
       console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
       
-      if (recipientId && recipientName && currentUser?.id && currentUser.id !== 'user-1' && !conversationsLoading) {
+      if (recipientId && recipientName && currentUser?.id && !conversationsLoading) {
         console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
         console.log("MessagingInterface: Current conversations:", Array.isArray(conversations) ? conversations.length : 'not array');
         
@@ -219,26 +238,36 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     }
   };
 
-  // Show loading state
-  if (conversationsLoading && currentUser.id === 'user-1') {
-    console.log("🔄 [MESSAGING] Showing loading state - user not loaded yet");
+  // Phase 1: Show loading state while authentication is in progress
+  if (authLoading || !currentUser) {
+    console.log("🔄 [MESSAGING] Showing loading state - authentication in progress");
     return (
       <div className={cn("flex items-center justify-center h-full bg-card rounded-lg border border-notification-border", className)}>
         <div className="text-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <div className="text-muted-foreground">Loading conversations...</div>
+          <div className="text-muted-foreground">
+            {authError ? `Error: ${authError}` : 'Loading conversations...'}
+          </div>
+          {authError && (
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Retry
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
-  console.log("🎯 [MESSAGING] Rendering interface", {
-    conversationsLoading,
-    filteredConversationsCount: filteredConversations.length,
-    selectedConversationId,
-    currentUserId: currentUser.id,
-    messagesCount: messages?.length || 0
-  });
+    console.log("🎯 [MESSAGING] Rendering interface", {
+      conversationsLoading,
+      filteredConversationsCount: filteredConversations.length,
+      selectedConversationId,
+      currentUserId: currentUser.id,
+      messagesCount: Array.isArray(messages) ? messages.length : 0
+    });
 
   return (
     <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>
@@ -264,7 +293,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
         {selectedConversation ? (
           <ChatWindow
             conversation={selectedConversation}
-            messages={messages || []}
+            messages={Array.isArray(messages) ? messages : []}
             currentUser={currentUser}
             typingUsers={[]}
             onSendMessage={handleSendMessage}

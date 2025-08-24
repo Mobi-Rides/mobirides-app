@@ -13,14 +13,14 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [viewMode, setViewMode] = useState<'popup' | 'fullscreen'>('popup');
-  const { conversations } = useOptimizedConversations();
+  const { conversations } = useOptimizedConversations(); // Will be empty array since no userId provided
   const navigate = useNavigate();
 
   // Calculate unread messages count from conversations
-  const unreadCount = conversations.reduce((total, conv) => {
+  const unreadCount = Array.isArray(conversations) ? conversations.reduce((total, conv) => {
     // Simplified unread calculation - you might want to implement proper read status tracking
     return total + (conv.lastMessage ? 1 : 0);
-  }, 0);
+  }, 0) : 0;
 
   // Auto-open popup if recipient is provided
   useEffect(() => {

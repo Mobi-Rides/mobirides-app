@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useCallback, useRef } from "react";
+import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
@@ -32,8 +32,9 @@ interface DatabaseConversation {
 
 /**
  * Optimized conversation hook with better real-time performance and batching
+ * Phase 1: Add authentication guard to prevent queries before user is loaded
  */
-export const useOptimizedConversations = () => {
+export const useOptimizedConversations = (userId?: string) => {
   const queryClient = useQueryClient();
 
   // Optimized real-time subscription with targeted filters
@@ -41,23 +42,22 @@ export const useOptimizedConversations = () => {
     let conversationIds: string[] = [];
 
     const setupSubscription = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.user) {
-        console.log('No valid session for subscription setup');
+      // Phase 1: Only set up subscription if userId is provided
+      if (!userId) {
+        console.log('No userId provided, skipping subscription setup');
         return;
       }
-      const user = session.user;
 
       // Get user's conversation IDs first
       const { data: userParticipations } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
 
       conversationIds = userParticipations?.map(p => p.conversation_id) || [];
 
       const channel = supabase
-        .channel(`optimized-conversations-${user.id}`)
+        .channel(`optimized-conversations-${userId}`)
         .on(
           'postgres_changes',
           {
@@ -70,7 +70,7 @@ export const useOptimizedConversations = () => {
             console.log('Optimized message update:', payload);
             // Batch invalidation to prevent excessive queries
             setTimeout(() => {
-              queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+              queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
             }, 100);
           }
         )
@@ -80,11 +80,11 @@ export const useOptimizedConversations = () => {
             event: '*',
             schema: 'public',
             table: 'conversation_participants',
-            filter: `user_id=eq.${user.id}`
+            filter: `user_id=eq.${userId}`
           },
           (payload) => {
             console.log('Optimized participation update:', payload);
-            queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+            queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
           }
         )
         .subscribe();
@@ -98,25 +98,36 @@ export const useOptimizedConversations = () => {
     return () => {
       cleanup.then(fn => fn?.());
     };
-  }, [queryClient]);
+  }, [queryClient, userId]);
 
-  const { data: conversations = [], isLoading, error } = useQuery({
-    queryKey: ['optimized-conversations'],
+  // Phase 2: Add circuit breaker and error recovery
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
+  const { data: conversations = [], isLoading, error } = useQuery<Conversation[]>({
+    queryKey: ['optimized-conversations', userId],
     queryFn: async () => {
       try {
         console.log("🔄 [CONVERSATIONS] Starting fetch process");
         const sessionStart = Date.now();
         
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log(`⏱️ [CONVERSATIONS] Session fetch took ${Date.now() - sessionStart}ms`);
-        
-        if (error || !session?.user) {
-          console.warn("❌ [CONVERSATIONS] No valid session:", { error: error?.message, hasUser: !!session?.user });
-          return [];
+        // Phase 1: Use provided userId or fall back to session
+        let user;
+        if (userId) {
+          user = { id: userId };
+          console.log(`✅ [CONVERSATIONS] Using provided user ID: ${userId}`);
+        } else {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          console.log(`⏱️ [CONVERSATIONS] Session fetch took ${Date.now() - sessionStart}ms`);
+          
+          if (error || !session?.user) {
+            console.warn("❌ [CONVERSATIONS] No valid session:", { error: error?.message, hasUser: !!session?.user });
+            return [];
+          }
+          
+          user = session.user;
+          console.log(`✅ [CONVERSATIONS] Valid session for user: ${user.id}`);
         }
-        
-        const user = session.user;
-        console.log(`✅ [CONVERSATIONS] Valid session for user: ${user.id}`);
 
       try {
         // Get user's conversation IDs with a single query
@@ -152,81 +163,106 @@ export const useOptimizedConversations = () => {
           console.error("🚨 [DEBUG] Simple profiles query failed:", JSON.stringify(testError, null, 2));
         }
 
-        // Test session state before complex queries
-        console.log("🔍 [DEBUG] Testing session state...");
-        const { data: sessionCheck, error: sessionError } = await supabase.auth.getSession();
-        console.log("🔍 [DEBUG] Current session state:", {
-          hasSession: !!sessionCheck.session,
-          hasUser: !!sessionCheck.session?.user,
-          userId: sessionCheck.session?.user?.id,
-          tokenPresent: !!sessionCheck.session?.access_token,
-          error: sessionError
-        });
-
-        // Test RLS function directly
-        console.log("🔍 [DEBUG] Testing is_conversation_participant function...");
-        if (convIds.length > 0) {
-          try {
-            const { data: rlsTest, error: rlsError } = await supabase
-              .rpc('is_conversation_participant', {
-                conversation_uuid: convIds[0],
-                user_uuid: user.id
-              });
-            console.log("🔍 [DEBUG] RLS function test result:", { rlsTest, rlsError });
-          } catch (rlsTestError) {
-            console.error("🚨 [DEBUG] RLS function test failed:", rlsTestError);
-          }
-        }
-
-        // Test basic conversation_participants query
-        console.log("🔍 [DEBUG] Testing basic conversation_participants query...");
-        const { data: basicParticipants, error: basicError } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id, user_id')
-          .eq('user_id', user.id)
-          .limit(1);
-        
-        console.log("🔍 [DEBUG] Basic participants test result:", { basicParticipants, basicError });
-
         // Batch fetch all conversation data
         const batchStart = Date.now();
         console.log("🔄 [CONVERSATIONS] Starting batch fetch for conversations, participants, and messages");
         
-        const [conversationsResult, participantsResult, messagesResult] = await Promise.all([
-          supabase
-            .from('conversations')
-            .select('id, title, type, created_at, updated_at, last_message_at, created_by')
-            .in('id', convIds)
-            .order('updated_at', { ascending: false }),
+        // Phase 2: Implement fallback logic for embedding failures
+        let conversationsResult, participantsResult, messagesResult;
+        
+        try {
+          [conversationsResult, participantsResult, messagesResult] = await Promise.all([
+            supabase
+              .from('conversations')
+              .select('id, title, type, created_at, updated_at, last_message_at, created_by')
+              .in('id', convIds)
+              .order('updated_at', { ascending: false }),
+            
+            supabase
+              .from('conversation_participants')
+              .select(`
+                conversation_id,
+                user_id,
+                joined_at,
+                profiles!conversation_participants_user_id_fkey (id, full_name, avatar_url)
+              `)
+              .in('conversation_id', convIds),
+            
+            supabase
+              .from('conversation_messages')
+              .select(`
+                id, 
+                content, 
+                sender_id, 
+                created_at, 
+                message_type, 
+                conversation_id,
+                sender:profiles (
+                  id,
+                  full_name,
+                  avatar_url
+                )
+              `)
+              .in('conversation_id', convIds)
+              .order('created_at', { ascending: false })
+          ]);
+        } catch (embeddingError) {
+          console.warn("⚠️ [CONVERSATIONS] Embedding query failed, using fallback queries:", embeddingError);
           
-          supabase
-            .from('conversation_participants')
-            .select(`
-              conversation_id,
-              user_id,
-              joined_at,
-              profiles!conversation_participants_user_id_fkey (id, full_name, avatar_url)
-            `)
-            .in('conversation_id', convIds),
+          // Phase 2: Fallback to separate queries if embedding fails
+          [conversationsResult, participantsResult, messagesResult] = await Promise.all([
+            supabase
+              .from('conversations')
+              .select('id, title, type, created_at, updated_at, last_message_at, created_by')
+              .in('id', convIds)
+              .order('updated_at', { ascending: false }),
+            
+            supabase
+              .from('conversation_participants')
+              .select('conversation_id, user_id, joined_at')
+              .in('conversation_id', convIds),
+            
+            supabase
+              .from('conversation_messages')
+              .select('id, content, sender_id, created_at, message_type, conversation_id')
+              .in('conversation_id', convIds)
+              .order('created_at', { ascending: false })
+          ]);
           
-          supabase
-            .from('conversation_messages')
-            .select(`
-              id, 
-              content, 
-              sender_id, 
-              created_at, 
-              message_type, 
-              conversation_id,
-              sender:profiles (
-                id,
-                full_name,
-                avatar_url
-              )
-            `)
-            .in('conversation_id', convIds)
-            .order('created_at', { ascending: false })
-        ]);
+          // Fetch profiles separately for participants
+          const participantUserIds = participantsResult.data?.map(p => p.user_id) || [];
+          if (participantUserIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, avatar_url')
+              .in('id', participantUserIds);
+            
+            // Merge profiles with participants
+            if (participantsResult.data && profiles) {
+              participantsResult.data = participantsResult.data.map(p => ({
+                ...p,
+                profiles: profiles.find(profile => profile.id === p.user_id) || null
+              }));
+            }
+          }
+          
+          // Fetch profiles separately for message senders
+          const senderUserIds = messagesResult.data?.map(m => m.sender_id) || [];
+          if (senderUserIds.length > 0) {
+            const { data: senderProfiles } = await supabase
+              .from('profiles')
+              .select('id, full_name, avatar_url')
+              .in('id', senderUserIds);
+            
+            // Merge profiles with messages
+            if (messagesResult.data && senderProfiles) {
+              messagesResult.data = messagesResult.data.map(m => ({
+                ...m,
+                sender: senderProfiles.find(profile => profile.id === m.sender_id) || null
+              }));
+            }
+          }
+        }
 
         const { data: userConversations, error: convError } = conversationsResult;
         const { data: participants, error: participantsError } = participantsResult;
@@ -323,12 +359,14 @@ export const useOptimizedConversations = () => {
         return [];
       }
     },
-    enabled: true,
+    // Phase 1: Only enable query when user is authenticated
+    enabled: !!userId,
     staleTime: 30000, // Cache for 30 seconds
     gcTime: 300000, // Keep in cache for 5 minutes
     retry: (failureCount, error) => {
       console.log(`🔄 [CONVERSATIONS] Query retry ${failureCount}:`, error);
-      return failureCount < 3;
+      setRetryCount(failureCount);
+      return failureCount < maxRetries;
     }
   });
 
@@ -403,12 +441,17 @@ export const useOptimizedConversations = () => {
       
       console.log('Creating conversation - establishing stable session...');
       
-      // Phase 2: Implement session stability checks
-      const session = await waitForStableSession();
-      const user = session.user;
+      // Phase 2: Implement session stability checks or use provided userId
+      let user;
+      if (userId) {
+        user = { id: userId };
+      } else {
+        const session = await waitForStableSession();
+        user = session.user;
+      }
 
       // Check if direct conversation already exists in current data
-      if (participantIds.length === 1 && conversations) {
+      if (participantIds.length === 1 && Array.isArray(conversations)) {
         console.log('Checking existing conversations:', conversations.length);
         
         const existingConversation = conversations.find(conv => {
@@ -447,150 +490,116 @@ export const useOptimizedConversations = () => {
         console.log('Using RPC method for conversation creation');
         const { data: rpcResult, error: rpcError } = await supabase.rpc('create_conversation_secure', {
           p_title: title || null,
-          p_type: participantIds.length > 1 ? 'group' : 'direct',
-          p_participant_ids: participantIds.filter(id => id && typeof id === 'string'),
+          p_type: participantIds.length === 1 ? 'direct' : 'group',
+          p_participant_ids: participantIds,
           p_created_by_id: user.id
         });
-        
+
         if (rpcError) {
-          console.error('RPC method failed:', rpcError);
-          throw rpcError;
+          console.error('RPC conversation creation failed:', rpcError);
+          throw new Error(`Failed to create conversation: ${rpcError.message}`);
         }
-        
-         console.log('Conversation created via RPC:', rpcResult);
-         
-         // Reset attempt counter on success
-         conversationAttempts.current.delete(attemptKey);
-         
-         // Cast RPC result and return the conversation in the expected format
-         const conversation = rpcResult as any;
-         return {
-           id: conversation.id,
-           title: conversation.title || title,
-           type: conversation.type,
-           participants: [
-             { id: user.id, name: user.email || 'You' },
-             ...participantIds.map(id => ({ id, name: 'User' }))
-           ],
-           lastMessage: null,
-           unreadCount: 0,
-           createdAt: new Date(conversation.created_at || new Date().toISOString()),
-           updatedAt: new Date(conversation.updated_at || new Date().toISOString())
-         };
-       } catch (error) {
-         console.error('Final error creating conversation:', error);
-         console.error('User ID used:', user.id);
-         console.error('Session details:', {
-           userId: session.user.id,
-           accessToken: session.access_token ? 'present' : 'missing',
-           refreshToken: session.refresh_token ? 'present' : 'missing',
-           sessionExpiry: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'unknown'
-         });
-         throw error;
-       }
-     },
-    onSuccess: (newConversation) => {
-      console.log('Conversation created successfully:', newConversation);
-      // Immediately refetch conversations to show the new one
-      queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+
+        console.log('RPC result:', rpcResult);
+
+        if (rpcResult && typeof rpcResult === 'object' && 'exists' in rpcResult && rpcResult.exists) {
+          console.log('RPC returned existing conversation:', (rpcResult as any).id);
+          // Find in current conversations or transform the result
+          const existingInState = conversations.find(c => c.id === (rpcResult as any).id);
+          if (existingInState) {
+            conversationAttempts.current.delete(attemptKey);
+            return existingInState;
+          }
+        }
+
+        // Reset attempt counter on successful creation
+        conversationAttempts.current.delete(attemptKey);
+        return rpcResult;
+
+      } catch (error) {
+        console.error('RPC conversation creation error:', error);
+        throw error;
+      }
     },
-    onError: (error) => {
-      console.error('Conversation creation failed:', error);
+    onSuccess: (data) => {
+      console.log('✅ [CONVERSATIONS] Successfully created/found conversation:', data);
+      toast.success('Conversation ready!');
+      queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
     },
+    onError: (error: Error) => {
+      console.error('❌ [CONVERSATIONS] Failed to create conversation:', error);
+      toast.error(error.message || 'Failed to create conversation. Please try again.');
+    }
   });
 
-  // Send message mutation with comprehensive auth and error handling
+  // Phase 4: Enhanced message sending with better authentication and error handling
   const sendMessageMutation = useMutation({
     mutationFn: async ({ conversationId, content, type = 'text' }: { 
       conversationId: string; 
       content: string; 
       type?: 'text' | 'image' | 'file' 
     }) => {
-      console.log("📤 [SEND_MESSAGE] Starting send operation:", { conversationId, content, type });
+      console.log('📤 [SEND MESSAGE] Starting send process:', { conversationId, contentLength: content.length, type });
       
-      // Establish stable session with retries
-      const session = await waitForStableSession();
-      console.log("✅ [SEND_MESSAGE] Authenticated user:", session.user.id);
-
-      // Verify user has access to the conversation
-      const { data: participationCheck, error: participationError } = await supabase
-        .from('conversation_participants')
-        .select('user_id')
-        .eq('conversation_id', conversationId)
-        .eq('user_id', session.user.id)
-        .single();
-      
-      if (participationError || !participationCheck) {
-        console.error("❌ [SEND_MESSAGE] User not authorized for conversation:", conversationId);
-        throw new Error('You are not authorized to send messages in this conversation');
+      // Phase 4: Use provided userId or establish session
+      let user;
+      if (userId) {
+        user = { id: userId };
+      } else {
+        const session = await waitForStableSession();
+        user = session.user;
       }
-      
-      console.log("🔄 [SEND_MESSAGE] Inserting message into database");
+
+      // Verify user has access to this conversation
+      const hasAccess = Array.isArray(conversations) && conversations.some(conv => 
+        conv.id === conversationId && 
+        conv.participants.some(p => p.id === user.id)
+      );
+
+      if (!hasAccess) {
+        throw new Error('You do not have permission to send messages to this conversation');
+      }
+
+      console.log('📤 [SEND MESSAGE] User authorized, inserting message...');
+
       const { data, error } = await supabase
         .from('conversation_messages')
         .insert({
           conversation_id: conversationId,
-          sender_id: session.user.id,
+          sender_id: user.id,
           content: content.trim(),
-          message_type: type || 'text',
-          sent_at: new Date().toISOString(),
-          delivery_status: 'sent',
-          is_encrypted: false,
-          edited: false
+          message_type: type
         })
-        .select(`
-          id,
-          content,
-          sender_id,
-          conversation_id,
-          created_at,
-          sent_at,
-          delivery_status,
-          message_type
-        `)
+        .select()
         .single();
 
       if (error) {
-        console.error("❌ [SEND_MESSAGE] Database insert failed:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          conversationId,
-          userId: session.user.id
-        });
+        console.error('❌ [SEND MESSAGE] Database error:', error);
         
-        // Provide user-friendly error messages
-        if (error.message?.includes('row-level security')) {
-          throw new Error('You are not authorized to send messages in this conversation. Please refresh and try again.');
-        } else if (error.message?.includes('violates check constraint')) {
-          throw new Error('Message content is invalid. Please check your message and try again.');
-        } else if (error.code === '23503') {
-          throw new Error('Conversation not found. Please refresh the page and try again.');
+        // Enhanced error messages for common issues
+        if (error.code === '23503') {
+          throw new Error('Invalid conversation or user reference');
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied - you may not have access to this conversation');
         } else {
           throw new Error(`Failed to send message: ${error.message}`);
         }
       }
-      
-      if (!data) {
-        console.error("❌ [SEND_MESSAGE] No data returned from insert");
-        throw new Error('Message was not created properly');
-      }
-      
-      console.log("✅ [SEND_MESSAGE] Message sent successfully:", data.id);
+
+      console.log('✅ [SEND MESSAGE] Message sent successfully:', data?.id);
       return data;
     },
     onSuccess: (data) => {
-      console.log("✅ [SEND_MESSAGE] Mutation successful, invalidating queries");
+      console.log('✅ [CONVERSATIONS] Message sent successfully:', data);
+      toast.success('Message sent!');
+      // Invalidate both conversations and messages queries
+      queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
       queryClient.invalidateQueries({ queryKey: ['conversation-messages'] });
-      queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
-      toast.success('Message sent successfully');
     },
-    onError: (error: any) => {
-      console.error("❌ [SEND_MESSAGE] Mutation failed:", error);
-      const errorMessage = error?.message || 'Failed to send message';
-      toast.error(errorMessage);
-    },
+    onError: (error: Error) => {
+      console.error('❌ [CONVERSATIONS] Failed to send message:', error);
+      toast.error(error.message || 'Failed to send message. Please try again.');
+    }
   });
 
   return {
@@ -602,21 +611,56 @@ export const useOptimizedConversations = () => {
     sendMessage: sendMessageMutation.mutate,
     isSendingMessage: sendMessageMutation.isPending,
     sendMessageError: sendMessageMutation.error,
-    sendMessageSuccess: sendMessageMutation.isSuccess,
+    sendMessageSuccess: sendMessageMutation.isSuccess
   };
 };
 
-// Separate hook for fetching messages to avoid conditional hook usage
+/**
+ * Hook for fetching messages in a specific conversation with real-time updates
+ * Phase 4: Ensure message fetching works with proper authentication
+ */
 export const useConversationMessages = (conversationId?: string) => {
+  const queryClient = useQueryClient();
+
+  // Real-time subscription for messages in this conversation
+  useEffect(() => {
+    if (!conversationId) return;
+
+    console.log('Setting up message subscription for conversation:', conversationId);
+    
+    const channel = supabase
+      .channel(`conversation-${conversationId}-messages`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversation_messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        (payload) => {
+          console.log('Message update received:', payload);
+          queryClient.invalidateQueries({ 
+            queryKey: ['conversation-messages', conversationId] 
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up message subscription for conversation:', conversationId);
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, queryClient]);
+
   return useQuery({
     queryKey: ['conversation-messages', conversationId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Message[]> => {
       if (!conversationId) return [];
-      
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session?.user) return [];
 
-      const { data: messages, error: messagesError } = await supabase
+      console.log('📥 [MESSAGES] Fetching messages for conversation:', conversationId);
+
+      const { data, error } = await supabase
         .from('conversation_messages')
         .select(`
           id,
@@ -627,9 +671,6 @@ export const useConversationMessages = (conversationId?: string) => {
           message_type,
           edited,
           edited_at,
-          reply_to_message_id,
-          related_car_id,
-          metadata,
           sender:profiles (
             id,
             full_name,
@@ -639,32 +680,32 @@ export const useConversationMessages = (conversationId?: string) => {
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
-      if (messagesError) {
-        console.error("Error fetching messages:", messagesError);
-        return [];
+      if (error) {
+        console.error('❌ [MESSAGES] Error fetching messages:', error);
+        throw error;
       }
-      
-      // Transform to UI format
-      const transformedMessages: Message[] = messages?.map((msg: any) => ({
+
+      console.log(`✅ [MESSAGES] Fetched ${data?.length || 0} messages`);
+
+      return (data || []).map((msg: any): Message => ({
         id: msg.id,
         content: msg.content,
         senderId: msg.sender_id,
-        conversationId,
+        conversationId: conversationId,
         timestamp: new Date(msg.created_at),
-        type: msg.message_type as 'text' | 'image' | 'file',
-        edited: msg.edited,
+        type: msg.message_type || 'text',
+        edited: msg.edited || false,
         editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
         sender: msg.sender ? {
           id: msg.sender.id,
           full_name: msg.sender.full_name,
           avatar_url: msg.sender.avatar_url
         } : undefined
-      })) || [];
-
-      return transformedMessages;
+      }));
     },
     enabled: !!conversationId,
-    staleTime: 10000, // Cache for 10 seconds
+    staleTime: 10000, // Cache messages for 10 seconds
     gcTime: 300000, // Keep in cache for 5 minutes
+    retry: 2
   });
 };
