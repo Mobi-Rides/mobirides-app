@@ -205,7 +205,7 @@ export const useOptimizedConversations = () => {
               conversation_id,
               user_id,
               joined_at,
-              profiles (id, full_name, avatar_url)
+              profiles!conversation_participants_user_id_fkey (id, full_name, avatar_url)
             `)
             .in('conversation_id', convIds),
           
