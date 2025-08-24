@@ -1705,10 +1705,6 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
-      can_read_profile_in_conversation: {
-        Args: { profile_user_id: string; requesting_user_id: string }
-        Returns: boolean
-      }
       check_conversation_access: {
         Args: { p_conversation_id: string; p_user_id?: string }
         Returns: boolean
