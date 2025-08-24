@@ -114,8 +114,8 @@ export function ChatWindow({
       // Transform sender data to match expected format
       let senderName = 'Unknown User';
       
-      if (message.sender?.full_name) {
-        senderName = message.sender.full_name;
+      if (message.sender?.id) {
+        senderName = 'User';
       } else {
         // Fallback to finding from conversation participants
         const sender = conversation.participants.find(p => p.id === message.senderId);
@@ -230,11 +230,11 @@ export function ChatWindow({
                 // Transform sender data to match MessageBubble expectations
                 let senderForBubble;
                 
-                if (message.sender?.full_name) {
+                if (message.sender?.id) {
                   // Use sender data from message
                   senderForBubble = {
                     id: message.sender.id,
-                    name: message.sender.full_name,
+                    name: 'User',
                     avatar: message.sender.avatar_url,
                     status: 'offline' as const
                   };

@@ -40,7 +40,7 @@ export const ChatMessages = ({ messages, currentUserId, onReply }: ChatMessagesP
           return (
             <div key={message.id} className={cn("border-b border-muted pb-4 group relative", isImportant && "ring-2 ring-yellow-400")}> 
               <div className="font-semibold flex items-center gap-2">
-                {message.sender?.full_name || message.sender_id}
+                {message.sender?.id ? 'User' : message.sender_id}
                 <span className="text-xs text-muted-foreground">{new Date(message.created_at).toLocaleDateString()}</span>
               </div>
               <div className="mt-1 text-base text-muted-foreground">

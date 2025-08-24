@@ -155,7 +155,7 @@ export const useOptimizedConversations = () => {
               conversation_id,
               user_id,
               joined_at,
-              profiles (id, full_name, avatar_url)
+              profiles (id, avatar_url)
             `)
             .in('conversation_id', convIds),
           
@@ -170,7 +170,6 @@ export const useOptimizedConversations = () => {
               conversation_id,
               sender:profiles (
                 id,
-                full_name,
                 avatar_url
               )
             `)
@@ -219,7 +218,7 @@ export const useOptimizedConversations = () => {
           
           const participantUsers: User[] = (conversationParticipants || []).map((p: any) => ({
             id: p.user_id,
-            name: p.profiles?.full_name || 'Unknown User',
+            name: 'Unknown User',
             avatar: p.profiles?.avatar_url ? 
               supabase.storage.from('avatars').getPublicUrl(p.profiles.avatar_url).data.publicUrl : 
               undefined,
@@ -577,7 +576,6 @@ export const useConversationMessages = (conversationId?: string) => {
           metadata,
           sender:profiles (
             id,
-            full_name,
             avatar_url
           )
         `)
@@ -601,7 +599,6 @@ export const useConversationMessages = (conversationId?: string) => {
         editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
         sender: msg.sender ? {
           id: msg.sender.id,
-          full_name: msg.sender.full_name,
           avatar_url: msg.sender.avatar_url
         } : undefined
       })) || [];
