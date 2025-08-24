@@ -4,6 +4,7 @@ import { MessagingInterface } from '../components/chat/MessagingInterface';
 import { MessagingErrorBoundary } from '../components/chat/MessagingErrorBoundary';
 import { Header } from '../components/Header';
 import { Navigation } from '../components/Navigation';
+import { AuthDebugger } from '../components/debug/AuthDebugger';
 
 const Messages = () => {
   const location = useLocation();
@@ -28,6 +29,10 @@ const Messages = () => {
         onSearchChange={() => {}}
         onFiltersChange={() => {}}
       />
+      
+      {/* Temporary debugging component */}
+      <AuthDebugger />
+      
       <div className="flex-1 flex flex-col pb-16">
         <MessagingErrorBoundary>
           <MessagingInterface 
