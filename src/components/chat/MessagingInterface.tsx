@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
+import { useOptimizedConversations, useConversationMessages } from '@/hooks/useOptimizedConversations';
 
 interface MessagingInterfaceProps {
   className?: string;
@@ -23,7 +23,6 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     isLoading: conversationsLoading,
     createConversation,
     isCreatingConversation,
-    getConversationMessages,
     sendMessage,
     isSendingMessage
   } = useOptimizedConversations();
@@ -37,10 +36,8 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     selectedConversationId
   });
   
-  // Get messages for selected conversation
-  const { data: messages = [] } = selectedConversationId ? 
-    getConversationMessages(selectedConversationId) : 
-    { data: [] };
+  // Get messages for selected conversation using the stable hook
+  const { data: messages = [], isLoading: isLoadingMessages, error: messagesError } = useConversationMessages(selectedConversationId);
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   

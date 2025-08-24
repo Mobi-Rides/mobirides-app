@@ -444,67 +444,6 @@ export const useOptimizedConversations = () => {
     },
   });
 
-  // Enhanced message operations
-  const getConversationMessages = useCallback((conversationId: string) => {
-    return useQuery({
-      queryKey: ['conversation-messages', conversationId],
-      queryFn: async () => {
-        if (!conversationId) return [];
-        
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) return [];
-
-        const { data: messages, error: messagesError } = await supabase
-          .from('conversation_messages')
-          .select(`
-            id,
-            content,
-            sender_id,
-            created_at,
-            updated_at,
-            message_type,
-            edited,
-            edited_at,
-            reply_to_message_id,
-            related_car_id,
-            metadata,
-            sender:profiles (
-              id,
-              full_name,
-              avatar_url
-            )
-          `)
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true });
-
-        if (messagesError) {
-          console.error("Error fetching messages:", messagesError);
-          return [];
-        }
-        
-        // Transform to UI format
-        const transformedMessages: Message[] = messages?.map((msg: any) => ({
-          id: msg.id,
-          content: msg.content,
-          senderId: msg.sender_id,
-          conversationId,
-          timestamp: new Date(msg.created_at),
-          type: msg.message_type as 'text' | 'image' | 'file',
-          edited: msg.edited,
-          editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
-          sender: msg.sender ? {
-            id: msg.sender.id,
-            full_name: msg.sender.full_name,
-            avatar_url: msg.sender.avatar_url
-          } : undefined
-        })) || [];
-
-        return transformedMessages;
-      },
-      enabled: !!conversationId
-    });
-  }, []);
-
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ conversationId, content, type = 'text' }: { 
@@ -560,8 +499,70 @@ export const useOptimizedConversations = () => {
     isLoading,
     createConversation: createConversationMutation.mutate,
     isCreatingConversation: createConversationMutation.isPending,
-    getConversationMessages,
     sendMessage: sendMessageMutation.mutate,
     isSendingMessage: sendMessageMutation.isPending
   };
+};
+
+// Separate hook for fetching messages to avoid conditional hook usage
+export const useConversationMessages = (conversationId?: string) => {
+  return useQuery({
+    queryKey: ['conversation-messages', conversationId],
+    queryFn: async () => {
+      if (!conversationId) return [];
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.user) return [];
+
+      const { data: messages, error: messagesError } = await supabase
+        .from('conversation_messages')
+        .select(`
+          id,
+          content,
+          sender_id,
+          created_at,
+          updated_at,
+          message_type,
+          edited,
+          edited_at,
+          reply_to_message_id,
+          related_car_id,
+          metadata,
+          sender:profiles (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (messagesError) {
+        console.error("Error fetching messages:", messagesError);
+        return [];
+      }
+      
+      // Transform to UI format
+      const transformedMessages: Message[] = messages?.map((msg: any) => ({
+        id: msg.id,
+        content: msg.content,
+        senderId: msg.sender_id,
+        conversationId,
+        timestamp: new Date(msg.created_at),
+        type: msg.message_type as 'text' | 'image' | 'file',
+        edited: msg.edited,
+        editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
+        sender: msg.sender ? {
+          id: msg.sender.id,
+          full_name: msg.sender.full_name,
+          avatar_url: msg.sender.avatar_url
+        } : undefined
+      })) || [];
+
+      return transformedMessages;
+    },
+    enabled: !!conversationId,
+    staleTime: 10000, // Cache for 10 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
+  });
 };
