@@ -15,10 +15,10 @@ interface MessagingInterfaceProps {
 }
 
 export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
-  const { 
-    conversations, 
-    isLoading: conversationsLoading, 
-    createConversation, 
+  const {
+    conversations,
+    isLoading: conversationsLoading,
+    createConversation,
     isCreatingConversation,
     getConversationMessages,
     sendMessage,

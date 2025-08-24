@@ -264,7 +264,10 @@ export const useOptimizedConversations = () => {
         .select()
         .single();
 
-      if (convError) throw convError;
+      if (convError) {
+        console.error('Error creating conversation:', convError);
+        throw convError;
+      }
 
       // Add participants
       const participantsToAdd = [user.id, ...participantIds.filter(id => id !== user.id)];
@@ -277,12 +280,18 @@ export const useOptimizedConversations = () => {
           }))
         );
 
-      if (participantsError) throw participantsError;
+      if (participantsError) {
+        console.error('Error adding participants:', participantsError);
+        throw participantsError;
+      }
 
       return conversation;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+    },
+    onError: (error) => {
+      console.error('Conversation creation failed:', error);
     }
   });
 
