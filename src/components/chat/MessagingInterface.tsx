@@ -1,9 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { useOptimizedConversations, useConversationMessages } from '@/hooks/useOptimizedConversations';
-import { useSecureMessaging } from '@/hooks/useSecureMessaging';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { NewConversationModal } from './NewConversationModal';
@@ -11,6 +6,8 @@ import { MigrationStatusBanner } from './MigrationStatusBanner';
 import { Button } from '@/components/ui/button';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useOptimizedConversations, useConversationMessages } from '@/hooks/useOptimizedConversations';
 
 interface MessagingInterfaceProps {
   className?: string;
@@ -212,30 +209,18 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   const selectedConversation = filteredConversations.find(c => c.id === selectedConversationId);
   
 
-  // Use secure messaging hook
-  const { sendMessage: sendSecureMessage, isLoading: isSecureSending } = useSecureMessaging();
-
   const handleSendMessage = useCallback((content: string) => {
-    if (!selectedConversationId || !content.trim()) {
-      console.warn('[MessagingInterface] Cannot send message: missing conversation or content');
-      return;
-    }
-
-    try {
-      console.log('[MessagingInterface] Sending secure message to conversation:', selectedConversationId);
-      
-      sendSecureMessage({
+    if (selectedConversationId && content.trim()) {
+      console.log('Sending message:', { conversationId: selectedConversationId, content });
+      sendMessage({
         conversationId: selectedConversationId,
         content: content.trim(),
-        messageType: 'text'
+        type: 'text'
       });
-
-      console.log('[MessagingInterface] Secure message send initiated');
-    } catch (error) {
-      console.error('[MessagingInterface] Failed to send secure message:', error);
-      // Error handling is done in the secure messaging hook
+    } else {
+      console.warn('Cannot send message:', { selectedConversationId, hasContent: !!content.trim() });
     }
-  }, [selectedConversationId, sendSecureMessage]);
+  }, [selectedConversationId, sendMessage]);
 
   const handleNewConversation = () => {
     setIsNewConversationModalOpen(true);
@@ -312,7 +297,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             currentUser={currentUser}
             typingUsers={[]}
             onSendMessage={handleSendMessage}
-            isLoading={isSecureSending}
+            isLoading={isSendingMessage}
           />
         ) : (
           <div className="flex items-center justify-center h-full">

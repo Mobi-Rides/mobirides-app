@@ -1987,21 +1987,14 @@ export type Database = {
         Returns: undefined
       }
       send_conversation_message: {
-        Args:
-          | {
-              p_content: string
-              p_conversation_id: string
-              p_message_type?: string
-              p_metadata?: Json
-              p_related_car_id?: string
-              p_reply_to_message_id?: string
-            }
-          | {
-              p_content: string
-              p_conversation_id: string
-              p_message_type?: string
-              p_related_car_id?: string
-            }
+        Args: {
+          p_content: string
+          p_conversation_id: string
+          p_message_type?: string
+          p_metadata?: Json
+          p_related_car_id?: string
+          p_reply_to_message_id?: string
+        }
         Returns: string
       }
       update_notification_expiration_policy: {
@@ -2015,10 +2008,6 @@ export type Database = {
       validate_admin_session: {
         Args: { p_session_token: string }
         Returns: boolean
-      }
-      validate_conversation_access: {
-        Args: { p_conversation_id: string; p_user_id?: string }
-        Returns: Json
       }
       validate_step_dependencies: {
         Args: {
