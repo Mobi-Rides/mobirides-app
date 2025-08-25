@@ -3,6 +3,7 @@ import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
+import { ensureAuthenticatedOperation, waitForStableSession } from "@/utils/authUtils";
 
 interface DatabaseConversation {
   id: string;
@@ -37,66 +38,128 @@ interface DatabaseConversation {
 export const useOptimizedConversations = (userId?: string) => {
   const queryClient = useQueryClient();
 
-  // Optimized real-time subscription with targeted filters
+  // Auth-aware real-time subscription with session monitoring
   useEffect(() => {
     let conversationIds: string[] = [];
+    let authListener: any;
+    let currentChannel: any;
 
-    const setupSubscription = async () => {
-      // Phase 1: Only set up subscription if userId is provided
-      if (!userId) {
-        console.log('No userId provided, skipping subscription setup');
-        return;
-      }
+    const setupAuthAwareSubscription = async () => {
+      try {
+        // Enhanced auth check with session stability
+        const authResult = await ensureAuthenticatedOperation(async () => {
+          await waitForStableSession();
+          return { success: true };
+        });
 
-      // Get user's conversation IDs first
-      const { data: userParticipations } = await supabase
-        .from('conversation_participants')
-        .select('conversation_id')
-        .eq('user_id', userId);
+        if (!authResult.success || !userId) {
+          console.log('🔐 [SUBSCRIPTION] Auth check failed or no userId, skipping subscription setup');
+          return;
+        }
 
-      conversationIds = userParticipations?.map(p => p.conversation_id) || [];
+        console.log('🔐 [SUBSCRIPTION] Setting up auth-aware subscription for user:', userId);
 
-      const channel = supabase
-        .channel(`optimized-conversations-${userId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'conversation_messages',
-            filter: conversationIds.length > 0 ? `conversation_id=in.(${conversationIds.join(',')})` : 'conversation_id=eq.never'
-          },
-          (payload) => {
-            console.log('Optimized message update:', payload);
-            // Batch invalidation to prevent excessive queries
-            setTimeout(() => {
-              queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
-            }, 100);
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'conversation_participants',
-            filter: `user_id=eq.${userId}`
-          },
-          (payload) => {
-            console.log('Optimized participation update:', payload);
+        // Get user's conversation IDs with auth validation
+        const { data: userParticipations, error } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', userId);
+
+        if (error) {
+          console.error('❌ [SUBSCRIPTION] Failed to fetch user participations:', error);
+          return;
+        }
+
+        conversationIds = userParticipations?.map(p => p.conversation_id) || [];
+        console.log(`📊 [SUBSCRIPTION] Setting up subscription for ${conversationIds.length} conversations`);
+
+        // Create auth-aware channel
+        currentChannel = supabase
+          .channel(`auth-aware-conversations-${userId}-${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'conversation_messages',
+              filter: conversationIds.length > 0 ? `conversation_id=in.(${conversationIds.join(',')})` : 'conversation_id=eq.never'
+            },
+            async (payload) => {
+              console.log('📨 [SUBSCRIPTION] Auth-aware message update:', payload);
+              
+              // Verify auth before processing update
+              try {
+                await ensureAuthenticatedOperation(async () => ({ success: true }));
+                
+                // Batch invalidation to prevent excessive queries
+                setTimeout(() => {
+                  queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
+                }, 100);
+              } catch (authError) {
+                console.warn('🔐 [SUBSCRIPTION] Auth failed during message update, ignoring:', authError);
+              }
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'conversation_participants',
+              filter: `user_id=eq.${userId}`
+            },
+            async (payload) => {
+              console.log('👥 [SUBSCRIPTION] Auth-aware participation update:', payload);
+              
+              // Verify auth before processing update
+              try {
+                await ensureAuthenticatedOperation(async () => ({ success: true }));
+                queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
+              } catch (authError) {
+                console.warn('🔐 [SUBSCRIPTION] Auth failed during participation update, ignoring:', authError);
+              }
+            }
+          )
+          .subscribe((status) => {
+            console.log('🔗 [SUBSCRIPTION] Channel status:', status);
+          });
+
+        // Set up auth state listener to handle session changes
+        authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('🔐 [SUBSCRIPTION] Auth state changed:', event, !!session);
+          
+          if (event === 'SIGNED_OUT' || !session) {
+            console.log('🔐 [SUBSCRIPTION] User signed out, cleaning up subscription');
+            if (currentChannel) {
+              await supabase.removeChannel(currentChannel);
+              currentChannel = null;
+            }
+            // Clear cached data
+            queryClient.removeQueries({ queryKey: ['optimized-conversations'] });
+            queryClient.removeQueries({ queryKey: ['conversation-messages'] });
+          } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            console.log('🔐 [SUBSCRIPTION] User signed in/token refreshed, refreshing data');
+            // Refresh queries with new session
             queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
           }
-        )
-        .subscribe();
+        });
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      } catch (error) {
+        console.error('❌ [SUBSCRIPTION] Failed to setup auth-aware subscription:', error);
+      }
     };
 
-    const cleanup = setupSubscription();
+    const cleanup = setupAuthAwareSubscription();
+    
     return () => {
-      cleanup.then(fn => fn?.());
+      cleanup.then(() => {
+        if (currentChannel) {
+          supabase.removeChannel(currentChannel);
+        }
+        if (authListener) {
+          authListener.data?.subscription?.unsubscribe();
+        }
+      });
     };
   }, [queryClient, userId]);
 
@@ -532,18 +595,18 @@ export const useOptimizedConversations = (userId?: string) => {
     }
   });
 
-  // Phase 4: Enhanced message sending with better authentication and error handling
+  // Phase 4: Enhanced message sending using secure RPC function
   const sendMessageMutation = useMutation({
     mutationFn: async ({ conversationId, content, type = 'text' }: { 
       conversationId: string; 
       content: string; 
       type?: 'text' | 'image' | 'file' 
     }) => {
-      console.log('📤 [SEND MESSAGE] Starting send process:', { conversationId, contentLength: content.length, type });
+      console.log('📤 [SEND MESSAGE] Starting send process with RPC:', { conversationId, contentLength: content.length, type });
       
-      // Enhanced authentication check with explicit null handling
+      // Basic validation before calling RPC
       if (!userId) {
-        console.error('❌ [SEND MESSAGE] No authenticated user - auth.uid() is null');
+        console.error('❌ [SEND MESSAGE] No authenticated user');
         throw new Error('User not authenticated - please log in');
       }
       
@@ -552,59 +615,47 @@ export const useOptimizedConversations = (userId?: string) => {
         throw new Error('Message content cannot be empty');
       }
 
-      console.log('💬 [SEND MESSAGE] Sending message to conversation:', conversationId);
+      console.log('💬 [SEND MESSAGE] Calling send_conversation_message RPC for conversation:', conversationId);
       
-      // Test RLS access with actual database query
-      const { data: accessCheck, error: accessError } = await supabase
-        .from('conversation_participants')
-        .select('user_id')
-        .eq('conversation_id', conversationId)
-        .eq('user_id', userId)
-        .single();
+      // Use the secure RPC function for message sending
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('send_conversation_message', {
+        p_conversation_id: conversationId,
+        p_content: content.trim(),
+        p_message_type: type
+      });
 
-      if (accessError) {
-        console.error('❌ [SEND MESSAGE] RLS access check failed:', accessError);
-        if (accessError.code === 'PGRST116') {
-          throw new Error('You do not have access to this conversation');
-        }
-        throw new Error(`Database access error: ${accessError.message}`);
+      if (rpcError) {
+        console.error('❌ [SEND MESSAGE] RPC error:', rpcError);
+        throw new Error(`Failed to send message: ${rpcError.message}`);
       }
 
-      console.log('✅ [SEND MESSAGE] RLS access verified, proceeding with message insert...');
-
-      const { data, error } = await supabase
-        .from('conversation_messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: userId,
-          content: content.trim(),
-          message_type: type
-        })
-        .select(`
-          *,
-          sender:profiles!sender_id (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
-        .single();
-
-      if (error) {
-        console.error('❌ [SEND MESSAGE] Database error:', error);
+      // Check if RPC returned an error in the result
+      if (rpcResult && typeof rpcResult === 'object' && 'success' in rpcResult) {
+        if (!rpcResult.success) {
+          console.error('❌ [SEND MESSAGE] RPC returned error:', rpcResult.error);
+          throw new Error(rpcResult.error || 'Failed to send message');
+        }
         
-        // Enhanced error messages for common issues
-        if (error.code === '23503') {
-          throw new Error('Invalid conversation or user reference');
-        } else if (error.code === '42501') {
-          throw new Error('Permission denied - you may not have access to this conversation');
-        } else {
-          throw new Error(`Failed to send message: ${error.message}`);
-        }
+        console.log('✅ [SEND MESSAGE] Message sent successfully via RPC:', rpcResult.message_id);
+        
+        // Transform RPC result to match expected format
+        const messageData = {
+          id: rpcResult.message_id,
+          conversation_id: rpcResult.conversation_id,
+          sender_id: rpcResult.sender_id,
+          content: rpcResult.content,
+          message_type: rpcResult.message_type,
+          created_at: rpcResult.created_at,
+          updated_at: rpcResult.created_at,
+          edited: false,
+          edited_at: null
+        };
+        
+        return messageData;
       }
 
-      console.log('✅ [SEND MESSAGE] Message sent successfully:', data?.id);
-      return data;
+      console.log('✅ [SEND MESSAGE] Message sent successfully via RPC');
+      return rpcResult;
     },
     onSuccess: (data) => {
       console.log('✅ [CONVERSATIONS] Message sent successfully:', data);
@@ -633,40 +684,99 @@ export const useOptimizedConversations = (userId?: string) => {
 };
 
 /**
- * Hook for fetching messages in a specific conversation with real-time updates
- * Phase 4: Ensure message fetching works with proper authentication
+ * Hook for fetching messages in a specific conversation with auth-aware real-time updates
+ * Enhanced with session monitoring and authentication validation
  */
 export const useConversationMessages = (conversationId?: string) => {
   const queryClient = useQueryClient();
 
-  // Real-time subscription for messages in this conversation
+  // Auth-aware real-time subscription for messages in this conversation
   useEffect(() => {
     if (!conversationId) return;
 
-    console.log('Setting up message subscription for conversation:', conversationId);
-    
-    const channel = supabase
-      .channel(`conversation-${conversationId}-messages`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversation_messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => {
-          console.log('Message update received:', payload);
-          queryClient.invalidateQueries({ 
-            queryKey: ['conversation-messages', conversationId] 
-          });
+    let currentChannel: any;
+    let authListener: any;
+
+    const setupAuthAwareMessageSubscription = async () => {
+      try {
+        // Verify authentication before setting up subscription
+        const authResult = await ensureAuthenticatedOperation(async () => {
+          await waitForStableSession();
+          return { success: true };
+        });
+
+        if (!authResult.success) {
+          console.log('🔐 [MESSAGE_SUB] Auth check failed, skipping message subscription setup');
+          return;
         }
-      )
-      .subscribe();
+
+        console.log('🔐 [MESSAGE_SUB] Setting up auth-aware message subscription for conversation:', conversationId);
+        
+        currentChannel = supabase
+          .channel(`auth-aware-messages-${conversationId}-${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'conversation_messages',
+              filter: `conversation_id=eq.${conversationId}`
+            },
+            async (payload) => {
+              console.log('📨 [MESSAGE_SUB] Auth-aware message update received:', payload);
+              
+              // Verify auth before processing message update
+              try {
+                await ensureAuthenticatedOperation(async () => ({ success: true }));
+                
+                queryClient.invalidateQueries({ 
+                  queryKey: ['conversation-messages', conversationId] 
+                });
+              } catch (authError) {
+                console.warn('🔐 [MESSAGE_SUB] Auth failed during message update, ignoring:', authError);
+              }
+            }
+          )
+          .subscribe((status) => {
+            console.log('🔗 [MESSAGE_SUB] Message channel status:', status);
+          });
+
+        // Set up auth state listener for message subscription
+        authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('🔐 [MESSAGE_SUB] Auth state changed for messages:', event, !!session);
+          
+          if (event === 'SIGNED_OUT' || !session) {
+            console.log('🔐 [MESSAGE_SUB] User signed out, cleaning up message subscription');
+            if (currentChannel) {
+              await supabase.removeChannel(currentChannel);
+              currentChannel = null;
+            }
+            // Clear message cache
+            queryClient.removeQueries({ queryKey: ['conversation-messages', conversationId] });
+          } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            console.log('🔐 [MESSAGE_SUB] User signed in/token refreshed, refreshing messages');
+            // Refresh message queries with new session
+            queryClient.invalidateQueries({ queryKey: ['conversation-messages', conversationId] });
+          }
+        });
+
+      } catch (error) {
+        console.error('❌ [MESSAGE_SUB] Failed to setup auth-aware message subscription:', error);
+      }
+    };
+
+    const cleanup = setupAuthAwareMessageSubscription();
 
     return () => {
-      console.log('Cleaning up message subscription for conversation:', conversationId);
-      supabase.removeChannel(channel);
+      cleanup.then(() => {
+        if (currentChannel) {
+          console.log('🧹 [MESSAGE_SUB] Cleaning up message subscription for conversation:', conversationId);
+          supabase.removeChannel(currentChannel);
+        }
+        if (authListener) {
+          authListener.data?.subscription?.unsubscribe();
+        }
+      });
     };
   }, [conversationId, queryClient]);
 
