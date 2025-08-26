@@ -2,9 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessagingInterface } from '../components/chat/MessagingInterface';
 import { MessagingErrorBoundary } from '../components/chat/MessagingErrorBoundary';
-import { Header } from '../components/Header';
 import { Navigation } from '../components/Navigation';
-import { AuthDebugger } from '../components/debug/AuthDebugger';
 
 const Messages = () => {
   const location = useLocation();
@@ -24,14 +22,7 @@ const Messages = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header 
-        searchQuery=""
-        onSearchChange={() => {}}
-        onFiltersChange={() => {}}
-      />
-      
-      {/* Temporary debugging component */}
-      <AuthDebugger />
+      {/* Header removed for Messages page */}
       
       <div className="flex-1 flex flex-col pb-16">
         <MessagingErrorBoundary>
