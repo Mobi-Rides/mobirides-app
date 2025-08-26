@@ -41,6 +41,13 @@ export function ConversationList({
   const filteredConversations = conversations;
 
   const getConversationTitle = (conversation: Conversation) => {
+    // For direct conversations, always show the counterparty name, ignore stored title
+    if (conversation.type === 'direct') {
+      const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
+      return otherParticipant?.name || 'Unknown User';
+    }
+    
+    // For group conversations, use stored title or generate from participants
     if (conversation.title) return conversation.title;
     
     const otherParticipants = (conversation.participants || []).filter(p => p.id !== currentUser.id);
