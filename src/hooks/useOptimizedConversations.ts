@@ -3,7 +3,7 @@ import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
-import { ensureAuthenticatedOperation, waitForStableSession } from "@/utils/authUtils";
+
 
 interface DatabaseConversation {
   id: string;
@@ -47,12 +47,9 @@ export const useOptimizedConversations = (userId?: string) => {
     const setupAuthAwareSubscription = async () => {
       try {
         // Enhanced auth check with session stability
-        const authResult = await ensureAuthenticatedOperation(async () => {
-          await waitForStableSession();
-          return { success: true };
-        });
-
-        if (!authResult.success || !userId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user || !userId) {
           console.log('🔐 [SUBSCRIPTION] Auth check failed or no userId, skipping subscription setup');
           return;
         }
@@ -89,7 +86,8 @@ export const useOptimizedConversations = (userId?: string) => {
               
               // Verify auth before processing update
               try {
-                await ensureAuthenticatedOperation(async () => ({ success: true }));
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) throw new Error('Not authenticated');
                 
                 // Batch invalidation to prevent excessive queries
                 setTimeout(() => {
@@ -113,7 +111,8 @@ export const useOptimizedConversations = (userId?: string) => {
               
               // Verify auth before processing update
               try {
-                await ensureAuthenticatedOperation(async () => ({ success: true }));
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) throw new Error('Not authenticated');
                 queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
               } catch (authError) {
                 console.warn('🔐 [SUBSCRIPTION] Auth failed during participation update, ignoring:', authError);
@@ -509,7 +508,10 @@ export const useOptimizedConversations = (userId?: string) => {
       if (userId) {
         user = { id: userId };
       } else {
-        const session = await waitForStableSession();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          throw new Error('Authentication required');
+        }
         user = session.user;
       }
 
@@ -633,7 +635,7 @@ export const useOptimizedConversations = (userId?: string) => {
       if (rpcResult && typeof rpcResult === 'object' && 'success' in rpcResult) {
         if (!rpcResult.success) {
           console.error('❌ [SEND MESSAGE] RPC returned error:', rpcResult.error);
-          throw new Error(rpcResult.error || 'Failed to send message');
+          throw new Error(String(rpcResult.error) || 'Failed to send message');
         }
         
         console.log('✅ [SEND MESSAGE] Message sent successfully via RPC:', rpcResult.message_id);
@@ -700,12 +702,9 @@ export const useConversationMessages = (conversationId?: string) => {
     const setupAuthAwareMessageSubscription = async () => {
       try {
         // Verify authentication before setting up subscription
-        const authResult = await ensureAuthenticatedOperation(async () => {
-          await waitForStableSession();
-          return { success: true };
-        });
-
-        if (!authResult.success) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
           console.log('🔐 [MESSAGE_SUB] Auth check failed, skipping message subscription setup');
           return;
         }
@@ -727,7 +726,8 @@ export const useConversationMessages = (conversationId?: string) => {
               
               // Verify auth before processing message update
               try {
-                await ensureAuthenticatedOperation(async () => ({ success: true }));
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) throw new Error('Not authenticated');
                 
                 queryClient.invalidateQueries({ 
                   queryKey: ['conversation-messages', conversationId] 
