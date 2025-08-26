@@ -180,8 +180,8 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             return updated;
           });
           handleCreateConversation({ 
-            participantIds: [recipientId], 
-            title: recipientName 
+            participantIds: [recipientId]
+            // Don't set title for direct conversations - let UI determine display name
           });
         } else {
           console.warn("MessagingInterface: Max creation attempts reached for recipient:", recipientId);
@@ -229,8 +229,8 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   const handleStartConversation = async (participant: User) => {
     try {
       handleCreateConversation({ 
-        participantIds: [participant.id], 
-        title: participant.name 
+        participantIds: [participant.id]
+        // Don't set title for direct conversations - let UI determine display name
       });
       setIsNewConversationModalOpen(false);
     } catch (error) {
