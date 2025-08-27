@@ -48,12 +48,23 @@ const useNonAdminUsers = () => {
   return useQuery({
     queryKey: ["non-admin-users"],
     queryFn: async (): Promise<Profile[]> => {
-      // Get all users who are NOT in the admins table
-      const { data, error } = await supabase
+      // First get existing admin IDs to exclude
+      const { data: existingAdmins } = await supabase
+        .from("admins")
+        .select("id");
+      
+      const adminIds = existingAdmins?.map(admin => admin.id) || [];
+      
+      // Get profiles that are not already admins
+      let query = supabase
         .from("profiles")
-        .select("id, full_name, role")
-        .not("id", "in", `(SELECT id FROM admins)`)
-        .order("full_name", { ascending: true });
+        .select("id, full_name, role");
+        
+      if (adminIds.length > 0) {
+        query = query.not("id", "in", `(${adminIds.join(",")})`);
+      }
+
+      const { data, error } = await query.order("full_name", { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -129,8 +140,8 @@ export const AdminManagementTable = () => {
     const selectedUser = nonAdminUsers?.find(user => user.id === selectedUserId);
     if (!selectedUser) return;
 
-    // For email, we'll use a placeholder since we don't have it in profiles
-    const userEmail = `${selectedUser.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+    // Use MobiRides placeholder email for all new admins
+    const userEmail = "admin@mobirides.com";
     
     addAdminMutation.mutate({
       userId: selectedUserId,
