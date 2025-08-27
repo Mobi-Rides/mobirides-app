@@ -41,6 +41,7 @@ const CarListing = () => {
         let query = supabase
           .from("cars")
           .select("*", { count: "exact" })
+          .eq("is_available", true)
           .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
         // Apply filters
