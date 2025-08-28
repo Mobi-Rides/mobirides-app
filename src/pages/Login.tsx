@@ -45,12 +45,11 @@ const Login = () => {
     return number.replace(/[^\d+]/g, "");
   };
 
-  // In the checkUserProfile function, replace the existing query with:
   const checkUserProfile = async (userId: string) => {
     try {
       console.log("Checking profile for user:", userId);
       
-      // First, check if the user has a profile
+      // Check if the user has a complete profile (database trigger handles creation)
       const { data, error: profileError } = await supabase
         .from("profiles")
         .select("full_name, phone_number")
@@ -60,40 +59,28 @@ const Login = () => {
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         
-        // If profile doesn't exist, create it
+        // If profile doesn't exist, the database trigger should handle creation
+        // Just prompt for missing information
         if (profileError.code === 'PGRST116') { // Not found
-          console.log("Profile not found, creating new profile...");
-          const { error: createError } = await supabase
-            .from("profiles")
-            .insert([
-              {
-                id: userId,
-                full_name: null,
-                phone_number: null,
-                role: "renter",
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              },
-            ]);
-  
-          if (createError) {
-            console.error("Error creating profile:", createError);
-            // Continue anyway, profile will be created later
-            navigate("/");
-            return;
-          }
+          console.log("Profile not found, prompting for profile completion...");
+          setShowProfilePrompt(true);
+          return;
         }
         
-        setShowProfilePrompt(true);
+        // For other errors, continue to home and let user handle it there
+        navigate("/");
         return;
       }
   
       const profile = data as ExtendedProfile | null;
       console.log("Profile data:", profile);
   
+      // Check if profile is complete
       if (!profile?.full_name || !profile?.phone_number) {
+        console.log("Profile incomplete, prompting for completion");
         setShowProfilePrompt(true);
       } else {
+        console.log("Profile complete, navigating to home");
         navigate("/");
       }
     } catch (error) {
