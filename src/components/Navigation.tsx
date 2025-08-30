@@ -20,18 +20,33 @@ export const Navigation = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const queryClient = useQueryClient();
   
-  // Fetch unread messages count
+  // Fetch unread messages count from conversation system
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unreadMessagesCount'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
 
+      // Get user's conversation IDs
+      const { data: userParticipations, error: participationError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', user.id);
+
+      if (participationError || !userParticipations?.length) {
+        console.error("Error fetching user participations:", participationError);
+        return 0;
+      }
+
+      const conversationIds = userParticipations.map(p => p.conversation_id);
+
+      // Count unread messages in user's conversations
       const { count, error } = await supabase
-        .from('messages')
+        .from('conversation_messages')
         .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .eq('status', 'sent');
+        .in('conversation_id', conversationIds)
+        .neq('sender_id', user.id) // Exclude messages sent by the user
+        .or('delivery_status.eq.sent,delivery_status.eq.delivered'); // Only count unread messages
 
       if (error) {
         console.error("Error fetching unread messages count:", error);
@@ -66,14 +81,26 @@ export const Navigation = () => {
     refetchInterval: 5000, // Refetch every 5 seconds for faster notification updates
   });
 
-  // Listen for wallet transaction changes to refresh notifications
+  // Listen for real-time changes to refresh counts
   useEffect(() => {
     const setupRealtimeSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const channel = supabase
-        .channel('wallet-notifications')
+        .channel('navigation-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'conversation_messages'
+          },
+          () => {
+            // Invalidate message count when conversation messages change
+            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
+          }
+        )
         .on(
           'postgres_changes',
           {

@@ -138,6 +138,12 @@ export const HostDashboard = () => {
     try {
       console.log("Starting handover for booking:", bookingId);
       
+      // Find the prompt for this booking to get the handover type
+      const prompt = handoverPrompts.find(p => p.bookingId === bookingId);
+      if (!prompt) {
+        throw new Error('Handover prompt not found for this booking');
+      }
+      
       // Get booking details to find host and renter IDs
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
@@ -156,12 +162,12 @@ export const HostDashboard = () => {
       const renterId = booking.renter_id;
 
       // Create handover session
-      const session = await createHandoverSession(bookingId, hostId, renterId, 'pickup');
+      const session = await createHandoverSession(bookingId, hostId, renterId);
       
       if (session) {
-        toast.success("Handover process started");
-        // Navigate to map with handover mode
-        navigate(`/map?bookingId=${bookingId}&mode=handover&role=host`);
+        toast.success(`${prompt.handoverType === 'pickup' ? 'Pickup' : 'Return'} process started`);
+        // Navigate to map with handover mode and the correct handover type
+        navigate(`/map?bookingId=${bookingId}&mode=handover&role=host&handoverType=${prompt.handoverType}`);
         refetchPrompts(); // Refresh prompts
       }
     } catch (error) {

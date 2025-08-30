@@ -47,11 +47,8 @@ export class HandoverPromptService {
     
     try {
       if (!userId || !userRole) {
-        logger.debug("detectHandoverPrompts: No userId or userRole provided");
         return [];
       }
-      
-      logger.debug(`Detecting handover prompts for ${userRole}:`, userId);
     
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -107,7 +104,6 @@ export class HandoverPromptService {
       }
 
       if (!bookings?.length) {
-        logger.debug('No bookings found for handover prompts');
         return [];
       }
 
@@ -189,7 +185,6 @@ export class HandoverPromptService {
         }
       }
 
-      logger.debug(`Found ${prompts.length} handover prompts for ${userRole}`);
       return prompts;
     } catch (error) {
       logger.error('Error in detectHandoverPrompts:', error);

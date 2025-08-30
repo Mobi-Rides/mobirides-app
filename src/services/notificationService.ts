@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { reverseGeocode } from "@/utils/mapbox";
 
 // Legacy navigation types for backward compatibility
 export interface NavigationNotificationData {
@@ -216,7 +217,10 @@ export const createNavigationNotification = async (
 
     let content = contentMap[type]; // Changed from const to let
     if (data.location) {
-      content += ` at ${data.location.address || `${data.location.latitude}, ${data.location.longitude}`}`;
+      // Try to get a human-readable address first, fallback to coordinates if needed
+      const locationText = data.location.address || 
+        await reverseGeocode(data.location.latitude, data.location.longitude);
+      content += ` at ${locationText}`;
     }
 
     // Use the existing create_booking_notification function

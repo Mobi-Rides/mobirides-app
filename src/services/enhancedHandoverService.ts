@@ -80,7 +80,6 @@ export const initializeHandoverSteps = async (handoverSessionId: string) => {
       .eq("handover_session_id", handoverSessionId);
 
     if (existingSteps && existingSteps.length > 0) {
-      console.log("Handover steps already initialized");
       return true;
     }
 
@@ -96,7 +95,6 @@ export const initializeHandoverSteps = async (handoverSessionId: string) => {
       .insert(stepsToInsert);
 
     if (error) throw error;
-    console.log("Handover steps initialized successfully");
     return true;
   } catch (error) {
     console.error("Error initializing handover steps:", error);
@@ -130,36 +128,50 @@ export const completeHandoverStep = async (
 ) => {
   try {
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user?.id) throw new Error("User not authenticated");
+    if (!userData?.user?.id) {
+      throw new Error("User not authenticated");
+    }
 
     // Get current step info to validate order
-    const { data: stepInfo } = await supabase
+    const { data: stepInfo, error: stepError } = await supabase
       .from("handover_step_completion")
-      .select("step_order")
+      .select("step_order, is_completed")
       .eq("handover_session_id", handoverSessionId)
       .eq("step_name", stepName)
       .single();
 
+    if (stepError) {
+      throw new Error(`Step lookup failed: ${stepError.message}`);
+    }
+
     if (!stepInfo) {
       throw new Error("Step not found");
+    }
+    
+    if (stepInfo.is_completed) {
+      toast.info(`${stepName.replace('_', ' ')} is already completed`);
+      return true;
     }
 
     // Validate step completion based on step type
     const validationResult = await validateStepCompletion(handoverSessionId, stepName, completionData);
+    
     if (!validationResult.isValid) {
       toast.error(validationResult.message);
       return false;
     }
 
     // The database trigger will enforce dependency validation
+    const updateData = {
+      is_completed: true,
+      completed_by: userData.user.id,
+      completion_data: completionData as any,
+      completed_at: new Date().toISOString()
+    };
+    
     const { error } = await supabase
       .from("handover_step_completion")
-      .update({
-        is_completed: true,
-        completed_by: userData.user.id,
-        completion_data: completionData as any,
-        completed_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq("handover_session_id", handoverSessionId)
       .eq("step_name", stepName);
 
@@ -168,26 +180,26 @@ export const completeHandoverStep = async (
       if (error.message.includes("Previous steps must be completed")) {
         toast.error("Please complete previous steps first");
       } else {
+        console.error("Database update error:", error);
         throw error;
       }
       return false;
     }
     
-    console.log(`Step ${stepName} completed successfully`);
     toast.success(`${stepName.replace('_', ' ')} completed`);
     return true;
   } catch (error) {
-    console.error("Error completing handover step:", error);
+    console.error(`Error completing handover step ${stepName}:`, error);
     if (error.message.includes("Previous steps must be completed")) {
       toast.error("Please complete previous steps in order");
     } else {
-      toast.error("Failed to complete handover step");
+      toast.error(`Failed to complete handover step: ${error.message}`);
     }
     return false;
   }
 };
 
-// Validate step completion
+// Validate step completion based on step type and requirements
 const validateStepCompletion = async (
   handoverSessionId: string,
   stepName: string,
@@ -198,10 +210,14 @@ const validateStepCompletion = async (
       if (!completionData?.fuel_level || !completionData?.mileage) {
         return { isValid: false, message: "Fuel level and mileage are required" };
       }
-      if (Number(completionData.fuel_level) < 0 || Number(completionData.fuel_level) > 100) {
+      // Validate fuel level is between 0-100
+      const fuelLevel = Number(completionData.fuel_level);
+      if (fuelLevel < 0 || fuelLevel > 100) {
         return { isValid: false, message: "Fuel level must be between 0 and 100%" };
       }
-      if (Number(completionData.mileage) < 0) {
+      // Validate mileage is positive
+      const mileage = Number(completionData.mileage);
+      if (mileage < 0) {
         return { isValid: false, message: "Mileage must be a positive number" };
       }
       break;
@@ -212,6 +228,7 @@ const validateStepCompletion = async (
       }
       break;
     
+    // Add more validation cases as needed
     default:
       // No specific validation needed for other steps
       break;
@@ -247,7 +264,6 @@ export const uploadHandoverPhoto = async (
         .from('handover-photos')
         .getPublicUrl(fileName);
 
-      console.log(`Photo uploaded successfully: ${fileName}`);
       return publicUrl;
     } catch (error) {
       attempt++;
@@ -297,7 +313,6 @@ export const createVehicleConditionReport = async (report: VehicleConditionRepor
       .single();
 
     if (error) throw error;
-    console.log("Vehicle condition report created successfully");
     return data;
   } catch (error) {
     console.error("Error creating vehicle condition report:", error);

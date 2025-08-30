@@ -201,11 +201,11 @@ export function ChatWindow({
             <Search className="w-4 h-4" />
           </Button>
           
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => alert('Initiating audio call...')}>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Audio call feature coming soon!')}>
             <Phone className="w-4 h-4" />
           </Button>
           
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => alert('Initiating video call...')}>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Video call feature coming soon!')}>
             <Video className="w-4 h-4" />
           </Button>
           

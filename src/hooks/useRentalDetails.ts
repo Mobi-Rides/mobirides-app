@@ -162,6 +162,11 @@ export const useRentalDetails = () => {
   const canHandover = canInitiatePickup || canInitiateReturn;
   const handoverType: HandoverType = canInitiatePickup ? HandoverType.PICKUP : HandoverType.RETURN;
 
+  // Essential logging for actual errors only
+  if (booking && !currentUser) {
+    console.error('User authentication required for handover operations');
+  }
+
   // Calculate duration
   const rentalDurationDays = booking
     ? differenceInDays(new Date(booking.end_date), new Date(booking.start_date)) + 1

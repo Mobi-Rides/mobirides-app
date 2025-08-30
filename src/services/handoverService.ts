@@ -30,51 +30,91 @@ export interface HandoverStatus {
 // Create a new handover session when a booking is confirmed
 export const createHandoverSession = async (
   bookingId: string,
-  hostId: string,
-  renterId: string,
-  handoverType?: string,
-) => {
+  hostId?: string,
+  renterId?: string
+): Promise<HandoverStatus> => {
   try {
     // Get current user
-    const { data: userData } = await supabase.auth.getUser();
-    const currentUserId = userData?.user?.id;
-
-    if (!currentUserId) {
-      throw new Error("User not authenticated");
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('Authentication error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      console.error('No user found in authentication');
+      throw new Error('User not authenticated - no user object returned');
     }
 
-    // Check if user is either host or renter
-    if (currentUserId !== hostId && currentUserId !== renterId) {
-      throw new Error("Only the host or renter can create a handover session");
+    // Validate required parameters
+    if (!bookingId) {
+      throw new Error('Booking ID is required');
+    }
+    
+    if (!hostId) {
+      throw new Error('Host ID is required');
+    }
+    
+    if (!renterId) {
+      throw new Error('Renter ID is required');
     }
 
+    // Check if handover session already exists
+    const { data: existingSession, error: fetchError } = await supabase
+      .from('handover_sessions')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Error checking existing handover session:', fetchError);
+      throw new Error(`Failed to check existing session: ${fetchError.message}`);
+    }
+
+    if (existingSession) {
+      return existingSession;
+    }
+
+    // Create new handover session
+    const sessionData = {
+      booking_id: bookingId,
+      host_id: hostId,
+      renter_id: renterId,
+      host_ready: false,
+      renter_ready: false,
+      handover_completed: false,
+    };
+    
     const { data, error } = await supabase
       .from("handover_sessions")
-      .insert({
-        booking_id: bookingId,
-        host_id: hostId,
-        renter_id: renterId,
-        host_ready: false,
-        renter_ready: false,
-        handover_completed: false,
-      })
+      .insert(sessionData)
       .select()
       .single();
 
     if (error) {
-      if (error.code === "42501") {
+      console.error('Error creating handover session:', error);
+      
+      // Check for specific error types
+      if (error.code === '23503') {
+        throw new Error('Invalid booking, host, or renter ID - record not found');
+      } else if (error.code === "42501") {
         console.error("RLS policy violation:", error);
         toast.error(
           "Permission denied: You don't have access to create a handover session",
         );
+        throw new Error('Permission denied - check RLS policies for handover_sessions');
       } else {
-        throw error;
+        throw new Error(`Failed to create handover session: ${error.message}`);
       }
-      return null;
     }
 
+    if (!data) {
+      throw new Error('Failed to create handover session - no data returned');
+    }
+    
     // If the current user is the host, send a notification to the renter
-    if (currentUserId === hostId) {
+    if (user.id === hostId) {
       try {
         // Get host name for the notification
         const { data: hostData } = await supabase
@@ -116,8 +156,6 @@ export const createHandoverSession = async (
               notificationError.message ||
                 JSON.stringify(notificationError, null, 2),
             );
-          } else {
-            console.log("Location request notification sent to renter");
           }
         }
       } catch (notificationError) {
@@ -133,16 +171,8 @@ export const createHandoverSession = async (
 
     return data;
   } catch (error) {
-    console.error(
-      "Error creating handover session:",
-      error instanceof Error ? error.message : JSON.stringify(error, null, 2),
-    );
-    toast.error(
-      `Failed to create handover session: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
-    );
-    return null;
+    console.error('Handover session creation failed:', error);
+    throw error;
   }
 };
 

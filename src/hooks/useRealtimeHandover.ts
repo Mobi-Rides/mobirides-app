@@ -61,7 +61,7 @@ export const useRealtimeHandover = (handoverSessionId: string | null): RealtimeH
   useEffect(() => {
     if (!handoverSessionId) return;
 
-    console.log("Setting up real-time subscription for handover:", handoverSessionId);
+
 
     const channel = supabase
       .channel(`handover_progress_${handoverSessionId}`)
@@ -74,8 +74,6 @@ export const useRealtimeHandover = (handoverSessionId: string | null): RealtimeH
           filter: `handover_session_id=eq.${handoverSessionId}`
         },
         async (payload) => {
-          console.log("Handover step completion changed:", payload);
-          
           // Refetch progress when steps are updated
           await fetchProgress();
           
@@ -95,25 +93,19 @@ export const useRealtimeHandover = (handoverSessionId: string | null): RealtimeH
           filter: `id=eq.${handoverSessionId}`
         },
         (payload) => {
-          console.log("Handover session changed:", payload);
-          
           if (payload.eventType === 'UPDATE' && payload.new?.handover_completed) {
             toast.success("Handover process completed successfully!");
           }
         }
       )
       .subscribe((status) => {
-        console.log("Real-time subscription status:", status);
-        if (status === 'SUBSCRIBED') {
-          console.log("Successfully subscribed to handover updates");
-        } else if (status === 'CHANNEL_ERROR') {
+        if (status === 'CHANNEL_ERROR') {
           console.error("Failed to subscribe to handover updates");
           setError("Real-time updates unavailable");
         }
       });
 
     return () => {
-      console.log("Cleaning up handover real-time subscription");
       supabase.removeChannel(channel);
     };
   }, [handoverSessionId]);

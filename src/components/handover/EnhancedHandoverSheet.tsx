@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { X, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,8 @@ export const EnhancedHandoverSheet = ({
   bookingId
 }: EnhancedHandoverSheetProps) => {
   const navigate = useNavigate();
-  const { isLoading, isHandoverSessionLoading, isHost, bookingDetails, handoverId, currentUserId } = useHandover();
+  const [searchParams] = useSearchParams();
+  const { isLoading, isHandoverSessionLoading, isHost, bookingDetails, handoverId, currentUserId, handoverStatus } = useHandover();
   const { handoverProgress } = useRealtimeHandover(handoverId);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<HandoverStepCompletion[]>([]);
@@ -114,25 +115,63 @@ export const EnhancedHandoverSheet = ({
     }
   }, [handoverId, isOpen, isHandoverSessionLoading, initializeHandover]);
 
-  const handleStepComplete = async (stepName: string, data?: Record<string, unknown>) => {
+  useEffect(() => {
+    if (isOpen && handoverStatus && completedSteps) {
+      console.log("🔍 DEBUG: Checking handover completion status...");
+      console.log("🔍 DEBUG: Handover status:", handoverStatus);
+      console.log("🔍 DEBUG: Completed steps:", completedSteps);
+      console.log("🔍 DEBUG: isReturnHandover():", isReturnHandover());
+      
+      // Check if handover is already completed
+      // BUT only show success popup if this is NOT a new return handover flow
+      const urlHandoverType = searchParams.get('handoverType');
+      if (handoverStatus.handover_completed && !urlHandoverType) {
+        console.log("✅ Handover already completed and no new handover type specified, showing success popup");
+        setIsHandoverCompleted(true);
+        return;
+      }
+      
+      // If this is a new return handover (handoverType=return in URL), reset the completion state
+      if (urlHandoverType === 'return' && handoverStatus.handover_completed) {
+        console.log("🔄 Starting new return handover flow, resetting completion state");
+        setIsHandoverCompleted(false);
+        // Reset to first step for return flow
+        setCurrentStep(0);
+      }
+    }
+  }, [isOpen, handoverStatus, completedSteps, searchParams]);
+
+  const handleStepComplete = async (stepName: string, completionData?: Record<string, unknown>) => {
+    console.log(`🚀 handleStepComplete called for step: ${stepName}`);
+    console.log(`📋 Handover session ID: ${handoverId}`);
+    console.log(`📊 Completion data:`, completionData);
+    
     if (!handoverId) {
+      console.error(`❌ No handover session ID available`);
       toast.error("Handover session not found");
       return;
     }
 
-    console.log(`Attempting to complete step: ${stepName}`);
-    const success = await completeHandoverStep(handoverId, stepName, data);
+    console.log(`🔄 Attempting to complete step: ${stepName}`, { completionData });
+    const success = await completeHandoverStep(handoverId, stepName, completionData);
+    
+    console.log(`📋 Step completion result for ${stepName}:`, success);
+    
     if (success) {
+      console.log(`✅ Step ${stepName} completed successfully, refreshing steps...`);
       // Refresh steps to get updated state
       const updatedSteps = await getHandoverSteps(handoverId);
       setCompletedSteps(updatedSteps as any);
       
       // Move to next step
       const nextIncomplete = updatedSteps.findIndex(step => !step.is_completed);
+      console.log(`🔍 Next incomplete step index:`, nextIncomplete);
+      
       if (nextIncomplete >= 0) {
+        console.log(`➡️ Moving to next step: ${nextIncomplete}`);
         setCurrentStep(nextIncomplete);
-        console.log(`Moving to next step: ${nextIncomplete}`);
       } else {
+        console.log(`🎉 All steps completed, initiating handover completion`);
         // All steps completed - the database trigger will handle session completion
         console.log("All steps completed, checking if handover should be finalized");
         
@@ -142,6 +181,8 @@ export const EnhancedHandoverSheet = ({
           await handleHandoverComplete();
         }
       }
+    } else {
+      console.error(`❌ Step ${stepName} completion failed`);
     }
   };
 
@@ -187,8 +228,88 @@ export const EnhancedHandoverSheet = ({
     }
   };
 
+  // Helper function to determine if this is a return handover
+  const isReturnHandover = () => {
+    // First check if handoverType is explicitly provided in URL parameters
+    const urlHandoverType = searchParams.get('handoverType');
+    console.log('🔍 DEBUG: URL handoverType parameter:', urlHandoverType);
+    console.log('🔍 DEBUG: All URL search params:', Object.fromEntries(searchParams.entries()));
+    
+    if (urlHandoverType) {
+      console.log('✅ Using handoverType from URL:', urlHandoverType);
+      const isReturn = urlHandoverType === 'return';
+      console.log('✅ isReturnHandover result from URL:', isReturn);
+      return isReturn;
+    }
+    
+    console.log('⚠️ No handoverType in URL, falling back to automatic detection');
+    // Fallback to automatic detection if no URL parameter
+    if (!bookingDetails || !handoverStatus) {
+      console.log('❌ Missing bookingDetails or handoverStatus for automatic detection');
+      return false;
+    }
+    
+    const booking = bookingDetails as unknown as HandoverBookingDetails;
+    const bookingStartDate = new Date(booking.start_date);
+    const bookingEndDate = new Date(booking.end_date);
+    const now = new Date();
+    
+    console.log('📅 Booking dates - Start:', bookingStartDate.toISOString(), 'End:', bookingEndDate.toISOString());
+    console.log('📅 Current time:', now.toISOString());
+    console.log('📊 Handover status:', handoverStatus);
+    
+    // If we're before the booking start date, this is definitely a pickup
+    if (now < bookingStartDate) {
+      console.log('✅ Before booking start date - this is a pickup');
+      return false;
+    }
+    
+    // If we're past the booking end date, this is definitely a return
+    if (now >= bookingEndDate) {
+      console.log('✅ Past booking end date - this is a return');
+      return true;
+    }
+    
+    // Key fix: Check if this handover session was previously completed
+    // If handover_completed is true AND we're starting a new handover process,
+    // this indicates a return handover (second handover for the same booking)
+    if (handoverStatus.handover_completed) {
+      console.log('✅ Previous handover completed - this is a return');
+      return true;
+    }
+    
+    // Additional check: If we have a handover session creation time,
+    // compare it with booking start to determine if this is the first or second handover
+    if (handoverStatus.created_at) {
+      const handoverCreatedAt = new Date(handoverStatus.created_at);
+      const timeSinceBookingStart = handoverCreatedAt.getTime() - bookingStartDate.getTime();
+      const hoursAfterStart = timeSinceBookingStart / (1000 * 60 * 60);
+      
+      console.log('⏰ Handover created:', handoverCreatedAt.toISOString());
+      console.log('⏰ Hours after booking start:', hoursAfterStart);
+      
+      // If handover was created significantly after booking start (e.g., more than 1 hour),
+      // and we're not at the very beginning of the rental, this might be a return
+      if (hoursAfterStart > 1 && now.getTime() - bookingStartDate.getTime() > (1000 * 60 * 60 * 2)) {
+        console.log('✅ Handover created well after booking start - likely a return');
+        return true;
+      }
+    }
+    
+    // Default: if we're between start and end date with no previous completion,
+    // this is the initial pickup
+    console.log('✅ Default case - this is a pickup');
+    return false;
+  };
+
   const handleSuccessPopupClose = () => {
-    console.log("Success popup closing, isHost:", isHost);
+    console.log("🎉 Success popup closing - starting redirection logic");
+    console.log("👤 User role - isHost:", isHost);
+    console.log("📋 Booking ID:", bookingId);
+    
+    const isReturn = isReturnHandover();
+    console.log("🔄 Handover type determination - isReturnHandover():", isReturn);
+    
     setIsHandoverCompleted(false);
     
     // Clear URL parameters first
@@ -199,12 +320,22 @@ export const EnhancedHandoverSheet = ({
     
     onClose();
     
-    // Navigate to appropriate bookings page
+    // Check if this is a return handover and user is a renter
+    if (!isHost && isReturn) {
+      console.log("🔄 Return handover completed - redirecting renter to review page");
+      console.log("🚀 Navigating to:", `/rental-review/${bookingId}`);
+      navigate(`/rental-review/${bookingId}`);
+      return;
+    }
+    
+    // Navigate to appropriate bookings page for other cases
     if (isHost) {
-      console.log("Navigating to host-bookings");
+      console.log("🏠 Host user - navigating to host-bookings");
+      console.log("🚀 Navigating to: /host-bookings");
       navigate("/host-bookings");
     } else {
-      console.log("Navigating to renter-bookings");
+      console.log("🚗 Renter user - pickup completed, navigating to renter-bookings");
+      console.log("🚀 Navigating to: /renter-bookings");
       navigate("/renter-bookings");
     }
   };
