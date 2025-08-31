@@ -199,6 +199,56 @@ export class TwilioNotificationService {
 
     return results;
   }
+
+  /**
+   * Send early return notifications
+   */
+  async sendEarlyReturnNotification(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData,
+    actualReturnDate: string
+  ): Promise<{ whatsapp?: { success: boolean; messageId?: string; error?: string }; email?: { success: boolean; messageId?: string; error?: string } }> {
+    const results: { whatsapp?: { success: boolean; messageId?: string; error?: string }; email?: { success: boolean; messageId?: string; error?: string } } = {};
+
+    // WhatsApp notification
+    if (recipient.whatsappEnabled && recipient.phone) {
+      const whatsappResult = await this.sendWhatsApp(
+        recipient.phone,
+        'EARLY_RETURN_TEMPLATE',
+        {
+          '1': recipient.name,
+          '2': bookingData.bookingReference,
+          '3': `${bookingData.carBrand} ${bookingData.carModel}`,
+          '4': actualReturnDate,
+          '5': bookingData.hostName
+        }
+      );
+
+      results.whatsapp = whatsappResult;
+    }
+
+    // Email notification
+    if (recipient.emailEnabled && recipient.email) {
+      const emailResult = await this.sendEmail(
+        recipient.email,
+        'early-return-notification',
+        {
+          customerName: recipient.name,
+          bookingReference: bookingData.bookingReference,
+          carDetails: `${bookingData.carBrand} ${bookingData.carModel}`,
+          actualReturnDate: actualReturnDate,
+          originalEndDate: bookingData.pickupDate, // This should be end date in real implementation
+          hostName: bookingData.hostName,
+          totalAmount: bookingData.totalAmount
+        },
+        'Early Return Notification - Booking Completed'
+      );
+
+      results.email = emailResult;
+    }
+
+    return results;
+  }
 }
 
 // Legacy function for backward compatibility
@@ -261,4 +311,32 @@ export const triggerNavigationEvent = async (
     userId,
     location
   });
+};
+
+// Helper function to create early return notification
+export const createEarlyReturnNotification = async (
+  bookingId: string,
+  actualReturnDate: string,
+  originalEndDate: string
+) => {
+  try {
+    const content = `Booking returned early on ${actualReturnDate}. Originally scheduled until ${originalEndDate}.`;
+
+    // Use the existing create_booking_notification function
+    const { error } = await supabase.rpc('create_booking_notification', {
+      p_booking_id: bookingId,
+      p_notification_type: 'early_return_notification',
+      p_content: content
+    });
+
+    if (error) {
+      console.error('Failed to create early return notification:', error);
+      throw error;
+    }
+
+    console.log(`Early return notification created for booking: ${bookingId}`);
+  } catch (error) {
+    console.error('Error creating early return notification:', error);
+    throw error;
+  }
 };

@@ -181,6 +181,7 @@ export const useRentalDetails = () => {
       // Create or get existing handover session
       const session = await createHandoverSession(
         booking.id,
+        handoverType,
         booking.cars?.owner_id,
         booking.renter_id
       );

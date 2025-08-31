@@ -113,7 +113,101 @@ const ProgressStepper: React.FC<{
 
   return (
     <div className="w-full mb-8">
-      <div className="flex items-center justify-between mb-4">
+      {/* Mobile: Horizontal scrolling container */}
+      <div className="sm:hidden">
+        <div className="flex items-center gap-6 overflow-x-auto pb-4 mb-4 scrollbar-hide">
+          <div className="flex items-center gap-6 min-w-max px-4">
+            {steps.map((step, index) => {
+              const config = STEP_CONFIG[step];
+              const Icon = config.icon;
+              const status = stepStatuses[step];
+              const isCurrent = step === currentStep;
+              const isCompleted = status === VerificationStatus.COMPLETED;
+              const canNavigate = canNavigateToStep(step);
+
+              // Color logic
+              let stepBg = "bg-gray-700";
+              let iconColor = "text-gray-300";
+              let ring = "";
+              let badgeBg = "bg-white";
+              let badgeText = "text-gray-700";
+              if (isCompleted) {
+                stepBg = "bg-green-500 hover:bg-green-600";
+                iconColor = "text-white";
+                badgeBg = "bg-white";
+                badgeText = "text-green-700";
+              } else if (isCurrent) {
+                stepBg = "bg-blue-600";
+                iconColor = "text-white";
+                ring = "ring-2 ring-blue-400 ring-offset-2";
+                badgeBg = "bg-white";
+                badgeText = "text-blue-700";
+              }
+
+              return (
+                <div key={step} className="flex items-center">
+                  <div className="flex flex-col items-center relative">
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className={`
+                          h-12 w-12 rounded-full mb-2
+                          ${stepBg} ${iconColor} ${ring}
+                          ${!canNavigate && !isCurrent && !isCompleted ? "opacity-50 cursor-not-allowed" : ""}
+                        `}
+                        onClick={() => canNavigate && onStepClick(step)}
+                        disabled={!canNavigate && !isCurrent && !isCompleted}
+                      >
+                        {isCompleted ? (
+                          <CheckCircle className="h-6 w-6 text-white" />
+                        ) : (
+                          <Icon className={`h-6 w-6 ${iconColor}`} />
+                        )}
+                      </Button>
+                      
+                      <Badge
+                        variant="secondary"
+                        className={`absolute -top-1 -right-1 h-5 w-5 p-0 text-xs ${badgeBg} ${badgeText} border border-gray-200`}
+                      >
+                        {index + 1}
+                      </Badge>
+                    </div>
+
+                    <div className="text-center max-w-[80px]">
+                      <p
+                        className={`text-xs font-medium ${isCurrent ? "text-blue-600" : isCompleted ? "text-green-600" : "text-gray-400"}`}
+                      >
+                        {config.title}
+                      </p>
+                    </div>
+                  </div>
+
+                  {index < steps.length - 1 && (
+                    <div
+                      className={`
+                      w-8 h-0.5 mx-2 mb-8
+                      ${isCompleted ? "bg-green-500" : isCurrent ? "bg-blue-600" : "bg-gray-700"}
+                    `}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {/* Scroll indicator for mobile */}
+        <div className="flex justify-center mb-2">
+          <div className="flex space-x-1">
+            {Array.from({ length: Math.ceil(steps.length / 3) }).map((_, i) => (
+              <div key={i} className="w-2 h-2 rounded-full bg-gray-300"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: Original justify-between layout */}
+      <div className="hidden sm:flex items-center justify-between mb-4">
         {steps.map((step, index) => {
           const config = STEP_CONFIG[step];
           const Icon = config.icon;
@@ -144,30 +238,32 @@ const ProgressStepper: React.FC<{
           return (
             <div key={step} className="contents">
               <div className="flex flex-col items-center">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className={`
-                    relative h-12 w-12 rounded-full mb-2
-                    ${stepBg} ${iconColor} ${ring}
-                    ${!canNavigate && !isCurrent && !isCompleted ? "opacity-50 cursor-not-allowed" : ""}
-                  `}
-                  onClick={() => canNavigate && onStepClick(step)}
-                  disabled={!canNavigate && !isCurrent && !isCompleted}
-                >
-                  {isCompleted ? (
-                    <CheckCircle className="h-6 w-6 text-white" />
-                  ) : (
-                    <Icon className={`h-6 w-6 ${iconColor}`} />
-                  )}
-
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={`
+                      h-12 w-12 rounded-full mb-2
+                      ${stepBg} ${iconColor} ${ring}
+                      ${!canNavigate && !isCurrent && !isCompleted ? "opacity-50 cursor-not-allowed" : ""}
+                    `}
+                    onClick={() => canNavigate && onStepClick(step)}
+                    disabled={!canNavigate && !isCurrent && !isCompleted}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle className="h-6 w-6 text-white" />
+                    ) : (
+                      <Icon className={`h-6 w-6 ${iconColor}`} />
+                    )}
+                  </Button>
+                  
                   <Badge
                     variant="secondary"
-                    className={`absolute -top-2 -right-2 h-5 w-5 p-0 text-xs ${badgeBg} ${badgeText}`}
+                    className={`absolute -top-1 -right-1 h-5 w-5 p-0 text-xs ${badgeBg} ${badgeText} border border-gray-200`}
                   >
                     {index + 1}
                   </Badge>
-                </Button>
+                </div>
 
                 <div className="text-center max-w-[80px]">
                   <p

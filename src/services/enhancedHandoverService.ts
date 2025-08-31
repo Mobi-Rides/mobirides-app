@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
+import { compressImage, isImageFile, formatFileSize } from "@/utils/imageCompression";
 
 // Enhanced handover step definitions
 export const HANDOVER_STEPS = [
@@ -165,7 +166,7 @@ export const completeHandoverStep = async (
     const updateData = {
       is_completed: true,
       completed_by: userData.user.id,
-      completion_data: completionData as any,
+      completion_data: completionData as Record<string, unknown>,
       completed_at: new Date().toISOString()
     };
     
@@ -237,12 +238,13 @@ const validateStepCompletion = async (
   return { isValid: true, message: "Validation passed" };
 };
 
-// Upload handover photo with retry mechanism
+// Upload handover photo with compression and retry mechanism
 export const uploadHandoverPhoto = async (
   file: File,
   handoverSessionId: string,
   photoType: string,
-  maxRetries: number = 3
+  maxRetries: number = 3,
+  onProgress?: (progress: number) => void
 ): Promise<string | null> => {
   let attempt = 0;
   
@@ -251,19 +253,58 @@ export const uploadHandoverPhoto = async (
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) throw new Error("User not authenticated");
 
-      const fileExt = file.name.split('.').pop();
+      onProgress?.(10); // Starting compression
+      
+      let fileToUpload = file;
+      
+      // Compress image if it's an image file and larger than 500KB
+      if (isImageFile(file) && file.size > 500 * 1024) {
+        const originalSize = formatFileSize(file.size);
+        
+        try {
+          fileToUpload = await compressImage(file, {
+            maxWidth: 1920,
+            maxHeight: 1080,
+            quality: 0.8,
+            maxSizeKB: 1024
+          });
+          
+          const compressedSize = formatFileSize(fileToUpload.size);
+          const compressionRatio = ((file.size - fileToUpload.size) / file.size * 100).toFixed(1);
+          
+          console.log(`Image compressed: ${originalSize} → ${compressedSize} (${compressionRatio}% reduction)`);
+          toast.success(`Image optimized: ${compressionRatio}% smaller`);
+        } catch (compressionError) {
+          console.warn("Image compression failed, uploading original:", compressionError);
+          toast.info("Uploading original image (compression failed)");
+          fileToUpload = file;
+        }
+      }
+      
+      onProgress?.(30); // Compression complete, starting upload
+
+      const fileExt = fileToUpload.name.split('.').pop();
       const fileName = `${userData.user.id}/${handoverSessionId}/${photoType}_${Date.now()}.${fileExt}`;
 
+      onProgress?.(50); // Upload starting
+      
       const { error: uploadError } = await supabase.storage
         .from('handover-photos')
-        .upload(fileName, file);
+        .upload(fileName, fileToUpload);
 
       if (uploadError) throw uploadError;
+      
+      onProgress?.(80); // Upload complete, getting URL
 
       const { data: { publicUrl } } = supabase.storage
         .from('handover-photos')
         .getPublicUrl(fileName);
 
+      onProgress?.(100); // Complete
+      
+      const finalSize = formatFileSize(fileToUpload.size);
+      toast.success(`Photo uploaded successfully (${finalSize})`);
+      
       return publicUrl;
     } catch (error) {
       attempt++;
@@ -271,8 +312,12 @@ export const uploadHandoverPhoto = async (
       
       if (attempt >= maxRetries) {
         toast.error("Failed to upload photo after multiple attempts");
+        onProgress?.(0); // Reset progress on failure
         return null;
       }
+      
+      toast.info(`Upload failed, retrying... (${attempt}/${maxRetries})`);
+      onProgress?.(0); // Reset progress for retry
       
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));

@@ -122,21 +122,27 @@ export const EnhancedHandoverSheet = ({
       console.log("🔍 DEBUG: Completed steps:", completedSteps);
       console.log("🔍 DEBUG: isReturnHandover():", isReturnHandover());
       
-      // Check if handover is already completed
-      // BUT only show success popup if this is NOT a new return handover flow
-      const urlHandoverType = searchParams.get('handoverType');
-      if (handoverStatus.handover_completed && !urlHandoverType) {
-        console.log("✅ Handover already completed and no new handover type specified, showing success popup");
+      // For the new handover type system, only show completion if:
+      // 1. The current session is completed AND
+      // 2. All steps for this specific session are completed
+      const allStepsCompleted = completedSteps.every(step => step.is_completed);
+      
+      if (handoverStatus.handover_completed && allStepsCompleted) {
+        console.log("✅ Current handover session completed with all steps done, showing success popup");
         setIsHandoverCompleted(true);
         return;
       }
       
-      // If this is a new return handover (handoverType=return in URL), reset the completion state
-      if (urlHandoverType === 'return' && handoverStatus.handover_completed) {
-        console.log("🔄 Starting new return handover flow, resetting completion state");
+      // Reset completion state if handover is not completed or steps are incomplete
+      if (!handoverStatus.handover_completed || !allStepsCompleted) {
+        console.log("🔄 Handover not completed or steps incomplete, ensuring completion state is reset");
         setIsHandoverCompleted(false);
-        // Reset to first step for return flow
-        setCurrentStep(0);
+        
+        // Find the first incomplete step and set it as current
+        const firstIncompleteIndex = completedSteps.findIndex(step => !step.is_completed);
+        if (firstIncompleteIndex >= 0) {
+          setCurrentStep(firstIncompleteIndex);
+        }
       }
     }
   }, [isOpen, handoverStatus, completedSteps, searchParams]);
@@ -198,11 +204,14 @@ export const EnhancedHandoverSheet = ({
       // Create final vehicle condition report only if we have meaningful data
       if (vehiclePhotos.length > 0 || damageReports.length > 0 || fuelLevel !== undefined || mileage !== undefined) {
         console.log("Creating vehicle condition report...");
+        const reportType = isReturnHandover() ? 'return' : 'pickup';
+        console.log("Report type determined as:", reportType);
+        
         const reportData = {
           handover_session_id: handoverId,
           booking_id: (bookingDetails as unknown as HandoverBookingDetails)?.id as string || "",
           car_id: (bookingDetails as unknown as HandoverBookingDetails)?.car_id as string || "",
-          report_type: 'pickup' as const,
+          report_type: reportType as const,
           vehicle_photos: vehiclePhotos,
           damage_reports: damageReports,
           fuel_level: fuelLevel,
@@ -242,10 +251,19 @@ export const EnhancedHandoverSheet = ({
       return isReturn;
     }
     
-    console.log('⚠️ No handoverType in URL, falling back to automatic detection');
-    // Fallback to automatic detection if no URL parameter
-    if (!bookingDetails || !handoverStatus) {
-      console.log('❌ Missing bookingDetails or handoverStatus for automatic detection');
+    console.log('⚠️ No handoverType in URL, checking handover session type');
+    // Check the handover session type directly
+    if (handoverStatus?.handover_type) {
+      console.log('✅ Using handover_type from session:', handoverStatus.handover_type);
+      const isReturn = handoverStatus.handover_type === 'return';
+      console.log('✅ isReturnHandover result from session:', isReturn);
+      return isReturn;
+    }
+    
+    console.log('⚠️ No handover_type in session, falling back to automatic detection');
+    // Fallback to automatic detection if no handover type is set
+    if (!bookingDetails) {
+      console.log('❌ Missing bookingDetails for automatic detection');
       return false;
     }
     
@@ -256,7 +274,6 @@ export const EnhancedHandoverSheet = ({
     
     console.log('📅 Booking dates - Start:', bookingStartDate.toISOString(), 'End:', bookingEndDate.toISOString());
     console.log('📅 Current time:', now.toISOString());
-    console.log('📊 Handover status:', handoverStatus);
     
     // If we're before the booking start date, this is definitely a pickup
     if (now < bookingStartDate) {
@@ -270,36 +287,16 @@ export const EnhancedHandoverSheet = ({
       return true;
     }
     
-    // Key fix: Check if this handover session was previously completed
-    // If handover_completed is true AND we're starting a new handover process,
-    // this indicates a return handover (second handover for the same booking)
-    if (handoverStatus.handover_completed) {
-      console.log('✅ Previous handover completed - this is a return');
-      return true;
-    }
+    // If we're between start and end date, determine based on time proximity
+    const timeToStart = Math.abs(now.getTime() - bookingStartDate.getTime());
+    const timeToEnd = Math.abs(now.getTime() - bookingEndDate.getTime());
     
-    // Additional check: If we have a handover session creation time,
-    // compare it with booking start to determine if this is the first or second handover
-    if (handoverStatus.created_at) {
-      const handoverCreatedAt = new Date(handoverStatus.created_at);
-      const timeSinceBookingStart = handoverCreatedAt.getTime() - bookingStartDate.getTime();
-      const hoursAfterStart = timeSinceBookingStart / (1000 * 60 * 60);
-      
-      console.log('⏰ Handover created:', handoverCreatedAt.toISOString());
-      console.log('⏰ Hours after booking start:', hoursAfterStart);
-      
-      // If handover was created significantly after booking start (e.g., more than 1 hour),
-      // and we're not at the very beginning of the rental, this might be a return
-      if (hoursAfterStart > 1 && now.getTime() - bookingStartDate.getTime() > (1000 * 60 * 60 * 2)) {
-        console.log('✅ Handover created well after booking start - likely a return');
-        return true;
-      }
-    }
+    // If we're closer to the end date and past the start date, it's likely a return
+    const isPastStartDate = now >= bookingStartDate;
+    const isReturn = isPastStartDate && timeToEnd < timeToStart;
     
-    // Default: if we're between start and end date with no previous completion,
-    // this is the initial pickup
-    console.log('✅ Default case - this is a pickup');
-    return false;
+    console.log('✅ Time-based determination - isReturn:', isReturn);
+    return isReturn;
   };
 
   const handleSuccessPopupClose = () => {

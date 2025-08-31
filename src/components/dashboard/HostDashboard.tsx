@@ -161,8 +161,8 @@ export const HostDashboard = () => {
       const hostId = booking.cars.owner_id;
       const renterId = booking.renter_id;
 
-      // Create handover session
-      const session = await createHandoverSession(bookingId, hostId, renterId);
+      // Create handover session with the correct handover type
+      const session = await createHandoverSession(bookingId, prompt.handoverType, hostId, renterId);
       
       if (session) {
         toast.success(`${prompt.handoverType === 'pickup' ? 'Pickup' : 'Return'} process started`);

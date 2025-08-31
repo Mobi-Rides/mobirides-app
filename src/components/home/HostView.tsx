@@ -103,7 +103,7 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
       const renterId = booking.renter_id;
 
       // Create handover session
-      const session = await createHandoverSession(bookingId, hostId, renterId, 'pickup');
+      const session = await createHandoverSession(bookingId, 'pickup', hostId, renterId);
       
       if (session) {
         toast.success("Handover process started");

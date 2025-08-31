@@ -4,7 +4,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Booking } from "@/types/booking";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Check, X, ArrowRight } from "lucide-react";
+import { Clock, Check, X, ArrowRight, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -27,6 +27,11 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
   };
 
   const getStatusBadge = () => {
+    // Check for early return first
+    if (booking.early_return && booking.status === "completed") {
+      return <Badge variant="secondary" className="bg-purple-100 text-purple-800 flex items-center gap-1"><RotateCcw className="h-3 w-3" /> Returned Early</Badge>;
+    }
+
     switch (booking.status) {
       case "pending":
         return <Badge variant="outline" className="flex items-center gap-1"><Clock className="h-3 w-3" /> Pending</Badge>;

@@ -11,6 +11,8 @@ export interface BookingWithRelations {
   total_price: number;
   pickup_latitude?: number;
   pickup_longitude?: number;
+  early_return?: boolean;
+  actual_end_date?: string;
   created_at: string;
   cars: {
     brand: string;
@@ -57,7 +59,8 @@ export enum BookingNotificationType {
   BOOKING_REQUEST = "booking_request",
   BOOKING_CONFIRMATION = "booking_confirmation", 
   BOOKING_CANCELLATION = "booking_cancellation",
-  BOOKING_REMINDER = "booking_reminder"
+  BOOKING_REMINDER = "booking_reminder",
+  EARLY_RETURN_NOTIFICATION = "early_return_notification"
 }
 
 // Add this enum for booking statuses

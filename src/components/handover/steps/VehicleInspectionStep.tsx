@@ -1,6 +1,7 @@
 
 import { useState, useRef } from "react";
 import { Camera, Plus, Trash2, Upload } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,7 @@ export const VehicleInspectionStep = ({
   const [photos, setPhotos] = useState<VehiclePhoto[]>(initialPhotos);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const requirements = PHOTO_REQUIREMENTS[inspectionType];
@@ -54,13 +56,21 @@ export const VehicleInspectionStep = ({
   const handlePhotoUpload = async (photoType: PhotoType, file: File) => {
     setIsUploading(true);
     setUploadingType(photoType);
+    setUploadProgress(prev => ({ ...prev, [photoType]: 0 }));
     
     try {
-      const photoUrl = await uploadHandoverPhoto(file, handoverSessionId, photoType);
+      const photoUrl = await uploadHandoverPhoto(
+        file, 
+        handoverSessionId, 
+        photoType,
+        3, // maxRetries
+        (progress) => setUploadProgress(prev => ({ ...prev, [photoType]: progress }))
+      );
+      
       if (photoUrl) {
         const newPhoto: VehiclePhoto = {
           id: `${Date.now()}-${photoType}`,
-          type: photoType, // Remove the 'as any' cast
+          type: photoType,
           url: photoUrl,
           timestamp: new Date().toISOString()
         };
@@ -68,13 +78,14 @@ export const VehicleInspectionStep = ({
         const updatedPhotos = [...photos, newPhoto];
         setPhotos(updatedPhotos);
         onPhotosUpdate(updatedPhotos);
-        toast.success("Photo uploaded successfully");
+        // Success toast is now handled by the upload function
       }
     } catch (error) {
       toast.error("Failed to upload photo");
     } finally {
       setIsUploading(false);
       setUploadingType(null);
+      setUploadProgress(prev => ({ ...prev, [photoType]: 0 }));
     }
   };
 
@@ -172,12 +183,20 @@ export const VehicleInspectionStep = ({
                       onChange={(e) => handleFileChange(e, requirement.type)}
                       className="hidden"
                     />
-                    <div className="flex flex-col items-center justify-center h-full">
+                    <div className="flex flex-col items-center justify-center h-full p-2">
                       {isUploading && uploadingType === requirement.type ? (
-                        <>
-                          <Upload className="h-6 w-6 animate-spin text-gray-400 mb-2" />
-                          <span className="text-xs text-gray-500">Uploading...</span>
-                        </>
+                        <div className="w-full space-y-2">
+                          <Upload className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
+                          <Progress 
+                            value={uploadProgress[requirement.type] || 0} 
+                            className="w-full h-2" 
+                          />
+                          <span className="text-xs text-gray-500 text-center block">
+                            {(uploadProgress[requirement.type] || 0) < 30 ? 'Optimizing...' : 
+                             (uploadProgress[requirement.type] || 0) < 80 ? 'Uploading...' : 
+                             'Finalizing...'}
+                          </span>
+                        </div>
                       ) : (
                         <>
                           <Plus className="h-6 w-6 text-gray-400 mb-2" />

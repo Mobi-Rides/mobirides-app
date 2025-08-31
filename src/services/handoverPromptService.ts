@@ -115,6 +115,7 @@ export class HandoverPromptService {
           booking_id, 
           handover_completed,
           created_at,
+          handover_type,
           handover_step_completion (
             step_name,
             is_completed,
@@ -142,18 +143,14 @@ export class HandoverPromptService {
         const isPickupDay = isToday(startDate);
         const isReturnDay = isToday(endDate);
         
-        // Separate pickup and return sessions based on creation date relative to booking dates
-        const pickupSessions = sessions.filter(session => {
-          const sessionDate = new Date(session.created_at);
-          // Pickup sessions are created on or before the rental period
-          return sessionDate <= new Date(endDate.getTime() + 24 * 60 * 60 * 1000); // Allow day after end for late sessions
-        });
+        // Separate pickup and return sessions based on handover_type field
+        const pickupSessions = sessions.filter(session => 
+          session.handover_type === 'pickup'
+        );
         
-        const returnSessions = sessions.filter(session => {
-          const sessionDate = new Date(session.created_at);
-          // Return sessions are created on or after the end date
-          return sessionDate >= new Date(endDate.getTime());
-        });
+        const returnSessions = sessions.filter(session => 
+          session.handover_type === 'return'
+        );
         
         // Check pickup completion - any pickup session that's completed
         const pickupCompleted = pickupSessions.some(session => 
