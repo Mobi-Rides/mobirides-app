@@ -14,7 +14,8 @@ import {
   Receipt,
   Calendar,
   MapPin,
-  DollarSign
+  DollarSign,
+  RotateCcw
 } from "lucide-react";
 import { BookingWithRelations } from "@/types/booking";
 import { useNavigate } from "react-router-dom";
@@ -39,6 +40,16 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
   };
 
   const getStatusBadge = (status: string) => {
+    // Check for early return first
+    if (booking.early_return && status === "completed") {
+      return (
+        <Badge variant="secondary" className="bg-purple-100 text-purple-800 animate-fade-in flex items-center gap-1">
+          <RotateCcw className="h-3 w-3" />
+          Returned Early
+        </Badge>
+      );
+    }
+
     const statusConfig = {
       pending: { label: "Pending", variant: "secondary" as const, color: "bg-orange-100 text-orange-800" },
       confirmed: { label: "Confirmed", variant: "default" as const, color: "bg-green-100 text-green-800" },

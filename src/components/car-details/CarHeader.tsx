@@ -99,32 +99,15 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
   };
 
   const handleContactOwner = async () => {
-    console.log("🔍 Contact button clicked - Starting debug logs");
-    console.log("👤 User authentication status:", {
-      isAuthenticated: !!user,
-      userId: user?.id,
-      userEmail: user?.email
-    });
-    
     if (!user) {
-      console.log("❌ User not authenticated");
       toast.error("Please log in to contact the owner.");
       return;
     }
-
-    console.log("🎯 Owner ID validation:", {
-      ownerId,
-      isValidOwnerId: !!ownerId,
-      ownerIdType: typeof ownerId
-    });
     
     if (!ownerId) {
-      console.log("❌ Owner ID not available");
       toast.error("Owner information not available.");
       return;
     }
-
-    console.log("🚀 Starting conversation creation process");
     
     try {
       const conversationParams = {
@@ -132,8 +115,6 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
         participantIds: [ownerId],
         title: `Chat about ${brand} ${model}`
       };
-      
-      console.log("📞 Calling createConversation with params:", conversationParams);
       
       createConversation(conversationParams);
       
@@ -146,11 +127,7 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
       });
       toast.success("Starting conversation...");
     } catch (error) {
-      console.error("💥 Error in handleStartConversation:", {
-        error,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        errorStack: error instanceof Error ? error.stack : undefined
-      });
+      console.error("Error in handleStartConversation:", error);
       toast.error("Failed to start conversation. Please try again.");
     }
   };

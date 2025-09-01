@@ -62,7 +62,36 @@ const CarListing = () => {
           throw error;
         }
 
-        setCars((prevCars) => (page === 1 ? data : [...prevCars, ...data]));
+        // Fetch ratings for each car
+        console.log('🔍 Fetching ratings for', data?.length || 0, 'cars');
+        const carsWithRatings = await Promise.all(
+          (data || []).map(async (car) => {
+            try {
+              const { data: ratingData, error: ratingError } = await supabase
+                .rpc('calculate_car_rating', { car_uuid: car.id });
+              
+              if (ratingError) {
+                console.error('Error fetching rating for car:', car.id, ratingError);
+                return { ...car, rating: 0 };
+              }
+              
+              console.log(`✅ Car ${car.brand} ${car.model} (${car.id}): Rating ${ratingData || 0}`);
+              return { ...car, rating: ratingData || 0 };
+            } catch (error) {
+              console.error('Error calculating rating for car:', car.id, error);
+              return { ...car, rating: 0 };
+            }
+          })
+        );
+        
+        console.log('🎯 Final cars with ratings:', carsWithRatings.map(car => ({
+          id: car.id,
+          brand: car.brand,
+          model: car.model,
+          rating: car.rating
+        })));
+
+        setCars((prevCars) => (page === 1 ? carsWithRatings : [...prevCars, ...carsWithRatings]));
         setTotalCars(count || 0);
         setHasMoreItems(data.length === PAGE_SIZE);
       } catch (error) {

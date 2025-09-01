@@ -9,6 +9,7 @@ export * from "./location/LocationManager";
 export * from "./location/LocationStateManager";
 export * from "./viewport/ViewportManager";
 export * from "./tokenValidator";
+export * from "./geocoding";
 
 // Cache to prevent multiple unnecessary token fetches
 let cachedToken: string | null = null;

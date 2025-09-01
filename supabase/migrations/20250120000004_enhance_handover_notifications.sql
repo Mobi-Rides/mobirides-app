@@ -9,7 +9,7 @@ DROP FUNCTION IF EXISTS public.create_handover_notification(uuid, text, text, te
 CREATE OR REPLACE FUNCTION public.create_handover_notification(
     p_user_id uuid,
     p_handover_type text,
-    p_car_make text,
+    p_car_brand text,
     p_car_model text,
     p_location text,
     p_status text DEFAULT 'ready',
@@ -27,18 +27,19 @@ DECLARE
     notification_type text;
 BEGIN
     -- Determine notification type and content based on status
+    -- Map all handover statuses to valid notification_type enum values
     CASE p_status
         WHEN 'ready' THEN
             notification_type := 'handover_ready';
             notification_title := 'Handover Ready';
             notification_description := format('Your %s handover for %s %s is ready at %s', 
-                p_handover_type, p_car_make, p_car_model, p_location);
+                p_handover_type, p_car_brand, p_car_model, p_location);
         
         WHEN 'in_progress' THEN
-            notification_type := 'handover_in_progress';
+            notification_type := 'handover_ready'; -- Use handover_ready for in_progress
             notification_title := 'Handover In Progress';
             notification_description := format('Your %s handover for %s %s is %s%% complete', 
-                p_handover_type, p_car_make, p_car_model, p_progress_percentage);
+                p_handover_type, p_car_brand, p_car_model, p_progress_percentage);
             
             -- Add step-specific information if provided
             IF p_step_name IS NOT NULL THEN
@@ -46,35 +47,35 @@ BEGIN
             END IF;
         
         WHEN 'step_completed' THEN
-            notification_type := 'handover_step_completed';
+            notification_type := 'system_notification'; -- Use system_notification for step completion
             notification_title := 'Handover Step Completed';
             notification_description := format('Step "%s" completed for %s handover of %s %s', 
-                COALESCE(p_step_name, 'Unknown'), p_handover_type, p_car_make, p_car_model);
+                COALESCE(p_step_name, 'Unknown'), p_handover_type, p_car_brand, p_car_model);
         
         WHEN 'completed' THEN
-            notification_type := 'handover_completed';
+            notification_type := 'system_notification'; -- Use system_notification for completion
             notification_title := 'Handover Completed';
             notification_description := format('Your %s handover for %s %s has been completed successfully', 
-                p_handover_type, p_car_make, p_car_model);
+                p_handover_type, p_car_brand, p_car_model);
         
         WHEN 'delayed' THEN
-            notification_type := 'handover_delayed';
+            notification_type := 'system_notification'; -- Use system_notification for delays
             notification_title := 'Handover Delayed';
             notification_description := format('Your %s handover for %s %s has been delayed. Please check for updates.', 
-                p_handover_type, p_car_make, p_car_model);
+                p_handover_type, p_car_brand, p_car_model);
         
         WHEN 'cancelled' THEN
-            notification_type := 'handover_cancelled';
+            notification_type := 'system_notification'; -- Use system_notification for cancellation
             notification_title := 'Handover Cancelled';
             notification_description := format('Your %s handover for %s %s has been cancelled', 
-                p_handover_type, p_car_make, p_car_model);
+                p_handover_type, p_car_brand, p_car_model);
         
         ELSE
             -- Default to ready status
             notification_type := 'handover_ready';
             notification_title := 'Handover Update';
             notification_description := format('Update for your %s handover of %s %s at %s', 
-                p_handover_type, p_car_make, p_car_model, p_location);
+                p_handover_type, p_car_brand, p_car_model, p_location);
     END CASE;
 
     -- Insert the notification
@@ -88,12 +89,12 @@ BEGIN
     )
     VALUES (
         p_user_id,
-        notification_type,
+        notification_type::notification_type,
         notification_title,
         notification_description,
         jsonb_build_object(
             'handover_type', p_handover_type,
-            'car_make', p_car_make,
+            'car_brand', p_car_brand,
             'car_model', p_car_model,
             'location', p_location,
             'status', p_status,
@@ -137,7 +138,7 @@ BEGIN
     END IF;
     
     -- Get car details
-    SELECT make, model
+    SELECT brand, model
     INTO car_record
     FROM cars
     WHERE id = session_record.car_id;
@@ -156,7 +157,7 @@ BEGIN
     PERFORM create_handover_notification(
         other_user_id,
         'pickup', -- This could be determined from booking status
-        car_record.make,
+        car_record.brand,
         car_record.model,
         session_record.pickup_location::text,
         'step_completed',
@@ -169,7 +170,7 @@ BEGIN
         PERFORM create_handover_notification(
             other_user_id,
             'pickup',
-            car_record.make,
+            car_record.brand,
             car_record.model,
             session_record.pickup_location::text,
             'completed',
@@ -207,7 +208,7 @@ BEGIN
     END IF;
     
     -- Get car details
-    SELECT make, model
+    SELECT brand, model
     INTO car_record
     FROM cars
     WHERE id = session_record.car_id;
@@ -228,7 +229,7 @@ BEGIN
     PERFORM create_handover_notification(
         session_record.host_id,
         'pickup',
-        car_record.make,
+        car_record.brand,
         car_record.model,
         session_record.pickup_location::text,
         'in_progress',
@@ -239,7 +240,7 @@ BEGIN
     PERFORM create_handover_notification(
         session_record.renter_id,
         'pickup',
-        car_record.make,
+        car_record.brand,
         car_record.model,
         session_record.pickup_location::text,
         'in_progress',

@@ -16,13 +16,10 @@ export const useHandoverPrompts = () => {
     queryFn: async () => {
       try {
         if (!userId || !userRole) {
-          logger.debug("useHandoverPrompts: No userId or userRole, returning empty array");
           return [];
         }
         
-        logger.debug("useHandoverPrompts: Fetching handover prompts", { userId, userRole });
         const prompts = await HandoverPromptService.detectHandoverPrompts(userId, userRole);
-        logger.debug("useHandoverPrompts: Successfully fetched prompts", { count: prompts.length });
         return prompts;
       } catch (error) {
         logger.error("useHandoverPrompts: Failed to fetch handover prompts", error);
@@ -34,7 +31,6 @@ export const useHandoverPrompts = () => {
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
     staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
     retry: (failureCount, error) => {
-      logger.warn("useHandoverPrompts: Query failed, retry attempt", { failureCount, error });
       return failureCount < 2; // Only retry twice
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),

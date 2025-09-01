@@ -14,9 +14,11 @@ import { toast } from "@/utils/toast-utils";
 import { 
   HandoverStatus, 
   HandoverLocation, 
+  HandoverType,
   updateHandoverLocation, 
   getHandoverSession,
-  createHandoverSession
+  createHandoverSession,
+  hasCompletedPickupHandover
 } from "@/services/handoverService";
 
 interface HandoverContextType {
@@ -104,9 +106,28 @@ const convertDatabaseHandoverToHandoverStatus = (
     host_location: convertDatabaseLocationToHandoverLocation(data.host_location),
     renter_location: convertDatabaseLocationToHandoverLocation(data.renter_location),
     handover_completed: !!data.handover_completed,
+    handover_type: (data.handover_type as HandoverType) || 'pickup',
     created_at: data.created_at as string,
     updated_at: data.updated_at as string,
   };
+};
+
+// Helper function to determine handover type based on booking dates
+const determineHandoverType = (bookingDetails: any): HandoverType => {
+  if (!bookingDetails) return 'pickup';
+  
+  const now = new Date();
+  const startDate = new Date(bookingDetails.start_date);
+  const endDate = new Date(bookingDetails.end_date);
+  
+  // If current time is closer to end date than start date, it's likely a return
+  const timeToStart = Math.abs(now.getTime() - startDate.getTime());
+  const timeToEnd = Math.abs(now.getTime() - endDate.getTime());
+  
+  // Also check if we're past the start date
+  const isPastStartDate = now >= startDate;
+  
+  return isPastStartDate && timeToEnd < timeToStart ? 'return' : 'pickup';
 };
 
 export const HandoverProvider: React.FC<HandoverProviderProps> = ({
@@ -240,32 +261,37 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
       setIsHandoverSessionLoading(true);
       
       try {
-        let handoverData = await getHandoverSession(bookingId);
+        // Determine the handover type based on booking dates
+        const handoverType = determineHandoverType(bookingDetails);
+        console.log("Determined handover type:", handoverType);
+        
+        // Try to get existing session for this specific handover type
+        let handoverData = await getHandoverSession(bookingId, handoverType);
         
         if (!handoverData) {
-          console.log("No handover session found, creating one...");
+          console.log(`No ${handoverType} handover session found, creating one...`);
           
           // Get the renter ID from booking details
           if (bookingDetails?.renter?.id) {
             const renterId = bookingDetails.renter.id;
-            console.log("Creating handover session with:", { bookingId, hostId: ownerId, renterId });
+            console.log("Creating handover session with:", { bookingId, hostId: ownerId, renterId, handoverType });
             
-            handoverData = await createHandoverSession(bookingId, ownerId, renterId);
+            handoverData = await createHandoverSession(bookingId, handoverType, ownerId, renterId);
             
             if (handoverData) {
-              console.log("Handover session created:", handoverData.id);
+              console.log(`${handoverType} handover session created:`, handoverData.id);
             } else {
-              throw new Error("Failed to create handover session");
+              throw new Error(`Failed to create ${handoverType} handover session`);
             }
           } else {
             throw new Error("Cannot create handover session: missing renter information");
           }
         } else {
-          console.log("Found existing handover session:", handoverData.id, "completed:", handoverData.handover_completed);
+          console.log(`Found existing ${handoverType} handover session:`, handoverData.id, "completed:", handoverData.handover_completed);
         }
         
         if (handoverData) {
-          console.log("Handover session ready:", handoverData.id);
+          console.log(`${handoverType} handover session ready:`, handoverData.id);
           setHandoverId(handoverData.id);
           
           // Use our conversion helper to ensure type safety

@@ -36,6 +36,8 @@ export const RentalActions = ({
   const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false);
   const [isModificationDialogOpen, setIsModificationDialogOpen] = useState(false);
 
+
+
   const handleExtendRental = () => {
     setIsExtensionDialogOpen(true);
   };

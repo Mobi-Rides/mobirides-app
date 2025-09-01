@@ -6,6 +6,7 @@ import { Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { useRentalDetails } from "@/hooks/useRentalDetails";
+import { useAuth } from "@/hooks/useAuth";
 import { CarDescription } from "@/components/car-details/CarDescription";
 import { CarOwner } from "@/components/car-details/CarOwner";
 import { RentalDetailsHeader } from "@/components/rental-details/RentalDetailsHeader";
@@ -22,6 +23,7 @@ const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [refreshKey, setRefreshKey] = useState(0);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     booking,
     isBookingLoading,
@@ -37,6 +39,8 @@ const RentalDetailsRefactored = () => {
     handleInitiateHandover,
     id
   } = useRentalDetails();
+
+
 
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);

@@ -17,6 +17,7 @@ export interface SafeCar {
   fuel: string;
   seats: number;
   vehicle_type: Database["public"]["Enums"]["vehicle_type"];
+  rating?: number;
   description: string;
   features: string[];
   image_url: string;

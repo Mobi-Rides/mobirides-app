@@ -63,6 +63,11 @@ const CarDetails = () => {
   const { carId } = useParams();
   const { theme } = useTheme();
   const user = useUser();
+  
+  console.log('=== CarDetails component rendered ===');
+  console.log('Current URL:', window.location.href);
+  console.log('carId from useParams:', carId);
+  console.log('user:', user?.id || 'not logged in');
 
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", carId],
@@ -162,6 +167,8 @@ const CarDetails = () => {
               ownerId={car.owner_id}
             />
             
+            {console.log('[CarDetails] About to render CarReviews with car:', car)}
+            {console.log('Car object keys:', car ? Object.keys(car) : 'car is null/undefined')}
             <CarReviews car={car} />
           </div>
           

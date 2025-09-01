@@ -1,13 +1,15 @@
+import { toast } from 'sonner';
+
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) {
-    alert('This browser does not support notifications.');
+    toast.error('This browser does not support notifications.');
     return;
   }
   const permission = await Notification.requestPermission();
   if (permission === 'granted') {
-    alert('Notifications enabled!');
+    toast.success('Notifications enabled!');
   } else {
-    alert('Notifications denied or dismissed.');
+    toast.warning('Notifications denied or dismissed.');
   }
 }
 
@@ -34,4 +36,4 @@ function urlBase64ToUint8Array(base64String: string) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
-} 
+}
