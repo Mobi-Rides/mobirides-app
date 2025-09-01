@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { NewConversationModal } from './NewConversationModal';
-import { MigrationStatusBanner } from './MigrationStatusBanner';
 import { Button } from '@/components/ui/button';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
@@ -271,9 +270,6 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   return (
     <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>
-      {/* Migration Status Banner */}
-      <MigrationStatusBanner />
-      
       <div className="flex flex-1 overflow-hidden">
         {/* Conversation List */}
         <div className="w-80 flex-shrink-0">
