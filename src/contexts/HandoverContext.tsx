@@ -266,7 +266,8 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         console.log("Determined handover type:", handoverType);
         
         // Try to get existing session for this specific handover type
-        let handoverData = await getHandoverSession(bookingId, handoverType);
+        let handoverData: any = await getHandoverSession(bookingId, handoverType);
+        let isNewSession = false;
         
         if (!handoverData) {
           console.log(`No ${handoverType} handover session found, creating one...`);
@@ -277,6 +278,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
             console.log("Creating handover session with:", { bookingId, hostId: ownerId, renterId, handoverType });
             
             handoverData = await createHandoverSession(bookingId, handoverType, ownerId, renterId);
+            isNewSession = true;
             
             if (handoverData) {
               console.log(`${handoverType} handover session created:`, handoverData.id);
@@ -287,15 +289,23 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
             throw new Error("Cannot create handover session: missing renter information");
           }
         } else {
-          console.log(`Found existing ${handoverType} handover session:`, handoverData.id, "completed:", handoverData.handover_completed);
+          console.log(`Found existing ${handoverType} handover session:`, (handoverData as any).id, "completed:", (handoverData as any).handover_completed);
         }
         
         if (handoverData) {
           console.log(`${handoverType} handover session ready:`, handoverData.id);
           setHandoverId(handoverData.id);
           
-          // Use our conversion helper to ensure type safety
-          const convertedHandoverStatus = convertDatabaseHandoverToHandoverStatus(handoverData);
+          // Handle type conversion based on data source
+          let convertedHandoverStatus: HandoverStatus | null;
+          if (isNewSession) {
+            // Data from createHandoverSession is already HandoverStatus
+            convertedHandoverStatus = handoverData as HandoverStatus;
+          } else {
+            // Data from getHandoverSession needs conversion from database format
+            convertedHandoverStatus = convertDatabaseHandoverToHandoverStatus(handoverData as Record<string, unknown>);
+          }
+          
           setHandoverStatus(convertedHandoverStatus);
         }
       } catch (error) {
