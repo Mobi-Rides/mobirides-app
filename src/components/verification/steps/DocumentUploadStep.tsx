@@ -387,7 +387,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
         await handleFileUpload(file, documentId);
       }
       
-      await completeDocumentUpload();
+      await completeDocumentUpload(user?.id || '');
       onNext();
     } catch (error) {
       console.error('Document upload completion error:', error);

@@ -41,6 +41,9 @@ export const compressImage = async (
 
     img.onload = () => {
       try {
+        // Clean up object URL immediately
+        URL.revokeObjectURL(objectUrl);
+        
         // Calculate new dimensions while maintaining aspect ratio
         const { width, height } = calculateDimensions(
           img.width,
@@ -97,15 +100,9 @@ export const compressImage = async (
       reject(new Error('Failed to load image'));
     };
 
-    // Create object URL for the image
+    // Create object URL and set source
     const objectUrl = URL.createObjectURL(file);
     img.src = objectUrl;
-    
-    // Clean up object URL after image loads
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      img.onload();
-    };
   });
 };
 

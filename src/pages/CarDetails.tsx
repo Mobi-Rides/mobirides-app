@@ -167,8 +167,6 @@ const CarDetails = () => {
               ownerId={car.owner_id}
             />
             
-            {console.log('[CarDetails] About to render CarReviews with car:', car)}
-            {console.log('Car object keys:', car ? Object.keys(car) : 'car is null/undefined')}
             <CarReviews car={car} />
           </div>
           

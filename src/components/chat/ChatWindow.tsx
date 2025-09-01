@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/utils/toast-utils';
 import { cn } from '@/lib/utils';
 
 interface ChatWindowProps {
