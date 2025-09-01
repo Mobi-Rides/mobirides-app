@@ -81,9 +81,14 @@ export const HandoverNavigationStep = ({
   // Send notification to host when renter arrives
   const notifyHostOfRenterArrival = async () => {
     try {
-      const { error } = await supabase.rpc('create_renter_arrival_notification', {
-        p_handover_session_id: handoverSessionId
-      });
+      // Create a simple notification instead of using non-existent RPC
+      const { error } = await supabase
+        .from("notifications")
+        .insert({
+          type: "arrival_notification",
+          title: "Renter has arrived",
+          content: "The renter has arrived at the handover location"
+        });
 
       if (error) {
         console.error('Error sending renter arrival notification:', error);

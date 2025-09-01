@@ -166,7 +166,7 @@ export const completeHandoverStep = async (
     const updateData = {
       is_completed: true,
       completed_by: userData.user.id,
-      completion_data: completionData as Record<string, unknown>,
+      completion_data: completionData as any,
       completed_at: new Date().toISOString()
     };
     

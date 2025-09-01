@@ -16,7 +16,8 @@ import {
   createVehicleConditionReport,
   VehiclePhoto,
   DamageReport,
-  HandoverStepCompletion
+  HandoverStepCompletion,
+  VehicleConditionReport
 } from "@/services/enhancedHandoverService";
 import { IdentityVerificationStep } from "./steps/IdentityVerificationStep";
 import { VehicleInspectionStep } from "./steps/VehicleInspectionStep";
@@ -207,11 +208,11 @@ export const EnhancedHandoverSheet = ({
         const reportType = isReturnHandover() ? 'return' : 'pickup';
         console.log("Report type determined as:", reportType);
         
-        const reportData = {
+        const reportData: VehicleConditionReport = {
           handover_session_id: handoverId,
           booking_id: (bookingDetails as unknown as HandoverBookingDetails)?.id as string || "",
           car_id: (bookingDetails as unknown as HandoverBookingDetails)?.car_id as string || "",
-          report_type: reportType as const,
+          report_type: reportType as 'pickup' | 'return',
           vehicle_photos: vehiclePhotos,
           damage_reports: damageReports,
           fuel_level: fuelLevel,

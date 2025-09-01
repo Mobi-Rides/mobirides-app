@@ -37,18 +37,18 @@ export const HostStats = () => {
       // Get all bookings for these cars
       const { data: bookings, error } = await supabase
         .from("bookings")
-        .select("status, early_return")
+        .select("status")
         .in("car_id", carIds);
 
       if (error) throw error;
 
-      // Calculate stats
+      // Calculate stats 
       const total = bookings.length;
       const confirmed = bookings.filter(b => b.status === "confirmed").length;
       const pending = bookings.filter(b => b.status === "pending").length;
       const completed = bookings.filter(b => b.status === "completed").length;
       const cancelled = bookings.filter(b => b.status === "cancelled").length;
-      const earlyReturn = bookings.filter(b => b.early_return === true).length;
+      const earlyReturn = 0; // Feature not implemented yet
 
       return { total, confirmed, completed, cancelled, pending, earlyReturn };
     }

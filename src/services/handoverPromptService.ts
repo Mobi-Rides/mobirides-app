@@ -127,7 +127,7 @@ export class HandoverPromptService {
 
       // Group sessions by booking_id and determine states
       const bookingSessionMap = new Map();
-      handoverSessions?.forEach(session => {
+      handoverSessions?.forEach((session: any) => {
         if (!bookingSessionMap.has(session.booking_id)) {
           bookingSessionMap.set(session.booking_id, []);
         }

@@ -76,7 +76,10 @@ export const createPickupHandoverSession = async (
     }
 
     if (existingSession) {
-      return existingSession;
+    return {
+      ...existingSession,
+      handover_type: (existingSession as any).handover_type || 'pickup'
+    } as unknown as HandoverStatus;
     }
 
     // Create new pickup handover session
@@ -144,8 +147,7 @@ export const createPickupHandoverSession = async (
           const { error: notificationError } = await supabase
             .from("notifications")
             .insert({
-              user_id: data.renter_id,
-              type: "pickup_location_request",
+              type: "pickup_location_shared",
               title: "Car Pickup Ready",
               content: notificationContent,
               related_car_id: carId,
@@ -172,7 +174,10 @@ export const createPickupHandoverSession = async (
       }
     }
 
-    return sessionResult;
+    return {
+      ...sessionResult,
+      handover_type: (sessionResult as any).handover_type || 'pickup'
+    } as unknown as HandoverStatus;
   } catch (error) {
     console.error('Pickup handover session creation failed:', error);
     throw error;
@@ -211,7 +216,10 @@ export const createReturnHandoverSession = async (
     }
 
     if (existingSession) {
-      return existingSession;
+    return {
+      ...existingSession,
+      handover_type: (existingSession as any).handover_type || 'return'
+    } as unknown as HandoverStatus;
     }
 
     // Create new return handover session
@@ -279,8 +287,7 @@ export const createReturnHandoverSession = async (
           const { error: notificationError } = await supabase
             .from("notifications")
             .insert({
-              user_id: data.host_id,
-              type: "return_coordination_request",
+              type: "arrival_notification",
               title: "Car Return Ready",
               content: notificationContent,
               related_car_id: carId,
@@ -307,7 +314,10 @@ export const createReturnHandoverSession = async (
       }
     }
 
-    return sessionResult;
+    return {
+      ...sessionResult,
+      handover_type: (sessionResult as any).handover_type || 'return'
+    } as unknown as HandoverStatus;
   } catch (error) {
     console.error('Return handover session creation failed:', error);
     throw error;
