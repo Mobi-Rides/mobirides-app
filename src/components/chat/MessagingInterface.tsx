@@ -109,6 +109,33 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
 
+  // Update last_read_at when conversation is selected
+  useEffect(() => {
+    if (selectedConversationId && currentUser?.id) {
+      const updateLastReadAt = async () => {
+        try {
+          console.log("📖 [READ_TRACKING] Updating last_read_at for conversation:", selectedConversationId);
+          
+          const { error } = await supabase
+            .from('conversation_participants')
+            .update({ last_read_at: new Date().toISOString() })
+            .eq('conversation_id', selectedConversationId)
+            .eq('user_id', currentUser.id);
+
+          if (error) {
+            console.error("❌ [READ_TRACKING] Error updating last_read_at:", error);
+          } else {
+            console.log("✅ [READ_TRACKING] Successfully updated last_read_at");
+          }
+        } catch (error) {
+          console.error("❌ [READ_TRACKING] Error in updateLastReadAt:", error);
+        }
+      };
+
+      updateLastReadAt();
+    }
+  }, [selectedConversationId, currentUser?.id]);
+
   // Auto-select first conversation if none selected
   useEffect(() => {
     try {

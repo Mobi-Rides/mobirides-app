@@ -27,10 +27,10 @@ export const Navigation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
 
-      // Get user's conversation IDs
+      // Get user's conversation IDs and their last_read_at timestamps
       const { data: userParticipations, error: participationError } = await supabase
         .from('conversation_participants')
-        .select('conversation_id')
+        .select('conversation_id, last_read_at')
         .eq('user_id', user.id);
 
       if (participationError || !userParticipations?.length) {
@@ -38,22 +38,35 @@ export const Navigation = () => {
         return 0;
       }
 
-      const conversationIds = userParticipations.map(p => p.conversation_id);
+      let totalUnread = 0;
 
-      // Count unread messages in user's conversations
-      const { count, error } = await supabase
-        .from('conversation_messages')
-        .select('*', { count: 'exact', head: true })
-        .in('conversation_id', conversationIds)
-        .neq('sender_id', user.id) // Exclude messages sent by the user
-        .or('delivery_status.eq.sent,delivery_status.eq.delivered'); // Only count unread messages
+      // For each conversation, count messages after last_read_at
+      for (const participation of userParticipations) {
+        const lastReadAt = participation.last_read_at;
 
-      if (error) {
-        console.error("Error fetching unread messages count:", error);
-        return 0;
+        let query = supabase
+          .from('conversation_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', participation.conversation_id)
+          .neq('sender_id', user.id); // Exclude messages sent by the user
+
+        // If user has read this conversation before, only count messages after last_read_at
+        if (lastReadAt) {
+          query = query.gt('created_at', lastReadAt);
+        }
+        // If never read, count all messages
+
+        const { count, error } = await query;
+
+        if (error) {
+          console.error("Error fetching unread messages for conversation:", participation.conversation_id, error);
+          continue;
+        }
+
+        totalUnread += count || 0;
       }
 
-      return count || 0;
+      return totalUnread;
     },
     refetchInterval: 10000, // Refetch every 10 seconds
   });
@@ -104,14 +117,14 @@ export const Navigation = () => {
         .on(
           'postgres_changes',
           {
-            event: 'INSERT',
+            event: 'UPDATE',
             schema: 'public',
-            table: 'notifications'
+            table: 'conversation_participants',
+            filter: `user_id=eq.${user?.id}`
           },
           () => {
-            // Invalidate notification queries when new notifications are created
-            queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            // Invalidate unread count when user reads a conversation
+            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
           }
         )
         .subscribe();
@@ -135,7 +148,7 @@ export const Navigation = () => {
       label: "Inbox", 
       icon: <Bell className="w-5 h-5" />, 
       activeIndex: 3,
-      badge: totalUnreadCount > 0 ? totalUnreadCount : undefined
+      badge: unreadCount > 0 ? unreadCount : undefined
     },
     { 
       path: "/profile", 
@@ -143,7 +156,7 @@ export const Navigation = () => {
       icon: <User className="w-5 h-5" />, 
       activeIndex: 4 
     },
-  ], [totalUnreadCount]);
+  ], [unreadCount]);
 
   useEffect(() => {
     const currentItem = items.find((item) => {
