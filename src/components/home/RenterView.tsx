@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
@@ -111,14 +111,16 @@ export const RenterView = ({
     },
   });
 
-  const savedCarsSet = savedCarIds || new Set<string>();
+  const savedCarsSet = useMemo(() => {
+    return savedCarIds || new Set<string>();
+  }, [savedCarIds]);
 
   // State for cars with ratings
   const [carsWithRatings, setCarsWithRatings] = useState<SafeCar[]>([]);
 
   // Process cars and fetch ratings
-  const allAvailableCars =
-    availableCars?.pages.flatMap((page) =>
+  const allAvailableCars = useMemo(() => {
+    return availableCars?.pages.flatMap((page) =>
       page.data
         .filter(car => car && typeof car === 'object' && car.id)
         .map((car) => ({
@@ -126,6 +128,7 @@ export const RenterView = ({
           isSaved: savedCarsSet.has(car.id),
         })),
     ) || [];
+  }, [availableCars?.pages, savedCarsSet]);
 
   // Fetch ratings for cars when they change
   useEffect(() => {
@@ -162,7 +165,7 @@ export const RenterView = ({
     };
 
     fetchRatings();
-  }, [allAvailableCars.length, availableCars]);
+  }, [allAvailableCars, availableCars]);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
