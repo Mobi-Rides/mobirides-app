@@ -474,37 +474,44 @@ export const ResizableHandoverTray = ({
   const currentStepData = currentStep < HANDOVER_STEPS.length ? HANDOVER_STEPS[currentStep] : null;
 
   return (
-    <div className="fixed inset-0 z-[9999] pointer-events-none">
+    <div className="fixed inset-0 z-[9999]">
+      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/20 pointer-events-auto"
+        className="absolute inset-0 bg-black/20"
         onClick={onClose}
       />
       
-      <div className="absolute inset-0 pointer-events-auto">
+      {/* Resizable container */}
+      <div className="absolute inset-0">
         <ResizablePanelGroup
           direction="vertical"
           onLayout={handlePanelResize}
           className="h-full"
         >
           {/* Invisible spacer panel */}
-          <ResizablePanel defaultSize={100 - panelSize} minSize={15} />
+          <ResizablePanel defaultSize={100 - panelSize} minSize={10} maxSize={85} />
           
           {/* Drag handle */}
           <ResizableHandle 
-            className="bg-border hover:bg-accent transition-colors"
+            className="relative bg-muted hover:bg-accent transition-all duration-200 cursor-row-resize group shadow-md"
             onDoubleClick={handleDoubleClick}
+            withHandle={false}
           >
-            <div className="flex items-center justify-center h-6 w-full bg-card border-t border-b">
-              <GripHorizontal className="h-3 w-3 text-muted-foreground" />
+            <div className="flex items-center justify-center h-8 w-full bg-muted border-2 border-muted-foreground/20 group-hover:bg-accent group-hover:border-accent-foreground/30 transition-all duration-200 shadow-sm">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-8 h-0.5 bg-muted-foreground/60 rounded-full group-hover:bg-accent-foreground/80 transition-colors" />
+                <div className="w-8 h-0.5 bg-muted-foreground/60 rounded-full group-hover:bg-accent-foreground/80 transition-colors" />
+                <div className="w-8 h-0.5 bg-muted-foreground/60 rounded-full group-hover:bg-accent-foreground/80 transition-colors" />
+              </div>
             </div>
           </ResizableHandle>
           
           {/* Handover tray panel */}
           <ResizablePanel 
             defaultSize={panelSize} 
-            minSize={20} 
+            minSize={15} 
             maxSize={90}
-            className="bg-background rounded-t-xl shadow-2xl border-t border-l border-r"
+            className="bg-background rounded-t-xl shadow-2xl border-t border-l border-r overflow-hidden"
           >
             <div className="h-full flex flex-col overflow-hidden">
               {/* Header - adaptive based on display mode */}
