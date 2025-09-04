@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { X, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { X, CheckCircle, Clock, AlertCircle, GripHorizontal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -70,6 +70,201 @@ export const EnhancedHandoverSheet = ({
   const [mileage, setMileage] = useState<number>();
   const [digitalSignature, setDigitalSignature] = useState<string>();
   const [isHandoverCompleted, setIsHandoverCompleted] = useState(false);
+  
+  // Resizable functionality state
+  const [sheetHeight, setSheetHeight] = useState<number>(90); // vh units
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragStartHeight, setDragStartHeight] = useState(90);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  
+  // Height constraints
+  const MIN_HEIGHT = 40; // vh
+  const MAX_HEIGHT = 95; // vh
+  const DEFAULT_HEIGHT = 90; // vh
+
+  // Load saved height from localStorage on component mount
+  useEffect(() => {
+    const savedHeight = localStorage.getItem('handover-sheet-height');
+    if (savedHeight) {
+      const height = parseInt(savedHeight, 10);
+      if (height >= MIN_HEIGHT && height <= MAX_HEIGHT) {
+        setSheetHeight(height);
+      }
+    }
+  }, []);
+
+  // Save height to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('handover-sheet-height', sheetHeight.toString());
+  }, [sheetHeight]);
+
+  // Drag event handlers
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStartY(e.clientY);
+    setDragStartHeight(sheetHeight);
+    document.body.style.userSelect = 'none';
+  }, [sheetHeight]);
+
+  const handleDragMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaY = dragStartY - e.clientY;
+    const viewportHeight = window.innerHeight;
+    const deltaVh = (deltaY / viewportHeight) * 100;
+    const newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, dragStartHeight + deltaVh));
+    
+    setSheetHeight(newHeight);
+  }, [isDragging, dragStartY, dragStartHeight]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    document.body.style.userSelect = '';
+  }, []);
+
+  // Add global mouse event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleDragMove);
+      document.addEventListener('mouseup', handleDragEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+      };
+    }
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
+  // Automated display logic - adjust height based on content and screen size
+  const adjustHeightForContent = useCallback(() => {
+    if (!sheetRef.current || isDragging) return;
+
+    const contentElement = sheetRef.current.querySelector('[data-content="true"]');
+    if (!contentElement) return;
+
+    const viewportHeight = window.innerHeight;
+    const contentHeight = contentElement.scrollHeight;
+    const dragHandleHeight = 40; // Height of drag handle
+    const padding = 48; // Additional padding for better UX
+    
+    // Calculate required height in vh
+    const requiredHeight = ((contentHeight + dragHandleHeight + padding) / viewportHeight) * 100;
+    
+    // Only auto-adjust if content requires more space than current height
+    // and user hasn't manually resized recently
+    const hasUserManuallyResized = localStorage.getItem('handover-sheet-user-resized') === 'true';
+    
+    if (!hasUserManuallyResized && requiredHeight > sheetHeight && requiredHeight <= MAX_HEIGHT) {
+      setSheetHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, requiredHeight)));
+    }
+  }, [sheetHeight, isDragging]);
+
+  // Monitor content changes for auto-adjustment
+  useEffect(() => {
+    adjustHeightForContent();
+  }, [currentStep, completedSteps, adjustHeightForContent]);
+
+  // Handle window resize for responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      // Ensure height constraints are maintained on window resize
+      const currentHeightPx = (sheetHeight / 100) * window.innerHeight;
+      const minHeightPx = (MIN_HEIGHT / 100) * window.innerHeight;
+      const maxHeightPx = (MAX_HEIGHT / 100) * window.innerHeight;
+      
+      if (currentHeightPx < minHeightPx) {
+        setSheetHeight(MIN_HEIGHT);
+      } else if (currentHeightPx > maxHeightPx) {
+        setSheetHeight(MAX_HEIGHT);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sheetHeight]);
+
+  // Track manual resize to prevent auto-adjustment interference
+  const handleManualDragStart = useCallback((e: React.MouseEvent) => {
+    localStorage.setItem('handover-sheet-user-resized', 'true');
+    handleDragStart(e);
+  }, [handleDragStart]);
+
+  // Keyboard accessibility for drag handle
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const increment = e.shiftKey ? 10 : 5; // Larger increment with Shift
+      const direction = e.key === 'ArrowUp' ? 1 : -1;
+      const newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, sheetHeight + (increment * direction)));
+      setSheetHeight(newHeight);
+      localStorage.setItem('handover-sheet-user-resized', 'true');
+    }
+  }, [sheetHeight]);
+
+  // Touch support for mobile devices
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setDragStartY(touch.clientY);
+      setDragStartHeight(sheetHeight);
+      localStorage.setItem('handover-sheet-user-resized', 'true');
+    }
+  }, [sheetHeight]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    const deltaY = dragStartY - touch.clientY;
+    const viewportHeight = window.innerHeight;
+    const deltaVh = (deltaY / viewportHeight) * 100;
+    const newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, dragStartHeight + deltaVh));
+    
+    setSheetHeight(newHeight);
+  }, [isDragging, dragStartY, dragStartHeight]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Add touch event listeners
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+      return () => {
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [isDragging, handleTouchMove, handleTouchEnd]);
+
+  // Responsive height adjustments for mobile
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      // Adjust height constraints for mobile landscape/portrait
+      const isMobile = window.innerWidth < 768;
+      const isLandscape = window.innerWidth > window.innerHeight;
+      
+      if (isMobile && isLandscape) {
+        // In mobile landscape, use more of the screen
+        if (sheetHeight > 85) {
+          setSheetHeight(85);
+        }
+      }
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, [sheetHeight]);
 
   const initializeHandover = useCallback(async () => {
     if (!handoverId) {
@@ -554,13 +749,10 @@ export const EnhancedHandoverSheet = ({
   return (
     <>
       {isHandoverCompleted && (
-        <>
-          {console.log("Rendering HandoverSuccessPopup with isHost:", isHost)}
-          <HandoverSuccessPopup 
-            isHost={isHost} 
-            onClose={handleSuccessPopupClose}
-          />
-        </>
+        <HandoverSuccessPopup 
+          isHost={isHost} 
+          onClose={handleSuccessPopupClose}
+        />
       )}
       
       <div
@@ -571,8 +763,41 @@ export const EnhancedHandoverSheet = ({
           className="absolute inset-0 bg-black/50 pointer-events-auto"
           onClick={onClose}
         />
-        <div className="absolute bottom-0 left-0 right-0 h-[90vh] bg-background rounded-t-xl shadow-lg overflow-y-auto pointer-events-auto">
-          <div className="p-6">
+        <div 
+          ref={sheetRef}
+          className={`absolute bottom-0 left-0 right-0 bg-background rounded-t-xl shadow-lg overflow-hidden pointer-events-auto transition-all duration-200 ease-out ${isDragging ? 'select-none shadow-xl' : ''}`}
+          style={{ 
+            height: `${sheetHeight}vh`,
+            transform: isDragging ? 'scale(1.001)' : 'scale(1)',
+            borderTop: isDragging ? '2px solid hsl(var(--primary))' : '1px solid hsl(var(--border))'
+          }}
+        >
+          {/* Drag Handle */}
+             <div 
+               className={`flex items-center justify-center py-2 cursor-ns-resize hover:bg-muted/50 transition-all duration-150 ${isDragging ? 'bg-primary/10 border-b border-primary/20' : ''}`}
+               onMouseDown={handleManualDragStart}
+               onTouchStart={handleTouchStart}
+               onKeyDown={handleKeyDown}
+               role="slider"
+               tabIndex={0}
+               aria-label={`Resize handover sheet. Current height: ${Math.round(sheetHeight)}% of viewport. Use arrow keys to adjust.`}
+               aria-valuemin={MIN_HEIGHT}
+               aria-valuemax={MAX_HEIGHT}
+               aria-valuenow={Math.round(sheetHeight)}
+               aria-orientation="vertical"
+               title="Drag to resize or use arrow keys (Shift for larger steps)"
+             >
+               <GripHorizontal className={`h-4 w-4 transition-colors duration-150 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+               {isDragging && (
+                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium shadow-md z-50">
+                   {Math.round(sheetHeight)}vh
+                 </div>
+               )}
+             </div>
+           
+           {/* Scrollable Content */}
+            <div className="overflow-y-auto" style={{ height: 'calc(100% - 40px)' }}>
+            <div className="p-6" data-content="true">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -654,6 +879,7 @@ export const EnhancedHandoverSheet = ({
               </CardContent>
             </Card>
           )}
+          </div>
           </div>
         </div>
       </div>
