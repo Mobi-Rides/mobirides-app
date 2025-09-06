@@ -146,10 +146,12 @@ export type Database = {
       }
       bookings: {
         Row: {
+          actual_end_date: string | null
           car_id: string
           commission_amount: number | null
           commission_status: string | null
           created_at: string
+          early_return: boolean | null
           end_date: string
           end_time: string | null
           host_preparation_completed: boolean | null
@@ -166,10 +168,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_end_date?: string | null
           car_id: string
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          early_return?: boolean | null
           end_date: string
           end_time?: string | null
           host_preparation_completed?: boolean | null
@@ -186,10 +190,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_end_date?: string | null
           car_id?: string
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          early_return?: boolean | null
           end_date?: string
           end_time?: string | null
           host_preparation_completed?: boolean | null
@@ -577,11 +583,54 @@ export type Database = {
           },
         ]
       }
+      guides: {
+        Row: {
+          content: Json
+          created_at: string | null
+          description: string | null
+          id: string
+          is_popular: boolean | null
+          read_time: string | null
+          role: string
+          section: string
+          sort_order: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_popular?: boolean | null
+          read_time?: string | null
+          role: string
+          section: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_popular?: boolean | null
+          read_time?: string | null
+          role?: string
+          section?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       handover_sessions: {
         Row: {
           booking_id: string
           created_at: string | null
           handover_completed: boolean | null
+          handover_type: Database["public"]["Enums"]["handover_type"]
           host_id: string
           host_location: Json | null
           host_ready: boolean | null
@@ -595,6 +644,7 @@ export type Database = {
           booking_id: string
           created_at?: string | null
           handover_completed?: boolean | null
+          handover_type?: Database["public"]["Enums"]["handover_type"]
           host_id: string
           host_location?: Json | null
           host_ready?: boolean | null
@@ -608,6 +658,7 @@ export type Database = {
           booking_id?: string
           created_at?: string | null
           handover_completed?: boolean | null
+          handover_type?: Database["public"]["Enums"]["handover_type"]
           host_id?: string
           host_location?: Json | null
           host_ready?: boolean | null
@@ -1798,7 +1849,7 @@ export type Database = {
               p_user_id: string
             }
           | {
-              p_car_make: string
+              p_car_brand: string
               p_car_model: string
               p_handover_type: string
               p_location: string
@@ -1810,16 +1861,28 @@ export type Database = {
         Returns: undefined
       }
       create_handover_progress_notification: {
-        Args: { p_handover_session_id: string }
-        Returns: undefined
+        Args:
+          | {
+              p_completed_steps: number
+              p_handover_session_id: string
+              p_total_steps: number
+            }
+          | { p_handover_session_id: string }
+        Returns: number
       }
       create_handover_step_notification: {
-        Args: {
-          p_completed_by: string
-          p_handover_session_id: string
-          p_step_name: string
-        }
-        Returns: undefined
+        Args:
+          | {
+              p_completed_by: string
+              p_handover_session_id: string
+              p_step_name: string
+            }
+          | {
+              p_handover_session_id: string
+              p_step_name: string
+              p_step_status: string
+            }
+        Returns: number
       }
       create_message_notification: {
         Args: {
@@ -1855,6 +1918,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      create_renter_arrival_notification: {
+        Args: { p_booking_id: string; p_renter_id: string }
+        Returns: string
       }
       create_system_notification: {
         Args: {
@@ -2053,6 +2120,7 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "expired"
+      handover_type: "pickup" | "return"
       message_delivery_status: "sent" | "delivered" | "read"
       message_status: "sent" | "delivered" | "read"
       notification_role: "host_only" | "renter_only" | "system_wide"
@@ -2078,6 +2146,7 @@ export type Database = {
         | "pickup_location_shared"
         | "return_location_shared"
         | "arrival_notification"
+        | "early_return_notification"
       old_notification_type:
         | "booking_cancelled"
         | "booking_confirmed"
@@ -2236,6 +2305,7 @@ export const Constants = {
         "completed",
         "expired",
       ],
+      handover_type: ["pickup", "return"],
       message_delivery_status: ["sent", "delivered", "read"],
       message_status: ["sent", "delivered", "read"],
       notification_role: ["host_only", "renter_only", "system_wide"],
@@ -2261,6 +2331,7 @@ export const Constants = {
         "pickup_location_shared",
         "return_location_shared",
         "arrival_notification",
+        "early_return_notification",
       ],
       old_notification_type: [
         "booking_cancelled",
