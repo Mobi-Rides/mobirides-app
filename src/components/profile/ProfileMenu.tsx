@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
   LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark,
-  ArrowRightLeft, Wallet, Car, Users
+  ArrowRightLeft, Wallet, Car, Users, BookOpen, MessageSquare, AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -114,9 +114,28 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
 
   const helpItems: MenuItem[] = [
     {
+      icon: BookOpen,
+      label: "Browse Help Center",
+      onClick: () => navigate(`/help/${role}`),
+      description: "Complete guides and tutorials"
+    },
+    {
       icon: HelpCircle,
-      label: "Help & Support",
-      onClick: () => toast("Help center coming soon"),
+      label: "Quick Start Guide",
+      onClick: () => navigate(`/help/${role}/getting-started`),
+      description: "Get started in minutes"
+    },
+    {
+      icon: MessageSquare,
+      label: "Contact Support",
+      onClick: () => toast("Contact support coming soon"),
+      description: "Get help from our team"
+    },
+    {
+      icon: AlertTriangle,
+      label: "Report Issue",
+      onClick: () => toast("Report issue coming soon"),
+      description: "Report bugs or problems"
     },
   ];
 
