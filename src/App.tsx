@@ -52,6 +52,8 @@ const EditCar = lazy(() => import("@/pages/EditCar"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
 const BookingDetails = lazy(() => import("@/components/BookingDetails"));
 const NotificationDetails = lazy(() => import("@/components/NotificationDetails"));
+const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
+const HelpSection = lazy(() => import("@/pages/HelpSection"));
 
 const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
@@ -286,6 +288,23 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        
+                        {/* Help Center Routes */}
+                        <Route path="/help/:role" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HelpCenter />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/help/:role/:section" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HelpSection />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        
                         <Route path="/messages" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
