@@ -133,51 +133,7 @@ export class WalletOperations {
     return true;
   }
 
-  async addTestFunds(hostId: string, amount: number): Promise<boolean> {
-    console.log("WalletOperations: Adding test funds:", { hostId, amount });
-    const { topUpWallet } = await import("./walletTopUp");
-    return await topUpWallet(hostId, {
-      amount,
-      payment_method: "test",
-      payment_reference: `TEST_${Date.now()}`
-    });
-  }
 
-  async resetWallet(hostId: string): Promise<boolean> {
-    try {
-      console.log("WalletOperations: Resetting wallet for host:", hostId);
-      
-      const wallet = await getWalletBalance(hostId);
-      if (!wallet) {
-        console.log("WalletOperations: No wallet found to reset");
-        return false;
-      }
-
-      const { error } = await supabase
-        .from("host_wallets")
-        .update({ balance: 0.00, updated_at: new Date().toISOString() })
-        .eq("id", wallet.id);
-
-      if (error) {
-        console.error("WalletOperations: Error resetting wallet:", error);
-        return false;
-      }
-
-      // Create notification for wallet reset
-      await notificationService.createNotification(
-        hostId,
-        "wallet_reset",
-        "Your wallet has been reset to P0.00"
-      );
-
-      console.log("WalletOperations: Wallet reset successfully");
-      toast.success("Wallet reset to P0.00");
-      return true;
-    } catch (error) {
-      console.error("WalletOperations: Error in resetWallet:", error);
-      return false;
-    }
-  }
 }
 
 export const walletOperations = new WalletOperations();
