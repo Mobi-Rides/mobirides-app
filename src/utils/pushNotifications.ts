@@ -19,27 +19,18 @@ export async function subscribeToPush() {
       const reg = await navigator.serviceWorker.ready;
       
       // Get VAPID public key from backend
-      const { data: vapidKey, error } = await fetch('/api/vapid-public-key').then(res => res.json());
-      if (error || !vapidKey) {
-        // Fallback to environment variable for development
-        const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa40HI0DLLaMgoIFakVLMFGqbNWfyHXisoWvSSfHZsF_ES5ej36xmd5-5qBX8w';
-        
-        const subscription = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-        });
-        
-        // Save subscription to database
-        await saveSubscriptionToDatabase(subscription);
-        
-        console.log('Push subscription created (fallback):', JSON.stringify(subscription));
-        toast.success('Push notifications enabled!');
-        return subscription;
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: response, error } = await supabase.functions.invoke('get-vapid-key');
+      
+      if (error || !response?.vapidKey) {
+        console.error('Failed to get VAPID key:', error);
+        toast.error('Failed to configure push notifications');
+        return;
       }
       
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        applicationServerKey: urlBase64ToUint8Array(response.vapidKey),
       });
       
       // Save subscription to database
