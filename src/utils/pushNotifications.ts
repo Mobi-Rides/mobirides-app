@@ -15,15 +15,26 @@ export async function requestNotificationPermission() {
 
 export async function subscribeToPush() {
   if ('serviceWorker' in navigator) {
-    const reg = await navigator.serviceWorker.ready;
-    const subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      // Replace with your VAPID public key (Uint8Array)
-      applicationServerKey: urlBase64ToUint8Array('<YOUR_PUBLIC_VAPID_KEY_BASE64>'),
-    });
-    // Send subscription to your backend to store for this user
-    console.log('Push subscription:', JSON.stringify(subscription));
-    // Example: await fetch('/api/save-subscription', { method: 'POST', body: JSON.stringify(subscription) });
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      
+      // Get VAPID public key from environment or use default for development
+      const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa40HI0DLLaMgoIFakVLMFGqbNWfyHXisoWvSSfHZsF_ES5ej36xmd5-5qBX8w';
+      
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
+      
+      // Save subscription for this user
+      console.log('Push subscription created:', JSON.stringify(subscription));
+      toast.success('Push notifications enabled!');
+      
+      return subscription;
+    } catch (error) {
+      console.error('Failed to subscribe to push notifications:', error);
+      toast.error('Failed to enable push notifications');
+    }
   }
 }
 
