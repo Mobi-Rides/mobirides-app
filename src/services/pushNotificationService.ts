@@ -139,6 +139,33 @@ export class PushNotificationService {
   }
 
   /**
+   * Send message notification
+   */
+  async sendMessageNotification(
+    userId: string,
+    messageData: {
+      senderName: string;
+      messagePreview?: string;
+    }
+  ): Promise<{ success: boolean; messageIds?: string[]; error?: string }> {
+    let title = 'New Message';
+    let body = `${messageData.senderName} sent you a message`;
+    
+    if (messageData.messagePreview) {
+      const preview = messageData.messagePreview.length > 50 
+        ? messageData.messagePreview.substring(0, 50) + '...'
+        : messageData.messagePreview;
+      body = `${messageData.senderName}: ${preview}`;
+    }
+
+    return this.sendPushNotification(userId, { 
+      title, 
+      body, 
+      url: '/messages' 
+    });
+  }
+
+  /**
    * Send wallet notification
    */
   async sendWalletNotification(

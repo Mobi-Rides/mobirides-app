@@ -116,6 +116,64 @@ export class CompleteNotificationService {
   }
 
   /**
+   * Create message notification with push notification
+   */
+  async createMessageNotification(
+    recipientId: string,
+    senderName: string,
+    messagePreview?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const title = 'New Message';
+      const description = messagePreview 
+        ? `${senderName}: ${messagePreview.length > 50 ? messagePreview.substring(0, 50) + '...' : messagePreview}`
+        : `You have a new message from ${senderName}`;
+
+      // Create database notification
+      const { error: dbError } = await supabase.from('notifications').insert({
+        user_id: recipientId,
+        type: 'message_received',
+        title,
+        description,
+        metadata: { sender_name: senderName } as any,
+        role_target: 'system_wide',
+        is_read: false
+      } as any);
+
+      if (dbError) {
+        console.error('Failed to create message notification:', dbError);
+        return { success: false, error: dbError.message };
+      }
+
+      // Send push notification (non-blocking)
+      this.sendMessagePushNotification(recipientId, senderName, messagePreview);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error creating message notification:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
+   * Send message push notification (async, non-blocking)
+   */
+  private async sendMessagePushNotification(
+    recipientId: string, 
+    senderName: string, 
+    messagePreview?: string
+  ): Promise<void> {
+    try {
+      await pushNotificationService.sendMessageNotification(recipientId, {
+        senderName,
+        messagePreview
+      });
+    } catch (error) {
+      console.error('Failed to send message push notification:', error);
+    }
+  }
+
+  /**
    * Create booking notification with proper role targeting
    */
   async createBookingNotification(
