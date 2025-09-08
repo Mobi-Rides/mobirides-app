@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { NewConversationModal } from './NewConversationModal';
-import { MigrationStatusBanner } from './MigrationStatusBanner';
 import { Button } from '@/components/ui/button';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
@@ -109,6 +108,33 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   const { data: messages = [], isLoading: isLoadingMessages, error: messagesError } = useConversationMessages(selectedConversationId);
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
+
+  // Update last_read_at when conversation is selected
+  useEffect(() => {
+    if (selectedConversationId && currentUser?.id) {
+      const updateLastReadAt = async () => {
+        try {
+          console.log("📖 [READ_TRACKING] Updating last_read_at for conversation:", selectedConversationId);
+          
+          const { error } = await supabase
+            .from('conversation_participants')
+            .update({ last_read_at: new Date().toISOString() })
+            .eq('conversation_id', selectedConversationId)
+            .eq('user_id', currentUser.id);
+
+          if (error) {
+            console.error("❌ [READ_TRACKING] Error updating last_read_at:", error);
+          } else {
+            console.log("✅ [READ_TRACKING] Successfully updated last_read_at");
+          }
+        } catch (error) {
+          console.error("❌ [READ_TRACKING] Error in updateLastReadAt:", error);
+        }
+      };
+
+      updateLastReadAt();
+    }
+  }, [selectedConversationId, currentUser?.id]);
 
   // Auto-select first conversation if none selected
   useEffect(() => {
@@ -271,9 +297,6 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   return (
     <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>
-      {/* Migration Status Banner */}
-      <MigrationStatusBanner />
-      
       <div className="flex flex-1 overflow-hidden">
         {/* Conversation List */}
         <div className="w-80 flex-shrink-0">

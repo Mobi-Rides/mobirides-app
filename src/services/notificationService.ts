@@ -1,5 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
-import { reverseGeocode } from "@/utils/mapbox";
+import { supabase } from "../integrations/supabase/client";
+import { reverseGeocode } from "../utils/mapbox";
+import { RESEND_TEMPLATES, ResendTemplateKey } from '../config/resend-templates';
 
 // Legacy navigation types for backward compatibility
 export interface NavigationNotificationData {
@@ -34,27 +35,190 @@ export interface BookingNotificationData {
   dropoffLocation: string;
   totalAmount: number;
   bookingReference: string;
+  carImage?: string;
 }
 
-// Twilio & SendGrid Service Class
-export class TwilioNotificationService {
-  private static instance: TwilioNotificationService;
+// Resend Email Service Class
+export class ResendEmailService {
+  private static instance: ResendEmailService;
 
-  public static getInstance(): TwilioNotificationService {
-    if (!TwilioNotificationService.instance) {
-      TwilioNotificationService.instance = new TwilioNotificationService();
+  public static getInstance(): ResendEmailService {
+    if (!ResendEmailService.instance) {
+      ResendEmailService.instance = new ResendEmailService();
     }
-    return TwilioNotificationService.instance;
+    return ResendEmailService.instance;
   }
 
   private constructor() {
-    console.log('🚀 TwilioNotificationService initialized');
+    console.log('📧 ResendEmailService initialized');
+  }
+
+  /**
+   * Send email via Supabase Edge Function using Resend
+   */
+  public async sendEmail(
+    to: string,
+    templateId: string,
+    dynamicData: Record<string, unknown>,
+    subject?: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-service', {
+        body: {
+          to,
+          subject,
+          templateId,
+          dynamicData,
+        },
+      });
+
+      if (error) {
+        console.error("Error sending email:", error);
+        return { success: false, error: error.message };
+      }
+
+      if (data.error) {
+        console.error("Error from send-email function:", data.error);
+        return { success: false, error: data.error };
+      }
+
+      return { success: true, messageId: data.id };
+    } catch (e) {
+      console.error("Unhandled error in sendEmail:", e);
+      const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Get default subject based on template type
+   */
+  private getDefaultSubject(templateId: string): string {
+    switch (templateId) {
+      case 'booking-confirmation':
+        return 'Booking Confirmation - MobiRides';
+      case 'booking-request':
+        return 'New Booking Request - MobiRides';
+      case 'pickup-reminder':
+        return 'Pickup Reminder - MobiRides';
+      case 'return-reminder':
+        return 'Return Reminder - MobiRides';
+      default:
+        return 'Notification from MobiRides';
+    }
+  }
+
+  /**
+   * Send booking confirmation email
+   */
+  async sendBookingConfirmation(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData,
+    isHost: boolean = false
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      bookingReference: bookingData.bookingReference,
+      carBrand: bookingData.carBrand,
+      carModel: bookingData.carModel,
+      pickupDate: bookingData.pickupDate,
+      pickupTime: bookingData.pickupTime,
+      pickupLocation: bookingData.pickupLocation,
+      dropoffLocation: bookingData.dropoffLocation,
+      totalAmount: bookingData.totalAmount,
+      customerName: bookingData.customerName,
+      hostName: bookingData.hostName,
+      carImage: bookingData.carImage || ''
+    };
+
+    const templateKey = isHost ? 'ownerBookingNotification' : 'bookingConfirmation';
+    const subject = isHost 
+      ? `New Booking Request - ${bookingData.carBrand} ${bookingData.carModel}`
+      : `Booking Confirmed - ${bookingData.carBrand} ${bookingData.carModel}`;
+
+    return this.sendEmail(recipient.email, templateKey, templateData, subject);
+  }
+
+  /**
+   * Send pickup reminder email
+   */
+  async sendPickupReminder(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      bookingReference: bookingData.bookingReference,
+      carBrand: bookingData.carBrand,
+      carModel: bookingData.carModel,
+      pickupDate: bookingData.pickupDate,
+      pickupTime: bookingData.pickupTime,
+      pickupLocation: bookingData.pickupLocation
+    };
+
+    return this.sendEmail(
+      recipient.email, 
+      'pickupReminder',
+      templateData,
+      `Pickup Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
+    );
+  }
+
+  /**
+   * Send return reminder email
+   */
+  async sendReturnReminder(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      bookingReference: bookingData.bookingReference,
+      carBrand: bookingData.carBrand,
+      carModel: bookingData.carModel,
+      dropoffLocation: bookingData.dropoffLocation
+    };
+
+    return this.sendEmail(
+      recipient.email, 
+      'return-reminder',
+      templateData,
+      `Return Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
+    );
+  }
+}
+
+// Twilio WhatsApp Service Class
+export class TwilioWhatsAppService {
+  private static instance: TwilioWhatsAppService;
+
+  public static getInstance(): TwilioWhatsAppService {
+    if (!TwilioWhatsAppService.instance) {
+      TwilioWhatsAppService.instance = new TwilioWhatsAppService();
+    }
+    return TwilioWhatsAppService.instance;
+  }
+
+  private constructor() {
+    console.log('💬 TwilioWhatsAppService initialized');
   }
 
   /**
    * Send WhatsApp notification via Supabase Edge Function
    */
-  private async sendWhatsApp(
+  public async sendWhatsApp(
     to: string,
     templateSid: string,
     variables: Record<string, string>
@@ -82,40 +246,117 @@ export class TwilioNotificationService {
   }
 
   /**
-   * Send email notification via Supabase Edge Function
+   * Send booking confirmation WhatsApp
    */
-  private async sendEmail(
+  async sendBookingConfirmation(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData,
+    isHost: boolean = false
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.phone) {
+      return { success: false, error: 'No phone number provided' };
+    }
+
+    const templateSid = isHost ? 'BOOKING_REQUEST_TEMPLATE' : 'BOOKING_CONFIRMATION_TEMPLATE';
+    const variables = {
+      '1': recipient.name,
+      '2': bookingData.bookingReference,
+      '3': `${bookingData.carBrand} ${bookingData.carModel}`,
+      '4': bookingData.pickupDate,
+      '5': bookingData.pickupTime,
+      '6': bookingData.pickupLocation
+    };
+
+    return this.sendWhatsApp(recipient.phone, templateSid, variables);
+  }
+
+  /**
+   * Send pickup reminder WhatsApp
+   */
+  async sendPickupReminder(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.phone) {
+      return { success: false, error: 'No phone number provided' };
+    }
+
+    const variables = {
+      '1': recipient.name,
+      '2': bookingData.bookingReference,
+      '3': `${bookingData.carBrand} ${bookingData.carModel}`,
+      '4': bookingData.pickupDate,
+      '5': bookingData.pickupTime,
+      '6': bookingData.pickupLocation
+    };
+
+    return this.sendWhatsApp(recipient.phone, 'PICKUP_REMINDER_TEMPLATE', variables);
+  }
+
+  /**
+   * Send return reminder WhatsApp
+   */
+  async sendReturnReminder(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.phone) {
+      return { success: false, error: 'No phone number provided' };
+    }
+
+    const variables = {
+      '1': recipient.name,
+      '2': bookingData.bookingReference,
+      '3': `${bookingData.carBrand} ${bookingData.carModel}`,
+      '4': bookingData.dropoffLocation
+    };
+
+    return this.sendWhatsApp(recipient.phone, 'RETURN_REMINDER_TEMPLATE', variables);
+  }
+}
+
+// Unified Notification Service (Legacy - for backward compatibility)
+export class TwilioNotificationService {
+  private static instance: TwilioNotificationService;
+  private emailService: ResendEmailService;
+  private whatsappService: TwilioWhatsAppService;
+
+  public static getInstance(): TwilioNotificationService {
+    if (!TwilioNotificationService.instance) {
+      TwilioNotificationService.instance = new TwilioNotificationService();
+    }
+    return TwilioNotificationService.instance;
+  }
+
+  private constructor() {
+    this.emailService = ResendEmailService.getInstance();
+    this.whatsappService = TwilioWhatsAppService.getInstance();
+    console.log('🚀 TwilioNotificationService initialized (legacy compatibility mode)');
+  }
+
+  /**
+   * Send WhatsApp notification via Supabase Edge Function
+   * @deprecated Use TwilioWhatsAppService directly
+   */
+  public async sendWhatsApp(
+    to: string,
+    templateSid: string,
+    variables: Record<string, string>
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    return this.whatsappService.sendWhatsApp(to, templateSid, variables);
+  }
+
+  /**
+   * Send email notification via Resend
+   * @deprecated Use ResendEmailService directly
+   */
+  public async sendEmail(
     to: string,
     templateId: string,
     dynamicData: Record<string, unknown>,
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    try {
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: {
-          to,
-          templateId,
-          dynamicData: {
-            ...dynamicData,
-            companyName: 'MobiRides',
-            supportEmail: 'support@mobirides.com',
-            year: new Date().getFullYear()
-          },
-          subject
-        }
-      });
-
-      if (error) throw error;
-
-      console.log(`✅ Email sent successfully to ${to}`);
-      return { success: true, messageId: data.messageId };
-    } catch (error) {
-      console.error('❌ Email sending failed:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
+    return this.emailService.sendEmail(to, templateId, dynamicData, subject);
   }
 
   /**
@@ -312,6 +553,10 @@ export const triggerNavigationEvent = async (
     location
   });
 };
+
+// Export new services for direct usage
+export const resendEmailService = ResendEmailService.getInstance();
+export const twilioWhatsAppService = TwilioWhatsAppService.getInstance();
 
 // Helper function to create early return notification
 export const createEarlyReturnNotification = async (

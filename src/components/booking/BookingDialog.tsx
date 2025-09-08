@@ -311,8 +311,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         .single();
 
       // Import notification service
-      const { TwilioNotificationService } = await import("@/services/notificationService");
-      const notificationService = TwilioNotificationService.getInstance();
+
 
       // Prepare booking data for notifications
       const bookingNotificationData = {
@@ -329,50 +328,79 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`
       };
 
-      // Send Twilio notifications (non-blocking)
+      // Send notifications using new services (non-blocking)
+      const { ResendEmailService, TwilioWhatsAppService } = await import("@/services/notificationService");
+      const emailService = ResendEmailService.getInstance();
+      const whatsappService = TwilioWhatsAppService.getInstance();
+
       if (renterProfile) {
         try {
-          const renterNotificationResult = await notificationService.sendBookingConfirmation(
+          // Send email to renter
+          await emailService.sendBookingConfirmation(
             {
               id: session.session.user.id,
-              name: renterProfile.full_name || "Customer",
               email: session.session.user.email,
-              phone: renterProfile.phone_number,
-              whatsappEnabled: true, // Default to enabled for now
-              emailEnabled: true
+              name: renterProfile.full_name || "Customer"
             },
             bookingNotificationData
           );
           
-          console.log("✅ Renter Twilio notifications sent:", renterNotificationResult);
+          // Send WhatsApp to renter
+          await whatsappService.sendBookingConfirmation(
+            {
+              id: session.session.user.id,
+              phone: renterProfile.phone_number,
+              name: renterProfile.full_name || "Customer"
+            },
+            bookingNotificationData
+          );
+          
+          console.log("✅ Renter notifications sent successfully");
         } catch (error) {
-          console.error("❌ Failed to send renter Twilio notifications:", error);
+          console.error("❌ Failed to send renter notifications:", error);
         }
       }
 
       if (hostProfile) {
         try {
-          // Get host email from auth system
-          const { data: hostAuth } = await supabase.auth.admin.getUserById(car.owner_id);
+          // Get host email using Edge Function (safe server-side admin access)
+          const { data: emailResponse, error: emailError } = await supabase.functions.invoke('get-user-email', {
+            body: { userId: car.owner_id }
+          });
           
-          const hostNotificationResult = await notificationService.sendBookingConfirmation(
+          if (!emailError && emailResponse?.email) {
+            // Send email to host
+            await emailService.sendBookingConfirmation(
+              {
+                id: car.owner_id,
+                email: emailResponse.email,
+                name: hostProfile.full_name || "Host"
+              },
+              {
+                ...bookingNotificationData,
+                customerName: renterProfile?.full_name || "Customer"
+              },
+              true // isHost flag
+            );
+          }
+          
+          // Send WhatsApp to host
+          await whatsappService.sendBookingConfirmation(
             {
               id: car.owner_id,
-              name: hostProfile.full_name || "Host",
-              email: hostAuth.user?.email,
               phone: hostProfile.phone_number,
-              whatsappEnabled: true, // Default to enabled for now
-              emailEnabled: true
+              name: hostProfile.full_name || "Host"
             },
             {
               ...bookingNotificationData,
-              customerName: hostProfile.full_name || "Host" // Adjust message for host
-            }
+              customerName: renterProfile?.full_name || "Customer"
+            },
+            true // isHost flag
           );
           
-          console.log("✅ Host Twilio notifications sent:", hostNotificationResult);
+          console.log("✅ Host notifications sent successfully");
         } catch (error) {
-          console.error("❌ Failed to send host Twilio notifications:", error);
+          console.error("❌ Failed to send host notifications:", error);
         }
       }
 

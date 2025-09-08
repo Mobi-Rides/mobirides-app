@@ -1,18 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, Info, Edit, MapPin, Calendar, Share2, CalendarCheck, MessageSquare } from "lucide-react";
+import { CalendarDays, Info, Edit, MapPin, Calendar, CalendarCheck, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { ShareDropdown } from '@/components/shared/ShareDropdown';
 import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
+import { toast } from "sonner";
+
+
 
 interface CarHeaderProps {
   brand: string;
@@ -24,12 +22,12 @@ interface CarHeaderProps {
 }
 
 export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }: CarHeaderProps) => {
-  const { id } = useParams<{ id: string }>();
+  const { carId } = useParams<{ carId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isOwner, setIsOwner] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+
   const { createConversation, isCreatingConversation } = useOptimizedConversations();
   
   useEffect(() => {
@@ -41,7 +39,7 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData?.session?.user?.id;
         
-        if (!userId || !id) {
+        if (!userId || !carId) {
           setIsOwner(false);
           return;
         }
@@ -50,7 +48,7 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
         const { data: carData } = await supabase
           .from("cars")
           .select("owner_id")
-          .eq("id", id)
+          .eq("id", carId)
           .single();
           
         setIsOwner(carData?.owner_id === userId || ownerId === userId);
@@ -63,39 +61,20 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
     };
     
     checkOwnership();
-  }, [id]);
+  }, [carId]);
   
-  // Handle share functionality
-  const handleShare = async () => {
-    if (!id) return;
-    
-    // Create the full URL to the car listing
-    const shareUrl = `${window.location.origin}/cars/${id}`;
-    
-    try {
-      if (navigator.share) {
-        // Use Web Share API if available (mobile devices)
-        await navigator.share({
-          title: `${brand} ${model} (${year})`,
-          text: `Let's rent this ${brand} ${model} on Mobi Rides`,
-          url: shareUrl,
-        });
-        toast.success("Shared successfully");
-      } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        toast.success("Link copied to clipboard");
-        
-        // Reset copied state after 2 seconds
-        setTimeout(() => {
-          setCopied(false);
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error sharing:", error);
-      toast.error("Failed to share. Please try again.");
+  // Prepare share data for the ShareDropdown component
+  const getShareData = () => {
+    if (!carId) {
+      console.error('No car ID available for sharing');
+      return null;
     }
+
+    return {
+      title: `${brand} ${model} (${year})`,
+      text: `Let's rent this ${brand} ${model} on Mobi Rides`,
+      url: `${window.location.origin}/cars/${carId}`,
+    };
   };
 
   const handleContactOwner = async () => {
@@ -170,7 +149,7 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
               className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
               asChild
             >
-              <Link to={`/edit-car/${id}`}>
+              <Link to={`/edit-car/${carId}`}>
                 <Edit className="h-4 w-4 text-[#581CFA] dark:text-white" />
                 <span className="hidden md:inline-block">
                   <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
@@ -181,26 +160,14 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
             </Button>
           )}
   
-          <Popover open={copied} onOpenChange={setCopied}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
-                onClick={handleShare}
-              >
-                <Share2 className="h-4 w-4 text-[#581CFA] dark:text-white" />
-                <span className="hidden md:inline-block">
-                  <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
-                    Share
-                  </p>
-                </span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-2 text-sm">
-              Link copied!
-            </PopoverContent>
-          </Popover>
+          {getShareData() && (
+            <ShareDropdown
+              shareData={getShareData()!}
+              variant="outline"
+              size="icon"
+              showLabel={true}
+            />
+          )}
   
           <Button
             variant="outline"

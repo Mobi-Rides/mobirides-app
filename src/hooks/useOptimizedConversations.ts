@@ -211,19 +211,7 @@ export const useOptimizedConversations = (userId?: string) => {
         const convIds = userParticipations.map(p => p.conversation_id);
         console.log(`📊 [CONVERSATIONS] Found ${convIds.length} conversation IDs:`, convIds);
 
-        // Test simple query first to isolate the issue
-        console.log("🔍 [DEBUG] Testing simple profiles query...");
-        const { data: testProfile, error: testError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        console.log("🔍 [DEBUG] Simple profiles test result:", { testProfile, testError });
-        
-        if (testError) {
-          console.error("🚨 [DEBUG] Simple profiles query failed:", JSON.stringify(testError, null, 2));
-        }
+
 
         // Batch fetch all conversation data
         const batchStart = Date.now();
@@ -246,6 +234,7 @@ export const useOptimizedConversations = (userId?: string) => {
                 conversation_id,
                 user_id,
                 joined_at,
+                last_read_at,
                 profiles!conversation_participants_user_id_fkey (id, full_name, avatar_url)
               `)
               .in('conversation_id', convIds),
@@ -281,7 +270,7 @@ export const useOptimizedConversations = (userId?: string) => {
             
             supabase
               .from('conversation_participants')
-              .select('conversation_id, user_id, joined_at')
+              .select('conversation_id, user_id, joined_at, last_read_at')
               .in('conversation_id', convIds),
             
             supabase
@@ -370,6 +359,25 @@ export const useOptimizedConversations = (userId?: string) => {
           const conversationParticipants = participantsByConv.get(conv?.id) || [];
           console.log(`👥 [CONVERSATIONS] Conv ${conv?.id}: ${conversationParticipants.length} participants found`);
           
+          // Find current user's participation to get last_read_at
+          const currentUserParticipation = conversationParticipants.find((p: any) => p.user_id === userId);
+          const lastReadAt = currentUserParticipation?.last_read_at;
+          
+          // Calculate unread count
+          let unreadCount = 0;
+          if (latestMessages) {
+            const conversationMessages = latestMessages.filter((m: any) => m.conversation_id === conv.id);
+            if (lastReadAt) {
+              // Count messages created after last_read_at
+              unreadCount = conversationMessages.filter((m: any) => 
+                new Date(m.created_at) > new Date(lastReadAt) && m.sender_id !== userId
+              ).length;
+            } else {
+              // If never read, count all messages not sent by current user
+              unreadCount = conversationMessages.filter((m: any) => m.sender_id !== userId).length;
+            }
+          }
+          
           const participantUsers: User[] = (conversationParticipants || []).map((p: any) => ({
             id: p.user_id,
             name: p.profiles?.full_name || 'Unknown User',
@@ -394,7 +402,7 @@ export const useOptimizedConversations = (userId?: string) => {
               type: lastMessage.message_type as 'text' | 'image' | 'file',
               sender: lastMessage.sender
             } : undefined,
-            unreadCount: 0,
+            unreadCount: unreadCount,
             type: (conv.type || 'direct') as 'direct' | 'group',
             createdAt: new Date(conv.created_at || new Date().toISOString()),
             updatedAt: new Date(conv.updated_at || conv.last_message_at || new Date().toISOString())

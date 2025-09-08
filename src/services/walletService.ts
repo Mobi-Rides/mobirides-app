@@ -65,19 +65,7 @@ class WalletService {
     return result;
   }
 
-  async addTestFunds(hostId: string, amount: number) {
-    return walletOperations.addTestFunds(hostId, amount);
-  }
 
-  async resetWallet(hostId: string) {
-    return walletOperations.resetWallet(hostId);
-  }
 }
 
 export const walletService = new WalletService();
-
-// Development helpers - available in console
-if (typeof window !== 'undefined') {
-  (window as Window & { walletService?: typeof walletService }).walletService = walletService;
-  console.log('WalletService available in console for testing');
-}

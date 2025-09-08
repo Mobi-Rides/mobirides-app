@@ -43,75 +43,21 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
 
   const fetchHostCars = async (hostId: string) => {
     setLoading(true);
-    console.log("Fetching cars for host:", hostId);
     
     try {
-      // Step 1: Check if host has any cars at all
-      console.log("Step 1: Checking if host has any cars...");
-      const { data: allCars, error: allCarsError } = await supabase
-        .from("cars")
-        .select("*")
-        .eq("owner_id", hostId);
-      
-      console.log("All cars for host:", allCars);
-      if (allCarsError) console.error("Error fetching all cars:", allCarsError);
-
-      // Step 2: Check available cars only
-      console.log("Step 2: Checking available cars...");
-      const { data: availableCars, error: availableError } = await supabase
-        .from("cars")
-        .select("*")
-        .eq("owner_id", hostId)
-        .eq("is_available", true);
-      
-      console.log("Available cars for host:", availableCars);
-      if (availableError) console.error("Error fetching available cars:", availableError);
-
-      // Step 3: Check car images for available cars
-      if (availableCars && availableCars.length > 0) {
-        console.log("Step 3: Checking car images...");
-        const carIds = availableCars.map(car => car.id);
-        const { data: carImages, error: imagesError } = await supabase
-          .from("car_images")
-          .select("*")
-          .in("car_id", carIds);
-        
-        console.log("Car images:", carImages);
-        if (imagesError) console.error("Error fetching car images:", imagesError);
-      }
-
-      // Step 4: Try the original query with left join instead of inner join
-      console.log("Step 4: Trying with left join...");
+      // Fetch available cars directly from cars table
       const { data, error } = await supabase
         .from("cars")
-        .select(`
-          *,
-          car_images(
-            image_url,
-            is_primary
-          )
-        `)
+        .select("*")
         .eq("owner_id", hostId)
         .eq("is_available", true);
 
       if (error) {
-        console.error("Error fetching host cars with left join:", error);
+        console.error("Error fetching host cars:", error);
         return;
       }
 
-      console.log("Cars with left join:", data);
-
-      // Transform the data to flatten the primary image
-      const transformedCars = data?.map(car => {
-        const primaryImage = car.car_images?.find(img => img.is_primary);
-        return {
-          ...car,
-          image_url: primaryImage?.image_url || car.car_images?.[0]?.image_url || car.image_url
-        };
-      }) || [];
-
-      console.log("Transformed cars:", transformedCars);
-      setCars(transformedCars);
+      setCars(data || []);
     } catch (error) {
       console.error("Error in fetchHostCars:", error);
     } finally {
@@ -120,10 +66,27 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
   };
 
   const getCarImageUrl = (imageUrl: string | null) => {
-    if (!imageUrl) return "/placeholder.svg";
-    return supabase.storage
-      .from("car-images")
-      .getPublicUrl(imageUrl).data.publicUrl;
+    if (!imageUrl) {
+      console.warn("No image URL provided, using placeholder");
+      return "/placeholder.svg";
+    }
+    
+    try {
+      // Check if imageUrl is already a full URL
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+      }
+      
+      // If it's just a storage path, generate the public URL
+      const publicUrl = supabase.storage
+        .from("car-images")
+        .getPublicUrl(imageUrl).data.publicUrl;
+      
+      return publicUrl;
+    } catch (error) {
+      console.error("Error processing image URL:", error, "Original URL:", imageUrl);
+      return "/placeholder.svg";
+    }
   };
 
   const getHostAvatarUrl = () => {

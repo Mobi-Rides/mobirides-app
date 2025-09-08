@@ -159,7 +159,7 @@ export class NotificationMetadataHandler {
 
     switch (true) {
       case this.isBookingType(type):
-        if (type.includes('request') && !notification.is_read) {
+        if (type === 'booking_request_received' && !notification.is_read) {
           actions.push(
             { label: 'Accept', action: 'accept_booking', variant: 'default', icon: 'Check' },
             { label: 'Decline', action: 'decline_booking', variant: 'outline', icon: 'X' }
