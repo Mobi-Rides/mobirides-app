@@ -30,9 +30,11 @@ export class PushNotificationService {
     payload: PushNotificationPayload
   ): Promise<{ success: boolean; messageIds?: string[]; error?: string }> {
     try {
-      // Get user's push subscriptions using raw SQL to avoid type issues
+      // Get user's push subscriptions using direct SQL query
       const { data: subscriptions, error: fetchError } = await supabase
-        .rpc('get_user_push_subscriptions', { user_id: userId });
+        .from('push_subscriptions' as any)
+        .select('*')
+        .eq('user_id', userId);
 
       if (fetchError) {
         console.error('Error fetching push subscriptions:', fetchError);
@@ -47,7 +49,7 @@ export class PushNotificationService {
       const results = [];
       
       // Send push notification to all user's devices
-      for (const subscription of subscriptions) {
+      for (const subscription of subscriptions as any[]) {
         try {
           const { data, error } = await supabase.functions.invoke('send-push-notification', {
             body: {

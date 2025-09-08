@@ -27,10 +27,14 @@ export class NotificationService {
       // Send push notification
       await pushNotificationService.sendWalletNotification(hostId, { type, amount });
 
-      // Get user for email notification (using auth.users since profiles might not have email)
+      // Get user for email notification (using auth.users to get email)
       const { data: { user } } = await supabase.auth.getUser();
-      const userEmail = user?.email;
+      if (!user || user.id !== hostId) {
+        // If we can't get the authenticated user, try to get user from profile (though it might not have email)
+        console.log('Could not get authenticated user for email notification');
+      }
 
+      const userEmail = user?.email;
       if (userEmail) {
         const emailService = ResendEmailService.getInstance();
         await emailService.sendEmail(

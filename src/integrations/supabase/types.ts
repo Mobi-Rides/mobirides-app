@@ -2517,6 +2517,16 @@ export type Database = {
           type: Database["public"]["Enums"]["notification_type"]
         }[]
       }
+      get_user_push_subscriptions: {
+        Args: { user_id: string }
+        Returns: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+        }[]
+      }
       get_user_review_stats: {
         Args: { user_uuid: string }
         Returns: Json
@@ -2557,6 +2567,15 @@ export type Database = {
       }
       migrate_legacy_messages_to_conversations: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      save_push_subscription: {
+        Args: {
+          auth_key: string
+          endpoint: string
+          p256dh_key: string
+          user_id: string
+        }
         Returns: undefined
       }
       send_conversation_message: {
