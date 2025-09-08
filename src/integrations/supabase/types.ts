@@ -144,6 +144,39 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          token_hash: string
+          token_type: string
+          updated_at: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          token_hash: string
+          token_type: string
+          updated_at?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          token_hash?: string
+          token_type?: string
+          updated_at?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           actual_end_date: string | null
@@ -538,6 +571,306 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      device_tokens: {
+        Row: {
+          created_at: string | null
+          device_info: Json | null
+          device_token: string
+          device_type: string
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: Json | null
+          device_token: string
+          device_type: string
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: Json | null
+          device_token?: string
+          device_type?: string
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_analytics_daily: {
+        Row: {
+          average_latency_ms: number | null
+          bounce_rate: number | null
+          click_rate: number | null
+          complaint_rate: number | null
+          created_at: string | null
+          date: string
+          delivery_rate: number | null
+          id: string
+          open_rate: number | null
+          provider: string
+          template_id: string | null
+          total_bounced: number | null
+          total_clicked: number | null
+          total_complained: number | null
+          total_delivered: number | null
+          total_failed: number | null
+          total_opened: number | null
+          total_sent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          average_latency_ms?: number | null
+          bounce_rate?: number | null
+          click_rate?: number | null
+          complaint_rate?: number | null
+          created_at?: string | null
+          date: string
+          delivery_rate?: number | null
+          id?: string
+          open_rate?: number | null
+          provider: string
+          template_id?: string | null
+          total_bounced?: number | null
+          total_clicked?: number | null
+          total_complained?: number | null
+          total_delivered?: number | null
+          total_failed?: number | null
+          total_opened?: number | null
+          total_sent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          average_latency_ms?: number | null
+          bounce_rate?: number | null
+          click_rate?: number | null
+          complaint_rate?: number | null
+          created_at?: string | null
+          date?: string
+          delivery_rate?: number | null
+          id?: string
+          open_rate?: number | null
+          provider?: string
+          template_id?: string | null
+          total_bounced?: number | null
+          total_clicked?: number | null
+          total_complained?: number | null
+          total_delivered?: number | null
+          total_failed?: number | null
+          total_opened?: number | null
+          total_sent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_delivery_logs: {
+        Row: {
+          bounced_at: string | null
+          clicked_at: string | null
+          complained_at: string | null
+          correlation_id: string | null
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          message_id: string
+          metadata: Json | null
+          opened_at: string | null
+          provider: string
+          recipient_email: string
+          retry_count: number | null
+          sender_email: string
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bounced_at?: string | null
+          clicked_at?: string | null
+          complained_at?: string | null
+          correlation_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_id: string
+          metadata?: Json | null
+          opened_at?: string | null
+          provider: string
+          recipient_email: string
+          retry_count?: number | null
+          sender_email: string
+          sent_at?: string | null
+          status: string
+          subject: string
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bounced_at?: string | null
+          clicked_at?: string | null
+          complained_at?: string | null
+          correlation_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          provider?: string
+          recipient_email?: string
+          retry_count?: number | null
+          sender_email?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_performance_metrics: {
+        Row: {
+          circuit_breaker_state: string | null
+          created_at: string | null
+          error_message: string | null
+          error_type: string | null
+          fallback_used: boolean | null
+          id: string
+          latency_ms: number
+          operation_type: string
+          provider: string
+          request_size_bytes: number | null
+          response_size_bytes: number | null
+          success: boolean
+        }
+        Insert: {
+          circuit_breaker_state?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          error_type?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          latency_ms: number
+          operation_type: string
+          provider: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          success: boolean
+        }
+        Update: {
+          circuit_breaker_state?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          error_type?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          latency_ms?: number
+          operation_type?: string
+          provider?: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          success?: boolean
+        }
+        Relationships: []
+      }
+      email_suppressions: {
+        Row: {
+          created_at: string | null
+          email_address: string
+          expires_at: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          provider: string
+          reason: string | null
+          suppressed_at: string | null
+          suppression_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_address: string
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          provider: string
+          reason?: string | null
+          suppressed_at?: string | null
+          suppression_type: string
+        }
+        Update: {
+          created_at?: string | null
+          email_address?: string
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          provider?: string
+          reason?: string | null
+          suppressed_at?: string | null
+          suppression_type?: string
+        }
+        Relationships: []
+      }
+      email_webhook_events: {
+        Row: {
+          created_at: string | null
+          event_timestamp: string
+          event_type: string
+          id: string
+          message_id: string
+          processed: boolean | null
+          processing_error: string | null
+          provider: string
+          raw_payload: Json
+          recipient_email: string
+          webhook_received_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_timestamp: string
+          event_type: string
+          id?: string
+          message_id: string
+          processed?: boolean | null
+          processing_error?: string | null
+          provider: string
+          raw_payload: Json
+          recipient_email: string
+          webhook_received_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_timestamp?: string
+          event_type?: string
+          id?: string
+          message_id?: string
+          processed?: boolean | null
+          processing_error?: string | null
+          provider?: string
+          raw_payload?: Json
+          recipient_email?: string
+          webhook_received_at?: string | null
+        }
+        Relationships: []
       }
       file_encryption: {
         Row: {
@@ -1275,14 +1608,19 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_locked_until: string | null
           avatar_url: string | null
           created_at: string
+          email_confirmed: boolean | null
+          email_confirmed_at: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          failed_login_attempts: number | null
           full_name: string | null
           id: string
           id_photo_url: string | null
           is_sharing_location: boolean | null
+          last_login_attempt: string | null
           latitude: number | null
           location_sharing_scope: string | null
           longitude: number | null
@@ -1291,14 +1629,19 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_locked_until?: string | null
           avatar_url?: string | null
           created_at?: string
+          email_confirmed?: boolean | null
+          email_confirmed_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          failed_login_attempts?: number | null
           full_name?: string | null
           id: string
           id_photo_url?: string | null
           is_sharing_location?: boolean | null
+          last_login_attempt?: string | null
           latitude?: number | null
           location_sharing_scope?: string | null
           longitude?: number | null
@@ -1307,20 +1650,142 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_locked_until?: string | null
           avatar_url?: string | null
           created_at?: string
+          email_confirmed?: boolean | null
+          email_confirmed_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          failed_login_attempts?: number | null
           full_name?: string | null
           id?: string
           id_photo_url?: string | null
           is_sharing_location?: boolean | null
+          last_login_attempt?: string | null
           latitude?: number | null
           location_sharing_scope?: string | null
           longitude?: number | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      provider_health_metrics: {
+        Row: {
+          average_latency_ms: number | null
+          circuit_breaker_state: string | null
+          consecutive_failures: number | null
+          created_at: string | null
+          failed_requests: number | null
+          health_check_status: boolean | null
+          id: string
+          last_failure_at: string | null
+          last_success_at: string | null
+          provider: string
+          success_rate: number | null
+          successful_requests: number | null
+          total_requests: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          average_latency_ms?: number | null
+          circuit_breaker_state?: string | null
+          consecutive_failures?: number | null
+          created_at?: string | null
+          failed_requests?: number | null
+          health_check_status?: boolean | null
+          id?: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          provider: string
+          success_rate?: number | null
+          successful_requests?: number | null
+          total_requests?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          average_latency_ms?: number | null
+          circuit_breaker_state?: string | null
+          consecutive_failures?: number | null
+          created_at?: string | null
+          failed_requests?: number | null
+          health_check_status?: boolean | null
+          id?: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          provider?: string
+          success_rate?: number | null
+          successful_requests?: number | null
+          total_requests?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          action: string | null
+          attempts: number | null
+          created_at: string | null
+          endpoint: string
+          expires_at: string | null
+          id: string
+          identifier: string
+          updated_at: string | null
+          window_start: string | null
+        }
+        Insert: {
+          action?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          endpoint: string
+          expires_at?: string | null
+          id?: string
+          identifier: string
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          action?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          endpoint?: string
+          expires_at?: string | null
+          id?: string
+          identifier?: string
+          updated_at?: string | null
+          window_start?: string | null
         }
         Relationships: []
       }
@@ -1723,7 +2188,40 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      email_analytics_summary: {
+        Row: {
+          avg_bounce_rate: number | null
+          avg_click_rate: number | null
+          avg_complaint_rate: number | null
+          avg_delivery_rate: number | null
+          avg_latency_ms: number | null
+          avg_open_rate: number | null
+          month: string | null
+          provider: string | null
+          total_bounced: number | null
+          total_clicked: number | null
+          total_complained: number | null
+          total_delivered: number | null
+          total_failed: number | null
+          total_opened: number | null
+          total_sent: number | null
+        }
+        Relationships: []
+      }
+      provider_performance_summary: {
+        Row: {
+          average_latency_ms: number | null
+          circuit_breaker_state: string | null
+          consecutive_failures: number | null
+          health_check_status: boolean | null
+          last_failure_at: string | null
+          last_success_at: string | null
+          provider: string | null
+          recent_events_24h: number | null
+          success_rate: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       analyze_conversation_query_performance: {
@@ -1784,6 +2282,14 @@ export type Database = {
           expired_by_timestamp: number
           total_deleted: number
         }[]
+      }
+      cleanup_expired_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_rate_limits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       count_unread_notifications: {
         Args: Record<PropertyKey, never>

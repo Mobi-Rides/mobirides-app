@@ -27,17 +27,14 @@ export class NotificationService {
       // Send push notification
       await pushNotificationService.sendWalletNotification(hostId, { type, amount });
 
-      // Get user email for email notification
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', hostId)
-        .single();
+      // Get user for email notification (using auth.users since profiles might not have email)
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email;
 
-      if (profile?.email) {
+      if (userEmail) {
         const emailService = ResendEmailService.getInstance();
         await emailService.sendEmail(
-          profile.email,
+          userEmail,
           'wallet-notification',
           {
             type: type,

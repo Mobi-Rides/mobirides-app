@@ -30,11 +30,9 @@ export class PushNotificationService {
     payload: PushNotificationPayload
   ): Promise<{ success: boolean; messageIds?: string[]; error?: string }> {
     try {
-      // Get user's push subscriptions
+      // Get user's push subscriptions using raw SQL to avoid type issues
       const { data: subscriptions, error: fetchError } = await supabase
-        .from('push_subscriptions')
-        .select('*')
-        .eq('user_id', userId);
+        .rpc('get_user_push_subscriptions', { user_id: userId });
 
       if (fetchError) {
         console.error('Error fetching push subscriptions:', fetchError);

@@ -63,17 +63,13 @@ async function saveSubscriptionToDatabase(subscription: PushSubscription) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase
-      .from('push_subscriptions')
-      .upsert({
-        user_id: user.id,
-        endpoint: subscription.endpoint,
-        p256dh: subscription.toJSON().keys?.p256dh,
-        auth: subscription.toJSON().keys?.auth,
-        created_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id'
-      });
+    // Use RPC function to handle the insert since table types aren't updated yet
+    const { error } = await supabase.rpc('save_push_subscription', {
+      user_id: user.id,
+      endpoint: subscription.endpoint,
+      p256dh_key: subscription.toJSON().keys?.p256dh || '',
+      auth_key: subscription.toJSON().keys?.auth || ''
+    });
 
     if (error) {
       console.error('Failed to save push subscription:', error);
