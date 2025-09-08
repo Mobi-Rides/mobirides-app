@@ -18,15 +18,33 @@ export async function subscribeToPush() {
     try {
       const reg = await navigator.serviceWorker.ready;
       
-      // Get VAPID public key from environment or use default for development
-      const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa40HI0DLLaMgoIFakVLMFGqbNWfyHXisoWvSSfHZsF_ES5ej36xmd5-5qBX8w';
+      // Get VAPID public key from backend
+      const { data: vapidKey, error } = await fetch('/api/vapid-public-key').then(res => res.json());
+      if (error || !vapidKey) {
+        // Fallback to environment variable for development
+        const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa40HI0DLLaMgoIFakVLMFGqbNWfyHXisoWvSSfHZsF_ES5ej36xmd5-5qBX8w';
+        
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+        
+        // Save subscription to database
+        await saveSubscriptionToDatabase(subscription);
+        
+        console.log('Push subscription created (fallback):', JSON.stringify(subscription));
+        toast.success('Push notifications enabled!');
+        return subscription;
+      }
       
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
       });
       
-      // Save subscription for this user
+      // Save subscription to database
+      await saveSubscriptionToDatabase(subscription);
+      
       console.log('Push subscription created:', JSON.stringify(subscription));
       toast.success('Push notifications enabled!');
       
@@ -35,6 +53,33 @@ export async function subscribeToPush() {
       console.error('Failed to subscribe to push notifications:', error);
       toast.error('Failed to enable push notifications');
     }
+  }
+}
+
+async function saveSubscriptionToDatabase(subscription: PushSubscription) {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert({
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: subscription.toJSON().keys?.p256dh,
+        auth: subscription.toJSON().keys?.auth,
+        created_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (error) {
+      console.error('Failed to save push subscription:', error);
+    }
+  } catch (error) {
+    console.error('Error saving subscription:', error);
   }
 }
 
