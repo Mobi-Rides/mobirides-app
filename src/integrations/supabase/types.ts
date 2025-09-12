@@ -2503,6 +2503,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_email_for_notification: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
       get_user_notifications: {
         Args: { p_only_unread?: boolean; p_page?: number; p_page_size?: number }
         Returns: {

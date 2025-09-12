@@ -93,20 +93,34 @@ export class CompleteNotificationService {
     type: NotificationType
   ): Promise<void> {
     try {
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', userId)
-        .single();
+      // Get user email and profile data
+      const [emailResponse, profileResponse] = await Promise.all([
+        supabase.rpc('get_user_email_for_notification', { user_uuid: userId }),
+        supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', userId)
+          .single()
+      ]);
 
-      // For now, skip email notifications if we can't get user email easily
-      // This will be handled by a separate email notification system
-      console.log('Email notification queued for user:', userId, 'Type:', type);
-      
-      // TODO: Implement proper email lookup via RPC or edge function
-      // The email templates are now properly configured in the resend-service
-      
+      if (emailResponse.data && emailResponse.data.length > 0) {
+        const emailService = ResendEmailService.getInstance();
+        const templateId = this.getEmailTemplateId(type);
+        
+        await emailService.sendEmail(
+          emailResponse.data,
+          templateId,
+          {
+            name: profileResponse.data?.full_name || 'User',
+            title,
+            description,
+            type,
+            timestamp: new Date().toLocaleDateString(),
+            actionUrl: `${window.location.origin}/notifications`
+          },
+          title
+        );
+      }
     } catch (error) {
       console.error('Failed to send email notification:', error);
     }
