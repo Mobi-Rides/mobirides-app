@@ -10,8 +10,10 @@ const corsHeaders = {
 
 interface EmailRequest {
   to: string;
-  subject: string;
-  html: string;
+  subject?: string;
+  html?: string;
+  templateId?: string;
+  dynamicData?: Record<string, unknown>;
   type?: string;
   user_name?: string;
 }
@@ -23,16 +25,31 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, subject, html, type, user_name }: EmailRequest = await req.json();
+    const { to, subject, html, templateId, dynamicData, type, user_name }: EmailRequest = await req.json();
 
-    console.log(`Sending ${type || 'notification'} email to ${to}`);
+    console.log(`Sending ${type || 'notification'} email to ${to}`, templateId ? `using template: ${templateId}` : 'using raw HTML');
 
-    const emailResponse = await resend.emails.send({
+    // Prepare email payload
+    const emailPayload: any = {
       from: "MobiRides <noreply@mobirides.com>",
       to: [to],
-      subject: subject,
-      html: html,
-    });
+    };
+
+    // Use template if provided, otherwise use raw HTML
+    if (templateId && dynamicData) {
+      emailPayload.template = templateId;
+      emailPayload.template_data = dynamicData;
+      if (subject) {
+        emailPayload.subject = subject;
+      }
+    } else if (html) {
+      emailPayload.html = html;
+      emailPayload.subject = subject || "MobiRides Notification";
+    } else {
+      throw new Error("Either templateId with dynamicData or html content must be provided");
+    }
+
+    const emailResponse = await resend.emails.send(emailPayload);
 
     console.log("Email sent successfully:", emailResponse);
 
