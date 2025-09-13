@@ -1,19 +1,32 @@
 import React, { useState } from 'react';
-import { Monitor } from 'lucide-react';
+import { Monitor, ArrowLeft } from 'lucide-react';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const DisplaySettingsPage = () => {
   const [theme, setTheme] = useState('system');
   const [language, setLanguage] = useState('en');
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY');
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-4 max-w-5xl mx-auto">
       <SettingsSidebar activeItem="display" />
       <main className="flex-1">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Monitor className="w-5 h-5" /> Display Settings
-        </h2>
+        <div className="flex items-center gap-3 mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/profile')}
+            className="md:hidden"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Monitor className="w-5 h-5" /> Display Settings
+          </h2>
+        </div>
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow border p-6">
           <div className="space-y-6">
             <div>

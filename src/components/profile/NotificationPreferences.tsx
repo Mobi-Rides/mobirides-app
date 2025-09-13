@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Bell, Info } from 'lucide-react';
+import { Bell, Info, ArrowLeft } from 'lucide-react';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 // Car rental-specific notification groups and notifications
 const notificationGroups = [
@@ -96,6 +98,7 @@ notificationGroups.forEach(group => {
 const NotificationPreferences = () => {
   const [prefs, setPrefs] = useState(defaultPrefs);
   const [saved, setSaved] = useState(false);
+  const navigate = useNavigate();
 
   const handleToggle = (notifKey, channel) => {
     setPrefs(prev => ({
@@ -117,7 +120,19 @@ const NotificationPreferences = () => {
       <SettingsSidebar activeItem="notifications" />
       {/* Main content */}
       <main className="flex-1">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Bell className="w-5 h-5" /> Notification Preferences</h2>
+        <div className="flex items-center gap-3 mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/profile')}
+            className="md:hidden"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Bell className="w-5 h-5" /> Notification Preferences
+          </h2>
+        </div>
         {notificationGroups.map(group => (
           <div key={group.key} className="mb-8">
             <h3 className="font-semibold mb-2 text-lg">{group.label}</h3>
