@@ -1,14 +1,20 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useGuideContent } from "@/hooks/useGuideContent";
 
 const HelpSection = () => {
   const navigate = useNavigate();
   const { role, section } = useParams<{ role: string; section: string }>();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+
+  const { data: guideContent, isLoading, error } = useGuideContent(
+    role as 'renter' | 'host', 
+    section || ''
+  );
 
   const toggleStep = (stepIndex: number) => {
     setCompletedSteps(prev => 
@@ -18,133 +24,30 @@ const HelpSection = () => {
     );
   };
 
-  const renterContent: Record<string, any> = {
-    'getting-started': {
-      title: 'Getting Started as a Renter',
-      description: 'Complete guide to setting up your account and making your first booking',
-      readTime: '15 min',
-      steps: [
-        {
-          title: 'Create Your Account',
-          content: 'Sign up with your email and create a secure password. You\'ll receive a confirmation email to verify your account.',
-          action: 'Go to Sign Up'
-        },
-        {
-          title: 'Complete Your Profile',
-          content: 'Add your personal information, profile photo, and contact details. This helps hosts trust you and improves your booking success rate.',
-          action: 'Edit Profile'
-        },
-        {
-          title: 'Verify Your Identity',
-          content: 'Upload a government-issued ID and take a selfie for verification. This is required before you can make bookings.',
-          action: 'Start Verification'
-        },
-        {
-          title: 'Add Your Driver\'s License',
-          content: 'Upload photos of your valid driver\'s license. Make sure it\'s not expired and clearly visible.',
-          action: 'Upload License'
-        },
-        {
-          title: 'Search for Cars',
-          content: 'Use our search filters to find cars by location, dates, price range, and vehicle type. Save your favorites for later.',
-          action: 'Browse Cars'
-        }
-      ]
-    },
-    'verification': {
-      title: 'Account Verification',
-      description: 'Step-by-step guide to complete identity and license verification',
-      readTime: '10 min',
-      steps: [
-        {
-          title: 'Identity Verification Process',
-          content: 'We use secure verification to ensure safety for all users. The process typically takes 2-4 hours to review.',
-          action: null
-        },
-        {
-          title: 'Required Documents',
-          content: 'You\'ll need: Government-issued photo ID (passport, national ID, or driver\'s license) and a clear selfie photo.',
-          action: null
-        },
-        {
-          title: 'Upload Your Documents',
-          content: 'Take clear photos of your ID - ensure all text is readable and there\'s no glare. Your selfie should clearly show your face.',
-          action: 'Start Upload'
-        }
-      ]
-    },
-    'booking': {
-      title: 'Finding & Booking Cars',
-      description: 'Learn how to search, filter, and successfully book vehicles',
-      readTime: '20 min',
-      steps: [
-        {
-          title: 'Using Search Filters',
-          content: 'Filter by location, pickup/return dates, price range, transmission type, and special features like GPS or child seats.',
-          action: null
-        },
-        {
-          title: 'Reading Car Listings',
-          content: 'Check photos, description, host reviews, availability calendar, and included features. Pay attention to pickup location and house rules.',
-          action: null
-        },
-        {
-          title: 'Making a Booking Request',
-          content: 'Select your dates and times, review the total cost including insurance, and send a booking request with a personal message to the host.',
-          action: null
-        },
-        {
-          title: 'Waiting for Approval',
-          content: 'Hosts have 24 hours to respond. You\'ll receive notifications via email and in-app when they accept or decline.',
-          action: null
-        },
-        {
-          title: 'Payment and Confirmation',
-          content: 'Once approved, complete payment securely. You\'ll receive booking confirmation with pickup details and host contact information.',
-          action: null
-        }
-      ]
-    }
-  };
-
-  const hostContent: Record<string, any> = {
-    'getting-started': {
-      title: 'Getting Started as a Host',
-      description: 'Complete guide to listing your car and earning money',
-      readTime: '20 min',
-      steps: [
-        {
-          title: 'Complete Host Profile',
-          content: 'Add a professional profile photo, bio, and contact information. This builds trust with potential renters.',
-          action: 'Edit Profile'
-        },
-        {
-          title: 'List Your First Car',
-          content: 'Upload high-quality photos, write a detailed description, set your pricing, and specify pickup location.',
-          action: 'Add Car'
-        },
-        {
-          title: 'Set Availability & Rules',
-          content: 'Configure your calendar, set house rules, minimum rental periods, and advance notice requirements.',
-          action: null
-        },
-        {
-          title: 'Understand Pricing',
-          content: 'Learn about MobiRides\' 15% commission, how to set competitive prices, and when you get paid.',
-          action: 'View Earnings'
-        }
-      ]
-    }
-  };
-
-  const content = role === 'renter' ? renterContent : hostContent;
-  const sectionData = content[section || ''];
-
-  if (!sectionData) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Section not found</h1>
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading help content...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !guideContent) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">
+            {error ? 'Error loading content' : 'Section not found'}
+          </h1>
+          <p className="text-muted-foreground">
+            {error 
+              ? 'Failed to load help content. Please try again.' 
+              : 'The help section you\'re looking for doesn\'t exist.'
+            }
+          </p>
           <Button onClick={() => navigate(`/help/${role}`)}>
             Back to Help Center
           </Button>
@@ -166,10 +69,10 @@ const HelpSection = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">{sectionData.title}</h1>
+            <h1 className="text-lg font-semibold">{guideContent.title}</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-3 w-3" />
-              <span>{sectionData.readTime}</span>
+              <span>{guideContent.read_time}</span>
             </div>
           </div>
         </div>
@@ -177,18 +80,18 @@ const HelpSection = () => {
 
       <main className="p-4 space-y-6">
         <div className="space-y-2">
-          <p className="text-muted-foreground">{sectionData.description}</p>
-          {sectionData.steps && (
+          <p className="text-muted-foreground">{guideContent.description}</p>
+          {guideContent.steps && (
             <div className="flex items-center gap-2 text-sm">
               <Badge variant="secondary">
-                {completedSteps.length} of {sectionData.steps.length} completed
+                {completedSteps.length} of {guideContent.steps.length} completed
               </Badge>
             </div>
           )}
         </div>
 
         <div className="space-y-4">
-          {sectionData.steps?.map((step: any, index: number) => (
+          {guideContent.steps?.map((step, index: number) => (
             <Card key={index} className="overflow-hidden">
               <CardContent className="p-0">
                 <div className="flex items-start gap-3 p-4">
@@ -211,7 +114,7 @@ const HelpSection = () => {
                     </p>
                     {step.action && (
                       <Button size="sm" variant="outline" className="mt-3">
-                        {step.action}
+                        {typeof step.action === 'object' ? step.action.label : step.action}
                       </Button>
                     )}
                   </div>

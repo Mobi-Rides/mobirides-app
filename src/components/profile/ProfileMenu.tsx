@@ -102,8 +102,8 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     },
     {
       icon: Bell,
-      label: "Notifications",
-      onClick: () => navigate("/notifications"),
+      label: "Notification Preferences",
+      onClick: () => navigate("/notification-preferences"),
     },
     {
       icon: Shield,

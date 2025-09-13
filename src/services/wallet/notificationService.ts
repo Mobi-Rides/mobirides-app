@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { ResendEmailService } from '../notificationService';
+import { pushNotificationService } from '../pushNotificationService';
 
 export class NotificationService {
   async createWalletNotification(
@@ -9,7 +11,7 @@ export class NotificationService {
     description?: string
   ) {
     try {
-      // Use the new database function for wallet notifications
+      // Create database notification
       const { error } = await supabase.rpc('create_wallet_notification', {
         p_host_id: hostId,
         p_type: type,
@@ -19,6 +21,32 @@ export class NotificationService {
 
       if (error) {
         console.error("NotificationService: Error creating wallet notification:", error);
+        return;
+      }
+
+      // Send push notification
+      await pushNotificationService.sendWalletNotification(hostId, { type, amount });
+
+      // Get user for email notification (using auth.users to get email)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || user.id !== hostId) {
+        // If we can't get the authenticated user, try to get user from profile (though it might not have email)
+        console.log('Could not get authenticated user for email notification');
+      }
+
+      const userEmail = user?.email;
+      if (userEmail) {
+        const emailService = ResendEmailService.getInstance();
+        await emailService.sendEmail(
+          userEmail,
+          'wallet-notification',
+          {
+            type: type,
+            amount: amount.toFixed(2),
+            description: description || `Wallet ${type} of P${amount.toFixed(2)}`
+          },
+          `Wallet ${type.charAt(0).toUpperCase() + type.slice(1)} - MobiRides`
+        );
       }
     } catch (error) {
       console.error("NotificationService: Unexpected error creating wallet notification:", error);

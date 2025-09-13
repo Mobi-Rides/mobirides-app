@@ -69,6 +69,7 @@ export class ResendEmailService {
           subject,
           templateId,
           dynamicData,
+          type: templateId
         },
       });
 
@@ -78,7 +79,7 @@ export class ResendEmailService {
       }
 
       if (data.error) {
-        console.error("Error from send-email function:", data.error);
+        console.error("Error from resend-service function:", data.error);
         return { success: false, error: data.error };
       }
 

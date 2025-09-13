@@ -73,6 +73,11 @@ const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
 
+// Settings pages
+const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
+const DisplaySettingsPage = lazy(() => import("@/pages/DisplaySettingsPage"));
+const SecuritySettingsPage = lazy(() => import("@/pages/SecuritySettingsPage"));
+
 // Admin pages
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
@@ -211,6 +216,27 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <NotificationPreferencesPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/settings/profile" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <ProfileSettingsPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/settings/display" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <DisplaySettingsPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/settings/security" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <SecuritySettingsPage />
                             </ProtectedRoute>
                           </Suspense>
                         } />
