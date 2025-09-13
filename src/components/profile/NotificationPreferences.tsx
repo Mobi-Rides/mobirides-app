@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, Info } from 'lucide-react';
+import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 
 // Car rental-specific notification groups and notifications
 const notificationGroups = [
@@ -113,18 +114,7 @@ const NotificationPreferences = () => {
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-4 max-w-5xl mx-auto">
-      {/* Sidebar (static for demo) */}
-      <aside className="hidden md:block w-56 flex-shrink-0">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow border p-4">
-          <h3 className="font-semibold mb-4">Settings</h3>
-          <ul className="space-y-2 text-sm">
-            <li className="text-gray-700 dark:text-gray-200">Profile</li>
-            <li className="text-gray-700 dark:text-gray-200">Display</li>
-            <li className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded px-2 py-1 font-semibold">Notifications</li>
-            <li className="text-gray-700 dark:text-gray-200">Security</li>
-          </ul>
-        </div>
-      </aside>
+      <SettingsSidebar activeItem="notifications" />
       {/* Main content */}
       <main className="flex-1">
         <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Bell className="w-5 h-5" /> Notification Preferences</h2>
