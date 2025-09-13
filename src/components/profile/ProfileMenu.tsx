@@ -88,7 +88,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
 
   const vehicleAndBookingsItems: MenuItem[] = [...baseMenuItems.slice(1), ...hostOnlyItems, {
     icon: Bell,
-    label: "Notification Settings",
+    label: "Notifications",
     onClick: () => navigate("/notifications"),
     description: "View your latest notifications",
     animate: true,
