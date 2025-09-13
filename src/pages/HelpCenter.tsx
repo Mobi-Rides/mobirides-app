@@ -74,7 +74,7 @@ const HelpCenter = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/profile')}
             className="p-2"
           >
             <ArrowLeft className="h-4 w-4" />
