@@ -15,15 +15,66 @@ export async function requestNotificationPermission() {
 
 export async function subscribeToPush() {
   if ('serviceWorker' in navigator) {
-    const reg = await navigator.serviceWorker.ready;
-    const subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      // Replace with your VAPID public key (Uint8Array)
-      applicationServerKey: urlBase64ToUint8Array('<YOUR_PUBLIC_VAPID_KEY_BASE64>'),
-    });
-    // Send subscription to your backend to store for this user
-    console.log('Push subscription:', JSON.stringify(subscription));
-    // Example: await fetch('/api/save-subscription', { method: 'POST', body: JSON.stringify(subscription) });
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      
+      // Get VAPID public key from backend
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: response, error } = await supabase.functions.invoke('get-vapid-key');
+      
+      if (error || !response?.vapidKey) {
+        console.error('Failed to get VAPID key:', error);
+        toast.error('Failed to configure push notifications');
+        return;
+      }
+      
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(response.vapidKey),
+      });
+      
+      // Save subscription to database
+      await saveSubscriptionToDatabase(subscription);
+      
+      console.log('Push subscription created:', JSON.stringify(subscription));
+      toast.success('Push notifications enabled!');
+      
+      return subscription;
+    } catch (error) {
+      console.error('Failed to subscribe to push notifications:', error);
+      toast.error('Failed to enable push notifications');
+    }
+  }
+}
+
+async function saveSubscriptionToDatabase(subscription: PushSubscription) {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Use direct insert with type assertion to handle the missing table types
+    const subscriptionData = subscription.toJSON();
+    
+    const { error } = await (supabase as any)
+      .from('push_subscriptions')
+      .upsert({
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: subscriptionData.keys?.p256dh || '',
+        auth: subscriptionData.keys?.auth || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (error) {
+      console.error('Failed to save push subscription:', error);
+    }
+  } catch (error) {
+    console.error('Error saving subscription:', error);
   }
 }
 
