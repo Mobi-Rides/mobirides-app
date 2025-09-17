@@ -63,6 +63,11 @@ const CarDetails = () => {
   const { carId } = useParams();
   const { theme } = useTheme();
   const user = useUser();
+  
+  console.log('=== CarDetails component rendered ===');
+  console.log('Current URL:', window.location.href);
+  console.log('carId from useParams:', carId);
+  console.log('user:', user?.id || 'not logged in');
 
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", carId],
@@ -137,6 +142,7 @@ const CarDetails = () => {
               year={car.year}
               location={car.location}
               pricePerDay={car.price_per_day}
+              ownerId={car.owner_id}
             />
             
             <CarSpecs

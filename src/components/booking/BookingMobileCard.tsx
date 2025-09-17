@@ -4,7 +4,7 @@ import { Booking } from "@/types/booking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Check, X, MapPin, CalendarDays } from "lucide-react";
+import { Clock, Check, X, MapPin, CalendarDays, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BookingMobileCardProps {
@@ -25,6 +25,11 @@ export const BookingMobileCard = ({ booking, onCancelBooking }: BookingMobileCar
   };
 
   const getStatusBadge = () => {
+    // Check for early return first
+    if (booking.early_return && booking.status === "completed") {
+      return <Badge variant="secondary" className="bg-purple-100 text-purple-800 flex items-center gap-1 text-xs px-2 py-1"><RotateCcw className="h-3 w-3" /> Returned Early</Badge>;
+    }
+
     switch (booking.status) {
       case "pending":
         return <Badge variant="outline" className="flex items-center gap-1 text-xs px-2 py-1"><Clock className="h-3 w-3" /> Pending</Badge>;

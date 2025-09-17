@@ -41,9 +41,16 @@ export function ConversationList({
   const filteredConversations = conversations;
 
   const getConversationTitle = (conversation: Conversation) => {
+    // For direct conversations, always show the counterparty name, ignore stored title
+    if (conversation.type === 'direct') {
+      const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
+      return otherParticipant?.name || 'Unknown User';
+    }
+    
+    // For group conversations, use stored title or generate from participants
     if (conversation.title) return conversation.title;
     
-    const otherParticipants = conversation.participants.filter(p => p.id !== currentUser.id);
+    const otherParticipants = (conversation.participants || []).filter(p => p.id !== currentUser.id);
     return otherParticipants.map(p => p.name).join(', ');
   };
 
@@ -52,14 +59,14 @@ export function ConversationList({
       return null; // Will show group icon instead
     }
     
-    const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
+    const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
     return otherParticipant?.avatar;
   };
 
   const getLastMessagePreview = (conversation: Conversation) => {
     if (!conversation.lastMessage) return 'No messages yet';
     
-    const sender = conversation.participants.find(p => p.id === conversation.lastMessage?.senderId);
+    const sender = (conversation.participants || []).find(p => p.id === conversation.lastMessage?.senderId);
     const senderName = sender?.id === currentUser.id ? 'You' : sender?.name;
     
     return `${senderName}: ${conversation.lastMessage.content}`;
@@ -125,7 +132,7 @@ export function ConversationList({
             <div className="space-y-1">
               {filteredConversations.map((conversation) => {
                 const isSelected = conversation.id === selectedConversationId;
-                const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
+                const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
                 
                 return (
                   <div

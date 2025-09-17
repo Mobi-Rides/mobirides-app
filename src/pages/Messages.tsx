@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessagingInterface } from '../components/chat/MessagingInterface';
-import { Header } from '../components/Header';
+import { MessagingErrorBoundary } from '../components/chat/MessagingErrorBoundary';
 import { Navigation } from '../components/Navigation';
 
 const Messages = () => {
@@ -22,17 +22,16 @@ const Messages = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header 
-        searchQuery=""
-        onSearchChange={() => {}}
-        onFiltersChange={() => {}}
-      />
+      {/* Header removed for Messages page */}
+      
       <div className="flex-1 flex flex-col pb-16">
-        <MessagingInterface 
-          className="flex-1" 
-          recipientId={recipientId}
-          recipientName={recipientName}
-        />
+        <MessagingErrorBoundary>
+          <MessagingInterface 
+            className="flex-1" 
+            recipientId={recipientId}
+            recipientName={recipientName}
+          />
+        </MessagingErrorBoundary>
       </div>
       <Navigation />
     </div>

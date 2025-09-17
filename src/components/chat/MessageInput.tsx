@@ -17,6 +17,7 @@ interface MessageInputProps {
   onStartTyping?: () => void;
   onStopTyping?: () => void;
   disabled?: boolean;
+  isLoading?: boolean;
   replyToMessage?: {
     id: string;
     content: string;
@@ -31,6 +32,7 @@ export function MessageInput({
   onStartTyping,
   onStopTyping,
   disabled = false,
+  isLoading = false,
   replyToMessage,
   onCancelReply
 }: MessageInputProps) {
@@ -40,7 +42,7 @@ export function MessageInput({
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleSend = () => {
-    if (message.trim() && !disabled) {
+    if (message.trim() && !disabled && !isLoading) {
       onSendMessage(message.trim());
       setMessage('');
       handleStopTyping();
@@ -162,12 +164,13 @@ export function MessageInput({
               value={message}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              disabled={disabled}
+              placeholder={isLoading ? "Sending..." : placeholder}
+              disabled={disabled || isLoading}
               className={cn(
                 "min-h-9 max-h-32 resize-none bg-notification border-notification-border rounded-2xl",
                 "focus:ring-1 focus:ring-primary focus:border-primary shadow-sm",
-                "pr-20 transition-all duration-200" // Space for emoji and image buttons
+                "pr-20 transition-all duration-200", // Space for emoji and image buttons
+                isLoading && "opacity-60 cursor-not-allowed"
               )}
               rows={1}
             />
@@ -216,10 +219,14 @@ export function MessageInput({
             <Button
               size="sm"
               onClick={handleSend}
-              disabled={disabled || !message.trim()}
-              className="h-9 w-9 p-0 flex-shrink-0 bg-primary hover:bg-primary/90 rounded-full shadow-md transition-all duration-200 ease-in-out transform hover:scale-105"
+              disabled={disabled || !message.trim() || isLoading}
+              className="h-9 w-9 p-0 flex-shrink-0 bg-primary hover:bg-primary/90 rounded-full shadow-md transition-all duration-200 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4" />
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
           ) : (
             <Button

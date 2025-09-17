@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
   LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark,
-  ArrowRightLeft, Wallet, Car, Users
+  ArrowRightLeft, Wallet, Car, Users, BookOpen, MessageSquare, AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -102,8 +102,8 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     },
     {
       icon: Bell,
-      label: "Notifications",
-      onClick: () => navigate("/notifications"),
+      label: "Notification Preferences",
+      onClick: () => navigate("/notification-preferences"),
     },
     {
       icon: Shield,
@@ -114,9 +114,28 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
 
   const helpItems: MenuItem[] = [
     {
+      icon: BookOpen,
+      label: "Browse Help Center",
+      onClick: () => navigate(`/help/${role}`),
+      description: "Complete guides and tutorials"
+    },
+    {
       icon: HelpCircle,
-      label: "Help & Support",
-      onClick: () => toast("Help center coming soon"),
+      label: "Quick Start Guide",
+      onClick: () => navigate(`/help/${role}/getting-started`),
+      description: "Get started in minutes"
+    },
+    {
+      icon: MessageSquare,
+      label: "Contact Support",
+      onClick: () => toast("Contact support coming soon"),
+      description: "Get help from our team"
+    },
+    {
+      icon: AlertTriangle,
+      label: "Report Issue",
+      onClick: () => toast("Report issue coming soon"),
+      description: "Report bugs or problems"
     },
   ];
 
@@ -217,12 +236,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
             <CardDescription className="text-left">Manage your preferences and account security</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 pt-0">
-            <button
-              type="button"
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
-              onClick={toggleTheme}
-              aria-label={`Toggle dark mode, currently ${theme === 'dark' ? 'on' : 'off'}`}
-            >
+            <div className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/70 transition-colors">
               <div className="flex items-center gap-3">
                 {theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 <span>Dark Mode</span>
@@ -230,9 +244,9 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
               <Switch
                 checked={theme === 'dark'}
                 onCheckedChange={toggleTheme}
-                aria-label="Toggle dark mode"
+                aria-label={`Toggle dark mode, currently ${theme === 'dark' ? 'on' : 'off'}`}
               />
-            </button>
+            </div>
 
             {settingsItems.map((item, idx) => (
               <button

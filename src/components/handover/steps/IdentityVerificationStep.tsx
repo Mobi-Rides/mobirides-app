@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Camera, Check, X, Upload } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +26,7 @@ export const IdentityVerificationStep = ({
 }: IdentityVerificationStepProps) => {
   const [verificationPhoto, setVerificationPhoto] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'failed'>('pending');
   const [notes, setNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,8 +36,17 @@ export const IdentityVerificationStep = ({
     if (!file) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
+    
     try {
-      const photoUrl = await uploadHandoverPhoto(file, handoverSessionId, 'identity_verification');
+      const photoUrl = await uploadHandoverPhoto(
+        file, 
+        handoverSessionId, 
+        'identity_verification',
+        3, // maxRetries
+        (progress) => setUploadProgress(progress) // progress callback
+      );
+      
       if (photoUrl) {
         setVerificationPhoto(photoUrl);
         // Create initial verification check
@@ -46,12 +57,13 @@ export const IdentityVerificationStep = ({
           verification_photo_url: photoUrl,
           verification_status: 'pending'
         });
-        toast.success("Verification photo uploaded successfully");
+        // Success toast is now handled by the upload function
       }
     } catch (error) {
       toast.error("Failed to upload verification photo");
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -93,28 +105,41 @@ export const IdentityVerificationStep = ({
             <p className="text-sm text-gray-600 mb-4">
               Take a photo of {otherUserName} for identity verification
             </p>
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                capture="user"
-                onChange={handlePhotoUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                disabled={isUploading}
-              />
-              <Button disabled={isUploading} className="flex items-center gap-2">
-                {isUploading ? (
-                  <>
-                    <Upload className="h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="h-4 w-4" />
-                    Take Photo
-                  </>
-                )}
-              </Button>
+            <div className="space-y-3">
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  onChange={handlePhotoUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={isUploading}
+                />
+                <Button disabled={isUploading} className="flex items-center gap-2">
+                  {isUploading ? (
+                    <>
+                      <Upload className="h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-4 w-4" />
+                      Take Photo
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {isUploading && (
+                <div className="space-y-2">
+                  <Progress value={uploadProgress} className="w-full" />
+                  <p className="text-xs text-center text-muted-foreground">
+                    {uploadProgress < 30 ? 'Optimizing image...' : 
+                     uploadProgress < 80 ? 'Uploading...' : 
+                     'Finalizing...'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         ) : (

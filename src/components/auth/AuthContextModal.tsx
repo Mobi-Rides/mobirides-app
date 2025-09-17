@@ -40,7 +40,7 @@ export const AuthContextModal: React.FC<AuthContextModalProps> = ({
         <div className="space-y-4">
           {mode === "signin" ? (
             <>
-              <SignInForm onSuccess={handleSuccess} />
+              <SignInForm onSuccess={handleSuccess} idPrefix="context-signin" />
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
                   Don't have an account?{" "}

@@ -41,7 +41,7 @@ export const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
     {
       title: "Personal Information",
       completed: verificationData?.personal_info?.fullName ? true : false,
-      details: verificationData?.personal_info?.fullName || "Not completed",
+      details: String((verificationData?.personal_info as any)?.fullName || "Not completed"),
     },
     {
       title: "Document Upload",
@@ -56,7 +56,7 @@ export const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
     {
       title: "Phone Verification",
       completed: true,
-      details: verificationData?.personal_info?.phoneNumber || "Phone verified",
+      details: String((verificationData?.personal_info as any)?.phoneNumber || "Phone verified"),
     },
     {
       title: "Address Confirmation",

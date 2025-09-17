@@ -23,6 +23,7 @@ export interface ExtendedProfile {
 // Type guard function to check if location sharing fields exist
 export const hasLocationFields = (profile: unknown): boolean => {
   return profile && 
+    typeof profile === 'object' &&
     'is_sharing_location' in profile && 
     'location_sharing_scope' in profile;
 };

@@ -9,6 +9,7 @@ import { RouteStepsPanel } from "@/components/navigation/RouteStepsPanel";
 import { useUserLocationTracking } from "@/hooks/useUserLocationTracking";
 import { navigationService } from "@/services/navigationService";
 import { toast } from "@/utils/toast-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HandoverNavigationStepProps {
   handoverSessionId: string;
@@ -77,6 +78,28 @@ export const HandoverNavigationStep = ({
     return R * c;
   };
 
+  // Send notification to host when renter arrives
+  const notifyHostOfRenterArrival = async () => {
+    try {
+      // Create a simple notification instead of using non-existent RPC
+      const { error } = await supabase
+        .from("notifications")
+        .insert({
+          type: "arrival_notification",
+          title: "Renter has arrived",
+          content: "The renter has arrived at the handover location"
+        });
+
+      if (error) {
+        console.error('Error sending renter arrival notification:', error);
+      } else {
+        console.log('Host notified of renter arrival');
+      }
+    } catch (error) {
+      console.error('Failed to notify host of renter arrival:', error);
+    }
+  };
+
   // Check if user has arrived at destination
   useEffect(() => {
     if (!userLocation || !isNavigating || hasArrived) return;
@@ -93,12 +116,17 @@ export const HandoverNavigationStep = ({
       setIsNavigating(false);
       toast.success("You have arrived at the handover location!");
       
+      // Notify host when renter arrives (only if current user is renter)
+      if (!isHost) {
+        notifyHostOfRenterArrival();
+      }
+      
       if (isVoiceEnabled && 'speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance("You have arrived at your destination");
         speechSynthesis.speak(utterance);
       }
     }
-  }, [userLocation, destinationLocation, isNavigating, hasArrived, arrivalRadius, isVoiceEnabled]);
+  }, [userLocation, destinationLocation, isNavigating, hasArrived, arrivalRadius, isVoiceEnabled, isHost, handoverSessionId]);
 
   // Updated fetchRoute with better error handling
   const fetchRoute = async () => {
@@ -157,6 +185,11 @@ export const HandoverNavigationStep = ({
   const handleSkipNavigation = () => {
     setHasArrived(true);
     toast.success("You've arrived at the handover location!");
+    
+    // Notify host when renter arrives (only if current user is renter)
+    if (!isHost) {
+      notifyHostOfRenterArrival();
+    }
   };
 
   const stopNavigation = () => {
@@ -179,6 +212,11 @@ export const HandoverNavigationStep = ({
     setHasArrived(true);
     setIsNavigating(false);
     toast.success("Marked as arrived - ready for handover!");
+    
+    // Notify host when renter arrives (only if current user is renter)
+    if (!isHost) {
+      notifyHostOfRenterArrival();
+    }
   };
 
   const currentStep = route[currentStepIndex] || null;

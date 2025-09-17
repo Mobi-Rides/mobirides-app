@@ -32,9 +32,3 @@ class CommissionService {
 }
 
 export const commissionService = new CommissionService();
-
-// Development helpers
-if (import.meta.env.DEV) {
-  (window as Window & { commissionService?: typeof commissionService }).commissionService = commissionService;
-  console.log('CommissionService available in console for testing');
-}

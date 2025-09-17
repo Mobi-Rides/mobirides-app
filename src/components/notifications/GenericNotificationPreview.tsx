@@ -12,7 +12,10 @@ export function GenericNotificationPreview({ notification, confidence }: { notif
   return (
     <div>
       {/* ...existing generic preview content... */}
-      <div>{notification.content}</div>
+      <div>
+        <h4 className="font-medium">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.description}</p>
+      </div>
       {typeof confidence === 'number' && (
         <div className="flex items-center gap-2 mt-1">
           <span
@@ -26,4 +29,4 @@ export function GenericNotificationPreview({ notification, confidence }: { notif
       )}
     </div>
   );
-} 
+}

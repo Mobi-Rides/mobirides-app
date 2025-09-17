@@ -1,122 +1,96 @@
-
-import { toast } from "@/utils/toast-utils";
-
-export interface MockPaymentRequest {
+// Mock payment service for development and testing
+export interface PaymentRequest {
   amount: number;
   payment_method: string;
 }
 
-export interface MockPaymentResponse {
+export interface PaymentResult {
   success: boolean;
   payment_reference?: string;
   error_message?: string;
 }
 
-export interface MockPaymentConfig {
-  enableFailures: boolean;
-  failureRate: number;
-  processingDelay: number;
-  maxAmount: number;
-  minAmount: number;
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
 }
 
 class MockPaymentService {
-  private config: MockPaymentConfig = {
-    enableFailures: false, // Disabled by default for better UX
-    failureRate: 0.05, // 5% failure rate when enabled
-    processingDelay: 2000,
-    maxAmount: 50000,
-    minAmount: 10
-  };
-
-  // Configure the mock service for testing
-  configure(config: Partial<MockPaymentConfig>) {
-    this.config = { ...this.config, ...config };
-  }
-
-  async processPayment(request: MockPaymentRequest): Promise<MockPaymentResponse> {
-    console.log('MockPaymentService: Starting payment processing', { 
-      amount: request.amount, 
-      method: request.payment_method,
-      config: this.config 
-    });
-
-    // Simulate payment processing delay
-    await new Promise(resolve => setTimeout(resolve, this.config.processingDelay));
-
-    // Validate amount
-    if (request.amount <= 0) {
-      console.log('MockPaymentService: Invalid amount - must be positive');
-      return {
-        success: false,
-        error_message: "Invalid amount"
-      };
+  private presetAmounts = [50, 100, 200, 500, 1000];
+  
+  private paymentMethods: PaymentMethod[] = [
+    {
+      id: 'gcash',
+      name: 'GCash',
+      description: 'Pay with GCash mobile wallet',
+      icon: 'wallet'
+    },
+    {
+      id: 'maya',
+      name: 'Maya (PayMaya)',
+      description: 'Pay with Maya digital wallet',
+      icon: 'creditCard'
+    },
+    {
+      id: 'bank_transfer',
+      name: 'Bank Transfer',
+      description: 'Transfer from your bank account',
+      icon: 'building'
+    },
+    {
+      id: 'credit_card',
+      name: 'Credit Card',
+      description: 'Visa, Mastercard, American Express',
+      icon: 'creditCard'
     }
-
-    if (request.amount < this.config.minAmount) {
-      console.log('MockPaymentService: Amount below minimum', { min: this.config.minAmount });
-      return {
-        success: false,
-        error_message: `Minimum top-up amount is P${this.config.minAmount}.00`
-      };
-    }
-
-    if (request.amount > this.config.maxAmount) {
-      console.log('MockPaymentService: Amount exceeds maximum', { max: this.config.maxAmount });
-      return {
-        success: false,
-        error_message: `Amount exceeds maximum limit of P${this.config.maxAmount.toLocaleString()}`
-      };
-    }
-
-    // Simulate random payment failures only if enabled
-    if (this.config.enableFailures && Math.random() < this.config.failureRate) {
-      console.log('MockPaymentService: Simulated payment failure');
-      return {
-        success: false,
-        error_message: "Payment processing failed. Please try again."
-      };
-    }
-
-    // Generate mock payment reference
-    const payment_reference = `MOCK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    console.log('MockPaymentService: Payment successful', { payment_reference });
-    return {
-      success: true,
-      payment_reference
-    };
-  }
-
-  getAvailablePaymentMethods(): string[] {
-    return ["credit_card", "debit_card", "paypal", "bank_transfer", "mobile_money"];
-  }
+  ];
 
   getPresetAmounts(): number[] {
-    return [50, 100, 200, 500, 1000, 2000];
+    return this.presetAmounts;
   }
 
-  // Development testing methods
-  simulateSuccess(): void {
-    this.configure({ enableFailures: false });
-    console.log('MockPaymentService: Configured for guaranteed success');
+  getAvailablePaymentMethods(): PaymentMethod[] {
+    return this.paymentMethods;
   }
 
-  simulateFailures(rate: number = 0.3): void {
-    this.configure({ enableFailures: true, failureRate: rate });
-    console.log('MockPaymentService: Configured to simulate failures at', rate * 100, '%');
+  async processPayment(request: PaymentRequest): Promise<PaymentResult> {
+    // Simulate payment processing delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Simulate 95% success rate (5% failure for testing)
+    const success = Math.random() > 0.05;
+    
+    if (success) {
+      return {
+        success: true,
+        payment_reference: `PAY_${Date.now()}_${Math.random().toString(36).substring(7).toUpperCase()}`
+      };
+    } else {
+      const errorMessages = [
+        'Insufficient funds in payment method',
+        'Payment method temporarily unavailable',
+        'Transaction limit exceeded',
+        'Payment gateway timeout'
+      ];
+      
+      return {
+        success: false,
+        error_message: errorMessages[Math.floor(Math.random() * errorMessages.length)]
+      };
+    }
   }
 
-  setProcessingDelay(delay: number): void {
-    this.configure({ processingDelay: delay });
-    console.log('MockPaymentService: Set processing delay to', delay, 'ms');
+  // Helper method to validate payment amounts
+  isValidAmount(amount: number): boolean {
+    return amount >= 10 && amount <= 50000; // Min 10, Max 50,000
+  }
+
+  // Get payment method by ID
+  getPaymentMethodById(id: string): PaymentMethod | undefined {
+    return this.paymentMethods.find(method => method.id === id);
   }
 }
 
 export const mockPaymentService = new MockPaymentService();
-
-// Development helpers - available in console
-if (typeof window !== 'undefined') {
-  (window as Window & { mockPaymentService?: typeof mockPaymentService }).mockPaymentService = mockPaymentService;
-  console.log('MockPaymentService available in console for testing');
-}

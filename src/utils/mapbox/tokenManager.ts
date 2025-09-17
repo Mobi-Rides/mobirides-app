@@ -74,7 +74,7 @@ class MapboxTokenManager {
       
       // Set token on the global mapboxgl object if available
       if (window.mapboxgl) {
-        window.mapboxgl.accessToken = token;
+        (window.mapboxgl as any).accessToken = token;
       }
       
       return true;
@@ -103,7 +103,7 @@ class MapboxTokenManager {
     
     // Clear token from global mapboxgl object if available
     if (window.mapboxgl) {
-      window.mapboxgl.accessToken = '';
+      (window.mapboxgl as any).accessToken = '';
     }
   }
 }

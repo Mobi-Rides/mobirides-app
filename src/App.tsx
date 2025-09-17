@@ -8,8 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import "./App.css";
-import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "sonner";
+import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
@@ -17,7 +16,6 @@ import { LocationSearchProvider } from "@/contexts/LocationSearchContext";
 import { VerificationProvider } from "@/contexts/VerificationContext";
 import { HandoverProvider } from "@/contexts/HandoverContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/toaster";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
 
@@ -52,12 +50,16 @@ const AddCar = lazy(() => import("@/pages/AddCar"));
 const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
-const NotificationDetails = lazy(() => import("@/pages/NotificationDetails"));
+const BookingDetails = lazy(() => import("@/components/BookingDetails"));
+const NotificationDetails = lazy(() => import("@/components/NotificationDetails"));
+const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
+const HelpSection = lazy(() => import("@/pages/HelpSection"));
+
 const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
 );
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Notifications = lazy(() => import("@/pages/Notifications"));
+const NotificationsRefactored = lazy(() => import("@/pages/NotificationsRefactored"));
 const Messages = lazy(() => import("@/pages/Messages"));
 const RentalReview = lazy(() => import("./pages/RentalReview"));
 const RentalDetailsRefactored = lazy(
@@ -70,6 +72,11 @@ const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPrefe
 const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
+
+// Settings pages
+const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
+const DisplaySettingsPage = lazy(() => import("@/pages/DisplaySettingsPage"));
+const SecuritySettingsPage = lazy(() => import("@/pages/SecuritySettingsPage"));
 
 // Admin pages
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
@@ -96,7 +103,6 @@ function App() {
               <LocationSearchProvider>
                 <VerificationProvider>
                   <TooltipProvider>
-                    <Toaster />
                     <BrowserRouter>
                       <Routes>
                         <Route path="/" element={
@@ -213,6 +219,27 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        <Route path="/settings/profile" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <ProfileSettingsPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/settings/display" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <DisplaySettingsPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/settings/security" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <SecuritySettingsPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
                         <Route path="/wallet" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -245,6 +272,13 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        <Route path="/bookings/:id" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <BookingDetails />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
                         <Route path="/host-bookings" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -269,7 +303,7 @@ function App() {
                         <Route path="/notifications" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
-                              <Notifications />
+                              <NotificationsRefactored />
                             </ProtectedRoute>
                           </Suspense>
                         } />
@@ -280,6 +314,23 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        
+                        {/* Help Center Routes */}
+                        <Route path="/help/:role" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HelpCenter />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/help/:role/:section" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HelpSection />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        
                         <Route path="/messages" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -345,8 +396,7 @@ function App() {
                       {/* Global Chat Manager */}
                       <ChatManager />
                       
-                      <ShadcnToaster />
-                      <SonnerToaster position="top-center" />
+                      <Toaster position="top-center" />
                     </BrowserRouter>
                   </TooltipProvider>
                 </VerificationProvider>

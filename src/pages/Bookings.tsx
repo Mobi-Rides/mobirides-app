@@ -73,22 +73,12 @@ const Bookings = () => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session?.user) return;
 
-    await supabase.from("notifications").insert([
-      {
-        user_id: booking.cars.owner_id,
-        type: "booking_cancelled",
-        content: `Booking for ${booking.cars.brand} ${booking.cars.model} from ${format(new Date(booking.start_date), "PPP")} to ${format(new Date(booking.end_date), "PPP")} has been cancelled.`,
-        related_car_id: booking.car_id,
-        related_booking_id: booking.id
-      },
-      {
-        user_id: session.session.user.id,
-        type: "booking_cancelled",
-        content: `Your booking for ${booking.cars.brand} ${booking.cars.model} from ${format(new Date(booking.start_date), "PPP")} to ${format(new Date(booking.end_date), "PPP")} has been cancelled.`,
-        related_car_id: booking.car_id,
-        related_booking_id: booking.id
-      }
-    ]);
+    // Use the database function for proper notification handling
+    await supabase.rpc('create_booking_notification', {
+      p_booking_id: booking.id,
+      p_notification_type: 'booking_cancelled',
+      p_content: `Booking for ${booking.cars.brand} ${booking.cars.model} from ${format(new Date(booking.start_date), "PPP")} to ${format(new Date(booking.end_date), "PPP")} has been cancelled.`
+    });
   };
 
   const handleCancelBooking = async (bookingId: string) => {

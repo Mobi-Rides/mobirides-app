@@ -8,6 +8,7 @@ import { useHandover } from "@/contexts/HandoverContext";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/utils/toast-utils";
 import { BookingWithRelations } from "@/types/booking";
+import { reverseGeocode } from "@/utils/mapbox";
 
 // Extended booking type for handover with additional car data
 interface HandoverBookingDetails extends BookingWithRelations {
@@ -35,6 +36,7 @@ export const HandoverSheet = ({
     useHandover();
 
   const [handoverStep, setHandoverStep] = useState(1);
+  const [destinationAddress, setDestinationAddress] = useState<string>("");
 
   // Set destination for external use
   useEffect(() => {
@@ -43,6 +45,23 @@ export const HandoverSheet = ({
       getDestination?.(latitude, longitude);
     }
   }, [getDestination, destination]);
+
+  // Fetch address from coordinates
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (destination?.latitude && destination?.longitude) {
+        try {
+          const address = await reverseGeocode(destination.latitude, destination.longitude);
+          setDestinationAddress(address);
+        } catch (error) {
+          console.error('Error fetching address:', error);
+          setDestinationAddress(`Lat: ${destination.latitude.toFixed(6)}, Lng: ${destination.longitude.toFixed(6)}`);
+        }
+      }
+    };
+
+    fetchAddress();
+  }, [destination]);
 
   useEffect(() => {
     if (isHost == undefined) return;
@@ -131,8 +150,7 @@ export const HandoverSheet = ({
                   <h4 className="font-medium">Destination</h4>
                   {destination ? (
                     <p className="text-sm mt-1">
-                      Latitude: {destination.latitude}, Longitude:{" "}
-                      {destination.longitude}
+                      {destinationAddress || 'Loading address...'}
                     </p>
                   ) : (
                     <p className="text-sm text-muted-foreground mt-1">

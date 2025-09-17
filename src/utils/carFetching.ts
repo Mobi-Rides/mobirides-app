@@ -23,10 +23,8 @@ export const fetchCars = async ({
   
   let query = supabase
     .from("cars")
-    .select("*", { count: "exact" });
-
-  // Remove the is_available filter temporarily to see all cars
-  // .eq("is_available", true)
+    .select("*", { count: "exact" })
+    .eq("is_available", true);
   
   // Apply pagination
   query = query.range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);

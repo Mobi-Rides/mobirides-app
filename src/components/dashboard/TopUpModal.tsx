@@ -288,8 +288,8 @@ export const TopUpModal = ({ isOpen, onClose, onSuccess, currentBalance }: TopUp
               </SelectTrigger>
               <SelectContent>
                 {paymentMethods.map((method) => (
-                  <SelectItem key={method} value={method}>
-                    {method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <SelectItem key={method.id} value={method.id}>
+                    {method.name}
                   </SelectItem>
                 ))}
               </SelectContent>

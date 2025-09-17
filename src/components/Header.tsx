@@ -136,7 +136,7 @@ export const Header = ({
           error: null,
         });
       } catch (error) {
-        console.error("IP Location error:", error);
+        // Silently fall back to default location when IP geolocation fails (e.g., CORS issues)
         setLocationData((prev) => ({
           ...prev,
           loading: false,
@@ -169,33 +169,19 @@ export const Header = ({
   const { data: notificationCount } = useQuery({
     queryKey: ["notification-count"],
     queryFn: async () => {
-      if (!user) return { messages: 0, notifications: 0 };
+      if (!user) return 0;
 
-      const [messagesResponse, notificationsResponse] = await Promise.all([
-        supabase
-          .from("messages")
-          .select("id", { count: "exact" })
-          .eq("receiver_id", user.id)
-          .eq("status", "sent"),
-        supabase
-          .from("notifications")
-          .select("id", { count: "exact" })
-          .eq("user_id", user.id)
-          .eq("is_read", false),
-      ]);
+      const { count } = await supabase
+        .from("notifications")
+        .select("id", { count: "exact" })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
 
-      return {
-        messages: messagesResponse.count || 0,
-        notifications: notificationsResponse.count || 0,
-      };
+      return count || 0;
     },
     refetchInterval: 30000, // Refetch every 30 seconds
     enabled: !!user,
   });
-
-  const totalNotifications =
-    (notificationCount?.messages || 0) +
-    (notificationCount?.notifications || 0);
 
   const avatarUrl = profile?.avatar_url
     ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_url).data
@@ -296,12 +282,12 @@ export const Header = ({
                 </Avatar>
               )}
             </button>
-            {totalNotifications > 0 && user && (
+            {user && typeof notificationCount === 'number' && notificationCount > 0 && (
               <Badge
                 variant="destructive"
                 className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
               >
-                {totalNotifications}
+                {notificationCount}
               </Badge>
             )}
           </div>
@@ -339,6 +325,7 @@ export const Header = ({
         isOpen={isAuthModalOpen}
         onClose={handleCloseModal}
         defaultTab={defaultTab}
+        idPrefix="header"
       />
     </header>
   );

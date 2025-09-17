@@ -20,7 +20,9 @@ export class ModuleResource extends ResourceBase {
       // Check if mapboxgl is already available (loaded via import)
       if (mapboxgl) {
         console.log('Mapbox module already available globally');
-        window.mapboxgl = mapboxgl;
+        if (typeof window !== 'undefined') {
+          (window as any).mapboxgl = mapboxgl;
+        }
         this.setState('ready');
         return true;
       }
@@ -40,18 +42,18 @@ export class ModuleResource extends ResourceBase {
         await instanceManager.getMapboxModule();
         
         // Verify the module was loaded correctly
-        if (!window.mapboxgl) {
-          window.mapboxgl = mapboxgl;
+        if (typeof window !== 'undefined' && !(window as any).mapboxgl) {
+          (window as any).mapboxgl = mapboxgl;
         }
         
-        if (!window.mapboxgl) {
+        if (typeof window !== 'undefined' && !(window as any).mapboxgl) {
           this.setState('error', 'Failed to load Mapbox GL JS module');
           return false;
         }
         
         // Set the token on the mapboxgl object
-        if (tokenState.token && window.mapboxgl) {
-          window.mapboxgl.accessToken = tokenState.token;
+        if (tokenState.token && typeof window !== 'undefined' && (window as any).mapboxgl) {
+          (window as any).mapboxgl.accessToken = tokenState.token;
         }
         
         this.setState('ready');
@@ -73,8 +75,11 @@ export class ModuleResource extends ResourceBase {
   }
 
   async validate(): Promise<boolean> {
-    if (window.mapboxgl || mapboxgl) {
-      window.mapboxgl = window.mapboxgl || mapboxgl;
+    const hasMapbox = (typeof window !== 'undefined' && (window as any).mapboxgl) || mapboxgl;
+    if (hasMapbox) {
+      if (typeof window !== 'undefined') {
+        (window as any).mapboxgl = (window as any).mapboxgl || mapboxgl;
+      }
       this.setState('ready');
       return true;
     }

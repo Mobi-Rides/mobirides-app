@@ -48,7 +48,7 @@ export const MapboxTokenProvider = ({ children }: { children: ReactNode }) => {
       // Set the token in the mapboxgl instance
       if (window.mapboxgl) {
         console.log("[MapboxTokenProvider] Setting token on mapboxgl:", token.substring(0, 10) + "...");
-        window.mapboxgl.accessToken = token;
+        (window.mapboxgl as any).accessToken = token;
       } else {
         console.warn("[MapboxTokenProvider] mapboxgl not available yet");
       }

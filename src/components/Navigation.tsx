@@ -20,25 +20,53 @@ export const Navigation = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const queryClient = useQueryClient();
   
-  // Fetch unread messages count
+  // Fetch unread messages count from conversation system
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unreadMessagesCount'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
 
-      const { count, error } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .eq('status', 'sent');
+      // Get user's conversation IDs and their last_read_at timestamps
+      const { data: userParticipations, error: participationError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, last_read_at')
+        .eq('user_id', user.id);
 
-      if (error) {
-        console.error("Error fetching unread messages count:", error);
+      if (participationError || !userParticipations?.length) {
+        console.error("Error fetching user participations:", participationError);
         return 0;
       }
 
-      return count || 0;
+      let totalUnread = 0;
+
+      // For each conversation, count messages after last_read_at
+      for (const participation of userParticipations) {
+        const lastReadAt = participation.last_read_at;
+
+        let query = supabase
+          .from('conversation_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', participation.conversation_id)
+          .neq('sender_id', user.id); // Exclude messages sent by the user
+
+        // If user has read this conversation before, only count messages after last_read_at
+        if (lastReadAt) {
+          query = query.gt('created_at', lastReadAt);
+        }
+        // If never read, count all messages
+
+        const { count, error } = await query;
+
+        if (error) {
+          console.error("Error fetching unread messages for conversation:", participation.conversation_id, error);
+          continue;
+        }
+
+        totalUnread += count || 0;
+      }
+
+      return totalUnread;
     },
     refetchInterval: 10000, // Refetch every 10 seconds
   });
@@ -66,25 +94,37 @@ export const Navigation = () => {
     refetchInterval: 5000, // Refetch every 5 seconds for faster notification updates
   });
 
-  // Listen for wallet transaction changes to refresh notifications
+  // Listen for real-time changes to refresh counts
   useEffect(() => {
     const setupRealtimeSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const channel = supabase
-        .channel('wallet-notifications')
+        .channel('navigation-updates')
         .on(
           'postgres_changes',
           {
-            event: 'INSERT',
+            event: '*',
             schema: 'public',
-            table: 'notifications'
+            table: 'conversation_messages'
           },
           () => {
-            // Invalidate notification queries when new notifications are created
-            queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            // Invalidate message count when conversation messages change
+            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'conversation_participants',
+            filter: `user_id=eq.${user?.id}`
+          },
+          () => {
+            // Invalidate unread count when user reads a conversation
+            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
           }
         )
         .subscribe();
@@ -108,7 +148,7 @@ export const Navigation = () => {
       label: "Inbox", 
       icon: <Bell className="w-5 h-5" />, 
       activeIndex: 3,
-      badge: totalUnreadCount > 0 ? totalUnreadCount : undefined
+      badge: unreadCount > 0 ? unreadCount : undefined
     },
     { 
       path: "/profile", 
@@ -116,7 +156,7 @@ export const Navigation = () => {
       icon: <User className="w-5 h-5" />, 
       activeIndex: 4 
     },
-  ], [totalUnreadCount]);
+  ], [unreadCount]);
 
   useEffect(() => {
     const currentItem = items.find((item) => {

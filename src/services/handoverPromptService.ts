@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format, isToday, isAfter, isBefore, addHours, subHours } from "date-fns";
-import { BookingWithRelations } from "@/types/booking";
 
 export interface HandoverPrompt {
   id: string;
@@ -19,17 +18,37 @@ export interface HandoverPrompt {
   location: string;
 }
 
+// Simplified booking type for prompts
+interface PromptBooking {
+  id: string;
+  car_id: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  cars: {
+    brand: string;
+    model: string;
+    location: string;
+    owner_id: string;
+    image_url?: string;
+    price_per_day?: number;
+    owner?: {
+      full_name: string;
+    };
+  };
+  renter?: {
+    full_name: string;
+  };
+}
+
 export class HandoverPromptService {
   static async detectHandoverPrompts(userId: string, userRole: 'host' | 'renter'): Promise<HandoverPrompt[]> {
     const { logger } = await import("@/utils/logger");
     
     try {
       if (!userId || !userRole) {
-        logger.debug("detectHandoverPrompts: No userId or userRole provided");
         return [];
       }
-      
-      logger.debug(`Detecting handover prompts for ${userRole}:`, userId);
     
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -47,15 +66,15 @@ export class HandoverPromptService {
             brand,
             model,
             location,
-            owner_id
-          ),
-          renter:profiles!renter_id (
-            full_name
-          ),
-          host:cars!inner(
+            owner_id,
+            image_url,
+            price_per_day,
             owner:profiles!owner_id (
               full_name
             )
+          ),
+          renter:profiles!renter_id (
+            full_name
           )
         `)
         .eq('status', 'confirmed')
@@ -85,7 +104,6 @@ export class HandoverPromptService {
       }
 
       if (!bookings?.length) {
-        logger.debug('No bookings found for handover prompts');
         return [];
       }
 
@@ -97,6 +115,7 @@ export class HandoverPromptService {
           booking_id, 
           handover_completed,
           created_at,
+          handover_type,
           handover_step_completion (
             step_name,
             is_completed,
@@ -108,7 +127,7 @@ export class HandoverPromptService {
 
       // Group sessions by booking_id and determine states
       const bookingSessionMap = new Map();
-      handoverSessions?.forEach(session => {
+      handoverSessions?.forEach((session: any) => {
         if (!bookingSessionMap.has(session.booking_id)) {
           bookingSessionMap.set(session.booking_id, []);
         }
@@ -124,18 +143,14 @@ export class HandoverPromptService {
         const isPickupDay = isToday(startDate);
         const isReturnDay = isToday(endDate);
         
-        // Separate pickup and return sessions based on creation date relative to booking dates
-        const pickupSessions = sessions.filter(session => {
-          const sessionDate = new Date(session.created_at);
-          // Pickup sessions are created on or before the rental period
-          return sessionDate <= new Date(endDate.getTime() + 24 * 60 * 60 * 1000); // Allow day after end for late sessions
-        });
+        // Separate pickup and return sessions based on handover_type field
+        const pickupSessions = sessions.filter(session => 
+          session.handover_type === 'pickup'
+        );
         
-        const returnSessions = sessions.filter(session => {
-          const sessionDate = new Date(session.created_at);
-          // Return sessions are created on or after the end date
-          return sessionDate >= new Date(endDate.getTime());
-        });
+        const returnSessions = sessions.filter(session => 
+          session.handover_type === 'return'
+        );
         
         // Check pickup completion - any pickup session that's completed
         const pickupCompleted = pickupSessions.some(session => 
@@ -158,16 +173,15 @@ export class HandoverPromptService {
 
         // Show pickup prompt if it's pickup day and pickup not completed
         if (isPickupDay && !pickupCompleted) {
-          prompts.push(this.createHandoverPrompt(booking, 'pickup', userRole));
+          prompts.push(this.createHandoverPrompt(booking as PromptBooking, 'pickup', userRole));
         }
         
         // Show return prompt if it's return day and pickup completed but return not completed
         if (isReturnDay && pickupCompleted && !returnCompleted) {
-          prompts.push(this.createHandoverPrompt(booking, 'return', userRole));
+          prompts.push(this.createHandoverPrompt(booking as PromptBooking, 'return', userRole));
         }
       }
 
-      logger.debug(`Found ${prompts.length} handover prompts for ${userRole}`);
       return prompts;
     } catch (error) {
       logger.error('Error in detectHandoverPrompts:', error);
@@ -176,7 +190,7 @@ export class HandoverPromptService {
     }
   }
 
-  private static createHandoverPrompt(booking: BookingWithRelations, handoverType: 'pickup' | 'return', userRole: 'host' | 'renter'): HandoverPrompt {
+  private static createHandoverPrompt(booking: PromptBooking, handoverType: 'pickup' | 'return', userRole: 'host' | 'renter'): HandoverPrompt {
     const startDate = new Date(booking.start_date);
     const endDate = new Date(booking.end_date);
     const now = new Date();
@@ -209,7 +223,7 @@ export class HandoverPromptService {
 
     // Get the other party's name
     const otherPartyName = userRole === 'renter' 
-      ? booking.host?.[0]?.owner?.full_name || 'Host'
+      ? booking.cars.owner?.full_name || 'Host'
       : booking.renter?.full_name || 'Renter';
 
     return {

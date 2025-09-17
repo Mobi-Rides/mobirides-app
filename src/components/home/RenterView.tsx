@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
@@ -13,7 +13,7 @@ import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
-import { toSafeCar } from '@/types/car'; // Ensure this import is present
+import { toSafeCar, type SafeCar } from '@/types/car'; // Ensure this import is present
 
 interface RenterViewProps {
   searchQuery: string;
@@ -111,11 +111,16 @@ export const RenterView = ({
     },
   });
 
-  const savedCarsSet = savedCarIds || new Set<string>();
+  const savedCarsSet = useMemo(() => {
+    return savedCarIds || new Set<string>();
+  }, [savedCarIds]);
 
-  // Remove duplicate import comments and ensure proper car conversion:
-  const allAvailableCars =
-    availableCars?.pages.flatMap((page) =>
+  // State for cars with ratings
+  const [carsWithRatings, setCarsWithRatings] = useState<SafeCar[]>([]);
+
+  // Process cars and fetch ratings
+  const allAvailableCars = useMemo(() => {
+    return availableCars?.pages.flatMap((page) =>
       page.data
         .filter(car => car && typeof car === 'object' && car.id)
         .map((car) => ({
@@ -123,6 +128,44 @@ export const RenterView = ({
           isSaved: savedCarsSet.has(car.id),
         })),
     ) || [];
+  }, [availableCars?.pages, savedCarsSet]);
+
+  // Fetch ratings for cars when they change
+  useEffect(() => {
+    const fetchRatings = async () => {
+      if (allAvailableCars.length === 0) {
+        setCarsWithRatings([]);
+        return;
+      }
+
+      console.log(`[RenterView] Fetching ratings for ${allAvailableCars.length} cars`);
+      
+      const carsWithRatingsPromises = allAvailableCars.map(async (car) => {
+        try {
+          const { data: rating, error } = await supabase.rpc('calculate_car_rating', {
+            car_uuid: car.id
+          });
+          
+          if (error) {
+            console.error(`[RenterView] Error fetching rating for car ${car.id}:`, error);
+            return { ...car, rating: 0 };
+          }
+          
+          console.log(`[RenterView] Car ${car.brand} ${car.model} (${car.id}) rating:`, rating);
+          return { ...car, rating: rating || 0 };
+        } catch (error) {
+          console.error(`[RenterView] Exception fetching rating for car ${car.id}:`, error);
+          return { ...car, rating: 0 };
+        }
+      });
+
+      const carsWithRatingsResults = await Promise.all(carsWithRatingsPromises);
+      console.log(`[RenterView] Final cars with ratings:`, carsWithRatingsResults.map(c => ({ id: c.id, brand: c.brand, model: c.model, rating: c.rating })));
+      setCarsWithRatings(carsWithRatingsResults);
+    };
+
+    fetchRatings();
+  }, [allAvailableCars, availableCars]);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -156,7 +199,7 @@ export const RenterView = ({
       const renterId = booking.renter_id;
 
       // Create handover session
-      const session = await createHandoverSession(bookingId, hostId, renterId, 'pickup');
+      const session = await createHandoverSession(bookingId, 'pickup', hostId, renterId);
       
       if (session) {
         toast.success("Handover process started");
@@ -211,7 +254,7 @@ export const RenterView = ({
         </h3>
       </div>
       <CarGrid
-        cars={allAvailableCars}
+        cars={carsWithRatings}
         isLoading={isLoadingCars}
         error={carsError}
         loadMoreRef={loadMoreRef}

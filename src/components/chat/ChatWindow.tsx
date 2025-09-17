@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/utils/toast-utils';
 import { cn } from '@/lib/utils';
 
 interface ChatWindowProps {
@@ -31,6 +32,7 @@ interface ChatWindowProps {
   onReactToMessage?: (messageId: string, emoji: string) => void;
   onStartTyping?: () => void;
   onStopTyping?: () => void;
+  isLoading?: boolean;
 }
 
 export function ChatWindow({
@@ -43,7 +45,8 @@ export function ChatWindow({
   onDeleteMessage,
   onReactToMessage,
   onStartTyping,
-  onStopTyping
+  onStopTyping,
+  isLoading = false
 }: ChatWindowProps) {
   const [replyToMessage, setReplyToMessage] = useState<{
     id: string;
@@ -60,6 +63,13 @@ export function ChatWindow({
   }, [messages, typingUsers]);
 
   const getConversationTitle = () => {
+    // For direct conversations, always show the counterparty name, ignore stored title
+    if (conversation.type === 'direct') {
+      const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
+      return otherParticipant?.name || 'Unknown User';
+    }
+    
+    // For group conversations, use stored title or generate from participants
     if (conversation.title) return conversation.title;
     
     const otherParticipants = conversation.participants.filter(p => p.id !== currentUser.id);
@@ -109,11 +119,21 @@ export function ChatWindow({
   const handleReply = (messageId: string) => {
     const message = messages.find(m => m.id === messageId);
     if (message) {
-      const sender = conversation.participants.find(p => p.id === message.senderId);
+      // Transform sender data to match expected format
+      let senderName = 'Unknown User';
+      
+      if (message.sender?.full_name) {
+        senderName = message.sender.full_name;
+      } else {
+        // Fallback to finding from conversation participants
+        const sender = conversation.participants.find(p => p.id === message.senderId);
+        senderName = sender?.name || 'Unknown User';
+      }
+      
       setReplyToMessage({
         id: messageId,
         content: message.content,
-        senderName: sender?.name || 'Unknown'
+        senderName
       });
     }
   };
@@ -182,11 +202,11 @@ export function ChatWindow({
             <Search className="w-4 h-4" />
           </Button>
           
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => alert('Initiating audio call...')}>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Audio call feature coming soon!')}>
             <Phone className="w-4 h-4" />
           </Button>
           
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => alert('Initiating video call...')}>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Video call feature coming soon!')}>
             <Video className="w-4 h-4" />
           </Button>
           
@@ -215,7 +235,27 @@ export function ChatWindow({
           ) : (
             <>
               {messages.map((message, index) => {
-                const sender = conversation.participants.find(p => p.id === message.senderId)!;
+                // Transform sender data to match MessageBubble expectations
+                let senderForBubble;
+                
+                if (message.sender?.full_name) {
+                  // Use sender data from message
+                  senderForBubble = {
+                    id: message.sender.id,
+                    name: message.sender.full_name,
+                    avatar: message.sender.avatar_url,
+                    status: 'offline' as const
+                  };
+                } else {
+                  // Fallback to conversation participants
+                  const participantSender = conversation.participants.find(p => p.id === message.senderId);
+                  senderForBubble = participantSender || {
+                    id: message.senderId,
+                    name: 'Unknown User',
+                    avatar: undefined,
+                    status: 'offline' as const
+                  };
+                }
                 
                 return (
                   <div key={message.id}>
@@ -233,7 +273,7 @@ export function ChatWindow({
                     {/* Message */}
                     <MessageBubble
                       message={message}
-                      sender={sender}
+                      sender={senderForBubble}
                       currentUser={currentUser}
                       isGroupChat={conversation.type === 'group'}
                       showAvatar={shouldShowAvatar(message, index)}
@@ -274,6 +314,7 @@ export function ChatWindow({
         onStopTyping={onStopTyping}
         replyToMessage={replyToMessage}
         onCancelReply={() => setReplyToMessage(null)}
+        isLoading={isLoading}
       />
     </div>
   );

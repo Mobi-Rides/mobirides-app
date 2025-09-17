@@ -10,6 +10,7 @@ import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type { Database } from "@/integrations/supabase/types";
+import { generateUUID } from "@/utils/uuid";
 
 type VehicleType = Database["public"]["Enums"]["vehicle_type"];
 
@@ -64,7 +65,7 @@ const AddCar = () => {
     console.log(`Attempting to upload document to ${path}`);
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const fileName = `${generateUUID()}.${fileExt}`;
       const filePath = `${path}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -137,7 +138,7 @@ const AddCar = () => {
       if (imageFile) {
         console.log("Uploading main car image...");
         const fileExt = imageFile.name.split(".").pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const fileName = `${generateUUID()}.${fileExt}`;
         const filePath = `${fileName}`;
 
 		  const { error: uploadError } = await supabase.storage

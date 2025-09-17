@@ -169,13 +169,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       carId,
       bookingId,
     });
-    const { error } = await supabase.from("notifications").insert({
-      user_id: userId,
-      type, // This will be a string literal for DB compatibility
-      content,
-      related_car_id: carId,
-      related_booking_id: bookingId,
+    // Use the database function instead of direct insert to avoid schema mismatches
+    const { error } = await supabase.rpc('create_booking_notification', {
+      p_booking_id: bookingId,
+      p_notification_type: 'booking_request',
+      p_content: content
     });
+
 
     if (error) {
       console.error(
@@ -295,9 +295,116 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (bookingError) throw bookingError;
 
       console.log("[BookingDialog] Booking created successfully:", booking.id);
-      console.log("[BookingDialog] Creating notifications...");
+      console.log("[BookingDialog] Creating notifications and sending Twilio alerts...");
 
-      // Create notifications (non-blocking - don't let notification failures block the booking flow)
+      // Get user details for notifications (using existing columns for now)
+      const { data: renterProfile } = await supabase
+        .from("profiles")
+        .select("full_name, phone_number")
+        .eq("id", session.session.user.id)
+        .single();
+
+      const { data: hostProfile } = await supabase
+        .from("profiles")
+        .select("full_name, phone_number")
+        .eq("id", car.owner_id)
+        .single();
+
+      // Import notification service
+
+
+      // Prepare booking data for notifications
+      const bookingNotificationData = {
+        bookingId: booking.id,
+        customerName: renterProfile?.full_name || "Customer",
+        hostName: hostProfile?.full_name || "Host", 
+        carBrand: car.brand,
+        carModel: car.model,
+        pickupDate: format(startDate, "PPP"),
+        pickupTime: startTime,
+        pickupLocation: car.location || "Pickup location",
+        dropoffLocation: car.location || "Return location",
+        totalAmount: totalPrice,
+        bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`
+      };
+
+      // Send notifications using new services (non-blocking)
+      const { ResendEmailService, TwilioWhatsAppService } = await import("@/services/notificationService");
+      const emailService = ResendEmailService.getInstance();
+      const whatsappService = TwilioWhatsAppService.getInstance();
+
+      if (renterProfile) {
+        try {
+          // Send email to renter
+          await emailService.sendBookingConfirmation(
+            {
+              id: session.session.user.id,
+              email: session.session.user.email,
+              name: renterProfile.full_name || "Customer"
+            },
+            bookingNotificationData
+          );
+          
+          // Send WhatsApp to renter
+          await whatsappService.sendBookingConfirmation(
+            {
+              id: session.session.user.id,
+              phone: renterProfile.phone_number,
+              name: renterProfile.full_name || "Customer"
+            },
+            bookingNotificationData
+          );
+          
+          console.log("✅ Renter notifications sent successfully");
+        } catch (error) {
+          console.error("❌ Failed to send renter notifications:", error);
+        }
+      }
+
+      if (hostProfile) {
+        try {
+          // Get host email using Edge Function (safe server-side admin access)
+          const { data: emailResponse, error: emailError } = await supabase.functions.invoke('get-user-email', {
+            body: { userId: car.owner_id }
+          });
+          
+          if (!emailError && emailResponse?.email) {
+            // Send email to host
+            await emailService.sendBookingConfirmation(
+              {
+                id: car.owner_id,
+                email: emailResponse.email,
+                name: hostProfile.full_name || "Host"
+              },
+              {
+                ...bookingNotificationData,
+                customerName: renterProfile?.full_name || "Customer"
+              },
+              true // isHost flag
+            );
+          }
+          
+          // Send WhatsApp to host
+          await whatsappService.sendBookingConfirmation(
+            {
+              id: car.owner_id,
+              phone: hostProfile.phone_number,
+              name: hostProfile.full_name || "Host"
+            },
+            {
+              ...bookingNotificationData,
+              customerName: renterProfile?.full_name || "Customer"
+            },
+            true // isHost flag
+          );
+          
+          console.log("✅ Host notifications sent successfully");
+        } catch (error) {
+          console.error("❌ Failed to send host notifications:", error);
+        }
+      }
+
+      // Create legacy database notifications (non-blocking - don't let notification failures block the booking flow)
       try {
         // Create notification for renter
         await createNotification(

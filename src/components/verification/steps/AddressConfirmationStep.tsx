@@ -35,7 +35,7 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
   // Initialize address data from verification data
   useEffect(() => {
     if (verificationData?.personal_info?.address) {
-      setAddressData(verificationData.personal_info.address);
+      setAddressData(verificationData.personal_info.address as any);
     }
   }, [verificationData]);
 
@@ -169,7 +169,7 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
                   variant="outline" 
                   onClick={() => {
                     setIsEditing(false);
-                    setAddressData(verificationData?.personal_info?.address || {
+                    setAddressData((verificationData?.personal_info?.address as any) || {
                       street: "",
                       area: "",
                       city: "",

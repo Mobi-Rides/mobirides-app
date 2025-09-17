@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatsCard } from "./StatsCard";
-import { CalendarClock, CarFront, CheckCircle, Clock } from "lucide-react";
+import { CalendarClock, CarFront, CheckCircle, Clock, RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, XAxis, YAxis, CartesianGrid, Bar, Legend } from "recharts";
@@ -13,6 +13,7 @@ const chartConfig = {
   pending: { label: "Pending", color: "hsl(var(--chart-2))" },
   completed: { label: "Completed", color: "hsl(var(--chart-3))" },
   cancelled: { label: "Cancelled", color: "hsl(var(--chart-4))" },
+  earlyReturn: { label: "Early Returns", color: "hsl(var(--chart-5))" },
 };
 
 export const HostStats = () => {
@@ -29,7 +30,7 @@ export const HostStats = () => {
         .eq("owner_id", user.id);
 
       if (carsError) throw carsError;
-      if (!cars.length) return { total: 0, confirmed: 0, completed: 0, cancelled: 0, pending: 0 };
+      if (!cars.length) return { total: 0, confirmed: 0, completed: 0, cancelled: 0, pending: 0, earlyReturn: 0 };
 
       const carIds = cars.map(car => car.id);
       
@@ -41,14 +42,15 @@ export const HostStats = () => {
 
       if (error) throw error;
 
-      // Calculate stats
+      // Calculate stats 
       const total = bookings.length;
       const confirmed = bookings.filter(b => b.status === "confirmed").length;
       const pending = bookings.filter(b => b.status === "pending").length;
       const completed = bookings.filter(b => b.status === "completed").length;
       const cancelled = bookings.filter(b => b.status === "cancelled").length;
+      const earlyReturn = 0; // Feature not implemented yet
 
-      return { total, confirmed, completed, cancelled, pending };
+      return { total, confirmed, completed, cancelled, pending, earlyReturn };
     }
   });
 
@@ -68,11 +70,12 @@ export const HostStats = () => {
     { name: "Pending", value: stats?.pending || 0, fill: "var(--color-pending)" },
     { name: "Completed", value: stats?.completed || 0, fill: "var(--color-completed)" },
     { name: "Cancelled", value: stats?.cancelled || 0, fill: "var(--color-cancelled)" },
+    { name: "Early Returns", value: stats?.earlyReturn || 0, fill: "var(--color-earlyReturn)" },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <StatsCard 
           title="Total Bookings" 
           value={stats?.total || 0}
@@ -95,6 +98,12 @@ export const HostStats = () => {
           value={stats?.pending || 0}
           icon={Clock}
           iconClassName="bg-amber-500"
+        />
+        <StatsCard 
+          title="Early Returns" 
+          value={stats?.earlyReturn || 0}
+          icon={RotateCcw}
+          iconClassName="bg-purple-500"
         />
       </div>
 

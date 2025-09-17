@@ -9,6 +9,7 @@ export * from "./location/LocationManager";
 export * from "./location/LocationStateManager";
 export * from "./viewport/ViewportManager";
 export * from "./tokenValidator";
+export * from "./geocoding";
 
 // Cache to prevent multiple unnecessary token fetches
 let cachedToken: string | null = null;
@@ -33,7 +34,7 @@ export const getMapboxToken = async (): Promise<string> => {
     // Set the token on the global context if mapboxgl is available
     if (typeof window !== 'undefined' && window.mapboxgl) {
       console.log("Setting token on mapboxgl instance:", token.substring(0, 10) + "...");
-      window.mapboxgl.accessToken = token;
+      (window.mapboxgl as any).accessToken = token;
     } else {
       console.log("mapboxgl not available yet, token will be set later");
     }

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { reverseGeocode } from "@/utils/mapbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Mail, Phone, Calendar, MapPin, Star } from "lucide-react";
@@ -89,6 +90,7 @@ const useUserStats = (userId: string) => {
 
 export const UserOverviewTab = ({ user, onUpdate }: UserOverviewTabProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [userAddress, setUserAddress] = useState<string | null>(null);
   const { data: profile, isLoading: profileLoading } = useUserProfile(user.id);
   const { data: stats, isLoading: statsLoading } = useUserStats(user.id);
 
@@ -100,6 +102,25 @@ export const UserOverviewTab = ({ user, onUpdate }: UserOverviewTabProps) => {
       default: return "outline";
     }
   };
+
+  // Fetch address when profile coordinates are available
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (profile?.latitude && profile?.longitude) {
+        try {
+          const address = await reverseGeocode(profile.latitude, profile.longitude);
+          setUserAddress(address);
+        } catch (error) {
+          console.error('Failed to fetch address:', error);
+          setUserAddress(`${profile.latitude.toFixed(4)}, ${profile.longitude.toFixed(4)}`);
+        }
+      } else {
+        setUserAddress(null);
+      }
+    };
+
+    fetchAddress();
+  }, [profile?.latitude, profile?.longitude]);
 
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
@@ -176,7 +197,7 @@ export const UserOverviewTab = ({ user, onUpdate }: UserOverviewTabProps) => {
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span>
-                  Location: {profile.latitude.toFixed(4)}, {profile.longitude.toFixed(4)}
+                  Location: {userAddress || "Loading address..."}
                   {profile.location_sharing_scope && (
                     <Badge variant="outline" className="ml-2">
                       {profile.location_sharing_scope}

@@ -1,6 +1,0 @@
-import{c as y,s as d}from"./index-ahmQo-Zq.js";import{a as i,p as l}from"./date-vendor-Dhms5dOu.js";/**
- * @license lucide-react v0.462.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */const u=y("CircleCheck",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["path",{d:"m9 12 2 2 4-4",key:"dzmm74"}]]),f=async(a,e,r,o)=>{try{let t=d.from("bookings").select("*").eq("car_id",a).in("status",["confirmed","pending"]).or(`and(start_date.lte.${i(r,"yyyy-MM-dd")},end_date.gte.${i(e,"yyyy-MM-dd")})`);o&&(t=t.neq("id",o));const{data:n,error:s}=await t;return s?(console.error("Error checking car availability:",s),!1):!n||n.length===0}catch(t){return console.error("Error in checkCarAvailability:",t),!1}},m=async a=>{try{const{data:e,error:r}=await d.from("bookings").select("start_date, end_date").eq("car_id",a).in("status",["confirmed","pending"]);if(r)return console.error("Error fetching booked dates:",r),[];const o=[];return e==null||e.forEach(t=>{const n=l(t.start_date),s=l(t.end_date);let c=new Date(n);for(;c<=s;)o.push(new Date(c)),c.setDate(c.getDate()+1)}),o}catch(e){return console.error("Error in getBookedDates:",e),[]}},p=(a,e)=>e.some(r=>a.getDate()===r.getDate()&&a.getMonth()===r.getMonth()&&a.getFullYear()===r.getFullYear());export{u as C,f as c,m as g,p as i};

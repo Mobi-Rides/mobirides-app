@@ -46,6 +46,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             isOpen={isAuthModalOpen}
             onClose={handleCloseModal}
             defaultTab="signin"
+            idPrefix="protected"
           />
         </div>
       )}

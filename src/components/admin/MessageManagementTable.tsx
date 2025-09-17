@@ -21,15 +21,24 @@ interface Message {
   id: string;
   content: string;
   created_at: string;
-  status: string;
+  message_type: string;
   sender_id: string;
-  receiver_id: string;
+  conversation_id: string;
   related_car_id: string | null;
   sender?: {
+    id: string;
     full_name: string | null;
+    avatar_url: string | null;
   } | null;
-  receiver?: {
-    full_name: string | null;
+  conversation?: {
+    id: string;
+    type: string;
+    participants: {
+      user_id: string;
+      profiles: {
+        full_name: string | null;
+      };
+    }[];
   } | null;
   cars?: {
     brand: string;
@@ -42,11 +51,24 @@ const useAdminMessages = () => {
     queryKey: ["admin-messages"],
     queryFn: async (): Promise<Message[]> => {
       const { data, error } = await supabase
-        .from("messages")
+        .from("conversation_messages")
         .select(`
-          id, content, created_at, status, sender_id, receiver_id, related_car_id,
-          sender:profiles!sender_id (full_name),
-          receiver:profiles!receiver_id (full_name),
+          id, content, created_at, message_type, sender_id, conversation_id, related_car_id,
+          sender:profiles!sender_id (
+            id,
+            full_name,
+            avatar_url
+          ),
+          conversation:conversations!conversation_id (
+            id,
+            type,
+            participants:conversation_participants (
+              user_id,
+              profiles!user_id (
+                full_name
+              )
+            )
+          ),
           cars:related_car_id (brand, model)
         `)
         .order("created_at", { ascending: false })
@@ -66,24 +88,39 @@ export const MessageManagementTable = () => {
   const filteredMessages = messages?.filter(message =>
     message.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.sender?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    message.receiver?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    message.conversation?.participants?.some(p => 
+      p.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   ) || [];
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "sent": return "default";
-      case "read": return "secondary";
-      case "flagged": return "destructive";
+  const getMessageTypeBadgeVariant = (messageType: string) => {
+    switch (messageType) {
+      case "text": return "default";
+      case "image": return "secondary";
+      case "file": return "outline";
       default: return "outline";
     }
   };
 
+  const getReceiverName = (message: Message) => {
+    if (!message.conversation?.participants) return "Unknown";
+    
+    // Find the participant who is not the sender
+    const receiver = message.conversation.participants.find(
+      p => p.user_id !== message.sender_id
+    );
+    
+    return receiver?.profiles?.full_name || "Unknown";
+  };
+
   const flagMessage = async (messageId: string) => {
     try {
-      // Note: This would require adding 'flagged' to message_status enum
+      // Add flagged status to metadata
       const { error } = await supabase
-        .from("messages")
-        .update({ status: "read" }) // Using 'read' as placeholder
+        .from("conversation_messages")
+        .update({ 
+          metadata: { flagged: true, flagged_at: new Date().toISOString() }
+        })
         .eq("id", messageId);
 
       if (error) throw error;
@@ -101,7 +138,7 @@ export const MessageManagementTable = () => {
 
     try {
       const { error } = await supabase
-        .from("messages")
+        .from("conversation_messages")
         .delete()
         .eq("id", messageId);
 
@@ -164,7 +201,7 @@ export const MessageManagementTable = () => {
                   <TableHead>To</TableHead>
                   <TableHead>Message</TableHead>
                   <TableHead>Related Car</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -176,7 +213,7 @@ export const MessageManagementTable = () => {
                       {message.sender?.full_name || "Unknown"}
                     </TableCell>
                     <TableCell>
-                      {message.receiver?.full_name || "Unknown"}
+                      {getReceiverName(message)}
                     </TableCell>
                     <TableCell className="max-w-xs">
                       <div className="truncate">
@@ -190,8 +227,8 @@ export const MessageManagementTable = () => {
                       }
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(message.status)}>
-                        {message.status}
+                      <Badge variant={getMessageTypeBadgeVariant(message.message_type)}>
+                        {message.message_type}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -203,7 +240,7 @@ export const MessageManagementTable = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => flagMessage(message.id)}
-                          disabled={message.status === "flagged"}
+                          disabled={false}
                         >
                           <Flag className="h-4 w-4" />
                         </Button>

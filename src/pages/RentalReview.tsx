@@ -140,14 +140,17 @@ export const RentalReview = () => {
       const imageUrls = await Promise.all(uploadPromises);
 
       // Create the review with image URLs
+      // Car reviews are about the rental experience and should be displayed on car detail pages
+      const reviewType = "car";
       const { error: reviewError } = await supabase.from("reviews").insert({
         booking_id: bookingId,
         reviewer_id: user.id,
         reviewee_id: revieweeId,
+        car_id: booking.car_id,
         rating,
         comment,
-        images: imageUrls,
-        review_type: "renter", // Always use 'renter' as per the database enum
+        review_images: imageUrls,
+        review_type: reviewType,
         updated_at: new Date().toISOString(),
       });
 
@@ -239,18 +242,16 @@ export const RentalReview = () => {
             </div>
           </div>
 
-          <CardTitle>
-            <h3 className="font-medium mb-4 text-left text-lg md:text-xl text-gray-800">
-              {booking.cars.brand} {booking.cars.model}
-            </h3>
+          <CardTitle className="font-medium mb-4 text-left text-lg md:text-xl text-gray-800">
+            {booking.cars.brand} {booking.cars.model}
           </CardTitle>
           <Separator />
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-medium mb-4 text-left text-2xl md:text-2xl text-gray-800 text-center">
+            <h2 className="font-medium mb-4 text-left text-2xl md:text-2xl text-gray-800 text-center">
               How is Your Rental Experience?
-            </h3>
+            </h2>
             <Separator />
           </div>
 

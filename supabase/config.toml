@@ -1,1 +1,7 @@
-project_id = "alammewoggxtuykkltcu"
+project_id = "putjowciegpzdheideaf"
+
+[functions.resend-service]
+verify_jwt = true
+
+[functions.send-push-notification]
+verify_jwt = true

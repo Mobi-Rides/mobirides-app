@@ -5,8 +5,14 @@ import { transactionHistory } from "./wallet/transactionHistory";
 import { notificationService } from "./wallet/notificationService";
 
 export type { WalletBalance } from "./wallet/walletBalance";
-export type { TopUpRequest } from "./wallet/walletTopUp";
 export type { WalletTransaction } from "./wallet/transactionHistory";
+
+// Re-export TopUpRequest from walletTopUp with proper interface
+export interface TopUpRequest {
+  amount: number;
+  payment_method: string;
+  payment_reference?: string;
+}
 
 class WalletService {
   async getWalletBalance(hostId: string) {
@@ -59,19 +65,7 @@ class WalletService {
     return result;
   }
 
-  async addTestFunds(hostId: string, amount: number) {
-    return walletOperations.addTestFunds(hostId, amount);
-  }
 
-  async resetWallet(hostId: string) {
-    return walletOperations.resetWallet(hostId);
-  }
 }
 
 export const walletService = new WalletService();
-
-// Development helpers - available in console
-if (typeof window !== 'undefined') {
-  (window as Window & { walletService?: typeof walletService }).walletService = walletService;
-  console.log('WalletService available in console for testing');
-}
