@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { emailConfirmationService } from '../services/emailConfirmationService';
+import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ConfirmEmail: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -13,30 +15,44 @@ const ConfirmEmail: React.FC = () => {
 
   const token = searchParams.get('token');
 
-  useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setMessage('Invalid confirmation link. Please check your email and try again.');
-      return;
-    }
-
-    confirmEmail();
-  }, [token]);
-
-  const confirmEmail = async () => {
+  const confirmEmail = useCallback(async () => {
     if (!token) return;
 
     try {
       const result = await emailConfirmationService.confirmEmail(token);
       
-      if (result.success) {
+      if (result.success && result.userData) {
         setStatus('success');
-        setMessage('Your email has been confirmed successfully! You can now sign in to your account.');
+        setMessage('Your email has been confirmed successfully! Signing you in...');
         
-        // Redirect to sign in page after 3 seconds
-        setTimeout(() => {
-          navigate('/auth?tab=signin');
-        }, 3000);
+        // Automatically sign the user in
+        try {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: result.userData.email,
+            password: result.userData.password,
+          });
+
+          if (signInError) {
+            console.error('Auto sign-in failed:', signInError);
+            setMessage('Email confirmed successfully! Please sign in to your account.');
+            // Redirect to sign in page after 3 seconds
+            setTimeout(() => {
+              navigate('/auth?tab=signin');
+            }, 3000);
+          } else {
+            toast.success('Welcome to MobiRides! You are now signed in.');
+            // Redirect to dashboard after successful sign-in
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 2000);
+          }
+        } catch (signInError) {
+          console.error('Auto sign-in error:', signInError);
+          setMessage('Email confirmed successfully! Please sign in to your account.');
+          setTimeout(() => {
+            navigate('/auth?tab=signin');
+          }, 3000);
+        }
       } else {
         setStatus('error');
         setMessage(result.error || 'Failed to confirm email. Please try again.');
@@ -46,9 +62,20 @@ const ConfirmEmail: React.FC = () => {
       setStatus('error');
       setMessage('An unexpected error occurred. Please try again.');
     }
-  };
+  }, [token, navigate, setStatus, setMessage]);
+
+  useEffect(() => {
+    if (!token) {
+      setStatus('error');
+      setMessage('Invalid confirmation link. Please check your email and try again.');
+      return;
+    }
+
+    confirmEmail();
+  }, [token, confirmEmail]);
 
   const handleResendConfirmation = async () => {
+
     if (!email.trim()) {
       alert('Please enter your email address');
       return;
@@ -88,7 +115,7 @@ const ConfirmEmail: React.FC = () => {
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Confirmed!</h2>
             <p className="text-gray-600 mb-4">{message}</p>
-            <p className="text-sm text-gray-500">Redirecting you to sign in...</p>
+            <p className="text-sm text-gray-500">Redirecting you to dashboard...</p>
           </div>
         );
 

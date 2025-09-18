@@ -65,7 +65,17 @@ export class EmailConfirmationService {
   /**
    * Verify email confirmation token via backend API
    */
-  public async verifyConfirmationToken(token: string): Promise<{ success: boolean; error?: string }> {
+  private async verifyConfirmationToken(token: string): Promise<{ 
+    success: boolean; 
+    error?: string;
+    userData?: {
+      id: string;
+      email: string;
+      fullName: string;
+      phoneNumber: string;
+      password: string;
+    };
+  }> {
     try {
       const response = await fetch(`${this.API_BASE_URL}/email/confirm`, {
         method: 'POST',
@@ -85,7 +95,10 @@ export class EmailConfirmationService {
       }
 
       console.log('Token verified successfully via API');
-      return { success: true };
+      return { 
+        success: true, 
+        userData: result.userData 
+      };
     } catch (error) {
       console.error('Error verifying token via API:', error);
       return { success: false, error: 'Failed to verify confirmation token' };
@@ -133,9 +146,19 @@ export class EmailConfirmationService {
   /**
    * Confirm email and complete signup
    */
-  public async confirmEmail(token: string): Promise<{ success: boolean; error?: string }> {
+  public async confirmEmail(token: string): Promise<{ 
+    success: boolean; 
+    error?: string;
+    userData?: {
+      id: string;
+      email: string;
+      fullName: string;
+      phoneNumber: string;
+      password: string;
+    };
+  }> {
     try {
-      // Verify token via backend API
+      // Verify token via backend API and create user account
       const verificationResult = await this.verifyConfirmationToken(token);
       
       if (!verificationResult.success) {
@@ -143,7 +166,10 @@ export class EmailConfirmationService {
       }
 
       console.log('Email confirmation completed successfully');
-      return { success: true };
+      return { 
+        success: true, 
+        userData: verificationResult.userData 
+      };
     } catch (error) {
       console.error('Error confirming email:', error);
       return { success: false, error: 'An unexpected error occurred during confirmation.' };

@@ -1,6 +1,12 @@
-import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
 import type { Request, Response } from 'express';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client with service role key for backend operations
+const supabaseUrl = 'https://putjowciegpzdheideaf.supabase.co';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1dGpvd2NpZWdwemRoZWlkZWFmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDk1NDkxNCwiZXhwIjoyMDUwNTMwOTE0fQ.iArZaXCWG2_LQi3ZPUbUl8GZURucpATlyUtuhOjiAWk';
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // In-memory storage for pending confirmations (in production, use Redis or database)
 const pendingConfirmations = new Map<string, {
@@ -17,7 +23,7 @@ setInterval(() => {
   const now = Date.now();
   const expiration = 24 * 60 * 60 * 1000; // 24 hours
   
-  for (const [token, data] of pendingConfirmations.entries()) {
+  for (const [token, data] of Array.from(pendingConfirmations.entries())) {
     if (now - data.createdAt > expiration) {
       pendingConfirmations.delete(token);
     }
@@ -210,19 +216,38 @@ export async function verifyConfirmationToken(req: Request, res: Response) {
       });
     }
 
-    // Return the confirmation data for the frontend to complete the signup
-    // Remove the token from pending confirmations
+    // Create user account in Supabase
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: confirmationData.email,
+      password: confirmationData.password,
+      email_confirm: true, // Mark email as confirmed
+      user_metadata: {
+        fullName: confirmationData.fullName,
+        phoneNumber: confirmationData.phoneNumber
+      }
+    });
+
+    if (authError) {
+      console.error('Error creating user in Supabase:', authError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create user account. Please try again.'
+      });
+    }
+
+    // Token is valid and user created successfully, remove it from pending confirmations
     pendingConfirmations.delete(token);
     
     return res.json({
       success: true,
       userData: {
+        id: authData.user?.id,
         email: confirmationData.email,
-        password: confirmationData.password,
         fullName: confirmationData.fullName,
-        phoneNumber: confirmationData.phoneNumber
+        phoneNumber: confirmationData.phoneNumber,
+        password: confirmationData.password // Include password for auto sign-in
       },
-      message: 'Email confirmed successfully'
+      message: 'Email confirmed successfully and user account created'
     });
     
   } catch (error) {
@@ -260,7 +285,7 @@ export async function resendConfirmationEmail(req: Request, res: Response) {
     } | null = null;
     let tokenToResend: string | null = null;
 
-    for (const [token, data] of pendingConfirmations.entries()) {
+    for (const [token, data] of Array.from(pendingConfirmations.entries())) {
       if (data.email === email) {
         confirmationData = data;
         tokenToResend = token;
