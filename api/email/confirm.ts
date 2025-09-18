@@ -28,7 +28,7 @@ setInterval(() => {
  * Create SMTP transporter
  */
 function createTransporter() {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: 'smtp.resend.com',
     port: 2465,
     secure: true, // true for 2465, false for other ports
@@ -250,7 +250,14 @@ export async function resendConfirmationEmail(req: Request, res: Response) {
     }
 
     // Find pending confirmation by email
-    let confirmationData: any = null;
+    let confirmationData: {
+      email: string;
+      password: string;
+      fullName: string;
+      phoneNumber: string;
+      token: string;
+      createdAt: number;
+    } | null = null;
     let tokenToResend: string | null = null;
 
     for (const [token, data] of pendingConfirmations.entries()) {
