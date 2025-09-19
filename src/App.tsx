@@ -73,9 +73,8 @@ const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPrefe
 const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
-const ResendTestPage = lazy(() => import("@/pages/ResendTestPage"));
-const EmailConfirmationTestPage = lazy(() => import("@/pages/EmailConfirmationTestPage"));
-const TestUserRegistrationFlow = lazy(() => import("@/pages/TestUserRegistrationFlow"));
+
+
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
@@ -348,28 +347,8 @@ function App() {
                           </Suspense>
                         } />
                         
-                        {/* Testing Routes */}
-                        <Route path="/test/resend" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <ResendTestPage />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/test/email-confirmation" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <EmailConfirmationTestPage />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/test/user-registration-flow" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <TestUserRegistrationFlow />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
+
+
 
                         {/* Admin Routes */}
                         <Route path="/admin" element={

@@ -5,8 +5,13 @@ import type { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client with service role key for backend operations
-const supabaseUrl = 'https://putjowciegpzdheideaf.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1dGpvd2NpZWdwemRoZWlkZWFmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDk1NDkxNCwiZXhwIjoyMDUwNTMwOTE0fQ.iArZaXCWG2_LQi3ZPUbUl8GZURucpATlyUtuhOjiAWk';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing required Supabase environment variables');
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // In-memory storage for pending confirmations (in production, use Redis or database)
@@ -57,10 +62,15 @@ function getBaseUrl(req: Request): string {
  * Create SMTP transporter
  */
 function createTransporter() {
+  // Runtime guard: validate RESEND_API_KEY before creating transporter
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY environment variable is required but not configured. Please set your Resend API key in the environment variables.');
+  }
+
   return nodemailer.createTransport({
     host: 'smtp.resend.com',
-    port: 2465,
-    secure: true, // true for 2465, false for other ports
+    port: 465, // Standard secure SMTP port (recommended)
+    secure: true, // true for 465, false for other ports
     auth: {
       user: 'resend',
       pass: process.env.RESEND_API_KEY
@@ -259,17 +269,16 @@ export async function verifyConfirmationToken(req: Request, res: Response) {
       });
     }
 
-    // Token is valid and user created successfully, remove it from pending confirmations
+    // Clean up the pending confirmation
     pendingConfirmations.delete(token);
-    
+
     return res.json({
       success: true,
       userData: {
         id: authData.user?.id,
         email: confirmationData.email,
         fullName: confirmationData.fullName,
-        phoneNumber: confirmationData.phoneNumber,
-        password: confirmationData.password // Include password for auto sign-in
+        phoneNumber: confirmationData.phoneNumber
       },
       message: 'Email confirmed successfully and user account created'
     });

@@ -1,4 +1,4 @@
-// Mock payment service for development and testing
+// Mock payment service for development
 export interface PaymentRequest {
   amount: number;
   payment_method: string;
@@ -59,7 +59,7 @@ class MockPaymentService {
     // Simulate payment processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Simulate 95% success rate (5% failure for testing)
+    // Simulate 95% success rate
     const success = Math.random() > 0.05;
     
     if (success) {

@@ -24,13 +24,11 @@ export const getMapboxToken = async (): Promise<string> => {
 
     console.log("Fetching new Mapbox token");
     
-    // This is our hardcoded token for development - in production this would come from a secure source
-    const token = "pk.eyJ1IjoibWFwaGFueWFuZSIsImEiOiJjbTdtMHp1OHUwaDhxMmlxdG5za3QzNTNzIn0.naTWJv5M3LuvUvB18-5RSQ";
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.MAPBOX_TOKEN;
     
     if (!token) {
       throw new Error("No Mapbox token available");
-    }
-    
+    }    
     // Set the token on the global context if mapboxgl is available
     if (typeof window !== 'undefined' && window.mapboxgl) {
       console.log("Setting token on mapboxgl instance:", token.substring(0, 10) + "...");

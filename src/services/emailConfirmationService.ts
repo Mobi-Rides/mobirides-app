@@ -11,9 +11,7 @@ export class EmailConfirmationService {
   private API_BASE_URL: string;
 
   constructor() {
-    // Use the correct port where the development server is running
-    this.API_BASE_URL = 'http://localhost:8081/api';
-  }
+    this.API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';  }
 
   /**
    * Send confirmation email via backend API
@@ -48,9 +46,7 @@ export class EmailConfirmationService {
       if (error instanceof Error) {
         const errorMsg = error.message.toLowerCase();
         
-        if (errorMsg.includes('testing emails') || errorMsg.includes('verify a domain')) {
-          errorMessage = 'Email service is in testing mode. Please contact support or try with a verified email address.';
-        } else if (errorMsg.includes('resend api')) {
+        if (errorMsg.includes('resend api')) {
           errorMessage = 'Email service configuration error. Please contact support.';
         } else if (error.message.includes('fetch')) {
           errorMessage = 'Unable to connect to email service. Please check your internet connection.';
