@@ -1,5 +1,6 @@
 import * as nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
+import * as express from 'express';
 import type { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 
@@ -29,6 +30,28 @@ setInterval(() => {
     }
   }
 }, 60 * 60 * 1000); // Run cleanup every hour
+
+/**
+ * Get base URL for email confirmation links with environment variable support
+ */
+function getBaseUrl(req: Request): string {
+  // Check if we're in production
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.PRODUCTION_URL || 'https://app.mobirides.com';
+  }
+  
+  // For development, use environment variables with fallbacks
+  if (process.env.BASE_URL) {
+    return process.env.BASE_URL;
+  }
+  
+  if (process.env.DEVELOPMENT_URL) {
+    return process.env.DEVELOPMENT_URL;
+  }
+  
+  // Fallback to request origin or default development URL
+  return req.headers.origin || 'http://localhost:8080';
+}
 
 /**
  * Create SMTP transporter
@@ -126,8 +149,9 @@ export async function sendConfirmationEmail(req: Request, res: Response) {
     // Create transporter
     const transporter = createTransporter();
     
-    // Generate confirmation URL
-    const confirmationUrl = `${req.headers.origin || 'http://localhost:8080'}/confirm-email?token=${token}`;
+    // Generate confirmation URL with environment variable support and fallback logic
+    const baseUrl = getBaseUrl(req);
+    const confirmationUrl = `${baseUrl}/confirm-email?token=${token}`;
     
     // Generate email HTML
     const emailHTML = generateConfirmationEmailHTML(
@@ -303,8 +327,9 @@ export async function resendConfirmationEmail(req: Request, res: Response) {
     // Create transporter
     const transporter = createTransporter();
     
-    // Generate confirmation URL
-    const confirmationUrl = `${req.headers.origin || 'http://localhost:8080'}/confirm-email?token=${tokenToResend}`;
+    // Generate confirmation URL with environment variable support and fallback logic
+    const baseUrl = getBaseUrl(req);
+    const confirmationUrl = `${baseUrl}/confirm-email?token=${tokenToResend}`;
     
     // Generate email HTML
     const emailHTML = generateConfirmationEmailHTML(

@@ -11,7 +11,8 @@ export class EmailConfirmationService {
   private API_BASE_URL: string;
 
   constructor() {
-    this.API_BASE_URL = 'http://localhost:3001/api';
+    // Use the correct port where the development server is running
+    this.API_BASE_URL = 'http://localhost:8081/api';
   }
 
   /**

@@ -22,10 +22,10 @@ To send emails to any email address (including Gmail), you need to:
 
 ### Option 1: Verify a Domain (Recommended)
 1. Go to [Resend Domains](https://resend.com/domains)
-2. Add and verify your domain (e.g., `mobirides.com`)
+2. Add and verify your domain (e.g., `app.mobirides.com`)
 3. Update the `FROM_EMAIL` in your `.env` file to use the verified domain:
    ```
-   FROM_EMAIL=noreply@mobirides.com
+   FROM_EMAIL=noreply@app.mobirides.com
    ```
 
 ### Option 2: Add Individual Email Addresses
@@ -86,7 +86,7 @@ The system now provides user-friendly error messages:
 ## Next Steps
 
 1. **For Development**: Continue using `maphanyane@mobirides.com` for testing
-2. **For Production**: Verify the `mobirides.com` domain in Resend
+2. **For Production**: Verify the `app.mobirides.com` domain in Resend
 3. **Update FROM_EMAIL**: Change to use the verified domain
 4. **Test Production**: Verify emails reach external addresses like Gmail
 

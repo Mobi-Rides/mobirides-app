@@ -145,7 +145,7 @@ We may update this Privacy Policy periodically to reflect changes in our practic
 
 For questions about this Privacy Policy or our privacy practices, please contact us:
 
-**Email:** privacy@mobirides.com
+**Email:** privacy@app.mobirides.com
 **Address:** [Company Address]
 **Phone:** [Phone Number]
 

@@ -75,6 +75,7 @@ const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
 const ResendTestPage = lazy(() => import("@/pages/ResendTestPage"));
 const EmailConfirmationTestPage = lazy(() => import("@/pages/EmailConfirmationTestPage"));
+const TestUserRegistrationFlow = lazy(() => import("@/pages/TestUserRegistrationFlow"));
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
@@ -359,6 +360,13 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <EmailConfirmationTestPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/test/user-registration-flow" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <TestUserRegistrationFlow />
                             </ProtectedRoute>
                           </Suspense>
                         } />
