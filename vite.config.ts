@@ -8,6 +8,18 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        configure: (proxy, options) => {
+          // Fallback to serve API files directly if no server is running
+          proxy.on('error', (err, req, res) => {
+            console.log('API proxy error, serving directly');
+          });
+        }
+      }
+    }
   },
   plugins: [
     react(),

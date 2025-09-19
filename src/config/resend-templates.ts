@@ -22,6 +22,7 @@ export type ResendTemplateKey =
   | 'welcome_renter'
   | 'welcome_host'
   | 'password_reset'
+  | 'email_confirmation'
   | 'system_notification';
 
 export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
@@ -102,6 +103,12 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     name: 'Password Reset',
     subject: 'Reset your MobiRides password',
     description: 'Sent when user requests password reset'
+  },
+  email_confirmation: {
+    id: 'email-confirmation',
+    name: 'Email Confirmation',
+    subject: 'Confirm your MobiRides account',
+    description: 'Sent to confirm user email address during signup'
   },
   system_notification: {
     id: 'system-notification',

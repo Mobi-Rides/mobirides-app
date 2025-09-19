@@ -137,7 +137,7 @@ MobiRides is a comprehensive car-sharing platform built with React 18, TypeScrip
 
 3. **React Hook Optimizations**
    - Fixed dependency array issues
-   - Optimized re-rendering patterns
+   - Optimized re-rendering patterns 
    - Improved component lifecycle management
 
 ### **🚀 IMPLEMENTED IMPROVEMENTS**
