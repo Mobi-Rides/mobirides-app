@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { emailConfirmationService } from "@/services/emailConfirmationService";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import countryCodes from "@/constants/Countries";
@@ -69,32 +70,30 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
       
-      const { error } = await supabase.auth.signUp({
+      // Use our custom email confirmation service
+      const result = await emailConfirmationService.initiateSignup({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName.trim(),
-            phone_number: formattedPhoneNumber,
-          },
-        },
+        fullName: fullName.trim(),
+        phoneNumber: formattedPhoneNumber
       });
 
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          setError("An account with this email already exists. Please sign in instead.");
-        } else if (error.message.includes("Invalid email")) {
-          setError("Please enter a valid email address");
-        } else if (error.message.includes("Password")) {
-          setError("Password must be at least 6 characters long");
-        } else {
-          setError(error.message);
-        }
+      if (!result.success) {
+        setError(result.error || "Failed to create account. Please try again.");
         return;
       }
 
+      // Success - show confirmation message
       toast.success("Account created successfully! Please check your email to verify your account.");
+      
+      // Reset form
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setFullName("");
+      setPhoneNumber("");
+      setCountryCode("+267");
+      
       onSuccess?.();
     } catch (error) {
       console.error("Signup error:", error);
