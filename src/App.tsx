@@ -2,6 +2,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -66,7 +67,7 @@ const RentalDetailsRefactored = lazy(
   () => import("./pages/RentalDetailsRefactored"),
 );
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const ConfirmEmail = lazy(() => import("@/pages/ConfirmEmail"));
+
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Verification = lazy(() => import("@/pages/Verification"));
 const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPreferencesPage"));
@@ -128,11 +129,7 @@ function App() {
                             <ResetPassword />
                           </Suspense>
                         } />
-                        <Route path="/confirm-email" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ConfirmEmail />
-                          </Suspense>
-                        } />
+                        <Route path="/confirm-email" element={<Navigate to="/login" replace />} />
                         <Route path="/profile" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>

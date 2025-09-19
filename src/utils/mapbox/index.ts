@@ -24,7 +24,7 @@ export const getMapboxToken = async (): Promise<string> => {
 
     console.log("Fetching new Mapbox token");
     
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.MAPBOX_TOKEN;
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
     
     if (!token) {
       throw new Error("No Mapbox token available");
