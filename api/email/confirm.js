@@ -1,25 +1,36 @@
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import { createTransporter } from './confirm.ts';
+import { createClient } from '@supabase/supabase-js';
 
-// In-memory storage for pending confirmations (in production, use Redis or database)
-const pendingConfirmations = new Map();
+// Validate environment variables
+if (!process.env.SUPABASE_URL) {
+  throw new Error('SUPABASE_URL environment variable is required');
+}
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+}
 
-// Clean up expired tokens (older than 24 hours)
-setInterval(() => {
-  const now = Date.now();
-  const expiration = 24 * 60 * 60 * 1000; // 24 hours
-  
-  for (const [token, data] of pendingConfirmations.entries()) {
-    if (now - data.createdAt > expiration) {
-      pendingConfirmations.delete(token);
-    }
-  }
-}, 60 * 60 * 1000); // Run cleanup every hour
+// Create Supabase client with service role for backend operations
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// TTL for confirmation tokens (24 hours)
+const CONFIRMATION_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Send email using direct Resend API
  */
 async function sendEmailViaResendAPI(to, subject, html) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+  
+  const fromEmail = process.env.FROM_EMAIL || 'noreply@mobirides.com';
+  // Ensure this domain is verified in your Resend account
+  
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -27,7 +38,7 @@ async function sendEmailViaResendAPI(to, subject, html) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: process.env.FROM_EMAIL || 'noreply@mobirides.com',
+      from: fromEmail,
       to: [to],
       subject: subject,
       html: html,
@@ -104,18 +115,30 @@ export async function sendConfirmationEmail(req, res) {
     }
 
     // Generate confirmation token
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const token = uuidv4();
+    const expiresAt = new Date(Date.now() + CONFIRMATION_TTL_MS);
 
-    // Store token with user data
-    pendingConfirmations.set(token, {
-      email,
-      fullName,
-      phoneNumber,
-      password,
-      expiresAt,
-      createdAt: new Date()
-    });
+    // Store confirmation data in database
+    try {
+      const { error: insertError } = await supabase
+        .from('pending_confirmations')
+        .insert({
+          token,
+          email,
+          full_name: fullName,
+          phone_number: phoneNumber,
+          password,
+          expires_at: expiresAt.toISOString()
+        });
+
+      if (insertError) {
+        console.error('Database error storing confirmation:', insertError);
+        throw new Error('Failed to store confirmation data');
+      }
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      throw new Error('Database connection failed');
+    }
 
     // Generate confirmation URL
     const confirmationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${token}`;
@@ -177,42 +200,66 @@ export async function verifyConfirmationToken(req, res) {
       });
     }
 
-    // Get pending confirmation data
-    const confirmationData = pendingConfirmations.get(token);
-    
-    if (!confirmationData) {
-      return res.status(400).json({
+    try {
+      // Get confirmation data from database
+      const { data: confirmationData, error: selectError } = await supabase
+        .from('pending_confirmations')
+        .select('*')
+        .eq('token', token)
+        .single();
+
+      if (selectError || !confirmationData) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid or expired confirmation token'
+        });
+      }
+
+      // Check if token has expired
+      const now = new Date();
+      const expiresAt = new Date(confirmationData.expires_at);
+      
+      if (now > expiresAt) {
+        // Clean up expired token
+        await supabase
+          .from('pending_confirmations')
+          .delete()
+          .eq('token', token);
+          
+        return res.status(400).json({
+          success: false,
+          error: 'Confirmation token has expired. Please sign up again.'
+        });
+      }
+
+      // Remove token from pending confirmations (consume the token)
+      const { error: deleteError } = await supabase
+        .from('pending_confirmations')
+        .delete()
+        .eq('token', token);
+
+      if (deleteError) {
+        console.error('Error deleting confirmation token:', deleteError);
+        // Continue anyway since we have the data
+      }
+      
+      return res.json({
+        success: true,
+        userData: {
+          email: confirmationData.email,
+          password: confirmationData.password,
+          fullName: confirmationData.full_name,
+          phoneNumber: confirmationData.phone_number
+        },
+        message: 'Email confirmed successfully'
+      });
+    } catch (dbError) {
+      console.error('Database error in verifyConfirmationToken:', dbError);
+      return res.status(500).json({
         success: false,
-        error: 'Invalid or expired confirmation token'
+        error: 'Database connection failed'
       });
     }
-
-    // Check if token is expired (24 hours)
-    const now = Date.now();
-    const expiration = 24 * 60 * 60 * 1000; // 24 hours
-    
-    if (now - confirmationData.createdAt > expiration) {
-      pendingConfirmations.delete(token);
-      return res.status(400).json({
-        success: false,
-        error: 'Confirmation token has expired. Please sign up again.'
-      });
-    }
-
-    // Return the confirmation data for the frontend to complete the signup
-    // Remove the token from pending confirmations
-    pendingConfirmations.delete(token);
-    
-    return res.json({
-      success: true,
-      userData: {
-        email: confirmationData.email,
-        password: confirmationData.password,
-        fullName: confirmationData.fullName,
-        phoneNumber: confirmationData.phoneNumber
-      },
-      message: 'Email confirmed successfully'
-    });
     
   } catch (error) {
     console.error('Error verifying confirmation token:', error);
@@ -238,31 +285,48 @@ export async function resendConfirmationEmail(req, res) {
       });
     }
 
-    // Find pending confirmation by email
-    let confirmationData = null;
-    let tokenToResend = null;
+    try {
+      // Find pending confirmation by email
+      const { data: confirmationData, error: selectError } = await supabase
+        .from('pending_confirmations')
+        .select('*')
+        .eq('email', email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-    for (const [token, data] of pendingConfirmations.entries()) {
-      if (data.email === email) {
-        confirmationData = data;
-        tokenToResend = token;
-        break;
+      if (selectError || !confirmationData) {
+        return res.status(400).json({
+          success: false,
+          error: 'No pending confirmation found for this email'
+        });
       }
-    }
 
-    if (!confirmationData || !tokenToResend) {
-      return res.status(400).json({
-        success: false,
-        error: 'No pending confirmation found for this email'
-      });
-    }
+      // Check if the existing token is still valid (not expired)
+      const now = new Date();
+      const expiresAt = new Date(confirmationData.expires_at);
+      
+      if (now > expiresAt) {
+        // Remove expired token
+        await supabase
+          .from('pending_confirmations')
+          .delete()
+          .eq('token', confirmationData.token);
+          
+        return res.status(400).json({
+          success: false,
+          error: 'Previous confirmation has expired. Please sign up again.'
+        });
+      }
+
+      const tokenToResend = confirmationData.token;
 
     // Generate confirmation URL
     const confirmationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email?token=${tokenToResend}`;
     
     // Generate email HTML
     const emailHTML = generateConfirmationEmailHTML(
-      confirmationData.fullName,
+      confirmationData.full_name,
       confirmationUrl,
       email
     );
@@ -285,6 +349,14 @@ export async function resendConfirmationEmail(req, res) {
       messageId: result.id,
       message: 'Confirmation email resent successfully'
     });
+    
+  } catch (dbError) {
+    console.error('Database error in resendConfirmationEmail:', dbError);
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection failed'
+    });
+  }
     
   } catch (error) {
     console.error('Error resending confirmation email:', error);
