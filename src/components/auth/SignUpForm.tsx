@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { emailConfirmationService } from "@/services/emailConfirmationService";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import countryCodes from "@/constants/Countries";
@@ -70,21 +69,32 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
       
-      // Use our custom email confirmation service
-      const result = await emailConfirmationService.initiateSignup({
-        email,
-        password,
-        fullName: fullName.trim(),
-        phoneNumber: formattedPhoneNumber
+      // Call our backend signup endpoint that creates confirmed users
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: fullName.trim(),
+          phoneNumber: formattedPhoneNumber,
+        }),
       });
 
-      if (!result.success) {
-        setError(result.error || "Failed to create account. Please try again.");
-        return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Signup failed');
       }
 
-      // Success - show confirmation message
-      toast.success("Account created successfully! Please check your email to verify your account.");
+      console.log('User created successfully:', data.user);
+
+      // Show success message - account is ready to use immediately
+      toast.success('🎉 Account created successfully!', {
+        description: 'Welcome to MobiRides! You can now sign in with your credentials.'
+      });
       
       // Reset form
       setEmail("");
@@ -98,7 +108,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     } catch (error) {
       console.error("Signup error:", error);
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

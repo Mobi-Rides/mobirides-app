@@ -1,178 +1,46 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { emailConfirmationService } from '../services/emailConfirmationService';
-import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ConfirmEmail: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('');
-  const [email, setEmail] = useState('');
-  const [isResending, setIsResending] = useState(false);
-
-  const token = searchParams.get('token');
-
-  const confirmEmail = useCallback(async () => {
-    if (!token) return;
-
-    try {
-      const result = await emailConfirmationService.confirmEmail(token);
-      
-      if (result.success && result.userData) {
-        setStatus('success');
-        setMessage('Your email has been confirmed successfully! Signing you in...');
-        
-        // Automatically sign the user in
-        try {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: result.userData.email,
-            password: result.userData.password,
-          });
-
-          if (signInError) {
-            console.error('Auto sign-in failed:', signInError);
-            setMessage('Email confirmed successfully! Please sign in to your account.');
-            // Redirect to sign in page after 3 seconds
-            setTimeout(() => {
-              navigate('/auth?tab=signin');
-            }, 3000);
-          } else {
-            toast.success('Welcome to MobiRides! You are now signed in.');
-            // Redirect to dashboard after successful sign-in
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 2000);
-          }
-        } catch (signInError) {
-          console.error('Auto sign-in error:', signInError);
-          setMessage('Email confirmed successfully! Please sign in to your account.');
-          setTimeout(() => {
-            navigate('/auth?tab=signin');
-          }, 3000);
-        }
-      } else {
-        setStatus('error');
-        setMessage(result.error || 'Failed to confirm email. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error confirming email:', error);
-      setStatus('error');
-      setMessage('An unexpected error occurred. Please try again.');
-    }
-  }, [token, navigate, setStatus, setMessage]);
 
   useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setMessage('Invalid confirmation link. Please check your email and try again.');
-      return;
-    }
+    // Show info message and redirect after a short delay
+    toast.info('Email confirmation is no longer required!');
+    
+    const timer = setTimeout(() => {
+      navigate('/login');
+    }, 3000);
 
-    confirmEmail();
-  }, [token, confirmEmail]);
-
-  const handleResendConfirmation = async () => {
-
-    if (!email.trim()) {
-      alert('Please enter your email address');
-      return;
-    }
-
-    setIsResending(true);
-    try {
-      const result = await emailConfirmationService.resendConfirmation(email);
-      
-      if (result.success) {
-        alert('Confirmation email sent! Please check your inbox.');
-      } else {
-        alert(result.error || 'Failed to resend confirmation email.');
-      }
-    } catch (error) {
-      console.error('Error resending confirmation:', error);
-      alert('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsResending(false);
-    }
-  };
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   const renderContent = () => {
-    switch (status) {
-      case 'loading':
-        return (
-          <div className="text-center">
-            <Loader2 className="w-16 h-16 text-purple-600 animate-spin mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Confirming your email...</h2>
-            <p className="text-gray-600">Please wait while we verify your email address.</p>
-          </div>
-        );
-
-      case 'success':
-        return (
-          <div className="text-center">
-            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Confirmed!</h2>
-            <p className="text-gray-600 mb-4">{message}</p>
-            <p className="text-sm text-gray-500">Redirecting you to dashboard...</p>
-          </div>
-        );
-
-      case 'error':
-        return (
-          <div className="text-center">
-            <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Confirmation Failed</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
-            
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Need help?</h3>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Enter your email to resend confirmation:
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                    <button
-                      onClick={handleResendConfirmation}
-                      disabled={isResending}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isResending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Mail className="w-4 h-4" />
-                      )}
-                      {isResending ? 'Sending...' : 'Resend'}
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => navigate('/auth?tab=signup')}
-                    className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                  >
-                    Back to Sign Up
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
+    return (
+      <div className="text-center">
+        <Info className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Confirmation No Longer Required</h2>
+        <p className="text-gray-600 mb-4">
+          Great news! We've simplified our signup process. Email confirmation is no longer required.
+        </p>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
+          <p className="text-green-800 font-medium">Your account is ready to use!</p>
+          <p className="text-green-700 text-sm mt-1">
+            You can now sign in directly with your credentials.
+          </p>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">Redirecting you to the login page...</p>
+        <button
+          onClick={() => navigate('/login')}
+          className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+        >
+          Go to Login
+        </button>
+      </div>
+    );
   };
 
   return (

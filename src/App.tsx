@@ -2,6 +2,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -66,15 +67,15 @@ const RentalDetailsRefactored = lazy(
   () => import("./pages/RentalDetailsRefactored"),
 );
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const ConfirmEmail = lazy(() => import("@/pages/ConfirmEmail"));
+
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Verification = lazy(() => import("@/pages/Verification"));
 const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPreferencesPage"));
 const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
-const ResendTestPage = lazy(() => import("@/pages/ResendTestPage"));
-const EmailConfirmationTestPage = lazy(() => import("@/pages/EmailConfirmationTestPage"));
+
+
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
@@ -128,11 +129,7 @@ function App() {
                             <ResetPassword />
                           </Suspense>
                         } />
-                        <Route path="/confirm-email" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ConfirmEmail />
-                          </Suspense>
-                        } />
+                        <Route path="/confirm-email" element={<Navigate to="/login" replace />} />
                         <Route path="/profile" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -347,21 +344,8 @@ function App() {
                           </Suspense>
                         } />
                         
-                        {/* Testing Routes */}
-                        <Route path="/test/resend" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <ResendTestPage />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/test/email-confirmation" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <EmailConfirmationTestPage />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
+
+
 
                         {/* Admin Routes */}
                         <Route path="/admin" element={

@@ -419,16 +419,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
         </Button>
       </div>
 
-      {/* Development Notice */}
-      {process.env.NODE_ENV === "development" && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <AlertDescription>
-            <strong>Development Complete:</strong> The verification system has
-            been successfully implemented with all required features including
-            local storage for development testing.
-          </AlertDescription>
-        </Alert>
-      )}
+
     </div>
   );
 };

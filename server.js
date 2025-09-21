@@ -22,79 +22,13 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-// Handler function for resend test endpoint
-async function handleResendTest(req, res) {
-  try {
-    const { type, to, subject, templateId, dynamicData, html } = req.body;
 
-    // Handle CORS preflight
-    if (req.method === 'OPTIONS') {
-      return res.status(200).json({ message: 'OK' });
-    }
-
-    switch (type) {
-      case 'config':
-        return res.json({
-          templates: 0,
-          functionAvailable: false,
-          apiKeyConfigured: !!process.env.RESEND_API_KEY,
-          fromEmailConfigured: !!process.env.RESEND_FROM_EMAIL,
-          environment: 'local-development'
-        });
-
-      case 'basic':
-        // Mock basic email response
-        return res.json({
-          success: true,
-          messageId: `mock-${Date.now()}-basic`,
-          message: 'Basic email sent successfully (mock)'
-        });
-
-      case 'template':
-        // Mock template email response
-        return res.json({
-          success: true,
-          messageId: `mock-${Date.now()}-template`,
-          message: 'Template email sent successfully (mock)',
-          templateId: templateId || 'welcome-renter'
-        });
-
-      case 'confirmation':
-        // Mock confirmation email response
-        return res.json({
-          success: true,
-          messageId: `mock-${Date.now()}-confirmation`,
-          message: 'Confirmation email sent successfully (mock)'
-        });
-
-      case 'booking':
-        // Mock booking email response
-        return res.json({
-          success: true,
-          messageId: `mock-${Date.now()}-booking`,
-          message: 'Booking notification sent successfully (mock)'
-        });
-
-      default:
-        return res.status(400).json({
-          error: 'Invalid email type',
-          validTypes: ['config', 'basic', 'template', 'confirmation', 'booking']
-        });
-    }
-  } catch (error) {
-    console.error('Resend test error:', error);
-    return res.status(500).json({
-      error: 'Failed to process email request',
-      details: error.message
-    });
-  }
-}
 
 // Dynamic API route handler
 app.use('/api', async (req, res) => {
   try {
     const apiPath = req.path.substring(1); // Remove leading slash
-    const filePath = join(__dirname, 'api', `${apiPath}.ts`);
+    const filePath = join(__dirname, 'api', `${apiPath}.js`);
     
     // Check if the API file exists
     if (!fs.existsSync(filePath)) {
@@ -102,16 +36,56 @@ app.use('/api', async (req, res) => {
     }
     
     // Handle specific endpoints
-    if (apiPath === 'test/resend') {
-      await handleResendTest(req, res);
+    if (apiPath === 'test/get-token') {
+      // Dynamic import for test endpoint
+      try {
+        const handler = await import('./api/test/get-token.js');
+        await handler.default(req, res);
+      } catch (importError) {
+        console.error('Failed to import test handler:', importError);
+        res.status(500).json({ error: 'Test service unavailable' });
+      }
     } else if (apiPath === 'email/confirm') {
       // Dynamic import for JavaScript file
       try {
-        const { default: emailConfirmHandler } = await import('./api/email/confirm.js');
-        await emailConfirmHandler(req, res);
+        const { sendConfirmationEmail, verifyConfirmationToken, resendConfirmationEmail } = await import('./api/email/confirm.js');
+        
+        // Route based on request method and action
+        if (req.method === 'POST') {
+          const { action } = req.body;
+          
+          if (action === 'verify') {
+            await verifyConfirmationToken(req, res);
+          } else if (action === 'resend') {
+            await resendConfirmationEmail(req, res);
+          } else {
+            // Default to sending confirmation email for signup
+            await sendConfirmationEmail(req, res);
+          }
+        } else {
+          res.status(405).json({ error: 'Method not allowed' });
+        }
       } catch (importError) {
         console.error('Failed to import email confirm handler:', importError);
         res.status(500).json({ error: 'Email confirmation service unavailable' });
+      }
+    } else if (apiPath === 'auth/login') {
+      // Dynamic import for auth login
+      try {
+        const handler = await import('./api/auth/login.js');
+        await handler.default(req, res);
+      } catch (importError) {
+        console.error('Failed to import auth login handler:', importError);
+        res.status(500).json({ error: 'Authentication service unavailable' });
+      }
+    } else if (apiPath === 'auth/signup') {
+      // Dynamic import for auth signup
+      try {
+        const handler = await import('./api/auth/signup.js');
+        await handler.default(req, res);
+      } catch (importError) {
+        console.error('Failed to import auth signup handler:', importError);
+        res.status(500).json({ error: 'Signup service unavailable' });
       }
     } else {
       res.status(404).json({ error: 'API endpoint not implemented' });
