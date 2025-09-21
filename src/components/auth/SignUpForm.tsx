@@ -69,37 +69,45 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
       
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName.trim(),
-            phone_number: formattedPhoneNumber,
-          },
+      // Call our backend signup endpoint that creates confirmed users
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: fullName.trim(),
+          phoneNumber: formattedPhoneNumber,
+        }),
       });
 
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          setError("An account with this email already exists. Please sign in instead.");
-        } else if (error.message.includes("Invalid email")) {
-          setError("Please enter a valid email address");
-        } else if (error.message.includes("Password")) {
-          setError("Password must be at least 6 characters long");
-        } else {
-          setError(error.message);
-        }
-        return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Signup failed');
       }
 
-      toast.success("Account created successfully! Please check your email to verify your account.");
+      console.log('User created successfully:', data.user);
+
+      // Show success message - account is ready to use immediately
+      toast.success('🎉 Account created successfully!', {
+        description: 'Welcome to MobiRides! You can now sign in with your credentials.'
+      });
+      
+      // Reset form
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setFullName("");
+      setPhoneNumber("");
+      setCountryCode("+267");
+      
       onSuccess?.();
     } catch (error) {
       console.error("Signup error:", error);
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

@@ -2,6 +2,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -66,12 +67,15 @@ const RentalDetailsRefactored = lazy(
   () => import("./pages/RentalDetailsRefactored"),
 );
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Verification = lazy(() => import("@/pages/Verification"));
 const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPreferencesPage"));
 const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
+
+
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
@@ -125,6 +129,7 @@ function App() {
                             <ResetPassword />
                           </Suspense>
                         } />
+                        <Route path="/confirm-email" element={<Navigate to="/login" replace />} />
                         <Route path="/profile" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -338,6 +343,9 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        
+
+
 
                         {/* Admin Routes */}
                         <Route path="/admin" element={

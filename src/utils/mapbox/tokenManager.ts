@@ -1,6 +1,24 @@
 
 import { getMapboxToken } from './index';
 
+// Define proper types for Mapbox GL
+interface MapboxGL {
+  accessToken: string;
+  // Add other known Mapbox GL properties as needed
+  version?: string;
+  supported?: boolean;
+  workerClass?: unknown;
+  workerUrl?: string;
+  [key: string]: unknown; // Allow other Mapbox GL properties with unknown type
+}
+
+// Extend the Window interface to include mapboxgl
+declare global {
+  interface Window {
+    mapboxgl?: MapboxGL;
+  }
+}
+
 class MapboxTokenManager {
   private static instance: MapboxTokenManager;
   private token: string | null = null;
@@ -74,7 +92,7 @@ class MapboxTokenManager {
       
       // Set token on the global mapboxgl object if available
       if (window.mapboxgl) {
-        (window.mapboxgl as any).accessToken = token;
+        window.mapboxgl.accessToken = token;
       }
       
       return true;
@@ -103,7 +121,7 @@ class MapboxTokenManager {
     
     // Clear token from global mapboxgl object if available
     if (window.mapboxgl) {
-      (window.mapboxgl as any).accessToken = '';
+      window.mapboxgl.accessToken = '';
     }
   }
 }
