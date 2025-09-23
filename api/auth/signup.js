@@ -83,31 +83,26 @@ export async function signupUser(req, res) {
       });
     }
 
-    // Call the handle_new_user function to create profile and send welcome email
-    const { data: welcomeResult, error: welcomeError } = await supabaseAdmin
-      .rpc('handle_new_user', { user_id: data.user.id });
-
-    if (welcomeError) {
-      console.error('Welcome process error:', welcomeError);
-      // Don't fail the signup if welcome process fails, just log it
-    } else {
-      console.log('Welcome process completed:', welcomeResult);
-    }
-
-    // Also update the profile with the full name from signup
-    const { error: profileUpdateError } = await supabaseAdmin
+    // The handle_new_user trigger function will automatically create the profile
+    // and extract data from raw_user_meta_data, so no manual intervention needed
+    
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify profile was created correctly
+    const { data: profileData, error: profileCheckError } = await supabaseAdmin
       .from('profiles')
-      .update({
-        full_name: fullName,
-        phone_number: phoneNumber,
-        email_confirmed: true,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', data.user.id);
-
-    if (profileUpdateError) {
-      console.error('Profile update error:', profileUpdateError);
-      // Don't fail the signup if profile update fails, just log it
+      .select('full_name, phone_number, email_confirmed')
+      .eq('id', data.user.id)
+      .single();
+      
+    if (profileCheckError) {
+      console.error('Profile verification error:', profileCheckError);
+    } else {
+      console.log('Profile created successfully:', {
+        userId: data.user.id,
+        profile: profileData
+      });
     }
 
     console.log('User created successfully:', {
