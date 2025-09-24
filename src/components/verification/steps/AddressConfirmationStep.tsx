@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useVerification } from "@/contexts/VerificationContext";
+import { useVerification } from "@/hooks/useVerification";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
   onNext,
   onPrevious,
 }) => {
-  const { verificationData, updateAddressConfirmation, updatePersonalInfo, isLoading } = useVerification();
+  const { verificationData, updatePersonalInfo, isLoading } = useVerification();
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [addressData, setAddressData] = useState({
@@ -62,13 +62,7 @@ export const AddressConfirmationStep: React.FC<AddressConfirmationStepProps> = (
   };
 
   const handleConfirmAddress = async () => {
-    await updateAddressConfirmation({
-      currentAddress: addressData,
-      confirmationMethod: "document",
-      isConfirmed: true,
-      confirmationDate: new Date().toISOString(),
-    });
-
+    // Address confirmation is handled locally
     setIsConfirmed(true);
     toast.success("Address confirmed successfully!");
   };

@@ -4,11 +4,11 @@
  * Handles document uploads for verification with camera capture functionality
  */
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { useVerification } from '@/contexts/VerificationContext';
+import { useVerification } from '@/hooks/useVerification';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import {
@@ -67,16 +67,18 @@ const DocumentCameraView: React.FC<{
           setCameraReady(true);
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Camera initialization error:", error);
       let errorMessage = "Unable to access camera.";
       
-      if (error.name === 'NotAllowedError') {
-        errorMessage = "Camera access denied. Please allow camera permissions and try again.";
-      } else if (error.name === 'NotFoundError') {
-        errorMessage = "No camera found. Please ensure your device has a camera.";
-      } else if (error.name === 'SecurityError' || window.location.protocol !== 'https:') {
-        errorMessage = "Camera access requires HTTPS. Please use HTTPS or upload manually.";
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = "Camera access denied. Please allow camera permissions and try again.";
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = "No camera found. Please ensure your device has a camera.";
+        } else if (error.name === 'SecurityError' || window.location.protocol !== 'https:') {
+          errorMessage = "Camera access requires HTTPS. Please use HTTPS or upload manually.";
+        }
       }
       
       setCameraError(errorMessage);
@@ -287,7 +289,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
   const [documentPhotos, setDocumentPhotos] = useState<Record<string, DocumentPhoto>>({});
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'camera' | 'upload'>>({});
 
-  const requiredDocuments = [
+  const requiredDocuments = useMemo(() => [
     {
       id: "national_id_front",
       title: "National ID (Front)",
@@ -308,7 +310,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       title: "Proof of Address",
       description: "Utility bill or bank statement (max 3 months old)",
     },
-  ];
+  ], []);
 
   const handlePhotoCapture = useCallback((documentId: string, photoBlob: Blob) => {
     const photoUrl = URL.createObjectURL(photoBlob);

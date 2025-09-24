@@ -1,89 +1,92 @@
--- Fix the function signature mismatch - only update the function, not the trigger
--- The trigger expects handle_new_user() with no parameters
+-- Update the handle_new_user function to ensure it works correctly
+-- This migration only updates the function, not the trigger
 
--- Drop the existing function that requires parameters
-DROP FUNCTION IF EXISTS public.handle_new_user(uuid) CASCADE;
-
--- Create the proper trigger function (no parameters, uses NEW from trigger context)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 DECLARE
-  user_email text;
-  user_metadata jsonb;
+    user_full_name text;
+    user_phone text;
 BEGIN
-  -- Get user details from the NEW record (trigger context)
-  user_email := NEW.email;
-  user_metadata := COALESCE(NEW.raw_user_meta_data, '{}'::jsonb);
-  
-  -- Create or update profile
-  INSERT INTO public.profiles (
-    id,
-    role,
-    full_name,
-    phone_number,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    NEW.id,
-    'renter'::user_role,
-    COALESCE(user_metadata->>'full_name', 'New User'),
-    COALESCE(user_metadata->>'phone_number', '+267 ' || LPAD((RANDOM() * 99999999)::INTEGER::TEXT, 8, '0')),
-    NOW(),
-    NOW()
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    updated_at = NOW();
-  
-  -- Log welcome email to email_delivery_logs
-  INSERT INTO public.email_delivery_logs (
-    message_id,
-    recipient_email,
-    sender_email,
-    subject,
-    provider,
-    status,
-    metadata,
-    sent_at,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    'welcome_' || NEW.id::text,
-    user_email,
-    'noreply@mobirides.com',
-    'Welcome to MobiRides!',
-    'resend',
-    'sent',
-    jsonb_build_object(
-      'user_id', NEW.id, 
-      'email_type', 'welcome_email',
-      'template', 'welcome'
-    ),
-    NOW(),
-    NOW(),
-    NOW()
-  );
-  
-  -- Log success
-  RAISE NOTICE 'Profile created and welcome email logged for user: % (email: %)', NEW.id, user_email;
-  
-  RETURN NEW;
-  
-EXCEPTION
-  WHEN OTHERS THEN
-    -- Log error but don't fail the user creation
-    RAISE WARNING 'Error in handle_new_user for user %: %', NEW.id, SQLERRM;
+    -- Extract full_name and phone_number from raw_user_meta_data
+    user_full_name := COALESCE(
+        NEW.raw_user_meta_data->>'full_name',
+        NEW.raw_user_meta_data->>'name',
+        split_part(NEW.email, '@', 1)
+    );
+    
+    user_phone := NEW.raw_user_meta_data->>'phone_number';
+    
+    -- Insert profile with correct enum value 'renter'
+    INSERT INTO public.profiles (
+        id,
+        role,
+        full_name,
+        phone_number,
+        email_confirmed,
+        email_confirmed_at,
+        created_at,
+        updated_at
+    )
+    VALUES (
+        NEW.id,
+        'renter'::user_role,
+        user_full_name,
+        user_phone,
+        COALESCE(NEW.email_confirmed_at IS NOT NULL, false),
+        NEW.email_confirmed_at,
+        timezone('utc'::text, now()),
+        timezone('utc'::text, now())
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        phone_number = EXCLUDED.phone_number,
+        email_confirmed = EXCLUDED.email_confirmed,
+        email_confirmed_at = EXCLUDED.email_confirmed_at,
+        updated_at = timezone('utc'::text, now());
+    
+    -- Log welcome email
+    INSERT INTO public.email_delivery_logs (
+        user_id,
+        email_type,
+        recipient_email,
+        status,
+        created_at
+    )
+    VALUES (
+        NEW.id,
+        'welcome',
+        NEW.email,
+        'pending',
+        timezone('utc'::text, now())
+    );
+    
     RETURN NEW;
+EXCEPTION
+    WHEN unique_violation THEN
+        -- Handle unique constraint violations gracefully
+        UPDATE public.profiles SET
+            full_name = user_full_name,
+            phone_number = user_phone,
+            email_confirmed = COALESCE(NEW.email_confirmed_at IS NOT NULL, false),
+            email_confirmed_at = NEW.email_confirmed_at,
+            updated_at = timezone('utc'::text, now())
+        WHERE id = NEW.id;
+        
+        RETURN NEW;
+    WHEN OTHERS THEN
+        -- Log other errors but don't fail the user creation
+        RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
--- Grant execute permissions
+-- Grant necessary permissions to the function
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO service_role;
-GRANT EXECUTE ON FUNCTION public.handle_new_user() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.handle_new_user() TO anon;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres;
 
--- Add comment
-COMMENT ON FUNCTION public.handle_new_user() IS 'Trigger function that creates a profile and logs welcome email for new users';
-
--- Function is now fixed to work with the existing trigger
+-- Ensure the function can access the tables it needs
+GRANT INSERT, UPDATE ON public.profiles TO postgres;
+GRANT INSERT ON public.email_delivery_logs TO postgres;

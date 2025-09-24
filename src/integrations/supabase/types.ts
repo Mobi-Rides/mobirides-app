@@ -1570,6 +1570,39 @@ export type Database = {
           },
         ]
       }
+      pending_confirmations: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          password: string
+          phone_number: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at: string
+          full_name: string
+          id?: string
+          password: string
+          phone_number?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          password?: string
+          phone_number?: string | null
+          token?: string
+        }
+        Relationships: []
+      }
       pre_keys: {
         Row: {
           created_at: string | null
@@ -2242,6 +2275,10 @@ export type Database = {
           session_info: string
         }[]
       }
+      bytea_to_text: {
+        Args: { data: string }
+        Returns: string
+      }
       calculate_car_rating: {
         Args: { car_uuid: string }
         Returns: number
@@ -2271,6 +2308,10 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_admin_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_expired_confirmations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -2364,7 +2405,7 @@ export type Database = {
               p_step_name?: string
               p_user_id: string
             }
-        Returns: undefined
+        Returns: number
       }
       create_handover_progress_notification: {
         Args:
@@ -2496,11 +2537,11 @@ export type Database = {
           | { p_user_id?: string }
         Returns: {
           conversation_id: string
-          created_at: string
-          is_creator: boolean
-          is_participant: boolean
+          last_message: string
+          last_message_at: string
+          participants: Json
           title: string
-          updated_at: string
+          type: string
         }[]
       }
       get_user_email_for_notification: {
@@ -2534,6 +2575,61 @@ export type Database = {
       get_user_review_stats: {
         Args: { user_uuid: string }
         Returns: Json
+      }
+      handle_new_user: {
+        Args: { user_id?: string }
+        Returns: Json
+      }
+      http: {
+        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_delete: {
+        Args:
+          | { content: string; content_type: string; uri: string }
+          | { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_get: {
+        Args: { data: Json; uri: string } | { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_head: {
+        Args: { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_header: {
+        Args: { field: string; value: string }
+        Returns: Database["public"]["CompositeTypes"]["http_header"]
+      }
+      http_list_curlopt: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          curlopt: string
+          value: string
+        }[]
+      }
+      http_patch: {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_post: {
+        Args:
+          | { content: string; content_type: string; uri: string }
+          | { data: Json; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_put: {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_reset_curlopt: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      http_set_curlopt: {
+        Args: { curlopt: string; value: string }
+        Returns: boolean
       }
       initialize_conversation: {
         Args: {
@@ -2593,6 +2689,10 @@ export type Database = {
         }
         Returns: Json
       }
+      text_to_bytea: {
+        Args: { data: string }
+        Returns: string
+      }
       update_notification_expiration_policy: {
         Args: {
           p_auto_cleanup_enabled?: boolean
@@ -2600,6 +2700,10 @@ export type Database = {
           p_notification_type: Database["public"]["Enums"]["notification_type"]
         }
         Returns: boolean
+      }
+      urlencode: {
+        Args: { data: Json } | { string: string } | { string: string }
+        Returns: string
       }
       validate_admin_session: {
         Args: { p_session_token: string }
@@ -2702,7 +2806,23 @@ export type Database = {
         | "Exotic"
     }
     CompositeTypes: {
-      [_ in never]: never
+      http_header: {
+        field: string | null
+        value: string | null
+      }
+      http_request: {
+        method: unknown | null
+        uri: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content_type: string | null
+        content: string | null
+      }
+      http_response: {
+        status: number | null
+        content_type: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content: string | null
+      }
     }
   }
 }
