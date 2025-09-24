@@ -69,31 +69,43 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
       
-      // Call our backend signup endpoint that creates confirmed users
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          fullName: fullName.trim(),
-          phoneNumber: formattedPhoneNumber,
-        }),
+      // Use Supabase auth to create user
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName.trim(),
+            phone_number: formattedPhoneNumber,
+          }
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Signup failed');
+      if (error) {
+        console.error("Signup error:", error);
+        
+        // Handle specific error cases
+        if (error.message.includes('User already registered')) {
+          setError('An account with this email already exists');
+        } else if (error.message.includes('Password should be at least')) {
+          setError('Password should be at least 6 characters long');
+        } else {
+          setError(error.message || 'Signup failed');
+        }
+        setIsLoading(false);
+        return;
       }
 
-      console.log('User created successfully:', data.user);
+      if (!data.user) {
+        setError('Signup failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
 
-      // Show success message - account is ready to use immediately
+      // Show success message
       toast.success('🎉 Account created successfully!', {
-        description: 'Welcome to MobiRides! You can now sign in with your credentials.'
+        description: 'Please check your email to confirm your account, then you can sign in.'
       });
       
       // Reset form
@@ -105,6 +117,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
       setCountryCode("+267");
       
       onSuccess?.();
+      setIsLoading(false);
     } catch (error) {
       console.error("Signup error:", error);
       setError("An unexpected error occurred. Please try again.");
