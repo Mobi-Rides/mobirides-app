@@ -223,6 +223,86 @@ const EMAIL_TEMPLATES = {
 </body>
 </html>
     `
+  },
+  
+  'password-reset': {
+    subject: '🔐 Reset Your MobiRides Password',
+    html: (data: any) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #fed7d7; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .security-notice { background: linear-gradient(135deg, #fef5e7 0%, #f7fafc 100%); padding: 20px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #ed8936; }
+        .security-notice h3 { color: #744210; margin: 0 0 10px 0; font-size: 16px; }
+        .security-notice p { color: #975a16; margin: 0; font-size: 14px; }
+        .reset-button { display: inline-block; background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
+        .reset-button:hover { transform: translateY(-2px); }
+        .expiry-notice { background-color: #f7fafc; padding: 20px; border-radius: 12px; margin: 30px 0; text-align: center; }
+        .expiry-notice p { color: #4a5568; margin: 0; font-size: 14px; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Password Reset</h1>
+            <p>Secure your MobiRides account</p>
+        </div>
+        
+        <div class="content">
+            <div class="message">
+                <p>Hi there! 👋</p>
+                <p>We received a request to reset your MobiRides password. If you made this request, click the button below to create a new password.</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.reset_url || data.confirmation_url}" class="reset-button">🔑 Reset My Password</a>
+            </div>
+            
+            <div class="security-notice">
+                <h3>🛡️ Security Notice</h3>
+                <p>If you didn't request this password reset, please ignore this email. Your password will remain unchanged, and your account is still secure.</p>
+            </div>
+            
+            <div class="expiry-notice">
+                <p>⏰ This password reset link will expire in 1 hour for your security.</p>
+            </div>
+            
+            <div style="margin: 30px 0; padding: 20px; border: 2px dashed #e2e8f0; border-radius: 12px; text-align: center;">
+                <p style="color: #4a5568; margin: 0 0 10px 0;">💡 <strong>Having trouble?</strong></p>
+                <p style="color: #718096; font-size: 14px; margin: 0;">If the button doesn't work, copy and paste this link into your browser:</p>
+                <p style="color: #3182ce; font-size: 12px; word-break: break-all; margin: 10px 0 0 0;">${data.reset_url || data.confirmation_url}</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Stay secure with MobiRides! 🔒</p>
+            <p>Need help? We're here for you!</p>
+            <p>
+                📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a> | 
+                🌐 <a href="${data.app_url || 'https://mobirides.com'}">Visit Website</a>
+            </p>
+            
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">
+                You're receiving this email because a password reset was requested for your MobiRides account.<br>
+                MobiRides, Gaborone, Botswana
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `
   }
 };
 

@@ -1,21 +1,21 @@
--- Check if test user was registered
-SELECT 
-  email,
-  full_name,
-  phone_number,
-  created_at,
-  expires_at
-FROM pending_confirmations 
-WHERE email = 'test@example.com'
-ORDER BY created_at DESC;
-
--- Also check Supabase Auth users
+-- Check if test user exists and their status
 SELECT 
   id,
   email,
   email_confirmed_at,
   created_at,
-  raw_user_meta_data
+  last_sign_in_at,
+  confirmed_at
 FROM auth.users 
-WHERE email = 'test@example.com'
-ORDER BY created_at DESC;
+WHERE email = 'test@mobirides.com';
+
+-- Also check the corresponding profile
+SELECT 
+  p.id,
+  p.role,
+  p.full_name,
+  p.email_confirmed,
+  p.email_confirmed_at
+FROM public.profiles p
+JOIN auth.users u ON p.id = u.id
+WHERE u.email = 'test@mobirides.com';
