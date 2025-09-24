@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import { HandoverBanner } from "@/components/handover/HandoverBanner";
 import { useHandoverPrompts } from "@/hooks/useHandoverPrompts";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { toSafeCar, type SafeCar } from '@/types/car'; // Ensure this import is present
+import { SuccessPopup } from "@/components/SuccessPopup";
 
 interface RenterViewProps {
   searchQuery: string;
@@ -28,9 +29,11 @@ export const RenterView = ({
 }: RenterViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const { ref: inViewRef, inView } = useInView();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Get handover prompts for this renter
   const { 
@@ -39,6 +42,18 @@ export const RenterView = ({
     hasUrgentPrompts,
     refetch: refetchPrompts 
   } = useHandoverPrompts();
+
+  // Check for verification success parameter
+  useEffect(() => {
+    const verificationSuccess = searchParams.get('verification_success');
+    if (verificationSuccess === 'true') {
+      setShowSuccessPopup(true);
+      // Clean up the URL parameter
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('verification_success');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // For combining the inView ref with our loadMoreRef
   const setRefs = (node: HTMLDivElement | null) => {
@@ -267,6 +282,13 @@ export const RenterView = ({
           Load more trigger
         </div>
       )}
+      
+      {/* Success Popup */}
+      <SuccessPopup
+        isVisible={showSuccessPopup}
+        onClose={() => setShowSuccessPopup(false)}
+        autoCloseDelay={5000}
+      />
     </div>
   );
 };

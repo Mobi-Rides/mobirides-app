@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useVerification } from "@/contexts/VerificationContext";
+import { useVerification } from "@/hooks/useVerification";
 import { useAuth } from "@/hooks/useAuth";
 import { VerificationStep, VerificationStatus } from "@/types/verification";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +47,6 @@ import { PersonalInfoStep } from "./steps/PersonalInfoStep";
 import { DocumentUploadStep } from "./steps/DocumentUploadStep";
 import { SelfieVerificationStep } from "./steps/SelfieVerificationStep";
 import { PhoneVerificationStep } from "./steps/PhoneVerificationStep";
-import { AddressConfirmationStep } from "./steps/AddressConfirmationStep";
 import { ReviewSubmitStep } from "./steps/ReviewSubmitStep";
 import { ProcessingStatusStep } from "./steps/ProcessingStatusStep";
 import { CompletionStep } from "./steps/CompletionStep";
@@ -76,12 +75,6 @@ const STEP_CONFIG = {
     description: "Verify your phone number",
     icon: Phone,
     component: PhoneVerificationStep,
-  },
-  [VerificationStep.ADDRESS_CONFIRMATION]: {
-    title: "Address Confirmation",
-    description: "Confirm your address",
-    icon: MapPin,
-    component: AddressConfirmationStep,
   },
   [VerificationStep.REVIEW_SUBMIT]: {
     title: "Review & Submit",
@@ -496,7 +489,6 @@ export const VerificationHub: React.FC = () => {
             [VerificationStep.DOCUMENT_UPLOAD]: verificationData?.documents_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
             [VerificationStep.SELFIE_VERIFICATION]: verificationData?.selfie_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
             [VerificationStep.PHONE_VERIFICATION]: verificationData?.phone_verified ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.ADDRESS_CONFIRMATION]: verificationData?.address_confirmed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
             [VerificationStep.REVIEW_SUBMIT]: VerificationStatus.NOT_STARTED,
             [VerificationStep.PROCESSING_STATUS]: VerificationStatus.NOT_STARTED,
             [VerificationStep.COMPLETION]: VerificationStatus.NOT_STARTED,
