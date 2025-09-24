@@ -4,50 +4,23 @@
  * Provides verification state and methods throughout the app
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, ReactNode } from "react";
 import {
-  VerificationData,
   VerificationStep,
-  PersonalInfo,
-  PhoneVerification,
-  AddressConfirmation,
+  type PersonalInfo,
+  type DocumentUpload,
+  type SelfieVerification,
+  type PhoneVerification,
+  type AddressConfirmation,
+  type VerificationData,
 } from "@/types/verification";
 import { VerificationService } from "@/services/verificationService";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { VerificationContext, type VerificationContextType } from "./VerificationContextDefinition";
 
-interface VerificationContextType {
-  // State
-  verificationData: VerificationData | null;
-  isLoading: boolean;
-  error: string | null;
-  isInitialized: boolean;
+// useVerification hook moved to src/hooks/useVerification.ts
 
-  // Actions
-  initializeVerification: (userId: string, userRole: "renter" | "host") => Promise<void>;
-  refreshData: () => Promise<void>;
-  refreshFromProfile: () => Promise<void>;
-  updatePersonalInfo: (personalInfo: Partial<PersonalInfo>) => Promise<void>;
-  completeDocumentUpload: (userId: string) => Promise<boolean>;
-  completeSelfieVerification: () => Promise<void>;
-  updatePhoneVerification: (phoneData: Partial<PhoneVerification>) => Promise<void>;
-  updateAddressConfirmation: (addressData: Partial<AddressConfirmation>) => Promise<void>;
-  submitForReview: () => Promise<void>;
-  navigateToStep: (step: VerificationStep) => Promise<void>;
-
-  // Utilities
-  canNavigateToStep: (step: VerificationStep) => boolean;
-  getStepProgress: () => { completed: number; total: number; percentage: number };
-  resetVerification: () => void;
-}
-
-const VerificationContext = createContext<VerificationContextType | undefined>(undefined);
-
-export const useVerification = () => {
-  const context = useContext(VerificationContext);
-  if (context === undefined) {
-    throw new Error("useVerification must be used within a VerificationProvider");
-  }
-  return context;
-};
 
 interface VerificationProviderProps {
   children: React.ReactNode;
@@ -171,20 +144,10 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     }
   }, [verificationData?.user_id, refreshData]);
 
-  const updateAddressConfirmation = useCallback(async (addressData: Partial<AddressConfirmation>) => {
-    if (!verificationData?.user_id) throw new Error("No verification data");
-
-    try {
-      setIsLoading(true);
-      await VerificationService.updateAddressConfirmation(verificationData.user_id, addressData);
-      await refreshData();
-    } catch (error) {
-      console.error("[VerificationContext] Failed to update address confirmation:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [verificationData?.user_id, refreshData]);
+  // Address confirmation is now auto-completed in the new flow
+  // const updateAddressConfirmation = useCallback(async (addressData: Partial<AddressConfirmation>) => {
+  //   // This method is no longer needed as address confirmation is automatic
+  // }, [verificationData?.user_id, refreshData]);
 
   const submitForReview = useCallback(async () => {
     if (!verificationData?.user_id) throw new Error("No verification data");
@@ -226,17 +189,15 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
         return verificationData.personal_info_completed && verificationData.documents_completed;
       case VerificationStep.PHONE_VERIFICATION:
         return verificationData.personal_info_completed && verificationData.documents_completed && verificationData.selfie_completed;
-      case VerificationStep.ADDRESS_CONFIRMATION:
-        return verificationData.personal_info_completed && verificationData.documents_completed && verificationData.selfie_completed && verificationData.phone_verified;
       case VerificationStep.REVIEW_SUBMIT:
-        return verificationData.personal_info_completed && verificationData.documents_completed && verificationData.selfie_completed && verificationData.phone_verified && verificationData.address_confirmed;
+        return verificationData.personal_info_completed && verificationData.documents_completed && verificationData.selfie_completed && verificationData.phone_verified;
       default:
         return false;
     }
   }, [verificationData]);
 
   const getStepProgress = useCallback(() => {
-    if (!verificationData) return { completed: 0, total: 8, percentage: 0 };
+    if (!verificationData) return { completed: 0, total: 7, percentage: 0 };
 
     const steps = Object.values(VerificationStep);
     const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
@@ -269,7 +230,7 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     completeDocumentUpload,
     completeSelfieVerification,
     updatePhoneVerification,
-    updateAddressConfirmation,
+    // updateAddressConfirmation, // Removed in new flow
     submitForReview,
     navigateToStep,
 

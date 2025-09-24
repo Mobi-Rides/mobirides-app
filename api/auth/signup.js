@@ -83,6 +83,7 @@ export async function signupUser(req, res) {
       });
     }
 
+<<<<<<< Updated upstream
     // The handle_new_user trigger function will automatically create the profile
     // and extract data from raw_user_meta_data, so no manual intervention needed
     
@@ -103,7 +104,78 @@ export async function signupUser(req, res) {
         userId: data.user.id,
         profile: profileData
       });
+=======
+    // The handle_new_user trigger function should automatically create the profile
+    // but if it fails, we'll create it manually as a fallback
+    
+    // Wait a moment to ensure the trigger has completed
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify that the profile was created correctly
+    let { data: profileData, error: profileCheckError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, phone_number')
+      .eq('id', data.user.id);
+    
+    // If profile doesn't exist, create it manually
+    if (!profileData || profileData.length === 0) {
+      console.log('Trigger failed to create profile, creating manually...');
+      
+      try {
+        // Create profile manually
+         const { data: manualProfile, error: manualError } = await supabaseAdmin
+           .from('profiles')
+           .insert({
+             id: data.user.id,
+             role: 'renter',
+             full_name: fullName,
+             phone_number: phoneNumber,
+             email_confirmed: true,
+             email_confirmed_at: data.user.email_confirmed_at,
+             created_at: new Date().toISOString(),
+             updated_at: new Date().toISOString()
+           })
+           .select('id, full_name, phone_number');
+        
+        if (manualError) {
+          console.error('Manual profile creation failed:', manualError);
+          return res.status(500).json({
+            success: false,
+            error: 'Account created but profile setup failed. Please contact support.',
+            details: manualError.message
+          });
+        }
+        
+        profileData = manualProfile;
+         console.log('Profile created manually:', manualProfile[0]);
+        
+        // Also log the welcome email manually
+        await supabaseAdmin
+          .from('email_delivery_logs')
+          .insert({
+            user_id: data.user.id,
+            email_type: 'welcome',
+            recipient_email: email,
+            status: 'pending',
+            created_at: new Date().toISOString()
+          });
+        
+      } catch (manualCreationError) {
+        console.error('Error during manual profile creation:', manualCreationError);
+        return res.status(500).json({
+          success: false,
+          error: 'Account created but profile setup failed. Please contact support.',
+          details: manualCreationError.message
+        });
+      }
+>>>>>>> Stashed changes
     }
+    
+    console.log('Profile created successfully:', {
+      userId: data.user.id,
+      profileFullName: profileData[0].full_name,
+      profilePhoneNumber: profileData[0].phone_number
+    });
 
     console.log('User created successfully:', {
       userId: data.user.id,

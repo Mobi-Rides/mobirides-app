@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
           .from('profiles')
           .select('full_name, phone_number')
           .eq('id', authUser.id)
-          .single();
+          .single<{ full_name: string; phone_number: string }>();
 
         if (profileError && profileError.code !== 'PGRST116') {
           stats.errors.push(`Error fetching profile for ${authUser.email}: ${profileError.message}`);
@@ -68,8 +68,9 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         // Extract metadata
-        const fullName = authUser.raw_user_meta_data?.full_name;
-        const phoneNumber = authUser.raw_user_meta_data?.phone_number;
+        const metadata = authUser.raw_user_meta_data as { full_name?: string; phone_number?: string } | undefined;
+        const fullName = metadata?.full_name;
+        const phoneNumber = metadata?.phone_number;
 
         // Skip if no metadata to extract
         if (!fullName && !phoneNumber) {
@@ -91,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         // Update or create profile
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
           updated_at: new Date().toISOString(),
         };
 
@@ -114,7 +115,8 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`Updated profile for ${authUser.email}`);
 
       } catch (userError) {
-        stats.errors.push(`Error processing user ${authUser.email}: ${userError}`);
+        const message = userError instanceof Error ? userError.message : String(userError);
+        stats.errors.push(`Error processing user ${authUser.email}: ${message}`);
         continue;
       }
     }
@@ -136,12 +138,13 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Migration error:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: errorMessage,
       }),
       {
         status: 500,
