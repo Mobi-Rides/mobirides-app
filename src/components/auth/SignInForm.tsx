@@ -64,17 +64,25 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
     setError("");
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Use our custom password reset API endpoint
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
 
-      if (error) {
-        setError(error.message);
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || 'Failed to send reset email');
         return;
       }
 
-      toast.success("Password reset email sent! Check your inbox.");
+      toast.success("Password reset email sent! Check your inbox for instructions.");
     } catch (error) {
+      console.error('Password reset error:', error);
       setError("Failed to send reset email. Please try again.");
     } finally {
       setIsResettingPassword(false);
