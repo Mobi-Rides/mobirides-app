@@ -1,58 +1,87 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Eye, EyeOff } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Lock } from "lucide-react";
 
 const ResetPassword = () => {
-  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Check if we have access to reset the password
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    const redirectedFromEmail = params.get("redirectedFromEmail");
+
+    if (!token || redirectedFromEmail !== "true") {
+      toast.error("Invalid or expired reset link");
+      navigate("/?auth=signin");
+      return;
+    }
+
+    // Exchange the recovery token for a session
+    const exchangeTokenForSession = async () => {
+      try {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'recovery'
+        });
+
+        if (error) {
+          throw error;
+        }
+      } catch (error) {
+        console.error("Error exchanging token for session:", error);
         toast.error("Invalid or expired reset link");
-        navigate("/login");
+        navigate("/?auth=signin");
       }
     };
-    
-    checkSession();
-  }, [navigate]);
+
+    exchangeTokenForSession();
+  }, [location.search, navigate]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setError("");
+
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
-    
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
     try {
       setLoading(true);
-      
       const { error } = await supabase.auth.updateUser({
-        password: password,
+        password,
       });
-      
+
       if (error) {
         throw error;
       }
-      
+
+      // Sign out the temporary session
+      await supabase.auth.signOut();
+
       toast.success("Password updated successfully");
-      navigate("/login");
+      navigate("/?auth=signin");
     } catch (error) {
       console.error("Error updating password:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update password");
+      setError(error instanceof Error ? error.message : "Failed to update password");
     } finally {
       setLoading(false);
     }
@@ -74,7 +103,13 @@ const ResetPassword = () => {
             Enter a new password for your account
           </p>
         </div>
-        
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleResetPassword} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -97,18 +132,12 @@ const ResetPassword = () => {
                   className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">
-                    {showPassword ? "Hide password" : "Show password"}
-                  </span>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
               <div className="relative">
@@ -129,24 +158,14 @@ const ResetPassword = () => {
                   className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">
-                    {showConfirmPassword ? "Hide password" : "Show password"}
-                  </span>
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
             </div>
           </div>
-          
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading || !password || !confirmPassword}
-          >
+
+          <Button type="submit" className="w-full" disabled={loading || !password || !confirmPassword}>
             {loading ? "Updating..." : "Reset Password"}
           </Button>
         </form>

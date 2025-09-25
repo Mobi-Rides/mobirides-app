@@ -284,6 +284,17 @@ const Login = () => {
             }}
           />
           <p className="mt-4 text-center text-sm text-gray-600">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/forgot-password");
+              }}
+              className="text-[#7C3AED] hover:text-[#6D28D9]"
+            >
+              Forgot Password?
+            </button>
+          </p>
+          <p className="mt-2 text-center text-sm text-gray-600">
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}

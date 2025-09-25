@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   try {
     // Call our custom Resend service to send the branded email
     const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseUrl = process.env.SUPABASE_URL;
     
     if (!supabaseServiceRole || !supabaseUrl) {
       console.error('Missing Supabase configuration');
@@ -53,10 +53,10 @@ export default async function handler(req, res) {
       // Continue anyway since we want to send our custom email
     }
 
-    if (!resendResponse.ok) {
+    if (!ok) {
       const errorText = await resendResponse.text();
       console.error('Resend service error:', errorText);
-      return res.status(500).json({ error: 'Failed to send password reset email' });
+      return res.status(500).json({ error: `Failed to send password reset email: ${errorText}` });
     }
 
     const resendResult = await resendResponse.json();

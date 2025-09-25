@@ -1,6 +1,6 @@
-
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useAuthModal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,6 +23,16 @@ export const useAuthModal = () => {
     setIsOpen(false);
     navigate("/", { replace: true });
   }, [navigate]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && isOpen) {
+        close();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [close, isOpen]);
 
   return {
     isOpen,
