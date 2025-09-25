@@ -49,7 +49,7 @@ const Login = () => {
     try {
       console.log("Checking profile for user:", userId);
       
-      // Check if the user has a complete profile (database trigger handles creation)
+      // Check if the user has a complete profile
       const { data, error: profileError } = await supabase
         .from("profiles")
         .select("full_name, phone_number")
@@ -59,11 +59,49 @@ const Login = () => {
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         
-        // If profile doesn't exist, the database trigger should handle creation
-        // Just prompt for missing information
+        // If profile doesn't exist, create it automatically
         if (profileError.code === 'PGRST116') { // Not found
-          console.log("Profile not found, prompting for profile completion...");
-          setShowProfilePrompt(true);
+          console.log("Profile not found, creating basic profile...");
+          
+          // Get user details from auth
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            console.error("No authenticated user found");
+            navigate("/");
+            return;
+          }
+
+          // Create basic profile with user metadata
+          const { error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: userId,
+              full_name: user.user_metadata?.full_name || '',
+              phone_number: user.user_metadata?.phone_number || '',
+              email_confirmed: !!user.email_confirmed_at,
+              role: 'renter'
+            });
+
+          if (createError) {
+            console.error("Error creating profile:", createError);
+            // Continue to home and let them handle it there
+            navigate("/");
+            return;
+          }
+
+          // Now check if profile needs completion
+          const newProfile = {
+            full_name: user.user_metadata?.full_name || '',
+            phone_number: user.user_metadata?.phone_number || ''
+          };
+
+          if (!newProfile.full_name || !newProfile.phone_number) {
+            console.log("Profile created but incomplete, prompting for completion");
+            setShowProfilePrompt(true);
+          } else {
+            console.log("Profile created and complete, navigating to home");
+            navigate("/");
+          }
           return;
         }
         
@@ -246,6 +284,17 @@ const Login = () => {
             }}
           />
           <p className="mt-4 text-center text-sm text-gray-600">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/forgot-password");
+              }}
+              className="text-[#7C3AED] hover:text-[#6D28D9]"
+            >
+              Forgot Password?
+            </button>
+          </p>
+          <p className="mt-2 text-center text-sm text-gray-600">
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}

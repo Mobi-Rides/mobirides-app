@@ -54,32 +54,6 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError("Please enter your email address first");
-      return;
-    }
-
-    setIsResettingPassword(true);
-    setError("");
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      toast.success("Password reset email sent! Check your inbox.");
-    } catch (error) {
-      setError("Failed to send reset email. Please try again.");
-    } finally {
-      setIsResettingPassword(false);
-    }
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,15 +111,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
       </Button>
 
       <div className="text-center">
-        <Button
-          type="button"
-          variant="link"
+        <a
+          href="/forgot-password"
           className="text-sm text-muted-foreground hover:text-primary"
-          onClick={handleForgotPassword}
-          disabled={isResettingPassword}
         >
-          {isResettingPassword ? "Sending reset email..." : "Forgot your password?"}
-        </Button>
+          Forgot your password?
+        </a>
       </div>
     </form>
   );

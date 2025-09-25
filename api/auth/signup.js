@@ -41,11 +41,11 @@ export async function signupUser(req, res) {
       });
     }
 
-    // Create user with service role (bypasses email confirmation)
+    // Create user with service role (bypass email confirmation for development)
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // This bypasses email confirmation
+      email_confirm: true,
       user_metadata: {
         full_name: fullName,
         phone_number: phoneNumber
@@ -56,7 +56,7 @@ export async function signupUser(req, res) {
       console.error('Signup error:', error);
       
       // Handle specific error cases
-      if (error.message.includes('User already registered')) {
+      if (error.code === 'email_exists' || error.message.includes('User already registered') || error.message.includes('already exists')) {
         return res.status(409).json({
           success: false,
           error: 'An account with this email already exists'
@@ -67,6 +67,13 @@ export async function signupUser(req, res) {
         return res.status(400).json({
           success: false,
           error: 'Password should be at least 6 characters long'
+        });
+      }
+      
+      if (error.message.includes('Invalid email')) {
+        return res.status(400).json({
+          success: false,
+          error: 'Please enter a valid email address'
         });
       }
       
@@ -83,28 +90,6 @@ export async function signupUser(req, res) {
       });
     }
 
-<<<<<<< Updated upstream
-    // The handle_new_user trigger function will automatically create the profile
-    // and extract data from raw_user_meta_data, so no manual intervention needed
-    
-    // Wait a moment for the trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Verify profile was created correctly
-    const { data: profileData, error: profileCheckError } = await supabaseAdmin
-      .from('profiles')
-      .select('full_name, phone_number, email_confirmed')
-      .eq('id', data.user.id)
-      .single();
-      
-    if (profileCheckError) {
-      console.error('Profile verification error:', profileCheckError);
-    } else {
-      console.log('Profile created successfully:', {
-        userId: data.user.id,
-        profile: profileData
-      });
-=======
     // The handle_new_user trigger function should automatically create the profile
     // but if it fails, we'll create it manually as a fallback
     
@@ -123,19 +108,19 @@ export async function signupUser(req, res) {
       
       try {
         // Create profile manually
-         const { data: manualProfile, error: manualError } = await supabaseAdmin
-           .from('profiles')
-           .insert({
-             id: data.user.id,
-             role: 'renter',
-             full_name: fullName,
-             phone_number: phoneNumber,
-             email_confirmed: true,
-             email_confirmed_at: data.user.email_confirmed_at,
-             created_at: new Date().toISOString(),
-             updated_at: new Date().toISOString()
-           })
-           .select('id, full_name, phone_number');
+        const { data: manualProfile, error: manualError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            role: 'renter',
+            full_name: fullName,
+            phone_number: phoneNumber,
+            email_confirmed: true,
+            email_confirmed_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select('id, full_name, phone_number');
         
         if (manualError) {
           console.error('Manual profile creation failed:', manualError);
@@ -147,7 +132,7 @@ export async function signupUser(req, res) {
         }
         
         profileData = manualProfile;
-         console.log('Profile created manually:', manualProfile[0]);
+        console.log('Profile created manually:', manualProfile[0]);
         
         // Also log the welcome email manually
         await supabaseAdmin
@@ -168,7 +153,6 @@ export async function signupUser(req, res) {
           details: manualCreationError.message
         });
       }
->>>>>>> Stashed changes
     }
     
     console.log('Profile created successfully:', {
@@ -188,11 +172,11 @@ export async function signupUser(req, res) {
       user: {
         id: data.user.id,
         email: data.user.email,
-        emailConfirmed: data.user.email_confirmed_at !== null,
+        emailConfirmed: true,
         fullName,
         phoneNumber
       },
-      message: 'Account created successfully! You can now sign in.'
+      message: 'Account created successfully! You can now sign in with your credentials.'
     });
 
   } catch (error) {

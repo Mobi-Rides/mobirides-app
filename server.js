@@ -87,6 +87,24 @@ app.use('/api', async (req, res) => {
         console.error('Failed to import auth signup handler:', importError);
         res.status(500).json({ error: 'Signup service unavailable' });
       }
+    } else if (apiPath === 'auth/forgot-password') {
+      // Dynamic import for auth forgot password
+      try {
+        const handler = await import('./api/auth/forgot-password.js');
+        await handler.default(req, res);
+      } catch (importError) {
+        console.error('Failed to import auth forgot password handler:', importError);
+        res.status(500).json({ error: 'Forgot password service unavailable' });
+      }
+    } else if (apiPath === 'auth/reset-password') {
+      // Dynamic import for auth reset password
+      try {
+        const handler = await import('./api/auth/reset-password.js');
+        await handler.default(req, res);
+      } catch (importError) {
+        console.error('Failed to import auth reset password handler:', importError);
+        res.status(500).json({ error: 'Reset password service unavailable' });
+      }
     } else {
       res.status(404).json({ error: 'API endpoint not implemented' });
     }
