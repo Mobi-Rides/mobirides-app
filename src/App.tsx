@@ -55,6 +55,7 @@ const BookingDetails = lazy(() => import("@/components/BookingDetails"));
 const NotificationDetails = lazy(() => import("@/components/NotificationDetails"));
 const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const HelpSection = lazy(() => import("@/pages/HelpSection"));
+const PasswordResetSent = lazy(() => import("@/pages/PasswordResetSent"));
 
 const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
@@ -67,6 +68,7 @@ const RentalDetailsRefactored = lazy(
   () => import("./pages/RentalDetailsRefactored"),
 );
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Verification = lazy(() => import("@/pages/Verification"));
@@ -127,6 +129,16 @@ function App() {
                         <Route path="/reset-password" element={
                           <Suspense fallback={<LoadingView />}>
                             <ResetPassword />
+                          </Suspense>
+                        } />
+                        <Route path="/forgot-password" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ForgotPassword />
+                          </Suspense>
+                        } />
+                        <Route path="/password-reset-sent" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <PasswordResetSent />
                           </Suspense>
                         } />
                         <Route path="/confirm-email" element={<Navigate to="/login" replace />} />

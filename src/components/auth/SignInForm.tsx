@@ -54,40 +54,6 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError("Please enter your email address first");
-      return;
-    }
-
-    setIsResettingPassword(true);
-    setError("");
-
-    try {
-      // Use our custom password reset API endpoint
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        setError(result.error || 'Failed to send reset email');
-        return;
-      }
-
-      toast.success("Password reset email sent! Check your inbox for instructions.");
-    } catch (error) {
-      console.error('Password reset error:', error);
-      setError("Failed to send reset email. Please try again.");
-    } finally {
-      setIsResettingPassword(false);
-    }
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,15 +111,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
       </Button>
 
       <div className="text-center">
-        <Button
-          type="button"
-          variant="link"
+        <a
+          href="/forgot-password"
           className="text-sm text-muted-foreground hover:text-primary"
-          onClick={handleForgotPassword}
-          disabled={isResettingPassword}
         >
-          {isResettingPassword ? "Sending reset email..." : "Forgot your password?"}
-        </Button>
+          Forgot your password?
+        </a>
       </div>
     </form>
   );
