@@ -36,7 +36,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     try {
       await supabase.auth.signOut();
       toast.success("Logged out successfully");
-      navigate("/login");
+      navigate("/?auth=signin");
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
