@@ -20,7 +20,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
 import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 // Create query client
 const queryClient = new QueryClient({
