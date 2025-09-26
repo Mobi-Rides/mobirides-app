@@ -19,6 +19,8 @@ import { HandoverProvider } from "@/contexts/HandoverContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 // Create query client
 const queryClient = new QueryClient({
@@ -415,8 +417,10 @@ function App() {
                       
                       {/* Global Chat Manager */}
                       <ChatManager />
-                      
+
                       <Toaster position="top-center" />
+                      <Analytics />
+                      <SpeedInsights/>
                     </BrowserRouter>
                   </TooltipProvider>
                 </VerificationProvider>
