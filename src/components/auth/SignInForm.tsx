@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SignInFormProps {
   onSuccess?: () => void;
@@ -20,6 +21,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
       });
 
       if (error) {
-        
+
         if (error.message.includes("Invalid login credentials")) {
           setError("Invalid email or password. Please check your credentials and try again.");
         } else if (error.message.includes("Email not confirmed")) {
@@ -44,7 +46,15 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSuccess, idPrefix = "s
         return;
       }
 
+      // Wait for session to be established
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        setError("Failed to establish session. Please try again.");
+        return;
+      }
+
       toast.success("Signed in successfully!");
+      navigate("/");
       onSuccess?.();
     } catch (error) {
       console.error("SignInForm: Unexpected error", error);
