@@ -41,6 +41,23 @@ export async function signupUser(req, res) {
       });
     }
 
+    // Format phone number for consistency
+    const formattedPhoneNumber = phoneNumber.replace(/[^\d+]/g, "");
+
+    // Check if phone number is already registered
+    const { data: existingProfile, error: checkError } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('phone_number', formattedPhoneNumber)
+      .single();
+
+    if (existingProfile) {
+      return res.status(409).json({
+        success: false,
+        error: 'An account with this phone number already exists'
+      });
+    }
+
     // Create user with service role (bypass email confirmation for development)
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -92,22 +109,22 @@ export async function signupUser(req, res) {
 
     // The handle_new_user trigger function should automatically create the profile
     // but if it fails, we'll create it manually as a fallback
-    
-    // Wait a moment to ensure the trigger has completed
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+
+    // Wait longer to ensure the trigger has completed
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Verify that the profile was created correctly
     let { data: profileData, error: profileCheckError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, phone_number')
+      .select('id, full_name, phone_number, role')
       .eq('id', data.user.id);
-    
+
     // If profile doesn't exist, create it manually
     if (!profileData || profileData.length === 0) {
       console.log('Trigger failed to create profile, creating manually...');
-      
+
       try {
-        // Create profile manually
+        // Create profile manually with explicit role
         const { data: manualProfile, error: manualError } = await supabaseAdmin
           .from('profiles')
           .insert({
@@ -120,37 +137,43 @@ export async function signupUser(req, res) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
-          .select('id, full_name, phone_number');
-        
+          .select('id, full_name, phone_number, role');
+
         if (manualError) {
-          console.error('Manual profile creation failed:', manualError);
+          console.error('Manual profile creation failed:', JSON.stringify(manualError, null, 2));
           return res.status(500).json({
             success: false,
             error: 'Account created but profile setup failed. Please contact support.',
-            details: manualError.message
+            details: manualError.message || 'Unknown database error'
           });
         }
-        
+
         profileData = manualProfile;
         console.log('Profile created manually:', manualProfile[0]);
-        
-        // Also log the welcome email manually
-        await supabaseAdmin
-          .from('email_delivery_logs')
-          .insert({
-            user_id: data.user.id,
-            email_type: 'welcome',
-            recipient_email: email,
-            status: 'pending',
-            created_at: new Date().toISOString()
-          });
-        
+
+        // Log the welcome email (moved outside try-catch to ensure it happens)
+        try {
+          await supabaseAdmin
+            .from('email_delivery_logs')
+            .insert({
+              user_id: data.user.id,
+              email_type: 'welcome',
+              recipient_email: email,
+              status: 'pending',
+              created_at: new Date().toISOString()
+            });
+          console.log('Welcome email logged for user:', data.user.id);
+        } catch (emailLogError) {
+          console.error('Failed to log welcome email:', emailLogError);
+          // Don't fail signup for email logging issues
+        }
+
       } catch (manualCreationError) {
-        console.error('Error during manual profile creation:', manualCreationError);
+        console.error('Error during manual profile creation:', JSON.stringify(manualCreationError, null, 2));
         return res.status(500).json({
           success: false,
           error: 'Account created but profile setup failed. Please contact support.',
-          details: manualCreationError.message
+          details: manualCreationError.message || 'Unexpected error during profile creation'
         });
       }
     }
