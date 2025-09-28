@@ -69,46 +69,51 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
 
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
-      
-      // Use Supabase auth to create user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName.trim(),
-            phone_number: formattedPhoneNumber,
-          }
-        }
+
+      // Use custom signup API endpoint
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: fullName.trim(),
+          phoneNumber: formattedPhoneNumber,
+        }),
       });
 
-      if (error) {
-        console.error("Signup error:", error);
-        
-        // Handle specific error cases
-        if (error.message.includes('User already registered')) {
-          setError('An account with this email already exists');
-        } else if (error.message.includes('Password should be at least')) {
-          setError('Password should be at least 6 characters long');
-        } else {
-          setError(error.message || 'Signup failed');
-        }
-        setIsLoading(false);
-        return;
-      }
+      const result = await response.json();
 
-      if (!data.user) {
-        setError('Signup failed. Please try again.');
+      if (!response.ok || !result.success) {
+        console.error("Signup error:", result);
+
+        // Handle specific error cases from backend
+        if (result.error?.includes('already exists') || result.error?.includes('already registered')) {
+          if (result.error?.includes('phone number')) {
+            setError('An account with this phone number already exists');
+          } else {
+            setError('An account with this email already exists');
+          }
+        } else if (result.error?.includes('Password should be at least')) {
+          setError('Password should be at least 6 characters long');
+        } else if (result.error?.includes('Invalid email')) {
+          setError('Please enter a valid email address');
+        } else if (result.error?.includes('Full name is required')) {
+          setError('Please enter your full name');
+        } else {
+          setError(result.error || 'Signup failed');
+        }
         setIsLoading(false);
         return;
       }
 
       // Show success message
       toast.success('🎉 Account created successfully!', {
-        description: 'Please check your email to confirm your account, then you can sign in.'
+        description: 'You can now sign in with your credentials. Welcome to MobiRides!'
       });
-      
+
       // Reset form
       setEmail("");
       setPassword("");
@@ -116,27 +121,19 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
       setFullName("");
       setPhoneNumber("");
       setCountryCode("+267");
-      
+
       onSuccess?.();
       setIsLoading(false);
     } catch (error) {
       console.error("Signup error:", error);
-      
-      // Handle specific error messages for better user experience
-      const errorMessage = error.message || "An unexpected error occurred";
-      
-      if (errorMessage.includes("already been registered") || errorMessage.includes("already exists")) {
-        setError("An account with this email already exists. Please try signing in instead.");
-      } else if (errorMessage.includes("Invalid email")) {
-        setError("Please enter a valid email address.");
-      } else if (errorMessage.includes("Password")) {
-        setError("Password requirements not met. Please ensure it's at least 6 characters long.");
-      } else if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+
+      // Handle network and other errors
+      if (error.message?.includes("network") || error.message?.includes("fetch")) {
         setError("Network error. Please check your connection and try again.");
       } else {
         setError("An unexpected error occurred. Please try again.");
       }
-      
+
       setIsLoading(false);
     }
   };
