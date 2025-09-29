@@ -39,15 +39,16 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError(""); // Clear any existing errors
 
-    // Validation
+    // Validate full name
     if (!fullName.trim()) {
       setError("Please enter your full name");
       setIsLoading(false);
       return;
     }
 
+    // Validate phone number
     if (!phoneNumber.trim()) {
       setError("Please enter your phone number");
       setIsLoading(false);
@@ -68,38 +69,71 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
 
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName.trim(),
-            phone_number: formattedPhoneNumber,
-          },
+
+      // Use custom signup API endpoint
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: fullName.trim(),
+          phoneNumber: formattedPhoneNumber,
+        }),
       });
 
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          setError("An account with this email already exists. Please sign in instead.");
-        } else if (error.message.includes("Invalid email")) {
-          setError("Please enter a valid email address");
-        } else if (error.message.includes("Password")) {
-          setError("Password must be at least 6 characters long");
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        console.error("Signup error:", result);
+
+        // Handle specific error cases from backend
+        if (result.error?.includes('already exists') || result.error?.includes('already registered')) {
+          if (result.error?.includes('phone number')) {
+            setError('An account with this phone number already exists');
+          } else {
+            setError('An account with this email already exists');
+          }
+        } else if (result.error?.includes('Password should be at least')) {
+          setError('Password should be at least 6 characters long');
+        } else if (result.error?.includes('Invalid email')) {
+          setError('Please enter a valid email address');
+        } else if (result.error?.includes('Full name is required')) {
+          setError('Please enter your full name');
         } else {
-          setError(error.message);
+          setError(result.error || 'Signup failed');
         }
+        setIsLoading(false);
         return;
       }
 
-      toast.success("Account created successfully! Please check your email to verify your account.");
+      // Show success message
+      toast.success('🎉 Account created successfully!', {
+        description: 'You can now sign in with your credentials. Welcome to MobiRides!'
+      });
+
+      // Reset form
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setFullName("");
+      setPhoneNumber("");
+      setCountryCode("+267");
+
       onSuccess?.();
+      setIsLoading(false);
     } catch (error) {
       console.error("Signup error:", error);
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
+
+      // Handle network and other errors
+      if (error.message?.includes("network") || error.message?.includes("fetch")) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+
       setIsLoading(false);
     }
   };

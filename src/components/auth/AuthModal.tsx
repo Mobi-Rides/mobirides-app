@@ -66,7 +66,7 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin", idPrefix = "
             <SignInForm onSuccess={onClose} idPrefix={`${idPrefix}-signin`} />
           </TabsContent>
           <TabsContent value="signup" className="mt-4">
-            <SignUpForm />
+            <SignUpForm onSuccess={onClose} />
           </TabsContent>
         </Tabs>
       </DialogContent>

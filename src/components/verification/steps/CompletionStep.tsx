@@ -5,8 +5,8 @@
  * Provides next steps and platform access information
  */
 
-import React from "react";
-import { useVerification } from "@/contexts/VerificationContext";
+import React, { useEffect } from "react";
+import { useVerification } from "@/hooks/useVerification";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -214,55 +214,34 @@ const NextSteps: React.FC<{
  * Main Completion Step Component
  */
 export const CompletionStep: React.FC<CompletionStepProps> = () => {
+  // Extract verification data from context
   const { verificationData } = useVerification();
   const navigate = useNavigate();
+  const [countdown, setCountdown] = React.useState(3);
 
-  /**
-   * Check for return context and handle navigation
-   */
-  React.useEffect(() => {
-    // Trigger verification completion event for other components
-    triggerVerificationCompletionEvent();
+  // Auto-redirect to explore page after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/?verification_success=true');
+    }, 3000);
 
-    // Check if user came from a specific action (like booking)
-    const returnContextStr = sessionStorage.getItem(
-      "verification_return_context",
-    );
-    if (returnContextStr) {
-      try {
-        const returnContext = JSON.parse(returnContextStr);
-        console.log("[CompletionStep] Found return context:", returnContext);
-
-        // Clear the context
-        sessionStorage.removeItem("verification_return_context");
-
-        // Auto-redirect after a delay
-        setTimeout(() => {
-          if (returnContext.action === "booking" && returnContext.carData) {
-            // Return to car details page where they can continue booking
-            const carId =
-              returnContext.carData.id || returnContext.carData.car_id;
-            navigate(`/cars/${carId}`);
-            toast.success("Verification complete! You can now book this car.");
-          } else if (returnContext.action === "listing") {
-            // Return to add car page
-            navigate("/add-car");
-            toast.success(
-              "Verification complete! You can now list your vehicle.",
-            );
-          } else {
-            // Default return to home
-            navigate("/");
-          }
-        }, 3000); // Give user time to see completion message
-      } catch (error) {
-        console.error(
-          "[CompletionStep] Failed to parse return context:",
-          error,
-        );
-      }
-    }
+    return () => clearTimeout(timer);
   }, [navigate]);
+
+  // Countdown for display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (!verificationData) {
     return (
@@ -305,9 +284,16 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
         <h1 className="text-3xl font-bold text-green-700 mb-2">
           🎉 Verification Complete!
         </h1>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-lg text-muted-foreground mb-4">
           Welcome to MobiRides! Your identity has been successfully verified.
         </p>
+        
+        {/* Countdown Timer */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 inline-block">
+          <p className="text-blue-700 font-medium">
+            Redirecting to explore cars in {countdown} second{countdown !== 1 ? 's' : ''}...
+          </p>
+        </div>
       </div>
 
       {/* Verification Certificate */}
@@ -419,16 +405,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
         </Button>
       </div>
 
-      {/* Development Notice */}
-      {process.env.NODE_ENV === "development" && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <AlertDescription>
-            <strong>Development Complete:</strong> The verification system has
-            been successfully implemented with all required features including
-            local storage for development testing.
-          </AlertDescription>
-        </Alert>
-      )}
+
     </div>
   );
 };

@@ -151,7 +151,7 @@ class LocationStateManager {
         this.startRealTimeSharing();
       }
       
-      toast.success("Location tracking enabled");
+      // toast.success("Location tracking enabled");
       return true;
 
     } catch (error) {
@@ -166,7 +166,7 @@ class LocationStateManager {
     locationManager.stopTracking();
     this.stopRealTimeSharing();
     this.setState('disabled');
-    toast.success("Location tracking disabled");
+    // toast.success("Location tracking disabled");
   }
 
   getCurrentState(): LocationTrackingState {

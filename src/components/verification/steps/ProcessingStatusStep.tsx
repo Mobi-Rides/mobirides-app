@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useVerification } from "@/contexts/VerificationContext";
+import { useVerification } from "@/hooks/useVerification";
 import { useAuth } from "@/hooks/useAuth";
 import { VerificationService } from "@/services/verificationService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

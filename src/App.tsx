@@ -2,6 +2,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -18,6 +19,8 @@ import { HandoverProvider } from "@/contexts/HandoverContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 // Create query client
 const queryClient = new QueryClient({
@@ -54,6 +57,7 @@ const BookingDetails = lazy(() => import("@/components/BookingDetails"));
 const NotificationDetails = lazy(() => import("@/components/NotificationDetails"));
 const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const HelpSection = lazy(() => import("@/pages/HelpSection"));
+const PasswordResetSent = lazy(() => import("@/pages/PasswordResetSent"));
 
 const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
@@ -66,12 +70,16 @@ const RentalDetailsRefactored = lazy(
   () => import("./pages/RentalDetailsRefactored"),
 );
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+
 const Wallet = lazy(() => import("@/pages/Wallet"));
 const Verification = lazy(() => import("@/pages/Verification"));
 const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPreferencesPage"));
 const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
+
+
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
@@ -125,6 +133,17 @@ function App() {
                             <ResetPassword />
                           </Suspense>
                         } />
+                        <Route path="/forgot-password" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ForgotPassword />
+                          </Suspense>
+                        } />
+                        <Route path="/password-reset-sent" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <PasswordResetSent />
+                          </Suspense>
+                        } />
+                        <Route path="/confirm-email" element={<Navigate to="/login" replace />} />
                         <Route path="/profile" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -338,6 +357,9 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        
+
+
 
                         {/* Admin Routes */}
                         <Route path="/admin" element={
@@ -395,8 +417,10 @@ function App() {
                       
                       {/* Global Chat Manager */}
                       <ChatManager />
-                      
+
                       <Toaster position="top-center" />
+                      <Analytics />
+                      <SpeedInsights/>
                     </BrowserRouter>
                   </TooltipProvider>
                 </VerificationProvider>

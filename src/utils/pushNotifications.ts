@@ -57,7 +57,7 @@ async function saveSubscriptionToDatabase(subscription: PushSubscription) {
     // Use direct insert with type assertion to handle the missing table types
     const subscriptionData = subscription.toJSON();
     
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('push_subscriptions')
       .upsert({
         user_id: user.id,

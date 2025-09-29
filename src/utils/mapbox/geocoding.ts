@@ -79,11 +79,11 @@ export const reverseGeocodeSimple = async (
       const context = feature.context || [];
       
       // Extract city and country from the context
-      let city = feature.text || '';
+      const city = feature.text || '';
       let country = '';
       
       // Look for country in context
-      const countryContext = context.find((ctx: any) => ctx.id.startsWith('country'));
+      const countryContext = context.find((ctx: { id: string; text: string }) => ctx.id.startsWith('country'));
       if (countryContext) {
         country = countryContext.text;
       }

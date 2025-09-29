@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from "react";
-import { useVerification } from "@/contexts/VerificationContext";
+import { useVerification } from "@/hooks/useVerification";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

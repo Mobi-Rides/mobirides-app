@@ -5,12 +5,12 @@
  */
 
 // Verification steps enum for progress tracking
+// Updated: Removed ADDRESS_CONFIRMATION step from user flow
 export enum VerificationStep {
   PERSONAL_INFO = "personal_info",
   DOCUMENT_UPLOAD = "document_upload",
   SELFIE_VERIFICATION = "selfie_verification",
   PHONE_VERIFICATION = "phone_verification",
-  ADDRESS_CONFIRMATION = "address_confirmation",
   REVIEW_SUBMIT = "review_submit",
   PROCESSING_STATUS = "processing_status",
   COMPLETION = "completion",
@@ -80,6 +80,17 @@ export interface PhoneVerification {
   isVerified: boolean;
   attemptCount: number;
   lastAttemptAt: string;
+}
+
+// Selfie verification data
+export interface SelfieVerification {
+  selfieFile: File | null;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+  status: VerificationStatus;
+  rejectionReason?: string;
+  isVerified: boolean;
 }
 
 // Address confirmation data
@@ -190,10 +201,10 @@ export const BOTSWANA_DOCUMENT_REQUIREMENTS: DocumentRequirement[] = [
   },
   {
     type: DocumentType.PROOF_OF_ADDRESS,
-    required: true,
+    required: false, // No longer required in user flow - auto-completed
     maxSizeMB: 5,
     allowedFormats: ["image/jpeg", "image/png", "application/pdf"],
-    description: "Utility bill or bank statement (max 3 months old)",
+    description: "Utility bill or bank statement (max 3 months old) - Optional",
   },
   {
     type: DocumentType.PROOF_OF_INCOME,

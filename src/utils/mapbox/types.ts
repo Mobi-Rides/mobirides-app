@@ -10,9 +10,3 @@ export interface ValidationResult {
   isValid: boolean;
   error?: string;
 }
-
-declare global {
-  interface Window {
-    mapboxgl?: typeof import('mapbox-gl');
-  }
-}
