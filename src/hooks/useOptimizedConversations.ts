@@ -1,8 +1,11 @@
+// TypeScript module resolution verified - packages are correctly installed
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
+import type { RealtimeChannel, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 
 interface DatabaseConversation {
@@ -41,8 +44,8 @@ export const useOptimizedConversations = (userId?: string) => {
   // Auth-aware real-time subscription with session monitoring
   useEffect(() => {
     let conversationIds: string[] = [];
-    let authListener: any;
-    let currentChannel: any;
+    let authListener: { data: { subscription: { unsubscribe: () => void } } } | null;
+    let currentChannel: RealtimeChannel | null;
 
     const setupAuthAwareSubscription = async () => {
       try {
@@ -355,30 +358,30 @@ export const useOptimizedConversations = (userId?: string) => {
         console.log("🔄 [CONVERSATIONS] Starting transformation process");
         const transformStart = Date.now();
         
-        const transformedConversations: Conversation[] = (userConversations || []).map((conv: any) => {
+        const transformedConversations: Conversation[] = (userConversations || []).map((conv: Database['public']['Tables']['conversations']['Row']) => {
           const conversationParticipants = participantsByConv.get(conv?.id) || [];
           console.log(`👥 [CONVERSATIONS] Conv ${conv?.id}: ${conversationParticipants.length} participants found`);
           
           // Find current user's participation to get last_read_at
-          const currentUserParticipation = conversationParticipants.find((p: any) => p.user_id === userId);
+          const currentUserParticipation = conversationParticipants.find((p: Database['public']['Tables']['conversation_participants']['Row'] & { profiles?: Database['public']['Tables']['profiles']['Row'] }) => p.user_id === userId);
           const lastReadAt = currentUserParticipation?.last_read_at;
           
           // Calculate unread count
           let unreadCount = 0;
           if (latestMessages) {
-            const conversationMessages = latestMessages.filter((m: any) => m.conversation_id === conv.id);
+            const conversationMessages = latestMessages.filter((m: Database['public']['Tables']['conversation_messages']['Row']) => m.conversation_id === conv.id);
             if (lastReadAt) {
               // Count messages created after last_read_at
-              unreadCount = conversationMessages.filter((m: any) => 
+              unreadCount = conversationMessages.filter((m: Database['public']['Tables']['conversation_messages']['Row']) => 
                 new Date(m.created_at) > new Date(lastReadAt) && m.sender_id !== userId
               ).length;
             } else {
               // If never read, count all messages not sent by current user
-              unreadCount = conversationMessages.filter((m: any) => m.sender_id !== userId).length;
+              unreadCount = conversationMessages.filter((m: Database['public']['Tables']['conversation_messages']['Row']) => m.sender_id !== userId).length;
             }
           }
           
-          const participantUsers: User[] = (conversationParticipants || []).map((p: any) => ({
+          const participantUsers: User[] = (conversationParticipants || []).map((p: Database['public']['Tables']['conversation_participants']['Row'] & { profiles?: Database['public']['Tables']['profiles']['Row'] }) => ({
             id: p.user_id,
             name: p.profiles?.full_name || 'Unknown User',
             avatar: p.profiles?.avatar_url ? 
@@ -391,7 +394,7 @@ export const useOptimizedConversations = (userId?: string) => {
 
           return {
             id: conv.id,
-            title: conv.title || conv.name || 'Direct Message',
+            title: conv.title || 'Direct Message',
             participants: participantUsers,
             lastMessage: lastMessage ? {
               id: lastMessage.id,
@@ -441,7 +444,7 @@ export const useOptimizedConversations = (userId?: string) => {
   });
 
   // Phase 2: Session stability and retry logic
-  const waitForStableSession = async (retries = 3): Promise<any> => {
+  const waitForStableSession = async (retries = 3): Promise<Session | null> => {
     for (let i = 0; i < retries; i++) {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -576,9 +579,9 @@ export const useOptimizedConversations = (userId?: string) => {
         console.log('RPC result:', rpcResult);
 
         if (rpcResult && typeof rpcResult === 'object' && 'exists' in rpcResult && rpcResult.exists) {
-          console.log('RPC returned existing conversation:', (rpcResult as any).id);
+          console.log('RPC returned existing conversation:', (rpcResult as { id: string; exists: boolean }).id);
           // Find in current conversations or transform the result
-          const existingInState = conversations.find(c => c.id === (rpcResult as any).id);
+          const existingInState = conversations.find(c => c.id === (rpcResult as { id: string; exists: boolean }).id);
           if (existingInState) {
             conversationAttempts.current.delete(attemptKey);
             return existingInState;
@@ -611,7 +614,7 @@ export const useOptimizedConversations = (userId?: string) => {
       conversationId: string;
       content: string;
       messageType?: 'text' | 'image' | 'file';
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }) => {
       console.log('📤 [SEND MESSAGE] Starting send process with RPC:', { conversationId: params.conversationId, contentLength: params.content.length, type: params.messageType });
       
@@ -633,7 +636,7 @@ export const useOptimizedConversations = (userId?: string) => {
         p_conversation_id: params.conversationId,
         p_content: params.content.trim(),
         p_message_type: params.messageType || 'text',
-        p_metadata: params.metadata || {}
+        p_metadata: (params.metadata || {}) as Json
       });
 
       if (rpcError) {
@@ -732,7 +735,7 @@ export const useOptimizedConversations = (userId?: string) => {
     error,
     createConversation: createConversationMutation.mutate,
     isCreatingConversation: createConversationMutation.isPending,
-    sendMessage: (params: { conversationId: string; content: string; messageType?: 'text' | 'image' | 'file'; metadata?: Record<string, any> }) => sendMessageMutation.mutate(params),
+    sendMessage: (params: { conversationId: string; content: string; messageType?: 'text' | 'image' | 'file'; metadata?: Record<string, unknown> }) => sendMessageMutation.mutate(params),
     isSendingMessage: sendMessageMutation.isPending,
     sendMessageError: sendMessageMutation.error,
     sendMessageSuccess: sendMessageMutation.isSuccess
@@ -750,8 +753,8 @@ export const useConversationMessages = (conversationId?: string) => {
   useEffect(() => {
     if (!conversationId) return;
 
-    let currentChannel: any;
-    let authListener: any;
+    let currentChannel: RealtimeChannel | null = null;
+    let authListener: { data: { subscription: { unsubscribe: () => void } } } | null = null;
 
     const setupAuthAwareMessageSubscription = async () => {
       try {
@@ -868,13 +871,13 @@ export const useConversationMessages = (conversationId?: string) => {
 
       console.log(`✅ [MESSAGES] Fetched ${data?.length || 0} messages`);
 
-      return (data || []).map((msg: any): Message => ({
+      return (data || []).map((msg): Message => ({
         id: msg.id,
         content: msg.content,
         senderId: msg.sender_id,
         conversationId: conversationId,
         timestamp: new Date(msg.created_at),
-        type: msg.message_type || 'text',
+        type: (msg.message_type as 'text' | 'image' | 'file') || 'text',
         edited: msg.edited || false,
         editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
         sender: msg.sender ? {
