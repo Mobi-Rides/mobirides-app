@@ -607,12 +607,13 @@ export const useOptimizedConversations = (userId?: string) => {
 
   // Phase 4: Enhanced message sending using secure RPC function
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ conversationId, content, type = 'text' }: { 
-      conversationId: string; 
-      content: string; 
-      type?: 'text' | 'image' | 'file' 
+    mutationFn: async (params: {
+      conversationId: string;
+      content: string;
+      messageType?: 'text' | 'image' | 'file';
+      metadata?: Record<string, any>;
     }) => {
-      console.log('📤 [SEND MESSAGE] Starting send process with RPC:', { conversationId, contentLength: content.length, type });
+      console.log('📤 [SEND MESSAGE] Starting send process with RPC:', { conversationId: params.conversationId, contentLength: params.content.length, type: params.messageType });
       
       // Basic validation before calling RPC
       if (!userId) {
@@ -620,18 +621,19 @@ export const useOptimizedConversations = (userId?: string) => {
         throw new Error('User not authenticated - please log in');
       }
       
-      if (!content.trim()) {
+      if (!params.content?.trim()) {
         console.warn('❌ [SEND MESSAGE] Empty content provided');
         throw new Error('Message content cannot be empty');
       }
 
-      console.log('💬 [SEND MESSAGE] Calling send_conversation_message RPC for conversation:', conversationId);
+      console.log('💬 [SEND MESSAGE] Calling send_conversation_message RPC for conversation:', params.conversationId);
       
       // Use the secure RPC function for message sending
       const { data: rpcResult, error: rpcError } = await supabase.rpc('send_conversation_message', {
-        p_conversation_id: conversationId,
-        p_content: content.trim(),
-        p_message_type: type
+        p_conversation_id: params.conversationId,
+        p_content: params.content.trim(),
+        p_message_type: params.messageType || 'text',
+        p_metadata: params.metadata || {}
       });
 
       if (rpcError) {
@@ -658,21 +660,62 @@ export const useOptimizedConversations = (userId?: string) => {
           created_at: rpcResult.created_at,
           updated_at: rpcResult.created_at,
           edited: false,
-          edited_at: null
+          edited_at: null,
+          messageParams: params
         };
         
         return messageData;
       }
 
       console.log('✅ [SEND MESSAGE] Message sent successfully via RPC');
-      return rpcResult;
+      return { ...rpcResult, messageParams: params };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('✅ [CONVERSATIONS] Message sent successfully:', data);
       toast.success('Message sent!');
       // Invalidate both conversations and messages queries
       queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
       queryClient.invalidateQueries({ queryKey: ['conversation-messages'] });
+      
+      // Handle push notifications at application layer
+      try {
+        const { PushNotificationService } = await import('@/services/pushNotificationService');
+        const pushService = PushNotificationService.getInstance();
+        
+        // Get conversation participants to send notifications
+        const { data: participants } = await supabase
+          .from('conversation_participants')
+          .select('user_id, profiles(full_name)')
+          .eq('conversation_id', data.messageParams.conversationId)
+          .neq('user_id', userId); // Exclude sender
+        
+        if (participants && participants.length > 0) {
+           // Get sender's name from user profile
+           const { data: senderProfile } = await supabase
+             .from('profiles')
+             .select('full_name')
+             .eq('id', userId)
+             .single();
+           
+           const senderName = senderProfile?.full_name || 'Someone';
+           const messagePreview = data.messageParams.content.length > 50 
+             ? data.messageParams.content.substring(0, 50) + '...'
+             : data.messageParams.content;
+           
+           // Send push notifications to all participants except sender
+           for (const participant of participants) {
+             await pushService.sendMessageNotification(participant.user_id, {
+               senderName,
+               messagePreview
+             });
+           }
+           
+           console.log('📱 [PUSH NOTIFICATIONS] Sent to', participants.length, 'participants');
+         }
+      } catch (pushError) {
+        console.error('❌ [PUSH NOTIFICATIONS] Failed to send push notifications:', pushError);
+        // Don't throw error - message was sent successfully, push notification is secondary
+      }
     },
     onError: (error: Error) => {
       console.error('❌ [CONVERSATIONS] Failed to send message:', error);
@@ -686,7 +729,7 @@ export const useOptimizedConversations = (userId?: string) => {
     error,
     createConversation: createConversationMutation.mutate,
     isCreatingConversation: createConversationMutation.isPending,
-    sendMessage: sendMessageMutation.mutate,
+    sendMessage: (params: { conversationId: string; content: string; messageType?: 'text' | 'image' | 'file'; metadata?: Record<string, any> }) => sendMessageMutation.mutate(params),
     isSendingMessage: sendMessageMutation.isPending,
     sendMessageError: sendMessageMutation.error,
     sendMessageSuccess: sendMessageMutation.isSuccess
