@@ -668,7 +668,10 @@ export const useOptimizedConversations = (userId?: string) => {
       }
 
       console.log('✅ [SEND MESSAGE] Message sent successfully via RPC');
-      return { ...rpcResult, messageParams: params };
+      return { 
+        ...(typeof rpcResult === 'object' && rpcResult !== null ? rpcResult : {}),
+        messageParams: params 
+      } as any;
     },
     onSuccess: async (data) => {
       console.log('✅ [CONVERSATIONS] Message sent successfully:', data);

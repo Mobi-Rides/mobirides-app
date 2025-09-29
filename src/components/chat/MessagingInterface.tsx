@@ -241,7 +241,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       sendMessage({
         conversationId: selectedConversationId,
         content: content.trim(),
-        type: 'text'
+        messageType: 'text'
       });
     } else {
       console.warn('Cannot send message:', { selectedConversationId, hasContent: !!content.trim() });
