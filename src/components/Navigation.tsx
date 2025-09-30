@@ -24,7 +24,8 @@ export const Navigation = () => {
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unreadMessagesCount'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return 0;
 
       // Get user's conversation IDs and their last_read_at timestamps
@@ -75,7 +76,8 @@ export const Navigation = () => {
   const { data: unreadNotifications = 0 } = useQuery({
     queryKey: ['unreadNotificationsCount'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return 0;
 
       const { count, error } = await supabase
@@ -97,7 +99,8 @@ export const Navigation = () => {
   // Listen for real-time changes to refresh counts
   useEffect(() => {
     const setupRealtimeSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return;
 
       const channel = supabase

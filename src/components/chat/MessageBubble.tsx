@@ -101,8 +101,7 @@ export function MessageBubble({
 
       {/* Message Content */}
       <div className={cn(
-        "flex-1 max-w-md",
-        isOwnMessage && "flex flex-col items-end"
+        "flex-1"
       )}>
         {/* Sender name (only in group chats and not own messages) */}
         {isGroupChat && !isOwnMessage && showAvatar && (
@@ -114,12 +113,12 @@ export function MessageBubble({
         {/* Message bubble */}
         <div className="relative">
           <div className={cn(
-            "relative px-4 py-2 rounded-2xl break-words shadow-sm transition-all duration-200",
+            "relative px-4 py-2 rounded-2xl break-words shadow-sm transition-all duration-200 text-left max-w-[75%]",
             isOwnMessage 
-              ? "bg-primary text-primary-foreground rounded-br-md transform hover:scale-[1.01]" 
+              ? "bg-primary text-primary-foreground rounded-br-md transform hover:scale-[1.01] ml-auto" 
               : "bg-notification border border-notification-border rounded-bl-md hover:bg-notification/80 transform hover:scale-[1.01]"
           )}>
-            <p className="text-sm">{renderContentWithHighlight(message.content)}</p>
+            <p className="text-sm text-left">{renderContentWithHighlight(message.content)}</p>
             
             {message.edited && (
               <span className="text-xs opacity-60 ml-2 italic">(edited)</span>

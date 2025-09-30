@@ -10,6 +10,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
 import { Conversation, User } from '@/types/message';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ interface ConversationListProps {
   onNewConversation: () => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
+  onBackToApp?: () => void; // New prop for navigating back to main app
 }
 
 export function ConversationList({
@@ -35,10 +37,23 @@ export function ConversationList({
   onSelectConversation,
   onNewConversation,
   searchTerm,
-  onSearchChange
+  onSearchChange,
+  onBackToApp,
 }: ConversationListProps) {
 
   const filteredConversations = conversations;
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    // If we have a custom back handler, use it (for clearing selected conversation)
+    // Otherwise, navigate back to the main app (dashboard or previous page)
+    if (onBackToApp) {
+      onBackToApp();
+    } else {
+      navigate(-1); // Go back to previous page in app navigation
+    }
+  };
 
   const getConversationTitle = (conversation: Conversation) => {
     // For direct conversations, always show the counterparty name, ignore stored title
@@ -72,11 +87,7 @@ export function ConversationList({
     return `${senderName}: ${conversation.lastMessage.content}`;
   };
 
-  const isMobile = useIsMobile();
-  
-  const handleBackClick = () => {
-    window.history.back();
-  };
+
 
   return (
     <div className="flex flex-col h-full bg-card border-r border-notification-border">
