@@ -20,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/utils/toast-utils';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 interface ChatWindowProps {
   conversation: Conversation;
@@ -56,11 +57,56 @@ export function ChatWindow({
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Search state
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [messageSearchTerm, setMessageSearchTerm] = useState('');
+  const [matchIds, setMatchIds] = useState<string[]>([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typingUsers]);
+
+  // Recompute matches when search term or messages change
+  useEffect(() => {
+    if (!messageSearchTerm.trim()) {
+      setMatchIds([]);
+      setCurrentMatchIndex(0);
+      return;
+    }
+    const term = messageSearchTerm.toLowerCase();
+    const ids = messages
+      .filter(m => m.content?.toLowerCase().includes(term))
+      .map(m => m.id);
+    setMatchIds(ids);
+    setCurrentMatchIndex(0);
+  }, [messageSearchTerm, messages]);
+
+  // Scroll to current match when index changes
+  useEffect(() => {
+    if (matchIds.length === 0) return;
+    const id = matchIds[currentMatchIndex];
+    const el = messageRefs.current.get(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-primary');
+      setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-primary');
+      }, 1200);
+    }
+  }, [currentMatchIndex, matchIds]);
+
+  const nextMatch = () => {
+    if (matchIds.length === 0) return;
+    setCurrentMatchIndex((idx) => (idx + 1) % matchIds.length);
+  };
+  const prevMatch = () => {
+    if (matchIds.length === 0) return;
+    setCurrentMatchIndex((idx) => (idx - 1 + matchIds.length) % matchIds.length);
+  };
 
   const getConversationTitle = () => {
     // For direct conversations, always show the counterparty name, ignore stored title
@@ -198,7 +244,7 @@ export function ChatWindow({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setIsSearchOpen(v => !v)}>
             <Search className="w-4 h-4" />
           </Button>
           
@@ -219,6 +265,29 @@ export function ChatWindow({
           </Button>
         </div>
       </div>
+
+      {/* Search bar */}
+      {isSearchOpen && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-notification-border bg-notification">
+          <Input
+            placeholder="Search messages..."
+            value={messageSearchTerm}
+            onChange={(e) => setMessageSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) nextMatch();
+              if (e.key === 'Enter' && e.shiftKey) prevMatch();
+              if (e.key === 'Escape') setIsSearchOpen(false);
+            }}
+            className="max-w-sm"
+          />
+          <span className="text-xs text-muted-foreground">
+            {matchIds.length > 0 ? `${currentMatchIndex + 1} / ${matchIds.length}` : 'No matches'}
+          </span>
+          <Button size="sm" variant="outline" onClick={prevMatch}>Prev</Button>
+          <Button size="sm" variant="outline" onClick={nextMatch}>Next</Button>
+          <Button size="sm" variant="ghost" onClick={() => { setIsSearchOpen(false); setMessageSearchTerm(''); }}>Close</Button>
+        </div>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
@@ -257,8 +326,11 @@ export function ChatWindow({
                   };
                 }
                 
+                const highlightTerm = messageSearchTerm.trim();
+                const isMatch = highlightTerm && message.content?.toLowerCase().includes(highlightTerm.toLowerCase());
+
                 return (
-                  <div key={message.id}>
+                  <div key={message.id} ref={(el) => { if (el) messageRefs.current.set(message.id, el); }}>
                     {/* Date separator */}
                     {shouldShowDateSeparator(message, index) && (
                       <div className="flex items-center justify-center py-4">
@@ -269,7 +341,7 @@ export function ChatWindow({
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Message */}
                     <MessageBubble
                       message={message}
@@ -282,11 +354,12 @@ export function ChatWindow({
                       onDelete={onDeleteMessage}
                       onReply={handleReply}
                       onReact={onReactToMessage}
+                      highlightTerm={isMatch ? highlightTerm : ''}
                     />
                   </div>
                 );
               })}
-              
+
               {/* Typing indicator */}
               {typingUsers.length > 0 && (
                 <div className="px-4 py-2">

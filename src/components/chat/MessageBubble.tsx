@@ -26,6 +26,7 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void;
   onReply?: (messageId: string) => void;
   onReact?: (messageId: string, emoji: string) => void;
+  highlightTerm?: string;
 }
 
 export function MessageBubble({
@@ -38,7 +39,8 @@ export function MessageBubble({
   onEdit,
   onDelete,
   onReply,
-  onReact
+  onReact,
+  highlightTerm = ''
 }: MessageBubbleProps) {
   const [showActions, setShowActions] = useState(false);
   const isOwnMessage = message.senderId === currentUser.id;
@@ -48,6 +50,31 @@ export function MessageBubble({
   };
 
   const commonReactions = ['👍', '❤️', '😂', '😮', '😢', '👏'];
+
+  // Highlight helper
+  const renderContentWithHighlight = (content: string) => {
+    if (!highlightTerm || !content) return content;
+    try {
+      const escaped = highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'gi');
+      const parts = content.split(regex);
+      return (
+        <>
+          {parts.map((part, idx) => (
+            regex.test(part) ? (
+              <mark key={idx} className="bg-yellow-200 text-foreground rounded px-0.5">
+                {part}
+              </mark>
+            ) : (
+              <span key={idx}>{part}</span>
+            )
+          ))}
+        </>
+      );
+    } catch {
+      return content;
+    }
+  };
 
   return (
     <div
@@ -92,7 +119,7 @@ export function MessageBubble({
               ? "bg-primary text-primary-foreground rounded-br-md transform hover:scale-[1.01]" 
               : "bg-notification border border-notification-border rounded-bl-md hover:bg-notification/80 transform hover:scale-[1.01]"
           )}>
-            <p className="text-sm">{message.content}</p>
+            <p className="text-sm">{renderContentWithHighlight(message.content)}</p>
             
             {message.edited && (
               <span className="text-xs opacity-60 ml-2 italic">(edited)</span>

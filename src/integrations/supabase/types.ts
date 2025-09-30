@@ -1285,71 +1285,7 @@ export type Database = {
         }
         Relationships: []
       }
-      messages: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          migrated_to_conversation_id: string | null
-          receiver_id: string
-          related_car_id: string | null
-          sender_id: string
-          status: Database["public"]["Enums"]["message_status"] | null
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          migrated_to_conversation_id?: string | null
-          receiver_id: string
-          related_car_id?: string | null
-          sender_id: string
-          status?: Database["public"]["Enums"]["message_status"] | null
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          migrated_to_conversation_id?: string | null
-          receiver_id?: string
-          related_car_id?: string | null
-          sender_id?: string
-          status?: Database["public"]["Enums"]["message_status"] | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_migrated_to_conversation_id_fkey"
-            columns: ["migrated_to_conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_receiver_id_fkey"
-            columns: ["receiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_related_car_id_fkey"
-            columns: ["related_car_id"]
-            isOneToOne: false
-            referencedRelation: "cars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+
       notification_cleanup_log: {
         Row: {
           cleanup_details: Json | null
@@ -2661,14 +2597,6 @@ export type Database = {
         Args: { p_notification_ids: number[] }
         Returns: number
       }
-      migrate_legacy_messages: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      migrate_legacy_messages_to_conversations: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       save_push_subscription: {
         Args: {
           auth_key: string
@@ -2956,7 +2884,7 @@ export const Constants = {
       ],
       handover_type: ["pickup", "return"],
       message_delivery_status: ["sent", "delivered", "read"],
-      message_status: ["sent", "delivered", "read"],
+
       notification_role: ["host_only", "renter_only", "system_wide"],
       notification_type: [
         "booking_request_received",
