@@ -27,13 +27,14 @@ interface ChatWindowProps {
   messages: Message[];
   currentUser: User;
   typingUsers: TypingIndicator[];
-  onSendMessage: (content: string) => void;
-  onEditMessage?: (messageId: string) => void;
+  onSendMessage: (content: string, replyToId?: string) => void;
+  onEditMessage?: (messageId: string, newContent: string) => void;
   onDeleteMessage?: (messageId: string) => void;
   onReactToMessage?: (messageId: string, emoji: string) => void;
   onStartTyping?: () => void;
   onStopTyping?: () => void;
   isLoading?: boolean;
+  onBackToList?: () => void;
 }
 
 export function ChatWindow({
@@ -47,7 +48,8 @@ export function ChatWindow({
   onReactToMessage,
   onStartTyping,
   onStopTyping,
-  isLoading = false
+  isLoading = false,
+  onBackToList
 }: ChatWindowProps) {
   const [replyToMessage, setReplyToMessage] = useState<{
     id: string;
@@ -198,16 +200,33 @@ export function ChatWindow({
     return `${typingNames[0]} and ${typingNames.length - 1} others are typing...`;
   };
 
+  // Wrapper to adapt MessageBubble onEdit signature to parent onEditMessage
+  const handleEditMessage = (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+    const initial = message.content || '';
+    const newContent = window.prompt('Edit message', initial);
+    if (newContent != null && newContent.trim() !== '' && newContent !== initial) {
+      onEditMessage?.(messageId, newContent);
+    }
+  };
+
   const isMobile = useIsMobile();
   
   const handleBackClick = () => {
-    window.history.back();
+    // Use the provided back handler if available (for mobile pane management)
+    // Otherwise, use browser history
+    if (onBackToList) {
+      onBackToList();
+    } else {
+      window.history.back();
+    }
   };
 
   return (
     <div className="flex flex-col h-full bg-card">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-notification-border">
+      {/* Fixed Header */}
+      <div className="sticky top-0 z-40 flex items-center justify-between p-4 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           {/* Back Button - Only visible on mobile */}
           {isMobile && (
@@ -227,9 +246,9 @@ export function ChatWindow({
               <Users className="w-5 h-5 text-primary" />
             </div>
           ) : (
-            <Avatar className="w-10 h-10">
+            <Avatar className="w-10 h-10 ring-2 ring-background">
               <AvatarImage src={conversation.participants.find(p => p.id !== currentUser.id)?.avatar} />
-              <AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary font-medium">
                 {getConversationTitle().charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -238,7 +257,7 @@ export function ChatWindow({
           {/* Title and status */}
           <div>
             <h3 className="font-medium text-foreground">{getConversationTitle()}</h3>
-            <p className="text-sm text-muted-foreground">{getConversationSubtitle()}</p>
+            <p className="text-xs text-muted-foreground">{getConversationSubtitle()}</p>
           </div>
         </div>
 
@@ -268,7 +287,7 @@ export function ChatWindow({
 
       {/* Search bar */}
       {isSearchOpen && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-notification-border bg-notification">
+        <div className="sticky top-[64px] z-30 flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
           <Input
             placeholder="Search messages..."
             value={messageSearchTerm}
@@ -278,117 +297,127 @@ export function ChatWindow({
               if (e.key === 'Enter' && e.shiftKey) prevMatch();
               if (e.key === 'Escape') setIsSearchOpen(false);
             }}
-            className="max-w-sm"
+            className="max-w-sm bg-background"
           />
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
             {matchIds.length > 0 ? `${currentMatchIndex + 1} / ${matchIds.length}` : 'No matches'}
           </span>
-          <Button size="sm" variant="outline" onClick={prevMatch}>Prev</Button>
-          <Button size="sm" variant="outline" onClick={nextMatch}>Next</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setIsSearchOpen(false); setMessageSearchTerm(''); }}>Close</Button>
+          <Button size="sm" variant="outline" onClick={prevMatch} disabled={matchIds.length === 0}>
+            Prev
+          </Button>
+          <Button size="sm" variant="outline" onClick={nextMatch} disabled={matchIds.length === 0}>
+            Next
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => { setIsSearchOpen(false); setMessageSearchTerm(''); }}>
+            Close
+          </Button>
         </div>
       )}
 
-      {/* Messages */}
-      <ScrollArea className="flex-1" ref={scrollAreaRef}>
-        <div className="py-4">
-          {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-primary" />
-              </div>
-              <p className="text-muted-foreground">
-                Start a conversation with {getConversationTitle()}
-              </p>
-            </div>
-          ) : (
-            <>
-              {messages.map((message, index) => {
-                // Transform sender data to match MessageBubble expectations
-                let senderForBubble;
-                
-                if (message.sender?.full_name) {
-                  // Use sender data from message
-                  senderForBubble = {
-                    id: message.sender.id,
-                    name: message.sender.full_name,
-                    avatar: message.sender.avatar_url,
-                    status: 'offline' as const
-                  };
-                } else {
-                  // Fallback to conversation participants
-                  const participantSender = conversation.participants.find(p => p.id === message.senderId);
-                  senderForBubble = participantSender || {
-                    id: message.senderId,
-                    name: 'Unknown User',
-                    avatar: undefined,
-                    status: 'offline' as const
-                  };
-                }
-                
-                const highlightTerm = messageSearchTerm.trim();
-                const isMatch = highlightTerm && message.content?.toLowerCase().includes(highlightTerm.toLowerCase());
-
-                return (
-                  <div key={message.id} ref={(el) => { if (el) messageRefs.current.set(message.id, el); }}>
-                    {/* Date separator */}
-                    {shouldShowDateSeparator(message, index) && (
-                      <div className="flex items-center justify-center py-4">
-                        <div className="bg-notification border border-notification-border rounded-full px-3 py-1">
-                          <span className="text-xs text-muted-foreground">
-                            {format(message.timestamp, 'MMMM d, yyyy')}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Message */}
-                    <MessageBubble
-                      message={message}
-                      sender={senderForBubble}
-                      currentUser={currentUser}
-                      isGroupChat={conversation.type === 'group'}
-                      showAvatar={shouldShowAvatar(message, index)}
-                      showTimestamp={shouldShowTimestamp(message, index)}
-                      onEdit={onEditMessage}
-                      onDelete={onDeleteMessage}
-                      onReply={handleReply}
-                      onReact={onReactToMessage}
-                      highlightTerm={isMatch ? highlightTerm : ''}
-                    />
-                  </div>
-                );
-              })}
-
-              {/* Typing indicator */}
-              {typingUsers.length > 0 && (
-                <div className="px-4 py-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                    </div>
-                    <span>{getTypingText()}</span>
-                  </div>
+      {/* Messages Area - Optimized scrolling */}
+      <div className="flex-1 min-h-0 overflow-hidden relative">
+        <ScrollArea className="h-full scroll-smooth" ref={scrollAreaRef}>
+          <div className="py-4 px-4">
+            {messages.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-primary/60" />
                 </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </>
-          )}
-        </div>
-      </ScrollArea>
+                <p className="text-muted-foreground">
+                  Start a conversation with {getConversationTitle()}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message, index) => {
+                  // Transform sender data to match MessageBubble expectations
+                  let senderForBubble;
+                  
+                  if (message.sender?.full_name) {
+                    // Use sender data from message
+                    senderForBubble = {
+                      id: message.sender.id,
+                      name: message.sender.full_name,
+                      avatar: message.sender.avatar_url,
+                      status: 'offline' as const
+                    };
+                  } else {
+                    // Fallback to conversation participants
+                    const participantSender = conversation.participants.find(p => p.id === message.senderId);
+                    senderForBubble = participantSender || {
+                      id: message.senderId,
+                      name: 'Unknown User',
+                      avatar: undefined,
+                      status: 'offline' as const
+                    };
+                  }
+                  
+                  const highlightTerm = messageSearchTerm.trim();
+                  const isMatch = highlightTerm && message.content?.toLowerCase().includes(highlightTerm.toLowerCase());
 
-      {/* Message Input */}
-      <MessageInput
-        onSendMessage={onSendMessage}
-        onStartTyping={onStartTyping}
-        onStopTyping={onStopTyping}
-        replyToMessage={replyToMessage}
-        onCancelReply={() => setReplyToMessage(null)}
-        isLoading={isLoading}
-      />
+                  return (
+                    <div key={message.id} ref={(el) => { if (el) messageRefs.current.set(message.id, el); }}>
+                      {/* Date separator */}
+                      {shouldShowDateSeparator(message, index) && (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="bg-muted/50 border border-border rounded-full px-3 py-1">
+                            <span className="text-xs text-muted-foreground">
+                              {format(message.timestamp, 'MMMM d, yyyy')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Message bubble */}
+                      <MessageBubble
+                        message={message}
+                        sender={senderForBubble}
+                        currentUser={currentUser}
+                        isGroupChat={conversation.type === 'group'}
+                        showAvatar={shouldShowAvatar(message, index)}
+                        showTimestamp={shouldShowTimestamp(message, index)}
+                        onReply={handleReply}
+                        onEdit={handleEditMessage}
+                        onDelete={onDeleteMessage}
+                        onReact={onReactToMessage}
+                        highlightTerm={isMatch ? highlightTerm : undefined}
+                      />
+                    </div>
+                  );
+                })}
+                
+                {/* Typing indicator */}
+                {typingUsers.length > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span className="text-sm text-muted-foreground">{getTypingText()}</span>
+                  </div>
+                )}
+                
+                {/* Scroll anchor */}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Message Input - Fixed at bottom */}
+      <div className="flex-shrink-0 border-t border-border bg-card/95 backdrop-blur-sm">
+        <MessageInput
+          onSendMessage={(content) => onSendMessage(content, replyToMessage?.id)}
+          onStartTyping={onStartTyping}
+          onStopTyping={onStopTyping}
+          replyToMessage={replyToMessage}
+          onCancelReply={() => setReplyToMessage(null)}
+          disabled={isLoading}
+          placeholder={`Message ${getConversationTitle()}...`}
+        />
+      </div>
     </div>
   );
 }

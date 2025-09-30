@@ -249,7 +249,7 @@ export const RentalReview = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h2 className="font-medium mb-4 text-left text-2xl md:text-2xl text-gray-800 text-center">
+            <h2 className="font-medium mb-4 text-2xl md:text-2xl text-gray-800 text-center">
               How is Your Rental Experience?
             </h2>
             <Separator />

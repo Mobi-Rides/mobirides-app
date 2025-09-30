@@ -3,7 +3,7 @@
 // This script tests the core messaging functionality after legacy removal
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../types';
+import type { Database } from '../../integrations/supabase/types';
 
 // Test configuration
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'your_supabase_url';
