@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+      "strict": true,
+      "allowJs": true,
+      "lib": ["esnext", "dom", "dom.iterable"],
+      "module": "esnext"
+    },
+    "lint": {
+      "files": {
+        "include": ["**/*.ts"]
+      }
+    },
+    "fmt": {
+      "files": {
+        "include": ["**/*.ts"]
+      }
+    },
+    "imports": {
+      "resend": "npm:resend@2.0.0/"
+    }
+  }

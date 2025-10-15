@@ -73,6 +73,7 @@ export const LocationSearchProvider: React.FC<LocationSearchProviderProps> = ({ 
     } catch (err) {
       setError('Search failed. Please try again.');
       console.error('Search error:', err);
+      console.error('Search error details:', err instanceof Error ? err.message : err);
     } finally {
       setIsLoading(false);
     }
