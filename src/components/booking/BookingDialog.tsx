@@ -109,6 +109,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             startDate,
             endDate,
           );
+          console.log('BookingDialog: Availability check result', available);
           setIsAvailable(available);
         } catch (error) {
           console.error("Error checking availability:", error);
@@ -140,6 +141,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   // Set default pickup location from car's location
   useEffect(() => {
+    console.log('BookingDialog: Setting default location from car', { carLatitude: car.latitude, carLongitude: car.longitude });
     if (car.latitude && car.longitude) {
       setPickupLocation({
         latitude: car.latitude,
@@ -485,6 +487,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   };
 
   const handleLocationSelected = (lat: number, lng: number) => {
+    console.log('BookingDialog: Location selected', { lat, lng });
     setPickupLocation({
       latitude: lat,
       longitude: lng,
@@ -492,6 +495,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   };
 
   const formatLocationDescription = () => {
+    console.log('BookingDialog: Current pickupLocation', pickupLocation);
     if (!pickupLocation) return "No location selected";
 
     if (
@@ -665,7 +669,14 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     : !isVerified
                       ? "Start Verification"
                       : "Confirm"}
-              </Button>
+            </Button>
+            {(!startDate || !endDate || !pickupLocation || !isAvailable) && (
+              <div className="text-xs text-destructive mt-1 text-center">
+                {(!startDate || !endDate) && 'Please select dates'}
+                {!pickupLocation && 'Please select pickup location'}
+                {!isAvailable && 'Car not available for selected dates'}
+              </div>
+            )}
            </div>
           </div>
         </DialogContent>

@@ -1,5 +1,4 @@
 
-import { SearchBoxCore } from '@mapbox/search-js-core';
 import { getMapboxToken } from '@/utils/mapbox';
 
 export interface SearchSuggestion {
@@ -22,63 +21,55 @@ export interface SearchResult {
 }
 
 class MapboxSearchService {
-  private searchBox: SearchBoxCore | null = null;
-  private isInitialized = false;
-  private sessionToken: string | null = null;
+  private token: string | null = null;
 
   async initialize(): Promise<void> {
-    if (this.isInitialized) return;
+    if (this.token) return;
 
     try {
       const token = await getMapboxToken();
       if (!token) {
         throw new Error('Mapbox token not available');
       }
-
-      this.searchBox = new SearchBoxCore({
-        accessToken: token,
-        language: 'en',
-        limit: 5,
-        country: 'BW', // Botswana
-      });
-
-      // Generate a session token for the search session
-      this.sessionToken = crypto.randomUUID();
-
-      this.isInitialized = true;
-      console.log('Mapbox Search JS initialized successfully');
+      this.token = token;
+      console.log('Mapbox Search service initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Mapbox Search JS:', error);
+      console.error('Failed to initialize Mapbox Search service:', error);
       throw error;
     }
   }
 
   async search(query: string): Promise<SearchResult> {
-    if (!this.isInitialized) {
+    if (!this.token) {
       await this.initialize();
     }
 
-    if (!this.searchBox || !query.trim() || !this.sessionToken) {
+    if (!query.trim()) {
       return { suggestions: [], query };
     }
 
     try {
-      const response = await this.searchBox.suggest(query, {
-        sessionToken: this.sessionToken,
-        proximity: [25.9087, -24.6541], // Gaborone, Botswana
-      });
+      // Use Mapbox Geocoding API for forward geocoding
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${this.token}&limit=5&country=BW&proximity=25.9087,-24.6541&types=address,poi,place,neighborhood,locality,region,country`;
 
-      const suggestions: SearchSuggestion[] = response.suggestions.map((suggestion) => ({
-        id: suggestion.mapbox_id || suggestion.name,
-        name: suggestion.name,
-        full_address: suggestion.full_address || suggestion.place_formatted || suggestion.name,
-        coordinates: [suggestion._geometry?.coordinates?.[0] || 0, suggestion._geometry?.coordinates?.[1] || 0],
-        place_type: suggestion.feature_type || 'place',
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Geocoding API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      const suggestions: SearchSuggestion[] = (data.features || []).map((feature: any) => ({
+        id: feature.id,
+        name: feature.text || feature.place_name,
+        full_address: feature.place_name,
+        coordinates: feature.geometry.coordinates as [number, number],
+        place_type: feature.place_type || 'place',
         context: {
-          country: suggestion.context?.country?.name,
-          region: suggestion.context?.region?.name,
-          district: suggestion.context?.district?.name,
-          place: suggestion.context?.place?.name,
+          country: feature.context?.find((c: any) => c.id.startsWith('country'))?.text,
+          region: feature.context?.find((c: any) => c.id.startsWith('region'))?.text,
+          district: feature.context?.find((c: any) => c.id.startsWith('district'))?.text,
+          place: feature.context?.find((c: any) => c.id.startsWith('place'))?.text,
         },
       }));
 
@@ -90,42 +81,24 @@ class MapboxSearchService {
   }
 
   async getCoordinates(suggestionId: string): Promise<[number, number] | null> {
-    if (!this.isInitialized) {
+    if (!this.token) {
       await this.initialize();
     }
 
-    if (!this.searchBox || !this.sessionToken) {
-      return null;
-    }
-
     try {
-      // Create a minimal suggestion object for retrieval
-      const suggestion: any = { 
-        mapbox_id: suggestionId,
-        name: '',
-        name_preferred: '',
-        feature_type: 'poi',
-        address: '',
-        full_address: '',
-        place_formatted: '',
-        context: {},
-        language: 'en',
-        maki: '',
-        poi_category: [],
-        poi_category_ids: [],
-        brand: [],
-        brand_id: '',
-        external_ids: {},
-        metadata: {},
-        _geometry: { coordinates: [0, 0] }
-      };
-      const response = await this.searchBox.retrieve(suggestion, {
-        sessionToken: this.sessionToken,
-      });
+      // Use the suggestion ID to retrieve coordinates via Geocoding API
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${suggestionId}.json?access_token=${this.token}`;
 
-      if (response.features && response.features.length > 0) {
-        const feature = response.features[0];
-        return [feature.geometry.coordinates[0], feature.geometry.coordinates[1]];
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Geocoding API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        const feature = data.features[0];
+        return feature.geometry.coordinates as [number, number];
       }
 
       return null;

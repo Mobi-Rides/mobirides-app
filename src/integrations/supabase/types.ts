@@ -1350,6 +1350,42 @@ export type Database = {
           },
         ]
       }
+      messages_backup_20250930_093926: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string | null
+          migrated_to_conversation_id: string | null
+          receiver_id: string | null
+          related_car_id: string | null
+          sender_id: string | null
+          status: Database["public"]["Enums"]["message_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          migrated_to_conversation_id?: string | null
+          receiver_id?: string | null
+          related_car_id?: string | null
+          sender_id?: string | null
+          status?: Database["public"]["Enums"]["message_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          migrated_to_conversation_id?: string | null
+          receiver_id?: string | null
+          related_car_id?: string | null
+          sender_id?: string | null
+          status?: Database["public"]["Enums"]["message_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notification_cleanup_log: {
         Row: {
           cleanup_details: Json | null
@@ -2692,6 +2728,10 @@ export type Database = {
       text_to_bytea: {
         Args: { data: string }
         Returns: string
+      }
+      toggle_message_reaction: {
+        Args: { p_emoji: string; p_message_id: string }
+        Returns: Json
       }
       update_notification_expiration_policy: {
         Args: {
