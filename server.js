@@ -105,6 +105,15 @@ app.use('/api', async (req, res) => {
         console.error('Failed to import auth reset password handler:', importError);
         res.status(500).json({ error: 'Reset password service unavailable' });
       }
+    } else if (apiPath === 'notifications/booking-confirmation') {
+      // Dynamic import for booking confirmation notifications
+      try {
+        const handler = await import('./api/notifications/booking-confirmation.js');
+        await handler.default(req, res);
+      } catch (importError) {
+        console.error('Failed to import booking confirmation handler:', importError);
+        res.status(500).json({ error: 'Booking confirmation service unavailable' });
+      }
     } else {
       res.status(404).json({ error: 'API endpoint not implemented' });
     }

@@ -54,7 +54,7 @@ export class ResendEmailService {
   }
 
   /**
-   * Send email via Supabase Edge Function using Resend
+   * Send email via API endpoint using Resend (same as password reset flow)
    */
   public async sendEmail(
     to: string,
@@ -63,27 +63,32 @@ export class ResendEmailService {
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      const { data, error } = await supabase.functions.invoke('resend-service', {
-        body: {
-          to,
-          subject,
-          templateId,
-          dynamicData,
-          type: templateId
+      const response = await fetch('/api/notifications/booking-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          to,
+          templateId,
+          bookingData: dynamicData,
+          isHost: templateId === 'owner-booking-notification'
+        }),
       });
 
-      if (error) {
-        console.error("Error sending email:", error);
-        return { success: false, error: error.message };
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Error sending email:", data.error);
+        return { success: false, error: data.error || 'Failed to send email' };
       }
 
-      if (data.error) {
-        console.error("Error from resend-service function:", data.error);
+      if (!data.success) {
+        console.error("Error from API:", data.error);
         return { success: false, error: data.error };
       }
 
-      return { success: true, messageId: data.id };
+      return { success: true, messageId: data.messageId };
     } catch (e) {
       console.error("Unhandled error in sendEmail:", e);
       const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
@@ -136,7 +141,7 @@ export class ResendEmailService {
       carImage: bookingData.carImage || ''
     };
 
-    const templateKey = isHost ? 'ownerBookingNotification' : 'bookingConfirmation';
+    const templateKey = isHost ? 'owner-booking-notification' : 'booking-confirmation';
     const subject = isHost 
       ? `New Booking Request - ${bookingData.carBrand} ${bookingData.carModel}`
       : `Booking Confirmed - ${bookingData.carBrand} ${bookingData.carModel}`;

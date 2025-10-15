@@ -176,10 +176,8 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
                         {suggestion.full_address}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 flex-shrink-0"
+                    <div
+                      className="h-6 w-6 p-0 flex-shrink-0 flex items-center justify-center cursor-pointer hover:bg-accent rounded"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (favorites.some((fav) => fav.id === suggestion.id)) {
@@ -194,10 +192,10 @@ export const LocationSearchInput: React.FC<LocationSearchInputProps> = ({
                           "h-3 w-3",
                           favorites.some((fav) => fav.id === suggestion.id)
                             ? "fill-yellow-400 text-yellow-400"
-                            : "text-muted-foreground"
+                            : "text-muted-foreground hover:text-yellow-400"
                         )}
                       />
-                    </Button>
+                    </div>
                   </button>
                 ))}
               </div>

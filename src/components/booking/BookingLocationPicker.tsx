@@ -102,10 +102,14 @@ export const BookingLocationPicker = ({
   }, []);
 
   const confirmLocation = () => {
+    console.log("Confirm location called with selectedLocation:", selectedLocation);
     if (selectedLocation) {
+      console.log("Calling onLocationSelected with:", selectedLocation.lat, selectedLocation.lng);
       onLocationSelected(selectedLocation.lat, selectedLocation.lng);
+      console.log("Closing dialog");
       onClose();
     } else {
+      console.log("No location selected, showing error");
       toast.error("Please select a location first");
     }
   };

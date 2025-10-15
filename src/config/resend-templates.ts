@@ -8,10 +8,10 @@ export interface ResendTemplate {
   description?: string;
 }
 
-export type ResendTemplateKey = 
+export type ResendTemplateKey =
   | 'booking_confirmation'
   | 'booking_request'
-  | 'booking_cancelled' 
+  | 'booking_cancelled'
   | 'payment_received'
   | 'payment_failed'
   | 'wallet_topup'
@@ -23,7 +23,9 @@ export type ResendTemplateKey =
   | 'welcome_host'
   | 'password_reset'
   | 'email_confirmation'
-  | 'system_notification';
+  | 'system_notification'
+  | 'booking-confirmation'
+  | 'owner-booking-notification';
 
 export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
   booking_confirmation: {
@@ -33,7 +35,7 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     description: 'Sent when a booking request is approved by the host'
   },
   booking_request: {
-    id: 'booking-request', 
+    id: 'booking-request',
     name: 'New Booking Request',
     subject: 'New booking request for your vehicle',
     description: 'Sent to hosts when they receive a new booking request'
@@ -75,7 +77,7 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     description: 'Sent as a reminder before rental start time'
   },
   return_reminder: {
-    id: 'return-reminder', 
+    id: 'return-reminder',
     name: 'Return Reminder',
     subject: 'Reminder: Please return your rental vehicle',
     description: 'Sent as a reminder before rental end time'
@@ -115,6 +117,18 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     name: 'System Notification',
     subject: 'MobiRides System Notification',
     description: 'General system notifications and updates'
+  },
+  'booking-confirmation': {
+    id: 'booking-confirmation',
+    name: 'Booking Confirmation',
+    subject: '🎉 Your MobiRides Booking is Confirmed!',
+    description: 'Sent when a booking request is approved by the host'
+  },
+  'owner-booking-notification': {
+    id: 'owner-booking-notification',
+    name: 'New Booking Request',
+    subject: '📋 New Booking Request - Action Required',
+    description: 'Sent to hosts when they receive a new booking request'
   }
 };
 
