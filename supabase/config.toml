@@ -1,5 +1,8 @@
 project_id = "putjowciegpzdheideaf"
 
+[functions.add-admin]
+verify_jwt = true
+
 [functions.resend-service]
 verify_jwt = true
 
