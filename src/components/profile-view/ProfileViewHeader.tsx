@@ -119,26 +119,6 @@ export const ProfileViewHeader = ({ profile }: ProfileViewHeaderProps) => {
 
           {/* Stats Cards */}
           <StatsCards profile={profile} />
-
-          {/* Action Buttons - Mobile */}
-          <div className="flex gap-3 mt-4 md:hidden">
-            <Button variant="outline" className="flex-1">
-              Edit Profile
-            </Button>
-            <Button variant="outline" className="flex-1">
-              Settings
-            </Button>
-          </div>
-        </div>
-
-        {/* Action Buttons - Desktop */}
-        <div className="hidden md:flex gap-3">
-          <Button variant="outline">
-            Edit Profile
-          </Button>
-          <Button variant="outline">
-            Settings
-          </Button>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ export const ActionButtons = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+    <div className="grid grid-cols-2 gap-3 mt-6">
       <Button
         variant="outline"
         className="flex items-center gap-2 h-auto py-3"
@@ -22,22 +22,6 @@ export const ActionButtons = () => {
       >
         <Download className="w-5 h-5" />
         <span>Download Data</span>
-      </Button>
-
-      <Button
-        variant="outline"
-        className="flex items-center gap-2 h-auto py-3"
-      >
-        <MapPin className="w-5 h-5" />
-        <span>Address</span>
-      </Button>
-
-      <Button
-        variant="outline"
-        className="flex items-center gap-2 h-auto py-3"
-      >
-        <Phone className="w-5 h-5" />
-        <span>Emergency</span>
       </Button>
     </div>
   );

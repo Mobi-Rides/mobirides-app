@@ -93,22 +93,15 @@ export const AddressSection = ({ profile }: AddressSectionProps) => {
           />
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
-            <MapPin className="w-4 h-4" />
-            Postal Code
-          </label>
-          <p className="text-sm text-foreground">
-            {profile.address?.postalCode || "Not provided"}
-          </p>
-        </div>
+        <EditableField
+          label="Postal Code"
+          value={profile.address?.postalCode || ""}
+          onSave={(value) => handleSave('postalCode', value)}
+          icon={<MapPin className="w-4 h-4" />}
+        />
 
-        <div className="flex gap-2 pt-2">
-          <Button variant="outline" className="flex-1" size="sm">
-            <Map className="w-4 h-4 mr-2" />
-            View on Map
-          </Button>
-          <Button variant="outline" className="flex-1" size="sm" onClick={copyAddress}>
+        <div className="pt-2">
+          <Button variant="outline" className="w-full" size="sm" onClick={copyAddress}>
             <Copy className="w-4 h-4 mr-2" />
             Copy Address
           </Button>

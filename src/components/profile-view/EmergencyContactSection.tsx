@@ -2,7 +2,10 @@ import { Phone, User, Heart, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FullProfileData } from "@/hooks/useFullProfile";
+import { EditableField } from "./EditableField";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface EmergencyContactSectionProps {
   profile: FullProfileData;
@@ -10,6 +13,41 @@ interface EmergencyContactSectionProps {
 
 export const EmergencyContactSection = ({ profile }: EmergencyContactSectionProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async (field: string, value: string) => {
+    try {
+      const { data: verification } = await supabase
+        .from('user_verifications')
+        .select('personal_info')
+        .eq('user_id', profile.id)
+        .single();
+
+      const personalInfo = verification?.personal_info as any || {};
+      const emergencyContact = personalInfo.emergencyContact || {};
+      const updatedContact = { ...emergencyContact, [field]: value };
+
+      const { error } = await supabase
+        .from('user_verifications')
+        .update({ 
+          personal_info: { ...personalInfo, emergencyContact: updatedContact }
+        })
+        .eq('user_id', profile.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Emergency contact updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const maskText = (text: string | undefined, visibleChars: number = 0) => {
     if (!text) return "Not provided";
@@ -32,35 +70,62 @@ export const EmergencyContactSection = ({ profile }: EmergencyContactSectionProp
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4 space-y-4">
-        <div>
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
-            <User className="w-4 h-4" />
-            Name
-          </label>
-          <p className="text-sm text-foreground font-mono">
-            {maskText(profile.emergencyContact?.name, 0)}
-          </p>
-        </div>
+        {showDetails ? (
+          <>
+            <EditableField
+              label="Name"
+              value={profile.emergencyContact?.name || ""}
+              onSave={(value) => handleSave('name', value)}
+              icon={<User className="w-4 h-4" />}
+            />
 
-        <div>
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
-            <Heart className="w-4 h-4" />
-            Relationship
-          </label>
-          <p className="text-sm text-foreground font-mono">
-            {maskText(profile.emergencyContact?.relationship, 0)}
-          </p>
-        </div>
+            <EditableField
+              label="Relationship"
+              value={profile.emergencyContact?.relationship || ""}
+              onSave={(value) => handleSave('relationship', value)}
+              icon={<Heart className="w-4 h-4" />}
+            />
 
-        <div>
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
-            <Phone className="w-4 h-4" />
-            Phone
-          </label>
-          <p className="text-sm text-foreground font-mono">
-            {maskPhone(profile.emergencyContact?.phoneNumber)}
-          </p>
-        </div>
+            <EditableField
+              label="Phone"
+              value={profile.emergencyContact?.phoneNumber || ""}
+              onSave={(value) => handleSave('phoneNumber', value)}
+              icon={<Phone className="w-4 h-4" />}
+            />
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
+                <User className="w-4 h-4" />
+                Name
+              </label>
+              <p className="text-sm text-foreground font-mono">
+                {maskText(profile.emergencyContact?.name, 0)}
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
+                <Heart className="w-4 h-4" />
+                Relationship
+              </label>
+              <p className="text-sm text-foreground font-mono">
+                {maskText(profile.emergencyContact?.relationship, 0)}
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
+                <Phone className="w-4 h-4" />
+                Phone
+              </label>
+              <p className="text-sm text-foreground font-mono">
+                {maskPhone(profile.emergencyContact?.phoneNumber)}
+              </p>
+            </div>
+          </>
+        )}
 
         <Button 
           variant="outline" 

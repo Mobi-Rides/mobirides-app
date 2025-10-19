@@ -85,15 +85,12 @@ export const PersonalInfoSection = ({ profile }: PersonalInfoSectionProps) => {
           </p>
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-1">
-            <Phone className="w-4 h-4" />
-            Phone
-          </label>
-          <p className="text-sm text-foreground">
-            {profile.phone_number || "Not provided"}
-          </p>
-        </div>
+        <EditableField
+          label="Phone"
+          value={profile.phone_number || ""}
+          onSave={(value) => handleSave('phone_number', value)}
+          icon={<Phone className="w-4 h-4" />}
+        />
       </CardContent>
     </Card>
   );

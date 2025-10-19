@@ -2,6 +2,7 @@ import { FileText, CheckCircle2, Clock, XCircle, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface DocumentItemProps {
   document: {
@@ -11,9 +12,11 @@ interface DocumentItemProps {
     uploaded_at: string;
     rejection_reason?: string | null;
   };
+  onUpdate: () => void;
 }
 
-export const DocumentItem = ({ document }: DocumentItemProps) => {
+export const DocumentItem = ({ document, onUpdate }: DocumentItemProps) => {
+  const navigate = useNavigate();
   const getStatusBadge = () => {
     switch (document.status) {
       case 'verified':
@@ -70,7 +73,12 @@ export const DocumentItem = ({ document }: DocumentItemProps) => {
       </div>
       
       {document.status === 'rejected' && (
-        <Button size="sm" variant="outline" className="ml-2">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="ml-2"
+          onClick={() => navigate('/verification')}
+        >
           <Upload className="w-3 h-3 mr-1" />
           Re-upload
         </Button>
