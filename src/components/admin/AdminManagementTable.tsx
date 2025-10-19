@@ -84,22 +84,17 @@ export const AdminManagementTable = () => {
   const { data: nonAdminUsers } = useNonAdminUsers();
 
   const addAdminMutation = useMutation({
-    mutationFn: async ({ userId, isSuperAdmin, userEmail, userName }: { 
+    mutationFn: async ({ userId, isSuperAdmin, userName }: { 
       userId: string; 
       isSuperAdmin: boolean; 
-      userEmail: string;
       userName: string;
     }) => {
-      const { error } = await supabase
-        .from("admins")
-        .insert({
-          id: userId,
-          email: userEmail,
-          full_name: userName,
-          is_super_admin: isSuperAdmin
-        });
+      const { data, error } = await supabase.functions.invoke('add-admin', {
+        body: { userId, isSuperAdmin, userName }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admins"] });
@@ -139,14 +134,10 @@ export const AdminManagementTable = () => {
     
     const selectedUser = nonAdminUsers?.find(user => user.id === selectedUserId);
     if (!selectedUser) return;
-
-    // Use MobiRides placeholder email for all new admins
-    const userEmail = "admin@mobirides.com";
     
     addAdminMutation.mutate({
       userId: selectedUserId,
       isSuperAdmin,
-      userEmail,
       userName: selectedUser.full_name || "Unknown User"
     });
   };
