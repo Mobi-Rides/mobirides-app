@@ -1,8 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Settings, CheckCircle, Calendar, FileText, Target } from "lucide-react";
+import { CheckCircle, Upload, Shield } from "lucide-react";
 import { FullProfileData } from "@/hooks/useFullProfile";
 import { format } from "date-fns";
 
@@ -16,89 +15,134 @@ export const ProfileDisplayHeader = ({ profile, onEditClick }: ProfileDisplayHea
   const totalSteps = Object.keys(profile.verificationSteps).length;
 
   return (
-    <Card className="p-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-        {/* Avatar Section */}
-        <div className="relative">
-          <Avatar className="h-24 w-24 md:h-32 md:w-32">
-            <AvatarImage src={profile.avatar_url || undefined} />
-            <AvatarFallback className="text-2xl">
-              {profile.full_name?.charAt(0) || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          {profile.verificationStatus === 'completed' && (
-            <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
-              <CheckCircle className="h-5 w-5 text-white" />
-            </div>
-          )}
-        </div>
+    <div className="space-y-4">
+      {/* Trust & Safety Badge - Desktop Only */}
+      <div className="hidden md:flex justify-end">
+        <Badge variant="outline" className="gap-2 px-4 py-2">
+          <Shield className="h-4 w-4" />
+          Trust & Safety Profile
+        </Badge>
+      </div>
 
-        {/* Profile Info */}
-        <div className="flex-1 space-y-3">
+      {/* Mobile Header */}
+      <div className="md:hidden flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={profile.avatar_url || undefined} />
+            <AvatarFallback>{profile.full_name?.charAt(0) || 'U'}</AvatarFallback>
+          </Avatar>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {profile.full_name || 'User'}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <Badge variant="secondary" className="capitalize">
-                {profile.role}
-              </Badge>
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                Member since {format(new Date(profile.created_at), 'MMM yyyy')}
-              </span>
-            </div>
-            {profile.phone_number && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {profile.phone_number}
-              </p>
+            <h2 className="font-semibold">{profile.full_name}</h2>
+            <p className="text-xs text-muted-foreground capitalize">{profile.role}</p>
+          </div>
+        </div>
+        {profile.verificationStatus === 'completed' && (
+          <Badge className="bg-green-500 gap-1">
+            <CheckCircle className="h-3 w-3" />
+            Verified
+          </Badge>
+        )}
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden md:flex items-start justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={profile.avatar_url || undefined} />
+              <AvatarFallback className="text-xl">
+                {profile.full_name?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            {profile.verificationStatus === 'completed' && (
+              <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
+                <CheckCircle className="h-4 w-4 text-white" />
+              </div>
             )}
           </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Target className="h-4 w-4" />
-                <span className="text-xs">Steps</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {completedSteps}/{totalSteps}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <FileText className="h-4 w-4" />
-                <span className="text-xs">Documents</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {profile.verificationSteps.documents ? '✓' : '0'}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <CheckCircle className="h-4 w-4" />
-                <span className="text-xs">Complete</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {profile.verificationProgress}%
-              </p>
+          <div>
+            <h1 className="text-2xl font-bold">{profile.full_name || 'User'}</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-sm text-muted-foreground capitalize">{profile.role}</span>
+              <span className="text-sm text-muted-foreground">•</span>
+              <span className="text-sm text-muted-foreground">
+                Member since {format(new Date(profile.created_at), 'MMM yyyy')}
+              </span>
+              {profile.phone_number && (
+                <>
+                  <span className="text-sm text-muted-foreground">•</span>
+                  <span className="text-sm text-muted-foreground">
+                    Phone: {profile.phone_number}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex md:flex-col gap-2 w-full md:w-auto">
-          <Button onClick={onEditClick} className="flex-1 md:flex-none gap-2">
-            <Edit className="h-4 w-4" />
-            Edit Profile
-          </Button>
-          <Button variant="outline" className="flex-1 md:flex-none gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
+        <div className="flex items-center gap-2">
+          {profile.verificationStatus === 'completed' && (
+            <Badge className="bg-green-500 gap-1 px-3 py-1">
+              <CheckCircle className="h-4 w-4" />
+              Verified
+            </Badge>
+          )}
+          <Button variant="outline" size="sm" className="gap-2">
+            <Upload className="h-4 w-4" />
+            Upload Avatar
           </Button>
         </div>
       </div>
-    </Card>
+
+      {/* Stats Cards - Desktop */}
+      <div className="hidden md:grid grid-cols-3 gap-4">
+        <div className="bg-muted/30 rounded-lg p-4 text-center">
+          <p className="text-sm text-muted-foreground mb-1">Verification Steps</p>
+          <p className="text-3xl font-bold">{completedSteps}/{totalSteps}</p>
+        </div>
+        <div className="bg-muted/30 rounded-lg p-4 text-center">
+          <p className="text-sm text-muted-foreground mb-1">Documents</p>
+          <p className="text-3xl font-bold">
+            {Object.values(profile.verificationSteps).filter(Boolean).length}
+          </p>
+        </div>
+        <div className="bg-muted/30 rounded-lg p-4 text-center">
+          <p className="text-sm text-muted-foreground mb-1">Completion</p>
+          <p className="text-3xl font-bold">{profile.verificationProgress}%</p>
+        </div>
+      </div>
+
+      {/* Stats Row - Mobile */}
+      <div className="md:hidden bg-muted/30 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold">{profile.full_name || 'User'}</h3>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+          <span>Member since {format(new Date(profile.created_at), 'MMM yyyy')}</span>
+          {profile.phone_number && (
+            <>
+              <span>•</span>
+              <span>Phone: {profile.phone_number}</span>
+            </>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-1">Verification Steps</p>
+            <p className="text-xl font-bold">{completedSteps}/{totalSteps}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-1">Documents</p>
+            <p className="text-xl font-bold">
+              {Object.values(profile.verificationSteps).filter(Boolean).length}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground mb-1">Completion</p>
+            <p className="text-xl font-bold">{profile.verificationProgress}%</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
