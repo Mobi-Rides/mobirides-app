@@ -39,7 +39,7 @@ const ProfileView = () => {
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>Back to Settings</span>
+          <span>Back</span>
         </button>
 
         {/* Header */}

@@ -5,6 +5,7 @@ import { FullProfileData } from "@/hooks/useFullProfile";
 import { EditableField } from "./EditableField";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AddressSectionProps {
   profile: FullProfileData;
@@ -12,28 +13,45 @@ interface AddressSectionProps {
 
 export const AddressSection = ({ profile }: AddressSectionProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSave = async (field: string, value: string) => {
     try {
-      const currentPersonalInfo = profile.address || {};
-      const updatedAddress = { ...currentPersonalInfo, [field]: value };
-
+      // First, check if verification record exists
       const { data: verification } = await supabase
         .from('user_verifications')
         .select('personal_info')
         .eq('user_id', profile.id)
-        .single();
+        .maybeSingle();
 
       const personalInfo = verification?.personal_info as any || {};
-      
-      const { error } = await supabase
-        .from('user_verifications')
-        .update({ 
-          personal_info: { ...personalInfo, address: updatedAddress }
-        })
-        .eq('user_id', profile.id);
+      const currentAddress = personalInfo.address || {};
+      const updatedAddress = { ...currentAddress, [field]: value };
+      const updatedPersonalInfo = { ...personalInfo, address: updatedAddress };
 
-      if (error) throw error;
+      if (verification) {
+        // Update existing record
+        const { error } = await supabase
+          .from('user_verifications')
+          .update({ personal_info: updatedPersonalInfo })
+          .eq('user_id', profile.id);
+
+        if (error) throw error;
+      } else {
+        // Create new record
+        const { error } = await supabase
+          .from('user_verifications')
+          .insert({ 
+            user_id: profile.id,
+            personal_info: updatedPersonalInfo,
+            user_role: profile.role
+          });
+
+        if (error) throw error;
+      }
+
+      // Invalidate profile query to refetch data
+      queryClient.invalidateQueries({ queryKey: ['fullProfile'] });
 
       toast({
         title: "Success",

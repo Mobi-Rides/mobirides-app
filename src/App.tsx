@@ -148,14 +148,14 @@ function App() {
                         <Route path="/profile" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
-                              <ProfileView />
+                              <Profile />
                             </ProtectedRoute>
                           </Suspense>
                         } />
-                        <Route path="/profile-settings" element={
+                        <Route path="/profile-view" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
-                              <Profile />
+                              <ProfileView />
                             </ProtectedRoute>
                           </Suspense>
                         } />

@@ -6,6 +6,7 @@ import { EditableField } from "./EditableField";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EmergencyContactSectionProps {
   profile: FullProfileData;
@@ -14,27 +15,45 @@ interface EmergencyContactSectionProps {
 export const EmergencyContactSection = ({ profile }: EmergencyContactSectionProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSave = async (field: string, value: string) => {
     try {
+      // First, check if verification record exists
       const { data: verification } = await supabase
         .from('user_verifications')
         .select('personal_info')
         .eq('user_id', profile.id)
-        .single();
+        .maybeSingle();
 
       const personalInfo = verification?.personal_info as any || {};
       const emergencyContact = personalInfo.emergencyContact || {};
       const updatedContact = { ...emergencyContact, [field]: value };
+      const updatedPersonalInfo = { ...personalInfo, emergencyContact: updatedContact };
 
-      const { error } = await supabase
-        .from('user_verifications')
-        .update({ 
-          personal_info: { ...personalInfo, emergencyContact: updatedContact }
-        })
-        .eq('user_id', profile.id);
+      if (verification) {
+        // Update existing record
+        const { error } = await supabase
+          .from('user_verifications')
+          .update({ personal_info: updatedPersonalInfo })
+          .eq('user_id', profile.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new record
+        const { error } = await supabase
+          .from('user_verifications')
+          .insert({ 
+            user_id: profile.id,
+            personal_info: updatedPersonalInfo,
+            user_role: profile.role
+          });
+
+        if (error) throw error;
+      }
+
+      // Invalidate profile query to refetch data
+      queryClient.invalidateQueries({ queryKey: ['fullProfile'] });
 
       toast({
         title: "Success",

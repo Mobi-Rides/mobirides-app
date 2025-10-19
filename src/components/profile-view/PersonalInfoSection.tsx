@@ -4,6 +4,7 @@ import { FullProfileData } from "@/hooks/useFullProfile";
 import { EditableField } from "./EditableField";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PersonalInfoSectionProps {
   profile: FullProfileData;
@@ -11,6 +12,7 @@ interface PersonalInfoSectionProps {
 
 export const PersonalInfoSection = ({ profile }: PersonalInfoSectionProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSave = async (field: string, value: string) => {
     try {
@@ -20,6 +22,9 @@ export const PersonalInfoSection = ({ profile }: PersonalInfoSectionProps) => {
         .eq('id', profile.id);
 
       if (error) throw error;
+
+      // Invalidate profile query to refetch data
+      queryClient.invalidateQueries({ queryKey: ['fullProfile'] });
 
       toast({
         title: "Success",

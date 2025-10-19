@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { FullProfileData } from "@/hooks/useFullProfile";
 import { StatsCards } from "./StatsCards";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProfileViewHeaderProps {
   profile: FullProfileData;
@@ -14,6 +15,7 @@ interface ProfileViewHeaderProps {
 export const ProfileViewHeader = ({ profile }: ProfileViewHeaderProps) => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,16 +32,15 @@ export const ProfileViewHeader = ({ profile }: ProfileViewHeaderProps) => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: fileName })
         .eq('id', profile.id);
 
       if (updateError) throw updateError;
+
+      // Invalidate profile query to refetch data
+      queryClient.invalidateQueries({ queryKey: ['fullProfile'] });
 
       toast({
         title: "Success",

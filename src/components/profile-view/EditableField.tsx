@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Pencil, Check, X } from "lucide-react";
@@ -21,6 +21,11 @@ export const EditableField = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Update editValue when value prop changes
+  useEffect(() => {
+    setEditValue(value);
+  }, [value]);
 
   const handleSave = async () => {
     setIsSaving(true);

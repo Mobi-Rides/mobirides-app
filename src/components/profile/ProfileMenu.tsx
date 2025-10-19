@@ -185,7 +185,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
         {/* Profile section */}
         <button
           type="button"
-          onClick={() => setActiveView('profile')}
+          onClick={() => navigate('/profile-view')}
           className="w-full flex items-center gap-3 p-3 hover:bg-accent/70 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring mb-6 transition-colors"
           aria-label="View and edit profile"
         >
