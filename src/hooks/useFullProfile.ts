@@ -37,6 +37,14 @@ export interface FullProfileData {
     address: boolean;
   };
   verificationProgress: number;
+  
+  // Documents
+  documents?: Array<{
+    id: string;
+    document_type: string;
+    status: 'pending' | 'verified' | 'rejected';
+    uploaded_at: string;
+  }>;
 }
 
 export const useFullProfile = () => {
@@ -62,6 +70,13 @@ export const useFullProfile = () => {
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      // Fetch documents
+      const { data: documents } = await supabase
+        .from('documents')
+        .select('id, document_type, status, uploaded_at')
+        .eq('user_id', user.id)
+        .order('uploaded_at', { ascending: false });
 
       // Calculate verification progress
       const steps = [
@@ -91,7 +106,8 @@ export const useFullProfile = () => {
           phone: verification?.phone_verified || false,
           address: verification?.address_confirmed || false
         },
-        verificationProgress: progress
+        verificationProgress: progress,
+        documents: documents || []
       } as FullProfileData;
     },
     enabled: !!user?.id

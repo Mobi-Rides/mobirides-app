@@ -46,6 +46,7 @@ const Index = lazy(() => import("@/pages/Index"));
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/signup"));
 const Profile = lazy(() => import("@/pages/Profile"));
+const ProfileView = lazy(() => import("@/pages/ProfileView"));
 const Map = lazy(() => import("@/pages/Map"));
 const More = lazy(() => import("@/pages/More"));
 const CarDetails = lazy(() => import("@/pages/CarDetails"));
@@ -148,6 +149,13 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <Profile />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/profiles" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <ProfileView />
                             </ProtectedRoute>
                           </Suspense>
                         } />
