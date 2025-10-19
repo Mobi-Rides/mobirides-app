@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 interface ProfileMenuProps {
   fullName: string;
   avatarUrl: string | null;
-  setActiveView: (view: 'menu' | 'profile' | 'role') => void;
+  setActiveView: (view: 'menu' | 'profile' | 'role' | 'display') => void;
   role?: string;
 }
 
@@ -53,10 +53,16 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
 
   const baseMenuItems: MenuItem[] = [
     {
+      icon: User,
+      label: "View Full Profile",
+      onClick: () => setActiveView('display'),
+      color: "text-primary",
+      description: "See all your details"
+    },
+    {
       icon: UserRound,
       label: "Edit Profile",
       onClick: () => setActiveView('profile'),
-      color: "text-primary",
     },
     {
       icon: Bookmark,
