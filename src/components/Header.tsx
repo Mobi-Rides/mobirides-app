@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
-import { Navigation, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Navigation, Plus, Search, SlidersHorizontal, LayoutDashboard, User, Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SearchFilters } from "@/components/SearchFilters";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -203,6 +211,11 @@ export const Header = ({
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   const handleCloseModal = () => {
     setIsAuthModalOpen(false);
     navigate(locationPath.pathname, { replace: true });
@@ -266,31 +279,92 @@ export const Header = ({
             </div>
           )}
 
-          <div className="relative">
-            <button
-              className="rounded-full bg-gray-100 flex items-center justify-center"
-              onClick={handleProfileClick}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-full bg-gray-100 flex items-center justify-center relative focus:outline-none">
+                {avatarUrl && user ? (
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={avatarUrl} alt="Profile" />
+                    <AvatarFallback>👤</AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback>👤</AvatarFallback>
+                  </Avatar>
+                )}
+                {user && typeof notificationCount === 'number' && notificationCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {notificationCount}
+                  </Badge>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
             >
-              {avatarUrl && user ? (
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={avatarUrl} alt="Profile" />
-                  <AvatarFallback>👤</AvatarFallback>
-                </Avatar>
-              ) : (
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>👤</AvatarFallback>
-                </Avatar>
+              {user && (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {profile?.full_name || 'User'}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={() => navigate('/notifications')} className="cursor-pointer">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Bell className="mr-2 h-4 w-4" />
+                        <span>Notifications</span>
+                      </div>
+                      {notificationCount && notificationCount > 0 && (
+                        <Badge variant="destructive" className="ml-2 h-5 px-2">
+                          {notificationCount}
+                        </Badge>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 dark:text-red-400">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </>
               )}
-            </button>
-            {user && typeof notificationCount === 'number' && notificationCount > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {notificationCount}
-              </Badge>
-            )}
-          </div>
+              
+              {!user && (
+                <DropdownMenuItem onClick={() => {
+                  setDefaultTab("signin");
+                  setIsAuthModalOpen(true);
+                }} className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Sign In</span>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
