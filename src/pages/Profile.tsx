@@ -7,6 +7,7 @@ import { ProfileError } from "@/components/profile/ProfileError";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import { ProfileEditView } from "@/components/profile/ProfileEditView";
 import { RoleEditView } from "@/components/profile/RoleEditView";
+import { ProfileDisplay } from "@/components/profile/ProfileDisplay";
 import { Navigation } from "@/components/Navigation";
 import { useUserLocation } from "@/hooks/useUserLocation";
 
@@ -15,7 +16,7 @@ const Profile = () => {
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initialFormValues, setInitialFormValues] = useState({ full_name: "" });
-  const [activeView, setActiveView] = useState<'menu' | 'profile' | 'role'>('menu');
+  const [activeView, setActiveView] = useState<'menu' | 'profile' | 'role' | 'display'>('menu');
   const [userRole, setUserRole] = useState<string>('renter');
   const navigate = useNavigate();
   const { userLocation } = useUserLocation(null);
@@ -100,6 +101,13 @@ const Profile = () => {
           avatarUrl={avatarUrl} 
           setActiveView={setActiveView}
           role={userRole}
+        />
+      )}
+
+      {activeView === 'display' && (
+        <ProfileDisplay
+          onBack={() => setActiveView('menu')}
+          onEditClick={() => setActiveView('profile')}
         />
       )}
 

@@ -694,6 +694,63 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_url: string
+          id: string
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["document_status"]
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_url: string
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_url?: string
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_analytics_daily: {
         Row: {
           average_latency_ms: number | null
@@ -3166,6 +3223,7 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "expired"
+      document_status: "pending" | "verified" | "rejected"
       handover_type: "pickup" | "return"
       message_delivery_status: "sent" | "delivered" | "read"
       message_status: "sent" | "delivered" | "read"
@@ -3367,6 +3425,7 @@ export const Constants = {
         "completed",
         "expired",
       ],
+      document_status: ["pending", "verified", "rejected"],
       handover_type: ["pickup", "return"],
       message_delivery_status: ["sent", "delivered", "read"],
       message_status: ["sent", "delivered", "read"],
