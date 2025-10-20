@@ -177,6 +177,78 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author_bio: string | null
+          author_email: string
+          author_image: string | null
+          author_name: string
+          category: string
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          featured_image: string | null
+          id: string
+          meta_description: string | null
+          published_at: string | null
+          read_time: number | null
+          scheduled_for: string | null
+          slug: string
+          social_image: string | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_bio?: string | null
+          author_email: string
+          author_image?: string | null
+          author_name: string
+          category: string
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          meta_description?: string | null
+          published_at?: string | null
+          read_time?: number | null
+          scheduled_for?: string | null
+          slug: string
+          social_image?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_bio?: string | null
+          author_email?: string
+          author_image?: string | null
+          author_name?: string
+          category?: string
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          meta_description?: string | null
+          published_at?: string | null
+          read_time?: number | null
+          scheduled_for?: string | null
+          slug?: string
+          social_image?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           actual_end_date: string | null
@@ -484,6 +556,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "conversation_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages_with_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages_with_replies"
+            referencedColumns: ["reply_original_id"]
+          },
+          {
             foreignKeyName: "conversation_messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
@@ -607,6 +693,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_url: string
+          id: string
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["document_status"]
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_url: string
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_url?: string
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_analytics_daily: {
         Row: {
@@ -913,6 +1056,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "conversation_messages"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_encryption_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages_with_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_encryption_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages_with_replies"
+            referencedColumns: ["reply_original_id"]
           },
         ]
       }
@@ -1285,37 +1442,110 @@ export type Database = {
         }
         Relationships: []
       }
+      message_operations: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          operation_data: Json | null
+          operation_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          operation_data?: Json | null
+          operation_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          operation_data?: Json | null
+          operation_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_operations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_operations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_operations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_replies"
+            referencedColumns: ["reply_to_message_id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
           created_at: string
+          forwarded: boolean | null
+          forwarded_at: string | null
+          forwarded_from: Json | null
           id: string
           migrated_to_conversation_id: string | null
+          pinned: boolean | null
           receiver_id: string
           related_car_id: string | null
+          replying_to_message_id: string | null
+          selected: boolean | null
           sender_id: string
+          starred: boolean | null
           status: Database["public"]["Enums"]["message_status"] | null
           updated_at: string
         }
         Insert: {
           content: string
           created_at?: string
+          forwarded?: boolean | null
+          forwarded_at?: string | null
+          forwarded_from?: Json | null
           id?: string
           migrated_to_conversation_id?: string | null
+          pinned?: boolean | null
           receiver_id: string
           related_car_id?: string | null
+          replying_to_message_id?: string | null
+          selected?: boolean | null
           sender_id: string
+          starred?: boolean | null
           status?: Database["public"]["Enums"]["message_status"] | null
           updated_at?: string
         }
         Update: {
           content?: string
           created_at?: string
+          forwarded?: boolean | null
+          forwarded_at?: string | null
+          forwarded_from?: Json | null
           id?: string
           migrated_to_conversation_id?: string | null
+          pinned?: boolean | null
           receiver_id?: string
           related_car_id?: string | null
+          replying_to_message_id?: string | null
+          selected?: boolean | null
           sender_id?: string
+          starred?: boolean | null
           status?: Database["public"]["Enums"]["message_status"] | null
           updated_at?: string
         }
@@ -1340,6 +1570,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cars"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_replying_to_message_id_fkey"
+            columns: ["replying_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_replying_to_message_id_fkey"
+            columns: ["replying_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_replying_to_message_id_fkey"
+            columns: ["replying_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_replies"
+            referencedColumns: ["reply_to_message_id"]
           },
           {
             foreignKeyName: "messages_sender_id_fkey"
@@ -2257,6 +2508,89 @@ export type Database = {
       }
     }
     Views: {
+      conversation_messages_with_replies: {
+        Row: {
+          content: string | null
+          conversation_id: string | null
+          created_at: string | null
+          delivered_at: string | null
+          delivery_status:
+            | Database["public"]["Enums"]["message_delivery_status"]
+            | null
+          edited: boolean | null
+          edited_at: string | null
+          encrypted_content: string | null
+          encryption_key_id: string | null
+          id: string | null
+          is_encrypted: boolean | null
+          message_type: string | null
+          metadata: Json | null
+          read_at: string | null
+          related_car_id: string | null
+          reply_count: number | null
+          reply_original_id: string | null
+          reply_to_content: string | null
+          reply_to_created_at: string | null
+          reply_to_message_id: string | null
+          reply_to_message_type: string | null
+          reply_to_preview: string | null
+          reply_to_sender_id: string | null
+          sender_id: string | null
+          sent_at: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_related_car_id_fkey"
+            columns: ["related_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages_with_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages_with_replies"
+            referencedColumns: ["reply_original_id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_sender_id_fkey"
+            columns: ["reply_to_sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_analytics_summary: {
         Row: {
           avg_bounce_rate: number | null
@@ -2276,6 +2610,83 @@ export type Database = {
           total_sent: number | null
         }
         Relationships: []
+      }
+      messages_with_replies: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string | null
+          migrated_to_conversation_id: string | null
+          receiver_id: string | null
+          related_car_id: string | null
+          reply_count: number | null
+          reply_to_content: string | null
+          reply_to_created_at: string | null
+          reply_to_message_id: string | null
+          reply_to_sender_id: string | null
+          replying_to_message_id: string | null
+          sender_id: string | null
+          status: Database["public"]["Enums"]["message_status"] | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_migrated_to_conversation_id_fkey"
+            columns: ["migrated_to_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_related_car_id_fkey"
+            columns: ["related_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_replying_to_message_id_fkey"
+            columns: ["replying_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_replying_to_message_id_fkey"
+            columns: ["replying_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_replying_to_message_id_fkey"
+            columns: ["replying_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_replies"
+            referencedColumns: ["reply_to_message_id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["reply_to_sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       provider_performance_summary: {
         Row: {
@@ -2567,6 +2978,25 @@ export type Database = {
           id: string
         }[]
       }
+      get_reply_chain: {
+        Args: { p_max_depth?: number; p_message_id: string }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          depth: number
+          message_id: string
+          reply_to_message_id: string
+          sender_id: string
+        }[]
+      }
+      get_reply_counts: {
+        Args: { conversation_id_param: string; message_ids: string[] }
+        Returns: {
+          message_id: string
+          reply_count: number
+        }[]
+      }
       get_user_conversations: {
         Args:
           | { p_page?: number; p_page_size?: number; p_search_term?: string }
@@ -2793,6 +3223,7 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "expired"
+      document_status: "pending" | "verified" | "rejected"
       handover_type: "pickup" | "return"
       message_delivery_status: "sent" | "delivered" | "read"
       message_status: "sent" | "delivered" | "read"
@@ -2994,6 +3425,7 @@ export const Constants = {
         "completed",
         "expired",
       ],
+      document_status: ["pending", "verified", "rejected"],
       handover_type: ["pickup", "return"],
       message_delivery_status: ["sent", "delivered", "read"],
       message_status: ["sent", "delivered", "read"],

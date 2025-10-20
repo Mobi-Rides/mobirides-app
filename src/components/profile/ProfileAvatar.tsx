@@ -68,31 +68,30 @@ export const ProfileAvatar = ({ avatarUrl, setAvatarUrl }: ProfileAvatarProps) =
     : null;
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
-          <AvatarImage 
-            src={avatarPublicUrl || undefined}
-            alt="Profile Avatar" 
-          />
-          <AvatarFallback>👤</AvatarFallback>
-        </Avatar>
-        <Button 
-          variant="outline" 
+    <div className="relative">
+      <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+        <AvatarImage 
+          src={avatarPublicUrl || undefined}
+          alt="Profile Avatar" 
+        />
+        <AvatarFallback className="text-2xl">👤</AvatarFallback>
+      </Avatar>
+      <Button 
+        size="sm"
+        variant="outline" 
+        disabled={uploading}
+        className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-xs px-3 py-1"
+      >
+        <input
+          type="file"
+          accept="image/*"
+          onChange={uploadAvatar}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={uploading}
-          className="relative"
-        >
-          <input
-            type="file"
-            accept="image/*"
-            onChange={uploadAvatar}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            disabled={uploading}
-          />
-          <Upload className="w-4 h-4 mr-2" />
-          {uploading ? 'Uploading...' : 'Upload Avatar'}
-        </Button>
-      </div>
+        />
+        <Upload className="w-3 h-3 mr-1" />
+        {uploading ? 'Uploading...' : 'Upload'}
+      </Button>
     </div>
   );
 };
