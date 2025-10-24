@@ -371,8 +371,8 @@ describe('VerificationService - 3-Step Flow', () => {
 
 **Acceptance Criteria:**
 - [ ] Create `SimpleDotProgress.tsx` component with 3 dots
-- [ ] Implement dot states: completed (green), current (blue with ring), upcoming (gray)
-- [ ] Add connecting lines between dots (green if completed, gray if not)
+- [ ] Implement dot states: completed (purple), current (green with ring), upcoming (gray)
+- [ ] Add connecting lines between dots (purple if completed, gray if not)
 - [ ] Show "Step X of 3" text below dots
 - [ ] Make responsive: stack vertically on mobile (<640px)
 - [ ] Add smooth transitions between step changes (300ms ease)
@@ -548,7 +548,6 @@ Update admin analytics to normalize metrics across 7-step and 3-step flows.
 - [ ] Create analytics normalization function
 - [ ] Update completion rate calculation (handle v1 vs v2)
 - [ ] Add new metrics: "Average time per step" (3-step)
-- [ ] Update charts to show v1 vs v2 comparison
 - [ ] Add migration success rate metric
 - [ ] Document analytics calculation methodology
 - [ ] Test with historical data (last 90 days)
@@ -585,7 +584,7 @@ Create and test migration script to move users mid-verification from 7-step to 3
 - [ ] Create SQL migration script: `migrate_verification_v1_to_v2.sql`
 - [ ] Map old steps to new steps:
   - `personal_info` → `personal_info` ✓
-  - `phone_verification` → Skip (set phone_verified=false)
+  - `phone_verification` → Remove
   - `address_confirmation` → Skip (set address_confirmed=true)
   - `document_upload` → `document_upload` ✓
   - `selfie_verification` → `document_upload` (merge)
@@ -593,10 +592,8 @@ Create and test migration script to move users mid-verification from 7-step to 3
   - `processing_status` → Remove
   - `completion` → Remove
 - [ ] Test migration on staging with 100 test users
-- [ ] Create rollback script in case of issues
 - [ ] Monitor migration success rate (target: 100%)
 - [ ] Generate migration report (users affected, success/failure)
-- [ ] Notify affected users via email about simplified flow
 
 **Migration Logic:**
 ```sql
@@ -780,10 +777,10 @@ Comprehensive testing of new 3-step verification flow across all user scenarios.
 #### User Experience Metrics
 | Metric | Current (Estimated) | Target | Measurement Method |
 |--------|---------------------|--------|-------------------|
-| Verification Completion Rate | 60% | 85% | Analytics dashboard |
+| Verification Completion Rate | 10% | 85% | Analytics dashboard |
 | Average Completion Time | 15 min | 8 min | Time tracking (start to submit) |
 | Step Drop-off Rate | 40% | <15% | Funnel analysis |
-| User Satisfaction Score | 3.5/5 | 4.5/5 | Post-verification survey |
+| User Satisfaction Score | 2.5/5 | 4.5/5 | Post-verification survey |
 | Mobile Completion Rate | 45% | 75% | Device analytics |
 
 #### Technical Metrics
@@ -798,9 +795,9 @@ Comprehensive testing of new 3-step verification flow across all user scenarios.
 #### Business Metrics
 | Metric | Current | Target | Impact |
 |--------|---------|--------|--------|
-| Daily Verification Starts | 50 | 75 | +50% user onboarding |
-| Verified Users (Monthly) | 300 | 500 | +67% conversion |
-| Admin Review Time per User | 10 min | 6 min | +40% efficiency |
+| Daily Verification Starts | 0 | 75 | +50% user onboarding |
+| Verified Users (Monthly) | 10 | 500 | +XX% conversion |
+| Admin Review Time per User | 1000 min | 6 min | +40% efficiency |
 | Support Tickets (Verification) | 20/week | 8/week | -60% support load |
 
 ### Monitoring Setup
@@ -975,7 +972,7 @@ const useSimplifiedVerification = () => {
   - Offer support contact for questions
 
 **In-App Messaging:**
-- Show banner on verification page: "New simplified flow!"
+- Show floating popup banner on verification page open: "New simplified flow!"
 - Tooltip on progress dots: "Just 3 steps to complete"
 - Help center article: "How to Complete Verification"
 
@@ -1183,10 +1180,10 @@ ALTER TABLE public.user_verifications
 ### E. Contact Information
 | Role | Name | Email | Slack |
 |------|------|-------|-------|
-| Product Owner | [Name] | product@mobirides.com | @product |
-| Tech Lead | [Name] | tech@mobirides.com | @tech-lead |
-| QA Lead | [Name] | qa@mobirides.com | @qa-lead |
-| DevOps | [Name] | devops@mobirides.com | @devops |
+| Product Owner | [Koketso Morapedi] | product@mobirides.com | @koketso |
+| Temp Tech Lead | [Modisa Maphanyane] | maphanyane@mobirides.com | @modisa |
+| Temp QA Lead | [Teboho Morapedi] | qa@mobirides.com | @teboho |
+| DevOps | [Duma Mtungwa] | devops@mobirides.com | @duma |
 
 ---
 
