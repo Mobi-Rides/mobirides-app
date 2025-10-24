@@ -132,7 +132,7 @@ CREATE POLICY "admin_manage_notifications" ON public.notifications
         EXISTS (
             SELECT 1 FROM public.profiles 
             WHERE id = auth.uid() 
-            AND role IN ('admin', 'super_admin')
+            AND role::text IN ('admin', 'super_admin')
         )
     );
 

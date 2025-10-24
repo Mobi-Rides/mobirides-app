@@ -29,14 +29,17 @@ CREATE TABLE public.user_verifications (
 ALTER TABLE public.user_verifications ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their own verification data
+DROP POLICY IF EXISTS "Users can view own verification" ON public.user_verifications;
 CREATE POLICY "Users can view own verification" ON public.user_verifications
   FOR SELECT USING (auth.uid() = user_id);
 
 -- Users can insert their own verification data
+DROP POLICY IF EXISTS "Users can insert own verification" ON public.user_verifications;
 CREATE POLICY "Users can insert own verification" ON public.user_verifications
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Users can update their own verification data
+DROP POLICY IF EXISTS "Users can update own verification" ON public.user_verifications;
 CREATE POLICY "Users can update own verification" ON public.user_verifications
   FOR UPDATE USING (auth.uid() = user_id);
 

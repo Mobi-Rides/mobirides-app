@@ -7,7 +7,7 @@ ADD COLUMN IF NOT EXISTS last_location_update TIMESTAMP WITH TIME ZONE;
 
 -- Create a new table for real-time location tracking
 CREATE TABLE IF NOT EXISTS public.real_time_locations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     car_id UUID NOT NULL REFERENCES public.cars(id) ON DELETE CASCADE,
     host_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     trip_id UUID REFERENCES public.bookings(id) ON DELETE SET NULL,

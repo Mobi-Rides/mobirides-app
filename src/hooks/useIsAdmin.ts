@@ -39,19 +39,21 @@ export const useIsAdmin = () => {
         }
 
         if (isAdminResult) {
-          // Get admin details
-          const { data: adminData } = await supabase
+          // RPC says this user is an admin. Treat that as the source of truth.
+          setIsAdmin(true);
+
+          // Try to fetch admin details (may be absent). If present, set super-admin flag.
+          const { data: adminData, error: adminDataError } = await supabase
             .from("admins")
             .select("id, is_super_admin")
             .eq("id", user.id)
             .maybeSingle();
 
-          if (adminData) {
-            setIsAdmin(true);
+          if (!adminDataError && adminData) {
             setIsSuperAdmin(adminData.is_super_admin || false);
             setAdminInfo(adminData);
           } else {
-            setIsAdmin(false);
+            // No admins row — still an admin per RPC, but not a super admin
             setIsSuperAdmin(false);
             setAdminInfo(null);
           }

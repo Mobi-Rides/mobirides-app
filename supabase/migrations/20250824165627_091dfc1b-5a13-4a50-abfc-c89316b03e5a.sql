@@ -10,16 +10,27 @@ ALTER TABLE public.conversation_messages DISABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "conversations_participant_select" ON public.conversations;
 DROP POLICY IF EXISTS "conversations_authenticated_insert" ON public.conversations;
 DROP POLICY IF EXISTS "conversations_creator_update" ON public.conversations;
+DROP POLICY IF EXISTS "conversations_select_policy" ON public.conversations;
+DROP POLICY IF EXISTS "conversations_insert_policy" ON public.conversations;
+DROP POLICY IF EXISTS "conversations_update_policy" ON public.conversations;
 
 DROP POLICY IF EXISTS "participants_participant_select" ON public.conversation_participants;
 DROP POLICY IF EXISTS "participants_authenticated_insert" ON public.conversation_participants;
 DROP POLICY IF EXISTS "participants_own_update" ON public.conversation_participants;
 DROP POLICY IF EXISTS "participants_own_delete" ON public.conversation_participants;
+DROP POLICY IF EXISTS "participants_select_policy" ON public.conversation_participants;
+DROP POLICY IF EXISTS "participants_insert_policy" ON public.conversation_participants;
+DROP POLICY IF EXISTS "participants_update_policy" ON public.conversation_participants;
+DROP POLICY IF EXISTS "participants_delete_policy" ON public.conversation_participants;
 
 DROP POLICY IF EXISTS "messages_participant_select" ON public.conversation_messages;
 DROP POLICY IF EXISTS "messages_participant_insert" ON public.conversation_messages;
 DROP POLICY IF EXISTS "messages_sender_update" ON public.conversation_messages;
 DROP POLICY IF EXISTS "messages_sender_delete" ON public.conversation_messages;
+DROP POLICY IF EXISTS "messages_select_policy" ON public.conversation_messages;
+DROP POLICY IF EXISTS "messages_insert_policy" ON public.conversation_messages;
+DROP POLICY IF EXISTS "messages_update_policy" ON public.conversation_messages;
+DROP POLICY IF EXISTS "messages_delete_policy" ON public.conversation_messages;
 
 -- Create NON-RECURSIVE policies with direct checks (proven pattern)
 

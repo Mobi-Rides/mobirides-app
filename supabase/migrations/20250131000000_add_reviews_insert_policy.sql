@@ -1,6 +1,7 @@
 -- Add RLS policies for reviews table to allow authenticated users to submit reviews
 
 -- Allow authenticated users to insert reviews for their bookings
+DROP POLICY IF EXISTS "Users can insert reviews for their bookings" ON public.reviews;
 CREATE POLICY "Users can insert reviews for their bookings" ON public.reviews
   FOR INSERT
   TO authenticated
@@ -28,6 +29,7 @@ CREATE POLICY "Users can insert reviews for their bookings" ON public.reviews
   );
 
 -- Allow authenticated users to view reviews for bookings they're involved in
+DROP POLICY IF EXISTS "Users can view reviews for their bookings" ON public.reviews;
 CREATE POLICY "Users can view reviews for their bookings" ON public.reviews
   FOR SELECT
   TO authenticated
@@ -58,6 +60,7 @@ CREATE POLICY "Users can view reviews for their bookings" ON public.reviews
   );
 
 -- Allow authenticated users to update their own reviews
+DROP POLICY IF EXISTS "Users can update their own reviews" ON public.reviews;
 CREATE POLICY "Users can update their own reviews" ON public.reviews
   FOR UPDATE
   TO authenticated
@@ -71,6 +74,7 @@ CREATE POLICY "Users can update their own reviews" ON public.reviews
   );
 
 -- Allow authenticated users to delete their own reviews
+DROP POLICY IF EXISTS "Users can delete their own reviews" ON public.reviews;
 CREATE POLICY "Users can delete their own reviews" ON public.reviews
   FOR DELETE
   TO authenticated

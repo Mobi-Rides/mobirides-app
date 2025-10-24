@@ -23,7 +23,7 @@ interface UserProfile {
   email: string;
   full_name: string | null;
   phone_number: string | null;
-  role: "renter" | "host" | "admin";
+  role: "renter" | "host" | "admin" | "super_admin";
   created_at: string;
   last_sign_in_at: string | null;
   is_restricted: boolean;
@@ -110,10 +110,11 @@ const useNonAdminUsers = () => {
   return useQuery({
     queryKey: ["non-admin-users"],
     queryFn: async (): Promise<Pick<UserProfile, 'id' | 'full_name' | 'role'>[]> => {
+      // Exclude both admin and super_admin roles when listing transferrable users
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, role")
-        .neq("role", "admin")
+        .not('role', 'in', ["admin", "super_admin"])
         .order("full_name", { ascending: true });
 
       if (error) throw error;
@@ -171,49 +172,25 @@ export const AdvancedUserManagement = () => {
   // Restriction mutation
   const restrictUserMutation = useMutation({
     mutationFn: async ({ userId, restriction }: { userId: string; restriction: RestrictionFormData }) => {
-      const expiresAt = calculateExpiresAt(restriction.duration, restriction.durationValue);
-
-      // Get current user and verify admin status
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError) {
-        console.error("Auth error:", userError);
-        throw new Error("Authentication failed. Please log in again.");
-      }
-
-      if (!user) {
-        throw new Error("No authenticated user found.");
-      }
-
-      // Verify the current user has admin privileges
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Profile fetch error:", profileError);
-        throw new Error("Failed to verify admin privileges.");
-      }
-
-      if (!profile || profile.role !== "admin") {
-        throw new Error("Insufficient permissions. Admin access required.");
-      }
-
-      const { error } = await supabase
-        .from("user_restrictions")
-        .insert({
-          user_id: userId,
-          restriction_type: restriction.restrictionType,
+      // Call the Edge Function to handle user suspension with service_role
+      const { data, error } = await supabase.functions.invoke('suspend-user', {
+        body: {
+          userId,
+          restrictionType: restriction.restrictionType,
           reason: restriction.reason,
-          expires_at: expiresAt?.toISOString() || null, // Convert Date object to ISO string for Supabase
-          created_by: user.id, // Add created_by field for audit trail
-        });
+          duration: restriction.duration,
+          durationValue: restriction.durationValue,
+        }
+      });
 
       if (error) {
-        console.error("Supabase insert error:", error);
-        throw new Error(error.message || "Failed to create restriction. Please try again.");
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to restrict user. Please try again.");
+      }
+
+      // The Edge Function handles all validation and admin checks
+      if (data?.error) {
+        throw new Error(data.error);
       }
     },
     onSuccess: () => {

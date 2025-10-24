@@ -51,11 +51,44 @@ serve(async (req) => {
 
     const user = data.user;
 
-    // Check if user is admin using the is_admin function
-    const { data: isAdmin, error: adminCheckError } = await supabase
+    // Check if user is admin using the is_admin function (be defensive about return shape)
+    const { data: isAdminRaw, error: adminCheckError } = await supabase
       .rpc('is_admin', { user_uuid: user.id });
 
-    if (adminCheckError || !isAdmin) {
+    if (adminCheckError) {
+      console.error("Error calling is_admin RPC:", adminCheckError);
+      return new Response(
+        JSON.stringify({ error: "Insufficient permissions. Admin access required." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Normalize RPC result: it may be a boolean, an object, or an array depending on Postgres/Supabase version
+    let isAdmin = false;
+    try {
+      if (Array.isArray(isAdminRaw)) {
+        // e.g., [true] or [{ is_admin: true }]
+        const first = isAdminRaw[0];
+        if (typeof first === 'boolean') isAdmin = first;
+        else if (first && typeof first === 'object') {
+          // check common boolean fields
+          isAdmin = !!(first.is_admin ?? first.exists ?? Object.values(first)[0]);
+        } else {
+          isAdmin = !!first;
+        }
+      } else if (typeof isAdminRaw === 'object' && isAdminRaw !== null) {
+        // e.g., { is_admin: true } or { exists: true }
+        isAdmin = !!(isAdminRaw.is_admin ?? isAdminRaw.exists ?? Object.values(isAdminRaw)[0]);
+      } else {
+        // boolean or truthy scalar
+        isAdmin = !!isAdminRaw;
+      }
+    } catch (e) {
+      console.error("Failed to normalize is_admin RPC result:", e, isAdminRaw);
+      isAdmin = false;
+    }
+
+    if (!isAdmin) {
       return new Response(
         JSON.stringify({ error: "Insufficient permissions. Admin access required." }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
