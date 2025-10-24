@@ -25,6 +25,57 @@ This implementation plan outlines the simplification of the MobiRides user verif
 
 ---
 
+## 📝 Simplified Jira Task List
+
+**Copy-Paste Format for Jira Import**
+
+### Epic
+```
+VERIFY-001 | Epic | Streamline Verification Flow | 34 points | High Priority | Sprint 24
+```
+
+### Phase 1: Backend & Infrastructure (13 points)
+```
+VERIFY-101 | Task | Create Storage Buckets for Verification Documents | 5 points | Highest | Sprint 24.1
+VERIFY-102 | Task | Update Database Schema for 3-Step Verification | 5 points | Highest | Sprint 24.1
+VERIFY-103 | Task | Update verificationService.ts for 3-Step Flow | 3 points | High | Sprint 24.1
+```
+
+### Phase 2: Frontend Components (13 points)
+```
+VERIFY-201 | Story | Create SimpleDotProgress Component | 3 points | High | Sprint 24.2
+VERIFY-202 | Task | Update VerificationHub.tsx for 3-Step Flow | 5 points | High | Sprint 24.2
+VERIFY-203 | Story | Simplify DocumentUploadStep Component | 5 points | High | Sprint 24.2
+```
+
+### Phase 3: Admin Panel Updates (5 points)
+```
+VERIFY-301 | Task | Update VerificationManagementTable for 3-Step Display | 3 points | Medium | Sprint 24.3
+VERIFY-302 | Task | Update Admin Analytics Dashboard | 2 points | Low | Sprint 24.3
+```
+
+### Phase 4: Testing & Migration (3 points)
+```
+VERIFY-401 | Task | Create and Test Migration Script for In-Progress Users | 2 points | High | Sprint 24.4
+VERIFY-402 | Task | End-to-End Testing and QA | 1 point | High | Sprint 24.4
+```
+
+### Impact Assessment Tasks
+```
+VERIFY-501 | Task | Update SuperAdmin Dashboard for 3-Step Display | 5 points | Medium | Sprint 24.3
+VERIFY-502 | Task | Update Enhanced Profile Features (Badge, Completion, Trust Score) | 4 points | Medium | Sprint 24.3
+```
+
+---
+
+**Quick Summary:**
+- **Total Tasks:** 12
+- **Total Story Points:** 34
+- **Duration:** 2 weeks (4 sprints)
+- **Team Required:** 1 Backend Engineer, 1 Frontend Engineer, 1 QA Engineer
+
+---
+
 ## 🎯 Epic Overview
 
 **Epic:** VERIFY-001 - Streamline Verification Flow  
