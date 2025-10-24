@@ -120,7 +120,6 @@ export interface VerificationData {
   
   // Data storage
   personal_info: Record<string, unknown>;
-  user_role: string;
   
   // Admin fields
   admin_notes?: string;
