@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.migrate-user-profiles]
 verify_jwt = false
+
+[functions.suspend-user]
+verify_jwt = false
