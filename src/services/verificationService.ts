@@ -139,7 +139,6 @@ export class VerificationService {
             current_step: currentStep,
             overall_status: "not_started",
             personal_info: personalInfo,
-            user_role: userRole,
             personal_info_completed: completionStatus.personal_info_completed,
             documents_completed: false,
             selfie_completed: false,

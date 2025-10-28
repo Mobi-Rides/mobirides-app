@@ -7,6 +7,7 @@
 
 import React, { useEffect } from "react";
 import { useVerification } from "@/hooks/useVerification";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -99,10 +100,8 @@ const VerificationCertificate: React.FC<{
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-medium text-gray-600">User Role</p>
-                <p className="text-green-600 capitalize">
-                  {verificationData?.user_role || "Renter"}
-                </p>
+                <p className="font-medium text-gray-600">User Type</p>
+                <p className="text-green-600 capitalize">Verified User</p>
               </div>
               <div>
                 <p className="font-medium text-gray-600">Status</p>
@@ -252,12 +251,8 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
   }
 
   const handleGoToApp = () => {
-    // Navigate to appropriate page based on user role
-    if (verificationData.user_role === "host") {
-      navigate("/dashboard");
-    } else {
-      navigate("/");
-    }
+    // Navigate to home or dashboard
+    navigate("/");
   };
 
   const downloadCertificate = () => {
@@ -265,8 +260,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
     toast.success("Certificate download started (Feature coming soon)");
   };
 
-  // Type assertion to ensure user_role is treated as the union type
-  const userRole = (verificationData.user_role === "host" ? "host" : "renter") as "renter" | "host";
+  const userRole = "renter";
 
   return (
     <div className="space-y-6">
@@ -342,7 +336,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
                 </div>
               </div>
 
-              {verificationData.user_role === "host" && (
+              {false && (
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <div>
@@ -396,11 +390,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = () => {
           onClick={handleGoToApp}
           className="flex items-center space-x-2 flex-1 bg-green-600 hover:bg-green-700"
         >
-          <span>
-            {verificationData.user_role === "host"
-              ? "Go to Dashboard"
-              : "Start Using MobiRides"}
-          </span>
+          <span>Start Using MobiRides</span>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
