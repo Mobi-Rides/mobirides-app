@@ -160,14 +160,22 @@ serve(async (req) => {
       expiresAt = now.toISOString();
     }
 
+    // Map frontend restriction types to database enum values
+    const restrictionTypeMap = {
+      "suspend": "suspension",
+      "ban": "login_block"
+    };
+    
+    const dbRestrictionType = restrictionTypeMap[restrictionType] || "login_block";
+
     // Insert restriction record for tracking
     const { error: restrictionError } = await supabase
       .from("user_restrictions")
       .insert({
         user_id: userId,
-        restriction_type: restrictionType,
+        restriction_type: dbRestrictionType,
         reason: reason,
-        expires_at: expiresAt,
+        ends_at: expiresAt,
         created_by: requestingUser.id,
       });
 

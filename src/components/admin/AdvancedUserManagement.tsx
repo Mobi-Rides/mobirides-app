@@ -73,7 +73,7 @@ const useUsers = () => {
             .from("user_restrictions")
             .select("*")
             .eq("user_id", profile.id)
-            .eq("is_active", true);
+            .eq("active", true);
 
           const { count: vehiclesCount } = await supabase
             .from("cars")
@@ -208,13 +208,13 @@ export const AdvancedUserManagement = () => {
   // Remove restriction mutation (Logic is sound)
   const removeRestrictionMutation = useMutation({
     mutationFn: async (userId: string) => {
-      // NOTE: This assumes user_restrictions is tracked by is_active, 
+      // NOTE: This assumes user_restrictions is tracked by active, 
       // not a simple delete, which is good for audit trail.
       const { error } = await supabase
         .from("user_restrictions")
-        .update({ is_active: false })
+        .update({ active: false })
         .eq("user_id", userId)
-        .eq("is_active", true);
+        .eq("active", true);
 
       if (error) throw error;
     },
