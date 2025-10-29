@@ -13,7 +13,7 @@ export const AdminSecurityPanel = () => {
   const { sessions, isLoading: sessionsLoading, cleanupExpiredSessions } = useAdminSession();
   const { logs, isLoading: logsLoading } = useAdminActivityLog();
 
-  const activeSessions = sessions.filter(s => s.is_active);
+  const activeSessions = sessions.filter(s => s.active);
   const recentActivity = logs.slice(0, 5);
 
   return (

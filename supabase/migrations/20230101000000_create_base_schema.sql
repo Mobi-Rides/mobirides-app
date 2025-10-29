@@ -2,43 +2,76 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create notification type enum
-CREATE TYPE notification_type AS ENUM (
-    'booking_request',
-    'booking_confirmed', 
-    'booking_cancelled',
-    'booking_reminder',
-    'message_received',
-    'wallet_topup',
-    'wallet_deduction',
-    'handover_ready',
-    'payment_received',
-    'payment_failed',
-    'navigation_started',
-    'pickup_location_shared',
-    'return_location_shared',
-    'arrival_notification',
-    'booking_request_received',
-    'booking_request_sent',
-    'booking_confirmed_host',
-    'booking_confirmed_renter',
-    'booking_cancelled_host',
-    'booking_cancelled_renter',
-    'booking_reminder_host',
-    'booking_reminder_renter',
-    'pickup_reminder_host',
-    'pickup_reminder_renter',
-    'return_reminder_host',
-    'return_reminder_renter',
-    'system_notification'
-);
+DO $$ BEGIN
+    CREATE TYPE notification_type AS ENUM (
+        'booking_request',
+        'booking_confirmed',
+        'booking_cancelled',
+        'booking_reminder',
+        'message_received',
+        'wallet_topup',
+        'wallet_deduction',
+        'handover_ready',
+        'payment_received',
+        'payment_failed',
+        'navigation_started',
+        'pickup_location_shared',
+        'return_location_shared',
+        'arrival_notification',
+        'booking_request_received',
+        'booking_request_sent',
+        'booking_confirmed_host',
+        'booking_confirmed_renter',
+        'booking_cancelled_host',
+        'booking_cancelled_renter',
+        'booking_reminder_host',
+        'booking_reminder_renter',
+        'pickup_reminder_host',
+        'pickup_reminder_renter',
+        'return_reminder_host',
+        'return_reminder_renter',
+        'system_notification'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Create additional enums needed by the schema
-CREATE TYPE booking_status AS ENUM ('pending', 'confirmed', 'cancelled', 'completed', 'in_progress');
-CREATE TYPE message_status AS ENUM ('sent', 'delivered', 'read');
-CREATE TYPE user_role AS ENUM ('renter', 'host', 'admin', 'super_admin');
-CREATE TYPE vehicle_type AS ENUM ('sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'motorcycle');
-CREATE TYPE review_type AS ENUM ('host_to_renter', 'renter_to_host', 'renter_to_car');
-CREATE TYPE notification_role AS ENUM ('system_wide', 'host', 'renter', 'admin');
+DO $$ BEGIN
+    CREATE TYPE booking_status AS ENUM ('pending', 'confirmed', 'cancelled', 'completed', 'in_progress');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE message_status AS ENUM ('sent', 'delivered', 'read');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('renter', 'host', 'admin', 'super_admin');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE vehicle_type AS ENUM ('sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van', 'motorcycle');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE review_type AS ENUM ('host_to_renter', 'renter_to_host', 'renter_to_car');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE notification_role AS ENUM ('system_wide', 'host', 'renter', 'admin');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Create profiles table (extending auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -63,21 +96,24 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Create profiles policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
 CREATE POLICY "Users can view their own profile"
 ON public.profiles FOR SELECT
 USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
 ON public.profiles FOR UPDATE
 USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 CREATE POLICY "Users can insert their own profile"
 ON public.profiles FOR INSERT
 WITH CHECK (auth.uid() = id);
 
 -- Create cars table
 CREATE TABLE IF NOT EXISTS public.cars (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     brand TEXT NOT NULL,
     model TEXT NOT NULL,
@@ -102,17 +138,19 @@ CREATE TABLE IF NOT EXISTS public.cars (
 ALTER TABLE public.cars ENABLE ROW LEVEL SECURITY;
 
 -- Create cars policies
+DROP POLICY IF EXISTS "Anyone can view available cars" ON public.cars;
 CREATE POLICY "Anyone can view available cars"
 ON public.cars FOR SELECT
 USING (is_available = true);
 
+DROP POLICY IF EXISTS "Hosts can manage their own cars" ON public.cars;
 CREATE POLICY "Hosts can manage their own cars"
 ON public.cars FOR ALL
 USING (auth.uid() = owner_id);
 
 -- Create bookings table
 CREATE TABLE IF NOT EXISTS public.bookings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     car_id UUID NOT NULL REFERENCES public.cars(id) ON DELETE CASCADE,
     renter_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     start_date DATE NOT NULL,
@@ -136,22 +174,27 @@ CREATE TABLE IF NOT EXISTS public.bookings (
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 
 -- Create bookings policies
+DROP POLICY IF EXISTS "Users can view their own bookings" ON public.bookings;
 CREATE POLICY "Users can view their own bookings"
 ON public.bookings FOR SELECT
 USING (auth.uid() = renter_id);
 
+DROP POLICY IF EXISTS "Hosts can view bookings for their cars" ON public.bookings;
 CREATE POLICY "Hosts can view bookings for their cars"
 ON public.bookings FOR SELECT
 USING (auth.uid() = (SELECT owner_id FROM public.cars WHERE id = car_id));
 
+DROP POLICY IF EXISTS "Users can create bookings" ON public.bookings;
 CREATE POLICY "Users can create bookings"
 ON public.bookings FOR INSERT
 WITH CHECK (auth.uid() = renter_id);
 
+DROP POLICY IF EXISTS "Users can update their own bookings" ON public.bookings;
 CREATE POLICY "Users can update their own bookings"
 ON public.bookings FOR UPDATE
 USING (auth.uid() = renter_id);
 
+DROP POLICY IF EXISTS "Hosts can update bookings for their cars" ON public.bookings;
 CREATE POLICY "Hosts can update bookings for their cars"
 ON public.bookings FOR UPDATE
 USING (auth.uid() = (SELECT owner_id FROM public.cars WHERE id = car_id));
@@ -190,7 +233,7 @@ CREATE TRIGGER update_bookings_updated_at
 
 -- Create notifications table
 CREATE TABLE IF NOT EXISTS public.notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     type notification_type NOT NULL,
     content TEXT NOT NULL,
@@ -205,10 +248,12 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Create notifications policies
+DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
 CREATE POLICY "Users can view their own notifications"
 ON public.notifications FOR SELECT
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
 CREATE POLICY "Users can update their own notifications"
 ON public.notifications FOR UPDATE
 USING (auth.uid() = user_id);
@@ -226,7 +271,7 @@ CREATE TRIGGER update_notifications_updated_at
 
 -- Create conversations table
 CREATE TABLE IF NOT EXISTS public.conversations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT,
     type VARCHAR NOT NULL DEFAULT 'direct' CHECK (type IN ('direct', 'group')),
     created_by UUID REFERENCES auth.users(id),
@@ -240,7 +285,7 @@ ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 
 -- Create conversation_participants table
 CREATE TABLE IF NOT EXISTS public.conversation_participants (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -253,7 +298,7 @@ ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
 
 -- Create conversation_messages table
 CREATE TABLE IF NOT EXISTS public.conversation_messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
@@ -272,7 +317,7 @@ ALTER TABLE public.conversation_messages ENABLE ROW LEVEL SECURITY;
 
 -- Create messages table
 CREATE TABLE IF NOT EXISTS public.messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     receiver_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
@@ -287,10 +332,12 @@ CREATE TABLE IF NOT EXISTS public.messages (
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
 -- Create messages policies
+DROP POLICY IF EXISTS "Users can view their own messages" ON public.messages;
 CREATE POLICY "Users can view their own messages"
 ON public.messages FOR SELECT
 USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
 
+DROP POLICY IF EXISTS "Users can send messages" ON public.messages;
 CREATE POLICY "Users can send messages"
 ON public.messages FOR INSERT
 WITH CHECK (auth.uid() = sender_id);

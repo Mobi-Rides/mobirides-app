@@ -27,9 +27,10 @@ DROP POLICY IF EXISTS "Users can update vehicle condition reports for their book
 
 -- Create RLS policies for vehicle_condition_reports
 -- Allow users to view reports for bookings they're involved in (as host or renter)
-CREATE POLICY "Users can view vehicle condition reports for their bookings" 
-ON public.vehicle_condition_reports 
-FOR SELECT 
+DROP POLICY IF EXISTS "Users can view vehicle condition reports for their bookings" ON public.vehicle_condition_reports;
+CREATE POLICY "Users can view vehicle condition reports for their bookings"
+ON public.vehicle_condition_reports
+FOR SELECT
 USING (
     EXISTS (
         SELECT 1 FROM public.bookings b
@@ -40,9 +41,10 @@ USING (
 );
 
 -- Allow users to create reports for bookings they're involved in
-CREATE POLICY "Users can create vehicle condition reports for their bookings" 
-ON public.vehicle_condition_reports 
-FOR INSERT 
+DROP POLICY IF EXISTS "Users can create vehicle condition reports for their bookings" ON public.vehicle_condition_reports;
+CREATE POLICY "Users can create vehicle condition reports for their bookings"
+ON public.vehicle_condition_reports
+FOR INSERT
 WITH CHECK (
     EXISTS (
         SELECT 1 FROM public.bookings b
@@ -54,8 +56,9 @@ WITH CHECK (
 );
 
 -- Allow users to update reports they created
-CREATE POLICY "Users can update vehicle condition reports for their bookings" 
-ON public.vehicle_condition_reports 
-FOR UPDATE 
+DROP POLICY IF EXISTS "Users can update vehicle condition reports for their bookings" ON public.vehicle_condition_reports;
+CREATE POLICY "Users can update vehicle condition reports for their bookings"
+ON public.vehicle_condition_reports
+FOR UPDATE
 USING (reporter_id = auth.uid())
 WITH CHECK (reporter_id = auth.uid());

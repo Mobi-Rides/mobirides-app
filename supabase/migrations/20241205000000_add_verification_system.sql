@@ -11,6 +11,12 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- VERIFICATION ENUMS
 -- =====================================================
 
+-- Drop existing enums if they exist
+DROP TYPE IF EXISTS verification_status CASCADE;
+DROP TYPE IF EXISTS verification_step CASCADE;
+DROP TYPE IF EXISTS document_type CASCADE;
+DROP TYPE IF EXISTS verification_method CASCADE;
+
 -- Verification status types for KYC process
 CREATE TYPE verification_status AS ENUM (
     'not_started',
@@ -57,9 +63,15 @@ CREATE TYPE verification_method AS ENUM (
 -- VERIFICATION TABLES
 -- =====================================================
 
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS public.verification_address CASCADE;
+DROP TABLE IF EXISTS public.phone_verifications CASCADE;
+DROP TABLE IF EXISTS public.verification_documents CASCADE;
+DROP TABLE IF EXISTS public.user_verifications CASCADE;
+
 -- User verification data table
 CREATE TABLE public.user_verifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     current_step verification_step DEFAULT 'personal_info',
     overall_status verification_status DEFAULT 'not_started',
@@ -86,7 +98,7 @@ CREATE TABLE public.user_verifications (
 
 -- Document uploads table
 CREATE TABLE public.verification_documents (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     document_type document_type NOT NULL,
     file_path TEXT NOT NULL,
@@ -104,7 +116,7 @@ CREATE TABLE public.verification_documents (
 
 -- Phone verification table
 CREATE TABLE public.phone_verifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     phone_number TEXT NOT NULL,
     country_code TEXT NOT NULL,
@@ -120,7 +132,7 @@ CREATE TABLE public.phone_verifications (
 
 -- Address confirmation table
 CREATE TABLE public.verification_address (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     verification_id UUID NOT NULL REFERENCES public.user_verifications(id) ON DELETE CASCADE,
     
     -- Address to confirm
@@ -153,6 +165,15 @@ CREATE TABLE public.verification_address (
 -- INDEXES FOR PERFORMANCE
 -- =====================================================
 
+-- Drop existing indexes if they exist
+DROP INDEX IF EXISTS idx_user_verifications_status;
+DROP INDEX IF EXISTS idx_user_verifications_step;
+DROP INDEX IF EXISTS idx_verification_documents_user;
+DROP INDEX IF EXISTS idx_verification_documents_type;
+DROP INDEX IF EXISTS idx_verification_documents_status;
+DROP INDEX IF EXISTS idx_phone_verifications_phone;
+DROP INDEX IF EXISTS idx_verification_address_confirmed;
+
 -- Verification indexes
 CREATE INDEX idx_user_verifications_status ON public.user_verifications(overall_status);
 CREATE INDEX idx_user_verifications_step ON public.user_verifications(current_step);
@@ -172,6 +193,13 @@ ALTER TABLE public.verification_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.phone_verifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.verification_address ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can manage their verification" ON public.user_verifications;
+DROP POLICY IF EXISTS "Users can manage their documents" ON public.verification_documents;
+DROP POLICY IF EXISTS "Users can manage their phone verification" ON public.phone_verifications;
+DROP POLICY IF EXISTS "Users can view their address verification" ON public.verification_address;
+DROP POLICY IF EXISTS "Users can update their address verification" ON public.verification_address;
+
 -- User verification policies
 CREATE POLICY "Users can manage their verification" ON public.user_verifications FOR ALL USING (auth.uid() = user_id);
 
@@ -182,14 +210,14 @@ CREATE POLICY "Users can manage their documents" ON public.verification_document
 CREATE POLICY "Users can manage their phone verification" ON public.phone_verifications FOR ALL USING (auth.uid() = user_id);
 
 -- Address verification policies
-CREATE POLICY "Users can view their address verification" ON public.verification_address 
+CREATE POLICY "Users can view their address verification" ON public.verification_address
     FOR SELECT USING (
         auth.uid() IN (
             SELECT user_id FROM public.user_verifications WHERE id = verification_address.verification_id
         )
     );
 
-CREATE POLICY "Users can update their address verification" ON public.verification_address 
+CREATE POLICY "Users can update their address verification" ON public.verification_address
     FOR UPDATE USING (
         auth.uid() IN (
             SELECT user_id FROM public.user_verifications WHERE id = verification_address.verification_id
@@ -254,13 +282,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop existing triggers if they exist
+DROP TRIGGER IF EXISTS update_user_verifications_updated_at ON public.user_verifications;
+DROP TRIGGER IF EXISTS update_verification_address_updated_at ON public.verification_address;
+
 -- Apply updated_at trigger to verification tables
-CREATE TRIGGER update_user_verifications_updated_at 
-    BEFORE UPDATE ON public.user_verifications 
+CREATE TRIGGER update_user_verifications_updated_at
+    BEFORE UPDATE ON public.user_verifications
     FOR EACH ROW EXECUTE FUNCTION update_verification_updated_at();
 
-CREATE TRIGGER update_verification_address_updated_at 
-    BEFORE UPDATE ON public.verification_address 
+CREATE TRIGGER update_verification_address_updated_at
+    BEFORE UPDATE ON public.verification_address
     FOR EACH ROW EXECUTE FUNCTION update_verification_updated_at();
 
 -- =====================================================

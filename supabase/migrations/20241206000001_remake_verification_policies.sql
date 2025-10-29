@@ -46,7 +46,7 @@ CREATE POLICY "Admins can manage all verifications"
     USING (
         auth.uid() IN (
             SELECT id FROM public.profiles 
-            WHERE role IN ('admin', 'super_admin')
+                WHERE role::text IN ('admin', 'super_admin')
         )
     );
 
@@ -86,7 +86,7 @@ CREATE POLICY "Admins can manage all documents"
     USING (
         auth.uid() IN (
             SELECT id FROM public.profiles 
-            WHERE role IN ('admin', 'super_admin')
+                WHERE role::text IN ('admin', 'super_admin')
         )
     );
 
@@ -126,7 +126,7 @@ CREATE POLICY "Admins can manage all phone verifications"
     USING (
         auth.uid() IN (
             SELECT id FROM public.profiles 
-            WHERE role IN ('admin', 'super_admin')
+                WHERE role::text IN ('admin', 'super_admin')
         )
     );
 
@@ -196,7 +196,7 @@ CREATE POLICY "Admins can manage all address verifications"
     USING (
         auth.uid() IN (
             SELECT id FROM public.profiles 
-            WHERE role IN ('admin', 'super_admin')
+                WHERE role::text IN ('admin', 'super_admin')
         )
     );
 
@@ -227,7 +227,7 @@ AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid() AND role IN ('admin', 'super_admin')
+        WHERE id = auth.uid() AND role::text IN ('admin', 'super_admin')
     );
 END;
 $$;

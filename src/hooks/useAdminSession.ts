@@ -9,7 +9,7 @@ interface AdminSession {
   created_at: string;
   expires_at: string;
   last_activity: string;
-  is_active: boolean;
+  active: boolean;
 }
 
 export const useAdminSession = () => {
@@ -77,7 +77,7 @@ export const useAdminSession = () => {
     try {
       const { error } = await supabase
         .from("admin_sessions")
-        .update({ is_active: false })
+        .update({ active: false })
         .eq("id", sessionId)
         .eq("admin_id", user.id);
 

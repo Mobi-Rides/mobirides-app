@@ -13,6 +13,7 @@ DROP POLICY IF EXISTS "conversation_messages_select_policy" ON "public"."convers
 
 -- Create improved SELECT policies for conversations
 -- Allow users to read conversations where they are participants
+DROP POLICY IF EXISTS "conversations_participant_select_policy" ON "public"."conversations";
 CREATE POLICY "conversations_participant_select_policy" ON "public"."conversations"
     AS PERMISSIVE FOR SELECT
     TO authenticated
@@ -30,6 +31,7 @@ CREATE POLICY "conversations_participant_select_policy" ON "public"."conversatio
 
 -- Create improved SELECT policies for conversation_participants
 -- Allow users to read participant data for conversations they are part of
+DROP POLICY IF EXISTS "conversation_participants_conversation_select_policy" ON "public"."conversation_participants";
 CREATE POLICY "conversation_participants_conversation_select_policy" ON "public"."conversation_participants"
     AS PERMISSIVE FOR SELECT
     TO authenticated
@@ -47,6 +49,7 @@ CREATE POLICY "conversation_participants_conversation_select_policy" ON "public"
 
 -- Create improved SELECT policies for conversation_messages
 -- Allow users to read messages from conversations they participate in
+DROP POLICY IF EXISTS "conversation_messages_participant_select_policy" ON "public"."conversation_messages";
 CREATE POLICY "conversation_messages_participant_select_policy" ON "public"."conversation_messages"
     AS PERMISSIVE FOR SELECT
     TO authenticated

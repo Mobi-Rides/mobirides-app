@@ -57,6 +57,11 @@ declare module "https://deno.land/std@0.190.0/http/server.ts" {
   export function serve(handler: Handler): Promise<void>;
 }
 
+// Module declaration for the std alias
+declare module "std/http/server.ts" {
+  export * from "https://deno.land/std@0.190.0/http/server.ts";
+}
+
 // Module declarations for Supabase
 declare module "https://esm.sh/@supabase/supabase-js@2.47.10" {
   export interface SupabaseClientOptions {
@@ -91,11 +96,13 @@ declare module "https://esm.sh/@supabase/supabase-js@2.47.10" {
 
   export interface SupabaseClient {
     auth: {
-      getUser(): Promise<{ data: { user: User | null } | null; error: PostgrestError | null }>;
+      getUser(token?: string): Promise<{ data: { user: User | null } | null; error: PostgrestError | null }>;
+      getSession(): Promise<{ data: { session: { user: User | null } | null }; error: PostgrestError | null }>;
       signInWithPassword(credentials: { email: string; password: string }): Promise<{ data: unknown; error: PostgrestError | null }>;
       signOut(): Promise<{ error: PostgrestError | null }>;
       admin: {
         listUsers(): Promise<{ data: { users: User[] }; error: PostgrestError | null }>;
+        deleteUser(userId: string): Promise<{ data: { user: User | null }; error: PostgrestError | null }>;
       };
     };
     from(table: string): {
@@ -111,9 +118,19 @@ declare module "https://esm.sh/@supabase/supabase-js@2.47.10" {
     };
   }
 
+  export interface Profile {
+    id: string;
+    role: string;
+  }
+
   export function createClient(
     supabaseUrl: string,
     supabaseKey: string,
     options?: SupabaseClientOptions
   ): SupabaseClient;
+}
+
+// Module declaration for the supabase alias
+declare module "supabase" {
+  export * from "https://esm.sh/@supabase/supabase-js@2.47.10";
 }

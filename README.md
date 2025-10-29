@@ -1,281 +1,183 @@
-# 🚗 **MobiRides - Car Sharing Platform**
+# Supabase CLI
 
-**Status:** 75% Production Ready (+5% improvement) | **Last Audit:** August 2025  
-**Tech Stack:** React 18 + TypeScript + Supabase + Tailwind CSS  
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
----
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-## 📋 **PROJECT OVERVIEW**
+This repository contains all the functionality for Supabase CLI.
 
-MobiRides is a comprehensive car-sharing platform designed for the Botswana market, featuring dual-role functionality for hosts and renters. The system provides end-to-end car rental management with integrated verification, payments, messaging, and handover processes.
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-### **🎯 Core Features**
-- **Dual User Roles:** Host and Renter with role switching
-- **Car Management:** Complete CRUD with availability tracking
-- **Booking System:** Real-time booking with commission handling
-- **KYC Verification:** Botswana-specific ID verification (Omang)
-- **Digital Wallet:** Top-up, commission, and earnings tracking
-- **Real-time Messaging:** Conversation-based chat system
-- **Handover Process:** 9-step vehicle inspection workflow
-- **Admin Dashboard:** Complete system management interface
+## Getting started
 
----
+### Install the CLI
 
-## 🔍 **CURRENT SYSTEM STATUS**
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
-### **✅ COMPLETED FEATURES (75%)**
-- [x] User authentication and profiles
-- [x] Car listing and management
-- [x] **Enhanced Booking System** - Improved pickup/return logic with proper validation
-- [x] Real-time messaging infrastructure
-- [x] Admin dashboard and management
-- [x] **Advanced Location Services** - GPS navigation, route display, arrival detection
-- [x] Review and rating system
-- [x] **Production-Grade Handover Process** - 9-step workflow with navigation integration
-- [x] **Rental Management** - Complete state management with Active Rentals tracking
-
-### **⚠️ CRITICAL GAPS (25%)**
-- [ ] **Payment Processing:** Mock service only, no real transactions
-- [ ] **File Storage:** UI complete, missing backend storage configuration
-- [ ] **Notification Infrastructure:** Email, SMS, and push notification delivery
-- [ ] **Admin Verification UI:** Document approval interface needed
-- [ ] **Code Quality:** 13 remaining linting errors to resolve
-
-> **📊 Detailed Analysis:** See [SYSTEM_AUDIT_REPORT.md](./SYSTEM_AUDIT_REPORT.md)
-
----
-
-## 🚀 **QUICK START**
-
-### **Prerequisites**
-- Node.js 18+ and npm
-- Supabase account and project
-- Mapbox account for location services
-
-### **Installation**
 ```bash
-# Clone repository
-git clone <repository-url>
-cd mobirides-app
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your Supabase and Mapbox credentials
-
-# Start development server
-npm run dev
+npm i supabase --save-dev
 ```
 
-### **Database Setup**
+To install the beta release channel:
+
 ```bash
-# Install Supabase CLI
-npm install -g supabase
-
-# Login and link project
-supabase login
-supabase link --project-ref <your-project-ref>
-
-# Run migrations
-supabase db push
+npm i supabase@beta --save-dev
 ```
 
----
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-## 📚 **DOCUMENTATION**
-
-### **📊 System Analysis**
-- [**Updated System Health Report**](./UPDATED_SYSTEM_HEALTH_REPORT.md) - Latest assessment including Arnold's improvements
-- [**System Audit Report**](./SYSTEM_AUDIT_REPORT.md) - Comprehensive feature analysis and health assessment
-- [**Technical Debt Tracker**](./TECHNICAL_DEBT.md) - Current technical debt inventory and metrics
-- [**Action Plan**](./ACTION_PLAN.md) - Priority-based implementation roadmap
-
-### **🏗️ Architecture Documentation**
-- [**Architecture Overview**](./docs/ARCHITECTURE.md) - System design and component relationships
-- [**Database Schema**](./docs/DATABASE_SCHEMA.md) - Complete database structure
-- [**API Documentation**](./docs/API.md) - Service layer and API reference
-
-### **🔧 Development**
-- [**Development Guide**](./docs/DEVELOPMENT.md) - Setup and contribution guidelines
-- [**Deployment Guide**](./docs/DEPLOYMENT.md) - Production deployment instructions
-- [**Testing Guide**](./docs/TESTING.md) - Testing strategies and requirements
-
----
-
-## 🎯 **IMMEDIATE PRIORITIES**
-
-Based on our comprehensive system audit, the immediate development priorities are:
-
-### **🔥 Week 1 - Critical Infrastructure**
-1. **Implement Real File Storage** (3 days)
-   - Set up Supabase Storage buckets
-   - Connect all upload components to real storage
-   - Add file validation and security
-
-2. **Integrate Payment Gateway** (4 days)
-   - Replace mock payment service with Stripe
-   - Implement secure payment processing
-   - Add webhook handling
-
-3. **Resolve Dual Message Systems** (2 days)
-   - Complete migration to conversation system
-   - Remove legacy message handling
-
-### **⚡ Week 2-3 - Core Functionality**
-4. **Complete Notification Delivery** (5 days)
-   - Email service integration
-   - SMS service for verification
-   - Fix push notifications
-
-5. **Add Transaction Atomicity** (3 days)
-   - Wrap complex operations in transactions
-   - Implement rollback mechanisms
-
-6. **Build Admin Review Interface** (6 days)
-   - Document approval workflows
-   - Admin action logging
-
-> **📋 Complete Plan:** See [ACTION_PLAN.md](./ACTION_PLAN.md)
-
----
-
-## 🏗️ **ARCHITECTURE OVERVIEW**
-
-### **Frontend Architecture**
 ```
-src/
-├── components/          # React components by feature
-├── pages/              # Route-level pages  
-├── services/           # Business logic and API calls
-├── hooks/              # Custom React hooks
-├── contexts/           # React Context providers
-├── types/              # TypeScript type definitions
-└── utils/              # Utility functions
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
 
-### **Backend Architecture (Supabase)**
-```
-Database (PostgreSQL)    Real-time (WebSockets)    Storage (S3-compatible)
-├── Users & Profiles     ├── Message subscriptions  ├── Car images
-├── Cars & Bookings      ├── Handover updates       ├── Documents  
-├── Wallet Transactions  ├── Location tracking      └── User avatars
-└── Verification Data    └── Notification delivery
-```
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-### **Key Technologies**
-- **Frontend:** React 18, TypeScript, Tailwind CSS, React Query
-- **Backend:** Supabase (PostgreSQL, Auth, Real-time, Storage)
-- **Services:** Mapbox (location), Stripe (payments), Twilio (SMS)
-- **Infrastructure:** Vercel (hosting), Supabase (database)
+<details>
+  <summary><b>macOS</b></summary>
 
----
+  Available via [Homebrew](https://brew.sh). To install:
 
-## 🔐 **SECURITY & COMPLIANCE**
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-### **Implemented Security**
-- Row Level Security (RLS) policies on all tables
-- JWT-based authentication with Supabase Auth
-- Role-based access control (Host/Renter/Admin)
-- Input validation and sanitization
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-### **Compliance Requirements**
-- **KYC Verification:** Botswana National ID (Omang) verification
-- **PCI DSS:** Required for payment processing (not yet implemented)
-- **Data Protection:** User data encryption and privacy controls
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-### **Security Gaps (Critical)**
-- [ ] File upload validation and scanning
-- [ ] Rate limiting and DDoS protection  
-- [ ] Security headers and CSRF protection
-- [ ] Audit logging for sensitive operations
+<details>
+  <summary><b>Windows</b></summary>
 
----
+  Available via [Scoop](https://scoop.sh). To install:
 
-## 🧪 **TESTING**
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
 
-### **Current Testing Status**
-- **Unit Tests:** Not implemented
-- **Integration Tests:** Not implemented  
-- **E2E Tests:** Not implemented
-- **Manual Testing:** Comprehensive
+  To upgrade:
 
-### **Testing Strategy**
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
 ```bash
-# Planned test structure
-npm run test:unit       # Jest unit tests
-npm run test:integration # API integration tests  
-npm run test:e2e        # Cypress end-to-end tests
-npm run test:coverage   # Coverage reporting
+supabase bootstrap
 ```
 
----
+Or using npx:
 
-## 📊 **PERFORMANCE METRICS**
-
-### **Current Performance**
-- **Build Time:** ~45 seconds
-- **Page Load:** ~2-3 seconds (development)
-- **Bundle Size:** ~2.8MB (unoptimized)
-- **Lighthouse Score:** Not measured
-
-### **Performance Targets**
-- **Page Load:** < 2 seconds
-- **First Contentful Paint:** < 1.5 seconds
-- **Bundle Size:** < 1.5MB (optimized)
-- **Lighthouse Score:** > 90 (all categories)
-
----
-
-## 🤝 **CONTRIBUTING**
-
-### **Development Workflow**
-1. Create feature branch from `main`
-2. Implement changes with proper TypeScript types
-3. Add unit tests for new functionality
-4. Update documentation as needed
-5. Submit pull request with detailed description
-
-### **Code Standards**
-- **TypeScript:** Strict mode, no `any` types
-- **Components:** Functional components with hooks
-- **Styling:** Tailwind CSS utility classes
-- **State:** React Query for server state, Context for global state
-
-### **Commit Convention**
-```
-feat: add payment gateway integration
-fix: resolve dual message system conflicts  
-docs: update API documentation
-test: add booking workflow tests
-refactor: improve type safety in services
+```bash
+npx supabase bootstrap
 ```
 
----
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
 
-## 📞 **SUPPORT & CONTACT**
+## Docs
 
-### **Project Maintainers**
-- **Technical Lead:** Development Team
-- **Product Owner:** Product Team
-- **DevOps Lead:** Infrastructure Team
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
 
-### **Resources**
-- **Issues:** GitHub Issues
-- **Documentation:** `/docs` folder
-- **Architecture Decisions:** ADR documents
-- **Deployment:** Vercel Dashboard
+## Breaking changes
 
----
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
 
-## 📝 **LICENSE**
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
 
-This project is proprietary software. All rights reserved.
+## Developing
 
----
+To run from source:
 
-**Last Updated:** December 2024  
-**Next Review:** January 2025  
-**System Health:** 70/100  
-**Production Readiness:** Blocked on critical infrastructure**
+```sh
+# Go >= 1.22
+go run . help
+```
