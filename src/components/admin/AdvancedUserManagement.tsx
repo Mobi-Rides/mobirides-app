@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,16 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-// Removed unused AlertDialog imports: AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-// Removed unused Tabs imports
-import { Search, UserX, UserCheck, Trash2, Shield, Mail } from "lucide-react"; // Clock, AlertTriangle kept for use in logic
-import { AlertTriangle } from 'lucide-react'; // Explicit import for clarity
+import { Search, UserX, UserCheck, Trash2, Shield, Mail } from "lucide-react";
+import { AlertTriangle } from 'lucide-react';
 import { toast } from "sonner";
 import { format } from "date-fns";
+import type { Database } from "@/integrations/supabase/types";
 
 interface UserProfile {
   id: string;
@@ -41,15 +40,14 @@ interface UserProfile {
 interface RestrictionFormData {
   restrictionType: "suspend" | "ban";
   reason: string;
-  duration: "hours" | "days" | "weeks" | "months" | "permanent"; // Strictly typed duration
+  duration: "hours" | "days" | "weeks" | "months" | "permanent";
   durationValue: number;
 }
 
 const useUsers = () => {
-  return useQuery<UserProfile[], Error>({ // Added type for error
+  return useQuery<UserProfile[], Error>({
     queryKey: ["admin-users"],
     queryFn: async (): Promise<UserProfile[]> => {
-      // Get users with their restriction status
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select(`
@@ -65,10 +63,8 @@ const useUsers = () => {
 
       if (profilesError) throw profilesError;
 
-      // Get restriction details and counts for each user
       const usersWithRestrictions = await Promise.all(
         (profiles || []).map(async (profile) => {
-          // Only fetch ACTIVE restrictions
           const { data: restrictions } = await supabase
             .from("user_restrictions")
             .select("*")
@@ -77,7 +73,7 @@ const useUsers = () => {
 
           const { count: vehiclesCount } = await supabase
             .from("cars")
-            .select("id", { count: "exact", head: true }) // Using head: true for efficiency
+            .select("id", { count: "exact", head: true })
             .eq("owner_id", profile.id);
 
           const { count: bookingsCount } = await supabase
@@ -110,11 +106,12 @@ const useNonAdminUsers = () => {
   return useQuery({
     queryKey: ["non-admin-users"],
     queryFn: async (): Promise<Pick<UserProfile, 'id' | 'full_name' | 'role'>[]> => {
-      // Exclude both admin and super_admin roles when listing transferrable users
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, role")
-        .not('role', 'in', ["admin", "super_admin"])
+        // Exclude admin roles with a single NOT IN filter to avoid
+        // duplicate query params like role=neq.admin&role=neq.super_admin
+        .not('role', 'in', '(admin,super_admin)')
         .order("full_name", { ascending: true });
 
       if (error) throw error;
@@ -123,7 +120,6 @@ const useNonAdminUsers = () => {
   });
 };
 
-// Helper function to calculate expiration date accurately
 const calculateExpiresAt = (duration: RestrictionFormData["duration"], value: number): Date | null => {
   if (duration === "permanent") return null;
   const now = new Date();
@@ -140,7 +136,6 @@ const calculateExpiresAt = (duration: RestrictionFormData["duration"], value: nu
       expiresAt.setDate(now.getDate() + value * 7);
       break;
     case "months":
-      // Use setMonth for accurate month calculation, avoiding the 30-day bug
       expiresAt.setMonth(now.getMonth() + value);
       break;
     default:
@@ -149,13 +144,11 @@ const calculateExpiresAt = (duration: RestrictionFormData["duration"], value: nu
   return expiresAt;
 };
 
-
 export const AdvancedUserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  // State for deletion reason
   const [deletionReason, setDeletionReason] = useState("");
   const [restrictionForm, setRestrictionForm] = useState<RestrictionFormData>({
     restrictionType: "suspend",
@@ -169,10 +162,23 @@ export const AdvancedUserManagement = () => {
   const { data: users, isLoading, error } = useUsers();
   const { data: nonAdminUsers } = useNonAdminUsers();
 
-  // Restriction mutation
   const restrictUserMutation = useMutation({
     mutationFn: async ({ userId, restriction }: { userId: string; restriction: RestrictionFormData }) => {
-      // Call the Edge Function to handle user suspension with service_role
+      // Explicitly include Authorization header to satisfy verify_jwt = true
+      const {
+        data: sessionData,
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(`Failed to get session: ${sessionError.message}`);
+      }
+
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error("No active session. Please sign in again.");
+      }
+
       const { data, error } = await supabase.functions.invoke('suspend-user', {
         body: {
           userId,
@@ -180,18 +186,49 @@ export const AdvancedUserManagement = () => {
           reason: restriction.reason,
           duration: restriction.duration,
           durationValue: restriction.durationValue,
-        }
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
 
       if (error) {
         console.error("Edge function error:", error);
-        throw new Error(error.message || "Failed to restrict user. Please try again.");
+        let parsed: any = null;
+        try {
+          const resp = error?.context?.response as Response | undefined;
+          if (resp) {
+            const contentType = resp.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+              parsed = await resp.json();
+            } else {
+              const text = await resp.text();
+              try { parsed = JSON.parse(text); } catch {}
+            }
+          }
+        } catch (parseErr) {
+          console.warn('Failed to parse function error response', parseErr);
+        }
+        
+        const msg = parsed?.error || error.message || "Failed to restrict user. Please try again.";
+        const composed = [
+          msg,
+          parsed?.code ? `(code: ${parsed.code})` : null,
+          parsed?.details ? `details: ${parsed.details}` : null,
+        ].filter(Boolean).join(' ');
+        throw new Error(composed);
       }
 
-      // The Edge Function handles all validation and admin checks
       if (data?.error) {
-        throw new Error(data.error);
+        const composed = [
+          data.error,
+          data.code ? `(code: ${data.code})` : null,
+          data.details ? `details: ${data.details}` : null,
+        ].filter(Boolean).join(' ');
+        throw new Error(composed);
       }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -205,14 +242,11 @@ export const AdvancedUserManagement = () => {
     },
   });
 
-  // Remove restriction mutation (Logic is sound)
   const removeRestrictionMutation = useMutation({
     mutationFn: async (userId: string) => {
-      // NOTE: This assumes user_restrictions is tracked by active, 
-      // not a simple delete, which is good for audit trail.
       const { error } = await supabase
         .from("user_restrictions")
-        .update({ active: false })
+        .update({ active: false } as Database["public"]["Tables"]["user_restrictions"]["Update"])
         .eq("user_id", userId)
         .eq("active", true);
 
@@ -227,17 +261,13 @@ export const AdvancedUserManagement = () => {
     },
   });
 
-  // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async ({ userId, transferToUserId, reason }: { userId: string; transferToUserId: string; reason: string }) => {
-      // This relies on a Supabase Edge Function ('delete-user-with-transfer') to handle
-      // the complex logic of: 1) transferring assets, 2) deleting the user from Auth, and 3) cleaning up the profile.
       const { data, error } = await supabase.functions.invoke('delete-user-with-transfer', {
         body: { userId, transferToUserId, reason }
       });
 
       if (error) throw error;
-      // The function response must be checked for application-level errors
       if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
@@ -245,24 +275,21 @@ export const AdvancedUserManagement = () => {
       toast.success("User deleted and assets transferred successfully");
       setIsDeleteDialogOpen(false);
       setTransferUserId("");
-      setDeletionReason(""); // Reset deletion reason
+      setDeletionReason("");
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete user: ${error.message}`);
     },
   });
 
-  // Reset password mutation (Logic is sound, relies on correct email lookup)
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: string) => {
-      // Step 1: Get the user's email from auth.users since profiles table doesn't have email column
       const { data: authUserData, error: authError } = await supabase.auth.admin.getUserById(userId);
 
       if (authError) throw authError;
       const userEmail = authUserData.user?.email;
       if (!userEmail) throw new Error("User email not found.");
 
-      // Step 2: Send the recovery link
       const { error } = await supabase.auth.admin.generateLink({
         type: 'recovery',
         email: userEmail,
@@ -289,8 +316,7 @@ export const AdvancedUserManagement = () => {
 
   const handleRestrictUser = (user: UserProfile) => {
     setSelectedUser(user);
-    // Re-initialize form for a new restriction
-    resetRestrictionForm(); 
+    resetRestrictionForm();
     setIsRestrictionDialogOpen(true);
   };
 
@@ -300,13 +326,12 @@ export const AdvancedUserManagement = () => {
 
   const handleDeleteUser = (user: UserProfile) => {
     setSelectedUser(user);
-    setDeletionReason(""); // Clear reason on open
-    setTransferUserId(""); // Clear transfer user on open
+    setDeletionReason("");
+    setTransferUserId("");
     setIsDeleteDialogOpen(true);
   };
 
   const handleResetPassword = (user: UserProfile) => {
-    // Prevent action for admins on themselves/other admins? Assuming this is allowed for now.
     resetPasswordMutation.mutate(user.id);
   };
 
@@ -319,14 +344,15 @@ export const AdvancedUserManagement = () => {
   };
 
   const confirmDelete = () => {
-    // Added check for deletionReason
-    if (!selectedUser || !transferUserId || !deletionReason.trim()) return; 
+    if (!selectedUser || !transferUserId || !deletionReason.trim()) return;
     deleteUserMutation.mutate({
       userId: selectedUser.id,
       transferToUserId: transferUserId,
-      reason: deletionReason.trim(), // Use the user-provided reason
+      reason: deletionReason.trim(),
     });
   };
+
+
 
   const filteredUsers = users?.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -423,7 +449,7 @@ export const AdvancedUserManagement = () => {
                       {user.is_restricted ? (
                         <Badge variant="destructive" className="flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3" />
-                          Restricted
+                          {`Restricted (${user.restrictions?.length ?? 0})`}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="flex items-center gap-1">
@@ -434,9 +460,9 @@ export const AdvancedUserManagement = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div>**{user.vehicles_count}** vehicles</div>
-                        <div>**{user.bookings_count}** bookings</div>
-                        <div>**{user.reviews_count}** reviews</div>
+                        <div>{user.vehicles_count} vehicles</div>
+                        <div>{user.bookings_count} bookings</div>
+                        <div>{user.reviews_count} reviews</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -506,21 +532,20 @@ export const AdvancedUserManagement = () => {
 
       {/* Restriction Dialog */}
       <Dialog open={isRestrictionDialogOpen} onOpenChange={setIsRestrictionDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Restrict User Access</DialogTitle>
             <DialogDescription>
-              Apply a restriction to **{selectedUser?.full_name || selectedUser?.email}**.
-              This will limit their access to the platform.
+              Apply a restriction to **{selectedUser?.full_name}**. This will limit their access to the platform.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="restriction-type">Restriction Type</Label>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="restrictionType">Restriction Type</Label>
               <Select
                 value={restrictionForm.restrictionType}
                 onValueChange={(value: "suspend" | "ban") =>
-                  setRestrictionForm(prev => ({ ...prev, restrictionType: value }))
+                  setRestrictionForm({ ...restrictionForm, restrictionType: value })
                 }
               >
                 <SelectTrigger>
@@ -528,28 +553,29 @@ export const AdvancedUserManagement = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="suspend">Suspend (Temporary Access Removal)</SelectItem>
-                  <SelectItem value="ban">Ban (Permanent/Severe Restriction)</SelectItem>
+                  <SelectItem value="ban">Ban (Permanent Access Removal)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="grid gap-2">
               <Label htmlFor="reason">Reason (Required for Audit)</Label>
               <Textarea
                 id="reason"
+                placeholder="Enter the reason for this restriction..."
                 value={restrictionForm.reason}
                 onChange={(e) =>
-                  setRestrictionForm(prev => ({ ...prev, reason: e.target.value }))
+                  setRestrictionForm({ ...restrictionForm, reason: e.target.value })
                 }
-                placeholder="Enter the reason for this restriction..."
+                className="min-h-[80px]"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="grid gap-2">
                 <Label htmlFor="duration">Duration</Label>
                 <Select
                   value={restrictionForm.duration}
                   onValueChange={(value: RestrictionFormData["duration"]) =>
-                    setRestrictionForm(prev => ({ ...prev, duration: value, durationValue: value === "permanent" ? 0 : prev.durationValue })) // Reset value for permanent
+                    setRestrictionForm({ ...restrictionForm, duration: value })
                   }
                 >
                   <SelectTrigger>
@@ -564,38 +590,36 @@ export const AdvancedUserManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="duration-value">Value</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="durationValue">Value</Label>
                 <Input
-                  id="duration-value"
+                  id="durationValue"
                   type="number"
+                  min="1"
                   value={restrictionForm.durationValue}
                   onChange={(e) =>
-                    setRestrictionForm(prev => ({
-                      ...prev,
-                      durationValue: parseInt(e.target.value) > 0 ? parseInt(e.target.value) : 1 // Ensure value is at least 1
-                    }))
+                    setRestrictionForm({
+                      ...restrictionForm,
+                      durationValue: parseInt(e.target.value) || 1,
+                    })
                   }
                   disabled={restrictionForm.duration === "permanent"}
-                  min="1"
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRestrictionDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsRestrictionDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button
               onClick={confirmRestriction}
-              // Require a reason and a duration value (unless permanent)
-              disabled={
-                !restrictionForm.reason.trim() || 
-                (restrictionForm.duration !== "permanent" && restrictionForm.durationValue < 1) || 
-                restrictUserMutation.isPending
-              }
+              disabled={!restrictionForm.reason.trim() || restrictUserMutation.isPending}
             >
-              {restrictUserMutation.isPending ? "Applying..." : "Apply Restriction"}
+              Apply Restriction
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -603,62 +627,53 @@ export const AdvancedUserManagement = () => {
 
       {/* Delete User Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-destructive">Delete User Account</DialogTitle>
+            <DialogTitle>Delete User Account</DialogTitle>
             <DialogDescription>
-              Permanently delete **{selectedUser?.full_name || selectedUser?.email}**'s account.
-              This action cannot be undone. All associated assets will be transferred to the selected user.
+              This will permanently delete **{selectedUser?.full_name}**'s account and transfer their assets to another user.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="transfer-user">Transfer Assets To</Label>
-              <Select value={transferUserId} onValueChange={setTransferUserId} disabled={!nonAdminUsers?.length}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="transferUser">Transfer Assets To</Label>
+              <Select value={transferUserId} onValueChange={setTransferUserId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a user to receive assets..." />
+                  <SelectValue placeholder="Select a user to transfer assets to" />
                 </SelectTrigger>
                 <SelectContent>
-                  {nonAdminUsers?.filter(u => u.id !== selectedUser?.id).map((user) => (
+                  {nonAdminUsers?.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
-                      {user.full_name || "Unnamed User"} ({user.role})
+                      {user.full_name} ({user.role})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {!nonAdminUsers?.length && <p className="text-sm text-red-500 mt-1">No other non-admin users available for transfer.</p>}
             </div>
-            {/* New: Deletion Reason Input */}
-            <div>
-              <Label htmlFor="deletion-reason">Reason for Deletion (Required for Audit)</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="deletionReason">Deletion Reason (Required)</Label>
               <Textarea
-                id="deletion-reason"
+                id="deletionReason"
+                placeholder="Enter the reason for deleting this user..."
                 value={deletionReason}
                 onChange={(e) => setDeletionReason(e.target.value)}
-                placeholder="Document the administrative reason for this permanent deletion..."
+                className="min-h-[80px]"
               />
-            </div>
-            {/* Asset Breakdown (Unchanged) */}
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Assets to be transferred:</h4>
-              <ul className="text-sm space-y-1">
-                <li>• **{selectedUser?.vehicles_count || 0}** vehicles</li>
-                <li>• **{selectedUser?.bookings_count || 0}** bookings</li>
-                <li>• **{selectedUser?.reviews_count || 0}** reviews</li>
-              </ul>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}
-              // Added check for deletionReason
-              disabled={!transferUserId || deleteUserMutation.isPending || !deletionReason.trim()}
+              disabled={!transferUserId || !deletionReason.trim() || deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+              Delete User
             </Button>
           </DialogFooter>
         </DialogContent>

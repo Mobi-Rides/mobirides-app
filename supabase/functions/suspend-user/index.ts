@@ -1,9 +1,10 @@
-import { serve } from "std/http/server.ts";
-import { createClient } from "@supabase/supabase-js";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 serve(async (req) => {
@@ -12,9 +13,43 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing Supabase environment variables", { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: !!SUPABASE_SERVICE_ROLE_KEY });
+      return new Response(
+        JSON.stringify({ error: "Server misconfiguration: Supabase env missing", code: "ENV_MISSING" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create service role client for admin operations
+    const supabaseAdmin = createClient(
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    // Create user-scoped client for authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", code: "NO_AUTH_HEADER" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUser = createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
     );
 
     const { userId, restrictionType, reason, duration, durationValue } = await req.json();
@@ -26,41 +61,31 @@ serve(async (req) => {
       );
     }
 
-    // Verify the requesting user is an admin
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    // Verify the requesting user is authenticated
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Authentication failed:", authError);
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ error: "Authentication failed", code: "AUTH_FAILED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !data?.user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const requestingUser = data.user;
-
-    // Check if user is admin using the is_admin function
-    const { data: isAdminRaw, error: adminCheckError } = await supabase
-      .rpc('is_admin', { user_uuid: requestingUser.id });
-
-    if (adminCheckError) {
-      console.error("Error calling is_admin RPC:", adminCheckError);
-      return new Response(
-        JSON.stringify({ error: "Insufficient permissions. Admin access required." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Normalize RPC result
+    // Verify admin using parameterized RPC and service-role fallbacks
     let isAdmin = false;
+    let adminCheckError: any = null;
+
+    console.log("DEBUG: Starting admin verification for user:", user.id);
+
+    // Prefer parameterized RPC with end-user auth context
+    const adminRpc = await supabaseUser.rpc('is_admin', { user_uuid: user.id });
+    let isAdminRaw: unknown = adminRpc.data;
+    adminCheckError = adminRpc.error;
+    
+    console.log("DEBUG: Admin RPC result:", { data: isAdminRaw, error: adminCheckError?.message });
+
+    // Normalize RPC result defensively
     try {
       if (Array.isArray(isAdminRaw)) {
         const first = isAdminRaw[0];
@@ -71,19 +96,61 @@ serve(async (req) => {
           isAdmin = !!first;
         }
       } else if (typeof isAdminRaw === 'object' && isAdminRaw !== null) {
-        isAdmin = !!(isAdminRaw.is_admin ?? isAdminRaw.exists ?? Object.values(isAdminRaw)[0]);
+        const rawObj = isAdminRaw as any;
+        isAdmin = !!(rawObj.is_admin ?? rawObj.exists ?? Object.values(rawObj)[0]);
       } else {
         isAdmin = !!isAdminRaw;
       }
+      console.log("DEBUG: Normalized admin result:", isAdmin);
     } catch (e) {
-      console.error("Failed to normalize is_admin RPC result:", e, isAdminRaw);
+      // If normalization fails, continue to fallback checks
+      console.log("DEBUG: Admin normalization failed:", e);
+      adminCheckError = adminCheckError || e;
       isAdmin = false;
+    }
+
+    // Fallback to service-role direct checks if RPC failed or returned false
+    if (!isAdmin) {
+      console.log("DEBUG: Admin RPC returned false, trying fallback checks");
+      try {
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const { data: adminRow } = await supabaseAdmin
+          .from('admins')
+          .select('is_super_admin')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        console.log("DEBUG: Fallback check results:", { profile: profile?.role, adminRow: !!adminRow });
+
+        isAdmin = !!(
+          (profile && (profile.role === 'admin' || profile.role === 'super_admin')) ||
+          adminRow
+        );
+        
+        console.log("DEBUG: Final admin status after fallback:", isAdmin);
+      } catch (e) {
+        console.log("DEBUG: Fallback admin check failed:", e);
+        adminCheckError = e;
+      }
+    }
+
+    if (adminCheckError && !isAdmin) {
+      console.error('Admin check failed:', adminCheckError);
+      return new Response(
+        JSON.stringify({ error: 'Admin check failed', code: 'ADMIN_CHECK_FAILED', details: adminCheckError?.message ?? String(adminCheckError) }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (!isAdmin) {
       return new Response(
-        JSON.stringify({ error: "Insufficient permissions. Admin access required." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'Insufficient permissions. Admin access required.', code: 'NOT_ADMIN' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -112,21 +179,15 @@ serve(async (req) => {
             break;
           default:
             return new Response(
-              JSON.stringify({ error: "Invalid duration type" }),
+              JSON.stringify({ error: "Invalid duration type", code: "INVALID_DURATION_TYPE" }),
               { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // Calculate duration in ISO 8601 format (e.g., "1d", "2h")
+        // Calculate duration in hours-only format (e.g., "24h") to ensure compatibility
         const diffMs = expiresAt.getTime() - now.getTime();
         const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-        if (diffDays >= 1) {
-          banDuration = `${diffDays}d`;
-        } else {
-          banDuration = `${diffHours}h`;
-        }
+        banDuration = `${diffHours}h`;
       }
     } else if (restrictionType === "ban") {
       // For ban, always permanent
@@ -134,14 +195,14 @@ serve(async (req) => {
     }
 
     // Call Supabase Auth admin API to ban/suspend the user
-    const { error: banError } = await supabase.auth.admin.updateUserById(userId, {
+    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
       ban_duration: banDuration,
     });
 
     if (banError) {
       console.error("Error banning user:", banError);
       return new Response(
-        JSON.stringify({ error: `Failed to ${restrictionType} user: ${banError.message}` }),
+        JSON.stringify({ error: `Failed to ${restrictionType} user`, code: "AUTH_ADMIN_UPDATE_FAILED", details: banError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -168,15 +229,21 @@ serve(async (req) => {
     
     const dbRestrictionType = restrictionTypeMap[restrictionType] || "login_block";
 
-    // Insert restriction record for tracking
-    const { error: restrictionError } = await supabase
+    // Insert restriction record for tracking (created_by nullable if no profile)
+    const { data: adminProfileRow } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const { error: restrictionError } = await supabaseAdmin
       .from("user_restrictions")
       .insert({
         user_id: userId,
         restriction_type: dbRestrictionType,
-        reason: reason,
+        reason,
         ends_at: expiresAt,
-        created_by: requestingUser.id,
+        created_by: adminProfileRow?.id ?? null,
       });
 
     if (restrictionError) {
@@ -196,7 +263,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in suspend-user function:", error);
     return new Response(
-      JSON.stringify({ error: (error as Error).message }),
+      JSON.stringify({ error: "Unhandled error", code: "UNHANDLED_ERROR", details: (error as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

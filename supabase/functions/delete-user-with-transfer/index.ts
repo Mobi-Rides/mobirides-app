@@ -1,5 +1,5 @@
-import { serve } from "std/http/server.ts";
-import { createClient } from "@supabase/supabase-js";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 interface Profile {
   role: string;
@@ -53,7 +53,7 @@ serve(async (req) => {
 
     // Check if user is admin using the is_admin function (be defensive about return shape)
     const { data: isAdminRaw, error: adminCheckError } = await supabase
-      .rpc('is_admin', { user_uuid: user.id });
+      .rpc('is_admin');
 
     if (adminCheckError) {
       console.error("Error calling is_admin RPC:", adminCheckError);
