@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-interface Profile {
-  role: string;
-}
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -21,11 +17,11 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { userId, transferToUserId, reason } = await req.json();
+    const { userId, reason } = await req.json();
 
-    if (!userId || !transferToUserId || !reason) {
+    if (!userId || !reason) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: userId, transferToUserId, reason" }),
+        JSON.stringify({ error: "Missing required fields: userId and reason" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -34,7 +30,7 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ error: "Unauthorized: No authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -44,14 +40,12 @@ serve(async (req) => {
 
     if (authError || !data?.user) {
       return new Response(
-        JSON.stringify({ error: "Invalid token" }),
+        JSON.stringify({ error: "Invalid token or session expired" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const user = data.user;
-
-    // Check if user is admin using the is_admin function (be defensive about return shape)
+    // Check if user is admin using the is_admin function
     const { data: isAdminRaw, error: adminCheckError } = await supabase
       .rpc('is_admin');
 
@@ -63,24 +57,20 @@ serve(async (req) => {
       );
     }
 
-    // Normalize RPC result: it may be a boolean, an object, or an array depending on Postgres/Supabase version
+    // Normalize RPC result
     let isAdmin = false;
     try {
       if (Array.isArray(isAdminRaw)) {
-        // e.g., [true] or [{ is_admin: true }]
         const first = isAdminRaw[0];
         if (typeof first === 'boolean') isAdmin = first;
         else if (first && typeof first === 'object') {
-          // check common boolean fields
           isAdmin = !!(first.is_admin ?? first.exists ?? Object.values(first)[0]);
         } else {
           isAdmin = !!first;
         }
       } else if (typeof isAdminRaw === 'object' && isAdminRaw !== null) {
-        // e.g., { is_admin: true } or { exists: true }
         isAdmin = !!(isAdminRaw.is_admin ?? isAdminRaw.exists ?? Object.values(isAdminRaw)[0]);
       } else {
-        // boolean or truthy scalar
         isAdmin = !!isAdminRaw;
       }
     } catch (e) {
@@ -95,79 +85,152 @@ serve(async (req) => {
       );
     }
 
-    // Transfer assets
-    // Transfer cars
-    const { error: carsError } = await supabase
+    // Get user information before deletion (for logging)
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("email, full_name, role")
+      .eq("id", userId)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError);
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Prevent deletion of admin or super_admin users
+    if (userProfile.role === "admin" || userProfile.role === "super_admin") {
+      return new Response(
+        JSON.stringify({ error: "Cannot delete admin or super_admin users" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check for vehicles
+    const { count: vehiclesCount } = await supabase
       .from("cars")
-      .update({ owner_id: transferToUserId })
+      .select("id", { count: "exact", head: true })
       .eq("owner_id", userId);
 
-    if (carsError) throw carsError;
+    console.log(`User ${userId} has ${vehiclesCount || 0} vehicles`);
 
-    // Transfer bookings (as renter)
-    const { error: bookingsRenterError } = await supabase
-      .from("bookings")
-      .update({ renter_id: transferToUserId })
-      .eq("renter_id", userId);
+    // Start deletion process - DELETE CASCADE will handle related records
+    
+    // 1. Delete user vehicles (if any remain)
+    const { error: carsError } = await supabase
+      .from("cars")
+      .delete()
+      .eq("owner_id", userId);
 
-    if (bookingsRenterError) throw bookingsRenterError;
+    if (carsError) {
+      console.error("Error deleting cars:", carsError);
+      throw new Error(`Failed to delete vehicles: ${carsError.message}`);
+    }
 
-    // Transfer bookings (as host)
-    const { error: bookingsHostError } = await supabase
-      .from("bookings")
-      .update({ host_id: transferToUserId })
-      .eq("host_id", userId);
-
-    if (bookingsHostError) throw bookingsHostError;
-
-    // Transfer reviews (as reviewer)
-    const { error: reviewsReviewerError } = await supabase
-      .from("reviews")
-      .update({ reviewer_id: transferToUserId })
-      .eq("reviewer_id", userId);
-
-    if (reviewsReviewerError) throw reviewsReviewerError;
-
-    // Transfer reviews (as reviewee)
-    const { error: reviewsRevieweeError } = await supabase
-      .from("reviews")
-      .update({ reviewee_id: transferToUserId })
-      .eq("reviewee_id", userId);
-
-    if (reviewsRevieweeError) throw reviewsRevieweeError;
-
-    // Delete user restrictions
+    // 2. Delete user restrictions
     const { error: restrictionsError } = await supabase
       .from("user_restrictions")
       .delete()
       .eq("user_id", userId);
 
-    if (restrictionsError) throw restrictionsError;
+    if (restrictionsError) {
+      console.error("Error deleting restrictions:", restrictionsError);
+      throw new Error(`Failed to delete restrictions: ${restrictionsError.message}`);
+    }
 
-    // Delete profile
+    // 3. Delete bookings where user is renter
+    const { error: bookingsRenterError } = await supabase
+      .from("bookings")
+      .delete()
+      .eq("renter_id", userId);
+
+    if (bookingsRenterError) {
+      console.error("Error deleting renter bookings:", bookingsRenterError);
+      throw new Error(`Failed to delete renter bookings: ${bookingsRenterError.message}`);
+    }
+
+    // 4. Delete bookings where user is host
+    const { error: bookingsHostError } = await supabase
+      .from("bookings")
+      .delete()
+      .eq("host_id", userId);
+
+    if (bookingsHostError) {
+      console.error("Error deleting host bookings:", bookingsHostError);
+      throw new Error(`Failed to delete host bookings: ${bookingsHostError.message}`);
+    }
+
+    // 5. Delete reviews where user is reviewer
+    const { error: reviewsReviewerError } = await supabase
+      .from("reviews")
+      .delete()
+      .eq("reviewer_id", userId);
+
+    if (reviewsReviewerError) {
+      console.error("Error deleting reviewer reviews:", reviewsReviewerError);
+      throw new Error(`Failed to delete reviewer reviews: ${reviewsReviewerError.message}`);
+    }
+
+    // 6. Delete reviews where user is reviewee
+    const { error: reviewsRevieweeError } = await supabase
+      .from("reviews")
+      .delete()
+      .eq("reviewee_id", userId);
+
+    if (reviewsRevieweeError) {
+      console.error("Error deleting reviewee reviews:", reviewsRevieweeError);
+      throw new Error(`Failed to delete reviewee reviews: ${reviewsRevieweeError.message}`);
+    }
+
+    // 7. Delete user profile
     const { error: profileDeleteError } = await supabase
       .from("profiles")
       .delete()
       .eq("id", userId);
 
-    if (profileDeleteError) throw profileDeleteError;
+    if (profileDeleteError) {
+      console.error("Error deleting profile:", profileDeleteError);
+      throw new Error(`Failed to delete profile: ${profileDeleteError.message}`);
+    }
 
-    // Delete user from auth
+    // 8. Delete user from auth (this should be last)
     const { error: authDeleteError } = await supabase.auth.admin.deleteUser(userId);
 
-    if (authDeleteError) throw authDeleteError;
+    if (authDeleteError) {
+      console.error("Error deleting auth user:", authDeleteError);
+      throw new Error(`Failed to delete authentication: ${authDeleteError.message}`);
+    }
 
-    // Log the deletion (optional, for audit)
-    console.log(`User ${userId} deleted and assets transferred to ${transferToUserId}. Reason: ${reason}`);
+    // Log the deletion for audit
+    console.log(`User deleted successfully:`, {
+      userId,
+      email: userProfile.email,
+      fullName: userProfile.full_name,
+      deletedBy: data.user.id,
+      reason,
+      vehiclesDeleted: vehiclesCount || 0,
+      timestamp: new Date().toISOString(),
+    });
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true,
+        message: "User and all related data deleted successfully",
+        details: {
+          vehiclesDeleted: vehiclesCount || 0,
+        }
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in delete-user-with-transfer:", error);
+    console.error("Error in delete-user function:", error);
     return new Response(
-      JSON.stringify({ error: (error as Error).message }),
+      JSON.stringify({ 
+        error: (error as Error).message || "An unexpected error occurred",
+        code: "DELETE_USER_ERROR"
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
