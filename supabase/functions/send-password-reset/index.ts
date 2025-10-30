@@ -203,36 +203,86 @@ serve(async (req) => {
       );
     }
 
-    // Send password reset email using admin.inviteUserByEmail with password reset
-    // This triggers Supabase's built-in email system
-    const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
+    // Generate password reset token first
+    const appUrl = Deno.env.get('VITE_FRONTEND_URL') || Deno.env.get('APP_URL') || 'http://localhost:8080';
+    
+    console.log("Generating password reset token for:", userEmail);
+
+    // Generate password reset link using Supabase admin
+    const { data: linkData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
       email: userEmail,
       options: {
-        redirectTo: `${Deno.env.get('SITE_URL') || SUPABASE_URL}/auth/callback`
+        redirectTo: `${appUrl}/reset-password?redirectedFromEmail=true`,
       }
     });
 
-    if (resetError) {
-      console.error("Error generating magic link:", resetError);
-      
-      // Fallback: Try to send recovery email directly
-      const { error: recoveryError } = await supabaseAdmin.auth.resetPasswordForEmail(userEmail, {
-        redirectTo: `${Deno.env.get('SITE_URL') || SUPABASE_URL}/reset-password`
-      });
-
-      if (recoveryError) {
-        console.error("Error sending recovery email:", recoveryError);
-        return new Response(
-          JSON.stringify({ 
-            error: "Failed to send password reset email", 
-            code: "RESET_EMAIL_FAILED", 
-            details: recoveryError.message 
-          }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    if (resetError || !linkData) {
+      console.error('Supabase token generation error:', resetError);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to generate password reset token",
+          code: "TOKEN_GENERATION_FAILED",
+          details: resetError?.message
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    // Extract token from the generated action_link
+    const actionLinkUrl = new URL(linkData.properties.action_link);
+    const token = actionLinkUrl.searchParams.get('token');
+    
+    if (!token) {
+      console.error('Failed to extract token from action link');
+      return new Response(
+        JSON.stringify({
+          error: "Failed to extract reset token",
+          code: "TOKEN_EXTRACTION_FAILED"
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Construct the reset URL with the token
+    const resetUrl = `${appUrl}/reset-password?token=${token}&redirectedFromEmail=true`;
+    
+    console.log("Sending branded password reset email via resend-service for:", userEmail);
+
+    // Call the resend-service function to send branded email
+    const resendResponse = await fetch(`${SUPABASE_URL}/functions/v1/resend-service`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({
+        to: userEmail,
+        templateId: 'password-reset',
+        dynamicData: {
+          reset_url: resetUrl,
+          confirmation_url: resetUrl,
+          support_email: Deno.env.get('SUPPORT_EMAIL') || 'support@mobirides.com',
+          app_url: appUrl
+        }
+      })
+    });
+
+    if (!resendResponse.ok) {
+      const errorText = await resendResponse.text();
+      console.error('Resend service error:', errorText);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to send password reset email",
+          code: "RESEND_FAILED",
+          details: errorText
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const resendResult = await resendResponse.json();
+    console.log('Branded email sent via resend-service:', resendResult);
 
     // Log the password reset action
     console.log(`Password reset email sent by super admin ${user.id} for user ${userId} (${userEmail})`);

@@ -53,7 +53,7 @@ export default async function handler(req, res) {
       // Continue anyway since we want to send our custom email
     }
 
-    if (!ok) {
+    if (!resendResponse.ok) {
       const errorText = await resendResponse.text();
       console.error('Resend service error:', errorText);
       return res.status(500).json({ error: `Failed to send password reset email: ${errorText}` });
