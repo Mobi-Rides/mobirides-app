@@ -19,7 +19,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 interface UserProfile {
   id: string;
-  email: string;
+  email?: string;
   full_name: string | null;
   phone_number: string | null;
   role: "renter" | "host" | "admin" | "super_admin";
@@ -52,7 +52,6 @@ const useUsers = () => {
         .from("profiles")
         .select(`
           id,
-          email,
           full_name,
           phone_number,
           role,
@@ -218,45 +217,77 @@ export const AdvancedUserManagement = () => {
     },
   });
 
-  const deleteUserMutation = useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      const {
-        data: sessionData,
-        error: sessionError,
-      } = await supabase.auth.getSession();
+  // Add this to your AdvancedUserManagement component to replace the deleteUserMutation
+const deleteUserMutation = useMutation({
+  mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+    console.log("🔍 Starting delete user mutation...");
+    console.log("User ID:", userId);
+    console.log("Reason:", reason);
 
-      if (sessionError) {
-        throw new Error(`Failed to get session: ${sessionError.message}`);
-      }
+    // Get session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    console.log("Session data:", sessionData ? "✅ Found" : "❌ Missing");
+    
+    if (sessionError) {
+      console.error("❌ Session error:", sessionError);
+      throw new Error(`Failed to get session: ${sessionError.message}`);
+    }
 
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) {
-        throw new Error("No active session. Please sign in again.");
-      }
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) {
+      console.error("❌ No access token found");
+      throw new Error("No active session. Please sign in again.");
+    }
 
-      const { data, error } = await supabase.functions.invoke('delete-user', {
+    console.log("✅ Access token found:", accessToken.substring(0, 20) + "...");
+
+    // Prepare function call
+    console.log("Request body:", { userId, reason });
+
+    try {
+      // Call the Edge Function
+      const { data, error } = await supabase.functions.invoke('delete-user-with-transfer', {
         body: { userId, reason },
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
+      console.log("📥 Function response received");
+      console.log("Data:", data);
+      console.log("Error:", error);
+
       if (error) {
-        console.error("Edge function error:", error);
+        console.error("❌ Edge function returned error:", error);
+        
+        // Try to parse error details
         let parsed: { error?: string; code?: string; details?: string } | null = null;
         try {
           const resp = error?.context?.response as Response | undefined;
           if (resp) {
+            console.log("Response status:", resp.status);
+            console.log("Response headers:", Object.fromEntries(resp.headers.entries()));
+            
             const contentType = resp.headers.get('content-type') || '';
+            console.log("Content-Type:", contentType);
+            
             if (contentType.includes('application/json')) {
               parsed = await resp.json();
+              console.log("Parsed error response:", parsed);
             } else {
               const text = await resp.text();
-              try { parsed = JSON.parse(text); } catch { /* ignore parse error */ }
+              console.log("Text response:", text);
+              try { 
+                parsed = JSON.parse(text); 
+                console.log("Parsed text as JSON:", parsed);
+              } catch { 
+                console.log("Could not parse text as JSON");
+              }
             }
           }
         } catch (parseErr) {
-          console.warn('Failed to parse function error response', parseErr);
+          console.error('❌ Failed to parse function error response', parseErr);
         }
 
         const msg = parsed?.error || error.message || "Failed to delete user. Please try again.";
@@ -265,10 +296,13 @@ export const AdvancedUserManagement = () => {
           parsed?.code ? `(code: ${parsed.code})` : null,
           parsed?.details ? `details: ${parsed.details}` : null,
         ].filter(Boolean).join(' ');
+        
+        console.error("❌ Final error message:", composed);
         throw new Error(composed);
       }
 
       if (data?.error) {
+        console.error("❌ Data contains error:", data);
         const composed = [
           data.error,
           data.code ? `(code: ${data.code})` : null,
@@ -277,20 +311,27 @@ export const AdvancedUserManagement = () => {
         throw new Error(composed);
       }
 
+      console.log("✅ Delete user successful!");
       return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      toast.success("User deleted successfully");
-      setIsDeleteDialogOpen(false);
-      setIsVehicleWarningDialogOpen(false);
-      setDeletionReason("");
-      setSelectedUser(null);
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete user: ${error.message}`);
-    },
-  });
+    } catch (err) {
+      console.error("❌ Exception during function call:", err);
+      throw err;
+    }
+  },
+  onSuccess: (data) => {
+    console.log("✅ Mutation success callback:", data);
+    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    toast.success("User deleted successfully");
+    setIsDeleteDialogOpen(false);
+    setIsVehicleWarningDialogOpen(false);
+    setDeletionReason("");
+    setSelectedUser(null);
+  },
+  onError: (error: Error) => {
+    console.error("❌ Mutation error callback:", error);
+    toast.error(`Failed to delete user: ${error.message}`);
+  },
+});
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -490,7 +531,7 @@ export const AdvancedUserManagement = () => {
                           {user.full_name || "No name"}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {user.email}
+                          {user.email || "No email"}
                         </div>
                         {user.phone_number && (
                           <div className="text-sm text-muted-foreground">
