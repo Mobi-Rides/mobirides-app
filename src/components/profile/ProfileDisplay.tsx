@@ -5,14 +5,46 @@ import { ProfileDisplayHeader } from "./ProfileDisplayHeader";
 import { QuickActionButtons } from "./QuickActionButtons";
 import { PersonalInformationCard } from "./PersonalInformationCard";
 import { AddressCard } from "./AddressCard";
-import { EmergencyContactCard } from "./EmergencyContactCard";
+import { EmergencyContactEditCard } from "./EmergencyContactEditCard";
 import { VerificationStatusCard } from "./VerificationStatusCard";
 import { ProfileLoading } from "./ProfileLoading";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileDisplayProps {
   onBack: () => void;
   onEditClick: () => void;
 }
+
+// Emergency contact save handler
+const handleEmergencyContactSave = async (contact: any) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('No active session');
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        emergencyContact: contact
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update emergency contact');
+    }
+
+    // Refresh profile data
+    window.location.reload();
+  } catch (error) {
+    console.error('Error updating emergency contact:', error);
+    throw error;
+  }
+};
 
 export const ProfileDisplay = ({ onBack, onEditClick }: ProfileDisplayProps) => {
   const { data: profile, isLoading, error } = useFullProfile();
@@ -52,7 +84,7 @@ export const ProfileDisplay = ({ onBack, onEditClick }: ProfileDisplayProps) => 
       <div className="md:hidden space-y-4">
         <PersonalInformationCard profile={profile} />
         <AddressCard profile={profile} />
-        <EmergencyContactCard profile={profile} />
+        <EmergencyContactEditCard profile={profile} onSave={handleEmergencyContactSave} />
         <VerificationStatusCard profile={profile} />
       </div>
 
@@ -60,7 +92,7 @@ export const ProfileDisplay = ({ onBack, onEditClick }: ProfileDisplayProps) => 
       <div className="hidden md:grid grid-cols-3 gap-6">
         <PersonalInformationCard profile={profile} />
         <AddressCard profile={profile} />
-        <EmergencyContactCard profile={profile} />
+        <EmergencyContactEditCard profile={profile} onSave={handleEmergencyContactSave} />
       </div>
 
       {/* Desktop Bottom Row - Two Column */}

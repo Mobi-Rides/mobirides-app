@@ -1,6 +1,6 @@
 -- Create pending_confirmations table for email confirmation tokens
 CREATE TABLE IF NOT EXISTS public.pending_confirmations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     token TEXT UNIQUE NOT NULL,
     email TEXT NOT NULL,
     full_name TEXT NOT NULL,
@@ -15,6 +15,7 @@ ALTER TABLE public.pending_confirmations ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for pending_confirmations
 -- Only allow service role to access this table (backend operations)
+DROP POLICY IF EXISTS "Service role can manage pending confirmations" ON public.pending_confirmations;
 CREATE POLICY "Service role can manage pending confirmations"
 ON public.pending_confirmations
 FOR ALL
@@ -53,6 +54,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS cleanup_expired_confirmations_trigger ON public.pending_confirmations;
 CREATE TRIGGER cleanup_expired_confirmations_trigger
     AFTER INSERT ON public.pending_confirmations
     FOR EACH ROW

@@ -1,19 +1,6 @@
--- Add unique constraint to prevent notification duplicates
--- This addresses the duplication issue identified in the analysis
-
--- Add unique constraint to prevent future duplicates
--- Only add if it doesn't already exist
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint 
-        WHERE conname = 'unique_notification_per_user_booking'
-    ) THEN
-        ALTER TABLE public.notifications 
-        ADD CONSTRAINT unique_notification_per_user_booking 
-        UNIQUE (user_id, type, related_booking_id);
-    END IF;
-END $$;
+-- Add notification indexes only (constraint removed - will be added in later migration)
+-- The unique constraint has been moved to 20251024062613_safe_dedupe_notifications_final.sql
+-- to ensure duplicates are removed first
 
 -- Add index for better notification query performance
 CREATE INDEX IF NOT EXISTS idx_notifications_user_type_booking 

@@ -69,77 +69,84 @@ ALTER TABLE public.identity_verification_checks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.handover_step_completion ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for vehicle_condition_reports
-CREATE POLICY "Users can view condition reports for their handovers" 
-  ON public.vehicle_condition_reports 
-  FOR SELECT 
+DROP POLICY IF EXISTS "Users can view condition reports for their handovers" ON public.vehicle_condition_reports;
+CREATE POLICY "Users can view condition reports for their handovers"
+  ON public.vehicle_condition_reports
+  FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM public.handover_sessions hs 
-      WHERE hs.id = handover_session_id 
+      SELECT 1 FROM public.handover_sessions hs
+      WHERE hs.id = handover_session_id
       AND (hs.host_id = auth.uid() OR hs.renter_id = auth.uid())
     )
   );
 
-CREATE POLICY "Users can create condition reports for their handovers" 
-  ON public.vehicle_condition_reports 
-  FOR INSERT 
+DROP POLICY IF EXISTS "Users can create condition reports for their handovers" ON public.vehicle_condition_reports;
+CREATE POLICY "Users can create condition reports for their handovers"
+  ON public.vehicle_condition_reports
+  FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM public.handover_sessions hs 
-      WHERE hs.id = handover_session_id 
+      SELECT 1 FROM public.handover_sessions hs
+      WHERE hs.id = handover_session_id
       AND (hs.host_id = auth.uid() OR hs.renter_id = auth.uid())
     )
     AND reporter_id = auth.uid()
   );
 
-CREATE POLICY "Users can update their own condition reports" 
-  ON public.vehicle_condition_reports 
-  FOR UPDATE 
+DROP POLICY IF EXISTS "Users can update their own condition reports" ON public.vehicle_condition_reports;
+CREATE POLICY "Users can update their own condition reports"
+  ON public.vehicle_condition_reports
+  FOR UPDATE
   USING (reporter_id = auth.uid());
 
 -- RLS policies for identity_verification_checks
-CREATE POLICY "Users can view identity checks for their handovers" 
-  ON public.identity_verification_checks 
-  FOR SELECT 
+DROP POLICY IF EXISTS "Users can view identity checks for their handovers" ON public.identity_verification_checks;
+CREATE POLICY "Users can view identity checks for their handovers"
+  ON public.identity_verification_checks
+  FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM public.handover_sessions hs 
-      WHERE hs.id = handover_session_id 
+      SELECT 1 FROM public.handover_sessions hs
+      WHERE hs.id = handover_session_id
       AND (hs.host_id = auth.uid() OR hs.renter_id = auth.uid())
     )
   );
 
-CREATE POLICY "Users can create identity checks for their handovers" 
-  ON public.identity_verification_checks 
-  FOR INSERT 
+DROP POLICY IF EXISTS "Users can create identity checks for their handovers" ON public.identity_verification_checks;
+CREATE POLICY "Users can create identity checks for their handovers"
+  ON public.identity_verification_checks
+  FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM public.handover_sessions hs 
-      WHERE hs.id = handover_session_id 
+      SELECT 1 FROM public.handover_sessions hs
+      WHERE hs.id = handover_session_id
       AND (hs.host_id = auth.uid() OR hs.renter_id = auth.uid())
     )
     AND verifier_id = auth.uid()
   );
 
 -- RLS policies for handover_step_completion
-CREATE POLICY "Users can view handover steps for their sessions" 
-  ON public.handover_step_completion 
-  FOR SELECT 
+DROP POLICY IF EXISTS "Users can view handover steps for their sessions" ON public.handover_step_completion;
+CREATE POLICY "Users can view handover steps for their sessions"
+  ON public.handover_step_completion
+  FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM public.handover_sessions hs 
-      WHERE hs.id = handover_session_id 
+      SELECT 1 FROM public.handover_sessions hs
+      WHERE hs.id = handover_session_id
       AND (hs.host_id = auth.uid() OR hs.renter_id = auth.uid())
     )
   );
 
-CREATE POLICY "Users can manage handover steps for their sessions" 
-  ON public.handover_step_completion 
-  FOR ALL 
+DROP POLICY IF EXISTS "Users can manage handover steps for their sessions" ON public.handover_step_completion;
+CREATE POLICY "Users can manage handover steps for their sessions"
+  ON public.handover_step_completion
+  FOR ALL
   USING (
     EXISTS (
-      SELECT 1 FROM public.handover_sessions hs 
-      WHERE hs.id = handover_session_id 
+      SELECT 1 FROM public.handover_sessions hs
+      WHERE hs.id = handover_session_id
       AND (hs.host_id = auth.uid() OR hs.renter_id = auth.uid())
     )
   );

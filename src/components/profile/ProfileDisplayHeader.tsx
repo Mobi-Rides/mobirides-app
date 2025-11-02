@@ -4,6 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Upload, Shield } from "lucide-react";
 import { FullProfileData } from "@/hooks/useFullProfile";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProfileDisplayHeaderProps {
   profile: FullProfileData;
@@ -13,6 +17,73 @@ interface ProfileDisplayHeaderProps {
 export const ProfileDisplayHeader = ({ profile, onEditClick }: ProfileDisplayHeaderProps) => {
   const completedSteps = Object.values(profile.verificationSteps).filter(Boolean).length;
   const totalSteps = Object.keys(profile.verificationSteps).length;
+
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const queryClient = useQueryClient();
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadAvatarUrl = async () => {
+      if (!profile.avatar_url) {
+        if (isMounted) setAvatarDisplayUrl(null);
+        return;
+      }
+      try {
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .createSignedUrl(profile.avatar_url, 3600);
+        if (!error && data?.signedUrl) {
+          if (isMounted) setAvatarDisplayUrl(data.signedUrl);
+          return;
+        }
+        const publicUrl = supabase.storage
+          .from('avatars')
+          .getPublicUrl(profile.avatar_url).data.publicUrl;
+        if (isMounted) setAvatarDisplayUrl(publicUrl || null);
+      } catch (e) {
+        const publicUrl = supabase.storage
+          .from('avatars')
+          .getPublicUrl(profile.avatar_url).data.publicUrl;
+        if (isMounted) setAvatarDisplayUrl(publicUrl || null);
+      }
+    };
+    loadAvatarUrl();
+    return () => { isMounted = false; };
+  }, [profile.avatar_url]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}-${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: fileName })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ['fullProfile'] });
+
+      toast({ title: "Success", description: "Avatar updated successfully" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -24,11 +95,21 @@ export const ProfileDisplayHeader = ({ profile, onEditClick }: ProfileDisplayHea
         </Badge>
       </div>
 
+      {/* Shared hidden file input for both mobile and desktop */}
+      <input
+        id="profile-header-avatar-upload"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleAvatarUpload}
+        disabled={uploading}
+      />
+
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={profile.avatar_url || undefined} />
+            <AvatarImage src={avatarDisplayUrl || undefined} />
             <AvatarFallback>{profile.full_name?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
           <div>
@@ -36,12 +117,24 @@ export const ProfileDisplayHeader = ({ profile, onEditClick }: ProfileDisplayHea
             <p className="text-xs text-muted-foreground capitalize">{profile.role}</p>
           </div>
         </div>
-        {profile.verificationStatus === 'completed' && (
-          <Badge className="bg-green-500 gap-1">
-            <CheckCircle className="h-3 w-3" />
-            Verified
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {profile.verificationStatus === 'completed' && (
+            <Badge className="bg-green-500 gap-1">
+              <CheckCircle className="h-3 w-3" />
+              Verified
+            </Badge>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={() => document.getElementById('profile-header-avatar-upload')?.click()}
+            disabled={uploading}
+          >
+            <Upload className="h-4 w-4" />
+            {uploading ? 'Uploading...' : 'Upload'}
+          </Button>
+        </div>
       </div>
 
       {/* Desktop Header */}
@@ -49,7 +142,7 @@ export const ProfileDisplayHeader = ({ profile, onEditClick }: ProfileDisplayHea
         <div className="flex items-center gap-4">
           <div className="relative">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={profile.avatar_url || undefined} />
+              <AvatarImage src={avatarDisplayUrl || undefined} />
               <AvatarFallback className="text-xl">
                 {profile.full_name?.charAt(0) || 'U'}
               </AvatarFallback>
@@ -87,9 +180,15 @@ export const ProfileDisplayHeader = ({ profile, onEditClick }: ProfileDisplayHea
               Verified
             </Badge>
           )}
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={() => document.getElementById('profile-header-avatar-upload')?.click()}
+            disabled={uploading}
+          >
             <Upload className="h-4 w-4" />
-            Upload Avatar
+            {uploading ? 'Uploading...' : 'Upload Avatar'}
           </Button>
         </div>
       </div>

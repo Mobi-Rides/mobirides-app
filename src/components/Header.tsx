@@ -201,15 +201,6 @@ export const Header = ({
     onFiltersChange({ ...filters, searchQuery });
   };
 
-  const handleProfileClick = () => {
-    if (user) {
-      navigate("/profile");
-    } else {
-      setDefaultTab("signin");
-      setIsAuthModalOpen(true);
-      navigate(`${locationPath.pathname}?auth=signin`, { replace: true });
-    }
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

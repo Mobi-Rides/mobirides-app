@@ -2,6 +2,7 @@
 -- This fixes the RLS policy violation error when users try to submit reviews
 
 -- Allow authenticated users to insert reviews for their bookings
+DROP POLICY IF EXISTS "Users can insert reviews for their bookings" ON public.reviews;
 CREATE POLICY "Users can insert reviews for their bookings" ON public.reviews
   FOR INSERT
   TO authenticated
@@ -29,6 +30,7 @@ CREATE POLICY "Users can insert reviews for their bookings" ON public.reviews
   );
 
 -- Allow authenticated users to view reviews for bookings they're involved in
+DROP POLICY IF EXISTS "Users can view reviews for their bookings" ON public.reviews;
 CREATE POLICY "Users can view reviews for their bookings" ON public.reviews
   FOR SELECT
   TO authenticated
