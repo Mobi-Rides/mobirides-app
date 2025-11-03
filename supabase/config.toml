@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.suspend-user]
 verify_jwt = true
+
+[functions.send-password-reset]
+verify_jwt = true
+
+[functions.delete-user-with-transfer]
+verify_jwt = true
