@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,15 +11,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, UserX, UserCheck, Trash2, Shield, Mail } from "lucide-react";
-import { AlertTriangle } from 'lucide-react';
+import { Search, UserX, UserCheck, Trash2, Shield, Mail, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import type { Database } from "@/integrations/supabase/types";
 
 interface UserProfile {
   id: string;
-  email: string;
+  email?: string;
   full_name: string | null;
   phone_number: string | null;
   role: "renter" | "host" | "admin" | "super_admin";
@@ -52,7 +52,6 @@ const useUsers = () => {
         .from("profiles")
         .select(`
           id,
-          email,
           full_name,
           phone_number,
           role,
@@ -102,53 +101,12 @@ const useUsers = () => {
   });
 };
 
-const useNonAdminUsers = () => {
-  return useQuery({
-    queryKey: ["non-admin-users"],
-    queryFn: async (): Promise<Pick<UserProfile, 'id' | 'full_name' | 'role'>[]> => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, role")
-        // Exclude admin roles with a single NOT IN filter to avoid
-        // duplicate query params like role=neq.admin&role=neq.super_admin
-        .not('role', 'in', '(admin,super_admin)')
-        .order("full_name", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
-};
-
-const calculateExpiresAt = (duration: RestrictionFormData["duration"], value: number): Date | null => {
-  if (duration === "permanent") return null;
-  const now = new Date();
-  const expiresAt = new Date(now);
-
-  switch (duration) {
-    case "hours":
-      expiresAt.setHours(now.getHours() + value);
-      break;
-    case "days":
-      expiresAt.setDate(now.getDate() + value);
-      break;
-    case "weeks":
-      expiresAt.setDate(now.getDate() + value * 7);
-      break;
-    case "months":
-      expiresAt.setMonth(now.getMonth() + value);
-      break;
-    default:
-      return null;
-  }
-  return expiresAt;
-};
-
 export const AdvancedUserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isVehicleWarningDialogOpen, setIsVehicleWarningDialogOpen] = useState(false);
   const [deletionReason, setDeletionReason] = useState("");
   const [restrictionForm, setRestrictionForm] = useState<RestrictionFormData>({
     restrictionType: "suspend",
@@ -156,15 +114,13 @@ export const AdvancedUserManagement = () => {
     duration: "days",
     durationValue: 7,
   });
-  const [transferUserId, setTransferUserId] = useState("");
 
   const queryClient = useQueryClient();
   const { data: users, isLoading, error } = useUsers();
-  const { data: nonAdminUsers } = useNonAdminUsers();
+  const { isSuperAdmin } = useIsAdmin();
 
   const restrictUserMutation = useMutation({
     mutationFn: async ({ userId, restriction }: { userId: string; restriction: RestrictionFormData }) => {
-      // Explicitly include Authorization header to satisfy verify_jwt = true
       const {
         data: sessionData,
         error: sessionError,
@@ -194,7 +150,7 @@ export const AdvancedUserManagement = () => {
 
       if (error) {
         console.error("Edge function error:", error);
-        let parsed: any = null;
+        let parsed: { error?: string; code?: string; details?: string } | null = null;
         try {
           const resp = error?.context?.response as Response | undefined;
           if (resp) {
@@ -203,13 +159,13 @@ export const AdvancedUserManagement = () => {
               parsed = await resp.json();
             } else {
               const text = await resp.text();
-              try { parsed = JSON.parse(text); } catch {}
+              try { parsed = JSON.parse(text); } catch { /* ignore parse error */ }
             }
           }
         } catch (parseErr) {
           console.warn('Failed to parse function error response', parseErr);
         }
-        
+
         const msg = parsed?.error || error.message || "Failed to restrict user. Please try again.";
         const composed = [
           msg,
@@ -261,41 +217,182 @@ export const AdvancedUserManagement = () => {
     },
   });
 
-  const deleteUserMutation = useMutation({
-    mutationFn: async ({ userId, transferToUserId, reason }: { userId: string; transferToUserId: string; reason: string }) => {
+  // Add this to your AdvancedUserManagement component to replace the deleteUserMutation
+const deleteUserMutation = useMutation({
+  mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+    console.log("🔍 Starting delete user mutation...");
+    console.log("User ID:", userId);
+    console.log("Reason:", reason);
+
+    // Get session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    console.log("Session data:", sessionData ? "✅ Found" : "❌ Missing");
+    
+    if (sessionError) {
+      console.error("❌ Session error:", sessionError);
+      throw new Error(`Failed to get session: ${sessionError.message}`);
+    }
+
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) {
+      console.error("❌ No access token found");
+      throw new Error("No active session. Please sign in again.");
+    }
+
+    console.log("✅ Access token found:", accessToken.substring(0, 20) + "...");
+
+    // Prepare function call
+    console.log("Request body:", { userId, reason });
+
+    try {
+      // Call the Edge Function
       const { data, error } = await supabase.functions.invoke('delete-user-with-transfer', {
-        body: { userId, transferToUserId, reason }
+        body: { userId, reason },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      toast.success("User deleted and assets transferred successfully");
-      setIsDeleteDialogOpen(false);
-      setTransferUserId("");
-      setDeletionReason("");
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete user: ${error.message}`);
-    },
-  });
+      console.log("📥 Function response received");
+      console.log("Data:", data);
+      console.log("Error:", error);
+
+      if (error) {
+        console.error("❌ Edge function returned error:", error);
+        
+        // Try to parse error details
+        let parsed: { error?: string; code?: string; details?: string } | null = null;
+        try {
+          const resp = error?.context?.response as Response | undefined;
+          if (resp) {
+            console.log("Response status:", resp.status);
+            console.log("Response headers:", Object.fromEntries(resp.headers.entries()));
+            
+            const contentType = resp.headers.get('content-type') || '';
+            console.log("Content-Type:", contentType);
+            
+            if (contentType.includes('application/json')) {
+              parsed = await resp.json();
+              console.log("Parsed error response:", parsed);
+            } else {
+              const text = await resp.text();
+              console.log("Text response:", text);
+              try { 
+                parsed = JSON.parse(text); 
+                console.log("Parsed text as JSON:", parsed);
+              } catch { 
+                console.log("Could not parse text as JSON");
+              }
+            }
+          }
+        } catch (parseErr) {
+          console.error('❌ Failed to parse function error response', parseErr);
+        }
+
+        const msg = parsed?.error || error.message || "Failed to delete user. Please try again.";
+        const composed = [
+          msg,
+          parsed?.code ? `(code: ${parsed.code})` : null,
+          parsed?.details ? `details: ${parsed.details}` : null,
+        ].filter(Boolean).join(' ');
+        
+        console.error("❌ Final error message:", composed);
+        throw new Error(composed);
+      }
+
+      if (data?.error) {
+        console.error("❌ Data contains error:", data);
+        const composed = [
+          data.error,
+          data.code ? `(code: ${data.code})` : null,
+          data.details ? `details: ${data.details}` : null,
+        ].filter(Boolean).join(' ');
+        throw new Error(composed);
+      }
+
+      console.log("✅ Delete user successful!");
+      return data;
+    } catch (err) {
+      console.error("❌ Exception during function call:", err);
+      throw err;
+    }
+  },
+  onSuccess: (data) => {
+    console.log("✅ Mutation success callback:", data);
+    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    toast.success("User deleted successfully");
+    setIsDeleteDialogOpen(false);
+    setIsVehicleWarningDialogOpen(false);
+    setDeletionReason("");
+    setSelectedUser(null);
+  },
+  onError: (error: Error) => {
+    console.error("❌ Mutation error callback:", error);
+    toast.error(`Failed to delete user: ${error.message}`);
+  },
+});
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { data: authUserData, error: authError } = await supabase.auth.admin.getUserById(userId);
+      const {
+        data: sessionData,
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-      if (authError) throw authError;
-      const userEmail = authUserData.user?.email;
-      if (!userEmail) throw new Error("User email not found.");
+      if (sessionError) {
+        throw new Error(`Failed to get session: ${sessionError.message}`);
+      }
 
-      const { error } = await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email: userEmail,
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error("No active session. Please sign in again.");
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { userId },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        let parsed: { error?: string; code?: string; details?: string } | null = null;
+        try {
+          const resp = error?.context?.response as Response | undefined;
+          if (resp) {
+            const contentType = resp.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+              parsed = await resp.json();
+            } else {
+              const text = await resp.text();
+              try { parsed = JSON.parse(text); } catch { /* ignore parse error */ }
+            }
+          }
+        } catch (parseErr) {
+          console.warn('Failed to parse function error response', parseErr);
+        }
+
+        const msg = parsed?.error || error.message || "Failed to send password reset. Please try again.";
+        const composed = [
+          msg,
+          parsed?.code ? `(code: ${parsed.code})` : null,
+          parsed?.details ? `details: ${parsed.details}` : null,
+        ].filter(Boolean).join(' ');
+        throw new Error(composed);
+      }
+
+      if (data?.error) {
+        const composed = [
+          data.error,
+          data.code ? `(code: ${data.code})` : null,
+          data.details ? `details: ${data.details}` : null,
+        ].filter(Boolean).join(' ');
+        throw new Error(composed);
+      }
+
+      return data;
     },
     onSuccess: () => {
       toast.success("Password reset email sent to user");
@@ -327,8 +424,14 @@ export const AdvancedUserManagement = () => {
   const handleDeleteUser = (user: UserProfile) => {
     setSelectedUser(user);
     setDeletionReason("");
-    setTransferUserId("");
-    setIsDeleteDialogOpen(true);
+    
+    // If user has vehicles, show warning first
+    if (user.vehicles_count > 0) {
+      setIsVehicleWarningDialogOpen(true);
+    } else {
+      // If no vehicles, go directly to delete confirmation
+      setIsDeleteDialogOpen(true);
+    }
   };
 
   const handleResetPassword = (user: UserProfile) => {
@@ -344,15 +447,12 @@ export const AdvancedUserManagement = () => {
   };
 
   const confirmDelete = () => {
-    if (!selectedUser || !transferUserId || !deletionReason.trim()) return;
+    if (!selectedUser || !deletionReason.trim()) return;
     deleteUserMutation.mutate({
       userId: selectedUser.id,
-      transferToUserId: transferUserId,
       reason: deletionReason.trim(),
     });
   };
-
-
 
   const filteredUsers = users?.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -431,7 +531,7 @@ export const AdvancedUserManagement = () => {
                           {user.full_name || "No name"}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {user.email}
+                          {user.email || "No email"}
                         </div>
                         {user.phone_number && (
                           <div className="text-sm text-muted-foreground">
@@ -500,16 +600,18 @@ export const AdvancedUserManagement = () => {
                             <UserX className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleResetPassword(user)}
-                          className="text-blue-600 hover:text-blue-700"
-                          title="Send Password Reset"
-                          disabled={resetPasswordMutation.isPending}
-                        >
-                          <Mail className="h-4 w-4" />
-                        </Button>
+                        {isSuperAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResetPassword(user)}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="Send Password Reset"
+                            disabled={resetPasswordMutation.isPending}
+                          >
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -536,7 +638,7 @@ export const AdvancedUserManagement = () => {
           <DialogHeader>
             <DialogTitle>Restrict User Access</DialogTitle>
             <DialogDescription>
-              Apply a restriction to **{selectedUser?.full_name}**. This will limit their access to the platform.
+              Apply a restriction to {selectedUser?.full_name}. This will limit their access to the platform.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -625,55 +727,114 @@ export const AdvancedUserManagement = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Vehicle Warning Dialog */}
+      <Dialog open={isVehicleWarningDialogOpen} onOpenChange={setIsVehicleWarningDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Vehicle Transfer Required
+            </DialogTitle>
+            <DialogDescription className="space-y-3 pt-2">
+              <p className="font-medium">
+                {selectedUser?.full_name} has {selectedUser?.vehicles_count} vehicle(s) registered.
+              </p>
+              <p>
+                Before deleting this user, you must transfer their vehicles to another user. 
+                Please go to the <span className="font-semibold">Cars</span> section in the dashboard 
+                to transfer the vehicles first.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Once all vehicles are transferred, you can proceed with user deletion.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsVehicleWarningDialogOpen(false);
+                setSelectedUser(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setIsVehicleWarningDialogOpen(false);
+                setIsDeleteDialogOpen(true);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Continue Anyway (Not Recommended)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete User Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Delete User Account</DialogTitle>
-            <DialogDescription>
-              This will permanently delete **{selectedUser?.full_name}**'s account and transfer their assets to another user.
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Delete User Account
+            </DialogTitle>
+            <DialogDescription className="space-y-2 pt-2">
+              <p className="font-medium text-red-600">
+                This action cannot be undone!
+              </p>
+              <p>
+                You are about to permanently delete <span className="font-semibold">{selectedUser?.full_name}</span>'s account.
+              </p>
+              <p>This will delete:</p>
+              <ul className="list-disc list-inside text-sm space-y-1 ml-2">
+                <li>User profile and authentication</li>
+                <li>All bookings ({selectedUser?.bookings_count || 0})</li>
+                <li>All reviews ({selectedUser?.reviews_count || 0})</li>
+                <li>All restrictions and history</li>
+                {selectedUser?.vehicles_count && selectedUser.vehicles_count > 0 && (
+                  <li className="text-orange-600 font-semibold">
+                    {selectedUser.vehicles_count} vehicle(s) - These will be permanently deleted!
+                  </li>
+                )}
+              </ul>
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="transferUser">Transfer Assets To</Label>
-              <Select value={transferUserId} onValueChange={setTransferUserId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a user to transfer assets to" />
-                </SelectTrigger>
-                <SelectContent>
-                  {nonAdminUsers?.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.full_name} ({user.role})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
               <Label htmlFor="deletionReason">Deletion Reason (Required)</Label>
               <Textarea
                 id="deletionReason"
-                placeholder="Enter the reason for deleting this user..."
+                placeholder="Enter the reason for deleting this user account..."
                 value={deletionReason}
                 onChange={(e) => setDeletionReason(e.target.value)}
-                className="min-h-[80px]"
+                className="min-h-[100px]"
               />
+              <p className="text-xs text-muted-foreground">
+                This reason will be logged for audit purposes.
+              </p>
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setDeletionReason("");
+                setSelectedUser(null);
+              }}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}
-              disabled={!transferUserId || !deletionReason.trim() || deleteUserMutation.isPending}
+              disabled={!deletionReason.trim() || deleteUserMutation.isPending}
             >
-              Delete User
+              {deleteUserMutation.isPending ? "Deleting..." : "Delete User Permanently"}
             </Button>
           </DialogFooter>
         </DialogContent>
