@@ -236,7 +236,10 @@ export const AuditLogViewer = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {log.target_profile?.full_name || "N/A"}
+                        {log.target_profile?.full_name || 
+                         (log.action_details?.fullName as string) || 
+                         (log.action_details?.email as string) || 
+                         "N/A"}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -294,12 +297,15 @@ export const AuditLogViewer = () => {
                 <p className="text-sm">{selectedEvent.actor_profile?.full_name || "System"}</p>
               </div>
 
-              {selectedEvent.target_profile && (
-                <div>
-                  <Label className="text-sm font-medium">Target</Label>
-                  <p className="text-sm">{selectedEvent.target_profile.full_name}</p>
-                </div>
-              )}
+              <div>
+                <Label className="text-sm font-medium">Target</Label>
+                <p className="text-sm">
+                  {selectedEvent.target_profile?.full_name || 
+                   (selectedEvent.action_details?.fullName as string) || 
+                   (selectedEvent.action_details?.email as string) || 
+                   "N/A"}
+                </p>
+              </div>
 
               {selectedEvent.reason && (
                 <div>
