@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Shield, ShieldOff, Edit, Trash2, Plus, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { logUserRestrictionUpdated, logUserRestrictionRemoved } from "@/utils/auditLogger";
+import { logUserRestrictionUpdated, logUserRestrictionRemoved, logUserRestrictionCreated } from "@/utils/auditLogger";
 
 interface Profile {
   id: string;
@@ -140,7 +140,19 @@ export const UserRestrictionsTab = ({ user, onUpdate }: UserRestrictionsTabProps
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Write audit log for creation
+      try {
+        await logUserRestrictionCreated(
+          user.id,
+          addForm.restriction_type,
+          addForm.reason,
+          (await supabase.auth.getUser()).data.user?.id || undefined
+        );
+      } catch (e) {
+        console.warn("Failed to log audit event for restriction creation", e);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["user-restrictions", user.id] });
       toast.success("Restriction added successfully");
       onUpdate?.();

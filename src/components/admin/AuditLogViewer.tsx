@@ -60,8 +60,16 @@ export const AuditLogViewer = () => {
         .order("event_timestamp", { ascending: false })
         .limit(100);
 
-      if (logsError) throw logsError;
-      if (!logs || logs.length === 0) return [];
+      console.log("Audit logs query result:", { logs, logsError });
+
+      if (logsError) {
+        console.error("Audit logs error:", logsError);
+        throw logsError;
+      }
+      if (!logs || logs.length === 0) {
+        console.log("No audit logs found");
+        return [];
+      }
 
       // Get unique user IDs from actor_id and target_id
       const userIds = new Set<string>();
@@ -70,11 +78,15 @@ export const AuditLogViewer = () => {
         if (log.target_id) userIds.add(log.target_id);
       });
 
+      console.log("User IDs to fetch:", Array.from(userIds));
+
       // Fetch profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, full_name")
         .in("id", Array.from(userIds));
+
+      console.log("Profiles query result:", { profiles, profilesError });
 
       if (profilesError) {
         console.warn("Failed to fetch profiles:", profilesError);
