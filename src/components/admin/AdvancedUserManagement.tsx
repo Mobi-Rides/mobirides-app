@@ -361,20 +361,11 @@ const deleteUserMutation = useMutation({
   onSuccess: async (data) => {
     console.log("✅ Mutation success callback:", data);
     
-    // Log audit event for user deletion
-    if (selectedUser) {
-      try {
-        await logUserDeleted(
-          selectedUser.id,
-          deletionReason.trim(),
-          (await supabase.auth.getUser()).data.user?.id || undefined
-        );
-      } catch (e) {
-        console.warn("Failed to log audit event for user deletion", e);
-      }
-    }
-
+    // Invalidate both admin-users and audit-logs queries to refresh the UI
+    // The edge function already logged the audit event
     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+    
     toast.success("User deleted successfully");
     setIsDeleteDialogOpen(false);
     setIsVehicleWarningDialogOpen(false);
