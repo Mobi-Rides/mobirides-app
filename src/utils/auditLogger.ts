@@ -21,287 +21,253 @@ export type AuditEventType =
 export type AuditSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface AuditLogData {
-  eventType: AuditEventType;
+  event_type: AuditEventType;
   severity?: AuditSeverity;
-  actorId?: string;
-  targetId?: string;
-  sessionId?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  locationData?: Record<string, unknown>;
-  actionDetails?: Record<string, unknown>;
-  resourceType?: string;
-  resourceId?: string;
+  actor_id?: string;
+  target_id?: string;
+  session_id?: string;
+  ip_address?: string;
+  user_agent?: string;
+  action_details: Record<string, unknown>;
+  resource_type?: string;
+  resource_id?: string;
   reason?: string;
-  anomalyFlags?: Record<string, unknown>;
-  complianceTags?: string[];
 }
 
 /**
- * Logs an audit event to the database
- * This function handles all audit logging for admin actions
+ * Logs an audit event to the audit_logs table
+ * @param data The audit event data
+ * @returns Promise that resolves when the audit log is created
  */
-export async function logAuditEvent(data: AuditLogData): Promise<string | null> {
+export const logAuditEvent = async (data: AuditLogData): Promise<void> => {
   try {
-    // Get client IP and user agent from browser if not provided
-    const ipAddress = data.ipAddress || getClientIP();
-    const userAgent = data.userAgent || navigator.userAgent;
+    // Get current session for actor information
+    const { data: session } = await supabase.auth.getSession();
+    const actorId = data.actor_id || session?.session?.user?.id;
 
-    // Get session ID from localStorage or generate one
-    const sessionId = data.sessionId || getSessionId();
+    // Get client IP and user agent if not provided
+    const ipAddress = data.ip_address || getClientIP();
+    const userAgent = data.user_agent || navigator.userAgent;
 
-    // Get location data if available
-    const locationData = data.locationData || await getLocationData();
-
-    // Call the database function
-    const { data: result, error } = await supabase.rpc('log_audit_event', {
-      p_event_type: data.eventType,
+    // Call the log_audit_event function
+    const { error } = await supabase.rpc('log_audit_event', {
+      p_event_type: data.event_type,
       p_severity: data.severity || 'medium',
-      p_actor_id: data.actorId,
-      p_target_id: data.targetId,
-      p_session_id: sessionId,
+      p_actor_id: actorId,
+      p_target_id: data.target_id,
+      p_session_id: data.session_id,
       p_ip_address: ipAddress,
       p_user_agent: userAgent,
-      p_location_data: locationData,
-      p_action_details: data.actionDetails || {},
-      p_resource_type: data.resourceType,
-      p_resource_id: data.resourceId,
+      p_action_details: data.action_details,
+      p_resource_type: data.resource_type,
+      p_resource_id: data.resource_id,
       p_reason: data.reason,
-      p_anomaly_flags: data.anomalyFlags,
-      p_compliance_tags: data.complianceTags
     });
 
     if (error) {
       console.error('Failed to log audit event:', error);
-      return null;
+      // Don't throw error to avoid breaking the main functionality
     }
-
-    return result as string;
   } catch (error) {
-    console.error('Audit logging error:', error);
-    return null;
+    console.error('Error in logAuditEvent:', error);
+    // Don't throw error to avoid breaking the main functionality
   }
-}
+};
 
 /**
  * Helper function to get client IP address
- * Note: This is a best-effort attempt and may not always work
+ * Note: This is a simplified implementation. In production, you might want to use a service
+ * or get the IP from the server-side.
  */
-function getClientIP(): string | undefined {
-  // This is a simplified approach - in production, you'd want to get this from the server
-  // For now, we'll return undefined and let the server determine the IP
+const getClientIP = (): string | undefined => {
+  // This is a placeholder - in a real implementation, you'd get this from the server
+  // or use a service like ipify.org
   return undefined;
-}
+};
 
 /**
- * Get or create a session ID for tracking
+ * Logs user restriction creation
  */
-function getSessionId(): string {
-  const sessionKey = 'audit_session_id';
-  let sessionId = localStorage.getItem(sessionKey);
-
-  if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem(sessionKey, sessionId);
-  }
-
-  return sessionId;
-}
+export const logUserRestrictionCreated = async (
+  targetUserId: string,
+  restrictionType: string,
+  reason: string,
+  createdBy?: string
+): Promise<void> => {
+  await logAuditEvent({
+    event_type: 'user_restriction_created',
+    severity: 'high',
+    target_id: targetUserId,
+    actor_id: createdBy,
+    action_details: {
+      restriction_type: restrictionType,
+      reason: reason,
+      action: 'created'
+    },
+    resource_type: 'user',
+    resource_id: targetUserId,
+    reason: reason,
+  });
+};
 
 /**
- * Get location data from browser geolocation API
+ * Logs user restriction updates
  */
-async function getLocationData(): Promise<Record<string, unknown> | undefined> {
-  try {
-    if (!navigator.geolocation) return undefined;
-
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: position.timestamp
-          });
-        },
-        () => resolve(undefined),
-        { timeout: 5000, enableHighAccuracy: false }
-      );
-    });
-  } catch {
-    return undefined;
-  }
-}
+export const logUserRestrictionUpdated = async (
+  targetUserId: string,
+  restrictionId: string,
+  oldData: Record<string, unknown>,
+  newData: Record<string, unknown>,
+  reason?: string,
+  updatedBy?: string
+): Promise<void> => {
+  await logAuditEvent({
+    event_type: 'user_restriction_updated',
+    severity: 'medium',
+    target_id: targetUserId,
+    actor_id: updatedBy,
+    action_details: {
+      restriction_id: restrictionId,
+      before: oldData,
+      after: newData,
+      changes: getObjectChanges(oldData, newData),
+      action: 'updated'
+    },
+    resource_type: 'user_restriction',
+    resource_id: restrictionId,
+    reason: reason,
+  });
+};
 
 /**
- * Verify audit chain integrity
+ * Logs user restriction removal
  */
-export async function verifyAuditIntegrity(): Promise<{
-  valid: boolean;
-  totalEvents: number;
-  invalidEvents: number;
-  details: Array<{
-    auditId: string;
-    expectedHash: string;
-    actualHash: string;
-    valid: boolean;
-  }>;
-}> {
-  try {
-    const { data, error } = await supabase.rpc('verify_audit_chain_integrity');
-
-    if (error) throw error;
-
-    const results = data || [];
-    const invalidEvents = results.filter((r: any) => !r.chain_valid);
-
-    return {
-      valid: invalidEvents.length === 0,
-      totalEvents: results.length,
-      invalidEvents: invalidEvents.length,
-      details: results.map((r: any) => ({
-        auditId: r.audit_id,
-        expectedHash: r.expected_hash,
-        actualHash: r.actual_hash,
-        valid: r.chain_valid
-      }))
-    };
-  } catch (error) {
-    console.error('Failed to verify audit integrity:', error);
-    return {
-      valid: false,
-      totalEvents: 0,
-      invalidEvents: 0,
-      details: []
-    };
-  }
-}
+export const logUserRestrictionRemoved = async (
+  targetUserId: string,
+  restrictionId: string,
+  restrictionType: string,
+  reason: string,
+  removedBy?: string
+): Promise<void> => {
+  await logAuditEvent({
+    event_type: 'user_restriction_removed',
+    severity: 'high',
+    target_id: targetUserId,
+    actor_id: removedBy,
+    action_details: {
+      restriction_id: restrictionId,
+      restriction_type: restrictionType,
+      action: 'removed'
+    },
+    resource_type: 'user_restriction',
+    resource_id: restrictionId,
+    reason: reason,
+  });
+};
 
 /**
- * Get audit analytics
+ * Logs user deletion
  */
-export async function getAuditAnalytics(dateRange?: { from: Date; to: Date }) {
-  try {
-    let query = supabase
-      .from('audit_analytics')
-      .select('*')
-      .order('date', { ascending: false });
+export const logUserDeleted = async (
+  targetUserId: string,
+  reason: string,
+  deletedBy?: string
+): Promise<void> => {
+  await logAuditEvent({
+    event_type: 'user_deleted',
+    severity: 'critical',
+    target_id: targetUserId,
+    actor_id: deletedBy,
+    action_details: {
+      action: 'deleted'
+    },
+    resource_type: 'user',
+    resource_id: targetUserId,
+    reason: reason,
+  });
+};
 
-    if (dateRange) {
-      query = query
-        .gte('date', dateRange.from.toISOString().split('T')[0])
-        .lte('date', dateRange.to.toISOString().split('T')[0]);
+/**
+ * Logs admin login
+ */
+export const logAdminLogin = async (
+  adminId: string,
+  ipAddress?: string,
+  userAgent?: string
+): Promise<void> => {
+  await logAuditEvent({
+    event_type: 'admin_login',
+    severity: 'low',
+    actor_id: adminId,
+    ip_address: ipAddress,
+    user_agent: userAgent,
+    action_details: {
+      action: 'login'
+    },
+    resource_type: 'admin',
+    resource_id: adminId,
+  });
+};
+
+/**
+ * Logs admin logout
+ */
+export const logAdminLogout = async (
+  adminId: string
+): Promise<void> => {
+  await logAuditEvent({
+    event_type: 'admin_logout',
+    severity: 'low',
+    actor_id: adminId,
+    action_details: {
+      action: 'logout'
+    },
+    resource_type: 'admin',
+    resource_id: adminId,
+  });
+};
+
+/**
+ * Logs user profile updates
+ */
+export const logUserProfileUpdated = async (
+  targetUserId: string,
+  oldData: Record<string, unknown>,
+  newData: Record<string, unknown>,
+  updatedBy?: string
+): Promise<void> => {
+  await logAuditEvent({
+    event_type: 'user_restriction_updated', // Using this as a general user update event
+    severity: 'low',
+    target_id: targetUserId,
+    actor_id: updatedBy,
+    action_details: {
+      before: oldData,
+      after: newData,
+      changes: getObjectChanges(oldData, newData),
+      action: 'profile_updated'
+    },
+    resource_type: 'user',
+    resource_id: targetUserId,
+  });
+};
+
+/**
+ * Helper function to get changes between two objects
+ */
+const getObjectChanges = (oldObj: Record<string, unknown>, newObj: Record<string, unknown>) => {
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
+
+  const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
+
+  for (const key of allKeys) {
+    const oldValue = oldObj[key];
+    const newValue = newObj[key];
+
+    if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+      changes[key] = { from: oldValue, to: newValue };
     }
-
-    const { data, error } = await query.limit(30);
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Failed to get audit analytics:', error);
-    return [];
   }
-}
 
-/**
- * Convenience functions for common audit events
- */
-export const auditEvents = {
-  userRestrictionCreated: (actorId: string, targetId: string, restrictionType: string, reason: string) =>
-    logAuditEvent({
-      eventType: 'user_restriction_created',
-      severity: 'high',
-      actorId,
-      targetId,
-      actionDetails: { restrictionType, reason },
-      resourceType: 'user',
-      resourceId: targetId,
-      reason,
-      complianceTags: ['user-management', 'restriction']
-    }),
-
-  userRestrictionRemoved: (actorId: string, targetId: string, reason: string) =>
-    logAuditEvent({
-      eventType: 'user_restriction_removed',
-      severity: 'medium',
-      actorId,
-      targetId,
-      actionDetails: { action: 'restriction_removed' },
-      resourceType: 'user',
-      resourceId: targetId,
-      reason,
-      complianceTags: ['user-management', 'restriction']
-    }),
-
-  userDeleted: (actorId: string, targetId: string, reason: string, assetsTransferred?: Record<string, unknown>) =>
-    logAuditEvent({
-      eventType: 'user_deleted',
-      severity: 'critical',
-      actorId,
-      targetId,
-      actionDetails: { assetsTransferred },
-      resourceType: 'user',
-      resourceId: targetId,
-      reason,
-      complianceTags: ['user-management', 'deletion', 'gdpr']
-    }),
-
-  passwordResetSent: (actorId: string, targetId: string) =>
-    logAuditEvent({
-      eventType: 'user_password_reset',
-      severity: 'medium',
-      actorId,
-      targetId,
-      actionDetails: { action: 'password_reset_sent' },
-      resourceType: 'user',
-      resourceId: targetId,
-      complianceTags: ['user-management', 'security']
-    }),
-
-  vehicleTransferred: (actorId: string, vehicleId: string, fromUserId: string, toUserId: string, reason: string) =>
-    logAuditEvent({
-      eventType: 'vehicle_transferred',
-      severity: 'high',
-      actorId,
-      targetId: toUserId,
-      actionDetails: { vehicleId, fromUserId, toUserId },
-      resourceType: 'vehicle',
-      resourceId: vehicleId,
-      reason,
-      complianceTags: ['vehicle-management', 'transfer']
-    }),
-
-  vehicleDeleted: (actorId: string, vehicleId: string, ownerId: string, reason: string) =>
-    logAuditEvent({
-      eventType: 'vehicle_deleted',
-      severity: 'high',
-      actorId,
-      targetId: ownerId,
-      actionDetails: { vehicleId },
-      resourceType: 'vehicle',
-      resourceId: vehicleId,
-      reason,
-      complianceTags: ['vehicle-management', 'deletion']
-    }),
-
-  adminLogin: (actorId: string, ipAddress?: string, userAgent?: string) =>
-    logAuditEvent({
-      eventType: 'admin_login',
-      severity: 'low',
-      actorId,
-      ipAddress,
-      userAgent,
-      actionDetails: { action: 'admin_login' },
-      complianceTags: ['authentication', 'admin']
-    }),
-
-  adminLogout: (actorId: string) =>
-    logAuditEvent({
-      eventType: 'admin_logout',
-      severity: 'low',
-      actorId,
-      actionDetails: { action: 'admin_logout' },
-      complianceTags: ['authentication', 'admin']
-    })
+  return changes;
 };

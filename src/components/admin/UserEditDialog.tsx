@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { logUserProfileUpdated } from "@/utils/auditLogger";
 
 interface Profile {
   id: string;
@@ -45,16 +46,28 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
     setIsLoading(true);
 
     try {
+      // Capture old data for audit logging
+      const oldData = {
+        full_name: user.full_name,
+        role: user.role,
+        phone_number: user.phone_number,
+      };
+
+      const newData = {
+        full_name: fullName.trim() || null,
+        role,
+        phone_number: phoneNumber.trim() || null,
+      };
+
       const { error } = await supabase
         .from("profiles")
-        .update({
-          full_name: fullName.trim() || null,
-          role,
-          phone_number: phoneNumber.trim() || null,
-        })
+        .update(newData)
         .eq("id", user.id);
 
       if (error) throw error;
+
+      // Log the audit event
+      await logUserProfileUpdated(user.id, oldData, newData);
 
       onSuccess();
     } catch (error) {

@@ -443,6 +443,38 @@ serve(async (req) => {
       deletionSteps.push("Deleted auth user");
 
       // Log the deletion for audit
+      try {
+        const { error: auditError } = await supabaseAdmin.rpc('log_audit_event', {
+          p_event_type: 'user_deleted',
+          p_severity: 'critical',
+          p_actor_id: user.id,
+          p_target_id: userId,
+          p_session_id: null,
+          p_ip_address: null,
+          p_user_agent: null,
+          p_location_data: null,
+          p_action_details: {
+            vehiclesDeleted: vehiclesCount || 0,
+            deletionSteps,
+            email: userEmail,
+            fullName: userProfile.full_name
+          },
+          p_resource_type: 'user',
+          p_resource_id: userId,
+          p_reason: reason,
+          p_anomaly_flags: null,
+          p_compliance_tags: ['user-management', 'deletion', 'gdpr']
+        });
+
+        if (auditError) {
+          console.error("Error logging audit event:", auditError);
+          // Don't fail the operation if audit logging fails
+        }
+      } catch (auditLogError) {
+        console.error("Exception during audit logging:", auditLogError);
+        // Don't fail the operation if audit logging fails
+      }
+
       console.log(`User deleted successfully:`, {
         userId,
         email: userEmail,

@@ -56,13 +56,7 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
     resource_id uuid, -- ID of the affected resource
     reason text, -- Reason for the action (if provided)
     anomaly_flags jsonb, -- Flags for detected anomalies
-    compliance_tags text[], -- Tags for compliance reporting
-
-    -- Constraints
-    CONSTRAINT valid_hash_chain CHECK (
-        (previous_hash IS NULL AND id = (SELECT min(id) FROM public.audit_logs)) OR
-        previous_hash IS NOT NULL
-    )
+    compliance_tags text[] -- Tags for compliance reporting
 );
 
 -- Create immutable trigger to prevent updates/deletes
@@ -87,13 +81,13 @@ CREATE TRIGGER audit_logs_immutable
 -- Enable RLS
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies: Only admins and super admins can view audit logs
-CREATE POLICY "Admins and super admins can view audit logs" ON public.audit_logs
+-- RLS Policies: Only admins can view audit logs
+CREATE POLICY "Admins can view audit logs" ON public.audit_logs
     FOR SELECT TO authenticated
     USING (
         EXISTS (
             SELECT 1 FROM public.profiles p
-            WHERE p.id = auth.uid() AND p.role IN ('admin', 'super_admin')
+            WHERE p.id = auth.uid() AND p.role = 'admin'
         )
     );
 
