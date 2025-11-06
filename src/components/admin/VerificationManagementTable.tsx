@@ -17,12 +17,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { VerificationData } from "@/types/verification";
+import { VerificationReviewDialog } from "@/components/admin/VerificationReviewDialog";
+import type { Database } from "@/integrations/supabase/types";
 
 // Extended verification type for admin table with profile data
 interface AdminVerificationData extends Pick<VerificationData, 
   'id' | 'user_id' | 'overall_status' | 'current_step' | 'personal_info_completed' | 
-  'documents_completed' | 'selfie_completed' | 'phone_verified' | 'address_confirmed' | 'created_at'
+  'documents_completed' | 'selfie_completed' | 'phone_verified' | 'address_confirmed'
 > {
+  started_at: string | null;
   profiles?: {
     full_name: string;
     role: string;
@@ -38,9 +41,9 @@ const useAdminVerifications = () => {
         .select(`
           id, user_id, overall_status, current_step, personal_info_completed,
           documents_completed, selfie_completed, phone_verified, address_confirmed,
-          created_at
+          started_at
         `)
-        .order("created_at", { ascending: false });
+        .order("started_at", { ascending: false });
 
       if (error) throw error;
       
@@ -67,6 +70,8 @@ const useAdminVerifications = () => {
 
 export const VerificationManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedVerification, setSelectedVerification] = useState<AdminVerificationData | null>(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   
   const { data: verifications, isLoading, error, refetch } = useAdminVerifications();
 
@@ -78,7 +83,7 @@ export const VerificationManagementTable = () => {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "verified": return "default";
+      case "completed": return "default";
       case "pending": return "secondary";
       case "rejected": return "destructive";
       case "not_started": return "outline";
@@ -86,13 +91,16 @@ export const VerificationManagementTable = () => {
     }
   };
 
-  const updateVerificationStatus = async (verificationId: string, newStatus: string) => {
+  const updateVerificationStatus = async (
+    verificationId: string,
+    newStatus: Database["public"]["Enums"]["verification_status"]
+  ) => {
     try {
       const { error } = await supabase
         .from("user_verifications")
         .update({ 
           overall_status: newStatus,
-          completed_at: newStatus === "verified" ? new Date().toISOString() : null
+          completed_at: newStatus === "completed" ? new Date().toISOString() : null
         })
         .eq("id", verificationId);
 
@@ -107,15 +115,25 @@ export const VerificationManagementTable = () => {
   };
 
   const getCompletionPercentage = (verification: AdminVerificationData) => {
-    const steps = [
-      verification.personal_info_completed,
-      verification.documents_completed,
-      verification.selfie_completed,
-      verification.phone_verified,
-      verification.address_confirmed
-    ];
-    const completed = steps.filter(Boolean).length;
-    return Math.round((completed / steps.length) * 100);
+    // Use simplified 3-step model for admin progress display
+    const step1 = verification.personal_info_completed;
+    // Map legacy flags into the documents step
+    const step2 = verification.documents_completed || verification.selfie_completed;
+    // Treat submission/review states as final step progress
+    const isReviewState = [
+      "review_submit",
+      "processing_status",
+      "completion",
+    ].includes(verification.current_step.toLowerCase());
+    const isPendingForReview = [
+      "pending",
+      "pending_review",
+      "completed",
+    ].includes(verification.overall_status.toLowerCase());
+    const step3 = isReviewState || isPendingForReview;
+
+    const completed = [step1, step2, step3].filter(Boolean).length;
+    return Math.round((completed / 3) * 100);
   };
 
   if (error) {
@@ -205,7 +223,7 @@ export const VerificationManagementTable = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {new Date(verification.created_at).toLocaleDateString()}
+                    {verification.started_at ? new Date(verification.started_at).toLocaleDateString() : "—"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -214,7 +232,7 @@ export const VerificationManagementTable = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => updateVerificationStatus(verification.id, "verified")}
+                              onClick={() => updateVerificationStatus(verification.id, "completed")}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Approve
@@ -229,7 +247,14 @@ export const VerificationManagementTable = () => {
                             </Button>
                           </>
                         )}
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedVerification(verification);
+                            setIsReviewOpen(true);
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -241,6 +266,11 @@ export const VerificationManagementTable = () => {
           )}
         </CardContent>
       </Card>
+      <VerificationReviewDialog
+        verification={selectedVerification}
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+      />
     </div>
   );
 };

@@ -197,12 +197,45 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
   }, [verificationData]);
 
   const getStepProgress = useCallback(() => {
-    if (!verificationData) return { completed: 0, total: 7, percentage: 0 };
+    // Use simplified 3-step model for progress display
+    if (!verificationData) return { completed: 0, total: 3, percentage: 0 };
 
-    const steps = Object.values(VerificationStep);
-    const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
-    const completed = currentIndex + 1;
-    const total = steps.length;
+    const CORE_STEPS: VerificationStep[] = [
+      VerificationStep.PERSONAL_INFO,
+      VerificationStep.DOCUMENT_UPLOAD,
+      VerificationStep.REVIEW_SUBMIT,
+    ];
+
+    const step = verificationData.current_step as VerificationStep;
+    let currentIndex = 0;
+
+    switch (step) {
+      case VerificationStep.PERSONAL_INFO:
+        currentIndex = 0;
+        break;
+      case VerificationStep.DOCUMENT_UPLOAD:
+      case VerificationStep.SELFIE_VERIFICATION: // legacy steps mapped to document upload
+      case VerificationStep.PHONE_VERIFICATION: // legacy steps mapped to document upload
+        currentIndex = 1;
+        break;
+      case VerificationStep.REVIEW_SUBMIT:
+      case VerificationStep.PROCESSING_STATUS: // legacy steps mapped to final review
+      case VerificationStep.COMPLETION: // legacy steps mapped to final review
+        currentIndex = 2;
+        break;
+      default:
+        // Fallback based on completion flags
+        if (verificationData.personal_info_completed && verificationData.documents_completed) {
+          currentIndex = 2;
+        } else if (verificationData.personal_info_completed) {
+          currentIndex = 1;
+        } else {
+          currentIndex = 0;
+        }
+    }
+
+    const completed = Math.min(currentIndex + 1, CORE_STEPS.length);
+    const total = CORE_STEPS.length;
     const percentage = Math.round((completed / total) * 100);
 
     return { completed, total, percentage };

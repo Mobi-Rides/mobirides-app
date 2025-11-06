@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useVerification } from '@/hooks/useVerification';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { VerificationService } from '@/services/verificationService';
 import {
   ArrowLeft,
   ArrowRight,
@@ -218,8 +219,10 @@ const DocumentManualUpload: React.FC<{
         return;
       }
 
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
+      // Align with Supabase Storage bucket limit (5MB) to avoid upload failures
+      const MAX_SIZE_BYTES = 5 * 1024 * 1024;
+      if (file.size > MAX_SIZE_BYTES) {
+        toast.error('File size must be less than 5MB (storage limit)');
         return;
       }
 
@@ -306,9 +309,14 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       description: "Front side of your valid driving license",
     },
     {
-      id: "proof_of_address",
-      title: "Proof of Address",
-      description: "Utility bill or bank statement (max 3 months old)",
+      id: "driving_license_back",
+      title: "Driving License (Back)",
+      description: "Back side of your valid driving license",
+    },
+    {
+      id: "selfie_photo",
+      title: "Selfie Photo",
+      description: "A clear selfie matching your ID",
     },
   ], []);
 
@@ -366,13 +374,26 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
   }, [handleRetakePhoto]);
 
   const handleFileUpload = async (file: File, documentId: string) => {
-    // Simulate file upload for development
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        toast.success(`${file.name} uploaded successfully`);
-        resolve(true);
-      }, 1000);
-    });
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return false;
+    }
+    try {
+      const isSelfie = documentId === 'selfie_photo';
+      const path = isSelfie
+        ? await VerificationService.uploadSelfie(user.id, file)
+        : await VerificationService.uploadDocument(user.id, documentId, file);
+      if (!path) {
+        toast.error('Upload failed. Please try again.');
+        return false;
+      }
+      toast.success(`${file.name} uploaded successfully`);
+      return true;
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Upload error. Please retry.');
+      return false;
+    }
   };
 
   const handleSubmit = async () => {
@@ -385,8 +406,11 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
     try {
       // Upload all document photos
       for (const [documentId, photo] of Object.entries(documentPhotos)) {
-        const file = new File([photo.blob], `${documentId}.jpg`, { type: 'image/jpeg' });
-        await handleFileUpload(file, documentId);
+        const inferredType = photo.blob.type || 'image/jpeg';
+        const filename = inferredType === 'application/pdf' ? `${documentId}.pdf` : `${documentId}.jpg`;
+        const file = new File([photo.blob], filename, { type: inferredType });
+        const ok = await handleFileUpload(file, documentId);
+        if (!ok) throw new Error(`Failed to upload ${documentId}`);
       }
       
       await completeDocumentUpload(user?.id || '');
