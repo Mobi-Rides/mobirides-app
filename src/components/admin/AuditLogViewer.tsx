@@ -7,16 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Download, Filter, Calendar as CalendarIcon, Shield, AlertTriangle, Eye, RefreshCw } from "lucide-react";
+import { Search, Eye, RefreshCw, Shield, Monitor } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+import  DeviceDetailsDialog  from "./DeviceDetailsDialog";
 
 type AuditLog = {
   id: string;
@@ -27,7 +23,28 @@ type AuditLog = {
   session_id: string | null;
   ip_address: string | null;
   user_agent: string | null;
-  action_details: Record<string, unknown>;
+  location_data: {
+    ip?: string;
+    city?: string;
+    region?: string;
+    country?: string;
+    countryCode?: string;
+    timezone?: string;
+    isp?: string;
+    org?: string;
+    lat?: number;
+    lon?: number;
+  } | null;
+  action_details: {
+    device?: {
+      browser: string;
+      browserVersion: string;
+      os: string;
+      osVersion: string;
+      deviceType: 'mobile' | 'tablet' | 'desktop';
+    };
+    [key: string]: unknown;
+  };
   event_timestamp: string;
   resource_type: string | null;
   resource_id: string | null;
@@ -48,12 +65,11 @@ export const AuditLogViewer = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<AuditLog | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isDeviceDialogOpen, setIsDeviceDialogOpen] = useState(false);
 
   const { data: auditLogs, isLoading, error, refetch } = useQuery<AuditLog[], Error>({
     queryKey: ["audit-logs"],
     queryFn: async (): Promise<AuditLog[]> => {
-      // First get the audit logs
       const { data: logs, error: logsError } = await supabase
         .from("audit_logs")
         .select("*")
@@ -71,7 +87,6 @@ export const AuditLogViewer = () => {
         return [];
       }
 
-      // Get unique user IDs from actor_id and target_id
       const userIds = new Set<string>();
       logs.forEach(log => {
         if (log.actor_id) userIds.add(log.actor_id);
@@ -80,7 +95,6 @@ export const AuditLogViewer = () => {
 
       console.log("User IDs to fetch:", Array.from(userIds));
 
-      // Fetch profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, full_name")
@@ -92,7 +106,6 @@ export const AuditLogViewer = () => {
         console.warn("Failed to fetch profiles:", profilesError);
       }
 
-      // Create a map of user ID to profile
       const profileMap = new Map();
       if (profiles) {
         profiles.forEach(profile => {
@@ -100,7 +113,6 @@ export const AuditLogViewer = () => {
         });
       }
 
-      // Combine the data
       const enrichedLogs = logs.map(log => ({
         ...log,
         actor_profile: log.actor_id ? profileMap.get(log.actor_id) : null,
@@ -123,6 +135,11 @@ export const AuditLogViewer = () => {
   const handleViewDetails = (log: AuditLog) => {
     setSelectedEvent(log);
     setIsDetailsDialogOpen(true);
+  };
+
+  const handleViewDeviceDetails = (log: AuditLog) => {
+    setSelectedEvent(log);
+    setIsDeviceDialogOpen(true);
   };
 
   const getSeverityColor = (severity: string) => {
@@ -156,7 +173,7 @@ export const AuditLogViewer = () => {
                 Audit Log Viewer ({filteredLogs.length})
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Comprehensive audit trail with real-time monitoring
+                Comprehensive audit trail with device and location tracking
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -205,6 +222,7 @@ export const AuditLogViewer = () => {
                   <TableHead>Severity</TableHead>
                   <TableHead>Actor</TableHead>
                   <TableHead>Target</TableHead>
+                  <TableHead>IP Address</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -243,13 +261,29 @@ export const AuditLogViewer = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewDetails(log)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                        {log.ip_address || "N/A"}
+                      </code>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewDetails(log)}
+                          title="View full details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewDeviceDetails(log)}
+                          title="View device & location details"
+                        >
+                          <Monitor className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -324,10 +358,37 @@ export const AuditLogViewer = () => {
                   />
                 </div>
               )}
+
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsDetailsDialogOpen(false);
+                    handleViewDeviceDetails(selectedEvent);
+                  }}
+                  className="w-full"
+                >
+                  <Monitor className="h-4 w-4 mr-2" />
+                  View Device & Location Details
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Device Details Dialog */}
+      {selectedEvent && (
+        <DeviceDetailsDialog
+          isOpen={isDeviceDialogOpen}
+          onClose={() => setIsDeviceDialogOpen(false)}
+          ipAddress={selectedEvent.ip_address}
+          userAgent={selectedEvent.user_agent}
+          locationData={selectedEvent.location_data}
+          deviceInfo={selectedEvent.action_details?.device || null}
+        />
+      )}
     </>
   );
 };

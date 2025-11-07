@@ -20,6 +20,29 @@ export type AuditEventType =
 
 export type AuditSeverity = 'low' | 'medium' | 'high' | 'critical';
 
+export interface DeviceInfo {
+  browser: string;
+  browserVersion: string;
+  os: string;
+  osVersion: string;
+  deviceType: 'mobile' | 'tablet' | 'desktop';
+  deviceVendor?: string;
+  deviceModel?: string;
+}
+
+export interface LocationData {
+  ip: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  countryCode?: string;
+  timezone?: string;
+  isp?: string;
+  org?: string;
+  lat?: number;
+  lon?: number;
+}
+
 export interface AuditLogData {
   event_type: AuditEventType;
   severity?: AuditSeverity;
@@ -35,6 +58,135 @@ export interface AuditLogData {
 }
 
 /**
+ * Parse user agent string to extract device information
+ */
+export const parseUserAgent = (userAgent: string): DeviceInfo => {
+  const ua = userAgent.toLowerCase();
+  
+  // Detect browser
+  let browser = 'Unknown';
+  let browserVersion = '';
+  
+  if (ua.includes('edg/')) {
+    browser = 'Edge';
+    browserVersion = ua.match(/edg\/([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('chrome/')) {
+    browser = 'Chrome';
+    browserVersion = ua.match(/chrome\/([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('firefox/')) {
+    browser = 'Firefox';
+    browserVersion = ua.match(/firefox\/([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('safari/') && !ua.includes('chrome')) {
+    browser = 'Safari';
+    browserVersion = ua.match(/version\/([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('opr/') || ua.includes('opera/')) {
+    browser = 'Opera';
+    browserVersion = ua.match(/(?:opr|opera)\/([\d.]+)/)?.[1] || '';
+  }
+  
+  // Detect OS
+  let os = 'Unknown';
+  let osVersion = '';
+  
+  if (ua.includes('windows nt')) {
+    os = 'Windows';
+    const version = ua.match(/windows nt ([\d.]+)/)?.[1];
+    const versionMap: Record<string, string> = {
+      '10.0': '10/11',
+      '6.3': '8.1',
+      '6.2': '8',
+      '6.1': '7',
+    };
+    osVersion = version ? (versionMap[version] || version) : '';
+  } else if (ua.includes('mac os x')) {
+    os = 'macOS';
+    osVersion = ua.match(/mac os x ([\d_]+)/)?.[1]?.replace(/_/g, '.') || '';
+  } else if (ua.includes('android')) {
+    os = 'Android';
+    osVersion = ua.match(/android ([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('iphone') || ua.includes('ipad')) {
+    os = ua.includes('ipad') ? 'iPadOS' : 'iOS';
+    osVersion = ua.match(/os ([\d_]+)/)?.[1]?.replace(/_/g, '.') || '';
+  } else if (ua.includes('linux')) {
+    os = 'Linux';
+  }
+  
+  // Detect device type
+  let deviceType: 'mobile' | 'tablet' | 'desktop' = 'desktop';
+  if (ua.includes('mobile') || ua.includes('iphone')) {
+    deviceType = 'mobile';
+  } else if (ua.includes('tablet') || ua.includes('ipad')) {
+    deviceType = 'tablet';
+  }
+  
+  return {
+    browser,
+    browserVersion,
+    os,
+    osVersion,
+    deviceType,
+  };
+};
+
+/**
+ * Fetch IP geolocation data using ip-api.com (free, no API key required)
+ */
+export const fetchIPGeolocation = async (ip: string): Promise<LocationData | null> => {
+  try {
+    // Using ip-api.com free tier (45 requests/minute)
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,city,timezone,isp,org,lat,lon`);
+    
+    if (!response.ok) {
+      console.warn('Failed to fetch IP geolocation');
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (data.status === 'fail') {
+      console.warn('IP geolocation failed:', data.message);
+      return null;
+    }
+    
+    return {
+      ip,
+      city: data.city,
+      region: data.region,
+      country: data.country,
+      countryCode: data.countryCode,
+      timezone: data.timezone,
+      isp: data.isp,
+      org: data.org,
+      lat: data.lat,
+      lon: data.lon,
+    };
+  } catch (error) {
+    console.error('Error fetching IP geolocation:', error);
+    return null;
+  }
+};
+
+/**
+ * Get client IP address from a third-party service
+ */
+const getClientIP = async (): Promise<string | null> => {
+  try {
+    // Using ipify.org (free, no API key required)
+    const response = await fetch('https://api.ipify.org?format=json');
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json();
+    return data.ip || null;
+  } catch (error) {
+    console.error('Error fetching client IP:', error);
+    return null;
+  }
+};
+
+/**
  * Logs an audit event to the audit_logs table
  * @param data The audit event data
  * @returns Promise that resolves when the audit log is created
@@ -45,9 +197,29 @@ export const logAuditEvent = async (data: AuditLogData): Promise<void> => {
     const { data: session } = await supabase.auth.getSession();
     const actorId = data.actor_id || session?.session?.user?.id;
 
-    // Get client IP and user agent if not provided
-    const ipAddress = data.ip_address || getClientIP();
+    // Get user agent
     const userAgent = data.user_agent || navigator.userAgent;
+    
+    // Parse device information from user agent
+    const deviceInfo = parseUserAgent(userAgent);
+
+    // Get client IP if not provided
+    let ipAddress = data.ip_address;
+    if (!ipAddress) {
+      ipAddress = await getClientIP();
+    }
+
+    // Fetch geolocation data for the IP
+    let locationData: LocationData | null = null;
+    if (ipAddress) {
+      locationData = await fetchIPGeolocation(ipAddress);
+    }
+
+    // Enhanced action details with device info
+    const enhancedActionDetails = {
+      ...data.action_details,
+      device: deviceInfo,
+    };
 
     // Call the log_audit_event function
     const { error } = await supabase.rpc('log_audit_event', {
@@ -56,9 +228,10 @@ export const logAuditEvent = async (data: AuditLogData): Promise<void> => {
       p_actor_id: actorId,
       p_target_id: data.target_id,
       p_session_id: data.session_id,
-      p_ip_address: ipAddress,
+      p_ip_address: ipAddress || null,
       p_user_agent: userAgent,
-      p_action_details: data.action_details,
+      p_location_data: locationData || null,
+      p_action_details: enhancedActionDetails,
       p_resource_type: data.resource_type,
       p_resource_id: data.resource_id,
       p_reason: data.reason,
@@ -72,17 +245,6 @@ export const logAuditEvent = async (data: AuditLogData): Promise<void> => {
     console.error('Error in logAuditEvent:', error);
     // Don't throw error to avoid breaking the main functionality
   }
-};
-
-/**
- * Helper function to get client IP address
- * Note: This is a simplified implementation. In production, you might want to use a service
- * or get the IP from the server-side.
- */
-const getClientIP = (): string | undefined => {
-  // This is a placeholder - in a real implementation, you'd get this from the server
-  // or use a service like ipify.org
-  return undefined;
 };
 
 /**
