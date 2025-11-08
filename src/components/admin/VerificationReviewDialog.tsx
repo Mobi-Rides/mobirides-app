@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { VerificationData } from "@/types/verification";
+import type { PersonalInfo } from "@/types/verification";
 
 interface AdminVerificationData extends Pick<VerificationData,
   'id' | 'user_id' | 'overall_status' | 'current_step' | 'personal_info_completed' |
@@ -50,6 +51,7 @@ export const VerificationReviewDialog: React.FC<VerificationReviewDialogProps> =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [personalInfo, setPersonalInfo] = useState<Partial<PersonalInfo> | null>(null);
 
   const userId = verification?.user_id;
 
@@ -99,6 +101,23 @@ export const VerificationReviewDialog: React.FC<VerificationReviewDialogProps> =
         }
         const urlMap = Object.fromEntries(urlPairs);
         setSignedUrls(urlMap);
+
+        // Fetch personal_info for this verification/user (step 1 data)
+        try {
+          const { data: vData, error: vErr } = await supabase
+            .from("user_verifications")
+            .select("personal_info")
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (!vErr && vData?.personal_info) {
+            setPersonalInfo(normalizePersonalInfo(vData.personal_info));
+          } else {
+            setPersonalInfo(null);
+          }
+        } catch (piErr) {
+          console.warn("[VerificationReviewDialog] Failed to fetch personal_info:", piErr);
+          setPersonalInfo(null);
+        }
       } catch (e: any) {
         console.error("[VerificationReviewDialog] Failed to fetch documents:", e);
         setError("Failed to load documents for review");
@@ -141,6 +160,75 @@ export const VerificationReviewDialog: React.FC<VerificationReviewDialogProps> =
                 <div className="text-sm text-muted-foreground">Started</div>
                 <div className="mt-1">{verification.started_at ? new Date(verification.started_at).toLocaleString() : "—"}</div>
               </div>
+            </div>
+
+            {/* Personal Information (Step 1) */}
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
+              {!personalInfo ? (
+                <div className="text-muted-foreground">No personal information submitted.</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-sm text-muted-foreground">Full Name</div>
+                    <div className="mt-1">{personalInfo.fullName || "—"}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-sm text-muted-foreground">Date of Birth</div>
+                    <div className="mt-1">{personalInfo.dateOfBirth || "—"}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-sm text-muted-foreground">National ID Number</div>
+                    <div className="mt-1">{personalInfo.nationalIdNumber || "—"}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-sm text-muted-foreground">Phone Number</div>
+                    <div className="mt-1">{personalInfo.phoneNumber || "—"}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-sm text-muted-foreground">Email</div>
+                    <div className="mt-1">{personalInfo.email || "—"}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="text-sm text-muted-foreground">Address</div>
+                    <div className="mt-1">
+                      {personalInfo.address ? (
+                        <span>
+                          {personalInfo.address.street || ""}{personalInfo.address.street ? ", " : ""}
+                          {personalInfo.address.area || ""}{personalInfo.address.area ? ", " : ""}
+                          {personalInfo.address.city || ""}{personalInfo.address.city ? " " : ""}
+                          {personalInfo.address.postalCode || ""}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4 border rounded-lg sm:col-span-2 lg:col-span-3">
+                    <div className="text-sm text-muted-foreground">Emergency Contact</div>
+                    <div className="mt-1">
+                      {(() => {
+                        const ec = personalInfo.emergencyContact;
+                        if (!ec) return "—";
+                        const name = (ec.name || "").trim();
+                        const relationship = (ec.relationship || "").trim();
+                        const phone = (ec.phoneNumber || "").trim();
+                        const cc = (ec.countryCode || "").trim();
+
+                        const hasAny = Boolean(name || relationship || phone);
+                        if (!hasAny) return "—";
+
+                        const left = name
+                          ? `${name}${relationship ? ` (${relationship})` : ""}`
+                          : relationship;
+                        const phoneWithCc = cc ? `${cc} ${phone}` : phone;
+                        const parts = [left, phoneWithCc].filter(Boolean);
+                        return parts.join(" — ");
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -361,3 +449,53 @@ const AdminActions = ({
     </div>
   );
 };
+// Normalize raw personal_info JSON into Partial<PersonalInfo>, handling legacy snake_case keys
+function normalizePersonalInfo(raw: any): Partial<PersonalInfo> | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const out: Partial<PersonalInfo> = {};
+
+  // Basic fields with camelCase or snake_case fallbacks
+  out.fullName = raw.fullName ?? raw.full_name ?? "";
+  out.dateOfBirth = raw.dateOfBirth ?? raw.date_of_birth ?? "";
+  out.nationalIdNumber = raw.nationalIdNumber ?? raw.national_id_number ?? "";
+  out.phoneNumber = raw.phoneNumber ?? raw.phone_number ?? "";
+  out.email = raw.email ?? raw.email_address ?? "";
+
+  // Address: either nested object or flattened keys
+  const address = raw.address ?? {
+    street: raw.address_street ?? raw.street ?? "",
+    area: raw.address_area ?? raw.area ?? "",
+    city: raw.address_city ?? raw.city ?? "",
+    postalCode: raw.postal_code ?? raw.postalCode ?? "",
+  };
+  if (address && typeof address === "object") {
+    out.address = {
+      street: address.street ?? "",
+      area: address.area ?? "",
+      city: address.city ?? "",
+      postalCode: address.postalCode ?? address.postal_code ?? "",
+    };
+  }
+
+  // Emergency contact: nested object or snake_case keys
+  let emergency = raw.emergencyContact;
+  if (!emergency && (raw.emergency_contact_name || raw.emergency_contact_phone || raw.emergency_contact_relationship)) {
+    emergency = {
+      name: raw.emergency_contact_name ?? "",
+      relationship: raw.emergency_contact_relationship ?? "",
+      phoneNumber: raw.emergency_contact_phone ?? "",
+      countryCode: raw.emergency_contact_country_code ?? raw.country_code ?? "",
+    };
+  }
+  if (emergency && typeof emergency === "object") {
+    out.emergencyContact = {
+      name: emergency.name ?? raw.emergency_contact_name ?? "",
+      relationship: emergency.relationship ?? raw.emergency_contact_relationship ?? "",
+      phoneNumber: emergency.phoneNumber ?? raw.emergency_contact_phone ?? "",
+      countryCode: emergency.countryCode ?? raw.emergency_contact_country_code ?? raw.country_code ?? "",
+    };
+  }
+
+  return out;
+}
