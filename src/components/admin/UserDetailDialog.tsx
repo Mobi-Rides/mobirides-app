@@ -7,6 +7,7 @@ import { UserTransactionsTab } from "./user-tabs/UserTransactionsTab";
 import { UserVerificationTab } from "./user-tabs/UserVerificationTab";
 import { UserAdminTab } from "./user-tabs/UserAdminTab";
 import { UserActivityTab } from "./user-tabs/UserActivityTab";
+import { UserRestrictionsTab } from "./user-tabs/UserRestrictionsTab";
 
 interface Profile {
   id: string;
@@ -40,8 +41,9 @@ export const UserDetailDialog = ({ user, isOpen, onClose, onUserUpdate }: UserDe
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="restrictions">Restrictions</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="verification">Verification</TabsTrigger>
@@ -53,7 +55,11 @@ export const UserDetailDialog = ({ user, isOpen, onClose, onUserUpdate }: UserDe
             <TabsContent value="overview" className="mt-0">
               <UserOverviewTab user={user} onUpdate={onUserUpdate} />
             </TabsContent>
-            
+
+            <TabsContent value="restrictions" className="mt-0">
+              <UserRestrictionsTab user={user} onUpdate={onUserUpdate} />
+            </TabsContent>
+
             <TabsContent value="bookings" className="mt-0">
               <UserBookingsTab userId={user.id} />
             </TabsContent>

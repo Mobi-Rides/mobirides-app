@@ -15,6 +15,7 @@ import { Search, UserX, UserCheck, Trash2, Shield, Mail, AlertTriangle } from "l
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { logUserRestrictionCreated, logUserDeleted } from "@/utils/auditLogger";
 import type { Database } from "@/integrations/supabase/types";
 
 interface UserProfile {
@@ -186,7 +187,21 @@ export const AdvancedUserManagement = () => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Log audit event for restriction
+      if (selectedUser) {
+        try {
+          await logUserRestrictionCreated(
+            selectedUser.id,
+            restrictionForm.restrictionType === 'ban' ? 'login_block' : 'suspension',
+            restrictionForm.reason,
+            (await supabase.auth.getUser()).data.user?.id || undefined
+          );
+        } catch (e) {
+          console.warn("Failed to log audit event for restriction", e);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User restriction applied successfully");
       setIsRestrictionDialogOpen(false);
@@ -208,7 +223,32 @@ export const AdvancedUserManagement = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async (_, userId) => {
+      // Log audit event for restriction removal
+      try {
+        const { data: restrictions } = await supabase
+          .from("user_restrictions")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("active", false)
+          .order("updated_at", { ascending: false })
+          .limit(1);
+
+        if (restrictions && restrictions.length > 0) {
+          const restriction = restrictions[0];
+          const { logUserRestrictionRemoved } = await import("@/utils/auditLogger");
+          await logUserRestrictionRemoved(
+            userId,
+            restriction.id,
+            restriction.restriction_type,
+            "Admin removed restriction",
+            (await supabase.auth.getUser()).data.user?.id || undefined
+          );
+        }
+      } catch (e) {
+        console.warn("Failed to log audit event for restriction removal", e);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User restriction removed successfully");
     },
@@ -318,9 +358,14 @@ const deleteUserMutation = useMutation({
       throw err;
     }
   },
-  onSuccess: (data) => {
+  onSuccess: async (data) => {
     console.log("✅ Mutation success callback:", data);
+    
+    // Invalidate both admin-users and audit-logs queries to refresh the UI
+    // The edge function already logged the audit event
     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+    
     toast.success("User deleted successfully");
     setIsDeleteDialogOpen(false);
     setIsVehicleWarningDialogOpen(false);
@@ -394,7 +439,28 @@ const deleteUserMutation = useMutation({
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Log audit event for password reset
+      if (selectedUser) {
+        try {
+          const { logAuditEvent } = await import("@/utils/auditLogger");
+          await logAuditEvent({
+            event_type: 'user_password_reset',
+            severity: 'medium',
+            target_id: selectedUser.id,
+            action_details: {
+              action: 'password_reset_requested',
+              reason: 'Admin initiated password reset'
+            },
+            resource_type: 'user',
+            resource_id: selectedUser.id,
+            reason: 'Admin initiated password reset'
+          });
+        } catch (e) {
+          console.warn("Failed to log audit event for password reset", e);
+        }
+      }
+
       toast.success("Password reset email sent to user");
     },
     onError: (error: Error) => {
