@@ -56,6 +56,8 @@ export interface PersonalInfo {
     name: string;
     relationship: string;
     phoneNumber: string;
+    // Optional international dialing code (e.g., "+267")
+    countryCode?: string;
   };
 }
 

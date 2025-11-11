@@ -24,6 +24,268 @@ interface ProfileData {
 
 export class VerificationService {
   /**
+   * Upload a verification document to Supabase Storage
+   */
+  static async uploadDocument(
+    userId: string,
+    documentId: string,
+    file: File
+  ): Promise<string | null> {
+    try {
+      const ext = file.type === "application/pdf" ? "pdf" : file.type.includes("png") ? "png" : "jpg";
+      const path = `${userId}/${documentId}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("verification-documents")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) {
+        console.error("[VerificationService] Document upload failed:", error);
+        return null;
+      }
+
+      // Persist a database record for the uploaded document so admins can review it
+      try {
+        // Check if a record exists for this user and document type
+        const { data: existingRows, error: fetchErr } = await supabase
+          .from("verification_documents")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("document_type", documentId);
+
+        if (fetchErr) {
+          console.warn("[VerificationService] Failed to check existing verification_documents:", fetchErr);
+        }
+
+        if (existingRows && existingRows.length > 0) {
+          // Update the latest record
+          const targetId = existingRows[0].id;
+          const { error: updateErr } = await supabase
+            .from("verification_documents")
+            .update({
+              file_path: path,
+              file_name: file.name,
+              file_size: file.size,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            })
+            .eq("id", targetId);
+          if (updateErr) {
+            console.error("[VerificationService] Failed to update verification_documents:", updateErr);
+          }
+        } else {
+          // Insert a new record
+          const { error: insertErr } = await supabase
+            .from("verification_documents")
+            .insert({
+              user_id: userId,
+              document_type: documentId as any,
+              file_path: path,
+              file_name: file.name,
+              file_size: file.size,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            });
+          if (insertErr) {
+            console.error("[VerificationService] Failed to insert verification_documents:", insertErr);
+          }
+        }
+      } catch (docErr) {
+        console.error("[VerificationService] Exception while saving verification_documents:", docErr);
+      }
+
+      return path;
+    } catch (err) {
+      console.error("[VerificationService] Document upload exception:", err);
+      return null;
+    }
+  }
+
+  /**
+   * Upload a selfie photo to Supabase Storage
+   */
+  static async uploadSelfie(userId: string, file: File): Promise<string | null> {
+    try {
+      const ext = file.type.includes("png") ? "png" : "jpg";
+      const path = `${userId}/selfie-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("verification-selfies")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) {
+        console.error("[VerificationService] Selfie upload failed:", error);
+        return null;
+      }
+
+      // Persist or update selfie record in verification_documents (tracked under document_type "selfie_photo")
+      try {
+        const { data: existingRows, error: fetchErr } = await supabase
+          .from("verification_documents")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("document_type", "selfie_photo");
+
+        if (fetchErr) {
+          console.warn("[VerificationService] Failed to check existing selfie record:", fetchErr);
+        }
+
+        if (existingRows && existingRows.length > 0) {
+          const targetId = existingRows[0].id;
+          const { error: updateErr } = await supabase
+            .from("verification_documents")
+            .update({
+              file_path: path,
+              file_name: file.name,
+              file_size: file.size,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            })
+            .eq("id", targetId);
+          if (updateErr) {
+            console.error("[VerificationService] Failed to update selfie record:", updateErr);
+          }
+        } else {
+          const { error: insertErr } = await supabase
+            .from("verification_documents")
+            .insert({
+              user_id: userId,
+              document_type: "selfie_photo" as any,
+              file_path: path,
+              file_name: file.name,
+              file_size: file.size,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            });
+          if (insertErr) {
+            console.error("[VerificationService] Failed to insert selfie record:", insertErr);
+          }
+        }
+      } catch (docErr) {
+        console.error("[VerificationService] Exception while saving selfie record:", docErr);
+      }
+
+      return path;
+    } catch (err) {
+      console.error("[VerificationService] Selfie upload exception:", err);
+      return null;
+    }
+  }
+
+  /**
+   * Backfill verification_documents from existing Storage objects for a user.
+   * Returns the number of records inserted/updated.
+   */
+  static async syncDocumentsFromStorageForUser(userId: string): Promise<number> {
+    let changed = 0;
+    try {
+      // List documents in verification-documents bucket under user folder
+      const { data: docObjects, error: docListErr } = await supabase.storage
+        .from("verification-documents")
+        .list(userId, { limit: 100 });
+
+      if (docListErr) {
+        console.warn("[VerificationService] Failed to list verification-documents:", docListErr);
+      }
+
+      for (const obj of docObjects || []) {
+        // file_path is userId/filename
+        const filePath = `${userId}/${obj.name}`;
+        const fileName = obj.name;
+        const guessedType = fileName.split("-")[0]; // e.g., national_id_front-123.jpg
+        const fileSize = (obj as any)?.metadata?.size ?? 0;
+
+        // Skip unknown types
+        if (!guessedType) continue;
+
+        const { data: existingRows } = await supabase
+          .from("verification_documents")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("document_type", guessedType);
+
+        if (existingRows && existingRows.length > 0) {
+          const targetId = existingRows[0].id;
+          const { error: updateErr } = await supabase
+            .from("verification_documents")
+            .update({
+              file_path: filePath,
+              file_name: fileName,
+              file_size: fileSize,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            })
+            .eq("id", targetId);
+          if (!updateErr) changed++;
+        } else {
+          const { error: insertErr } = await supabase
+            .from("verification_documents")
+            .insert({
+              user_id: userId,
+              document_type: guessedType as any,
+              file_path: filePath,
+              file_name: fileName,
+              file_size: fileSize,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            });
+          if (!insertErr) changed++;
+        }
+      }
+
+      // List selfies in verification-selfies bucket
+      const { data: selfieObjects, error: selfieListErr } = await supabase.storage
+        .from("verification-selfies")
+        .list(userId, { limit: 100 });
+
+      if (selfieListErr) {
+        console.warn("[VerificationService] Failed to list verification-selfies:", selfieListErr);
+      }
+
+      for (const obj of selfieObjects || []) {
+        const filePath = `${userId}/${obj.name}`;
+        const fileName = obj.name;
+        const fileSize = (obj as any)?.metadata?.size ?? 0;
+        const docType = "selfie_photo";
+
+        const { data: existingRows } = await supabase
+          .from("verification_documents")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("document_type", docType);
+
+        if (existingRows && existingRows.length > 0) {
+          const targetId = existingRows[0].id;
+          const { error: updateErr } = await supabase
+            .from("verification_documents")
+            .update({
+              file_path: filePath,
+              file_name: fileName,
+              file_size: fileSize,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            })
+            .eq("id", targetId);
+          if (!updateErr) changed++;
+        } else {
+          const { error: insertErr } = await supabase
+            .from("verification_documents")
+            .insert({
+              user_id: userId,
+              document_type: docType as any,
+              file_path: filePath,
+              file_name: fileName,
+              file_size: fileSize,
+              status: "in_progress",
+              uploaded_at: new Date().toISOString(),
+            });
+          if (!insertErr) changed++;
+        }
+      }
+
+      return changed;
+    } catch (err) {
+      console.error("[VerificationService] syncDocumentsFromStorageForUser exception:", err);
+      return changed;
+    }
+  }
+  /**
    * Fetch user profile data for verification initialization
    */
   static async fetchUserProfileData(userId: string): Promise<ProfileData | null> {
@@ -142,8 +404,8 @@ export class VerificationService {
             personal_info_completed: completionStatus.personal_info_completed,
             documents_completed: false,
             selfie_completed: false,
-            phone_verified: completionStatus.phone_verified,
-            address_confirmed: false,
+            phone_verified: false,
+            address_confirmed: true,
           },
         ])
         .select()
@@ -223,7 +485,8 @@ export class VerificationService {
         .from("user_verifications")
         .update({
           selfie_completed: true,
-          current_step: "phone_verification",
+          documents_completed: true,
+          current_step: "review_submit",
           last_updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
@@ -247,19 +510,19 @@ export class VerificationService {
     phoneData: Partial<PhoneVerification>
   ): Promise<boolean> {
     try {
+      // Phone verification removed in v2 flow; advance to review_submit
       const { error } = await supabase
         .from("user_verifications")
         .update({
-          phone_verified: !!phoneData.isVerified,
-          current_step: phoneData.isVerified
-            ? "address_confirmation"
-            : "phone_verification",
+          phone_verified: false,
+          address_confirmed: true,
+          current_step: "review_submit",
           last_updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
 
       if (error) {
-        console.error("[VerificationService] Failed to update phone verification:", error);
+        console.error("[VerificationService] Phone verification (deprecated) update failed:", error);
         return false;
       }
       return true;
@@ -280,10 +543,8 @@ export class VerificationService {
       const { error } = await supabase
         .from("user_verifications")
         .update({
-          address_confirmed: !!addressData.isConfirmed,
-          current_step: addressData.isConfirmed
-            ? "review_submit"
-            : "address_confirmation",
+          address_confirmed: true,
+          current_step: "review_submit",
           last_updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
@@ -307,7 +568,7 @@ export class VerificationService {
       const { error } = await supabase
         .from("user_verifications")
         .update({
-          current_step: "processing_status",
+          current_step: "review_submit",
           overall_status: "pending_review",
           last_updated_at: new Date().toISOString(),
         })
@@ -332,7 +593,7 @@ export class VerificationService {
       const { error } = await supabase
         .from("user_verifications")
         .update({
-          current_step: "completion",
+          current_step: "review_submit",
           overall_status: "completed",
           completed_at: new Date().toISOString(),
           last_updated_at: new Date().toISOString(),
@@ -359,7 +620,7 @@ export class VerificationService {
         .from("user_verifications")
         .update({
           documents_completed: true,
-          current_step: VerificationStep.SELFIE_VERIFICATION,
+          current_step: "review_submit",
           last_updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);

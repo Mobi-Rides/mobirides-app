@@ -45,11 +45,8 @@ import {
 // Import step components
 import { PersonalInfoStep } from "./steps/PersonalInfoStep";
 import { DocumentUploadStep } from "./steps/DocumentUploadStep";
-import { SelfieVerificationStep } from "./steps/SelfieVerificationStep";
-import { PhoneVerificationStep } from "./steps/PhoneVerificationStep";
 import { ReviewSubmitStep } from "./steps/ReviewSubmitStep";
-import { ProcessingStatusStep } from "./steps/ProcessingStatusStep";
-import { CompletionStep } from "./steps/CompletionStep";
+import { SimpleDotProgress } from "./SimpleDotProgress";
 
 const STEP_CONFIG = {
   [VerificationStep.PERSONAL_INFO]: {
@@ -64,227 +61,15 @@ const STEP_CONFIG = {
     icon: FileText,
     component: DocumentUploadStep,
   },
-  [VerificationStep.SELFIE_VERIFICATION]: {
-    title: "Selfie Verification",
-    description: "Take a verification selfie",
-    icon: Camera,
-    component: SelfieVerificationStep,
-  },
-  [VerificationStep.PHONE_VERIFICATION]: {
-    title: "Phone Verification",
-    description: "Verify your phone number",
-    icon: Phone,
-    component: PhoneVerificationStep,
-  },
   [VerificationStep.REVIEW_SUBMIT]: {
     title: "Review & Submit",
     description: "Review and submit verification",
     icon: CheckCircle,
     component: ReviewSubmitStep,
   },
-  [VerificationStep.PROCESSING_STATUS]: {
-    title: "Processing",
-    description: "Verification in progress",
-    icon: Clock,
-    component: ProcessingStatusStep,
-  },
-  [VerificationStep.COMPLETION]: {
-    title: "Completed",
-    description: "Verification complete",
-    icon: Shield,
-    component: CompletionStep,
-  },
-};
+} as const;
 
-const ProgressStepper: React.FC<{
-  currentStep: VerificationStep;
-  stepStatuses: Record<VerificationStep, VerificationStatus>;
-  onStepClick: (step: VerificationStep) => void;
-  canNavigateToStep: (step: VerificationStep) => boolean;
-}> = ({ currentStep, stepStatuses, onStepClick, canNavigateToStep }) => {
-  const steps = Object.values(VerificationStep);
-
-  return (
-    <div className="w-full mb-8">
-      {/* Mobile: Horizontal scrolling container */}
-      <div className="sm:hidden">
-        <div className="flex items-center gap-6 overflow-x-auto pb-4 mb-4 scrollbar-hide">
-          <div className="flex items-center gap-6 min-w-max px-4">
-            {steps.map((step, index) => {
-              const config = STEP_CONFIG[step];
-              const Icon = config.icon;
-              const status = stepStatuses[step];
-              const isCurrent = step === currentStep;
-              const isCompleted = status === VerificationStatus.COMPLETED;
-              const canNavigate = canNavigateToStep(step);
-
-              // Color logic
-              let stepBg = "bg-gray-700";
-              let iconColor = "text-gray-300";
-              let ring = "";
-              let badgeBg = "bg-white";
-              let badgeText = "text-gray-700";
-              if (isCompleted) {
-                stepBg = "bg-green-500 hover:bg-green-600";
-                iconColor = "text-white";
-                badgeBg = "bg-white";
-                badgeText = "text-green-700";
-              } else if (isCurrent) {
-                stepBg = "bg-blue-600";
-                iconColor = "text-white";
-                ring = "ring-2 ring-blue-400 ring-offset-2";
-                badgeBg = "bg-white";
-                badgeText = "text-blue-700";
-              }
-
-              return (
-                <div key={step} className="flex items-center">
-                  <div className="flex flex-col items-center relative">
-                    <div className="relative">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className={`
-                          h-12 w-12 rounded-full mb-2
-                          ${stepBg} ${iconColor} ${ring}
-                          ${!canNavigate && !isCurrent && !isCompleted ? "opacity-50 cursor-not-allowed" : ""}
-                        `}
-                        onClick={() => canNavigate && onStepClick(step)}
-                        disabled={!canNavigate && !isCurrent && !isCompleted}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle className="h-6 w-6 text-white" />
-                        ) : (
-                          <Icon className={`h-6 w-6 ${iconColor}`} />
-                        )}
-                      </Button>
-                      
-                      <Badge
-                        variant="secondary"
-                        className={`absolute -top-1 -right-1 h-5 w-5 p-0 text-xs ${badgeBg} ${badgeText} border border-gray-200`}
-                      >
-                        {index + 1}
-                      </Badge>
-                    </div>
-
-                    <div className="text-center max-w-[80px]">
-                      <p
-                        className={`text-xs font-medium ${isCurrent ? "text-blue-600" : isCompleted ? "text-green-600" : "text-gray-400"}`}
-                      >
-                        {config.title}
-                      </p>
-                    </div>
-                  </div>
-
-                  {index < steps.length - 1 && (
-                    <div
-                      className={`
-                      w-8 h-0.5 mx-2 mb-8
-                      ${isCompleted ? "bg-green-500" : isCurrent ? "bg-blue-600" : "bg-gray-700"}
-                    `}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        {/* Scroll indicator for mobile */}
-        <div className="flex justify-center mb-2">
-          <div className="flex space-x-1">
-            {Array.from({ length: Math.ceil(steps.length / 3) }).map((_, i) => (
-              <div key={i} className="w-2 h-2 rounded-full bg-gray-300"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop: Original justify-between layout */}
-      <div className="hidden sm:flex items-center justify-between mb-4">
-        {steps.map((step, index) => {
-          const config = STEP_CONFIG[step];
-          const Icon = config.icon;
-          const status = stepStatuses[step];
-          const isCurrent = step === currentStep;
-          const isCompleted = status === VerificationStatus.COMPLETED;
-          const canNavigate = canNavigateToStep(step);
-
-          // Color logic
-          let stepBg = "bg-gray-700";
-          let iconColor = "text-gray-300";
-          let ring = "";
-          let badgeBg = "bg-white";
-          let badgeText = "text-gray-700";
-          if (isCompleted) {
-            stepBg = "bg-green-500 hover:bg-green-600";
-            iconColor = "text-white";
-            badgeBg = "bg-white";
-            badgeText = "text-green-700";
-          } else if (isCurrent) {
-            stepBg = "bg-blue-600";
-            iconColor = "text-white";
-            ring = "ring-2 ring-blue-400 ring-offset-2";
-            badgeBg = "bg-white";
-            badgeText = "text-blue-700";
-          }
-
-          return (
-            <div key={step} className="contents">
-              <div className="flex flex-col items-center">
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={`
-                      h-12 w-12 rounded-full mb-2
-                      ${stepBg} ${iconColor} ${ring}
-                      ${!canNavigate && !isCurrent && !isCompleted ? "opacity-50 cursor-not-allowed" : ""}
-                    `}
-                    onClick={() => canNavigate && onStepClick(step)}
-                    disabled={!canNavigate && !isCurrent && !isCompleted}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle className="h-6 w-6 text-white" />
-                    ) : (
-                      <Icon className={`h-6 w-6 ${iconColor}`} />
-                    )}
-                  </Button>
-                  
-                  <Badge
-                    variant="secondary"
-                    className={`absolute -top-1 -right-1 h-5 w-5 p-0 text-xs ${badgeBg} ${badgeText} border border-gray-200`}
-                  >
-                    {index + 1}
-                  </Badge>
-                </div>
-
-                <div className="text-center max-w-[80px]">
-                  <p
-                    className={`text-xs font-medium ${isCurrent ? "text-blue-600" : isCompleted ? "text-green-600" : "text-gray-400"}`}
-                  >
-                    {config.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground hidden sm:block">
-                    {config.description}
-                  </p>
-                </div>
-              </div>
-
-              {index < steps.length - 1 && (
-                <div
-                  className={`
-                  flex-1 h-0.5 mx-2 mb-8
-                  ${isCompleted ? "bg-green-500" : isCurrent ? "bg-blue-600" : "bg-gray-700"}
-                `}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+// Removed the complex ProgressStepper, replaced by a minimal SimpleDotProgress
 
 export const VerificationHub: React.FC = () => {
   const { user } = useAuth();
@@ -328,12 +113,7 @@ export const VerificationHub: React.FC = () => {
     initializeUserVerification();
   }, [user?.id, isInitialized, isLoading, verificationData]);
 
-  // Handle automatic redirect to completion step
-  React.useEffect(() => {
-    if (verificationData && verificationData.overall_status === "completed" && verificationData.current_step !== "completion") {
-      navigateToStep(VerificationStep.COMPLETION);
-    }
-  }, [verificationData?.overall_status, verificationData?.current_step, navigateToStep]);
+  // Simplified 3-step flow: no auto-redirect to completion
 
   const handleStepNavigation = (step: VerificationStep) => {
     if (!canNavigateToStep(step)) {
@@ -345,10 +125,8 @@ export const VerificationHub: React.FC = () => {
 
   const handleNextStep = () => {
     if (!verificationData) return;
-
-    const steps = Object.values(VerificationStep);
+    const steps = Object.keys(STEP_CONFIG) as VerificationStep[];
     const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
-
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
       handleStepNavigation(nextStep);
@@ -357,10 +135,8 @@ export const VerificationHub: React.FC = () => {
 
   const handlePreviousStep = () => {
     if (!verificationData) return;
-
-    const steps = Object.values(VerificationStep);
+    const steps = Object.keys(STEP_CONFIG) as VerificationStep[];
     const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
-
     if (currentIndex > 0) {
       const previousStep = steps[currentIndex - 1];
       navigateToStep(previousStep);
@@ -481,18 +257,14 @@ export const VerificationHub: React.FC = () => {
           </div>
         </div>
 
-        {/* Progress Stepper */}
-        <ProgressStepper
+        {/* Simplified Progress (3 steps) */}
+        <SimpleDotProgress
           currentStep={verificationData?.current_step as VerificationStep}
-          stepStatuses={{
-            [VerificationStep.PERSONAL_INFO]: verificationData?.personal_info_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.DOCUMENT_UPLOAD]: verificationData?.documents_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.SELFIE_VERIFICATION]: verificationData?.selfie_completed ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.PHONE_VERIFICATION]: verificationData?.phone_verified ? VerificationStatus.COMPLETED : VerificationStatus.NOT_STARTED,
-            [VerificationStep.REVIEW_SUBMIT]: VerificationStatus.NOT_STARTED,
-            [VerificationStep.PROCESSING_STATUS]: VerificationStatus.NOT_STARTED,
-            [VerificationStep.COMPLETION]: VerificationStatus.NOT_STARTED,
-          }}
+          steps={[
+            VerificationStep.PERSONAL_INFO,
+            VerificationStep.DOCUMENT_UPLOAD,
+            VerificationStep.REVIEW_SUBMIT,
+          ]}
           onStepClick={handleStepNavigation}
           canNavigateToStep={canNavigateToStep}
         />
@@ -527,7 +299,7 @@ export const VerificationHub: React.FC = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {Object.values(VerificationStep).map((step) => (
+                    {(Object.keys(STEP_CONFIG) as VerificationStep[]).map((step) => (
                       <Button
                         key={step}
                         variant="outline"

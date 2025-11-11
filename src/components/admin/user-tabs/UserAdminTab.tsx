@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Shield, UserCheck, UserX, Crown } from "lucide-react";
 import { toast } from "sonner";
+import { logAdminLogin, logAdminLogout } from "@/utils/auditLogger";
 import { useNavigate } from "react-router-dom";
 
 interface Profile {
