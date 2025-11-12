@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const AuthDebug = () => {
   const [authInfo, setAuthInfo] = useState<any>(null);
+  const [edgeFunctionTest, setEdgeFunctionTest] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const checkAuth = async () => {

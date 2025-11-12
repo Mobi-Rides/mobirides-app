@@ -284,7 +284,7 @@ export const VerificationHub: React.FC = () => {
         </Card>
 
         {/* Development Controls */}
-        {process.env.NODE_ENV === "development" && (
+        {import.meta.env.DEV && (
           <Card className="mt-6 border-orange-200">
             <CardHeader>
               <Button

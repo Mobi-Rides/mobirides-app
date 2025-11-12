@@ -221,7 +221,7 @@ export const useMap = ({
       return;
     }
 
-    let initializationTimeout: NodeJS.Timeout;
+    let initializationTimeout: ReturnType<typeof setTimeout>;
 
     // Clean up any previous observer
     if (observerRef.current) {

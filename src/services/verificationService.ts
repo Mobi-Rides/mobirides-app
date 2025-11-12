@@ -49,7 +49,7 @@ export class VerificationService {
           .from("verification_documents")
           .select("id")
           .eq("user_id", userId)
-          .eq("document_type", documentId);
+          .eq("document_type", documentId as any);
 
         if (fetchErr) {
           console.warn("[VerificationService] Failed to check existing verification_documents:", fetchErr);
@@ -198,7 +198,7 @@ export class VerificationService {
           .from("verification_documents")
           .select("id")
           .eq("user_id", userId)
-          .eq("document_type", guessedType);
+          .eq("document_type", guessedType as any);
 
         if (existingRows && existingRows.length > 0) {
           const targetId = existingRows[0].id;
@@ -387,7 +387,7 @@ export class VerificationService {
       const completionStatus = this.determineCompletionStatus(profileData);
 
       // Determine initial step based on profile completeness
-      let currentStep = "personal_info";
+      let currentStep: any = "personal_info";
       if (completionStatus.personal_info_completed) {
         currentStep = "document_upload";
       }
