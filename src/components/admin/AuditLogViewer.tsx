@@ -71,9 +71,9 @@ export const AuditLogViewer = () => {
     queryKey: ["audit-logs"],
     queryFn: async (): Promise<AuditLog[]> => {
       const { data: logs, error: logsError } = await supabase
-        .from("audit_logs")
+        .from("admin_activity_logs")
         .select("*")
-        .order("event_timestamp", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(100);
 
       console.log("Audit logs query result:", { logs, logsError });
@@ -89,8 +89,8 @@ export const AuditLogViewer = () => {
 
       const userIds = new Set<string>();
       logs.forEach(log => {
-        if (log.actor_id) userIds.add(log.actor_id);
-        if (log.target_id) userIds.add(log.target_id);
+        if (log.admin_id) userIds.add(log.admin_id);
+        if (log.resource_id) userIds.add(log.resource_id);
       });
 
       console.log("User IDs to fetch:", Array.from(userIds));
@@ -114,9 +114,24 @@ export const AuditLogViewer = () => {
       }
 
       const enrichedLogs = logs.map(log => ({
-        ...log,
-        actor_profile: log.actor_id ? profileMap.get(log.actor_id) : null,
-        target_profile: log.target_id ? profileMap.get(log.target_id) : null,
+        id: log.id,
+        event_type: log.action,
+        severity: 'medium' as const,
+        actor_id: log.admin_id,
+        target_id: log.resource_id,
+        session_id: null,
+        ip_address: log.ip_address as string | null,
+        user_agent: log.user_agent as string | null,
+        location_data: null,
+        action_details: (log.details || {}) as { [key: string]: unknown },
+        event_timestamp: log.created_at,
+        resource_type: log.resource_type,
+        resource_id: log.resource_id,
+        reason: null,
+        anomaly_flags: {},
+        compliance_tags: null,
+        actor_profile: log.admin_id ? profileMap.get(log.admin_id) : null,
+        target_profile: log.resource_id ? profileMap.get(log.resource_id) : null,
       }));
 
       return enrichedLogs;

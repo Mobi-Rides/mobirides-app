@@ -23,7 +23,7 @@ const useAdminStats = () => {
           supabase.from("profiles").select("id", { count: "exact", head: true }),
           supabase.from("cars").select("id", { count: "exact", head: true }),
           supabase.from("bookings").select("id", { count: "exact", head: true }),
-          supabase.from("user_verifications").select("id", { count: "exact", head: true }).neq("overall_status", "verified"),
+          supabase.from("user_verifications").select("id", { count: "exact", head: true }).neq("overall_status", "completed"),
           supabase.from("wallet_transactions").select("amount").eq("status", "completed")
         ]);
 

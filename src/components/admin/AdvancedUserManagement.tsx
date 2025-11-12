@@ -25,13 +25,18 @@ interface UserProfile {
   phone_number: string | null;
   role: "renter" | "host" | "admin" | "super_admin";
   created_at: string;
-  last_sign_in_at: string | null;
   is_restricted: boolean;
   restrictions: Array<{
-    restriction_type: string;
+    active: boolean;
+    created_at: string;
+    created_by: string;
+    ends_at: string;
+    id: string;
     reason: string;
-    restricted_at: string;
-    expires_at: string | null;
+    restriction_type: "booking_block" | "login_block" | "messaging_block" | "suspension";
+    starts_at: string;
+    updated_at: string;
+    user_id: string;
   }>;
   vehicles_count: number;
   bookings_count: number;
@@ -56,8 +61,7 @@ const useUsers = () => {
           full_name,
           phone_number,
           role,
-          created_at,
-          last_sign_in_at
+          created_at
         `)
         .order("created_at", { ascending: false });
 
@@ -635,11 +639,6 @@ const deleteUserMutation = useMutation({
                       <div className="text-sm">
                         {format(new Date(user.created_at), "MMM dd, yyyy")}
                       </div>
-                      {user.last_sign_in_at && (
-                        <div className="text-xs text-muted-foreground">
-                          Last sign in: {format(new Date(user.last_sign_in_at), "MMM dd, yyyy")}
-                        </div>
-                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

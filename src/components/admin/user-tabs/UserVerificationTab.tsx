@@ -262,11 +262,11 @@ export const UserVerificationTab = ({ userId }: UserVerificationTabProps) => {
                   <div className="text-sm">
                     <span className="font-medium">Verification Started</span>
                     <span className="text-muted-foreground ml-2">
-                      {new Date(verification.created_at).toLocaleString()}
+                      {new Date(verification.started_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
-                {verification.last_updated_at !== verification.created_at && (
+                {verification.last_updated_at !== verification.started_at && (
                   <div className="flex items-center space-x-3 p-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="text-sm">

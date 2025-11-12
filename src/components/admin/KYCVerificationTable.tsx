@@ -36,7 +36,7 @@ const usePendingVerifications = () => {
         .select(`
           id, user_id, overall_status, current_step, started_at, personal_info
         `)
-        .in("overall_status", ["pending", "submitted"])
+        .in("overall_status", ["pending_review", "in_progress"])
         .order("started_at", { ascending: false });
 
       if (error) throw error;
@@ -69,7 +69,7 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
       const { error } = await supabase
         .from("user_verifications")
         .update({ 
-          overall_status: "verified",
+          overall_status: "completed",
           completed_at: new Date().toISOString()
         })
         .eq("id", verificationId);
