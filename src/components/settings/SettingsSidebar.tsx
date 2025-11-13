@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User, Monitor, Bell, Shield, Menu } from 'lucide-react';
+import { User, Monitor, Bell, Shield, ShieldCheck, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -11,6 +11,7 @@ interface SettingsSidebarProps {
 
 const settingsItems = [
   { key: 'profile', label: 'Profile', path: '/settings/profile', icon: User },
+  { key: 'verification', label: 'Verification', path: '/settings/verification', icon: ShieldCheck },
   { key: 'display', label: 'Display', path: '/settings/display', icon: Monitor },
   { key: 'notifications', label: 'Notifications', path: '/notification-preferences', icon: Bell },
   { key: 'security', label: 'Security', path: '/settings/security', icon: Shield },
@@ -26,6 +27,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeItem }) 
     // Determine active item from current path
     if (location.pathname === '/notification-preferences') return 'notifications';
     if (location.pathname.includes('/settings/profile')) return 'profile';
+    if (location.pathname.includes('/settings/verification')) return 'verification';
     if (location.pathname.includes('/settings/display')) return 'display';
     if (location.pathname.includes('/settings/security')) return 'security';
     

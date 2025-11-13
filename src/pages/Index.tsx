@@ -7,6 +7,7 @@ import { UnauthenticatedView } from "@/components/home/UnauthenticatedView";
 import { LoadingView } from "@/components/home/LoadingView";
 import { HostView } from "@/components/home/HostView";
 import { RenterView } from "@/components/home/RenterView";
+import { ReverificationFloatingPopup } from "@/components/verification/ReverificationFloatingPopup";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 
 const Index = () => {
@@ -55,6 +56,10 @@ const Index = () => {
           />
         )}
       </main>
+      
+      {/* Floating re-verification popup - only shows when needed */}
+      {isAuthenticated && <ReverificationFloatingPopup />}
+      
       <Navigation />
     </div>
   );

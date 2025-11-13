@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Navigation, Plus, Search, SlidersHorizontal, LayoutDashboard, User, Bell, LogOut } from "lucide-react";
+import { Navigation, Plus, Search, SlidersHorizontal, LayoutDashboard, User, Bell, LogOut, ShieldCheck, CheckCircle2, Clock, XCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { VerificationStatusBadge } from "@/components/verification/VerificationStatusBadge";
+import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 
 interface HeaderProps {
   searchQuery: string;
@@ -42,6 +43,7 @@ export const Header = ({
   const navigate = useNavigate();
   const locationPath = useLocation();
   const { user } = useAuth();
+  const { verificationData, isVerified } = useVerificationStatus();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [defaultTab, setDefaultTab] = useState<"signin" | "signup">("signin");
   const [locationData, setLocationData] = useState<LocationState>({
@@ -320,6 +322,31 @@ export const Header = ({
                   <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={() => navigate('/settings/verification')} className="cursor-pointer">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        <span>Verification</span>
+                      </div>
+                      {verificationData && (
+                        <div className="ml-2">
+                          {verificationData.overall_status === 'completed' && (
+                            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          )}
+                          {verificationData.overall_status === 'requires_reverification' && (
+                            <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                          )}
+                          {(verificationData.overall_status === 'pending_review' || verificationData.overall_status === 'pending') && (
+                            <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                          )}
+                          {verificationData.overall_status === 'rejected' && (
+                            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem onClick={() => navigate('/notifications')} className="cursor-pointer">
