@@ -114,20 +114,7 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     }
   }, [refreshData]);
 
-  const completeSelfieVerification = useCallback(async () => {
-    if (!verificationData?.user_id) throw new Error("No verification data");
-
-    try {
-      setIsLoading(true);
-      await VerificationService.completeSelfieVerification(verificationData.user_id);
-      await refreshData();
-    } catch (error) {
-      console.error("[VerificationContext] Failed to complete selfie verification:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [verificationData?.user_id, refreshData]);
+  // Removed completeSelfieVerification - not needed in 3-step flow
 
   const updatePhoneVerification = useCallback(async (phoneData: Partial<PhoneVerification>) => {
     if (!verificationData?.user_id) throw new Error("No verification data");
@@ -261,7 +248,6 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     refreshFromProfile,
     updatePersonalInfo,
     completeDocumentUpload,
-    completeSelfieVerification,
     updatePhoneVerification,
     // updateAddressConfirmation, // Removed in new flow
     submitForReview,
