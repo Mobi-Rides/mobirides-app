@@ -37,31 +37,22 @@ export const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
     }
   };
 
+  // 3-STEP FLOW: Only 3 review items (removed phone, selfie, address)
   const reviewItems = [
     {
       title: "Personal Information",
-      completed: verificationData?.personal_info?.fullName ? true : false,
+      completed: verificationData?.personal_info_completed || false,
       details: String((verificationData?.personal_info as any)?.fullName || "Not completed"),
     },
     {
-      title: "Document Upload",
-      completed: true, // Assuming completed if we reached this step
-      details: "All required documents uploaded",
+      title: "Documents Uploaded",
+      completed: verificationData?.documents_completed || false,
+      details: "3 required documents (National ID + Proof of Income)",
     },
     {
-      title: "Selfie Verification",
-      completed: true,
-      details: "Selfie photo captured",
-    },
-    {
-      title: "Phone Verification",
-      completed: true,
-      details: String((verificationData?.personal_info as any)?.phoneNumber || "Phone verified"),
-    },
-    {
-      title: "Address Confirmation",
-      completed: true,
-      details: "Address confirmed",
+      title: "Ready for Review",
+      completed: verificationData?.personal_info_completed && verificationData?.documents_completed,
+      details: "All requirements met for admin review",
     },
   ];
 
@@ -98,7 +89,13 @@ export const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
       <Card>
         <CardContent className="pt-6">
           <div className="text-sm text-muted-foreground space-y-2">
-            <p>
+            <p className="font-medium text-foreground mb-2">By submitting, you confirm that:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>All personal information provided is accurate and up-to-date</li>
+              <li>All required documents (National ID + Proof of Income) are clear and valid</li>
+              <li>You consent to verification review by MobiRides admin team</li>
+            </ul>
+            <p className="font-medium text-foreground mt-4 mb-2">
               <strong>What happens next?</strong>
             </p>
             <ul className="list-disc list-inside space-y-1">

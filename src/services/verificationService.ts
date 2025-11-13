@@ -477,14 +477,35 @@ export class VerificationService {
   }
 
   /**
-   * Complete selfie verification
+   * Complete document upload (3-STEP FLOW)
+   * Check for 3 required documents: national_id_front, national_id_back, proof_of_income
    */
-  static async completeSelfieVerification(userId: string): Promise<boolean> {
+  static async completeDocumentUpload(userId: string): Promise<boolean> {
     try {
+      // Check if all 3 required documents are uploaded
+      const requiredDocTypes = ['national_id_front', 'national_id_back', 'proof_of_income'] as const;
+      
+      const { data: docs, error: fetchError } = await supabase
+        .from("verification_documents")
+        .select('document_type')
+        .eq("user_id", userId)
+        .in('document_type', requiredDocTypes as any);
+
+      if (fetchError) {
+        console.error("[VerificationService] Failed to fetch documents:", fetchError);
+        return false;
+      }
+
+      // Verify all 3 documents are present
+      if (!docs || docs.length < 3) {
+        console.warn("[VerificationService] Not all required documents uploaded:", docs?.length || 0, "/ 3");
+        return false;
+      }
+
+      // Mark documents as completed and move to review step
       const { error } = await supabase
         .from("user_verifications")
         .update({
-          selfie_completed: true,
           documents_completed: true,
           current_step: "review_submit",
           last_updated_at: new Date().toISOString(),
@@ -492,12 +513,12 @@ export class VerificationService {
         .eq("user_id", userId);
 
       if (error) {
-        console.error("[VerificationService] Failed to complete selfie verification:", error);
+        console.error("[VerificationService] Failed to complete document upload:", error);
         return false;
       }
       return true;
     } catch (error) {
-      console.error("[VerificationService] Failed to complete selfie verification:", error);
+      console.error("[VerificationService] Failed to complete document upload:", error);
       return false;
     }
   }

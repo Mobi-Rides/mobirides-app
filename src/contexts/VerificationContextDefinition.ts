@@ -20,7 +20,6 @@ export interface VerificationContextType {
   refreshFromProfile: () => Promise<void>;
   updatePersonalInfo: (personalInfo: Partial<PersonalInfo>) => Promise<void>;
   completeDocumentUpload: (userId: string) => Promise<boolean>;
-  completeSelfieVerification: () => Promise<void>;
   updatePhoneVerification: (phoneData: Partial<PhoneVerification>) => Promise<void>;
   submitForReview: () => Promise<void>;
   navigateToStep: (step: VerificationStep) => Promise<void>;
