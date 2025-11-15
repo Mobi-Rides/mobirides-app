@@ -23,7 +23,7 @@ interface PendingVerification {
   user_id: string;
   overall_status: string;
   current_step: string;
-  created_at: string;
+  started_at: string;
   personal_info: unknown;
 }
 
@@ -34,10 +34,10 @@ const usePendingVerifications = () => {
       const { data, error } = await supabase
         .from("user_verifications")
         .select(`
-          id, user_id, overall_status, current_step, created_at, personal_info
+          id, user_id, overall_status, current_step, started_at, personal_info
         `)
-        .in("overall_status", ["pending", "submitted"])
-        .order("created_at", { ascending: false });
+        .in("overall_status", ["pending_review", "in_progress"])
+        .order("started_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -69,7 +69,7 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
       const { error } = await supabase
         .from("user_verifications")
         .update({ 
-          overall_status: "verified",
+          overall_status: "completed",
           completed_at: new Date().toISOString()
         })
         .eq("id", verificationId);
@@ -127,7 +127,7 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
       </TableCell>
       <TableCell>{verification.current_step}</TableCell>
       <TableCell>
-        {new Date(verification.created_at).toLocaleDateString()}
+        {new Date(verification.started_at).toLocaleDateString()}
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-2">

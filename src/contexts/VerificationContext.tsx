@@ -114,20 +114,7 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     }
   }, [refreshData]);
 
-  const completeSelfieVerification = useCallback(async () => {
-    if (!verificationData?.user_id) throw new Error("No verification data");
-
-    try {
-      setIsLoading(true);
-      await VerificationService.completeSelfieVerification(verificationData.user_id);
-      await refreshData();
-    } catch (error) {
-      console.error("[VerificationContext] Failed to complete selfie verification:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [verificationData?.user_id, refreshData]);
+  // Removed completeSelfieVerification - not needed in 3-step flow
 
   const updatePhoneVerification = useCallback(async (phoneData: Partial<PhoneVerification>) => {
     if (!verificationData?.user_id) throw new Error("No verification data");
@@ -197,12 +184,45 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
   }, [verificationData]);
 
   const getStepProgress = useCallback(() => {
-    if (!verificationData) return { completed: 0, total: 7, percentage: 0 };
+    // Use simplified 3-step model for progress display
+    if (!verificationData) return { completed: 0, total: 3, percentage: 0 };
 
-    const steps = Object.values(VerificationStep);
-    const currentIndex = steps.indexOf(verificationData.current_step as VerificationStep);
-    const completed = currentIndex + 1;
-    const total = steps.length;
+    const CORE_STEPS: VerificationStep[] = [
+      VerificationStep.PERSONAL_INFO,
+      VerificationStep.DOCUMENT_UPLOAD,
+      VerificationStep.REVIEW_SUBMIT,
+    ];
+
+    const step = verificationData.current_step as VerificationStep;
+    let currentIndex = 0;
+
+    switch (step) {
+      case VerificationStep.PERSONAL_INFO:
+        currentIndex = 0;
+        break;
+      case VerificationStep.DOCUMENT_UPLOAD:
+      case VerificationStep.SELFIE_VERIFICATION: // legacy steps mapped to document upload
+      case VerificationStep.PHONE_VERIFICATION: // legacy steps mapped to document upload
+        currentIndex = 1;
+        break;
+      case VerificationStep.REVIEW_SUBMIT:
+      case VerificationStep.PROCESSING_STATUS: // legacy steps mapped to final review
+      case VerificationStep.COMPLETION: // legacy steps mapped to final review
+        currentIndex = 2;
+        break;
+      default:
+        // Fallback based on completion flags
+        if (verificationData.personal_info_completed && verificationData.documents_completed) {
+          currentIndex = 2;
+        } else if (verificationData.personal_info_completed) {
+          currentIndex = 1;
+        } else {
+          currentIndex = 0;
+        }
+    }
+
+    const completed = Math.min(currentIndex + 1, CORE_STEPS.length);
+    const total = CORE_STEPS.length;
     const percentage = Math.round((completed / total) * 100);
 
     return { completed, total, percentage };
@@ -228,7 +248,6 @@ export const VerificationProvider: React.FC<VerificationProviderProps> = ({ chil
     refreshFromProfile,
     updatePersonalInfo,
     completeDocumentUpload,
-    completeSelfieVerification,
     updatePhoneVerification,
     // updateAddressConfirmation, // Removed in new flow
     submitForReview,

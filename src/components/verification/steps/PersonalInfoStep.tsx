@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, User, RefreshCw, Info } from "lucide-react";
+import { ArrowRight, User, RefreshCw, Info, Phone } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { VerificationService } from "@/services/verificationService";
+import countryCodes from "@/constants/Countries";
 
 interface PersonalInfoStepProps {
   onNext: () => void;
@@ -35,8 +37,20 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
       city: "",
       postalCode: "",
     },
+    emergencyContact: {
+      name: "",
+      relationship: "",
+      phoneNumber: "",
+      countryCode: "",
+    },
   });
   const [hasPrefilledData, setHasPrefilledData] = useState(false);
+
+  // Relationships list aligned with profile editor
+  const RELATIONSHIPS = [
+    "Spouse", "Parent", "Child", "Sibling", "Friend",
+    "Colleague", "Neighbor", "Other"
+  ];
 
   // Update form data when verification data changes
   useEffect(() => {
@@ -54,6 +68,12 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
           city: String((personalInfo as any)?.address?.city || ""),
           postalCode: String((personalInfo as any)?.address?.postalCode || ""),
         },
+        emergencyContact: {
+          name: String((personalInfo as any)?.emergencyContact?.name || ""),
+          relationship: String((personalInfo as any)?.emergencyContact?.relationship || ""),
+          phoneNumber: String((personalInfo as any)?.emergencyContact?.phoneNumber || ""),
+          countryCode: String((personalInfo as any)?.emergencyContact?.countryCode || ""),
+        },
       };
       
       setFormData(newFormData);
@@ -64,11 +84,36 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
     }
   }, [verificationData]);
 
+  const validateInternationalPhone = (phone: string): boolean => {
+    // Basic international phone validation (E.164-like or common local formats)
+    // 1) Allow leading '+' followed by 8-15 digits
+    // 2) Or allow digits with spaces/hyphens/parentheses, total digits 7-15
+    const trimmed = phone.trim();
+    const plusFormat = /^\+[0-9\s\-()]{8,20}$/; // coarse pre-check for plus format with separators
+    if (plusFormat.test(trimmed)) {
+      const digits = trimmed.replace(/[^0-9]/g, "");
+      return digits.length >= 8 && digits.length <= 15;
+    }
+    const digitsOnly = trimmed.replace(/[^0-9]/g, "");
+    return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.fullName || !formData.dateOfBirth || !formData.nationalIdNumber) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Emergency contact required fields
+    const ec = formData.emergencyContact;
+    if (!ec.name.trim() || !ec.relationship || !ec.countryCode || !ec.phoneNumber.trim()) {
+      toast.error("Please provide emergency contact name, relationship, country, and phone");
+      return;
+    }
+    if (!validateInternationalPhone(ec.phoneNumber)) {
+      toast.error("Enter a valid international emergency contact phone number");
       return;
     }
 
@@ -90,6 +135,15 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
         address: {
           ...prev.address,
           [addressField]: value,
+        },
+      }));
+    } else if (field.includes("emergencyContact.")) {
+      const ecField = field.split(".")[1];
+      setFormData(prev => ({
+        ...prev,
+        emergencyContact: {
+          ...prev.emergencyContact,
+          [ecField]: value,
         },
       }));
     } else {
@@ -260,6 +314,73 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
                     value={formData.address.postalCode}
                     onChange={(e) => handleInputChange("address.postalCode", e.target.value)}
                     placeholder="Postal code"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact Section */}
+            <div className="space-y-4">
+              <h3 className="font-medium flex items-center gap-2"><Phone className="h-4 w-4" />Emergency Contact</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="ec_name">Name *</Label>
+                  <Input
+                    id="ec_name"
+                    value={formData.emergencyContact.name}
+                    onChange={(e) => handleInputChange("emergencyContact.name", e.target.value)}
+                    placeholder="Enter contact name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="ec_relationship">Relationship *</Label>
+                  <Select
+                    value={formData.emergencyContact.relationship}
+                    onValueChange={(value) => handleInputChange("emergencyContact.relationship", value)}
+                  >
+                    <SelectTrigger id="ec_relationship">
+                      <SelectValue placeholder="Select relationship" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RELATIONSHIPS.map((relationship) => (
+                        <SelectItem key={relationship} value={relationship}>
+                          {relationship}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="ec_country">Country *</Label>
+                  <Select
+                    value={formData.emergencyContact.countryCode}
+                    onValueChange={(value) => handleInputChange("emergencyContact.countryCode", value)}
+                  >
+                    <SelectTrigger id="ec_country">
+                      <SelectValue placeholder="Select country code" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countryCodes.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.country} ({c.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="ec_phone">Phone Number *</Label>
+                  <Input
+                    id="ec_phone"
+                    type="tel"
+                    value={formData.emergencyContact.phoneNumber}
+                    onChange={(e) => handleInputChange("emergencyContact.phoneNumber", e.target.value)}
+                    placeholder="Enter phone number (e.g., +1234567890)"
+                    required
                   />
                 </div>
               </div>

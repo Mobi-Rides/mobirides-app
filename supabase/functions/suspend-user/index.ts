@@ -252,6 +252,39 @@ serve(async (req) => {
       // The user is already banned in Auth
     }
 
+    // Log the restriction action for audit purposes
+    try {
+      const { error: auditError } = await supabaseAdmin.rpc('log_audit_event', {
+        p_event_type: 'user_restriction_created',
+        p_severity: restrictionType === 'ban' ? 'high' : 'medium',
+        p_actor_id: user.id,
+        p_target_id: userId,
+        p_session_id: null,
+        p_ip_address: null,
+        p_user_agent: null,
+        p_location_data: null,
+        p_action_details: {
+          restrictionType: dbRestrictionType,
+          reason,
+          duration: banDuration,
+          expiresAt
+        },
+        p_resource_type: 'user',
+        p_resource_id: userId,
+        p_reason: reason,
+        p_anomaly_flags: null,
+        p_compliance_tags: ['user-management', 'restriction', restrictionType === 'ban' ? 'ban' : 'suspension']
+      });
+
+      if (auditError) {
+        console.error("Error logging audit event:", auditError);
+        // Don't fail the operation if audit logging fails
+      }
+    } catch (auditLogError) {
+      console.error("Exception during audit logging:", auditLogError);
+      // Don't fail the operation if audit logging fails
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

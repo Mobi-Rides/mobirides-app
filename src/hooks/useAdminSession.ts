@@ -9,8 +9,20 @@ interface AdminSession {
   created_at: string;
   expires_at: string;
   last_activity: string;
-  active: boolean;
+  is_active: boolean;
+  admin_id: string;
+  ip_address: string | null;
+  user_agent: string | null;
 }
+
+// Helper to cast database result to AdminSession
+const castToAdminSession = (data: any[]): AdminSession[] => {
+  return data.map(item => ({
+    ...item,
+    ip_address: item.ip_address as string | null,
+    user_agent: item.user_agent as string | null
+  }));
+};
 
 export const useAdminSession = () => {
   const { user } = useAuth();
@@ -30,7 +42,7 @@ export const useAdminSession = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setSessions(data || []);
+      setSessions(castToAdminSession(data || []));
     } catch (error) {
       console.error("Error fetching admin sessions:", error);
     } finally {
@@ -77,7 +89,7 @@ export const useAdminSession = () => {
     try {
       const { error } = await supabase
         .from("admin_sessions")
-        .update({ active: false })
+        .update({ is_active: false })
         .eq("id", sessionId)
         .eq("admin_id", user.id);
 

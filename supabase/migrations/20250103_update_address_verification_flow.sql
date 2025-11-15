@@ -12,15 +12,15 @@ WHERE
     OR address_confirmed IS NULL;
 
 -- Update current_step for users who were stuck on address confirmation
-UPDATE user_verifications 
-SET 
-    current_step = CASE 
-        WHEN current_step = 'ADDRESS_CONFIRMATION' THEN 'COMPLETION'
+UPDATE user_verifications
+SET
+    current_step = CASE
+        WHEN current_step = 'address_confirmation' THEN 'completion'
         ELSE current_step
     END,
     last_updated_at = NOW()
-WHERE 
-    current_step = 'ADDRESS_CONFIRMATION';
+WHERE
+    current_step = 'address_confirmation';
 
 -- Update overall_status for completed verifications
 UPDATE user_verifications 

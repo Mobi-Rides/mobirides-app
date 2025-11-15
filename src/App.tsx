@@ -84,6 +84,7 @@ const CarListing = lazy(() => import("@/pages/CarListing"));
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
+const VerificationSettingsPage = lazy(() => import("@/pages/VerificationSettingsPage"));
 const DisplaySettingsPage = lazy(() => import("@/pages/DisplaySettingsPage"));
 const SecuritySettingsPage = lazy(() => import("@/pages/SecuritySettingsPage"));
 
@@ -96,6 +97,7 @@ const AdminTransactions = lazy(() => import("@/pages/admin/AdminTransactions"));
 const AdminVerifications = lazy(() => import("@/pages/admin/AdminVerifications"));
 const AdminMessages = lazy(() => import("@/pages/admin/AdminMessages"));
 const AdminManagement = lazy(() => import("@/pages/admin/AdminManagement"));
+const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
 
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
@@ -250,6 +252,13 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <ProfileSettingsPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/settings/verification" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <VerificationSettingsPage />
                             </ProtectedRoute>
                           </Suspense>
                         } />
@@ -410,7 +419,12 @@ function App() {
                             <AdminManagement />
                           </Suspense>
                         } />
-                        
+                        <Route path="/admin/audit" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminAudit />
+                          </Suspense>
+                        } />
+
                         <Route path="*" element={
                           <Suspense fallback={<LoadingView />}>
                             <div className="flex items-center justify-center min-h-screen">

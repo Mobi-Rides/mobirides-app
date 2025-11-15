@@ -118,7 +118,7 @@ export const PersonalInformationCard = ({ profile }: PersonalInformationCardProp
 
       setIsEditing(false);
       // Trigger profile refetch
-      queryClient.invalidateQueries(['fullProfile']);
+      queryClient.invalidateQueries({ queryKey: ['fullProfile'] });
 
     } catch (error) {
       toast({

@@ -149,7 +149,7 @@ export class HandoverErrorBoundary extends Component<Props, State> {
                 </Button>
               </div>
 
-              {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+              {import.meta.env.DEV && this.state.errorInfo && (
                 <details className="mt-4 text-xs">
                   <summary className="cursor-pointer text-muted-foreground">
                     Error Details (Development)
