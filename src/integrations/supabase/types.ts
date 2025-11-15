@@ -58,6 +58,39 @@ export type Database = {
           },
         ]
       }
+      admin_capabilities: {
+        Row: {
+          admin_id: string
+          capability_key: string
+          created_at: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          capability_key: string
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          capability_key?: string
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_sessions: {
         Row: {
           admin_id: string
@@ -1745,6 +1778,54 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_campaigns: {
+        Row: {
+          audience_count: number | null
+          content: Json
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          metrics: Json
+          name: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_campaign_status"]
+          target_filters: Json
+          updated_at: string
+        }
+        Insert: {
+          audience_count?: number | null
+          content?: Json
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          metrics?: Json
+          name: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_campaign_status"]
+          target_filters?: Json
+          updated_at?: string
+        }
+        Update: {
+          audience_count?: number | null
+          content?: Json
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          metrics?: Json
+          name?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_campaign_status"]
+          target_filters?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           content: string | null
@@ -2428,6 +2509,64 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vehicle_transfers: {
+        Row: {
+          from_owner_id: string
+          id: string
+          metadata: Json
+          to_owner_id: string
+          transfer_notes: string | null
+          transfer_reason: string | null
+          transferred_at: string
+          transferred_by: string
+          vehicle_id: string
+        }
+        Insert: {
+          from_owner_id: string
+          id?: string
+          metadata?: Json
+          to_owner_id: string
+          transfer_notes?: string | null
+          transfer_reason?: string | null
+          transferred_at?: string
+          transferred_by: string
+          vehicle_id: string
+        }
+        Update: {
+          from_owner_id?: string
+          id?: string
+          metadata?: Json
+          to_owner_id?: string
+          transfer_notes?: string | null
+          transfer_reason?: string | null
+          transferred_at?: string
+          transferred_by?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_transfers_from_owner_id_fkey"
+            columns: ["from_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_transfers_to_owner_id_fkey"
+            columns: ["to_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_transfers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_restrictions: {
         Row: {
@@ -3136,6 +3275,48 @@ export type Database = {
           session_info: string
         }[]
       }
+      ban_user: {
+        Args: { p_user_id: string; p_reason?: string | null }
+        Returns: Database["public"]["Tables"]["user_restrictions"]["Row"]
+      }
+      bulk_suspend_users: {
+        Args: {
+          p_user_ids: string[]
+          p_reason?: string | null
+          p_duration?: unknown
+        }
+        Returns: { user_id: string; restriction_id: string }[]
+      }
+      suspend_user: {
+        Args: {
+          p_user_id: string
+          p_reason?: string | null
+          p_duration?: unknown
+        }
+        Returns: Database["public"]["Tables"]["user_restrictions"]["Row"]
+      }
+      transfer_vehicle: {
+        Args: {
+          p_vehicle_id: string
+          p_from_owner_id: string
+          p_to_owner_id: string
+          p_reason?: string | null
+          p_notes?: string | null
+        }
+        Returns: Database["public"]["Tables"]["vehicle_transfers"]["Row"]
+      }
+      validate_vehicle_transfer: {
+        Args: {
+          p_vehicle_id: string
+          p_from_owner_id: string
+          p_to_owner_id: string
+        }
+        Returns: Database["public"]["CompositeTypes"]["vehicle_transfer_validation_result"]
+      }
+      validate_notification_campaign: {
+        Args: { p_campaign_data: Json }
+        Returns: Json
+      }
       bytea_to_text: { Args: { data: string }; Returns: string }
       calculate_car_rating: { Args: { car_uuid: string }; Returns: number }
       calculate_category_ratings: { Args: { car_uuid: string }; Returns: Json }
@@ -3167,6 +3348,7 @@ export type Database = {
       cleanup_expired_admin_sessions: { Args: never; Returns: undefined }
       cleanup_expired_bypass_sessions: { Args: never; Returns: number }
       cleanup_expired_confirmations: { Args: never; Returns: undefined }
+      cleanup_expired_restrictions: { Args: never; Returns: number }
       cleanup_expired_notifications_enhanced: {
         Args: never
         Returns: {
@@ -3304,6 +3486,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_notification_campaign: {
+        Args: { p_campaign_data: Json }
+        Returns: Database["public"]["Tables"]["notification_campaigns"]["Row"]
+      }
       create_notification_with_expiration: {
         Args: {
           p_content?: string
@@ -3369,6 +3555,16 @@ export type Database = {
       delete_old_notifications: {
         Args: { p_days_old?: number }
         Returns: number
+      }
+      export_user_data: { Args: { p_user_id: string }; Returns: Json }
+      get_admin_capabilities: {
+        Args: { p_admin_id?: string | null }
+        Returns: {
+          capability_key: string
+          granted_at: string
+          granted_by: string | null
+          metadata: Json
+        }[]
       }
       get_bypass_statistics: {
         Args: { p_end_date?: string; p_start_date?: string }
@@ -3811,6 +4007,12 @@ export type Database = {
         | "booking_request_sent"
         | "pickup_reminder"
         | "return_reminder"
+      notification_campaign_status:
+        | "draft"
+        | "scheduled"
+        | "in_progress"
+        | "sent"
+        | "cancelled"
       restriction_type_enum:
         | "login_block"
         | "booking_block"
@@ -3862,6 +4064,11 @@ export type Database = {
         content_type: string | null
         headers: Database["public"]["CompositeTypes"]["http_header"][] | null
         content: string | null
+      }
+      vehicle_transfer_validation_result: {
+        valid: boolean | null
+        warnings: string[] | null
+        errors: string[] | null
       }
     }
   }
