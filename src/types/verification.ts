@@ -109,7 +109,7 @@ export interface VerificationData {
   user_id: string;
   current_step: string;
   overall_status: string;
-  created_at: string;
+  started_at: string;
   last_updated_at: string;
   completed_at?: string;
   

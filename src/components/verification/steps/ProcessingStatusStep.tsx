@@ -433,8 +433,8 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
                   Verification Submitted
                 </p>
                 <p className="text-sm text-green-600">
-                  {verificationData?.created_at
-                    ? new Date(verificationData.created_at).toLocaleString()
+                  {verificationData?.started_at
+                    ? new Date(verificationData.started_at).toLocaleString()
                     : "Just now"}
                 </p>
               </div>
@@ -474,7 +474,7 @@ export const ProcessingStatusStep: React.FC<ProcessingStatusStepProps> = ({
       </div>
 
       {/* Development Notice */}
-      {process.env.NODE_ENV === "development" && (
+      {import.meta.env.DEV && (
         <Alert className="border-orange-200 bg-orange-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>

@@ -25,13 +25,18 @@ interface UserProfile {
   phone_number: string | null;
   role: "renter" | "host" | "admin" | "super_admin";
   created_at: string;
-  last_sign_in_at: string | null;
   is_restricted: boolean;
   restrictions: Array<{
-    restriction_type: string;
+    active: boolean;
+    created_at: string;
+    created_by: string;
+    ends_at: string;
+    id: string;
     reason: string;
-    restricted_at: string;
-    expires_at: string | null;
+    restriction_type: "booking_block" | "login_block" | "messaging_block" | "suspension";
+    starts_at: string;
+    updated_at: string;
+    user_id: string;
   }>;
   vehicles_count: number;
   bookings_count: number;
@@ -56,8 +61,7 @@ const useUsers = () => {
           full_name,
           phone_number,
           role,
-          created_at,
-          last_sign_in_at
+          created_at
         `)
         .order("created_at", { ascending: false });
 
@@ -200,6 +204,36 @@ export const AdvancedUserManagement = () => {
         } catch (e) {
           console.warn("Failed to log audit event for restriction", e);
         }
+
+        // Send system notification to the user about the restriction
+        try {
+          const isBan = restrictionForm.restrictionType === 'ban';
+          const title = isBan ? "Account Banned" : "Account Suspended";
+          const description = isBan
+            ? `Your account has been permanently banned. Reason: ${restrictionForm.reason}`
+            : `Your account has been suspended. Reason: ${restrictionForm.reason}`;
+
+          const { error: notifyError } = await supabase.rpc("create_system_notification", {
+            p_user_id: selectedUser.id,
+            p_title: title,
+            p_description: description,
+            p_metadata: {
+              source: "admin_restriction",
+              restriction_type: restrictionForm.restrictionType,
+              reason: restrictionForm.reason,
+              duration: restrictionForm.duration,
+              duration_value: restrictionForm.durationValue,
+              applied_by: (await supabase.auth.getUser()).data.user?.id,
+              applied_at: new Date().toISOString(),
+            },
+          });
+
+          if (notifyError) {
+            console.warn("[AdvancedUserManagement] Failed to create restriction notification:", notifyError);
+          }
+        } catch (notifyErr) {
+          console.warn("[AdvancedUserManagement] Notification RPC error:", notifyErr);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -247,6 +281,26 @@ export const AdvancedUserManagement = () => {
         }
       } catch (e) {
         console.warn("Failed to log audit event for restriction removal", e);
+      }
+
+      // Send system notification to the user about restriction removal
+      try {
+        const { error: notifyError } = await supabase.rpc("create_system_notification", {
+          p_user_id: userId,
+          p_title: "Account Restriction Removed",
+          p_description: "Your account restriction has been removed. You now have full access to the platform.",
+          p_metadata: {
+            source: "admin_restriction_removal",
+            removed_by: (await supabase.auth.getUser()).data.user?.id,
+            removed_at: new Date().toISOString(),
+          },
+        });
+
+        if (notifyError) {
+          console.warn("[AdvancedUserManagement] Failed to create restriction removal notification:", notifyError);
+        }
+      } catch (notifyErr) {
+        console.warn("[AdvancedUserManagement] Notification RPC error:", notifyErr);
       }
 
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -635,11 +689,6 @@ const deleteUserMutation = useMutation({
                       <div className="text-sm">
                         {format(new Date(user.created_at), "MMM dd, yyyy")}
                       </div>
-                      {user.last_sign_in_at && (
-                        <div className="text-xs text-muted-foreground">
-                          Last sign in: {format(new Date(user.last_sign_in_at), "MMM dd, yyyy")}
-                        </div>
-                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

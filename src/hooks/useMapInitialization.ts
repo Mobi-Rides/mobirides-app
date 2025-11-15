@@ -19,7 +19,7 @@ export const useMapInitialization = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const initializationAttempted = useRef(false);
-  const initTimeout = useRef<NodeJS.Timeout | null>(null);
+  const initTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Reset state when dependencies change

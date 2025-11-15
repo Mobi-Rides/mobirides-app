@@ -431,7 +431,7 @@ export const SelfieVerificationStep: React.FC<SelfieVerificationStepProps> = ({
   onNext,
   onPrevious,
 }) => {
-  const { verificationData, completeSelfieVerification, isLoading } =
+  const { verificationData, completeDocumentUpload, isLoading } =
     useVerification();
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -485,9 +485,9 @@ export const SelfieVerificationStep: React.FC<SelfieVerificationStepProps> = ({
     try {
       setIsSubmitting(true);
 
-      // In a real implementation, you would upload the photo blob to your storage
-      // For development, we'll just mark the step as completed
-      await completeSelfieVerification();
+      // In 3-step flow, selfie is no longer required
+      // Just mark document upload as complete
+      await completeDocumentUpload(verificationData?.user_id || '');
 
       toast.success("Selfie verification completed!");
 

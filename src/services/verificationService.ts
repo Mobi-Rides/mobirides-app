@@ -49,7 +49,7 @@ export class VerificationService {
           .from("verification_documents")
           .select("id")
           .eq("user_id", userId)
-          .eq("document_type", documentId);
+          .eq("document_type", documentId as any);
 
         if (fetchErr) {
           console.warn("[VerificationService] Failed to check existing verification_documents:", fetchErr);
@@ -198,7 +198,7 @@ export class VerificationService {
           .from("verification_documents")
           .select("id")
           .eq("user_id", userId)
-          .eq("document_type", guessedType);
+          .eq("document_type", guessedType as any);
 
         if (existingRows && existingRows.length > 0) {
           const targetId = existingRows[0].id;
@@ -387,7 +387,7 @@ export class VerificationService {
       const completionStatus = this.determineCompletionStatus(profileData);
 
       // Determine initial step based on profile completeness
-      let currentStep = "personal_info";
+      let currentStep: any = "personal_info";
       if (completionStatus.personal_info_completed) {
         currentStep = "document_upload";
       }
@@ -477,14 +477,35 @@ export class VerificationService {
   }
 
   /**
-   * Complete selfie verification
+   * Complete document upload (3-STEP FLOW)
+   * Check for 3 required documents: national_id_front, national_id_back, proof_of_income
    */
-  static async completeSelfieVerification(userId: string): Promise<boolean> {
+  static async completeDocumentUpload(userId: string): Promise<boolean> {
     try {
+      // Check if all 3 required documents are uploaded
+      const requiredDocTypes = ['national_id_front', 'national_id_back', 'proof_of_income'] as const;
+      
+      const { data: docs, error: fetchError } = await supabase
+        .from("verification_documents")
+        .select('document_type')
+        .eq("user_id", userId)
+        .in('document_type', requiredDocTypes as any);
+
+      if (fetchError) {
+        console.error("[VerificationService] Failed to fetch documents:", fetchError);
+        return false;
+      }
+
+      // Verify all 3 documents are present
+      if (!docs || docs.length < 3) {
+        console.warn("[VerificationService] Not all required documents uploaded:", docs?.length || 0, "/ 3");
+        return false;
+      }
+
+      // Mark documents as completed and move to review step
       const { error } = await supabase
         .from("user_verifications")
         .update({
-          selfie_completed: true,
           documents_completed: true,
           current_step: "review_submit",
           last_updated_at: new Date().toISOString(),
@@ -492,12 +513,12 @@ export class VerificationService {
         .eq("user_id", userId);
 
       if (error) {
-        console.error("[VerificationService] Failed to complete selfie verification:", error);
+        console.error("[VerificationService] Failed to complete document upload:", error);
         return false;
       }
       return true;
     } catch (error) {
-      console.error("[VerificationService] Failed to complete selfie verification:", error);
+      console.error("[VerificationService] Failed to complete document upload:", error);
       return false;
     }
   }
@@ -611,30 +632,6 @@ export class VerificationService {
     }
   }
 
-  /**
-   * Complete document upload step
-   */
-  static async completeDocumentUpload(userId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from("user_verifications")
-        .update({
-          documents_completed: true,
-          current_step: "review_submit",
-          last_updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", userId);
-
-      if (error) {
-        console.error("[VerificationService] Failed to complete document upload:", error);
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.error("[VerificationService] Failed to complete document upload:", error);
-      return false;
-    }
-  }
 
   /**
    * Navigate to specific step

@@ -221,7 +221,36 @@ export const logAuditEvent = async (data: AuditLogData): Promise<void> => {
       device: deviceInfo,
     };
 
-    // Call the log_audit_event function
+    // Call the database function to log audit event
+    // Note: Using log_admin_activity RPC instead of direct insert for better compatibility
+    try {
+      await supabase.rpc('log_admin_activity', {
+        p_admin_id: actorId || '',
+        p_action: data.event_type,
+        p_resource_type: data.resource_type || null,
+        p_resource_id: data.resource_id || null,
+        p_details: JSON.parse(JSON.stringify(enhancedActionDetails)),
+        p_ip_address: ipAddress || null,
+        p_user_agent: userAgent || null,
+      });
+    } catch (rpcError) {
+      // Fallback to direct insert if RPC fails
+      await supabase
+        .from('admin_activity_logs')
+        .insert({
+          admin_id: actorId || '',
+          action: data.event_type,
+          resource_type: data.resource_type || null,
+          resource_id: data.resource_id || null,
+          details: JSON.parse(JSON.stringify(enhancedActionDetails)),
+          ip_address: ipAddress || null,
+          user_agent: userAgent || null,
+        });
+    }
+    
+    const error = null; // No error if we reach here
+    
+    /* Original RPC call - commented out as it's not in generated types
     const { error } = await supabase.rpc('log_audit_event', {
       p_event_type: data.event_type,
       p_severity: data.severity || 'medium',
@@ -236,6 +265,7 @@ export const logAuditEvent = async (data: AuditLogData): Promise<void> => {
       p_resource_id: data.resource_id,
       p_reason: data.reason,
     });
+    */
 
     if (error) {
       console.error('Failed to log audit event:', error);

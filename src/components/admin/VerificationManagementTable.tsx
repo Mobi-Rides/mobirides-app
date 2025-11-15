@@ -87,8 +87,17 @@ export const VerificationManagementTable = () => {
       case "pending": return "secondary";
       case "rejected": return "destructive";
       case "not_started": return "outline";
+      case "requires_reverification": return "destructive";
       default: return "outline";
     }
+  };
+
+  const getCompletionPercentage = (v: AdminVerificationData) => {
+    let completed = 0;
+    if (v.personal_info_completed) completed++;
+    if (v.documents_completed) completed++;
+    if (v.overall_status === 'completed') completed++;
+    return Math.round((completed / 3) * 100);
   };
 
   const updateVerificationStatus = async (
@@ -114,27 +123,6 @@ export const VerificationManagementTable = () => {
     }
   };
 
-  const getCompletionPercentage = (verification: AdminVerificationData) => {
-    // Use simplified 3-step model for admin progress display
-    const step1 = verification.personal_info_completed;
-    // Map legacy flags into the documents step
-    const step2 = verification.documents_completed || verification.selfie_completed;
-    // Treat submission/review states as final step progress
-    const isReviewState = [
-      "review_submit",
-      "processing_status",
-      "completion",
-    ].includes(verification.current_step.toLowerCase());
-    const isPendingForReview = [
-      "pending",
-      "pending_review",
-      "completed",
-    ].includes(verification.overall_status.toLowerCase());
-    const step3 = isReviewState || isPendingForReview;
-
-    const completed = [step1, step2, step3].filter(Boolean).length;
-    return Math.round((completed / 3) * 100);
-  };
 
   if (error) {
     return (

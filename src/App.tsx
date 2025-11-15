@@ -84,6 +84,7 @@ const CarListing = lazy(() => import("@/pages/CarListing"));
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
+const VerificationSettingsPage = lazy(() => import("@/pages/VerificationSettingsPage"));
 const DisplaySettingsPage = lazy(() => import("@/pages/DisplaySettingsPage"));
 const SecuritySettingsPage = lazy(() => import("@/pages/SecuritySettingsPage"));
 
@@ -251,6 +252,13 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <ProfileSettingsPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/settings/verification" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <VerificationSettingsPage />
                             </ProtectedRoute>
                           </Suspense>
                         } />
