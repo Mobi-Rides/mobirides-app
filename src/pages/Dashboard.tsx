@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 type DashboardView = "renter" | "host" | "admin";
 
 const Dashboard = () => {
-  const [userRole, setUserRole] = useState<"host" | "renter" | "admin" | null>(null);
+  const [userRole, setUserRole] = useState<"host" | "renter" | "admin" | "super_admin" | null>(null);
   const [currentView, setCurrentView] = useState<DashboardView>("renter");
   const [searchQuery, setSearchQuery] = useState("");
   const { isAdmin } = useIsAdmin();
