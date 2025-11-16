@@ -477,13 +477,13 @@ export class VerificationService {
   }
 
   /**
-   * Complete document upload (3-STEP FLOW)
-   * Check for 3 required documents: national_id_front, national_id_back, proof_of_income
+   * Complete document upload (2-DOCUMENT FLOW)
+   * Check for 2 required documents: national_id_front, national_id_back
    */
   static async completeDocumentUpload(userId: string): Promise<boolean> {
     try {
-      // Check if all 3 required documents are uploaded
-      const requiredDocTypes = ['national_id_front', 'national_id_back', 'proof_of_income'] as const;
+      // Check if both required documents are uploaded
+      const requiredDocTypes = ['national_id_front', 'national_id_back'] as const;
       
       const { data: docs, error: fetchError } = await supabase
         .from("verification_documents")
@@ -496,9 +496,9 @@ export class VerificationService {
         return false;
       }
 
-      // Verify all 3 documents are present
-      if (!docs || docs.length < 3) {
-        console.warn("[VerificationService] Not all required documents uploaded:", docs?.length || 0, "/ 3");
+      // Verify both documents are present
+      if (!docs || docs.length < 2) {
+        console.warn("[VerificationService] Not all required documents uploaded:", docs?.length || 0, "/ 2");
         return false;
       }
 

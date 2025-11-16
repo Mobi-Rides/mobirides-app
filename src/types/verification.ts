@@ -209,9 +209,9 @@ export const BOTSWANA_DOCUMENT_REQUIREMENTS: DocumentRequirement[] = [
   },
   {
     type: DocumentType.PROOF_OF_INCOME,
-    required: true,
+    required: false, // Removed from verification flow - simplified to ID only
     maxSizeMB: 5,
     allowedFormats: ["image/jpeg", "image/png", "application/pdf"],
-    description: "Proof of Income (required for verification)",
+    description: "Proof of Income - Optional",
   },
 ];
