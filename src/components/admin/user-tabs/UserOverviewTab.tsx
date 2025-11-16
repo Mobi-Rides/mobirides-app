@@ -12,7 +12,7 @@ import { UserEditDialog } from "../UserEditDialog";
 interface Profile {
   id: string;
   full_name: string | null;
-  role: "renter" | "host" | "admin";
+  role: "renter" | "host" | "admin" | "super_admin";
   phone_number: string | null;
   created_at: string;
   avatar_url: string | null;
