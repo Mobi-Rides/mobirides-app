@@ -797,6 +797,73 @@ ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_messages ENABLE ROW LEVEL SECURITY;
 
+-- ===== SECURITY DEFINER HELPER FUNCTIONS =====
+-- These functions prevent infinite recursion in RLS policies by executing with
+-- elevated privileges, bypassing RLS checks when querying conversation_participants
+
+-- Function 1: Check if user is a participant in a conversation
+CREATE OR REPLACE FUNCTION public.is_conversation_participant(
+  _conversation_id uuid,
+  _user_id uuid
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.conversation_participants cp
+    WHERE cp.conversation_id = _conversation_id
+      AND cp.user_id = _user_id
+  );
+$$;
+
+-- Function 2: Check if user created a conversation
+CREATE OR REPLACE FUNCTION public.is_conversation_creator(
+  _conversation_id uuid,
+  _user_id uuid
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.conversations c
+    WHERE c.id = _conversation_id
+      AND c.created_by = _user_id
+  );
+$$;
+
+-- Function 3: Check if user is admin in a conversation
+CREATE OR REPLACE FUNCTION public.is_conversation_admin(
+  _conversation_id uuid,
+  _user_id uuid
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.conversation_participants cp
+    WHERE cp.conversation_id = _conversation_id
+      AND cp.user_id = _user_id
+      AND cp.is_admin = true
+  );
+$$;
+
+-- Grant execute permissions to authenticated users
+GRANT EXECUTE ON FUNCTION public.is_conversation_participant(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_conversation_creator(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_conversation_admin(uuid, uuid) TO authenticated;
+
 -- ===== CONVERSATIONS TABLE POLICIES =====
 
 -- SELECT: Users can view conversations they participate in OR created
@@ -832,7 +899,7 @@ TO authenticated
 USING (auth.uid() = created_by)
 WITH CHECK (auth.uid() = created_by);
 
--- ===== CONVERSATION_PARTICIPANTS TABLE POLICIES =====
+-- ===== CONVERSATION_PARTICIPANTS TABLE POLICIES (NON-RECURSIVE) =====
 
 -- SELECT: Users can view participants in conversations they're part of
 CREATE POLICY "participants_select"
@@ -840,21 +907,8 @@ ON public.conversation_participants
 FOR SELECT
 TO authenticated
 USING (
-  -- Can view participants if you're a participant
-  EXISTS (
-    SELECT 1 
-    FROM public.conversation_participants cp
-    WHERE cp.conversation_id = conversation_participants.conversation_id
-      AND cp.user_id = auth.uid()
-  )
-  OR
-  -- Or if you're the creator
-  EXISTS (
-    SELECT 1
-    FROM public.conversations c
-    WHERE c.id = conversation_participants.conversation_id
-      AND c.created_by = auth.uid()
-  )
+  public.is_conversation_participant(conversation_id, auth.uid())
+  OR public.is_conversation_creator(conversation_id, auth.uid())
 );
 
 -- INSERT: Users can add themselves as participants OR conversation creators can add others
@@ -863,25 +917,23 @@ ON public.conversation_participants
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  -- Can add yourself
   auth.uid() = user_id
-  OR
-  -- Or creator can add others
-  EXISTS (
-    SELECT 1
-    FROM public.conversations c
-    WHERE c.id = conversation_participants.conversation_id
-      AND c.created_by = auth.uid()
-  )
+  OR public.is_conversation_creator(conversation_id, auth.uid())
 );
 
--- UPDATE: Users can update their own participant record
+-- UPDATE: Users can update their own participant record OR admins can update
 CREATE POLICY "participants_update"
 ON public.conversation_participants
 FOR UPDATE
 TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING (
+  auth.uid() = user_id
+  OR public.is_conversation_admin(conversation_id, auth.uid())
+)
+WITH CHECK (
+  auth.uid() = user_id
+  OR public.is_conversation_admin(conversation_id, auth.uid())
+);
 
 -- DELETE: Creators can remove participants, users can remove themselves
 CREATE POLICY "participants_delete"
@@ -890,16 +942,10 @@ FOR DELETE
 TO authenticated
 USING (
   auth.uid() = user_id
-  OR
-  EXISTS (
-    SELECT 1
-    FROM public.conversations c
-    WHERE c.id = conversation_participants.conversation_id
-      AND c.created_by = auth.uid()
-  )
+  OR public.is_conversation_creator(conversation_id, auth.uid())
 );
 
--- ===== CONVERSATION_MESSAGES TABLE POLICIES =====
+-- ===== CONVERSATION_MESSAGES TABLE POLICIES (NON-RECURSIVE) =====
 
 -- SELECT: Users can view messages in conversations they participate in
 CREATE POLICY "messages_select"
@@ -907,12 +953,7 @@ ON public.conversation_messages
 FOR SELECT
 TO authenticated
 USING (
-  EXISTS (
-    SELECT 1 
-    FROM public.conversation_participants cp
-    WHERE cp.conversation_id = conversation_messages.conversation_id
-      AND cp.user_id = auth.uid()
-  )
+  public.is_conversation_participant(conversation_id, auth.uid())
 );
 
 -- INSERT: Users can send messages to conversations they participate in
@@ -922,13 +963,7 @@ FOR INSERT
 TO authenticated
 WITH CHECK (
   auth.uid() = sender_id
-  AND
-  EXISTS (
-    SELECT 1 
-    FROM public.conversation_participants cp
-    WHERE cp.conversation_id = conversation_messages.conversation_id
-      AND cp.user_id = auth.uid()
-  )
+  AND public.is_conversation_participant(conversation_id, auth.uid())
 );
 
 -- UPDATE: Users can update their own messages
@@ -945,6 +980,29 @@ ON public.conversation_messages
 FOR DELETE
 TO authenticated
 USING (auth.uid() = sender_id);
+
+-- ----------------------------------------------------------------------------
+-- 🔒 WHY SECURITY DEFINER FUNCTIONS?
+-- ----------------------------------------------------------------------------
+-- **Problem:** Infinite Recursion in RLS Policies
+-- When RLS policies on `conversation_participants` query the same table, PostgreSQL 
+-- creates a recursive loop trying to check permissions to check permissions.
+--
+-- **Solution:** SECURITY DEFINER Functions
+-- These functions execute with elevated privileges (bypassing RLS) and only return 
+-- boolean results. This breaks the recursion chain while maintaining security:
+--
+-- ✅ **No Self-Reference:** Functions query tables directly without triggering RLS
+-- ✅ **Security Maintained:** Functions only return true/false, no data exposure
+-- ✅ **Performance:** Single function call replaces complex nested EXISTS queries
+-- ✅ **Reusability:** Same functions used across multiple policies
+--
+-- **Security Note:** The `SECURITY DEFINER` attribute is safe here because:
+-- - Functions only return boolean values (no data leakage)
+-- - Limited to specific permission checks
+-- - `SET search_path = public` prevents schema injection attacks
+-- - Used in policies that already restrict data access appropriately
+-- ----------------------------------------------------------------------------
 
 -- ----------------------------------------------------------------------------
 -- SECTION 5: Performance Indexes for Conversation Policies

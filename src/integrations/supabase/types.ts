@@ -3715,8 +3715,16 @@ export type Database = {
       is_admin:
         | { Args: { user_uuid: string }; Returns: boolean }
         | { Args: never; Returns: boolean }
+      is_conversation_admin: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_conversation_creator: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_conversation_participant: {
-        Args: { conversation_uuid: string; user_uuid: string }
+        Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
       log_admin_activity: {

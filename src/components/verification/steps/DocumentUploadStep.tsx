@@ -292,7 +292,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
   const [documentPhotos, setDocumentPhotos] = useState<Record<string, DocumentPhoto>>({});
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'camera' | 'upload'>>({});
 
-  // 3-STEP FLOW: Only 3 required documents
+  // 2-DOCUMENT FLOW: Only 2 required documents (National ID Front + Back)
   const requiredDocuments = useMemo(() => [
     {
       id: "national_id_front",
@@ -303,11 +303,6 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       id: "national_id_back",
       title: "National ID (Back)",
       description: "Back side of your Botswana National ID (Omang)",
-    },
-    {
-      id: "proof_of_income",
-      title: "Proof of Income",
-      description: "Recent payslip, bank statement, or income verification",
     },
   ], []);
 
