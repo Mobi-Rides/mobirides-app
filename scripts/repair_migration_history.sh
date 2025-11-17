@@ -16,14 +16,14 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Check if supabase CLI is available
-if ! command -v supabase &> /dev/null; then
-    echo -e "${RED}❌ Error: Supabase CLI not found${NC}"
-    echo "Please install it: npm install -g supabase"
+# Check if npx is available (comes with Node.js/npm)
+if ! command -v npx &> /dev/null; then
+    echo -e "${RED}❌ Error: npx not found${NC}"
+    echo "Please install Node.js which includes npx: https://nodejs.org/"
     exit 1
 fi
 
-echo -e "${GREEN}✓ Supabase CLI found${NC}"
+echo -e "${GREEN}✓ npx found - will use 'npx supabase' commands${NC}"
 echo ""
 
 # Function to mark migration as applied
@@ -32,7 +32,7 @@ mark_applied() {
     local description=$2
     echo -e "${YELLOW}→ Marking as applied: $migration${NC}"
     echo "  Reason: $description"
-    if supabase migration repair --status applied "$migration" 2>/dev/null; then
+    if npx supabase migration repair --status applied "$migration" 2>/dev/null; then
         echo -e "${GREEN}  ✓ Success${NC}"
     else
         echo -e "${YELLOW}  ⚠ Already applied or migration not found${NC}"
@@ -46,7 +46,7 @@ mark_reverted() {
     local description=$2
     echo -e "${YELLOW}→ Marking as reverted: $migration${NC}"
     echo "  Reason: $description"
-    if supabase migration repair --status reverted "$migration" 2>/dev/null; then
+    if npx supabase migration repair --status reverted "$migration" 2>/dev/null; then
         echo -e "${GREEN}  ✓ Success${NC}"
     else
         echo -e "${YELLOW}  ⚠ Already reverted or migration not found${NC}"
@@ -93,10 +93,10 @@ echo -e "${GREEN}✅ Migration Repair Complete${NC}"
 echo "======================================"
 echo ""
 echo "Next Steps:"
-echo "1. Run: supabase migration list"
+echo "1. Run: npx supabase migration list"
 echo "   → Verify archived migrations show correct status"
 echo ""
-echo "2. Run: supabase db reset --local"
+echo "2. Run: npx supabase db reset --local"
 echo "   → Test fresh database seeding"
 echo ""
 echo "3. Check for errors:"
