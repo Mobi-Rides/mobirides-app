@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -141,6 +141,72 @@ export type Database = {
           must_change_password?: boolean | null
           password_changed_at?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action_details: Json
+          actor_id: string | null
+          anomaly_flags: Json | null
+          compliance_tags: string[] | null
+          created_at: string
+          current_hash: string | null
+          event_timestamp: string
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          id: string
+          ip_address: unknown
+          location_data: Json | null
+          previous_hash: string | null
+          reason: string | null
+          resource_id: string | null
+          resource_type: string | null
+          session_id: string | null
+          severity: Database["public"]["Enums"]["audit_severity"]
+          target_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_details: Json
+          actor_id?: string | null
+          anomaly_flags?: Json | null
+          compliance_tags?: string[] | null
+          created_at?: string
+          current_hash?: string | null
+          event_timestamp?: string
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          id?: string
+          ip_address?: unknown
+          location_data?: Json | null
+          previous_hash?: string | null
+          reason?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          session_id?: string | null
+          severity?: Database["public"]["Enums"]["audit_severity"]
+          target_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_details?: Json
+          actor_id?: string | null
+          anomaly_flags?: Json | null
+          compliance_tags?: string[] | null
+          created_at?: string
+          current_hash?: string | null
+          event_timestamp?: string
+          event_type?: Database["public"]["Enums"]["audit_event_type"]
+          id?: string
+          ip_address?: unknown
+          location_data?: Json | null
+          previous_hash?: string | null
+          reason?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          session_id?: string | null
+          severity?: Database["public"]["Enums"]["audit_severity"]
+          target_id?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -582,7 +648,7 @@ export type Database = {
             referencedColumns: ["reply_original_id"]
           },
           {
-            foreignKeyName: "conversation_messages_sender_id_fkey"
+            foreignKeyName: "fk_conversation_messages_sender_id"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -2922,6 +2988,18 @@ export type Database = {
       }
     }
     Views: {
+      audit_analytics: {
+        Row: {
+          compliance_tags: string[] | null
+          date: string | null
+          event_count: number | null
+          event_type: Database["public"]["Enums"]["audit_event_type"] | null
+          severity: Database["public"]["Enums"]["audit_severity"] | null
+          unique_actors: number | null
+          unique_targets: number | null
+        }
+        Relationships: []
+      }
       conversation_messages_with_replies: {
         Row: {
           content: string | null
@@ -2990,14 +3068,14 @@ export type Database = {
             referencedColumns: ["reply_original_id"]
           },
           {
-            foreignKeyName: "conversation_messages_sender_id_fkey"
+            foreignKeyName: "fk_conversation_messages_sender_id"
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "conversation_messages_sender_id_fkey"
+            foreignKeyName: "fk_conversation_messages_sender_id"
             columns: ["reply_to_sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -3088,14 +3166,14 @@ export type Database = {
           },
           {
             foreignKeyName: "messages_sender_id_fkey"
-            columns: ["reply_to_sender_id"]
+            columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
+            columns: ["reply_to_sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -3370,6 +3448,17 @@ export type Database = {
         Args: { p_days_old?: number }
         Returns: number
       }
+      generate_audit_hash: {
+        Args: {
+          action_details: Json
+          actor_id: string
+          event_timestamp: string
+          event_type: Database["public"]["Enums"]["audit_event_type"]
+          previous_hash?: string
+          target_id: string
+        }
+        Returns: string
+      }
       get_bypass_statistics: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
@@ -3624,10 +3713,18 @@ export type Database = {
         Returns: string
       }
       is_admin:
-        | { Args: never; Returns: boolean }
         | { Args: { user_uuid: string }; Returns: boolean }
+        | { Args: never; Returns: boolean }
+      is_conversation_admin: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_conversation_creator: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_conversation_participant: {
-        Args: { conversation_uuid: string; user_uuid: string }
+        Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
       log_admin_activity: {
@@ -3639,6 +3736,25 @@ export type Database = {
           p_resource_type?: string
         }
         Returns: undefined
+      }
+      log_audit_event: {
+        Args: {
+          p_action_details?: Json
+          p_actor_id?: string
+          p_anomaly_flags?: Json
+          p_compliance_tags?: string[]
+          p_event_type: Database["public"]["Enums"]["audit_event_type"]
+          p_ip_address?: unknown
+          p_location_data?: Json
+          p_reason?: string
+          p_resource_id?: string
+          p_resource_type?: string
+          p_session_id?: string
+          p_severity?: Database["public"]["Enums"]["audit_severity"]
+          p_target_id?: string
+          p_user_agent?: string
+        }
+        Returns: string
       }
       mark_notifications_read: {
         Args: { p_notification_ids: number[] }
@@ -3727,6 +3843,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      verify_audit_chain_integrity: {
+        Args: never
+        Returns: {
+          actual_hash: string
+          audit_id: string
+          chain_valid: boolean
+          event_timestamp: string
+          expected_hash: string
+        }[]
+      }
       verify_conversation_policies: {
         Args: never
         Returns: {
@@ -3753,6 +3879,24 @@ export type Database = {
       }
     }
     Enums: {
+      audit_event_type:
+        | "user_restriction_created"
+        | "user_restriction_updated"
+        | "user_restriction_removed"
+        | "user_deleted"
+        | "user_password_reset"
+        | "vehicle_transferred"
+        | "vehicle_deleted"
+        | "admin_login"
+        | "admin_logout"
+        | "system_config_changed"
+        | "notification_campaign_created"
+        | "notification_sent"
+        | "verification_approved"
+        | "verification_rejected"
+        | "booking_cancelled_admin"
+        | "payment_refunded_admin"
+      audit_severity: "low" | "medium" | "high" | "critical"
       booking_status:
         | "pending"
         | "confirmed"
@@ -3817,7 +3961,7 @@ export type Database = {
         | "messaging_block"
         | "suspension"
       review_type: "car" | "renter" | "host_to_renter" | "renter_to_host"
-      user_role: "host" | "renter" | "admin"
+      user_role: "host" | "renter" | "admin" | "super_admin"
       vehicle_type:
         | "Basic"
         | "Standard"
@@ -3987,6 +4131,25 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      audit_event_type: [
+        "user_restriction_created",
+        "user_restriction_updated",
+        "user_restriction_removed",
+        "user_deleted",
+        "user_password_reset",
+        "vehicle_transferred",
+        "vehicle_deleted",
+        "admin_login",
+        "admin_logout",
+        "system_config_changed",
+        "notification_campaign_created",
+        "notification_sent",
+        "verification_approved",
+        "verification_rejected",
+        "booking_cancelled_admin",
+        "payment_refunded_admin",
+      ],
+      audit_severity: ["low", "medium", "high", "critical"],
       booking_status: [
         "pending",
         "confirmed",
@@ -4056,7 +4219,7 @@ export const Constants = {
         "suspension",
       ],
       review_type: ["car", "renter", "host_to_renter", "renter_to_host"],
-      user_role: ["host", "renter", "admin"],
+      user_role: ["host", "renter", "admin", "super_admin"],
       vehicle_type: [
         "Basic",
         "Standard",

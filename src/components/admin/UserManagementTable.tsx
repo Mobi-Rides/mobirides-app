@@ -30,10 +30,12 @@ import { toast } from "sonner";
 interface Profile {
   id: string;
   full_name: string | null;
-  role: "renter" | "host" | "admin";
+  role: "renter" | "host" | "admin" | "super_admin";
   phone_number: string | null;
   created_at: string;
   avatar_url: string | null;
+  verification_status?: string | null;
+  requires_reverification?: boolean;
 }
 
 interface UserManagementTableProps {
@@ -48,12 +50,32 @@ const useAdminUsers = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select(`
-          id, full_name, role, phone_number, created_at, avatar_url
+          id, 
+          full_name, 
+          role, 
+          phone_number, 
+          created_at, 
+          avatar_url,
+          user_verifications (
+            overall_status,
+            requires_reverification
+          )
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform the data to flatten verification fields
+      return (data || []).map((user: any) => ({
+        id: user.id,
+        full_name: user.full_name,
+        role: user.role,
+        phone_number: user.phone_number,
+        created_at: user.created_at,
+        avatar_url: user.avatar_url,
+        verification_status: user.user_verifications?.[0]?.overall_status || null,
+        requires_reverification: user.user_verifications?.[0]?.requires_reverification || false,
+      })) as Profile[];
     },
   });
 };
@@ -147,9 +169,16 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
         <Badge variant="default">Active</Badge>
       </TableCell>
       <TableCell>
-        <Badge variant={getKYCBadgeVariant("not_started")}>
-          not started
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={getKYCBadgeVariant(user.verification_status || "not_started")}>
+            {user.verification_status || "not started"}
+          </Badge>
+          {user.requires_reverification && (
+            <Badge variant="destructive" className="text-xs">
+              Re-verify
+            </Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell>{user.phone_number || "N/A"}</TableCell>
       <TableCell>
