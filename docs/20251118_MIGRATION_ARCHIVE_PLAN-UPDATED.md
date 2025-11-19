@@ -6,17 +6,27 @@
 
 ## Executive Summary
 
+### 🚨 CRITICAL UPDATE - December 18, 2025
+
+**ARCHIVE PROCESS UNCOVERED CRITICAL ISSUE:**
+The November 2025 migration archive inadvertently archived migrations that created **CRITICAL PRODUCTION TABLES**. These tables exist in the database but have **NO CREATE TABLE STATEMENTS** in canonical migrations.
+
+**Impact:** Database reset would completely fail and destroy these tables.
+
+**Status:** 🔴 RECOVERY IN PROGRESS - See `docs/20251218_CRITICAL_ARCHIVE_RECOVERY.md`
+
 ### Updated Reality Check
 After comprehensive analysis of all migration files in `supabase/migrations/`:
 
 - **Current State:** 198 total migration files
-- **Target State:** 70 canonical migrations
-- **Files to Archive:** **128 files** (not 50 as initially documented)
+- **Target State:** 70 canonical migrations → **NOW INVALID**
+- **Files to Archive:** ~~128 files~~ → **PARTIAL ROLLBACK REQUIRED**
+- **Critical Files Incorrectly Archived:** 8+ migrations with unique table definitions
 
 ### Archive Breakdown
-1. **63 UUID-Suffixed Migrations** - Improperly named system-generated files
-2. **27 Undated Migrations** - Missing timestamp prefixes entirely
-3. **38 Canonical Duplicates** - Properly named but redundant implementations
+1. **63 UUID-Suffixed Migrations** - Improperly named BUT **8+ contain critical table definitions**
+2. **27 Undated Migrations** - Missing timestamp BUT **1+ contains critical enum types**
+3. **38 Canonical Duplicates** - Properly named but redundant implementations ✅
 
 ---
 
