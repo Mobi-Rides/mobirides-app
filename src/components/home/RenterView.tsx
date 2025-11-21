@@ -163,19 +163,27 @@ export const RenterView = ({
           
           if (error) {
             console.error(`[RenterView] Error fetching rating for car ${car.id}:`, error);
-            return { ...car, rating: 0 };
+            return { ...car, rating: 0, reviewCount: 0 };
           }
           
-          console.log(`[RenterView] Car ${car.brand} ${car.model} (${car.id}) rating:`, rating);
-          return { ...car, rating: rating || 0 };
+          // Fetch review count
+          const { count: reviewCount } = await supabase
+            .from('reviews')
+            .select('*', { count: 'exact', head: true })
+            .eq('car_id', car.id)
+            .eq('review_type', 'car')
+            .eq('status', 'published');
+          
+          console.log(`[RenterView] Car ${car.brand} ${car.model} (${car.id}) rating:`, rating, 'reviews:', reviewCount);
+          return { ...car, rating: rating || 0, reviewCount: reviewCount || 0 };
         } catch (error) {
           console.error(`[RenterView] Exception fetching rating for car ${car.id}:`, error);
-          return { ...car, rating: 0 };
+          return { ...car, rating: 0, reviewCount: 0 };
         }
       });
 
       const carsWithRatingsResults = await Promise.all(carsWithRatingsPromises);
-      console.log(`[RenterView] Final cars with ratings:`, carsWithRatingsResults.map(c => ({ id: c.id, brand: c.brand, model: c.model, rating: c.rating })));
+      console.log(`[RenterView] Final cars with ratings:`, carsWithRatingsResults.map(c => ({ id: c.id, brand: c.brand, model: c.model, rating: c.rating, reviewCount: c.reviewCount })));
       setCarsWithRatings(carsWithRatingsResults);
     };
 

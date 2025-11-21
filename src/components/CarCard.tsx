@@ -78,6 +78,8 @@ export const CarCard = ({ car }: CarCardProps) => {
     return stars;
   };
 
+  const isNewListing = (car.rating === 4.0 || car.rating === 4) && (car.reviewCount === 0 || !car.reviewCount);
+
   return (
     <Card
       className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-auto min-h-[20rem] sm:h-[24rem] dark:bg-gray-800 dark:border-gray-700"
@@ -120,6 +122,11 @@ export const CarCard = ({ car }: CarCardProps) => {
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {(car.rating || 0).toFixed(1)}
             </span>
+            {isNewListing && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium ml-1">
+                New Listing
+              </span>
+            )}
           </div>
         </div>
         <div className="flex justify-between items-start mb-2 min-h-[3rem]">
