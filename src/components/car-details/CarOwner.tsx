@@ -110,7 +110,6 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
                   <p className="text-xs md:text-sm text-muted-foreground">
                     Vehicle Host
                   </p>
-                  {/* Debug info */}
                   {statsLoading && (
                     <span className="text-xs text-blue-500">Loading rating...</span>
                   )}
@@ -120,6 +119,11 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
                       <span className="text-xs font-medium text-gray-700 dark:text-white">
                         {userStats.overall_rating?.toFixed(1) || "0.0"}
                       </span>
+                      {userStats.total_reviews === 0 && (userStats.overall_rating === 4.0 || userStats.overall_rating === 4) && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-medium">
+                          New Host
+                        </span>
+                      )}
                       {userStats.total_reviews > 0 && (
                         <span className="text-xs text-muted-foreground">
                           ({userStats.total_reviews} review{userStats.total_reviews !== 1 ? 's' : ''})
