@@ -11,6 +11,19 @@ ALTER TABLE IF EXISTS public.notifications RENAME TO notifications_backup2;
 
 -- Step 2: Drop existing notification_type enum to recreate with extended types
 DROP TYPE IF EXISTS notification_type CASCADE;
+-- Drop existing indexes to avoid conflicts
+DROP INDEX IF EXISTS idx_notifications_user_id;
+DROP INDEX IF EXISTS idx_notifications_type;
+DROP INDEX IF EXISTS idx_notifications_created_at;
+DROP INDEX IF EXISTS idx_notifications_is_read;
+DROP INDEX IF EXISTS idx_notifications_role_target;
+DROP INDEX IF EXISTS idx_notifications_user_unread;
+DROP INDEX IF EXISTS idx_notifications_user_type;
+DROP INDEX IF EXISTS idx_notifications_booking_related;
+DROP INDEX IF EXISTS idx_notifications_car_related;
+DROP INDEX IF EXISTS idx_notifications_priority_created;
+DROP INDEX IF EXISTS idx_notifications_active;
+DROP INDEX IF EXISTS idx_notifications_user_read;
 
 -- Step 3: Create extended notification_type enum with all missing types
 CREATE TYPE notification_type AS ENUM (
