@@ -192,7 +192,7 @@ CREATE INDEX idx_notifications_priority_created ON public.notifications(priority
 
 -- Partial indexes for performance
 CREATE INDEX idx_notifications_active ON public.notifications(user_id, created_at DESC) 
-    WHERE expires_at IS NULL OR expires_at > NOW();
+    WHERE expires_at IS NULL;
 
 -- Step 9: Create updated_at trigger
 CREATE TRIGGER update_notifications_updated_at
