@@ -112,6 +112,10 @@ DROP POLICY IF EXISTS "Users can view their own messages" ON messages;
 DROP POLICY IF EXISTS "Users can send messages" ON messages;
 DROP POLICY IF EXISTS "Users can update their own messages" ON messages;
 DROP POLICY IF EXISTS "Users can delete their own messages" ON messages;
+DROP POLICY IF EXISTS "messages_select_policy" ON messages;
+DROP POLICY IF EXISTS "messages_insert_policy" ON messages;
+DROP POLICY IF EXISTS "messages_update_policy" ON messages;
+DROP POLICY IF EXISTS "messages_delete_policy" ON messages;
 
 CREATE POLICY "messages_select_policy" ON messages
     FOR SELECT USING (
