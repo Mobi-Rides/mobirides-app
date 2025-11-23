@@ -7,7 +7,7 @@ echo "=============================="
 echo ""
 
 # Run migration validator
-node scripts/validate-migrations.js
+node scripts/validate-migrations.cjs
 
 # Check if validation passed
 if [ $? -eq 0 ]; then
