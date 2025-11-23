@@ -140,6 +140,10 @@ DROP POLICY IF EXISTS "Users can view their own notifications" ON notifications;
 DROP POLICY IF EXISTS "System can create notifications" ON notifications;
 DROP POLICY IF EXISTS "Users can update their own notifications" ON notifications;
 DROP POLICY IF EXISTS "Users can delete their own notifications" ON notifications;
+DROP POLICY IF EXISTS "notifications_select_policy" ON notifications;
+DROP POLICY IF EXISTS "notifications_insert_policy" ON notifications;
+DROP POLICY IF EXISTS "notifications_update_policy" ON notifications;
+DROP POLICY IF EXISTS "notifications_delete_policy" ON notifications;
 
 CREATE POLICY "notifications_select_policy" ON notifications
     FOR SELECT USING (user_id = auth.uid());
