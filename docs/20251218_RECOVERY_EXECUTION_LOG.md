@@ -20,6 +20,41 @@
 | `20251218000008_create_guides_table.sql` | `guides` | ✅ Created | None |
 | `20251218000009_create_push_subscriptions_table.sql` | `push_subscriptions` | ✅ Created | None |
 
+---
+
+## Phase 3: Notification System Recovery (November 24, 2025)
+
+### Migrations Created
+
+| Migration File | Functionality Recovered | Status | Source Archive |
+|----------------|------------------------|--------|----------------|
+| `20251124105913_add_missing_notification_enum_values.sql` | Handover enum values (4) | ✅ Created | `20250728202605` |
+| `20251124110205_fix_notification_functions_schema.sql` | Function schema migration + deduplication | ✅ Created | Multiple archives |
+| `20251124110226_add_wallet_payment_enum_values.sql` | Payment enum values (4) | ✅ Created | `20250728202610` |
+
+### What Was Recovered
+
+**Enum Values Added (8 total):**
+- `booking_request_sent`
+- `pickup_reminder`
+- `return_reminder`
+- `handover_ready`
+- `wallet_topup`
+- `wallet_deduction`
+- `payment_received`
+- `payment_failed`
+
+**Functions Updated (6 total):**
+- Migrated from legacy `content` field to `title`/`description` schema
+- Added 5-minute deduplication logic (anti-spam)
+- Updated functions: `create_handover_notification()`, `create_booking_request_notification()`, `create_handover_ready_notification()`, `create_wallet_topup_notification()`, `create_wallet_deduction_notification()`, `create_payment_notification()`
+
+**Impact:** Notification system now fully functional with proper schema alignment
+
+**Detailed Documentation:** See `docs/20251124_NOTIFICATION_SYSTEM_RECOVERY.md`
+
+---
+
 ### Schema Source
 
 All schemas were extracted from:
@@ -80,21 +115,24 @@ Implement verification scripts and CI/CD checks.
 
 ## Migration Count Update
 
-| Category | Before | After Recovery |
-|----------|--------|----------------|
-| Canonical Migrations | 70 | 79 |
-| Active Migrations | 70 | 79 |
-| Archived Migrations | 128 | 128 |
-| **Total Migrations** | **198** | **207** |
+| Category | Before | After Phase 1 | After Phase 3 |
+|----------|--------|---------------|---------------|
+| Canonical Migrations | 70 | 79 | 82 |
+| Active Migrations | 70 | 79 | 82 |
+| Archived Migrations | 128 | 128 | 128 |
+| **Total Migrations** | **198** | **207** | **210** |
+
+**Phase 3 Addition:** 3 notification system recovery migrations (Nov 24, 2025)
 
 ---
 
 ## Sign-Off
 
-- [x] **Phase 1 Complete:** 9 recovery migrations created
+- [x] **Phase 1 Complete:** 9 recovery migrations created (Dec 18, 2025)
 - [ ] **Phase 2 Pending:** Verification testing
-- [ ] **Phase 3 Pending:** Comprehensive archive audit
+- [x] **Phase 3 Started:** Notification system recovery complete (Nov 24, 2025)
+- [ ] **Phase 3 Ongoing:** Comprehensive archive audit continues
 - [ ] **Phase 4 Pending:** Documentation updates
 - [ ] **Phase 5 Pending:** Prevention measures
 
-**Status:** 🟡 PHASE 1 COMPLETE - PROCEED TO TESTING
+**Status:** 🟢 PHASE 1 COMPLETE | 🟡 PHASE 3 IN PROGRESS
