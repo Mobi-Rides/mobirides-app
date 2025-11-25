@@ -140,12 +140,12 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in booking-cleanup function:', error);
-    
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
+      console.error('Error in booking-cleanup function:', error);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error'
       }),
       { 
         status: 500,
