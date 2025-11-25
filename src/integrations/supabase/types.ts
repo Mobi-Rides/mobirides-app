@@ -3941,6 +3941,8 @@ export type Database = {
         | "return_location_shared"
         | "arrival_notification"
         | "early_return_notification"
+        | "pickup_reminder"
+        | "return_reminder"
       old_notification_type:
         | "booking_cancelled"
         | "booking_confirmed"
@@ -4196,6 +4198,8 @@ export const Constants = {
         "return_location_shared",
         "arrival_notification",
         "early_return_notification",
+        "pickup_reminder",
+        "return_reminder",
       ],
       old_notification_type: [
         "booking_cancelled",
