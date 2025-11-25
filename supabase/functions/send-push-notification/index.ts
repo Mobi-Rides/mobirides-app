@@ -100,7 +100,7 @@ async function sendWebPushNotification(
   
   const cryptoKey = await crypto.subtle.importKey(
     'pkcs8',
-    privateKeyBuffer,
+    privateKeyBuffer.buffer,
     {
       name: 'ECDSA',
       namedCurve: 'P-256'

@@ -617,8 +617,8 @@ const handler = async (req: Request): Promise<Response> => {
         emailPayload.subject = template.subject;
         emailPayload.html = template.html;
       } catch (error) {
-        return new Response(
-          JSON.stringify({ error: `Template error: ${error.message}` }),
+      return new Response(
+        JSON.stringify({ error: `Template error: ${error instanceof Error ? error.message : 'Unknown error'}` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

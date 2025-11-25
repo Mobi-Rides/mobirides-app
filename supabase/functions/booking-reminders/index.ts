@@ -72,7 +72,7 @@ serve(async (req) => {
     // Process 24-hour reminders
     if (tomorrowBookings) {
       for (const booking of tomorrowBookings) {
-        const carTitle = `${booking.cars.brand} ${booking.cars.model}`;
+        const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
         
         // Notification for renter
         await supabaseClient.from('notifications').insert({
@@ -80,16 +80,16 @@ serve(async (req) => {
           type: 'booking_reminder',
           content: `Your rental of ${carTitle} starts tomorrow at ${booking.start_time || '09:00'}. Please prepare for pickup!`,
           related_booking_id: booking.id,
-          related_car_id: booking.cars.id
+          related_car_id: booking.cars[0]?.id
         });
 
         // Notification for host
         await supabaseClient.from('notifications').insert({
-          user_id: booking.cars.owner_id,
+          user_id: booking.cars[0]?.owner_id,
           type: 'booking_reminder',
           content: `Your ${carTitle} rental starts tomorrow at ${booking.start_time || '09:00'}. Please prepare for handover!`,
           related_booking_id: booking.id,
-          related_car_id: booking.cars.id
+          related_car_id: booking.cars[0]?.id
         });
 
         // Mark reminder as sent
@@ -110,7 +110,7 @@ serve(async (req) => {
         const hoursUntilStart = timeDiff / (1000 * 60 * 60);
         const minutesUntilStart = timeDiff / (1000 * 60);
 
-        const carTitle = `${booking.cars.brand} ${booking.cars.model}`;
+        const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
 
         // 2-hour reminder
         if (hoursUntilStart <= 2.1 && hoursUntilStart >= 1.9) {
@@ -120,16 +120,16 @@ serve(async (req) => {
             type: 'booking_reminder',
             content: `Your rental of ${carTitle} starts in 2 hours! Time to head to pickup location.`,
             related_booking_id: booking.id,
-            related_car_id: booking.cars.id
+            related_car_id: booking.cars[0]?.id
           });
 
           // Notification for host
           await supabaseClient.from('notifications').insert({
-            user_id: booking.cars.owner_id,
+            user_id: booking.cars[0]?.owner_id,
             type: 'booking_reminder',
             content: `Your ${carTitle} handover is in 2 hours! Please ensure the car is ready.`,
             related_booking_id: booking.id,
-            related_car_id: booking.cars.id
+            related_car_id: booking.cars[0]?.id
           });
           
           processedCount++;
@@ -143,16 +143,16 @@ serve(async (req) => {
             type: 'booking_reminder',
             content: `Your rental of ${carTitle} starts in 30 minutes! Final preparations time.`,
             related_booking_id: booking.id,
-            related_car_id: booking.cars.id
+            related_car_id: booking.cars[0]?.id
           });
 
           // Notification for host
           await supabaseClient.from('notifications').insert({
-            user_id: booking.cars.owner_id,
+            user_id: booking.cars[0]?.owner_id,
             type: 'booking_reminder',
             content: `Your ${carTitle} handover is in 30 minutes! Please be ready at pickup location.`,
             related_booking_id: booking.id,
-            related_car_id: booking.cars.id
+            related_car_id: booking.cars[0]?.id
           });
           
           processedCount++;
@@ -178,7 +178,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing booking reminders:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500, 
         headers: { 
