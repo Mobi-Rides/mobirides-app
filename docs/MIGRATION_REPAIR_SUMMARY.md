@@ -14,7 +14,7 @@ Successfully completed migration consolidation by identifying and documenting 12
 
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
-| Total Migrations | 198 | 70* | ↓ 128 (65%) |
+| Total Migrations | 198 | 73* | ↓ 125 (63%) |
 | Conversation Fixes | 14 | 1 | ↓ 13 (93%) |
 | is_admin Implementations | 5 | 1 | ↓ 4 (80%) |
 | Notification Constraints | 3 | 1 | ↓ 2 (67%) |
@@ -76,6 +76,20 @@ Created detailed READMEs explaining:
 - **When** to use repair script
 - **Lessons learned** from conflicts
 
+### 4. ✅ Notification System Recovery (Phase 3)
+
+**Date:** November 24, 2025  
+**Status:** Complete  
+**Details:** See `docs/20251124_NOTIFICATION_SYSTEM_RECOVERY.md`
+
+Recovered missing notification functionality from archived migrations:
+- **8 Enum Values Added**: `booking_request_sent`, `pickup_reminder`, `return_reminder`, `handover_ready`, `wallet_topup`, `wallet_deduction`, `payment_received`, `payment_failed`
+- **6 Functions Updated**: Migrated from legacy `content` field to `title`/`description` schema
+- **Deduplication Logic**: Added 5-minute anti-spam protection
+- **3 New Migrations**: `20251124105913`, `20251124110205`, `20251124110226`
+
+**Impact:** Notification system now fully functional with proper schema alignment
+
 ## Canonical Migrations Identified
 
 | Feature | Canonical Migration | Replaces |
@@ -84,6 +98,9 @@ Created detailed READMEs explaining:
 | is_admin Function | `20251105150000_simplify_is_admin_to_avoid_rls_recursion.sql` | 5 implementations |
 | Notification Constraints | `20251024062613_safe_dedupe_notifications_final.sql` | 3 attempts |
 | Cars Insert Policy | `20250117000000_add_cars_insert_policy.sql` | - |
+| Notification Enums | `20251124105913_add_missing_notification_enum_values.sql` | Archive 20250728202605 |
+| Notification Functions | `20251124110205_fix_notification_functions_schema.sql` | Multiple archives |
+| Payment Enums | `20251124110226_add_wallet_payment_enum_values.sql` | Archive 20250728202610 |
 
 ## Files To Archive (Manual Step Required)
 
@@ -273,6 +290,7 @@ Begin RLS security implementation:
 - **Original Plan:** `docs/migration-rls-consolidation-plan-2025-11-12.md`
 - **Conversation Fix:** `docs/RLS_RECURSION_FIX_DOCUMENTATION.md`
 - **Notification Fix:** `docs/DUPLICATE_NOTIFICATIONS_FIX_DOCUMENTATION.md`
+- **Notification Recovery:** `docs/20251124_NOTIFICATION_SYSTEM_RECOVERY.md` (Phase 3)
 
 ## Commit Message
 

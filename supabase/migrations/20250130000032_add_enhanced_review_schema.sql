@@ -12,6 +12,7 @@ ADD COLUMN IF NOT EXISTS response_at TIMESTAMP WITH TIME ZONE;
 -- Update review_type enum to support bidirectional reviews
 ALTER TYPE review_type ADD VALUE IF NOT EXISTS 'host_to_renter';
 ALTER TYPE review_type ADD VALUE IF NOT EXISTS 'renter_to_host';
+ALTER TYPE review_type ADD VALUE IF NOT EXISTS 'car';
 
 -- Enhanced calculate_car_rating function with category support
 CREATE OR REPLACE FUNCTION public.calculate_car_rating(car_uuid uuid)

@@ -62,7 +62,7 @@ const CarListing = () => {
           throw error;
         }
 
-        // Fetch ratings for each car
+        // Fetch ratings and review counts for each car
         console.log('🔍 Fetching ratings for', data?.length || 0, 'cars');
         const carsWithRatings = await Promise.all(
           (data || []).map(async (car) => {
@@ -72,14 +72,22 @@ const CarListing = () => {
               
               if (ratingError) {
                 console.error('Error fetching rating for car:', car.id, ratingError);
-                return { ...car, rating: 0 };
+                return { ...car, rating: 0, reviewCount: 0 };
               }
               
-              console.log(`✅ Car ${car.brand} ${car.model} (${car.id}): Rating ${ratingData || 0}`);
-              return { ...car, rating: ratingData || 0 };
+              // Fetch review count
+              const { count: reviewCount } = await supabase
+                .from('reviews')
+                .select('*', { count: 'exact', head: true })
+                .eq('car_id', car.id)
+                .eq('review_type', 'car')
+                .eq('status', 'published');
+              
+              console.log(`✅ Car ${car.brand} ${car.model} (${car.id}): Rating ${ratingData || 0}, Reviews: ${reviewCount || 0}`);
+              return { ...car, rating: ratingData || 0, reviewCount: reviewCount || 0 };
             } catch (error) {
               console.error('Error calculating rating for car:', car.id, error);
-              return { ...car, rating: 0 };
+              return { ...car, rating: 0, reviewCount: 0 };
             }
           })
         );
