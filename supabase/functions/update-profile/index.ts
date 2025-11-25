@@ -1,5 +1,5 @@
 import { serve } from "std/http/server.ts"
-import { createClient } from "supabase"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
