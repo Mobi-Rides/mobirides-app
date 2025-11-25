@@ -68,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         // Extract metadata
-        const metadata = authUser.raw_user_meta_data as { full_name?: string; phone_number?: string } | undefined;
+        const metadata = authUser.user_metadata as { full_name?: string; phone_number?: string } | undefined;
         const fullName = metadata?.full_name;
         const phoneNumber = metadata?.phone_number;
 
