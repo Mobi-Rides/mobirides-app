@@ -151,38 +151,316 @@ function checkSyntaxPatterns(content, filename) {
   return !hasIssues;
 }
 
-function validateMigration(filename) {
-  const filepath = path.join(MIGRATIONS_DIR, filename);
+// ============= DEPENDENCY VALIDATION FUNCTIONS =============
+
+function extractTableNames(content) {
+  const tables = [];
+  // Match: CREATE TABLE [IF NOT EXISTS] schema.table or table
+  const tablePattern = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)/gi;
+  let match;
   
-  // Skip non-SQL files
-  if (!filename.endsWith('.sql')) {
-    return true;
+  while ((match = tablePattern.exec(content)) !== null) {
+    const schema = match[1] || 'public';
+    const table = match[2];
+    tables.push({ schema, name: table, fullName: `${schema}.${table}` });
   }
   
-  log(`\nChecking ${filename}...`, 'cyan');
+  return tables;
+}
+
+function extractEnumTypes(content) {
+  const enums = [];
+  // Match: CREATE TYPE [schema.]name AS ENUM
+  const enumPattern = /CREATE\s+TYPE\s+(?:(\w+)\.)?(\w+)\s+AS\s+ENUM/gi;
+  let match;
   
-  try {
-    const content = fs.readFileSync(filepath, 'utf8');
-    
-    let isValid = true;
-    
-    // Run all checks
-    isValid = checkFileNaming(filename) && isValid;
-    isValid = checkFileTruncation(content, filename) && isValid;
-    isValid = checkNestedDelimiters(content, filename) && isValid;
-    isValid = checkExtensionAvailability(content, filename) && isValid;
-    isValid = checkSyntaxPatterns(content, filename) && isValid;
-    
-    if (isValid) {
-      log(`   ✅ No critical issues found`, 'green');
+  while ((match = enumPattern.exec(content)) !== null) {
+    const schema = match[1] || 'public';
+    const name = match[2];
+    enums.push({ schema, name, fullName: `${schema}.${name}` });
+  }
+  
+  return enums;
+}
+
+function extractPolicyReferences(content) {
+  const policies = [];
+  // Match: CREATE POLICY ... ON [schema.]table
+  const policyPattern = /CREATE\s+(?:OR\s+REPLACE\s+)?POLICY\s+["']?(\w+)["']?\s+ON\s+(?:(\w+)\.)?(\w+)/gi;
+  let match;
+  
+  while ((match = policyPattern.exec(content)) !== null) {
+    const policyName = match[1];
+    const schema = match[2] || 'public';
+    const table = match[3];
+    policies.push({ 
+      policyName, 
+      schema, 
+      table, 
+      fullTableName: `${schema}.${table}` 
+    });
+  }
+  
+  return policies;
+}
+
+function extractTriggerReferences(content) {
+  const triggers = [];
+  // Match: CREATE TRIGGER ... ON [schema.]table
+  const triggerPattern = /CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+(\w+)[\s\S]*?ON\s+(?:(\w+)\.)?(\w+)/gi;
+  let match;
+  
+  while ((match = triggerPattern.exec(content)) !== null) {
+    const triggerName = match[1];
+    const schema = match[2] || 'public';
+    const table = match[3];
+    triggers.push({ 
+      triggerName, 
+      schema, 
+      table, 
+      fullTableName: `${schema}.${table}` 
+    });
+  }
+  
+  return triggers;
+}
+
+function extractForeignKeyReferences(content) {
+  const foreignKeys = [];
+  // Match: REFERENCES [schema.]table or FOREIGN KEY ... REFERENCES [schema.]table
+  const fkPattern = /(?:REFERENCES|FOREIGN\s+KEY[\s\S]*?REFERENCES)\s+(?:(\w+)\.)?(\w+)/gi;
+  let match;
+  
+  while ((match = fkPattern.exec(content)) !== null) {
+    const schema = match[1] || 'public';
+    const table = match[2];
+    foreignKeys.push({ 
+      schema, 
+      table, 
+      fullTableName: `${schema}.${table}` 
+    });
+  }
+  
+  return foreignKeys;
+}
+
+function extractEnumAlterations(content) {
+  const alterations = [];
+  // Match: ALTER TYPE [schema.]enum_name ADD VALUE
+  const alterPattern = /ALTER\s+TYPE\s+(?:(\w+)\.)?(\w+)\s+ADD\s+VALUE/gi;
+  let match;
+  
+  while ((match = alterPattern.exec(content)) !== null) {
+    const schema = match[1] || 'public';
+    const enumName = match[2];
+    alterations.push({ 
+      schema, 
+      enumName, 
+      fullEnumName: `${schema}.${enumName}` 
+    });
+  }
+  
+  return alterations;
+}
+
+function buildObjectRegistry(migrations) {
+  const registry = {
+    tables: new Map(), // fullTableName -> filename
+    enums: new Map(),  // fullEnumName -> filename
+  };
+  
+  for (const { filename, content } of migrations) {
+    // Register tables
+    const tables = extractTableNames(content);
+    for (const table of tables) {
+      registry.tables.set(table.fullName, filename);
     }
     
-    return isValid;
-    
-  } catch (err) {
-    error(filename, `Failed to read or parse file: ${err.message}`);
-    return false;
+    // Register enums
+    const enums = extractEnumTypes(content);
+    for (const enumType of enums) {
+      registry.enums.set(enumType.fullName, filename);
+    }
   }
+  
+  return registry;
+}
+
+function checkPolicyDependencies(content, filename, registry) {
+  const policies = extractPolicyReferences(content);
+  let hasIssues = false;
+  
+  for (const policy of policies) {
+    if (!registry.tables.has(policy.fullTableName)) {
+      error(
+        filename, 
+        `Policy "${policy.policyName}" references table "${policy.fullTableName}" which doesn't exist in any migration.`
+      );
+      hasIssues = true;
+    }
+  }
+  
+  return !hasIssues;
+}
+
+function checkTriggerDependencies(content, filename, registry) {
+  const triggers = extractTriggerReferences(content);
+  let hasIssues = false;
+  
+  for (const trigger of triggers) {
+    if (!registry.tables.has(trigger.fullTableName)) {
+      error(
+        filename, 
+        `Trigger "${trigger.triggerName}" references table "${trigger.fullTableName}" which doesn't exist in any migration.`
+      );
+      hasIssues = true;
+    }
+  }
+  
+  return !hasIssues;
+}
+
+function checkForeignKeyDependencies(content, filename, registry) {
+  const foreignKeys = extractForeignKeyReferences(content);
+  let hasIssues = false;
+  
+  for (const fk of foreignKeys) {
+    if (!registry.tables.has(fk.fullTableName)) {
+      error(
+        filename, 
+        `Foreign key references table "${fk.fullTableName}" which doesn't exist in any migration.`
+      );
+      hasIssues = true;
+    }
+  }
+  
+  return !hasIssues;
+}
+
+function checkEnumDependencies(content, filename, registry) {
+  const alterations = extractEnumAlterations(content);
+  let hasIssues = false;
+  
+  for (const alt of alterations) {
+    if (!registry.enums.has(alt.fullEnumName)) {
+      error(
+        filename, 
+        `ALTER TYPE references enum "${alt.fullEnumName}" which doesn't exist in any migration.`
+      );
+      hasIssues = true;
+    }
+  }
+  
+  return !hasIssues;
+}
+
+function checkDependencyOrdering(migrations, registry) {
+  let hasIssues = false;
+  
+  // Track objects as we process migrations in order
+  const availableTables = new Set();
+  const availableEnums = new Set();
+  
+  for (const { filename, content } of migrations) {
+    // Check if references are available BEFORE we add this migration's objects
+    const policies = extractPolicyReferences(content);
+    for (const policy of policies) {
+      if (!availableTables.has(policy.fullTableName)) {
+        const createdIn = registry.tables.get(policy.fullTableName);
+        if (createdIn && createdIn !== filename) {
+          error(
+            filename,
+            `Policy "${policy.policyName}" references table "${policy.fullTableName}" which is created later in: ${createdIn}\n` +
+            `   Fix: Move this migration after ${createdIn} or merge them.`
+          );
+          hasIssues = true;
+        }
+      }
+    }
+    
+    const triggers = extractTriggerReferences(content);
+    for (const trigger of triggers) {
+      if (!availableTables.has(trigger.fullTableName)) {
+        const createdIn = registry.tables.get(trigger.fullTableName);
+        if (createdIn && createdIn !== filename) {
+          error(
+            filename,
+            `Trigger "${trigger.triggerName}" references table "${trigger.fullTableName}" which is created later in: ${createdIn}\n` +
+            `   Fix: Move this migration after ${createdIn} or merge them.`
+          );
+          hasIssues = true;
+        }
+      }
+    }
+    
+    const foreignKeys = extractForeignKeyReferences(content);
+    for (const fk of foreignKeys) {
+      if (!availableTables.has(fk.fullTableName)) {
+        const createdIn = registry.tables.get(fk.fullTableName);
+        if (createdIn && createdIn !== filename) {
+          error(
+            filename,
+            `Foreign key references table "${fk.fullTableName}" which is created later in: ${createdIn}\n` +
+            `   Fix: Move this migration after ${createdIn} or ensure the table exists first.`
+          );
+          hasIssues = true;
+        }
+      }
+    }
+    
+    const enumAlterations = extractEnumAlterations(content);
+    for (const alt of enumAlterations) {
+      if (!availableEnums.has(alt.fullEnumName)) {
+        const createdIn = registry.enums.get(alt.fullEnumName);
+        if (createdIn && createdIn !== filename) {
+          error(
+            filename,
+            `ALTER TYPE references enum "${alt.fullEnumName}" which is created later in: ${createdIn}\n` +
+            `   Fix: Move this migration after ${createdIn} or merge them.`
+          );
+          hasIssues = true;
+        }
+      }
+    }
+    
+    // Now add this migration's objects to available sets
+    const tables = extractTableNames(content);
+    for (const table of tables) {
+      availableTables.add(table.fullName);
+    }
+    
+    const enums = extractEnumTypes(content);
+    for (const enumType of enums) {
+      availableEnums.add(enumType.fullName);
+    }
+  }
+  
+  return !hasIssues;
+}
+
+function validateMigration(filename, content, registry) {
+  log(`\nChecking ${filename}...`, 'cyan');
+  
+  let isValid = true;
+  
+  // Run all checks
+  isValid = checkFileNaming(filename) && isValid;
+  isValid = checkFileTruncation(content, filename) && isValid;
+  isValid = checkNestedDelimiters(content, filename) && isValid;
+  isValid = checkExtensionAvailability(content, filename) && isValid;
+  isValid = checkSyntaxPatterns(content, filename) && isValid;
+  
+  // Run dependency checks
+  isValid = checkPolicyDependencies(content, filename, registry) && isValid;
+  isValid = checkTriggerDependencies(content, filename, registry) && isValid;
+  isValid = checkForeignKeyDependencies(content, filename, registry) && isValid;
+  isValid = checkEnumDependencies(content, filename, registry) && isValid;
+  
+  if (isValid) {
+    log(`   ✅ No critical issues found`, 'green');
+  }
+  
+  return isValid;
 }
 
 function main() {
@@ -200,13 +478,40 @@ function main() {
   
   log(`Found ${files.length} migration files\n`, 'cyan');
   
-  let allValid = true;
+  // First pass: Load all migrations and build object registry
+  log('🔧 Building object registry...', 'cyan');
+  const migrations = [];
   
   for (const file of files) {
-    const isValid = validateMigration(file);
+    const filepath = path.join(MIGRATIONS_DIR, file);
+    try {
+      const content = fs.readFileSync(filepath, 'utf8');
+      migrations.push({ filename: file, content });
+    } catch (err) {
+      error(file, `Failed to read file: ${err.message}`);
+    }
+  }
+  
+  const registry = buildObjectRegistry(migrations);
+  log(`   Found ${registry.tables.size} tables and ${registry.enums.size} enums\n`, 'cyan');
+  
+  // Second pass: Validate each migration
+  let allValid = true;
+  
+  for (const { filename, content } of migrations) {
+    const isValid = validateMigration(filename, content, registry);
     if (!isValid) {
       allValid = false;
     }
+  }
+  
+  // Third pass: Check dependency ordering
+  log('\n🔗 Checking dependency ordering...', 'cyan');
+  const orderingValid = checkDependencyOrdering(migrations, registry);
+  if (!orderingValid) {
+    allValid = false;
+  } else {
+    log('   ✅ All dependencies are in correct order\n', 'green');
   }
   
   log('\n==============================', 'blue');
