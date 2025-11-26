@@ -1,10 +1,6 @@
--- Check if there's a table with RLS enabled but no policies
--- Let's add RLS policy for locations table which likely has this issue
-ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
+-- This migration originally tried to add RLS to a 'locations' table that doesn't exist.
+-- The correct table is 'real_time_locations' which already has RLS configured
+-- in migration 20231028173000_add_location_sharing_fields.sql
+-- Converting to no-op.
 
--- Add RLS policy for locations table
-CREATE POLICY "Users can manage their own location data" 
-ON public.locations 
-FOR ALL 
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+SELECT 1; -- No-op migration
