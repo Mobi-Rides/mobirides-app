@@ -3256,6 +3256,13 @@ export type Database = {
       }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      cleanup_verification_temp: {
+        Args: never
+        Returns: {
+          deleted_count: number
+          error_message: string
+        }[]
+      }
       count_unread_notifications: { Args: never; Returns: number }
       create_booking_notification:
         | {
