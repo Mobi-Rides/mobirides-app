@@ -2,6 +2,12 @@
 
 -- Drop the overly restrictive existing policies (keeping the authenticated basic read)
 DROP POLICY IF EXISTS "profiles_authenticated_basic_read" ON public.profiles;
+-- Drop existing policies that we're about to recreate
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Authenticated users can view basic profile info" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can manage all profiles" ON public.profiles;
 
 -- Create new policies that allow proper access while maintaining security
 CREATE POLICY "Users can view their own profile" 
