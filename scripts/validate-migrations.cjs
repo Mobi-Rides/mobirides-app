@@ -16,6 +16,33 @@ const UNAVAILABLE_EXTENSIONS = [
   'pg_net'
 ];
 
+// System schemas that exist by default (not created in migrations)
+const SYSTEM_SCHEMAS = ['auth', 'storage', 'pg_catalog', 'information_schema', 'extensions'];
+
+// SQL keywords that should be filtered out from extracted "table names"
+const SQL_KEYWORDS = [
+  'CREATE', 'DROP', 'ALTER', 'FOR', 'AFTER', 'BEFORE', 'ENABLE', 'IN', 'ONLY', 
+  'TABLE', 'EXISTS', 'EACH', 'ROW', 'INSTEAD', 'OF', 'WHEN', 'AND', 'OR', 'NOT',
+  'IF', 'THEN', 'ELSE', 'END', 'BEGIN', 'EXCEPTION', 'RETURN', 'RETURNS', 'AS',
+  'DO', 'PERFORM', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'FROM', 'WHERE',
+  'FUNCTION', 'PROCEDURE', 'TRIGGER', 'POLICY', 'USING', 'CHECK', 'WITH', 'BY',
+  'TO', 'INTO', 'VALUES', 'SET', 'ON', 'AT', 'ALL', 'ANY', 'SOME', 'BETWEEN',
+  'LIKE', 'ILIKE', 'SIMILAR', 'CASE', 'CAST', 'NULL', 'TRUE', 'FALSE',
+  'DEFAULT', 'CONSTRAINT', 'PRIMARY', 'FOREIGN', 'KEY', 'REFERENCES', 'UNIQUE',
+  'INDEX', 'VIEW', 'SCHEMA', 'DATABASE', 'ROLE', 'USER', 'GROUP', 'GRANT', 'REVOKE',
+  'COMMIT', 'ROLLBACK', 'SAVEPOINT', 'TRANSACTION', 'LOCK', 'UNLOCK', 'VACUUM',
+  'ANALYZE', 'EXPLAIN', 'PREPARE', 'EXECUTE', 'DEALLOCATE', 'DECLARE', 'FETCH',
+  'CLOSE', 'OPEN', 'CURSOR', 'LOOP', 'WHILE', 'REPEAT', 'UNTIL', 'CONTINUE', 'EXIT',
+  'RAISE', 'NOTICE', 'WARNING', 'INFO', 'LOG', 'DEBUG', 'EXCEPTION', 'SQLSTATE',
+  'MESSAGE', 'DETAIL', 'HINT', 'ERRCODE', 'COLUMN', 'COLUMNS', 'TYPE', 'ENUM',
+  'SEQUENCE', 'SERIAL', 'BIGSERIAL', 'SMALLSERIAL', 'IDENTITY', 'GENERATED',
+  'ALWAYS', 'TEMPORARY', 'TEMP', 'UNLOGGED', 'LOGGED', 'MATERIALIZED', 'REFRESH',
+  'CONCURRENTLY', 'CASCADE', 'RESTRICT', 'NO', 'ACTION', 'DEFERRABLE', 'INITIALLY',
+  'IMMEDIATE', 'DEFERRED', 'MATCH', 'FULL', 'PARTIAL', 'SIMPLE', 'NULLS', 'FIRST',
+  'LAST', 'ASC', 'DESC', 'LIMIT', 'OFFSET', 'OVER', 'PARTITION', 'RANGE', 'ROWS',
+  'GROUPS', 'EXCLUDE', 'CURRENT', 'FOLLOWING', 'PRECEDING', 'UNBOUNDED', 'TIES'
+];
+
 // Color codes for terminal output
 const colors = {
   reset: '\x1b[0m',
@@ -153,15 +180,44 @@ function checkSyntaxPatterns(content, filename) {
 
 // ============= DEPENDENCY VALIDATION FUNCTIONS =============
 
+function stripComments(content) {
+  // Remove SQL comments
+  let result = content;
+  
+  // Remove single-line comments (-- comment)
+  result = result.replace(/--[^\n]*/g, '');
+  
+  // Remove multi-line comments (/* comment */)
+  result = result.replace(/\/\*[\s\S]*?\*\//g, '');
+  
+  return result;
+}
+
+function isSystemSchema(schema) {
+  return SYSTEM_SCHEMAS.includes(schema);
+}
+
+function isSQLKeyword(word) {
+  return SQL_KEYWORDS.includes(word.toUpperCase());
+}
+
 function extractTableNames(content) {
   const tables = [];
+  const cleanContent = stripComments(content);
+  
   // Match: CREATE TABLE [IF NOT EXISTS] schema.table or table
   const tablePattern = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(\w+)\.)?(\w+)/gi;
   let match;
   
-  while ((match = tablePattern.exec(content)) !== null) {
+  while ((match = tablePattern.exec(cleanContent)) !== null) {
     const schema = match[1] || 'public';
     const table = match[2];
+    
+    // Skip if it's a SQL keyword
+    if (isSQLKeyword(table)) {
+      continue;
+    }
+    
     tables.push({ schema, name: table, fullName: `${schema}.${table}` });
   }
   
@@ -170,13 +226,21 @@ function extractTableNames(content) {
 
 function extractEnumTypes(content) {
   const enums = [];
+  const cleanContent = stripComments(content);
+  
   // Match: CREATE TYPE [schema.]name AS ENUM
   const enumPattern = /CREATE\s+TYPE\s+(?:(\w+)\.)?(\w+)\s+AS\s+ENUM/gi;
   let match;
   
-  while ((match = enumPattern.exec(content)) !== null) {
+  while ((match = enumPattern.exec(cleanContent)) !== null) {
     const schema = match[1] || 'public';
     const name = match[2];
+    
+    // Skip if it's a SQL keyword
+    if (isSQLKeyword(name)) {
+      continue;
+    }
+    
     enums.push({ schema, name, fullName: `${schema}.${name}` });
   }
   
@@ -185,14 +249,22 @@ function extractEnumTypes(content) {
 
 function extractPolicyReferences(content) {
   const policies = [];
+  const cleanContent = stripComments(content);
+  
   // Match: CREATE POLICY ... ON [schema.]table
   const policyPattern = /CREATE\s+(?:OR\s+REPLACE\s+)?POLICY\s+["']?(\w+)["']?\s+ON\s+(?:(\w+)\.)?(\w+)/gi;
   let match;
   
-  while ((match = policyPattern.exec(content)) !== null) {
+  while ((match = policyPattern.exec(cleanContent)) !== null) {
     const policyName = match[1];
     const schema = match[2] || 'public';
     const table = match[3];
+    
+    // Skip if it's a system schema or SQL keyword
+    if (isSystemSchema(schema) || isSQLKeyword(table)) {
+      continue;
+    }
+    
     policies.push({ 
       policyName, 
       schema, 
@@ -206,14 +278,23 @@ function extractPolicyReferences(content) {
 
 function extractTriggerReferences(content) {
   const triggers = [];
+  const cleanContent = stripComments(content);
+  
   // Match: CREATE TRIGGER ... ON [schema.]table
-  const triggerPattern = /CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+(\w+)[\s\S]*?ON\s+(?:(\w+)\.)?(\w+)/gi;
+  // More specific pattern to avoid matching "FOR EACH ROW"
+  const triggerPattern = /CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+(\w+)\s+(?:BEFORE|AFTER|INSTEAD\s+OF)\s+(?:INSERT|UPDATE|DELETE|TRUNCATE)[\s\S]*?ON\s+(?:(\w+)\.)?(\w+)\s+FOR\s+EACH/gi;
   let match;
   
-  while ((match = triggerPattern.exec(content)) !== null) {
+  while ((match = triggerPattern.exec(cleanContent)) !== null) {
     const triggerName = match[1];
     const schema = match[2] || 'public';
     const table = match[3];
+    
+    // Skip if table name is a SQL keyword
+    if (isSQLKeyword(table)) {
+      continue;
+    }
+    
     triggers.push({ 
       triggerName, 
       schema, 
@@ -227,13 +308,21 @@ function extractTriggerReferences(content) {
 
 function extractForeignKeyReferences(content) {
   const foreignKeys = [];
+  const cleanContent = stripComments(content);
+  
   // Match: REFERENCES [schema.]table or FOREIGN KEY ... REFERENCES [schema.]table
   const fkPattern = /(?:REFERENCES|FOREIGN\s+KEY[\s\S]*?REFERENCES)\s+(?:(\w+)\.)?(\w+)/gi;
   let match;
   
-  while ((match = fkPattern.exec(content)) !== null) {
+  while ((match = fkPattern.exec(cleanContent)) !== null) {
     const schema = match[1] || 'public';
     const table = match[2];
+    
+    // Skip if it's a system schema or SQL keyword
+    if (isSystemSchema(schema) || isSQLKeyword(table)) {
+      continue;
+    }
+    
     foreignKeys.push({ 
       schema, 
       table, 
@@ -348,6 +437,35 @@ function checkEnumDependencies(content, filename, registry) {
         `ALTER TYPE references enum "${alt.fullEnumName}" which doesn't exist in any migration.`
       );
       hasIssues = true;
+    }
+  }
+  
+  return !hasIssues;
+}
+
+function checkDuplicateRealtimePublications(migrations) {
+  let hasIssues = false;
+  const publicationTables = new Map(); // tableName -> first migration file
+  
+  for (const { filename, content } of migrations) {
+    const cleanContent = stripComments(content);
+    const matches = [...cleanContent.matchAll(/ALTER\s+PUBLICATION\s+supabase_realtime\s+ADD\s+TABLE\s+(\w+)/gi)];
+    
+    for (const match of matches) {
+      const tableName = match[1];
+      
+      if (publicationTables.has(tableName)) {
+        error(
+          filename,
+          `Table "${tableName}" added to supabase_realtime publication in multiple migrations.\n` +
+          `   First: ${publicationTables.get(tableName)}\n` +
+          `   Duplicate: ${filename}\n` +
+          `   Fix: Use idempotent DO $$ IF NOT EXISTS pattern in the later migration.`
+        );
+        hasIssues = true;
+      } else {
+        publicationTables.set(tableName, filename);
+      }
     }
   }
   
@@ -512,6 +630,15 @@ function main() {
     allValid = false;
   } else {
     log('   ✅ All dependencies are in correct order\n', 'green');
+  }
+  
+  // Fourth pass: Check for duplicate realtime publications
+  log('🔄 Checking for duplicate realtime publications...', 'cyan');
+  const publicationsValid = checkDuplicateRealtimePublications(migrations);
+  if (!publicationsValid) {
+    allValid = false;
+  } else {
+    log('   ✅ No duplicate realtime publications found\n', 'green');
   }
   
   log('\n==============================', 'blue');
