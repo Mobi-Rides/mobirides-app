@@ -3727,16 +3727,27 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
-      log_admin_activity: {
-        Args: {
-          p_action: string
-          p_admin_id: string
-          p_details?: Json
-          p_resource_id?: string
-          p_resource_type?: string
-        }
-        Returns: undefined
-      }
+      log_admin_activity:
+        | {
+            Args: {
+              p_action: string
+              p_admin_id: string
+              p_details?: Json
+              p_resource_id?: string
+              p_resource_type?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_action: string
+              p_admin_id: string
+              p_details?: Json
+              p_resource_id?: string
+              p_resource_type?: string
+            }
+            Returns: undefined
+          }
       log_audit_event: {
         Args: {
           p_action_details?: Json
