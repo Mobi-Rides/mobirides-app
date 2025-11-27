@@ -6,9 +6,9 @@ echo "==================================================================="
 echo "Migration Sync Fix - Minimal Repair Script"
 echo "==================================================================="
 echo ""
-echo "This script will fix 5 migration mismatches:"
-echo "  - Mark 5 migrations as APPLIED in remote history"
-echo "  - Remove placeholder files (not needed)"
+echo "This script will fix migration timestamp collisions:"
+echo "  - Rename 2 local files to have unique timestamps"
+echo "  - Mark the new migration IDs as APPLIED in remote"
 echo ""
 read -p "Continue? (y/n) " -n 1 -r
 echo
@@ -18,37 +18,32 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo ""
-echo "Phase 1: Marking migrations as APPLIED in remote (5 migrations)"
+echo "Phase 1: Renaming colliding migration files"
 echo "-------------------------------------------------------------------"
 
-echo "Marking 20250103 as applied..."
-npx supabase migration repair --status applied 20250103 --linked
+if [ -f "supabase/migrations/20250131_fix_host_rating_with_car_reviews.sql" ]; then
+    echo "Renaming 20250131_fix_host_rating_with_car_reviews.sql to 20250131000004_fix_host_rating_with_car_reviews.sql..."
+    mv supabase/migrations/20250131_fix_host_rating_with_car_reviews.sql supabase/migrations/20250131000004_fix_host_rating_with_car_reviews.sql
+else
+    echo "⚠️  20250131_fix_host_rating_with_car_reviews.sql not found (may already be renamed)"
+fi
 
-echo "Marking first 20250131 as applied..."
-npx supabase migration repair --status applied 20250131 --linked
-
-echo "Marking second 20250131 as applied..."
-npx supabase migration repair --status applied 20250131 --linked
-
-echo "Marking first 20251120 as applied..."
-npx supabase migration repair --status applied 20251120 --linked
-
-echo "Marking second 20251120 as applied..."
-npx supabase migration repair --status applied 20251120 --linked
+if [ -f "supabase/migrations/20251120_fix_audit_logs_rls_v2.sql" ]; then
+    echo "Renaming 20251120_fix_audit_logs_rls_v2.sql to 20251120000014_fix_audit_logs_rls_v2.sql..."
+    mv supabase/migrations/20251120_fix_audit_logs_rls_v2.sql supabase/migrations/20251120000014_fix_audit_logs_rls_v2.sql
+else
+    echo "⚠️  20251120_fix_audit_logs_rls_v2.sql not found (may already be renamed)"
+fi
 
 echo ""
-echo "Phase 2: Removing placeholder files (if they exist)"
+echo "Phase 2: Marking new migration IDs as applied in remote"
 echo "-------------------------------------------------------------------"
 
-if [ -f "supabase/migrations/20250131_production_placeholder.sql" ]; then
-    echo "Removing 20250131 placeholder..."
-    rm supabase/migrations/20250131_production_placeholder.sql
-fi
+echo "Marking 20250131000004 as applied..."
+npx supabase migration repair --status applied 20250131000004 --linked
 
-if [ -f "supabase/migrations/20251120_production_placeholder.sql" ]; then
-    echo "Removing 20251120 placeholder..."
-    rm supabase/migrations/20251120_production_placeholder.sql
-fi
+echo "Marking 20251120000014 as applied..."
+npx supabase migration repair --status applied 20251120000014 --linked
 
 echo ""
 echo "Phase 3: Verification"
