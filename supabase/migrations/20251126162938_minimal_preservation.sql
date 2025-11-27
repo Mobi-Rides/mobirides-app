@@ -83,20 +83,7 @@ BEGIN
   END IF;
 END $$;
 
--- =====================================================
--- FUNCTION: get_user_conversation_ids
--- =====================================================
-CREATE OR REPLACE FUNCTION public.get_user_conversation_ids(p_user_id UUID)
-RETURNS TABLE(conversation_id UUID) 
-LANGUAGE sql 
-STABLE 
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT DISTINCT cp.conversation_id
-  FROM public.conversation_participants cp
-  WHERE cp.user_id = p_user_id;
-$$;
+-- Function get_user_conversation_ids already exists in database, skipping
 
 -- =====================================================
 -- RLS POLICIES: campaign_delivery_logs
