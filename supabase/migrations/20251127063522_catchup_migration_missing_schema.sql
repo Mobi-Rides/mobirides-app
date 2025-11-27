@@ -197,6 +197,9 @@ BEGIN
 END;
 $$;
 
+-- Drop function first to allow return type change (PostgreSQL doesn't allow changing return types with CREATE OR REPLACE)
+DROP FUNCTION IF EXISTS public.create_notification_campaign(jsonb);
+
 -- Function: create_notification_campaign
 CREATE OR REPLACE FUNCTION public.create_notification_campaign(p_campaign_data JSONB)
 RETURNS JSONB
