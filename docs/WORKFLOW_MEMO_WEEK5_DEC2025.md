@@ -1,10 +1,30 @@
 # MobiRides Workflow Execution Memo
 ## Week 5 - Week 8 | November-December 2025
+**Date:** 27/11/2025
 
 **Document Version:** 1.0  
 **Last Updated:** November 27, 2025  
 **Sprint Duration:** 4 weeks (Week 5-8)  
 **Target Completion:** December 31, 2025
+
+---
+
+## 📋 Related Documentation
+
+- **Strategic Plans:**
+  - [Nov-Dec 2025 Roadmap](./ROADMAP-NOV-DEC-2025.md) - Full roadmap and timeline
+  - [Week 4 Status Report](./Product%20Status/WEEK_4_NOVEMBER_2025_STATUS_REPORT.md) - Current status baseline
+  - [Week 2 Status Report](./Product%20Status/WEEK_2_NOVEMBER_2025_STATUS_REPORT_11-12-2025.docx.md) - Historical context
+  - [Updated System Health Report](./Product%20Status/UPDATED_SYSTEM_HEALTH_REPORT.md) - Technical health assessment
+
+- **Technical Documentation:**
+  - [SuperAdmin Functionality Analysis](../src/components/chat/Comprehensive%20Admin/SuperAdmin%20Functionality%20Analysis.md) - SuperAdmin requirements
+  - [Car Addition Failure Analysis](./.trae/documents/Car%20Addition%20Failure%20Analysis%20Report.md) - RLS policy examples
+  - [Migration Audit Report](./.trae/documents/migration-audit-report.md) - Migration cleanup status
+
+- **Project Context:**
+  - [Project Status September 2025](./Product%20Status/PROJECT_STATUS_SEPTEMBER_2025_REPORT.md) - Q3 achievements
+  - [Main Roadmap](../ROADMAP.md) - Original development roadmap
 
 ---
 
@@ -859,7 +879,26 @@ git push origin hotfix/MOBI-XXX-[description]
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | Nov 27, 2025 | Arnold | Initial workflow memo created |
+| 1.0 | 27/11/2025 | Arnold | Initial workflow memo created with team assignments and coordination protocols |
+
+---
+
+## 🔗 Quick Links
+
+**Project Management:**
+- [Jira Sprint Board](https://mobi-rides.atlassian.net/sprint/5) - Track all tickets and progress
+- [Confluence Wiki](https://mobi-rides.atlassian.net/wiki) - Technical documentation
+- [GitHub Repository](https://github.com/mobi-rides/mobi-rides) - Code repository
+
+**Communication:**
+- Slack: `#engineering`, `#migrations`, `#code-reviews`, `#deployments`
+- Daily Standup: 9:00 AM in `#engineering`
+- Weekly Retrospective: Fridays 4:00 PM
+
+**Deployment & Monitoring:**
+- [Lovable Cloud Dashboard](https://lovable.dev) - Frontend deployment
+- [Supabase Dashboard](https://supabase.com/dashboard) - Database and Edge Functions
+- [Production URL](https://mobi-rides.lovable.app) - Live application
 
 ---
 
