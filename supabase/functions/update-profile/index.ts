@@ -1,5 +1,5 @@
 import { serve } from "std/http/server.ts"
-import { createClient } from "supabase"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +18,8 @@ serve(async (req: Request) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    const { data, error: authError } = await supabaseClient.auth.getUser()
+    const user = data?.user
     if (authError || !user) {
       throw new Error("Unauthorized")
     }
@@ -37,10 +38,12 @@ serve(async (req: Request) => {
     if (emergencyContact?.phoneNumber !== undefined) profileUpdates.emergency_contact_phone = emergencyContact.phoneNumber
 
     if (Object.keys(profileUpdates).length > 0) {
-      const { error: profileError } = await supabaseClient
+      const updateQuery = supabaseClient
         .from('profiles')
         .update(profileUpdates)
         .eq('id', user.id)
+      
+      const { error: profileError } = await updateQuery
 
       if (profileError) throw profileError
     }
@@ -53,34 +56,40 @@ serve(async (req: Request) => {
 
     if (Object.keys(verificationUpdates).length > 0) {
       // Get current verification record
-      const { data: existingVerification } = await supabaseClient
+      const selectQuery = supabaseClient
         .from('user_verifications')
         .select('id, personal_info')
         .eq('user_id', user.id)
-        .maybeSingle()
+      
+      const { data: existingVerificationRows } = await selectQuery
+      const existingVerification = existingVerificationRows?.[0]
 
       if (!existingVerification) {
         // Create verification record if missing
-        const { error: insertVerificationError } = await supabaseClient
+        const insertQuery = supabaseClient
           .from('user_verifications')
           .insert({
             user_id: user.id,
             personal_info: verificationUpdates,
             last_updated_at: new Date().toISOString()
           })
+        
+        const { error: insertVerificationError } = await insertQuery
 
         if (insertVerificationError) throw insertVerificationError
       } else {
         const currentPersonalInfo = existingVerification?.personal_info || {}
         const updatedPersonalInfo = { ...currentPersonalInfo, ...verificationUpdates }
 
-        const { error: verificationError } = await supabaseClient
+        const updateQuery = supabaseClient
           .from('user_verifications')
           .update({ 
             personal_info: updatedPersonalInfo,
             last_updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id)
+        
+        const { error: verificationError } = await updateQuery
 
         if (verificationError) throw verificationError
       }

@@ -171,7 +171,7 @@ const RenterBookings = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-4 space-y-4">
         <div className="px-4 py-4 mb-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-xl md:text-2xl text-left font-semibold">

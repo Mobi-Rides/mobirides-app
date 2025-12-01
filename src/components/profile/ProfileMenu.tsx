@@ -32,6 +32,14 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
+  // Map admin roles to renter for help center access
+  const getHelpCenterRole = (userRole: string): 'renter' | 'host' => {
+    if (['admin', 'super_admin'].includes(userRole)) {
+      return 'renter'; // Default to renter view for admins
+    }
+    return userRole as 'renter' | 'host';
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -118,17 +126,19 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     },
   ];
 
+  const helpCenterRole = getHelpCenterRole(role);
+
   const helpItems: MenuItem[] = [
     {
       icon: BookOpen,
       label: "Browse Help Center",
-      onClick: () => navigate(`/help/${role}`),
+      onClick: () => navigate(`/help/${helpCenterRole}`),
       description: "Complete guides and tutorials"
     },
     {
       icon: HelpCircle,
       label: "Quick Start Guide",
-      onClick: () => navigate(`/help/${role}/getting-started`),
+      onClick: () => navigate(`/help/${helpCenterRole}/getting-started`),
       description: "Get started in minutes"
     },
     {

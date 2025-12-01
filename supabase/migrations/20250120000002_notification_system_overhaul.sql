@@ -75,7 +75,9 @@ CREATE TYPE notification_role AS ENUM (
     'host',
     'renter', 
     'admin',
-    'both' -- For notifications that apply to both host and renter
+    'both',
+    'host_only',
+    'renter_only'
 );
 
 -- Step 5: Create new notifications table with enhanced schema

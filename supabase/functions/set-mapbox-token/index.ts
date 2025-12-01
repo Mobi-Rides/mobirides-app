@@ -68,7 +68,7 @@ serve(async (req) => {
     console.error('Error in set-mapbox-token function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         message: 'Internal server error while processing token'
       }),
       { 

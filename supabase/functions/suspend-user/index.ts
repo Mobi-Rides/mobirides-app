@@ -222,12 +222,12 @@ serve(async (req) => {
     }
 
     // Map frontend restriction types to database enum values
-    const restrictionTypeMap = {
+    const restrictionTypeMap: Record<string, string> = {
       "suspend": "suspension",
       "ban": "login_block"
     };
     
-    const dbRestrictionType = restrictionTypeMap[restrictionType] || "login_block";
+    const dbRestrictionType = restrictionTypeMap[restrictionType as string] || "login_block";
 
     // Insert restriction record for tracking (created_by nullable if no profile)
     const { data: adminProfileRow } = await supabaseAdmin

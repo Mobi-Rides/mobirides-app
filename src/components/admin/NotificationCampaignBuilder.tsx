@@ -92,18 +92,29 @@ export const NotificationCampaignBuilder: React.FC<NotificationCampaignBuilderPr
 
   const queryClient = useQueryClient();
 
-  // Validate campaign (mock validation since RPC function doesn't exist)
+  // Validate campaign using RPC function
   const validateCampaign = async () => {
     setIsValidating(true);
     try {
-      // Mock validation result
-      const mockValidation: CampaignValidation = {
-        valid: true,
-        warnings: [],
-        errors: [],
-        estimated_recipients: 0
+      const { data, error } = await supabase.rpc('validate_campaign_audience' as any, {
+        p_user_roles: campaign.target_audience.user_roles,
+        p_registration_start: campaign.target_audience.registration_date_range?.start || null,
+        p_registration_end: campaign.target_audience.registration_date_range?.end || null,
+        p_last_login_days: campaign.target_audience.activity_filters?.last_login_days || null,
+        p_booking_count_min: campaign.target_audience.activity_filters?.booking_count_min || null,
+      });
+
+      if (error) throw error;
+
+      const result = data as { valid: boolean; warnings: string[]; errors: string[]; estimated_recipients: number };
+      const validation: CampaignValidation = {
+        valid: result.valid,
+        warnings: result.warnings || [],
+        errors: result.errors || [],
+        estimated_recipients: result.estimated_recipients || 0
       };
-      setValidationResult(mockValidation);
+      
+      setValidationResult(validation);
       toast.success("Campaign validated successfully");
     } catch (error) {
       console.error("Validation error:", error);
@@ -113,20 +124,40 @@ export const NotificationCampaignBuilder: React.FC<NotificationCampaignBuilderPr
     }
   };
 
-  // Create campaign mutation (direct database insert since RPC function doesn't exist)
+  // Create campaign mutation using RPC function
   const createCampaignMutation = useMutation({
     mutationFn: async () => {
       if (!campaign.name.trim() || !campaign.content.title.trim() || !campaign.content.message.trim()) {
         throw new Error("Required fields are missing");
       }
 
-      // Create notifications directly since campaign RPC doesn't exist
-      // This would need to be implemented based on your notification system
-      toast.info("Campaign functionality requires database RPC functions to be implemented");
-      throw new Error("Campaign RPC functions not implemented yet");
+      const { data, error } = await supabase.rpc('create_notification_campaign' as any, {
+        p_campaign_name: campaign.name,
+        p_campaign_description: campaign.description,
+        p_user_roles: campaign.target_audience.user_roles,
+        p_title: campaign.content.title,
+        p_message: campaign.content.message,
+        p_action_url: campaign.content.action_url || null,
+        p_action_text: campaign.content.action_text || null,
+        p_priority: campaign.settings.priority,
+        p_send_immediately: campaign.schedule.send_immediately,
+        p_scheduled_date: campaign.schedule.scheduled_date || null,
+        p_registration_start: campaign.target_audience.registration_date_range?.start || null,
+        p_registration_end: campaign.target_audience.registration_date_range?.end || null,
+        p_last_login_days: campaign.target_audience.activity_filters?.last_login_days || null,
+        p_booking_count_min: campaign.target_audience.activity_filters?.booking_count_min || null,
+        p_metadata: {
+          allow_unsubscribe: campaign.settings.allow_unsubscribe,
+          track_opens: campaign.settings.track_opens,
+          track_clicks: campaign.settings.track_clicks,
+        },
+      });
+
+      if (error) throw error;
+      return data as { success: boolean; campaign_id: string; notifications_created: number; total_recipients: number };
     },
-    onSuccess: () => {
-      toast.success("Notification campaign created successfully");
+    onSuccess: (data) => {
+      toast.success(`Campaign created! ${data.notifications_created} notifications sent to ${data.total_recipients} recipients.`);
       queryClient.invalidateQueries({ queryKey: ["notification-campaigns"] });
       onClose();
       resetForm();
