@@ -19,17 +19,17 @@ export const HostPopup = ({ host, onViewCars }: HostPopupProps) => {
     <div className="bg-background border rounded-lg shadow-lg p-3 min-w-[200px] cursor-pointer hover:bg-muted/50 transition-colors"
          onClick={() => onViewCars(host.id)}>
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-          {host.avatar_url ? (
-            <img 
-              src={getAvatarUrl()} 
-              alt={host.full_name || "Host"} 
-              className="w-full h-full object-cover"
-            />
-          ) : (
+        {host.avatar_url ? (
+          <img 
+            src={getAvatarUrl()} 
+            alt={host.full_name || "Host"} 
+            className="w-12 h-12 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
             <User className="w-6 h-6 text-muted-foreground" />
-          )}
-        </div>
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-sm truncate">
             {host.full_name || "Host"}
