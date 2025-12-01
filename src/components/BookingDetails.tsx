@@ -193,14 +193,17 @@ export const BookingDetails: React.FC = () => {
               </div>
             ) : isHost && booking.renter ? (
               <div className="flex items-center gap-4">
-                <img 
-                  src={booking.renter.avatar_url 
-                    ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl 
-                    : "/placeholder.svg"
-                  } 
-                  alt={booking.renter.full_name || 'Renter'} 
-                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                />
+                {booking.renter.avatar_url ? (
+                  <img 
+                    src={supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl} 
+                    alt={booking.renter.full_name || 'Renter'} 
+                    className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-muted border-2 border-primary/20 flex items-center justify-center">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
                 <div>
                   <p className="font-medium text-foreground">{booking.renter.full_name}</p>
                   {booking.renter.phone_number && (
@@ -215,14 +218,17 @@ export const BookingDetails: React.FC = () => {
               </div>
             ) : isRenter && booking.cars?.owner ? (
               <div className="flex items-center gap-4">
-                <img 
-                  src={booking.cars.owner.avatar_url 
-                    ? supabase.storage.from('avatars').getPublicUrl(booking.cars.owner.avatar_url).data.publicUrl 
-                    : "/placeholder.svg"
-                  } 
-                  alt={booking.cars.owner.full_name || 'Host'} 
-                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-                />
+                {booking.cars.owner.avatar_url ? (
+                  <img 
+                    src={supabase.storage.from('avatars').getPublicUrl(booking.cars.owner.avatar_url).data.publicUrl} 
+                    alt={booking.cars.owner.full_name || 'Host'} 
+                    className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-muted border-2 border-primary/20 flex items-center justify-center">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
                 <div>
                   <p className="font-medium text-foreground">{booking.cars.owner.full_name}</p>
                   {booking.cars.owner.phone_number && (
