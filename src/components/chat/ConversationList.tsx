@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   Search, 
@@ -37,7 +38,7 @@ export function ConversationList({
   searchTerm,
   onSearchChange
 }: ConversationListProps) {
-
+  const navigate = useNavigate();
   const filteredConversations = conversations;
 
   const getConversationTitle = (conversation: Conversation) => {
@@ -75,7 +76,7 @@ export function ConversationList({
   const isMobile = useIsMobile();
   
   const handleBackClick = () => {
-    window.history.back();
+    navigate('/');
   };
 
   return (

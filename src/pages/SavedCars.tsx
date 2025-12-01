@@ -73,7 +73,7 @@ const SavedCars = () => {
   return (
     <div className="min-h-screen px-4 pb-20">
       <div className="px-4 py-4 mb-4 flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-xl md:text-2xl text-left font-semibold">Profile</h1>

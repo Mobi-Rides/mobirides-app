@@ -181,7 +181,7 @@ export const RentalReview = () => {
   if (!booking || !booking.cars) {
     return (
       <div className="container max-w-2xl py-8">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="">
+        <Button variant="ghost" onClick={() => navigate('/bookings')} className="">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
@@ -204,7 +204,7 @@ export const RentalReview = () => {
           <div className="absolute left-0">
             <Button
               variant="ghost"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/bookings')}
               className="p-0"
             >
               <div className="flex items-center bg-gray-200 rounded-full p-1">

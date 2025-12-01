@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, isSameDay, format } from 'date-fns';
 import { 
   Phone, 
@@ -48,6 +49,7 @@ export function ChatWindow({
   onStopTyping,
   isLoading = false
 }: ChatWindowProps) {
+  const navigate = useNavigate();
   const [replyToMessage, setReplyToMessage] = useState<{
     id: string;
     content: string;
@@ -155,7 +157,7 @@ export function ChatWindow({
   const isMobile = useIsMobile();
   
   const handleBackClick = () => {
-    window.history.back();
+    navigate('/messages');
   };
 
   return (
