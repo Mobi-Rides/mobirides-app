@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ type Booking = Database['public']['Tables']['bookings']['Row'] & {
 export const BookingDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['booking', id],
@@ -57,7 +58,7 @@ export const BookingDetails: React.FC = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Booking Not Found</h1>
           <p className="text-muted-foreground mb-4">The booking you're looking for doesn't exist or you don't have permission to view it.</p>
-          <Button onClick={() => window.history.back()}>Go Back</Button>
+          <Button onClick={() => navigate('/bookings')}>Go Back</Button>
         </div>
       </div>
     );
@@ -95,7 +96,7 @@ export const BookingDetails: React.FC = () => {
       <div className="mb-6">
         <Button 
           variant="outline" 
-          onClick={() => window.history.back()}
+          onClick={() => navigate('/bookings')}
           className="mb-4"
         >
           ← Back
