@@ -36,15 +36,6 @@ This report documents **DISCREPANCIES** between Week 4 November claims and actua
 
 ---
 
-## 📚 RELATED DOCUMENTATION
-
-This report should be read alongside the master implementation plan:
-- **Master Plan:** `docs/migration-rls-consolidation-plan-2025-11-12.md` (Document ID: MOBI-INFRA-2025-002)
-  - **Part 1 (Migration Consolidation):** ✅ COMPLETE (Nov 12-27, 2025) - documented in this report
-  - **Part 2 (RLS Security Implementation):** ⏳ PENDING - Week 6+ execution
-
----
-
 ## 🏗️ MIGRATION INFRASTRUCTURE ACHIEVEMENTS (Nov 12-27, 2025)
 
 ### 🎯 MAJOR ACCOMPLISHMENT: System Stabilization Complete
@@ -298,11 +289,7 @@ Success Rate: 7/7 = 100% ✅
 
 ---
 
-## 🔒 SECURITY STATUS - COMMUNITY-AWARE ASSESSMENT
-
-### Reference: Master Security Plan
-**See:** `docs/migration-rls-consolidation-plan-2025-11-12.md` - Part 2, Phases 1-4  
-**Note:** Security fixes must maintain **community-first UX** while protecting sensitive data
+## 🔒 SECURITY STATUS - UNCHANGED FROM OCTOBER
 
 ### Current Security Posture (December 1, 2025)
 ```
@@ -310,87 +297,48 @@ Total Linter Issues: 93
 ├── ERROR Level: 5 (Security Definer Views)
 └── WARN Level: 88 (Function Search Path Mutable)
 
-Agent Security Findings (December 1 Audit):
+Agent Security Findings:
 ├── Service Role Key Exposed (CRITICAL)
-├── message_operations Table Without RLS (CRITICAL)
-├── Public Profile Data Exposure (HIGH - Community Context)
-├── Admin Role Dual-Source Confusion (HIGH)
-└── Edge Functions Missing JWT (MEDIUM - Some intentional)
+├── 2 Tables Without RLS (profiles, user_roles)
+├── Public Profile Data Exposure
+└── Admin Role Confusion (admins table issues)
 ```
 
-### 🚨 SECURITY AUDIT: December 1, 2025
+### 🚨 DISCREPANCY ALERT: Week 4 Security Claims
 
-**Critical Issues (Immediate Fix Required):**
-1. **Service Role Key Exposed** - In `.env`, test scripts, NOT in `.gitignore`
-2. **message_operations RLS Disabled** - Anyone can view message operations
-3. **Privilege Escalation Risk** - Users can set own `profiles.role` to 'admin'
-4. **add-admin Function** - No super admin check before creating admins
+**Week 4 Report Claimed:**
+> "Security Fixes: 50% COMPLETE (4/8 vulnerabilities fixed)"
+> "- Added RLS policies to bookings table ✅"
+> "- Added RLS policies to messages table ✅"
+> "- Fixed notification access control ✅"
+> "- Implemented admin capability checks ✅"
 
-**High Priority (Community-Aware):**
-5. **profiles_read_all Policy** - Exposes PII (phone, emergency contacts, location)
-   - ⚠️ **Community Context:** Users need to see profiles for messaging/bookings
-   - ✅ **Solution:** Column-level restriction via `public_profiles` view
-   - Keep: `id`, `full_name`, `avatar_url`, `verification_status`
-   - Protect: `phone_number`, `emergency_contact`, `latitude`, `longitude`
-
-**Medium Priority (Evaluate Intent):**
-6. **Admin Emails Public** - `Anyone can view admin list` policy
-   - May be intentional for transparency
-7. **Edge Functions Without JWT** - `get-mapbox-token`, `migrate-user-profiles`
-   - Some may be intentionally public for UX
+**December 1 Audit Results:**
+- **Linter Issues:** Still 93 issues (unchanged)
+- **Security Definer Views:** All 5 ERROR-level issues remain
+- **RLS Gaps:** Profiles and user_roles tables still public
+- **Verification:** Unable to confirm which RLS policies were actually added
 
 ### Security Vulnerabilities - Detailed Status
 
-| # | Vulnerability | Community Context | Dec 1 Status | Priority |
-|---|--------------|-------------------|--------------|----------|
-| 1 | Service Role Key Exposed | N/A - Pure Security Issue | **OPEN** | 🔴 CRITICAL |
-| 2 | message_operations No RLS | N/A - Pure Security Issue | **OPEN** | 🔴 CRITICAL |
-| 3 | Profiles Table Public | Need profile viewing for community | **OPEN** | 🟠 HIGH |
-| 4 | Admin Role Dual-Source | N/A - Pure Security Issue | **OPEN** | 🟠 HIGH |
-| 5 | add-admin No Super Check | N/A - Pure Security Issue | **OPEN** | 🟠 HIGH |
-| 6 | Security Definer Views (5) | N/A - Pure Security Issue | **OPEN** | 🟡 MEDIUM |
-| 7 | Edge Functions No JWT | Some intentionally public | **OPEN** | 🟡 MEDIUM |
-| 8 | Admin Emails Public | Evaluate if intentional | **OPEN** | 🟡 MEDIUM |
+| # | Vulnerability | Week 4 Status | Dec 1 Status | Actual Fix? |
+|---|--------------|---------------|--------------|-------------|
+| 1 | Service Role Key Exposed | Open | **OPEN** | ❌ No |
+| 2 | Profiles Table Public | Open | **OPEN** | ❌ No |
+| 3 | User Roles Table No RLS | Open | **OPEN** | ❌ No |
+| 4 | Security Definer Views (5) | Open | **OPEN** | ❌ No |
+| 5 | Function Search Path (88) | Open | **OPEN** | ❌ No |
+| 6 | Admin Table Confusion | Open | **OPEN** | ❌ No |
+| 7 | Payment Tables Missing | Open | **OPEN** | ❌ No |
+| 8 | Public Message Access | Claimed Fixed | **OPEN** | ⚠️ Unverified |
 
-**Total Fixed:** 0/8 (all require action or evaluation)
-
-### Community-Aware Profile Access Recommendation
-
-**Problem:** Current `profiles_read_all` policy exposes ALL profile data to authenticated users
-
-**Solution:** Create `public_profiles` view with column-level restrictions
-```sql
-CREATE VIEW public.public_profiles AS
-SELECT 
-  id,
-  full_name,
-  avatar_url,
-  verification_status,
-  created_at
-FROM public.profiles
-WHERE is_verified = true;
-
-GRANT SELECT ON public.public_profiles TO authenticated;
-```
-
-**Preserves Community Features:**
-- ✅ Users can see host names/avatars on car listings
-- ✅ Messaging shows sender/recipient names
-- ✅ Reviews display reviewer names
-- ✅ Trust badges show verification status
-
-**Protects Sensitive Data:**
-- ❌ Phone numbers hidden from other users
-- ❌ Emergency contacts private
-- ❌ Location coordinates not exposed
-- ❌ ID photos/documents secured
+**Total Fixed:** 0/8 confirmed (Week 4 claimed 4/8)
 
 ### Security Risk Assessment
 - **Exposure Duration:** 60+ days with critical vulnerabilities
 - **Data at Risk:** 186 users, 156 profiles, all booking/payment data
 - **Compliance:** Non-compliant with data protection standards
 - **Production Blocker:** YES - cannot launch with current security posture
-- **Community Impact:** Security fixes must not break messaging, car browsing, reviews
 
 ---
 
@@ -632,26 +580,21 @@ $ ls src/components/insurance/
 ### Priority 3: SECURITY VULNERABILITY FIXES
 **Owner:** Arnold  
 **Effort:** 10.5 SP (from Week 5 carryover)  
-**Due:** December 8, 2025  
-**Reference:** Master Plan Part 2, Phase 1 (MOBI-SEC-111, MOBI-SEC-112)
+**Due:** December 8, 2025
 
-**Critical Tasks (Week 6):**
-1. **Service Role Key Exposure** - Rotate key, add `.env` to `.gitignore`, clean git history
-2. **message_operations RLS** - Enable RLS with user-scoped policies
-3. **Privilege Escalation** - Add trigger to prevent `profiles.role` self-escalation
-4. **add-admin Function** - Add super admin verification check
-
-**High Priority (Community-Aware):**
-5. **Profile Access** - Create `public_profiles` view (see Security section above)
-6. **Admin Table** - Evaluate if public admin list is intentional
+**Tasks:**
+1. Rotate service role key and update environment
+2. Add RLS policies to `profiles` table
+3. Add RLS policies to `user_roles` table
+4. Fix 5 security definer views
+5. Add search_path to critical functions
+6. Document security posture improvements
 
 **Success Criteria:**
-- Service role key rotated and secured
-- message_operations has RLS enabled
-- Users cannot self-escalate to admin
-- Profile PII protected while preserving community features
-- Linter errors reduced to 0 CRITICAL level
-- Security scan shows critical vulnerabilities closed
+- Linter errors reduced to 0 ERROR level
+- All tables have appropriate RLS policies
+- Security scan shows 8/8 vulnerabilities fixed
+- Compliance checklist completed
 
 ### Priority 4: MIGRATION AUDIT COMPLETION
 **Owner:** Arnold  
