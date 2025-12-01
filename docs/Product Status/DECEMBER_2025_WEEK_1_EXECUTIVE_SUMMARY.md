@@ -27,10 +27,10 @@
 - **After (Dec 1):** **85%** - Stable foundation, workflow restored
 - **Achievement:** +45% improvement through migration cleanup
 
-### Data Integrity - REQUIRES INVESTIGATION ⚠️
-- **Week 4 Claimed:** "100% FIXED - 0 orphaned users"
-- **December 1 Reality:** 30 orphaned users, 22 unnamed profiles
-- **Required Action:** Investigate if these are new signups post-Week 4 or if trigger was lost during migration cleanup
+### Data Integrity - ARNOLD'S FIX WORKING ✅
+- **Arnold's Trigger:** Working perfectly (100% success rate since Oct 29) ✅
+- **30 Orphaned Users:** Legacy accounts from BEFORE fix (24 test + 6 real users)
+- **Required Action:** Backfill 6 real legacy user profiles (non-urgent cleanup)
 
 ### Security Fixes - NEEDS RE-AUDIT ⚠️
 - **Week 4 Claimed:** "4/8 vulnerabilities fixed (50%)"
@@ -58,7 +58,8 @@
 | Overall System Health | 72% | **68%** | -4% 🟡 |
 | Production Readiness | 52% | **48%** | -4% 🟡 |
 | Security Posture | 50% | TBD | Needs re-audit |
-| Data Integrity | 100% | TBD | Needs investigation |
+| Data Integrity (Trigger) | Unknown | **100%** | Working ✅ |
+| Data Integrity (Legacy Cleanup) | Unknown | **80%** | 30 pre-fix accounts need backfill |
 | Revenue Features | 30% | **25%** | Service complete, integration pending |
 
 ---
@@ -80,11 +81,11 @@
 
 **Context:** With migration infrastructure complete, team can now focus on feature delivery at full velocity.
 
-### Priority 1: Data Integrity Investigation & Fix
-- **Task:** Investigate orphaned users timeline, create/restore trigger, backfill profiles
+### Priority 1: Legacy User Profile Backfill
+- **Task:** Backfill 6 real legacy orphaned user profiles (pre-Oct 29 accounts)
 - **Owner:** Arnold
-- **Due:** December 4, 2025
-- **Effort:** 3 SP
+- **Due:** December 6, 2025
+- **Effort:** 2 SP
 
 ### Priority 2: Dynamic Pricing Integration
 - **Task:** Integrate existing service into `BookingDialog.tsx`
@@ -182,7 +183,7 @@
 **Focus:** Verify Week 6 corrective actions and measure actual progress
 
 **Success Criteria for Week 6:**
-- [ ] 0 orphaned users (down from 30)
+- [ ] Legacy user profile backfill complete (6 real users)
 - [ ] Dynamic pricing integrated and visible in UI
 - [ ] 4/8 security vulnerabilities fixed
 - [ ] 50% migration audit complete
