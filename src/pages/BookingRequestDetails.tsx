@@ -206,7 +206,7 @@ const BookingRequestDetails = () => {
       <Button 
         variant="ghost" 
         className="mb-6 flex items-center" 
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/host-bookings')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back

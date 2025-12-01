@@ -11,7 +11,7 @@ export const RentalDetailsSkeleton = () => {
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
       <div className="flex items-center mb-6">
-        <Button variant="ghost" onClick={() => navigate(-1)}>
+        <Button variant="ghost" onClick={() => navigate('/bookings')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>

@@ -82,7 +82,7 @@ const VerificationSettingsPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/profile')}
             className="md:hidden"
           >
             <ArrowLeft className="h-4 w-4" />
