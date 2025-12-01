@@ -5,10 +5,26 @@ ALTER TABLE vehicle_condition_reports REPLICA IDENTITY FULL;
 ALTER TABLE identity_verification_checks REPLICA IDENTITY FULL;
 
 -- Add tables to realtime publication
-ALTER PUBLICATION supabase_realtime ADD TABLE handover_sessions;
-ALTER PUBLICATION supabase_realtime ADD TABLE handover_step_completion;
-ALTER PUBLICATION supabase_realtime ADD TABLE vehicle_condition_reports;
-ALTER PUBLICATION supabase_realtime ADD TABLE identity_verification_checks;
+-- Safe realtime publication (check if already exists)
+DO $$
+BEGIN
+  -- handover_sessions
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'handover_sessions') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE handover_sessions;
+  END IF;
+  -- handover_step_completion
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'handover_step_completion') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE handover_step_completion;
+  END IF;
+  -- vehicle_condition_reports  
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'vehicle_condition_reports') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE vehicle_condition_reports;
+  END IF;
+  -- identity_verification_checks
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'identity_verification_checks') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE identity_verification_checks;
+  END IF;
+END $$;
 
 -- Add step dependency validation function
 CREATE OR REPLACE FUNCTION public.validate_step_dependencies(

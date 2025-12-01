@@ -58,6 +58,72 @@ export type Database = {
           },
         ]
       }
+      admin_capabilities: {
+        Row: {
+          admin_id: string
+          can_create: boolean | null
+          can_delete: boolean | null
+          can_read: boolean | null
+          can_update: boolean | null
+          capability: string | null
+          capability_key: string
+          created_at: string
+          expires_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          metadata: Json | null
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_read?: boolean | null
+          can_update?: boolean | null
+          capability?: string | null
+          capability_key: string
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_read?: boolean | null
+          can_update?: boolean | null
+          capability?: string | null
+          capability_key?: string
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_capabilities_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_capabilities_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_sessions: {
         Row: {
           admin_id: string
@@ -398,6 +464,57 @@ export type Database = {
             columns: ["renter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_delivery_logs: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          notification_id: number | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_id?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_id?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_delivery_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "notification_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_delivery_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
             referencedColumns: ["id"]
           },
         ]
@@ -1443,6 +1560,39 @@ export type Database = {
           },
         ]
       }
+      insurance_plans: {
+        Row: {
+          base_rate: number
+          coverage_percentage: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          base_rate: number
+          coverage_percentage: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          base_rate?: number
+          coverage_percentage?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       license_verifications: {
         Row: {
           back_image_path: string | null
@@ -1715,6 +1865,84 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_campaigns: {
+        Row: {
+          action_text: string | null
+          action_url: string | null
+          booking_count_min: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          failed_sends: number | null
+          id: string
+          last_login_days: number | null
+          message: string
+          metadata: Json | null
+          name: string
+          priority: string | null
+          registration_end: string | null
+          registration_start: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_campaign_status"]
+          successful_sends: number | null
+          target_user_roles: string[] | null
+          title: string
+          total_recipients: number | null
+          updated_at: string
+        }
+        Insert: {
+          action_text?: string | null
+          action_url?: string | null
+          booking_count_min?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          failed_sends?: number | null
+          id?: string
+          last_login_days?: number | null
+          message: string
+          metadata?: Json | null
+          name: string
+          priority?: string | null
+          registration_end?: string | null
+          registration_start?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_campaign_status"]
+          successful_sends?: number | null
+          target_user_roles?: string[] | null
+          title: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Update: {
+          action_text?: string | null
+          action_url?: string | null
+          booking_count_min?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          failed_sends?: number | null
+          id?: string
+          last_login_days?: number | null
+          message?: string
+          metadata?: Json | null
+          name?: string
+          priority?: string | null
+          registration_end?: string | null
+          registration_start?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_campaign_status"]
+          successful_sends?: number | null
+          target_user_roles?: string[] | null
+          title?: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_cleanup_log: {
         Row: {
           cleanup_details: Json | null
@@ -1935,6 +2163,102 @@ export type Database = {
           },
         ]
       }
+      notifications_backup2: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          metadata: Json | null
+          related_booking_id: string | null
+          related_car_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          related_booking_id?: string | null
+          related_car_id?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          related_booking_id?: string | null
+          related_car_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          payer_id: string
+          provider: string | null
+          provider_reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payer_id: string
+          provider?: string | null
+          provider_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payer_id?: string
+          provider?: string | null
+          provider_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_confirmations: {
         Row: {
           created_at: string | null
@@ -2011,6 +2335,48 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_selections: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          plan_id: string
+          premium: number
+          selected_by: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          plan_id: string
+          premium: number
+          selected_by: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          plan_id?: string
+          premium?: number
+          selected_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_selections_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_selections_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -2542,6 +2908,33 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_verifications: {
         Row: {
           address_confirmed: boolean | null
@@ -2698,6 +3091,71 @@ export type Database = {
             columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_transfers: {
+        Row: {
+          created_at: string
+          from_owner_id: string
+          id: string
+          to_owner_id: string
+          transfer_notes: string | null
+          transfer_reason: string
+          transferred_at: string
+          transferred_by: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_owner_id: string
+          id?: string
+          to_owner_id: string
+          transfer_notes?: string | null
+          transfer_reason: string
+          transferred_at?: string
+          transferred_by?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          from_owner_id?: string
+          id?: string
+          to_owner_id?: string
+          transfer_notes?: string | null
+          transfer_reason?: string
+          transferred_at?: string
+          transferred_by?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_transfers_from_owner_id_fkey"
+            columns: ["from_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_transfers_to_owner_id_fkey"
+            columns: ["to_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_transfers_transferred_by_fkey"
+            columns: ["transferred_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_transfers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
             referencedColumns: ["id"]
           },
         ]
@@ -3256,6 +3714,13 @@ export type Database = {
       }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      cleanup_verification_temp: {
+        Args: never
+        Returns: {
+          deleted_count: number
+          error_message: string
+        }[]
+      }
       count_unread_notifications: { Args: never; Returns: number }
       create_booking_notification:
         | {
@@ -3382,6 +3847,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_notification_campaign: {
+        Args: { p_campaign_data: Json }
+        Returns: Json
+      }
       create_notification_with_expiration: {
         Args: {
           p_content?: string
@@ -3444,10 +3913,12 @@ export type Database = {
             }
             Returns: undefined
           }
+      decrypt_message_content: { Args: { p_cipher: string }; Returns: string }
       delete_old_notifications: {
         Args: { p_days_old?: number }
         Returns: number
       }
+      encrypt_message_content: { Args: { p_text: string }; Returns: string }
       generate_audit_hash: {
         Args: {
           action_details: Json
@@ -3470,6 +3941,7 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_campaign_analytics: { Args: { p_campaign_id: string }; Returns: Json }
       get_conversation_messages: {
         Args: { p_conversation_id: string; p_user_id?: string }
         Returns: {
@@ -3480,6 +3952,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_encryption_key: { Args: never; Returns: string }
       get_notification_expiration_info: {
         Args: {
           p_notification_type: Database["public"]["Enums"]["notification_type"]
@@ -3727,16 +4200,27 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
-      log_admin_activity: {
-        Args: {
-          p_action: string
-          p_admin_id: string
-          p_details?: Json
-          p_resource_id?: string
-          p_resource_type?: string
-        }
-        Returns: undefined
-      }
+      log_admin_activity:
+        | {
+            Args: {
+              p_action: string
+              p_admin_id: string
+              p_details?: Json
+              p_resource_id?: string
+              p_resource_type?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_action: string
+              p_admin_id: string
+              p_details?: Json
+              p_resource_id?: string
+              p_resource_type?: string
+            }
+            Returns: undefined
+          }
       log_audit_event: {
         Args: {
           p_action_details?: Json
@@ -3831,6 +4315,16 @@ export type Database = {
         Args: { p_session_token: string }
         Returns: boolean
       }
+      validate_campaign_audience: {
+        Args: {
+          p_booking_count_min?: number
+          p_last_login_days?: number
+          p_registration_end?: string
+          p_registration_start?: string
+          p_user_roles?: string[]
+        }
+        Returns: Json
+      }
       validate_conversation_access: {
         Args: { p_conversation_id: string; p_user_id?: string }
         Returns: Json
@@ -3877,6 +4371,18 @@ export type Database = {
           table_name: string
         }[]
       }
+      wallet_topup: {
+        Args: {
+          p_amount: number
+          p_payment_method?: string
+          p_payment_reference?: string
+        }
+        Returns: Json
+      }
+      wallet_withdraw: {
+        Args: { p_amount: number; p_description?: string }
+        Returns: Json
+      }
     }
     Enums: {
       audit_event_type:
@@ -3917,6 +4423,13 @@ export type Database = {
       handover_type: "pickup" | "return"
       message_delivery_status: "sent" | "delivered" | "read"
       message_status: "sent" | "delivered" | "read"
+      notification_campaign_status:
+        | "draft"
+        | "scheduled"
+        | "sending"
+        | "completed"
+        | "cancelled"
+        | "failed"
       notification_role: "host_only" | "renter_only" | "system_wide"
       notification_type:
         | "booking_request_received"
@@ -4174,6 +4687,14 @@ export const Constants = {
       handover_type: ["pickup", "return"],
       message_delivery_status: ["sent", "delivered", "read"],
       message_status: ["sent", "delivered", "read"],
+      notification_campaign_status: [
+        "draft",
+        "scheduled",
+        "sending",
+        "completed",
+        "cancelled",
+        "failed",
+      ],
       notification_role: ["host_only", "renter_only", "system_wide"],
       notification_type: [
         "booking_request_received",

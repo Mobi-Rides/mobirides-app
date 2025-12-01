@@ -1,8 +1,6 @@
 -- Fix security warnings from the linter
 -- Add search_path security to the new function we created
 
-DROP FUNCTION IF EXISTS public.get_user_conversation_ids(uuid);
-
 CREATE OR REPLACE FUNCTION public.get_user_conversation_ids(user_uuid uuid DEFAULT auth.uid())
 RETURNS TABLE(conversation_id uuid) AS $$
 BEGIN
@@ -14,7 +12,6 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = 'public';
 
 -- Update the legacy message migration function with proper search_path
-DROP FUNCTION IF EXISTS public.migrate_legacy_messages();
 
 CREATE OR REPLACE FUNCTION public.migrate_legacy_messages()
 RETURNS void AS $$

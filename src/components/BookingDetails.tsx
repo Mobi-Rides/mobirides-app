@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,13 +12,16 @@ import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 
 type Booking = Database['public']['Tables']['bookings']['Row'] & {
-  cars: Database['public']['Tables']['cars']['Row'] | null;
+  cars: (Database['public']['Tables']['cars']['Row'] & {
+    owner: Database['public']['Tables']['profiles']['Row'] | null;
+  }) | null;
   renter: Database['public']['Tables']['profiles']['Row'] | null;
 };
 
 export const BookingDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['booking', id],
@@ -29,7 +32,7 @@ export const BookingDetails: React.FC = () => {
         .from('bookings')
         .select(`
           *,
-          cars (*),
+          cars (*, owner:profiles!owner_id (*)),
           renter:profiles!renter_id (*)
         `)
         .eq('id', id)
@@ -55,7 +58,7 @@ export const BookingDetails: React.FC = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Booking Not Found</h1>
           <p className="text-muted-foreground mb-4">The booking you're looking for doesn't exist or you don't have permission to view it.</p>
-          <Button onClick={() => window.history.back()}>Go Back</Button>
+          <Button onClick={() => navigate('/bookings')}>Go Back</Button>
         </div>
       </div>
     );
@@ -93,7 +96,7 @@ export const BookingDetails: React.FC = () => {
       <div className="mb-6">
         <Button 
           variant="outline" 
-          onClick={() => window.history.back()}
+          onClick={() => navigate('/bookings')}
           className="mb-4"
         >
           ← Back
@@ -185,9 +188,65 @@ export const BookingDetails: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center text-muted-foreground">
-              <p>Contact information will be available once the booking is confirmed.</p>
-            </div>
+            {booking.status === 'pending' ? (
+              <div className="text-center text-muted-foreground">
+                <p>Contact information will be available once the booking is confirmed.</p>
+              </div>
+            ) : isHost && booking.renter ? (
+              <div className="flex items-center gap-4">
+                {booking.renter.avatar_url ? (
+                  <img 
+                    src={supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl} 
+                    alt={booking.renter.full_name || 'Renter'} 
+                    className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-muted border-2 border-primary/20 flex items-center justify-center">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium text-foreground">{booking.renter.full_name}</p>
+                  {booking.renter.phone_number && (
+                    <a 
+                      href={`tel:${booking.renter.phone_number}`}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {booking.renter.phone_number}
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : isRenter && booking.cars?.owner ? (
+              <div className="flex items-center gap-4">
+                {booking.cars.owner.avatar_url ? (
+                  <img 
+                    src={supabase.storage.from('avatars').getPublicUrl(booking.cars.owner.avatar_url).data.publicUrl} 
+                    alt={booking.cars.owner.full_name || 'Host'} 
+                    className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-muted border-2 border-primary/20 flex items-center justify-center">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium text-foreground">{booking.cars.owner.full_name}</p>
+                  {booking.cars.owner.phone_number && (
+                    <a 
+                      href={`tel:${booking.cars.owner.phone_number}`}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {booking.cars.owner.phone_number}
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <p>Contact information not available.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

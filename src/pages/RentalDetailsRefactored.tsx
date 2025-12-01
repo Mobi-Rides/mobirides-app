@@ -67,7 +67,7 @@ const RentalDetailsRefactored = () => {
     <div className="container mx-auto px-4 py-8 pb-20 animate-fade-in">
       <RentalDetailsHeader 
         status={booking?.status || 'unknown'} 
-        onBack={() => navigate(-1)} 
+        onBack={() => navigate('/bookings')} 
       />
 
       <div className="space-y-6">

@@ -60,12 +60,12 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('WhatsApp sending error:', error)
+    console.error('WhatsApp sending error:', error);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error instanceof Error ? error.message : 'Unknown error'
       }),
       { 
         status: 500,

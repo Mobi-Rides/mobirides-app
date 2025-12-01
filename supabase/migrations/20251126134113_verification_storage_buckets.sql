@@ -1,9 +1,9 @@
--- Migration: Create Supabase Buckets for Verification Files (with existence pre-check)
+-- Migration: Create Supabase Buckets for Verification Files (Fixed - No pg_cron dependency)
 -- Source: VERIFY-101: Create Storage Buckets for Verification Documents
 -- Description:
 --   - Create secure, private buckets for documents, selfies, and temporary uploads.
 --   - Apply RLS policies scoped to user-owned folders, admin read-only, and MIME/size restrictions.
---   - Configure 24-hour auto-cleanup for temp bucket using pg_cron.
+--   - Provide cleanup function for temp bucket (manual/external trigger, no pg_cron required).
 --   - Idempotent operations: safe to re-run.
 
 -- =====================================================
@@ -193,40 +193,67 @@ DO $$ BEGIN
 END $$;
 
 -- =====================================================
--- Auto-cleanup: delete verification-temp objects older than 24 hours
+-- Auto-cleanup function for temp files (no pg_cron dependency)
 -- =====================================================
-CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- This function can be called manually or via an external scheduler (e.g., GitHub Actions, Supabase Edge Functions)
+-- For production, consider using Supabase Edge Functions with Deno.cron or external schedulers
 
 CREATE OR REPLACE FUNCTION public.cleanup_verification_temp()
-RETURNS void
+RETURNS TABLE(deleted_count INTEGER, error_message TEXT)
 LANGUAGE plpgsql
-AS $$
+SECURITY DEFINER
+SET search_path = public
+AS $CLEANUP$
+DECLARE
+  files_to_delete TEXT[];
+  delete_count INTEGER := 0;
 BEGIN
-  -- Delete actual objects older than 24 hours in temporary bucket using storage.delete
-  PERFORM storage.delete(
-    'verification-temp',
-    ARRAY(
-      SELECT name FROM storage.objects
-      WHERE bucket_id = 'verification-temp'
-        AND created_at < now() - interval '24 hours'
-    )
-  );
-END;
-$$;
+  -- Get list of files older than 24 hours
+  SELECT ARRAY_AGG(name) INTO files_to_delete
+  FROM storage.objects
+  WHERE bucket_id = 'verification-temp'
+    AND created_at < now() - interval '24 hours';
 
--- Schedule hourly cleanup; idempotent schedule ensuring single job name
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM cron.jobs WHERE jobname = 'cleanup_verification_temp_hourly'
-  ) THEN
-    PERFORM cron.schedule(
-      'cleanup_verification_temp_hourly',
-      '0 * * * *',
-      $$ SELECT public.cleanup_verification_temp(); $$
-    );
+  -- If there are files to delete
+  IF files_to_delete IS NOT NULL AND array_length(files_to_delete, 1) > 0 THEN
+    -- Delete files using storage API
+    FOR i IN 1..array_length(files_to_delete, 1) LOOP
+      BEGIN
+        DELETE FROM storage.objects
+        WHERE bucket_id = 'verification-temp' AND name = files_to_delete[i];
+        delete_count := delete_count + 1;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING 'Failed to delete file %: %', files_to_delete[i], SQLERRM;
+      END;
+    END LOOP;
   END IF;
-END $$;
+
+  RETURN QUERY SELECT delete_count, NULL::TEXT;
+
+EXCEPTION WHEN OTHERS THEN
+  RETURN QUERY SELECT 0, SQLERRM;
+END;
+$CLEANUP$;
+
+-- Grant execute permission to authenticated users (admins can run cleanup manually)
+GRANT EXECUTE ON FUNCTION public.cleanup_verification_temp() TO authenticated;
+
+-- =====================================================
+-- Notes on Cleanup Scheduling
+-- =====================================================
+-- For production deployment:
+-- Option 1: Supabase Edge Function with Deno.cron (recommended for Supabase Cloud)
+--   - Create an edge function that calls this cleanup_verification_temp() function
+--   - Use Deno.cron to schedule it hourly
+--
+-- Option 2: External scheduler (GitHub Actions, etc.)
+--   - Create a scheduled workflow that calls the Supabase RPC endpoint
+--   - Example: POST https://your-project.supabase.co/rest/v1/rpc/cleanup_verification_temp
+--
+-- Option 3: Manual cleanup
+--   - Admins can call: SELECT * FROM public.cleanup_verification_temp();
+--
+-- pg_cron is not used to maintain compatibility with local development and various deployment environments.
 
 -- =====================================================
 -- Notes on CORS
@@ -234,5 +261,3 @@ END $$;
 -- CORS for Supabase Storage uploads is configured at the platform level.
 -- For local CLI, default storage service permits typical dev origins. Validate via frontend upload.
 -- In production, set allowed origins/headers in Supabase Studio (Storage settings) to include your app domains.
-
--- End of migration
