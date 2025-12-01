@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Car, Star, MapPin } from "lucide-react";
+import { X, Car, Star, MapPin, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -126,11 +126,17 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
             {/* Host Info */}
             {host && (
               <div className="flex items-center gap-3">
-                <img
-                  src={getHostAvatarUrl()}
-                  alt={host.full_name || "Host"}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                {host.avatar_url ? (
+                  <img
+                    src={getHostAvatarUrl()}
+                    alt={host.full_name || "Host"}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <User className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
                 <div>
                   <p className="font-medium text-sm">{host.full_name || "Host"}</p>
                   <div className="flex items-center gap-1">

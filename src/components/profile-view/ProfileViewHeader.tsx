@@ -1,4 +1,4 @@
-import { Upload, Shield, CheckCircle2, Camera } from "lucide-react";
+import { Upload, Shield, CheckCircle2, Camera, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,11 +76,17 @@ export const ProfileViewHeader = ({ profile }: ProfileViewHeaderProps) => {
         {/* Avatar Section */}
         <div className="relative flex-shrink-0">
           <div className="relative w-24 h-24 md:w-32 md:h-32">
-            <img
-              src={avatarUrl || "/placeholder.svg"}
-              alt={profile.full_name || "User"}
-              className="w-full h-full rounded-full object-cover border-4 border-border"
-            />
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={profile.full_name || "User"}
+                className="w-full h-full rounded-full object-cover border-4 border-border"
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-muted border-4 border-border flex items-center justify-center">
+                <User className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground" />
+              </div>
+            )}
             <Badge className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-success/10 text-success border-success/20 px-2 py-0.5">
               <CheckCircle2 className="w-3 h-3 mr-1" />
               {profile.role}

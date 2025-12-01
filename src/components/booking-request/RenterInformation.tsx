@@ -1,5 +1,4 @@
-
-import { Star } from "lucide-react";
+import { Star, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RenterInformationProps {
@@ -23,11 +22,17 @@ export const RenterInformation = ({
         Renter Information
       </h2>
       <div className="flex items-center gap-4">
-        <img 
-          src={renter.avatar_url ? supabase.storage.from('avatars').getPublicUrl(renter.avatar_url).data.publicUrl : "/placeholder.svg"} 
-          alt={renter.full_name} 
-          className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
-        />
+        {renter.avatar_url ? (
+          <img 
+            src={supabase.storage.from('avatars').getPublicUrl(renter.avatar_url).data.publicUrl} 
+            alt={renter.full_name} 
+            className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-muted border-2 border-primary/20 flex items-center justify-center">
+            <User className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
         <div>
           <p className="font-medium text-foreground">{renter.full_name}</p>
           {typeof renterRating === 'number' && (

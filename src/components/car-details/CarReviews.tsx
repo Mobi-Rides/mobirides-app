@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Star, StarHalf, MessageSquare } from "lucide-react";
+import { Star, StarHalf, MessageSquare, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -161,13 +161,17 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
             <div key={review.id} className="border rounded-lg p-4 dark:border-gray-700">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <img 
-                    src={review.reviewer.avatar_url 
-                      ? supabase.storage.from('avatars').getPublicUrl(review.reviewer.avatar_url).data.publicUrl
-                      : "/placeholder.svg"} 
-                    alt={review.reviewer.full_name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
+                  {review.reviewer.avatar_url ? (
+                    <img 
+                      src={supabase.storage.from('avatars').getPublicUrl(review.reviewer.avatar_url).data.publicUrl} 
+                      alt={review.reviewer.full_name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
                   <span className="font-medium">{review.reviewer.full_name}</span>
                 </div>
                 <div className="flex items-center">
