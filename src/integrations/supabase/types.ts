@@ -65,6 +65,7 @@ export type Database = {
           can_delete: boolean | null
           can_read: boolean | null
           can_update: boolean | null
+          capability: string | null
           capability_key: string
           created_at: string
           expires_at: string | null
@@ -80,6 +81,7 @@ export type Database = {
           can_delete?: boolean | null
           can_read?: boolean | null
           can_update?: boolean | null
+          capability?: string | null
           capability_key: string
           created_at?: string
           expires_at?: string | null
@@ -95,6 +97,7 @@ export type Database = {
           can_delete?: boolean | null
           can_read?: boolean | null
           can_update?: boolean | null
+          capability?: string | null
           capability_key?: string
           created_at?: string
           expires_at?: string | null
@@ -1557,6 +1560,39 @@ export type Database = {
           },
         ]
       }
+      insurance_plans: {
+        Row: {
+          base_rate: number
+          coverage_percentage: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          base_rate: number
+          coverage_percentage: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          base_rate?: number
+          coverage_percentage?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       license_verifications: {
         Row: {
           back_image_path: string | null
@@ -2166,6 +2202,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          payer_id: string
+          provider: string | null
+          provider_reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payer_id: string
+          provider?: string | null
+          provider_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payer_id?: string
+          provider?: string | null
+          provider_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_confirmations: {
         Row: {
           created_at: string | null
@@ -2242,6 +2335,48 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_selections: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          plan_id: string
+          premium: number
+          selected_by: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          plan_id: string
+          premium: number
+          selected_by: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          plan_id?: string
+          premium?: number
+          selected_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_selections_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_selections_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -2772,6 +2907,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_roles: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_verifications: {
         Row: {
@@ -3751,10 +3913,12 @@ export type Database = {
             }
             Returns: undefined
           }
+      decrypt_message_content: { Args: { p_cipher: string }; Returns: string }
       delete_old_notifications: {
         Args: { p_days_old?: number }
         Returns: number
       }
+      encrypt_message_content: { Args: { p_text: string }; Returns: string }
       generate_audit_hash: {
         Args: {
           action_details: Json
@@ -3788,6 +3952,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_encryption_key: { Args: never; Returns: string }
       get_notification_expiration_info: {
         Args: {
           p_notification_type: Database["public"]["Enums"]["notification_type"]
@@ -4205,6 +4370,18 @@ export type Database = {
           policy_name: string
           table_name: string
         }[]
+      }
+      wallet_topup: {
+        Args: {
+          p_amount: number
+          p_payment_method?: string
+          p_payment_reference?: string
+        }
+        Returns: Json
+      }
+      wallet_withdraw: {
+        Args: { p_amount: number; p_description?: string }
+        Returns: Json
       }
     }
     Enums: {

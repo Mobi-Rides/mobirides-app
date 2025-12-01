@@ -12,7 +12,9 @@ import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 
 type Booking = Database['public']['Tables']['bookings']['Row'] & {
-  cars: Database['public']['Tables']['cars']['Row'] | null;
+  cars: (Database['public']['Tables']['cars']['Row'] & {
+    owner: Database['public']['Tables']['profiles']['Row'] | null;
+  }) | null;
   renter: Database['public']['Tables']['profiles']['Row'] | null;
 };
 
@@ -29,7 +31,7 @@ export const BookingDetails: React.FC = () => {
         .from('bookings')
         .select(`
           *,
-          cars (*),
+          cars (*, owner:profiles!owner_id (*)),
           renter:profiles!renter_id (*)
         `)
         .eq('id', id)
@@ -185,9 +187,59 @@ export const BookingDetails: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center text-muted-foreground">
-              <p>Contact information will be available once the booking is confirmed.</p>
-            </div>
+            {booking.status === 'pending' ? (
+              <div className="text-center text-muted-foreground">
+                <p>Contact information will be available once the booking is confirmed.</p>
+              </div>
+            ) : isHost && booking.renter ? (
+              <div className="flex items-center gap-4">
+                <img 
+                  src={booking.renter.avatar_url 
+                    ? supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl 
+                    : "/placeholder.svg"
+                  } 
+                  alt={booking.renter.full_name || 'Renter'} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div>
+                  <p className="font-medium text-foreground">{booking.renter.full_name}</p>
+                  {booking.renter.phone_number && (
+                    <a 
+                      href={`tel:${booking.renter.phone_number}`}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {booking.renter.phone_number}
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : isRenter && booking.cars?.owner ? (
+              <div className="flex items-center gap-4">
+                <img 
+                  src={booking.cars.owner.avatar_url 
+                    ? supabase.storage.from('avatars').getPublicUrl(booking.cars.owner.avatar_url).data.publicUrl 
+                    : "/placeholder.svg"
+                  } 
+                  alt={booking.cars.owner.full_name || 'Host'} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div>
+                  <p className="font-medium text-foreground">{booking.cars.owner.full_name}</p>
+                  {booking.cars.owner.phone_number && (
+                    <a 
+                      href={`tel:${booking.cars.owner.phone_number}`}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {booking.cars.owner.phone_number}
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <p>Contact information not available.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
