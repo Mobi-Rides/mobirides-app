@@ -449,7 +449,17 @@ function checkDuplicateRealtimePublications(migrations) {
   
   for (const { filename, content } of migrations) {
     const cleanContent = stripComments(content);
-    const matches = [...cleanContent.matchAll(/ALTER\s+PUBLICATION\s+supabase_realtime\s+ADD\s+TABLE\s+(\w+)/gi)];
+    
+    // Check for idempotent pattern - skip files that use DO $$ IF NOT EXISTS
+    const hasIdempotentPattern = /DO\s*\$\$[\s\S]*?IF\s+NOT\s+EXISTS[\s\S]*?ALTER\s+PUBLICATION\s+supabase_realtime/i.test(cleanContent);
+    
+    if (hasIdempotentPattern) {
+      // File uses idempotent pattern, skip duplicate check for this file
+      continue;
+    }
+    
+    // Updated regex to capture schema-qualified table names (e.g., public.user_verifications)
+    const matches = [...cleanContent.matchAll(/ALTER\s+PUBLICATION\s+supabase_realtime\s+ADD\s+TABLE\s+([\w.]+)/gi)];
     
     for (const match of matches) {
       const tableName = match[1];
@@ -480,9 +490,20 @@ function checkDependencyOrdering(migrations, registry) {
   const availableEnums = new Set();
   
   for (const { filename, content } of migrations) {
+    // First, add this migration's objects to available sets so we can check same-file creation
+    const currentFileTables = extractTableNames(content);
+    const currentFileEnums = extractEnumTypes(content);
+    const currentFileTableNames = new Set(currentFileTables.map(t => t.fullName));
+    const currentFileEnumNames = new Set(currentFileEnums.map(e => e.fullName));
+    
     // Check if references are available BEFORE we add this migration's objects
     const policies = extractPolicyReferences(content);
     for (const policy of policies) {
+      // Skip if table is created in the same file
+      if (currentFileTableNames.has(policy.fullTableName)) {
+        continue;
+      }
+      
       if (!availableTables.has(policy.fullTableName)) {
         const createdIn = registry.tables.get(policy.fullTableName);
         if (createdIn && createdIn !== filename) {
@@ -498,6 +519,11 @@ function checkDependencyOrdering(migrations, registry) {
     
     const triggers = extractTriggerReferences(content);
     for (const trigger of triggers) {
+      // Skip if table is created in the same file
+      if (currentFileTableNames.has(trigger.fullTableName)) {
+        continue;
+      }
+      
       if (!availableTables.has(trigger.fullTableName)) {
         const createdIn = registry.tables.get(trigger.fullTableName);
         if (createdIn && createdIn !== filename) {
@@ -513,6 +539,11 @@ function checkDependencyOrdering(migrations, registry) {
     
     const foreignKeys = extractForeignKeyReferences(content);
     for (const fk of foreignKeys) {
+      // Skip if table is created in the same file
+      if (currentFileTableNames.has(fk.fullTableName)) {
+        continue;
+      }
+      
       if (!availableTables.has(fk.fullTableName)) {
         const createdIn = registry.tables.get(fk.fullTableName);
         if (createdIn && createdIn !== filename) {
@@ -528,6 +559,11 @@ function checkDependencyOrdering(migrations, registry) {
     
     const enumAlterations = extractEnumAlterations(content);
     for (const alt of enumAlterations) {
+      // Skip if enum is created in the same file
+      if (currentFileEnumNames.has(alt.fullEnumName)) {
+        continue;
+      }
+      
       if (!availableEnums.has(alt.fullEnumName)) {
         const createdIn = registry.enums.get(alt.fullEnumName);
         if (createdIn && createdIn !== filename) {
@@ -541,14 +577,12 @@ function checkDependencyOrdering(migrations, registry) {
       }
     }
     
-    // Now add this migration's objects to available sets
-    const tables = extractTableNames(content);
-    for (const table of tables) {
+    // Now add this migration's objects to available sets for next migrations
+    for (const table of currentFileTables) {
       availableTables.add(table.fullName);
     }
     
-    const enums = extractEnumTypes(content);
-    for (const enumType of enums) {
+    for (const enumType of currentFileEnums) {
       availableEnums.add(enumType.fullName);
     }
   }
