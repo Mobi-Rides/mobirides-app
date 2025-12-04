@@ -10,7 +10,7 @@ export const useSuperAdminRoles = () => {
     listUserRoles().then((d) => { setRoles(d); setLoading(false); });
   }, []);
 
-  const assign = async (userId: string, role: string) => {
+  const assign = async (userId: string, role: "admin" | "host" | "renter" | "super_admin") => {
     setLoading(true);
     await assignUserRole(userId, role);
     const d = await listUserRoles();
