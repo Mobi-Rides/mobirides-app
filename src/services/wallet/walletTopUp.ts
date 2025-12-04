@@ -53,7 +53,8 @@ export const topUpWallet = async (hostId: string, request: TopUpRequest): Promis
       p_payment_reference: request.payment_reference,
     });
 
-    if (rpcError || !rpcData?.success) {
+    const result = rpcData as { success?: boolean } | null;
+    if (rpcError || !result?.success) {
       console.error("WalletTopUp: RPC error:", rpcError || rpcData);
       toast.error("Failed to update wallet balance");
       return false;
