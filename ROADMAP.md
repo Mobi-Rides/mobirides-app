@@ -65,10 +65,12 @@ MobiRides has a solid foundation with comprehensive features, but requires criti
 **Priority: HIGH - System Stability**
 
 ### Architecture Cleanup
-- [ ] **High** - Resolve dual message system
-  - Migrate legacy messages to conversation system
-  - Remove old message hooks and components
-  - Test message continuity
+- [x] **High** - Resolve dual message system ✅ **COMPLETE (December 2025)**
+  - ✅ Migrated legacy messages to conversation system
+  - ✅ Legacy `message_operations` table dropped (was empty, RLS disabled)
+  - ✅ Legacy `messages_with_replies` view dropped
+  - ✅ Legacy tables (`messages`, `messages_backup_*`, `notifications_backup`) archived to `archive` schema
+  - ✅ Test message continuity verified
 - [ ] **High** - Fix wallet balance vs earnings confusion
   - Consolidate into single balance system
   - Clear earnings tracking

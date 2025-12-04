@@ -1032,8 +1032,8 @@ grep -r "calculateBookingPrice" src/components/booking/
 
 ## ✍️ REPORT METADATA
 
-**Document Version:** 1.0  
-**Last Updated:** December 1, 2025  
+**Document Version:** 1.1  
+**Last Updated:** December 4, 2025  
 **Next Report Due:** December 8, 2025 (Week 2 December)  
 **Report Type:** Critical Assessment & Corrective Action Plan  
 **Confidence Level:** HIGH (verified via database queries and code inspection)
@@ -1044,6 +1044,50 @@ grep -r "calculateBookingPrice" src/components/booking/
 - ✅ Security linter run with current results
 - ✅ Git history reviewed for Week 5 activity
 - ✅ All claims verified against actual system state
+
+---
+
+## 📝 APPENDIX C: DECEMBER 4, 2025 ADDITIONAL DISCOVERY
+
+### Phase 5 Recovery Findings
+
+**TypeScript Build Errors Discovered:**
+| File | Issue | Owner | Status |
+|------|-------|-------|--------|
+| `src/services/superAdminService.ts` | Line 11: `role` typed as `string` instead of enum | Arnold | ⏳ Pending |
+| `src/services/wallet/walletTopUp.ts` | Line 56: `Json` type lacks `.success` property | Arnold | ⏳ Pending |
+
+**Migration File Issues:**
+| File | Issue | Action |
+|------|-------|--------|
+| `20251018173333_Fix_admin_deletion_logging_to_current user_ID.sql` | Space in filename | Rename |
+| `20251118082909_fix_infinite_recursion_in_conversation_RLS policies.sql` | Space in filename | Rename |
+| `20251125145805_create_admins_table.sql` | Empty placeholder | Delete |
+| `20251201135103_create_profiles_for_6_legacy_users.sql` | Production-specific | Delete |
+
+**Orphaned Production Tables (No Migrations):**
+- Email system: 5 tables (`email_delivery_logs`, `email_analytics_daily`, etc.)
+- E2E encryption: 4 tables (`identity_keys`, `file_encryption`, etc.)
+- Content: `blog_posts`
+- Monitoring: `provider_health_metrics`
+
+**Legacy Messaging Cleanup Required:**
+- `message_operations` table: RLS DISABLED (security risk) → DROP
+- `messages_with_replies` view → DROP
+- Legacy tables → Archive to `archive` schema
+
+**Technical Debt Resolution:**
+- Item #3 (Dual Message Systems): Will be RESOLVED via cleanup
+- Item #15 (Incomplete Message Migration): Will be RESOLVED via cleanup
+
+### Updated Metrics
+
+| Metric | Week 1 Report | Dec 4 Update |
+|--------|---------------|--------------|
+| TypeScript Errors | 0 | 2 (discovered) |
+| Migration Issues | Unknown | 4 files identified |
+| Orphaned Tables | 8 | 19+ (11 more discovered) |
+| Technical Debt Items | 47 | 45 (2 to be resolved) |
 
 ---
 
