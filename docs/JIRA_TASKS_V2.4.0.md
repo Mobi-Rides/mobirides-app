@@ -67,6 +67,12 @@
 - Definition of Done:
   - Recovery plan documented; team alignment on deletions
 
+**Phase 1 Update (December 4, 2025):**
+- Additional orphaned tables discovered: 11+ tables (email system, E2E encryption, blog_posts, metrics)
+- Migration file issues identified: 2 files with spaces, 2 problematic migrations
+- TypeScript build errors found: 2 files (`superAdminService.ts`, `walletTopUp.ts`)
+- Legacy messaging cleanup required: `message_operations`, `messages_with_replies`, backup tables
+
 ---
 
 ## MOBI-603 — Migration Audit Phase 2 & Payment Recovery
@@ -79,15 +85,27 @@
 - Files:
   - `.trae/documents/migration-audit-report.md` (complete)
   - `supabase/migrations/[ts]_recover_payment_tables.sql` (new)
+  - `supabase/migrations/20251204000001_create_email_system_tables.sql` (new)
+  - `supabase/migrations/20251204000002_create_blog_posts_table.sql` (new)
+  - `supabase/migrations/20251204000003_create_e2e_encryption_tables.sql` (new)
+  - `supabase/migrations/20251204000004_create_provider_health_metrics.sql` (new)
+  - `supabase/migrations/20251204000005_cleanup_legacy_messaging_tables.sql` (new)
 - Acceptance Criteria:
   - All 378 archives reviewed; payment table recovery initiated
   - Duplicate migrations consolidated; clean upgrade path
+  - All orphaned production tables have CREATE TABLE migrations
+  - Legacy messaging system cleaned up (TECHNICAL_DEBT #3, #15 resolved)
 - Subtasks:
   - MOBI-603-1: Complete remaining archive reviews
   - MOBI-603-2: Execute payment table recovery script
   - MOBI-603-3: Consolidate duplicate migrations
+  - **MOBI-603-4: Create missing table migrations (email, encryption, blog, metrics)**
+  - **MOBI-603-5: Create legacy messaging cleanup migration**
+  - **MOBI-603-6: Rename migration files with spaces**
+  - **MOBI-603-7: Delete problematic migrations (empty, production-specific)**
 - Definition of Done:
   - Payment tables recovered with historical data; idempotent migrations validated
+  - All orphaned tables have migrations; branch seeding works
 
 ---
 
