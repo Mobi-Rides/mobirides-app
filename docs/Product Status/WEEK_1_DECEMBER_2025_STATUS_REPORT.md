@@ -112,7 +112,7 @@ This report documents **DISCREPANCIES** between Week 4 November claims and actua
 
 ### Total Infrastructure Investment
 - **Time:** 50+ hours across 2 weeks
-- **Engineers:** Arnold (lead), with Teboho support
+- **Engineers:** Modisa(lead), with Teboho support
 - **Outcome:** Development velocity RESTORED
 - **Impact:** Feature development can now proceed safely
 
