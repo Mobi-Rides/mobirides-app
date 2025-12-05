@@ -100,9 +100,9 @@
   - MOBI-603-2: Execute payment table recovery script
   - MOBI-603-3: Consolidate duplicate migrations
   - **MOBI-603-4: Create missing table migrations (email, encryption, blog, metrics)**
-  - **MOBI-603-5: Create legacy messaging cleanup migration**
-  - **MOBI-603-6: Rename migration files with spaces**
-  - **MOBI-603-7: Delete problematic migrations (empty, production-specific)**
+  - ~~**MOBI-603-5: Create legacy messaging cleanup migration**~~ ✅ Complete (Dec 5, 2025)
+  - ~~**MOBI-603-6: Rename migration files with spaces**~~ ✅ N/A (files already correct)
+  - ~~**MOBI-603-7: Archive problematic migrations (duplicates, production-specific)**~~ ✅ Complete (Dec 5, 2025)
 - Definition of Done:
   - Payment tables recovered with historical data; idempotent migrations validated
   - All orphaned tables have migrations; branch seeding works
