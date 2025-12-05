@@ -244,32 +244,59 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.ts
 
 ---
 
-## Phase 6: Legacy Messaging Cleanup (Pending)
+## Phase 6: Legacy Messaging Cleanup (✅ Complete)
 
-### Migration to Create
-`20251204000005_cleanup_legacy_messaging_tables.sql`
+**Completed:** December 5, 2025
 
-**Contents:**
-```sql
--- Create archive schema
-CREATE SCHEMA IF NOT EXISTS archive;
+### Changes Made
 
--- Drop legacy view
-DROP VIEW IF EXISTS messages_with_replies;
+1. **Legacy Tables Archived:**
+   - `messages` → `archive.messages`
+   - `messages_backup_20250930_093926` → `archive.messages_backup_20250930_093926`
+   - `notifications_backup` → `archive.notifications_backup`
 
--- Drop empty table with disabled RLS
-DROP TABLE IF EXISTS message_operations;
+2. **Legacy Objects Dropped:**
+   - `DROP VIEW messages_with_replies`
+   - `DROP TABLE message_operations`
+   - `DROP TABLE notifications_backup2`
 
--- Drop empty backup
-DROP TABLE IF EXISTS notifications_backup2;
+3. **Security Fix:**
+   - Updated `blog_posts_admin_all` policy to use `is_admin()` function
 
--- Archive legacy tables
-ALTER TABLE messages SET SCHEMA archive;
-ALTER TABLE messages_backup_20250930_093926 SET SCHEMA archive;
-ALTER TABLE notifications_backup SET SCHEMA archive;
-```
+4. **Edge Function Type Errors Fixed:**
+   - `assign-role/index.ts`
+   - `bulk-assign-role/index.ts`
+   - `capabilities/index.ts`
+   - `users-with-roles/index.ts`
 
 **Impact:** Resolves TECHNICAL_DEBT items #3 (Dual Message Systems) and #15 (Incomplete Message Migration)
+
+---
+
+## Phase 7: Duplicate Migration Cleanup (✅ Complete)
+
+**Completed:** December 5, 2025
+
+### Migrations Archived
+
+**Duplicate Timestamps (4 files):**
+| Archived | Kept | Reason |
+|----------|------|--------|
+| `20250824170712_correct_self-referential_rls_conditions.sql` | `...self_referential...` | Hyphen vs underscore |
+| `20250824171554_fix_self-referential_bugs.sql` | `...self_referential...` | Hyphen vs underscore |
+| `20251018173333_fix_admin_deletion_logging_to_current_user_ID.sql` | `...user_id.sql` | Uppercase vs lowercase |
+| `20251122065754_create_role-based_notifications.sql` | `...role_based...` | Hyphen vs underscore |
+
+**Production-Specific (1 file):**
+| Archived | Reason |
+|----------|--------|
+| `20251201135102_create_profiles_for_6_legacy_users.sql` | INSERT statements, not schema |
+
+**Archive Locations:**
+- `supabase/migrations/archive/duplicate-timestamps/`
+- `supabase/migrations/archive/production-specific/`
+
+**Documentation:** See `docs/20251205_DUPLICATE_MIGRATIONS_ARCHIVED.md`
 
 ---
 
@@ -279,8 +306,9 @@ ALTER TABLE notifications_backup SET SCHEMA archive;
 - [x] **Phase 2 Complete:** Verification testing passed (Nov 26, 2025)
 - [x] **Phase 3 Complete:** Notification system recovery complete (Nov 24, 2025)
 - [x] **Phase 4 Complete:** Production migration sync successful (Nov 27, 2025)
-- [ ] **Phase 5 In Progress:** Additional discovery & fixes (Dec 4, 2025)
-- [ ] **Phase 6 Pending:** Legacy messaging cleanup
-- [ ] **Phase 7 Pending:** Prevention measures
+- [x] **Phase 5 Complete:** Additional discovery & fixes (Dec 4, 2025)
+- [x] **Phase 6 Complete:** Legacy messaging cleanup (Dec 5, 2025)
+- [x] **Phase 7 Complete:** Duplicate migration cleanup (Dec 5, 2025)
+- [ ] **Phase 8 Pending:** Prevention measures
 
-**Status:** 🟡 PHASE 5 IN PROGRESS
+**Status:** 🟢 RECOVERY COMPLETE - Prevention measures pending
