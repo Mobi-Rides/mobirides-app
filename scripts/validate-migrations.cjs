@@ -513,6 +513,13 @@ function checkDependencyOrdering(migrations, registry) {
             `   Fix: Move this migration after ${createdIn} or merge them.`
           );
           hasIssues = true;
+        } else if (!createdIn) {
+          error(
+            filename,
+            `Policy "${policy.policyName}" references table "${policy.fullTableName}" which does not exist in any migration.\n` +
+            `   Fix: Create the table "${policy.fullTableName}" before referencing it, or remove this policy.`
+          );
+          hasIssues = true;
         }
       }
     }
@@ -531,6 +538,13 @@ function checkDependencyOrdering(migrations, registry) {
             filename,
             `Trigger "${trigger.triggerName}" references table "${trigger.fullTableName}" which is created later in: ${createdIn}\n` +
             `   Fix: Move this migration after ${createdIn} or merge them.`
+          );
+          hasIssues = true;
+        } else if (!createdIn) {
+          error(
+            filename,
+            `Trigger "${trigger.triggerName}" references table "${trigger.fullTableName}" which does not exist in any migration.\n` +
+            `   Fix: Create the table "${trigger.fullTableName}" before referencing it, or remove this trigger.`
           );
           hasIssues = true;
         }
@@ -553,6 +567,13 @@ function checkDependencyOrdering(migrations, registry) {
             `   Fix: Move this migration after ${createdIn} or ensure the table exists first.`
           );
           hasIssues = true;
+        } else if (!createdIn) {
+          error(
+            filename,
+            `Foreign key references table "${fk.fullTableName}" which does not exist in any migration.\n` +
+            `   Fix: Create the table "${fk.fullTableName}" before referencing it, or remove this foreign key.`
+          );
+          hasIssues = true;
         }
       }
     }
@@ -571,6 +592,13 @@ function checkDependencyOrdering(migrations, registry) {
             filename,
             `ALTER TYPE references enum "${alt.fullEnumName}" which is created later in: ${createdIn}\n` +
             `   Fix: Move this migration after ${createdIn} or merge them.`
+          );
+          hasIssues = true;
+        } else if (!createdIn) {
+          error(
+            filename,
+            `ALTER TYPE references enum "${alt.fullEnumName}" which does not exist in any migration.\n` +
+            `   Fix: Create the enum "${alt.fullEnumName}" before altering it, or remove this ALTER TYPE statement.`
           );
           hasIssues = true;
         }

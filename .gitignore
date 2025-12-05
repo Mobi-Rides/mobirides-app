@@ -35,3 +35,6 @@ dist
 .kiro/steering/byterover-rules.md
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md
+
+# MCP configuration (contains sensitive tokens)
+mcp-config.json
