@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CarBasicInfo } from "@/components/add-car/CarBasicInfo";
 import { EnhancedCarDetails } from "@/components/add-car/EnhancedCarDetails";
 import { CarDescription } from "@/components/add-car/CarDescription";
-import { ImageUpload } from "@/components/add-car/ImageUpload";
+import { MultiImageUpload } from "@/components/add-car/MultiImageUpload";
+import { CarImageManager } from "@/components/add-car/CarImageManager";
 import { DocumentUpload } from "@/components/add-car/DocumentUpload";
 import { CarFeatures } from "@/components/add-car/CarFeatures";
 import { FormSection } from "@/components/add-car/FormSection";
@@ -44,7 +45,8 @@ interface CarFormProps {
   onFeaturesChange: (features: string[]) => void;
   isEdit?: boolean;
   carId?: string;
-  onSubmit: (formData: CarFormData, imageFile: File | null, documents: Record<string, File | FileList>, features: string[]) => Promise<void>;
+  mainImageUrl?: string | null;
+  onSubmit: (formData: CarFormData, imageFiles: File[], documents: Record<string, File | FileList>, features: string[]) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -53,11 +55,13 @@ export const CarForm = ({
   selectedFeatures,
   onFeaturesChange,
   isEdit = false,
+  carId,
+  mainImageUrl,
   onSubmit,
   isSubmitting
 }: CarFormProps) => {
   const [formData, setFormData] = useState<CarFormData>(initialData);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [documents, setDocuments] = useState<{
     registration?: File;
     insurance?: File;
@@ -89,10 +93,8 @@ export const CarForm = ({
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-    }
+  const handleImagesChange = (files: File[]) => {
+    setImageFiles(files);
   };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
@@ -113,7 +115,7 @@ export const CarForm = ({
       return;
     }
     
-    await onSubmit(formData, imageFile, documents, selectedFeatures);
+    await onSubmit(formData, imageFiles, documents, selectedFeatures);
   };
 
   return (
@@ -162,9 +164,16 @@ export const CarForm = ({
 
       <FormSection 
         title="Vehicle Images" 
-        description="Upload photos that showcase your vehicle clearly"
+        description={isEdit ? "Manage your vehicle photos - add, delete, or change the main photo" : "Upload multiple photos to showcase your vehicle (up to 10)"}
       >
-        <ImageUpload onImageChange={handleImageChange} />
+        {isEdit && carId ? (
+          <CarImageManager 
+            carId={carId} 
+            mainImageUrl={mainImageUrl || null} 
+          />
+        ) : (
+          <MultiImageUpload onImagesChange={handleImagesChange} />
+        )}
       </FormSection>
       
       {!isEdit && (

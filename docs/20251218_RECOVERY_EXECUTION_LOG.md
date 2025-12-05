@@ -199,12 +199,88 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.ts
 
 ---
 
+---
+
+## Phase 5: Additional Discovery & Fixes (December 4, 2025)
+
+### Issues Discovered
+
+**TypeScript Build Errors:**
+| File | Issue | Fix Required |
+|------|-------|--------------|
+| `src/services/superAdminService.ts` | Line 11: `role` parameter typed as `string` instead of `Database["public"]["Enums"]["user_role"]` | Update type import |
+| `src/services/wallet/walletTopUp.ts` | Line 56: `rpcData.success` - `Json` type doesn't have `.success` property | Cast to `WalletTopUpResult` interface |
+
+**Migration File Issues:**
+| File | Issue | Action |
+|------|-------|--------|
+| `20251018173333_Fix_admin_deletion_logging_to_current user_ID.sql` | Space in filename breaks Supabase branch seeding | Rename to `20251018173333_fix_admin_deletion_logging_to_current_user_id.sql` |
+| `20251118082909_fix_infinite_recursion_in_conversation_RLS policies.sql` | Space in filename | Rename to `20251118082909_fix_infinite_recursion_in_conversation_rls_policies.sql` |
+| `20251125145805_create_admins_table.sql` | Empty placeholder (0 bytes) | Delete |
+| `20251201135103_create_profiles_for_6_legacy_users.sql` | Production-specific INSERT statements | Delete |
+
+**Orphaned Production Tables (11+ tables without migrations):**
+- Email system: 5 tables
+- E2E encryption: 4 tables  
+- Content: `blog_posts`
+- Monitoring: `provider_health_metrics`
+
+**Legacy Messaging System Cleanup:**
+- `message_operations` table: Empty, RLS disabled, FK to legacy `messages` table → DROP
+- `messages_with_replies` view → DROP
+- Legacy tables → Archive to `archive` schema
+
+### Actions Assigned
+
+**Owner:** Arnold  
+**Target:** December 6, 2025
+
+1. Fix TypeScript build errors (2 files)
+2. Rename migration files with spaces (2 files)
+3. Delete problematic migrations (2 files)
+4. Create missing table migrations (4 migration files)
+5. Create legacy messaging cleanup migration (1 migration file)
+6. Mark new migrations as applied in production
+
+---
+
+## Phase 6: Legacy Messaging Cleanup (Pending)
+
+### Migration to Create
+`20251204000005_cleanup_legacy_messaging_tables.sql`
+
+**Contents:**
+```sql
+-- Create archive schema
+CREATE SCHEMA IF NOT EXISTS archive;
+
+-- Drop legacy view
+DROP VIEW IF EXISTS messages_with_replies;
+
+-- Drop empty table with disabled RLS
+DROP TABLE IF EXISTS message_operations;
+
+-- Drop empty backup
+DROP TABLE IF EXISTS notifications_backup2;
+
+-- Archive legacy tables
+ALTER TABLE messages SET SCHEMA archive;
+ALTER TABLE messages_backup_20250930_093926 SET SCHEMA archive;
+ALTER TABLE notifications_backup SET SCHEMA archive;
+```
+
+**Impact:** Resolves TECHNICAL_DEBT items #3 (Dual Message Systems) and #15 (Incomplete Message Migration)
+
+---
+
 ## Sign-Off
 
 - [x] **Phase 1 Complete:** 9 recovery migrations created (Dec 18, 2025)
 - [x] **Phase 2 Complete:** Verification testing passed (Nov 26, 2025)
 - [x] **Phase 3 Complete:** Notification system recovery complete (Nov 24, 2025)
 - [x] **Phase 4 Complete:** Production migration sync successful (Nov 27, 2025)
-- [ ] **Phase 5 Pending:** Prevention measures
+- [ ] **Phase 5 In Progress:** Additional discovery & fixes (Dec 4, 2025)
+- [ ] **Phase 6 Pending:** Legacy messaging cleanup
+- [ ] **Phase 7 Pending:** Prevention measures
 
-**Status:** 🟢 ALL PHASES COMPLETE
+**Status:** 🟡 PHASE 5 IN PROGRESS

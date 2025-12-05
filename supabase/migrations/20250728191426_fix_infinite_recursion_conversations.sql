@@ -161,6 +161,15 @@ ALTER TABLE public.conversation_messages REPLICA IDENTITY FULL;
 ALTER TABLE public.conversation_participants REPLICA IDENTITY FULL;
 
 -- Add tables to realtime publication
-ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.conversation_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.conversation_participants;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'conversations') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'conversation_messages') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.conversation_messages;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'conversation_participants') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.conversation_participants;
+  END IF;
+END $$;

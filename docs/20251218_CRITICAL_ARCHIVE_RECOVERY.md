@@ -357,4 +357,50 @@ npx supabase db reset --local
 
 ---
 
-**Next Steps:** Execute Phase 1 immediately - Create recovery migrations
+## 🆕 Phase 5: Additional Discovery (December 4, 2025)
+
+### New Issues Identified
+
+**TypeScript Build Errors (2 files):**
+| File | Issue | Status |
+|------|-------|--------|
+| `src/services/superAdminService.ts` | Incorrect type for `role` parameter in `user_roles` upsert | ⏳ Pending fix |
+| `src/services/wallet/walletTopUp.ts` | Untyped `Json` response from `wallet_topup` RPC | ⏳ Pending fix |
+
+**Migration File Issues (4 files):**
+| File | Issue | Status |
+|------|-------|--------|
+| `20251018173333_Fix_admin_deletion_logging_to_current user_ID.sql` | Space in filename | ⏳ Rename pending |
+| `20251118082909_fix_infinite_recursion_in_conversation_RLS policies.sql` | Space in filename | ⏳ Rename pending |
+| `20251125145805_create_admins_table.sql` | Empty placeholder migration | ⏳ Delete pending |
+| `20251201135103_create_profiles_for_6_legacy_users.sql` | Production-specific data migration | ⏳ Delete pending |
+
+**Additional Orphaned Tables (11+ tables):**
+| Category | Tables | Status |
+|----------|--------|--------|
+| Email System | `email_delivery_logs`, `email_analytics_daily`, `email_performance_metrics`, `email_suppressions`, `email_webhook_events` | ⏳ Migration pending |
+| E2E Encryption | `identity_keys`, `file_encryption`, `device_tokens`, `auth_tokens` | ⏳ Migration pending |
+| Content | `blog_posts` | ⏳ Migration pending |
+| Monitoring | `provider_health_metrics` | ⏳ Migration pending |
+
+**Legacy Messaging Cleanup Required:**
+| Item | Issue | Action |
+|------|-------|--------|
+| `message_operations` table | Empty, RLS disabled, FK to legacy `messages` | Drop |
+| `messages_with_replies` view | Legacy view | Drop |
+| `messages` table | Legacy, no longer used | Archive to `archive` schema |
+| `messages_backup_20250930_093926` table | Backup table | Archive to `archive` schema |
+| `notifications_backup` table | Backup table | Archive to `archive` schema |
+| `notifications_backup2` table | Empty backup | Drop |
+
+### Phase 5 Actions (Assigned to Arnold)
+
+1. **Fix TypeScript errors** - Use proper types from `Database["public"]["Enums"]`
+2. **Rename migration files** - Remove spaces from filenames
+3. **Delete problematic migrations** - Empty placeholder and production-specific
+4. **Create missing table migrations** - Email system, E2E encryption, blog_posts, metrics
+5. **Cleanup legacy messaging** - Drop unused tables/views, archive legacy data
+
+---
+
+**Next Steps:** Arnold to implement Phase 5 fixes

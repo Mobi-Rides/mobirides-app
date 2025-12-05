@@ -58,33 +58,15 @@ const EditCar = () => {
     }
   }, [car]);
 
-  const handleSubmit = async (formData: CarFormData, imageFile: File | null) => {
+  const handleSubmit = async (formData: CarFormData, imageFiles: File[]) => {
     setIsSubmitting(true);
 
     try {
-      let image_url = car?.image_url;
-
-      if (imageFile) {
-        const fileExt = imageFile.name.split(".").pop();
-        const filePath = `${crypto.randomUUID()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("car-images")
-          .upload(filePath, imageFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("car-images")
-          .getPublicUrl(filePath);
-
-        image_url = publicUrl;
-      }
-
+      // Note: Image management is now handled by CarImageManager component
+      // This submit only updates the car details
       const { error } = await supabase
         .from("cars")
         .update({
-          image_url,
           price_per_day: parseFloat(formData.price_per_day),
           year: parseInt(formData.year.toString()),
           seats: parseInt(formData.seats.toString()),
@@ -170,6 +152,7 @@ const EditCar = () => {
           onFeaturesChange={setSelectedFeatures}
           isEdit={true}
           carId={id}
+          mainImageUrl={car?.image_url}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />
