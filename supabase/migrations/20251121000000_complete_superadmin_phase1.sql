@@ -813,6 +813,9 @@ END;
 $$;
 
 -- Notification campaign creation helper
+-- Drop existing function to allow return type change (postgres doesn't allow CREATE OR REPLACE to change return type)
+DROP FUNCTION IF EXISTS public.create_notification_campaign(jsonb);
+
 CREATE OR REPLACE FUNCTION public.create_notification_campaign(
   p_campaign_data jsonb
 )
