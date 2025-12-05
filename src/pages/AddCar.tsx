@@ -107,12 +107,13 @@ const AddCar = () => {
 
   const handleSubmit = async (
     formData: CarFormData,
-    imageFile: File | null,
+    imageFiles: File[],
     documents: Record<string, File | FileList>,
     features: string[],
   ) => {
     console.log("Starting car submission process...");
     console.log("Selected features:", features);
+    console.log("Number of images:", imageFiles.length);
 
     if (!userId) {
       toast({
@@ -133,56 +134,91 @@ const AddCar = () => {
 
     try {
       let image_url = null;
+      const additionalImageUrls: string[] = [];
 
-      // Upload main car image if provided
-      if (imageFile) {
-        console.log("Uploading main car image...");
-        const fileExt = imageFile.name.split(".").pop();
-        const fileName = `${generateUUID()}.${fileExt}`;
-        const filePath = `${fileName}`;
+      // Upload images
+      if (imageFiles.length > 0) {
+        console.log("Uploading car images...");
+        
+        for (let i = 0; i < imageFiles.length; i++) {
+          const imageFile = imageFiles[i];
+          const fileExt = imageFile.name.split(".").pop();
+          const fileName = `${generateUUID()}.${fileExt}`;
+          const filePath = `${fileName}`;
 
-		  const { error: uploadError } = await supabase.storage
-			
-          .from("car-images")
-		  .upload(filePath, imageFile);
-		  
+          const { error: uploadError } = await supabase.storage
+            .from("car-images")
+            .upload(filePath, imageFile);
 
-        if (uploadError) {
-          console.error("Error uploading car image:", uploadError);
-          throw uploadError;
+          if (uploadError) {
+            console.error("Error uploading car image:", uploadError);
+            continue;
+          }
+
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("car-images").getPublicUrl(filePath);
+
+          if (i === 0) {
+            // First image becomes the main image
+            image_url = publicUrl;
+            console.log("Main car image uploaded:", image_url);
+          } else {
+            // Additional images will be stored in car_images table
+            additionalImageUrls.push(publicUrl);
+          }
         }
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("car-images").getPublicUrl(filePath);
-
-        image_url = publicUrl;
-        console.log("Car image uploaded successfully:", image_url);
       }
 
       console.log("Inserting car data into database...");
       console.log("Features to insert:", features);
 
-      const { error: insertError } = await supabase.from("cars").insert({
-        owner_id: userId,
-        image_url,
-        price_per_day: parseFloat(formData.price_per_day),
-        year: parseInt(formData.year.toString()),
-        seats: formData.seats,
-        brand: formData.brand,
-        model: formData.model,
-        vehicle_type: formData.vehicle_type,
-        location: formData.location,
-        transmission: formData.transmission,
-        fuel: formData.fuel,
-        description: formData.description,
-        features: features || [],
-        is_available: true,
-      });
+      const { data: insertedCar, error: insertError } = await supabase
+        .from("cars")
+        .insert({
+          owner_id: userId,
+          image_url,
+          price_per_day: parseFloat(formData.price_per_day),
+          year: parseInt(formData.year.toString()),
+          seats: formData.seats,
+          brand: formData.brand,
+          model: formData.model,
+          vehicle_type: formData.vehicle_type,
+          location: formData.location,
+          transmission: formData.transmission,
+          fuel: formData.fuel,
+          description: formData.description,
+          features: features || [],
+          is_available: true,
+        })
+        .select()
+        .single();
 
       if (insertError) {
         console.error("Error inserting car data:", insertError);
         throw insertError;
+      }
+
+      // Insert additional images into car_images table
+      if (insertedCar && additionalImageUrls.length > 0) {
+        console.log("Inserting additional images into car_images table...");
+        
+        const imageInserts = additionalImageUrls.map((url) => ({
+          car_id: insertedCar.id,
+          image_url: url,
+          is_primary: false,
+        }));
+
+        const { error: imageInsertError } = await supabase
+          .from("car_images")
+          .insert(imageInserts);
+
+        if (imageInsertError) {
+          console.error("Error inserting additional images:", imageInsertError);
+          // Don't throw - car was created, just log the error
+        } else {
+          console.log(`${additionalImageUrls.length} additional images saved`);
+        }
       }
 
       console.log("Car listed successfully!");
