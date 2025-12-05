@@ -44,7 +44,7 @@ const CreateCar = () => {
     transmission: ""
   };
   
-  const handleSubmit = async (carData: CarFormData, imageFile: File | null, documents: Record<string, File | FileList>, features: string[]) => {
+  const handleSubmit = async (carData: CarFormData, imageFiles: File[], documents: Record<string, File | FileList>, features: string[]) => {
     setIsSubmitting(true);
     // Submission logic would go here
     setIsSubmitting(false);

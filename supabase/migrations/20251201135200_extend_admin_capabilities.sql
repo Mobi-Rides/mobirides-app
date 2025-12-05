@@ -168,7 +168,7 @@ SET search_path = public
 AS $$
 DECLARE
     v_actor uuid := public.assert_admin(true); -- Require super admin
-    v_deleted boolean := false;
+    v_deleted integer := 0;
 BEGIN
     IF p_admin_id IS NULL OR p_capability_key IS NULL THEN
         RAISE EXCEPTION 'revoke_admin_capability: admin_id and capability_key are required';
@@ -178,9 +178,9 @@ BEGIN
     DELETE FROM public.admin_capabilities
     WHERE admin_id = p_admin_id AND capability_key = p_capability_key;
 
-    GET DIAGNOSTICS v_deleted = ROW_COUNT > 0;
+    GET DIAGNOSTICS v_deleted = ROW_COUNT;
 
-    IF v_deleted THEN
+    IF v_deleted > 0 THEN
         -- Log audit event
         PERFORM public.log_audit_event(
             'system_config_changed', -- Using existing enum
@@ -203,7 +203,7 @@ BEGIN
         );
     END IF;
 
-    RETURN v_deleted;
+    RETURN v_deleted > 0;
 END;
 $$;
 

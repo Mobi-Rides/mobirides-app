@@ -1,0 +1,17 @@
+-- Fix Security Definer Views - Set all to SECURITY INVOKER
+-- This ensures views respect RLS policies of the querying user
+
+-- 1. Fix email_analytics_summary view
+ALTER VIEW public.email_analytics_summary SET (security_invoker = true);
+
+-- 2. Fix conversation_messages_with_replies view
+ALTER VIEW public.conversation_messages_with_replies SET (security_invoker = true);
+
+-- 3. Fix provider_performance_summary view
+ALTER VIEW public.provider_performance_summary SET (security_invoker = true);
+
+-- 4. Fix messages_with_replies view
+ALTER VIEW public.messages_with_replies SET (security_invoker = true);
+
+-- 5. Fix audit_analytics view
+ALTER VIEW public.audit_analytics SET (security_invoker = true);

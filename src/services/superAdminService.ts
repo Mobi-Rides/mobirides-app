@@ -5,7 +5,7 @@ export const listUserRoles = async () => {
   return data ?? [];
 };
 
-export const assignUserRole = async (userId: string, role: string) => {
+export const assignUserRole = async (userId: string, role: "admin" | "host" | "renter" | "super_admin") => {
   const { data, error } = await supabase
     .from("user_roles")
     .upsert({ user_id: userId, role })
