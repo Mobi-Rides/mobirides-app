@@ -7,6 +7,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface RoleItem {
+  user_id: string
+  role: string
+}
+
+interface ProfileItem {
+  id: string
+  full_name: string | null
+  email?: string
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -37,7 +48,7 @@ Deno.serve(async (req) => {
     if (roleError) throw roleError
 
     // Group roles by user_id
-    const rolesByUser = roleData.reduce((acc, item) => {
+    const rolesByUser: Record<string, string[]> = (roleData as RoleItem[]).reduce((acc: Record<string, string[]>, item: RoleItem) => {
       if (!acc[item.user_id]) {
         acc[item.user_id] = []
       }
@@ -51,15 +62,14 @@ Deno.serve(async (req) => {
     // Get user profiles
     const { data: profileData, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('id, full_name, email')
+      .select('id, full_name')
       .in('id', userIds)
 
     if (profileError) throw profileError
 
     // Combine profile data with roles
-    const usersWithRoles = profileData.map(profile => ({
+    const usersWithRoles = (profileData as ProfileItem[]).map((profile: ProfileItem) => ({
       id: profile.id,
-      email: profile.email,
       full_name: profile.full_name,
       current_roles: rolesByUser[profile.id] || []
     }))
@@ -77,10 +87,11 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error fetching users with roles:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({
         error: 'Failed to fetch users with roles',
-        details: error.message
+        details: errorMessage
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
