@@ -236,4 +236,5 @@ export const SuperAdminUserRoles: React.FC<SuperAdminUserRolesProps> = ({
       )}
     </div>
   );
-};
+}
+
