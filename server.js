@@ -1,128 +1,47 @@
-import express from 'express';
-import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
-import { createRequire } from 'module';
-import dotenv from 'dotenv';
-// Import will be handled dynamically
-
-// Load environment variables
-dotenv.config();
-
-const require = createRequire(import.meta.url);
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const app = express();
-const PORT = 3001;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-
-
-// Dynamic API route handler
-app.use('/api', async (req, res) => {
-  try {
-    const apiPath = req.path.substring(1); // Remove leading slash
-    const filePath = join(__dirname, 'api', `${apiPath}.js`);
-    
-    // Check if the API file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'API endpoint not found' });
-    }
-    
-    // Handle specific endpoints
-    if (apiPath === 'test/get-token') {
-      // Dynamic import for test endpoint
+// Dynamic import for admin users with roles
       try {
-        const handler = await import('./api/test/get-token.js');
+        const handler = await import('./api/admin/users-with-roles.js');
         await handler.default(req, res);
       } catch (importError) {
-        console.error('Failed to import test handler:', importError);
-        res.status(500).json({ error: 'Test service unavailable' });
+        console.error('Failed to import admin users with roles handler:', importError);
+        res.status(500).json({ error: 'Admin users with roles service unavailable' });
       }
-    } else if (apiPath === 'email/confirm') {
-      // Dynamic import for JavaScript file
+    } else if (apiPath === 'admin/assign-role') {
+      // Dynamic import for admin assign role
       try {
-        const { sendConfirmationEmail, verifyConfirmationToken, resendConfirmationEmail } = await import('./api/email/confirm.js');
-        
-        // Route based on request method and action
-        if (req.method === 'POST') {
-          const { action } = req.body;
-          
-          if (action === 'verify') {
-            await verifyConfirmationToken(req, res);
-          } else if (action === 'resend') {
-            await resendConfirmationEmail(req, res);
-          } else {
-            // Default to sending confirmation email for signup
-            await sendConfirmationEmail(req, res);
-          }
-        } else {
-          res.status(405).json({ error: 'Method not allowed' });
-        }
-      } catch (importError) {
-        console.error('Failed to import email confirm handler:', importError);
-        res.status(500).json({ error: 'Email confirmation service unavailable' });
-      }
-    } else if (apiPath === 'auth/login') {
-      // Dynamic import for auth login
-      try {
-        const handler = await import('./api/auth/login.js');
+        const handler = await import('./api/admin/assign-role.js');
         await handler.default(req, res);
       } catch (importError) {
-        console.error('Failed to import auth login handler:', importError);
-        res.status(500).json({ error: 'Authentication service unavailable' });
+        console.error('Failed to import admin assign role handler:', importError);
+        res.status(500).json({ error: 'Admin assign role service unavailable' });
       }
-    } else if (apiPath === 'auth/signup') {
-      // Dynamic import for auth signup
+    } else if (apiPath === 'admin/capabilities') {
+      // Dynamic import for admin capabilities
       try {
-        const handler = await import('./api/auth/signup.js');
+        const handler = await import('./api/admin/capabilities.js');
         await handler.default(req, res);
       } catch (importError) {
-        console.error('Failed to import auth signup handler:', importError);
-        res.status(500).json({ error: 'Signup service unavailable' });
+        console.error('Failed to import admin capabilities handler:', importError);
+        res.status(500).json({ error: 'Admin capabilities service unavailable' });
       }
-    } else if (apiPath === 'auth/forgot-password') {
-      // Dynamic import for auth forgot password
+    } else if (apiPath === 'admin/user-capabilities') {
+      // Dynamic import for admin user capabilities
       try {
-        const handler = await import('./api/auth/forgot-password.js');
+        const handler = await import('./api/admin/user-capabilities.js');
         await handler.default(req, res);
       } catch (importError) {
-        console.error('Failed to import auth forgot password handler:', importError);
-        res.status(500).json({ error: 'Forgot password service unavailable' });
+        console.error('Failed to import admin user capabilities handler:', importError);
+        res.status(500).json({ error: 'Admin user capabilities service unavailable' });
       }
-    } else if (apiPath === 'auth/reset-password') {
-      // Dynamic import for auth reset password
+    } else if (apiPath === 'admin/bulk-assign-role') {
+      // Dynamic import for admin bulk assign role
       try {
-        const handler = await import('./api/auth/reset-password.js');
+        const handler = await import('./api/admin/bulk-assign-role.js');
         await handler.default(req, res);
       } catch (importError) {
-        console.error('Failed to import auth reset password handler:', importError);
-        res.status(500).json({ error: 'Reset password service unavailable' });
-      }
-    } else if (apiPath === 'notifications/booking-confirmation') {
-      // Dynamic import for booking confirmation notifications
-      try {
-        const handler = await import('./api/notifications/booking-confirmation.js');
-        await handler.default(req, res);
-      } catch (importError) {
-        console.error('Failed to import booking confirmation handler:', importError);
-        res.status(500).json({ error: 'Booking confirmation service unavailable' });
+        console.error('Failed to import admin bulk assign role handler:', importError);
+        res.status(500).json({ error: 'Admin bulk assign role service unavailable' });
       }
     } else {
-      res.status(404).json({ error: 'API endpoint not implemented' });
-    }
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`API server running on http://localhost:${PORT}`);
-});
+=======
+    } else {

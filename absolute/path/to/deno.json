@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+      "strict": true,
+      "allowJs": true,
+      "lib": ["esnext", "dom", "dom.iterable"],
+      "module": "esnext"
+    },
+    "lint": {
+      "files": {
+        "include": ["**/*.ts"]
+      }
+    },
+    "fmt": {
+      "files": {
+        "include": ["**/*.ts"]
+      }
+    },
+    "imports": {
+      "std/": "https://deno.land/std@0.168.0/",
+      "resend": "npm:resend@2.0.0/",
+      "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+    }
+  }
