@@ -112,7 +112,7 @@ This report documents **DISCREPANCIES** between Week 4 November claims and actua
 
 ### Total Infrastructure Investment
 - **Time:** 50+ hours across 2 weeks
-- **Engineers:** Arnold (lead), with Teboho support
+- **Engineers:** Arnold (lead), with Teboho and Modisa (CEO) support
 - **Outcome:** Development velocity RESTORED
 - **Impact:** Feature development can now proceed safely
 
@@ -471,24 +471,42 @@ $ ls src/components/insurance/
 - ⚠️ Database schema verification pending (waiting for migration stability)
 - ⏸️ UI Phase 2 appropriately delayed until database 100% verified
 - ✅ Supported migration audit process
+- ✅ Supported infrastructure fix alongside Arnold and Modisa (CEO)
 
 **Assessment:** Appropriately blocked by infrastructure work. Cannot proceed safely until migrations are stable.
 
-### Duma (Revenue Features Engineer)
-**Assigned (MOBI-503):** Dynamic Pricing Integration (8 SP)  
+### Duma (Revenue Features Engineer) - REASSIGNED
+**Original Assignment (MOBI-503):** Dynamic Pricing Integration (8 SP)  
 **Branch:** `feature/dynamic-pricing-integration`  
-**Status:** PARTIAL (20% complete - service layer only)
+**Status:** PARTIAL (20% complete - service layer only)  
+**Update:** Duma is currently dealing with personal issues. Tasks reassigned to Modisa (CEO).
 
-**Completed:**
+**Completed (by Duma):**
 - ✅ `dynamicPricingService.ts` created (420 lines, full implementation)
 
-**Not Completed:**
+**Not Completed (Reassigned to Modisa):**
 - ❌ `BookingDialog.tsx` integration (still using static pricing formula)
 - ❌ `useDynamicPricing` hook (doesn't exist)
 - ❌ Price breakdown UI (not implemented)
 - ❌ Feature flags system (not created)
 
-**Assessment:** Service layer complete but integration work not finished. This is 5 SP remaining work for Week 6.
+**Assessment:** Service layer complete but integration work not finished. Remaining 5 SP work reassigned to Modisa (CEO) for Week 6.
+
+### Modisa (CEO) - Infrastructure & Revenue Features
+**Assigned:** Infrastructure Fix Support + Dynamic Pricing Integration (reassigned from Duma)  
+**Status:** ACTIVE
+
+**Contributions:**
+- ✅ Supported infrastructure fix with Arnold and Teboho
+- ⏳ Taking over Dynamic Pricing Integration (5 SP remaining)
+
+**Week 6 Tasks (Reassigned from Duma):**
+- `BookingDialog.tsx` integration
+- `useDynamicPricing` hook creation
+- Price breakdown UI
+- Feature flags system
+
+**Assessment:** Stepping in to ensure revenue features delivery while Duma addresses personal matters.
 
 ---
 
@@ -559,7 +577,7 @@ $ ls src/components/insurance/
 - Automated monitoring in place
 
 ### Priority 2: DYNAMIC PRICING INTEGRATION
-**Owner:** Duma  
+**Owner:** Modisa (CEO) - *Reassigned from Duma due to personal matters*  
 **Effort:** 5 SP (remaining from 8 SP)  
 **Due:** December 6, 2025
 
