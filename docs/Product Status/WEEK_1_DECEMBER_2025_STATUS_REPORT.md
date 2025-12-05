@@ -1041,11 +1041,13 @@ grep -r "calculateBookingPrice" src/components/booking/
 |--------|----------|-----------|-------------|--------|-------------------|
 | MOBI-501 | Teboho | 5.1 | SuperAdmin DB 100% | ⚠️ IN PROGRESS | Unable to verify |
 | MOBI-502 | Arnold | 10.5 | Security Fixes 5-8 | ❌ NOT COMPLETE | 0/8 verified |
-| MOBI-503 | Duma | 8.0 | Dynamic Pricing Integration | ❌ NOT COMPLETE | ~20% (service only) |
+| MOBI-503 | Modisa (CEO)* | 8.0 | Dynamic Pricing Integration | ❌ NOT COMPLETE | ~20% (service only) |
 | MOBI-504 | Arnold | 15.0 | Migration Audit 50% | ⚠️ IN PROGRESS | Unknown % |
-| MOBI-505 | Duma | 0.0 | Insurance Phase 1 Kickoff | ❌ NOT STARTED | 0% |
+| MOBI-505 | Modisa (CEO)* | 0.0 | Insurance Phase 1 Kickoff | ❌ NOT STARTED | 0% |
 
-**Total Planned:** 38.6 SP  
+*Reassigned from Duma who is dealing with personal issues
+
+**Total Planned:** 38.6 SP
 **Total Delivered:** ~3 SP (estimated, mostly service layer work)  
 **Delivery Rate:** ~8% of planned work
 
