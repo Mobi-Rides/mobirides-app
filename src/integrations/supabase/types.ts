@@ -3511,7 +3511,7 @@ export type Database = {
       }
       create_renter_arrival_notification: {
         Args: { p_booking_id: string; p_renter_id: string }
-        Returns: string
+        Returns: number
       }
       create_system_notification: {
         Args: {
