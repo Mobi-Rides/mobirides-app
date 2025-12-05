@@ -25,7 +25,7 @@ export function BulkUserActions({ selectedUsers, onClearSelection }: BulkUserAct
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name')
         .in('id', selectedUsers);
       
       if (error) throw error;
@@ -82,11 +82,11 @@ export function BulkUserActions({ selectedUsers, onClearSelection }: BulkUserAct
           <div className="max-h-32 overflow-y-auto border rounded-md p-2 text-sm">
             {selectedUserDetails?.map((user) => (
               <div key={user.id} className="flex items-center justify-between py-1">
-                <span>{user.full_name || user.email}</span>
-                <span className="text-xs text-gray-500">{user.email}</span>
+                <span>{user.full_name || user.id}</span>
+                <span className="text-xs text-muted-foreground">{user.id.slice(0, 8)}...</span>
               </div>
             )) || (
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Loading user details...
               </div>
             )}
