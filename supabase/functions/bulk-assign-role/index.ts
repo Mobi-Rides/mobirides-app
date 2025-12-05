@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     }
 
     // Bulk assign role to users
-    const roleInserts = userIds.map(userId => ({
+    const roleInserts = userIds.map((userId: string) => ({
       user_id: userId,
       role
     }))
@@ -78,10 +78,11 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error bulk assigning roles:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({
         error: 'Failed to bulk assign roles',
-        details: error.message
+        details: errorMessage
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
