@@ -64,6 +64,10 @@ SECURITY DEFINER
 SET search_path = 'public'
 AS $$
 BEGIN
+  IF EXISTS (
+       SELECT 1 FROM information_schema.tables 
+       WHERE table_schema = 'public' AND table_name = 'admin_activity_logs'
+  ) THEN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO public.admin_activity_logs (admin_id, action, details)
     VALUES (NEW.id, 'admin_created', jsonb_build_object('email', NEW.email, 'is_super_admin', NEW.is_super_admin));
@@ -76,7 +80,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create trigger for admin changes logging
 DROP TRIGGER IF EXISTS admin_changes_log ON public.admins;

@@ -1,5 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-
 console.log("Capabilities function invoked")
 
 const corsHeaders = {
@@ -63,10 +61,11 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error fetching capabilities:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({
         error: 'Failed to fetch capabilities',
-        details: error.message
+        details: errorMessage
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
