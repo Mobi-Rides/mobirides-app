@@ -214,8 +214,9 @@ const DocumentManualUpload: React.FC<{
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-        toast.error('Please select an image or PDF file');
+      const validTypes = ['image/jpeg', 'image/png', 'application/pdf', 'image/jpg'];
+      if (!validTypes.includes(file.type) && !file.type.startsWith('image/jpeg') && !file.type.startsWith('image/png')) {
+        toast.error('Please select a JPG, PNG, or PDF file');
         return;
       }
 
@@ -392,7 +393,12 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
     try {
       // Upload all document photos
       for (const [documentId, photo] of Object.entries(documentPhotos)) {
-        const inferredType = photo.blob.type || 'image/jpeg';
+        let inferredType = photo.blob.type || 'image/jpeg';
+        // Normalize jpg to jpeg for Supabase storage compatibility
+        if (inferredType === 'image/jpg') {
+          inferredType = 'image/jpeg';
+        }
+        
         const filename = inferredType === 'application/pdf' ? `${documentId}.pdf` : `${documentId}.jpg`;
         const file = new File([photo.blob], filename, { type: inferredType });
         const ok = await handleFileUpload(file, documentId);
