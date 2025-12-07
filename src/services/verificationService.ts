@@ -39,6 +39,10 @@ export class VerificationService {
         .upload(path, file, { upsert: true, contentType: file.type });
       if (error) {
         console.error("[VerificationService] Document upload failed:", error);
+        // Check for common storage errors
+        if (error.message.includes("Bucket not found")) {
+          console.error("CRITICAL: Verification buckets missing. Please run 'node verify-buckets.js' or check migrations.");
+        }
         return null;
       }
 
@@ -111,6 +115,9 @@ export class VerificationService {
         .upload(path, file, { upsert: true, contentType: file.type });
       if (error) {
         console.error("[VerificationService] Selfie upload failed:", error);
+        if (error.message.includes("Bucket not found")) {
+          console.error("CRITICAL: Verification buckets missing. Please run 'node verify-buckets.js' or check migrations.");
+        }
         return null;
       }
 
