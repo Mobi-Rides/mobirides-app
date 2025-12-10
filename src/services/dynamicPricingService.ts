@@ -303,13 +303,14 @@ export class DynamicPricingService {
   }
 
   /**
-   * Get season from month number
+   * Get season from month number (Southern Hemisphere - Botswana)
    */
   static getSeasonFromMonth(month: number): Season {
-    if (month >= 3 && month <= 5) return Season.SPRING;
-    if (month >= 6 && month <= 8) return Season.SUMMER;
-    if (month >= 9 && month <= 11) return Season.AUTUMN;
-    return Season.WINTER;
+    // Southern Hemisphere seasons (Botswana)
+    if (month === 12 || month <= 2) return Season.SUMMER;  // Dec-Feb: Summer (+15% peak)
+    if (month >= 3 && month <= 5) return Season.AUTUMN;    // Mar-May: Autumn
+    if (month >= 6 && month <= 8) return Season.WINTER;    // Jun-Aug: Winter
+    return Season.SPRING;                                   // Sep-Nov: Spring
   }
 
   /**
