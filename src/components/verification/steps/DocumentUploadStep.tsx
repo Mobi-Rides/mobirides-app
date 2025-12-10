@@ -292,7 +292,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
   const [documentPhotos, setDocumentPhotos] = useState<Record<string, DocumentPhoto>>({});
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'camera' | 'upload'>>({});
 
-  // 2-DOCUMENT FLOW: Only 2 required documents (National ID Front + Back)
+  // 3-DOCUMENT FLOW: National ID (Front + Back) + Selfie
   const requiredDocuments = useMemo(() => [
     {
       id: "national_id_front",
@@ -303,6 +303,11 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       id: "national_id_back",
       title: "National ID (Back)",
       description: "Back side of your Botswana National ID (Omang)",
+    },
+    {
+      id: "selfie_photo",
+      title: "Selfie Photo",
+      description: "A clear photo of your face to verify your identity",
     },
   ], []);
 
@@ -369,15 +374,14 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       const path = isSelfie
         ? await VerificationService.uploadSelfie(user.id, file)
         : await VerificationService.uploadDocument(user.id, documentId, file);
-      if (!path) {
-        toast.error('Upload failed. Please try again.');
-        return false;
-      }
+      
       toast.success(`${file.name} uploaded successfully`);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload error:', err);
-      toast.error('Upload error. Please retry.');
+      // Display specific error message from the server if available
+      const errorMessage = err.message || err.error_description || 'Upload failed. Please try again.';
+      toast.error(`Upload error: ${errorMessage}`);
       return false;
     }
   };
