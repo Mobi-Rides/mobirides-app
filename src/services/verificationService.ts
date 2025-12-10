@@ -30,16 +30,17 @@ export class VerificationService {
     userId: string,
     documentId: string,
     file: File
-  ): Promise<string | null> {
+  ): Promise<string> {
     try {
       const ext = file.type === "application/pdf" ? "pdf" : file.type.includes("png") ? "png" : "jpg";
       const path = `${userId}/${documentId}-${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("verification-documents")
         .upload(path, file, { upsert: true, contentType: file.type });
+      
       if (error) {
         console.error("[VerificationService] Document upload failed:", error);
-        return null;
+        throw error;
       }
 
       // Persist a database record for the uploaded document so admins can review it
@@ -95,23 +96,24 @@ export class VerificationService {
       return path;
     } catch (err) {
       console.error("[VerificationService] Document upload exception:", err);
-      return null;
+      throw err;
     }
   }
 
   /**
    * Upload a selfie photo to Supabase Storage
    */
-  static async uploadSelfie(userId: string, file: File): Promise<string | null> {
+  static async uploadSelfie(userId: string, file: File): Promise<string> {
     try {
       const ext = file.type.includes("png") ? "png" : "jpg";
       const path = `${userId}/selfie-${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("verification-selfies")
         .upload(path, file, { upsert: true, contentType: file.type });
+      
       if (error) {
         console.error("[VerificationService] Selfie upload failed:", error);
-        return null;
+        throw error;
       }
 
       // Persist or update selfie record in verification_documents (tracked under document_type "selfie_photo")
@@ -164,7 +166,7 @@ export class VerificationService {
       return path;
     } catch (err) {
       console.error("[VerificationService] Selfie upload exception:", err);
-      return null;
+      throw err;
     }
   }
 
@@ -482,8 +484,9 @@ export class VerificationService {
    */
   static async completeDocumentUpload(userId: string): Promise<boolean> {
     try {
-      // Check if the required document is uploaded
-      const requiredDocTypes = ['national_id_front'] as const;
+      // Check if the required documents are uploaded
+      // 3-DOCUMENT FLOW: national_id_front, national_id_back, and selfie_photo are required
+      const requiredDocTypes = ['national_id_front', 'national_id_back', 'selfie_photo'] as const;
       
       const { data: docs, error: fetchError } = await supabase
         .from("verification_documents")
@@ -496,9 +499,13 @@ export class VerificationService {
         return false;
       }
 
-      // Verify the document is present
-      if (!docs || docs.length < 1) {
-        console.warn("[VerificationService] Required document not uploaded:", docs?.length || 0, "/ 1");
+      // Verify all required documents are present
+      // We need to check if we have unique document types matching the count of required types
+      const uploadedTypes = new Set(docs?.map(d => d.document_type));
+      const missingDocs = requiredDocTypes.filter(type => !uploadedTypes.has(type));
+
+      if (missingDocs.length > 0) {
+        console.warn("[VerificationService] Required documents missing:", missingDocs);
         return false;
       }
 

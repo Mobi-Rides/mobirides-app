@@ -47,7 +47,7 @@ export const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
     {
       title: "Documents Uploaded",
       completed: verificationData?.documents_completed || false,
-      details: "2 required documents (National ID Front + Back)",
+      details: "3 required documents (National ID Front, Back & Selfie)",
     },
     {
       title: "Ready for Review",
@@ -92,7 +92,7 @@ export const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
             <p className="font-medium text-foreground mb-2">By submitting, you confirm that:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>All personal information provided is accurate and up-to-date</li>
-              <li>All required documents (National ID Front + Back) are clear and valid</li>
+              <li>All required documents (National ID Front, Back & Selfie) are clear and valid</li>
               <li>You consent to verification review by MobiRides admin team</li>
             </ul>
             <p className="font-medium text-foreground mt-4 mb-2">
