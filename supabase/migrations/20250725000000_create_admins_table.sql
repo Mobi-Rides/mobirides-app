@@ -64,15 +64,20 @@ SECURITY DEFINER
 SET search_path = 'public'
 AS $$
 BEGIN
-  IF TG_OP = 'INSERT' THEN
-    INSERT INTO public.admin_activity_logs (admin_id, action, details)
-    VALUES (NEW.id, 'admin_created', jsonb_build_object('email', NEW.email, 'is_super_admin', NEW.is_super_admin));
-  ELSIF TG_OP = 'UPDATE' THEN
-    INSERT INTO public.admin_activity_logs (admin_id, action, details)
-    VALUES (NEW.id, 'admin_updated', jsonb_build_object('email', NEW.email, 'is_super_admin', NEW.is_super_admin));
-  ELSIF TG_OP = 'DELETE' THEN
-    INSERT INTO public.admin_activity_logs (admin_id, action, details)
-    VALUES (OLD.id, 'admin_deleted', jsonb_build_object('email', OLD.email));
+  IF EXISTS (
+       SELECT 1 FROM information_schema.tables 
+       WHERE table_schema = 'public' AND table_name = 'admin_activity_logs'
+  ) THEN
+    IF TG_OP = 'INSERT' THEN
+      INSERT INTO public.admin_activity_logs (admin_id, action, details)
+      VALUES (NEW.id, 'admin_created', jsonb_build_object('email', NEW.email, 'is_super_admin', NEW.is_super_admin));
+    ELSIF TG_OP = 'UPDATE' THEN
+      INSERT INTO public.admin_activity_logs (admin_id, action, details)
+      VALUES (NEW.id, 'admin_updated', jsonb_build_object('email', NEW.email, 'is_super_admin', NEW.is_super_admin));
+    ELSIF TG_OP = 'DELETE' THEN
+      INSERT INTO public.admin_activity_logs (admin_id, action, details)
+      VALUES (OLD.id, 'admin_deleted', jsonb_build_object('email', OLD.email));
+    END IF;
   END IF;
   RETURN NEW;
 END;

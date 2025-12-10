@@ -9,6 +9,14 @@ export interface TopUpRequest {
   payment_reference?: string;
 }
 
+interface WalletTopUpResult {
+  success: boolean;
+  wallet_id?: string;
+  balance?: number;
+  transaction_id?: string;
+  error?: string;
+}
+
 export const topUpWallet = async (hostId: string, request: TopUpRequest): Promise<boolean> => {
   try {
     console.log("WalletTopUp: Starting wallet top-up", { hostId, amount: request.amount, method: request.payment_method });
@@ -46,45 +54,18 @@ export const topUpWallet = async (hostId: string, request: TopUpRequest): Promis
       }
     }
 
-    const newBalance = wallet.balance + request.amount;
-    console.log("WalletTopUp: Updating balance", { from: wallet.balance, to: newBalance, difference: request.amount });
+    // Use secure RPC to adjust wallet balance and record transaction
+    const { data: rpcData, error: rpcError } = await supabase.rpc('wallet_topup', {
+      p_amount: request.amount,
+      p_payment_method: request.payment_method,
+      p_payment_reference: request.payment_reference,
+    });
 
-    // Update wallet balance
-    const { error: walletError } = await supabase
-      .from("host_wallets")
-      .update({ 
-        balance: newBalance,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", wallet.id)
-      .eq("host_id", hostId); // Extra security check
-
-    if (walletError) {
-      console.error("WalletTopUp: Error updating wallet balance:", walletError);
+    const result = rpcData as unknown as WalletTopUpResult | null;
+    if (rpcError || !result?.success) {
+      console.error("WalletTopUp: RPC error:", rpcError || rpcData);
       toast.error("Failed to update wallet balance");
       return false;
-    }
-
-    // Record transaction
-    const transactionData = {
-      wallet_id: wallet.id,
-      transaction_type: "top_up",
-      amount: request.amount,
-      balance_before: wallet.balance,
-      balance_after: newBalance,
-      description: `Wallet top-up via ${request.payment_method.replace('_', ' ')}`,
-      payment_method: request.payment_method,
-      payment_reference: request.payment_reference,
-      status: "completed"
-    };
-
-    const { error: transactionError } = await supabase
-      .from("wallet_transactions")
-      .insert(transactionData);
-
-    if (transactionError) {
-      console.error("WalletTopUp: Error recording transaction:", transactionError);
-      toast.warning("Top-up successful but transaction logging failed");
     }
 
     console.log("WalletTopUp: Wallet top-up completed successfully");

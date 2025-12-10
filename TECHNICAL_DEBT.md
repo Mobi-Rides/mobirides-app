@@ -1,8 +1,8 @@
 # 🔧 **TECHNICAL DEBT TRACKER**
 
-**Last Updated:** December 2024  
-**Total Debt Items:** 47  
-**Critical:** 15 | **High:** 18 | **Medium:** 14  
+**Last Updated:** December 4, 2025  
+**Total Debt Items:** 45 (2 resolved)  
+**Critical:** 14 | **High:** 17 | **Medium:** 14
 
 ---
 
@@ -22,12 +22,13 @@
 - **Effort:** 3 days
 - **Owner:** Full-stack Team
 
-### **3. Dual Message Systems**
+### **3. Dual Message Systems** ✅ RESOLVED (December 2025)
 - **Files:** `messages` table vs `conversation_messages`
 - **Issue:** Two competing messaging architectures
-- **Impact:** 🔥 Data consistency issues, user confusion
-- **Effort:** 2 days
+- **Impact:** 🟢 RESOLVED - Legacy tables archived to `archive` schema
+- **Resolution:** Legacy `message_operations` dropped, `messages_with_replies` view dropped, legacy tables archived
 - **Owner:** Backend Team
+- **Resolved Date:** December 4, 2025
 
 ### **4. Broken Push Notifications**
 - **File:** `src/utils/pushNotifications.ts`
@@ -109,12 +110,13 @@
 - **Effort:** 2 days
 - **Owner:** Backend Team
 
-### **15. Incomplete Message Migration**
+### **15. Incomplete Message Migration** ✅ RESOLVED (December 2025)
 - **Files:** Messaging hooks and components
 - **Issue:** Legacy message handling still present
-- **Impact:** Feature inconsistency
-- **Effort:** 3 days
+- **Impact:** 🟢 RESOLVED - Migration to conversation system complete
+- **Resolution:** Legacy messaging tables archived, `message_operations` table dropped
 - **Owner:** Backend Team
+- **Resolved Date:** December 4, 2025
 
 ---
 

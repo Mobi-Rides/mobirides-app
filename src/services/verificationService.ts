@@ -477,13 +477,13 @@ export class VerificationService {
   }
 
   /**
-   * Complete document upload (2-DOCUMENT FLOW)
-   * Check for 2 required documents: national_id_front, national_id_back
+   * Complete document upload (1-DOCUMENT FLOW)
+   * Check for 1 required document: national_id_front
    */
   static async completeDocumentUpload(userId: string): Promise<boolean> {
     try {
-      // Check if both required documents are uploaded
-      const requiredDocTypes = ['national_id_front', 'national_id_back'] as const;
+      // Check if the required document is uploaded
+      const requiredDocTypes = ['national_id_front'] as const;
       
       const { data: docs, error: fetchError } = await supabase
         .from("verification_documents")
@@ -496,9 +496,9 @@ export class VerificationService {
         return false;
       }
 
-      // Verify both documents are present
-      if (!docs || docs.length < 2) {
-        console.warn("[VerificationService] Not all required documents uploaded:", docs?.length || 0, "/ 2");
+      // Verify the document is present
+      if (!docs || docs.length < 1) {
+        console.warn("[VerificationService] Required document not uploaded:", docs?.length || 0, "/ 1");
         return false;
       }
 

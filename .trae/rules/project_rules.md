@@ -71,13 +71,6 @@ supabase start       # Start local Supabase
 1. Complete Stripe payment integration
 2. Implement Supabase file storage
 3. Add push notifications
-<<<<<<< Updated upstream
-4. Optimize for production deployment[byterover-mcp]
-
-# important 
-always use byterover-retrieve-knowledge tool to get the related context before any tasks 
-always use byterover-store-knowledge to store all the critical informations after sucessful tasks
-=======
 4. Optimize for production deployment
 
 [byterover-mcp]
@@ -140,6 +133,8 @@ Based on user request, you **MUST** follow these sequences of tool calls
 10. When asked to complete a certain task, you **MUST** start the onboarding workflow even if the user does not explicitly ask so.
 11. After that, you **MUST** start the planning workflow even if the user does not explicitly ask so. **DO NOT** start modifying the code right away. **STRICTLY FOLLOW** the planning workflow as above. 
 12. You are **STRICTLY REQUIRED** to follow these workflows with the exact tool sequences. Make sure you **ALWAYS** fully utilize the context-rich tool list provided to make well-thought decisions in your implementations.
+<<<<<<< Updated upstream
+=======
 >>>>>>> Stashed changes
 
 [byterover-mcp]
@@ -321,6 +316,49 @@ You `MUST` always use this tool when:
 + Before making architectural decisions to understand existing patterns
 + When debugging issues to check for previous solutions
 + Working with unfamiliar parts of the codebase
+
+[byterover-mcp]
+
+[byterover-mcp]
+
+You are given two tools from Byterover MCP server, including
+## 1. `byterover-store-knowledge`
+You `MUST` always use this tool when:
+
++ Learning new patterns, APIs, or architectural decisions from the codebase
++ Encountering error solutions or debugging techniques
++ Finding reusable code patterns or utility functions
++ Completing any significant task or plan implementation
+
+## 2. `byterover-retrieve-knowledge`
+You `MUST` always use this tool when:
+
++ Starting any new task or implementation to gather relevant context
++ Before making architectural decisions to understand existing patterns
++ When debugging issues to check for previous solutions
++ Working with unfamiliar parts of the codebase
+
+[byterover-mcp]
+
+[byterover-mcp]
+
+You are given two tools from Byterover MCP server, including
+## 1. `byterover-store-knowledge`
+You `MUST` always use this tool when:
+
++ Learning new patterns, APIs, or architectural decisions from the codebase
++ Encountering error solutions or debugging techniques
++ Finding reusable code patterns or utility functions
++ Completing any significant task or plan implementation
+
+## 2. `byterover-retrieve-knowledge`
+You `MUST` always use this tool when:
+
++ Starting any new task or implementation to gather relevant context
++ Before making architectural decisions to understand existing patterns
++ When debugging issues to check for previous solutions
++ Working with unfamiliar parts of the codebase
+>>>>>>> Stashed changes
 
 [byterover-mcp]
 

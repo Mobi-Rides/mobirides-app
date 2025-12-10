@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,6 +27,11 @@ import { VerificationRequiredDialog } from "@/components/verification/Verificati
 import { BookingLocationPicker } from "./BookingLocationPicker";
 import { BookingBreadcrumbs } from "./BookingBreadcrumbs";
 import { BookingSuccessModal } from "./BookingSuccessModal";
+import { useDynamicPricing } from "@/hooks/useDynamicPricing";
+import { isFeatureEnabled } from "@/lib/featureFlags";
+import { PriceBreakdown } from "./PriceBreakdown";
+import { InsurancePlanSelector } from "@/components/insurance/InsurancePlanSelector";
+import { CoverageCalculator } from "@/components/insurance/CoverageCalculator";
 
 interface BookingDialogProps {
   car: Car;
@@ -66,6 +71,27 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const navigate = useNavigate();
   const { isVerified, isLoading: isVerificationLoading } =
     useVerificationStatus();
+
+  const basePrice = useMemo(() => {
+    if (!startDate || !endDate) return undefined;
+    const numberOfDays =
+      Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
+    return numberOfDays * car.price_per_day;
+  }, [startDate, endDate, car.price_per_day]);
+
+  const { calculation, finalPrice, loading: dpLoading } = useDynamicPricing(
+    car.id,
+    basePrice,
+    startDate,
+    endDate,
+    pickupLocation?.latitude,
+    pickupLocation?.longitude,
+    userId ?? undefined,
+  );
+
+  const [insurancePremium, setInsurancePremium] = useState<number | null>(null);
 
   // Check if the current user is the car owner
   useEffect(() => {
@@ -268,11 +294,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.user) throw new Error("No authenticated user");
 
-      const numberOfDays =
-        Math.ceil(
-          (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-        ) + 1; // Include both start and end days
-      const totalPrice = numberOfDays * car.price_per_day;
+      const totalPrice = isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : (() => {
+        const numberOfDays =
+          Math.ceil(
+            (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+          ) + 1;
+        return numberOfDays * car.price_per_day;
+      })();
 
       console.log("[BookingDialog] Creating booking in database...");
 
@@ -612,12 +640,15 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                   <p>End date: {format(endDate, "PPP")}</p>
                   <div className="border-t border-border pt-2 mt-2">
                     <p className="font-medium text-primary">
-                      Total: BWP{" "}
-                      {Math.ceil(
-                        (endDate.getTime() - startDate.getTime()) /
-                          (1000 * 60 * 60 * 24) +
-                          1,
-                      ) * car.price_per_day}
+                      Total: BWP {(
+                        isFeatureEnabled("DYNAMIC_PRICING") && finalPrice
+                          ? finalPrice
+                          : Math.ceil(
+                              (endDate.getTime() - startDate.getTime()) /
+                                (1000 * 60 * 60 * 24) +
+                                1,
+                            ) * car.price_per_day
+                      ).toFixed(2)}
                     </p>
                   </div>
                   <Button
@@ -628,6 +659,29 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     Change
                   </Button>
                 </div>
+                {isFeatureEnabled("DYNAMIC_PRICING") && basePrice !== undefined && (
+                  <PriceBreakdown calculation={calculation} basePrice={basePrice} />
+                )}
+                {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined && (
+                  <>
+                    <InsurancePlanSelector
+                      basePrice={basePrice}
+                      onSelected={(_, premium) => setInsurancePremium(premium)}
+                    />
+                    <CoverageCalculator
+                      premium={insurancePremium}
+                      totalWithoutInsurance={(
+                        isFeatureEnabled("DYNAMIC_PRICING") && finalPrice
+                          ? finalPrice
+                          : Math.ceil(
+                              (endDate.getTime() - startDate.getTime()) /
+                                (1000 * 60 * 60 * 24) +
+                                1,
+                            ) * car.price_per_day
+                      )}
+                    />
+                  </>
+                )}
               </div>
             )}
            </div>
@@ -660,7 +714,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 !isVerified && !isVerificationLoading ? "outline" : "default"
               }
             >
-              {isLoading
+              {isLoading || dpLoading
                 ? "Booking..."
                 : isCheckingAvailability
                   ? "Checking..."

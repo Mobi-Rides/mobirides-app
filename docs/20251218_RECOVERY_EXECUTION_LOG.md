@@ -199,12 +199,116 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.ts
 
 ---
 
+---
+
+## Phase 5: Additional Discovery & Fixes (December 4, 2025)
+
+### Issues Discovered
+
+**TypeScript Build Errors:**
+| File | Issue | Fix Required |
+|------|-------|--------------|
+| `src/services/superAdminService.ts` | Line 11: `role` parameter typed as `string` instead of `Database["public"]["Enums"]["user_role"]` | Update type import |
+| `src/services/wallet/walletTopUp.ts` | Line 56: `rpcData.success` - `Json` type doesn't have `.success` property | Cast to `WalletTopUpResult` interface |
+
+**Migration File Issues:**
+| File | Issue | Action |
+|------|-------|--------|
+| `20251018173333_Fix_admin_deletion_logging_to_current user_ID.sql` | Space in filename breaks Supabase branch seeding | Rename to `20251018173333_fix_admin_deletion_logging_to_current_user_id.sql` |
+| `20251118082909_fix_infinite_recursion_in_conversation_RLS policies.sql` | Space in filename | Rename to `20251118082909_fix_infinite_recursion_in_conversation_rls_policies.sql` |
+| `20251125145805_create_admins_table.sql` | Empty placeholder (0 bytes) | Delete |
+| `20251201135103_create_profiles_for_6_legacy_users.sql` | Production-specific INSERT statements | Delete |
+
+**Orphaned Production Tables (11+ tables without migrations):**
+- Email system: 5 tables
+- E2E encryption: 4 tables  
+- Content: `blog_posts`
+- Monitoring: `provider_health_metrics`
+
+**Legacy Messaging System Cleanup:**
+- `message_operations` table: Empty, RLS disabled, FK to legacy `messages` table → DROP
+- `messages_with_replies` view → DROP
+- Legacy tables → Archive to `archive` schema
+
+### Actions Assigned
+
+**Owner:** Arnold  
+**Target:** December 6, 2025
+
+1. Fix TypeScript build errors (2 files)
+2. Rename migration files with spaces (2 files)
+3. Delete problematic migrations (2 files)
+4. Create missing table migrations (4 migration files)
+5. Create legacy messaging cleanup migration (1 migration file)
+6. Mark new migrations as applied in production
+
+---
+
+## Phase 6: Legacy Messaging Cleanup (✅ Complete)
+
+**Completed:** December 5, 2025
+
+### Changes Made
+
+1. **Legacy Tables Archived:**
+   - `messages` → `archive.messages`
+   - `messages_backup_20250930_093926` → `archive.messages_backup_20250930_093926`
+   - `notifications_backup` → `archive.notifications_backup`
+
+2. **Legacy Objects Dropped:**
+   - `DROP VIEW messages_with_replies`
+   - `DROP TABLE message_operations`
+   - `DROP TABLE notifications_backup2`
+
+3. **Security Fix:**
+   - Updated `blog_posts_admin_all` policy to use `is_admin()` function
+
+4. **Edge Function Type Errors Fixed:**
+   - `assign-role/index.ts`
+   - `bulk-assign-role/index.ts`
+   - `capabilities/index.ts`
+   - `users-with-roles/index.ts`
+
+**Impact:** Resolves TECHNICAL_DEBT items #3 (Dual Message Systems) and #15 (Incomplete Message Migration)
+
+---
+
+## Phase 7: Duplicate Migration Cleanup (✅ Complete)
+
+**Completed:** December 5, 2025
+
+### Migrations Archived
+
+**Duplicate Timestamps (4 files):**
+| Archived | Kept | Reason |
+|----------|------|--------|
+| `20250824170712_correct_self-referential_rls_conditions.sql` | `...self_referential...` | Hyphen vs underscore |
+| `20250824171554_fix_self-referential_bugs.sql` | `...self_referential...` | Hyphen vs underscore |
+| `20251018173333_fix_admin_deletion_logging_to_current_user_ID.sql` | `...user_id.sql` | Uppercase vs lowercase |
+| `20251122065754_create_role-based_notifications.sql` | `...role_based...` | Hyphen vs underscore |
+
+**Production-Specific (1 file):**
+| Archived | Reason |
+|----------|--------|
+| `20251201135102_create_profiles_for_6_legacy_users.sql` | INSERT statements, not schema |
+
+**Archive Locations:**
+- `supabase/migrations/archive/duplicate-timestamps/`
+- `supabase/migrations/archive/production-specific/`
+
+**Documentation:** See `docs/20251205_DUPLICATE_MIGRATIONS_ARCHIVED.md`
+
+---
+
 ## Sign-Off
 
 - [x] **Phase 1 Complete:** 9 recovery migrations created (Dec 18, 2025)
 - [x] **Phase 2 Complete:** Verification testing passed (Nov 26, 2025)
 - [x] **Phase 3 Complete:** Notification system recovery complete (Nov 24, 2025)
 - [x] **Phase 4 Complete:** Production migration sync successful (Nov 27, 2025)
-- [ ] **Phase 5 Pending:** Prevention measures
+- [x] **Phase 5 Complete:** Additional discovery & fixes (Dec 4, 2025)
+- [x] **Phase 6 Complete:** Legacy messaging cleanup (Dec 5, 2025)
+- [x] **Phase 7 Complete:** Duplicate migration cleanup (Dec 5, 2025)
+- [ ] **Phase 8 Pending:** Prevention measures
 
-**Status:** 🟢 ALL PHASES COMPLETE
+**Status:** 🟢 RECOVERY COMPLETE - Prevention measures pending

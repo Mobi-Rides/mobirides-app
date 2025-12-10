@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "supabase-remote": {
+            "type": "http",
+            "url": "https://mcp.supabase.com/mcp?project_ref=putjowciegpzdheideaf",
+            "headers": {
+                "Authorization": "Bearer YOUR_SUPABASE_PERSONAL_ACCESS_TOKEN"
+            }
+        }
+    }
+}
