@@ -110,5 +110,5 @@ BEGIN
 
 END $$;
 
-COMMENT ON FUNCTION public.is_admin() IS 'SECURITY DEFINER check to prevent RLS recursion';
+COMMENT ON FUNCTION public.is_admin IS 'SECURITY DEFINER check to prevent RLS recursion';
 COMMENT ON POLICY "Admins are viewable by everyone" ON public.admins IS 'Public access to admin list to prevent recursion during admin checks';

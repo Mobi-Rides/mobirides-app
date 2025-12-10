@@ -47,7 +47,7 @@ export const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
     {
       title: "Documents Uploaded",
       completed: verificationData?.documents_completed || false,
-      details: "1 required document (National ID Front)",
+      details: "2 required documents (National ID Front + Back)",
     },
     {
       title: "Ready for Review",
