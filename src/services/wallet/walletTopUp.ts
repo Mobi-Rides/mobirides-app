@@ -9,6 +9,14 @@ export interface TopUpRequest {
   payment_reference?: string;
 }
 
+interface WalletTopUpResult {
+  success: boolean;
+  wallet_id?: string;
+  balance?: number;
+  transaction_id?: string;
+  error?: string;
+}
+
 export const topUpWallet = async (hostId: string, request: TopUpRequest): Promise<boolean> => {
   try {
     console.log("WalletTopUp: Starting wallet top-up", { hostId, amount: request.amount, method: request.payment_method });
@@ -53,7 +61,7 @@ export const topUpWallet = async (hostId: string, request: TopUpRequest): Promis
       p_payment_reference: request.payment_reference,
     });
 
-    const result = rpcData as { success?: boolean } | null;
+    const result = rpcData as unknown as WalletTopUpResult | null;
     if (rpcError || !result?.success) {
       console.error("WalletTopUp: RPC error:", rpcError || rpcData);
       toast.error("Failed to update wallet balance");

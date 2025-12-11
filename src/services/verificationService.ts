@@ -30,16 +30,17 @@ export class VerificationService {
     userId: string,
     documentId: string,
     file: File
-  ): Promise<string | null> {
+  ): Promise<string> {
     try {
       const ext = file.type === "application/pdf" ? "pdf" : file.type.includes("png") ? "png" : "jpg";
       const path = `${userId}/${documentId}-${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("verification-documents")
         .upload(path, file, { upsert: true, contentType: file.type });
+      
       if (error) {
         console.error("[VerificationService] Document upload failed:", error);
-        return null;
+        throw error;
       }
 
       // Persist a database record for the uploaded document so admins can review it
@@ -95,23 +96,24 @@ export class VerificationService {
       return path;
     } catch (err) {
       console.error("[VerificationService] Document upload exception:", err);
-      return null;
+      throw err;
     }
   }
 
   /**
    * Upload a selfie photo to Supabase Storage
    */
-  static async uploadSelfie(userId: string, file: File): Promise<string | null> {
+  static async uploadSelfie(userId: string, file: File): Promise<string> {
     try {
       const ext = file.type.includes("png") ? "png" : "jpg";
       const path = `${userId}/selfie-${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("verification-selfies")
         .upload(path, file, { upsert: true, contentType: file.type });
+      
       if (error) {
         console.error("[VerificationService] Selfie upload failed:", error);
-        return null;
+        throw error;
       }
 
       // Persist or update selfie record in verification_documents (tracked under document_type "selfie_photo")
@@ -164,7 +166,7 @@ export class VerificationService {
       return path;
     } catch (err) {
       console.error("[VerificationService] Selfie upload exception:", err);
-      return null;
+      throw err;
     }
   }
 
@@ -387,10 +389,15 @@ export class VerificationService {
       const completionStatus = this.determineCompletionStatus(profileData);
 
       // Determine initial step based on profile completeness
+      // FORCE STEP 1: Always start at personal_info regardless of profile data
       let currentStep: any = "personal_info";
+      
+      /* 
+      // Previously skipped step 1 if profile was complete
       if (completionStatus.personal_info_completed) {
         currentStep = "document_upload";
       }
+      */
 
       // Create new verification record with mapped data
       const { data, error } = await supabase
@@ -477,13 +484,14 @@ export class VerificationService {
   }
 
   /**
-   * Complete document upload (2-DOCUMENT FLOW)
-   * Check for 2 required documents: national_id_front, national_id_back
+   * Complete document upload (1-DOCUMENT FLOW)
+   * Check for 1 required document: national_id_front
    */
   static async completeDocumentUpload(userId: string): Promise<boolean> {
     try {
-      // Check if both required documents are uploaded
-      const requiredDocTypes = ['national_id_front', 'national_id_back'] as const;
+      // Check if the required documents are uploaded
+      // 3-DOCUMENT FLOW: national_id_front, national_id_back, and selfie_photo are required
+      const requiredDocTypes = ['national_id_front', 'national_id_back', 'selfie_photo'] as const;
       
       const { data: docs, error: fetchError } = await supabase
         .from("verification_documents")
@@ -496,9 +504,13 @@ export class VerificationService {
         return false;
       }
 
-      // Verify both documents are present
-      if (!docs || docs.length < 2) {
-        console.warn("[VerificationService] Not all required documents uploaded:", docs?.length || 0, "/ 2");
+      // Verify all required documents are present
+      // We need to check if we have unique document types matching the count of required types
+      const uploadedTypes = new Set(docs?.map(d => d.document_type));
+      const missingDocs = requiredDocTypes.filter(type => !uploadedTypes.has(type));
+
+      if (missingDocs.length > 0) {
+        console.warn("[VerificationService] Required documents missing:", missingDocs);
         return false;
       }
 
