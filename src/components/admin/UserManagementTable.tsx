@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TestDialog } from "./TestDialog";
-import { SimpleTestDialog } from "./SimpleTestDialog";
 import {
   Table,
   TableBody,
@@ -36,7 +34,6 @@ interface Profile {
   phone_number: string | null;
   created_at: string;
   avatar_url: string | null;
-  email?: string;
   verification_status?: string | null;
   requires_reverification?: boolean;
 }
@@ -55,31 +52,25 @@ const useAdminUsers = () => {
         .select(`
           id, 
           full_name, 
-          email,
           role, 
           phone_number, 
           created_at, 
-          avatar_url,
-          user_verifications (
-            overall_status,
-            requires_reverification
-          )
+          avatar_url
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      // Transform the data to flatten verification fields
+      // Transform the data - verification fields will be null since we removed the join
       return (data || []).map((user: any) => ({
         id: user.id,
         full_name: user.full_name,
-        email: user.email,
         role: user.role,
         phone_number: user.phone_number,
         created_at: user.created_at,
         avatar_url: user.avatar_url,
-        verification_status: user.user_verifications?.[0]?.overall_status || null,
-        requires_reverification: user.user_verifications?.[0]?.requires_reverification || false,
+        verification_status: null,
+        requires_reverification: false,
       })) as Profile[];
     },
   });
@@ -92,27 +83,6 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
-  const [isSimpleTestDialogOpen, setIsSimpleTestDialogOpen] = useState(false);
-  
-  // Add effect to monitor test dialog state
-  React.useEffect(() => {
-    console.log("Test dialog state changed:", isTestDialogOpen);
-    if (isTestDialogOpen) {
-      const div = document.createElement('div');
-      div.style.position = 'fixed';
-      div.style.top = '300px';
-      div.style.left = '300px';
-      div.style.background = 'green';
-      div.style.color = 'white';
-      div.style.zIndex = '99997';
-      div.style.padding = '20px';
-      div.style.fontSize = '24px';
-      div.innerHTML = 'TEST DIALOG STATE IS TRUE';
-      document.body.appendChild(div);
-      setTimeout(() => document.body.removeChild(div), 3000);
-    }
-  }, [isTestDialogOpen]);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   // Debug effect to monitor state changes
@@ -355,6 +325,27 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
               No users found
             </div>
           )}
+
+          {selectedUser && (
+            <>
+              {console.log("Rendering dialogs for user:", selectedUser.id, "Edit open:", isEditDialogOpen, "Detail open:", isDetailDialogOpen)}
+              <UserEditDialog
+                user={selectedUser}
+                isOpen={isEditDialogOpen}
+                onClose={() => setIsEditDialogOpen(false)}
+                onSuccess={handleUpdateSuccess}
+              />
+              <UserDetailDialog
+                user={selectedUser}
+                isOpen={isDetailDialogOpen}
+                onClose={handleCloseDetailDialog}
+                onUserUpdate={() => {
+                  refetch();
+                  handleUpdateSuccess();
+                }}
+              />
+             </>
+          )}
         </CardContent>
       </Card>
     );
@@ -381,44 +372,6 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
 
   return (
     <>
-      <button onClick={() => {
-         console.log("Test dialog button clicked");
-         setIsTestDialogOpen(true);
-         // Create a very obvious visual indicator
-         const div = document.createElement('div');
-         div.style.position = 'fixed';
-         div.style.top = '100px';
-         div.style.left = '100px';
-         div.style.background = 'red';
-         div.style.color = 'white';
-         div.style.zIndex = '99999';
-         div.style.padding = '20px';
-         div.style.fontSize = '24px';
-         div.innerHTML = 'BUTTON CLICKED - DIALOG SHOULD OPEN';
-         document.body.appendChild(div);
-         setTimeout(() => document.body.removeChild(div), 3000);
-       }} style={{ position: 'fixed', top: 10, right: 10, zIndex: 10000, background: 'red', color: 'white' }}>
-         TEST DIALOG BUTTON
-       </button>
-       <button onClick={() => {
-         console.log("Simple test dialog button clicked");
-         setIsSimpleTestDialogOpen(true);
-         // Create a very obvious visual indicator
-         const div = document.createElement('div');
-         div.style.position = 'fixed';
-         div.style.top = '150px';
-         div.style.left = '100px';
-         div.style.background = 'blue';
-         div.style.color = 'white';
-         div.style.zIndex = '99998';
-         div.style.padding = '20px';
-         div.style.fontSize = '24px';
-         div.innerHTML = 'SIMPLE DIALOG BUTTON CLICKED';
-         document.body.appendChild(div);
-         setTimeout(() => document.body.removeChild(div), 3000);
-       }} style={{ position: 'fixed', top: 60, right: 10, zIndex: 10000, background: 'blue', color: 'white' }}>
-         SIMPLE TEST DIALOG
-       </button>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -456,14 +409,6 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
               handleUpdateSuccess();
             }}
           />
-          <TestDialog 
-             isOpen={isTestDialogOpen}
-             onClose={() => setIsTestDialogOpen(false)}
-           />
-           <SimpleTestDialog 
-             isOpen={isSimpleTestDialogOpen}
-             onClose={() => setIsSimpleTestDialogOpen(false)}
-           />
          </>
       )}
     </>

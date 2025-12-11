@@ -36,8 +36,6 @@ interface UserEditDialogProps {
 }
 
 export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDialogProps) => {
-  console.log("UserEditDialog component called with user:", user.id, "isOpen:", isOpen);
-  
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState(user.full_name || "");
   const [role, setRole] = useState(user.role);
@@ -80,35 +78,9 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
     }
   };
 
-  console.log("UserEditDialog rendering with isOpen:", isOpen);
-  
-  // Add DOM indicator for debugging
-  if (isOpen) {
-    setTimeout(() => {
-      const indicator = document.createElement('div');
-      indicator.style.position = 'fixed';
-      indicator.style.top = '50px';
-      indicator.style.left = '50px';
-      indicator.style.background = 'blue';
-      indicator.style.color = 'white';
-      indicator.style.zIndex = '10000';
-      indicator.style.padding = '10px';
-      indicator.innerHTML = 'DIALOG IS OPEN - RENDERING';
-      document.body.appendChild(indicator);
-      setTimeout(() => document.body.removeChild(indicator), 3000);
-      
-      // Check if dialog portal elements exist
-      const portalElements = document.querySelectorAll('[data-radix-portal]');
-      console.log('Portal elements found:', portalElements.length);
-      portalElements.forEach((el, index) => {
-        console.log(`Portal ${index}:`, el);
-      });
-    }, 100);
-  }
-  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]" style={{ border: '5px solid red', backgroundColor: 'yellow', zIndex: 9999 }}>
+      <DialogContent className="sm:max-w-[480px] border border-blue-200">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
