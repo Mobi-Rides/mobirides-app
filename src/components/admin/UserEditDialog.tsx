@@ -36,6 +36,8 @@ interface UserEditDialogProps {
 }
 
 export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDialogProps) => {
+  console.log("UserEditDialog component called with user:", user.id, "isOpen:", isOpen);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState(user.full_name || "");
   const [role, setRole] = useState(user.role);
@@ -78,9 +80,35 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
     }
   };
 
+  console.log("UserEditDialog rendering with isOpen:", isOpen);
+  
+  // Add DOM indicator for debugging
+  if (isOpen) {
+    setTimeout(() => {
+      const indicator = document.createElement('div');
+      indicator.style.position = 'fixed';
+      indicator.style.top = '50px';
+      indicator.style.left = '50px';
+      indicator.style.background = 'blue';
+      indicator.style.color = 'white';
+      indicator.style.zIndex = '10000';
+      indicator.style.padding = '10px';
+      indicator.innerHTML = 'DIALOG IS OPEN - RENDERING';
+      document.body.appendChild(indicator);
+      setTimeout(() => document.body.removeChild(indicator), 3000);
+      
+      // Check if dialog portal elements exist
+      const portalElements = document.querySelectorAll('[data-radix-portal]');
+      console.log('Portal elements found:', portalElements.length);
+      portalElements.forEach((el, index) => {
+        console.log(`Portal ${index}:`, el);
+      });
+    }, 100);
+  }
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" style={{ border: '5px solid red', backgroundColor: 'yellow', zIndex: 9999 }}>
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
@@ -98,7 +126,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value: "renter" | "host" | "admin") => setRole(value)}>
+            <Select value={role} onValueChange={(value: "renter" | "host" | "admin" | "super_admin") => setRole(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
@@ -106,6 +134,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
                 <SelectItem value="renter">Renter</SelectItem>
                 <SelectItem value="host">Host</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
