@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Car, Star, MapPin, User } from "lucide-react";
+import { X, Car, Star, MapPin, User, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ interface Car {
   seats: number;
   features: string[];
   location: string;
+  view_count?: number;
 }
 
 interface HostCarsSideTrayProps {
@@ -204,9 +205,15 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
                           <span className="text-muted-foreground">{car.transmission}</span>
                         </div>
 
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-xs text-muted-foreground">4.5 (12)</span>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-xs text-muted-foreground">4.5 (12)</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Eye className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">{car.view_count || 0} views</span>
+                          </div>
                         </div>
                       </div>
                     </CardContent>

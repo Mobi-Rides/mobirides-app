@@ -12,34 +12,52 @@ export const checkCarAvailability = async (
   excludeBookingId?: string
 ): Promise<boolean> => {
   try {
-    // Query for any confirmed bookings that overlap with the requested date range
+    const startStr = format(startDate, "yyyy-MM-dd");
+    const endStr = format(endDate, "yyyy-MM-dd");
+
+    // 1. Check existing bookings
     let query = supabase
       .from("bookings")
-      .select("*")
+      .select("id")
       .eq("car_id", carId)
-      .in("status", ["confirmed", "pending"]) // Check both confirmed and pending bookings
+      .in("status", ["confirmed", "pending"])
       .or(
-        `and(start_date.lte.${format(endDate, "yyyy-MM-dd")},end_date.gte.${format(
-          startDate,
-          "yyyy-MM-dd"
-        )})`
+        `and(start_date.lte.${endStr},end_date.gte.${startStr})`
       );
     
-    // If we're checking availability for an existing booking (like when updating),
-    // exclude that booking from the check
     if (excludeBookingId) {
       query = query.neq("id", excludeBookingId);
     }
 
-    const { data: overlappingBookings, error } = await query;
+    const { data: overlappingBookings, error: bookingError } = await query;
 
-    if (error) {
-      console.error("Error checking car availability:", error);
+    if (bookingError) {
+      console.error("Error checking car bookings:", bookingError);
       return false;
     }
 
-    // If there are any overlapping bookings, the car is not available
-    return !overlappingBookings || overlappingBookings.length === 0;
+    if (overlappingBookings && overlappingBookings.length > 0) {
+      return false;
+    }
+
+    // 2. Check blocked dates
+    const { data: blockedDates, error: blockedError } = await supabase
+      .from("car_blocked_dates")
+      .select("id")
+      .eq("car_id", carId)
+      .gte("blocked_date", startStr)
+      .lte("blocked_date", endStr);
+
+    if (blockedError) {
+      console.error("Error checking blocked dates:", blockedError);
+      return false;
+    }
+
+    if (blockedDates && blockedDates.length > 0) {
+      return false;
+    }
+
+    return true;
   } catch (error) {
     console.error("Error in checkCarAvailability:", error);
     return false;
@@ -47,35 +65,47 @@ export const checkCarAvailability = async (
 };
 
 /**
- * Fetches all booked dates for a car
+ * Fetches all booked and blocked dates for a car
  */
 export const getBookedDates = async (carId: string): Promise<Date[]> => {
   try {
-    const { data: bookings, error } = await supabase
+    const bookedDates: Date[] = [];
+
+    // 1. Fetch Bookings
+    const { data: bookings, error: bookingError } = await supabase
       .from("bookings")
       .select("start_date, end_date")
       .eq("car_id", carId)
-      .in("status", ["confirmed", "pending"]); // Include both confirmed and pending
+      .in("status", ["confirmed", "pending"]);
 
-    if (error) {
-      console.error("Error fetching booked dates:", error);
-      return [];
+    if (bookingError) {
+      console.error("Error fetching bookings:", bookingError);
+    } else {
+      bookings?.forEach(booking => {
+        const start = parseISO(booking.start_date);
+        const end = parseISO(booking.end_date);
+        
+        const currentDate = new Date(start);
+        while (currentDate <= end) {
+          bookedDates.push(new Date(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      });
     }
 
-    // Create an array of all booked dates
-    const bookedDates: Date[] = [];
-    
-    bookings?.forEach(booking => {
-      const start = parseISO(booking.start_date);
-      const end = parseISO(booking.end_date);
-      
-      // For each day between start and end (inclusive), add to bookedDates
-      const currentDate = new Date(start);
-      while (currentDate <= end) {
-        bookedDates.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-    });
+    // 2. Fetch Blocked Dates
+    const { data: blocked, error: blockedError } = await supabase
+      .from("car_blocked_dates")
+      .select("blocked_date")
+      .eq("car_id", carId);
+
+    if (blockedError) {
+      console.error("Error fetching blocked dates:", blockedError);
+    } else {
+      blocked?.forEach(item => {
+        bookedDates.push(parseISO(item.blocked_date));
+      });
+    }
 
     return bookedDates;
   } catch (error) {

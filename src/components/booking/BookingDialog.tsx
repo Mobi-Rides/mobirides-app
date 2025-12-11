@@ -32,6 +32,13 @@ import { isFeatureEnabled } from "@/lib/featureFlags";
 import { PriceBreakdown } from "./PriceBreakdown";
 import { InsurancePlanSelector } from "@/components/insurance/InsurancePlanSelector";
 import { CoverageCalculator } from "@/components/insurance/CoverageCalculator";
+import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
+import { 
+  validatePromoCode, 
+  applyPromoCode, 
+  calculateDiscount, 
+  PromoCode 
+} from "@/services/promoCodeService";
 
 interface BookingDialogProps {
   car: Car;
@@ -72,6 +79,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const { isVerified, isLoading: isVerificationLoading } =
     useVerificationStatus();
 
+  // Promo Code State
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+
   const basePrice = useMemo(() => {
     if (!startDate || !endDate) return undefined;
     const numberOfDays =
@@ -92,6 +102,19 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   );
 
   const [insurancePremium, setInsurancePremium] = useState<number | null>(null);
+
+  // Calculate prices for display and booking
+  const priceBeforeDiscount = isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : basePrice || 0;
+  const discountAmount = appliedPromo ? calculateDiscount(appliedPromo, priceBeforeDiscount) : 0;
+  const totalDisplayPrice = Math.max(0, priceBeforeDiscount - discountAmount);
+
+  const handlePromoApplied = (promo: PromoCode) => {
+    setAppliedPromo(promo);
+  };
+
+  const handlePromoRemoved = () => {
+    setAppliedPromo(null);
+  };
 
   // Check if the current user is the car owner
   useEffect(() => {
@@ -294,13 +317,14 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.user) throw new Error("No authenticated user");
 
-      const totalPrice = isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : (() => {
-        const numberOfDays =
-          Math.ceil(
-            (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-          ) + 1;
-        return numberOfDays * car.price_per_day;
-      })();
+      // Use the pre-calculated prices from component scope
+      let totalPrice = priceBeforeDiscount;
+      let discountValue = 0;
+
+      if (appliedPromo) {
+        discountValue = calculateDiscount(appliedPromo, priceBeforeDiscount);
+        totalPrice = priceBeforeDiscount - discountValue;
+      }
 
       console.log("[BookingDialog] Creating booking in database...");
 
@@ -323,6 +347,29 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         .single();
 
       if (bookingError) throw bookingError;
+
+      // Apply promo code usage if applicable
+      if (appliedPromo) {
+        try {
+          await applyPromoCode(
+            appliedPromo.id, 
+            session.session.user.id, 
+            booking.id, 
+            discountValue, 
+            priceBeforeDiscount, 
+            totalPrice
+          );
+          console.log("[BookingDialog] Promo code usage recorded");
+        } catch (promoError) {
+          console.error("[BookingDialog] Failed to record promo usage:", promoError);
+          // Non-blocking for booking flow, but should be logged
+          toast({
+            title: "Warning",
+            description: "Booking successful, but promo code application failed. Please contact support.",
+            variant: "destructive"
+          });
+        }
+      }
 
       console.log("[BookingDialog] Booking created successfully:", booking.id);
       console.log("[BookingDialog] Creating notifications and sending Twilio alerts...");
@@ -638,17 +685,21 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 <div className="text-sm space-y-1 p-4 bg-primary/5 rounded-md">
                   <p>Start date: {format(startDate, "PPP")}</p>
                   <p>End date: {format(endDate, "PPP")}</p>
+                  
+                  {/* Promo Code Input */}
+                  <div className="py-2 border-y border-border/50 my-2">
+                    <PromoCodeInput
+                      userId={userId}
+                      bookingAmount={isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : basePrice || 0}
+                      onApply={handlePromoApplied}
+                      onRemove={handlePromoRemoved}
+                      appliedPromo={appliedPromo}
+                    />
+                  </div>
+
                   <div className="border-t border-border pt-2 mt-2">
                     <p className="font-medium text-primary">
-                      Total: BWP {(
-                        isFeatureEnabled("DYNAMIC_PRICING") && finalPrice
-                          ? finalPrice
-                          : Math.ceil(
-                              (endDate.getTime() - startDate.getTime()) /
-                                (1000 * 60 * 60 * 24) +
-                                1,
-                            ) * car.price_per_day
-                      ).toFixed(2)}
+                      Total: BWP {totalDisplayPrice.toFixed(2)}
                     </p>
                   </div>
                   <Button
@@ -660,7 +711,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                   </Button>
                 </div>
                 {isFeatureEnabled("DYNAMIC_PRICING") && basePrice !== undefined && (
-                  <PriceBreakdown calculation={calculation} basePrice={basePrice} />
+                  <PriceBreakdown 
+                    calculation={calculation} 
+                    basePrice={basePrice} 
+                    discountAmount={discountAmount}
+                    promoCode={appliedPromo?.code}
+                  />
                 )}
                 {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined && (
                   <>

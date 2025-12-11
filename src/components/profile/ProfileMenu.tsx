@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
   LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark,
-  ArrowRightLeft, Wallet, Car, Users, BookOpen, MessageSquare, AlertTriangle
+  ArrowRightLeft, Wallet, Car, Users, BookOpen, MessageSquare, AlertTriangle, Ticket
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -106,6 +106,11 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     onClick: () => navigate("/notifications"),
     description: "View your latest notifications",
     animate: true,
+  }, {
+    icon: Ticket,
+    label: "Rewards & Discounts",
+    onClick: () => navigate("/promo-codes"),
+    description: "View promo codes and savings"
   }];
 
   const settingsItems: MenuItem[] = [

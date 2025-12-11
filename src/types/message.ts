@@ -4,6 +4,7 @@ export interface User {
   avatar?: string;
   status: 'online' | 'offline' | 'away';
   lastSeen?: Date;
+  role?: 'host' | 'renter' | 'admin' | 'super_admin';
 }
 
 export interface Message {
