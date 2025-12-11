@@ -35,7 +35,19 @@ async function runTests() {
     console.log(`✅ Test user created: ${testUserId} (${TEST_USER_EMAIL})`);
 
     // Ensure profile exists (triggers might take a moment)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log("⏳ Waiting for profile creation trigger...");
+    let profileExists = false;
+    for (let i = 0; i < 10; i++) {
+        const { data } = await supabase.from('profiles').select('id').eq('id', testUserId).maybeSingle();
+        if (data) {
+            profileExists = true;
+            break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    if (!profileExists) throw new Error("Profile was not created by trigger within 10 seconds");
+    console.log("✅ Profile confirmed");
     
     // Update marketing preferences
     const { error: prefError } = await supabase
@@ -162,11 +174,64 @@ async function runTests() {
         throw new Error("Failed to detect existing usage");
     }
 
-    // 7. Cleanup
+    // 7. Verify Notification Targeting (Marketing Preferences)
+    console.log("\n🎯 Verifying notification targeting...");
+    
+    // Use the RPC function to get recipients (joins with auth.users for email)
+    const { data: targetUsers, error: targetError } = await supabase.rpc('get_marketing_recipients');
+
+    if (targetError) throw new Error(`Targeting query failed: ${targetError.message}`);
+    
+    // Check if our test user is in the list
+    const foundUser = targetUsers.find(u => u.id === testUserId);
+    
+    if (foundUser) {
+        console.log(`✅ User correctly identified as a marketing recipient: ${foundUser.email}`);
+        console.log(`ℹ️ Total recipients found: ${targetUsers.length}`);
+    } else {
+        console.warn("Target List:", targetUsers);
+        throw new Error("Test user NOT found in marketing target list");
+    }
+
+    // 8. Verify In-App Notification Creation
+    console.log("\n🔔 Verifying in-app notification creation...");
+    
+    // Simulate the new logic (Insert only, no email check)
+    const { error: notifError } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: testUserId,
+        type: 'system_notification',
+        title: `Promo Code: ${TEST_PROMO_CODE}`,
+        description: `Special Offer! Use code ${TEST_PROMO_CODE} for a discount.`,
+        is_read: false,
+        role_target: 'system_wide'
+      });
+
+    if (notifError) throw new Error(`Failed to create notification: ${notifError.message}`);
+    
+    // Verify it exists
+    const { data: verifyNotif } = await supabase
+        .from('notifications')
+        .select('id, title')
+        .eq('user_id', testUserId)
+        .eq('title', `Promo Code: ${TEST_PROMO_CODE}`)
+        .single();
+        
+    if (verifyNotif) {
+        console.log("✅ In-App Notification successfully created and verified");
+    } else {
+        throw new Error("Notification created but not found in verification query");
+    }
+
+
+    // 9. Cleanup
     console.log("\n🧹 Cleaning up test data...");
     if (testPromoId) {
         // First delete usage records due to foreign key constraints
         await supabase.from("promo_code_usage").delete().eq("promo_code_id", testPromoId);
+        // Delete notifications
+        await supabase.from("notifications").delete().eq("user_id", testUserId);
         // Then delete the promo code
         await supabase.from("promo_codes").delete().eq("id", testPromoId);
     }

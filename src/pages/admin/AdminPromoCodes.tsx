@@ -101,24 +101,23 @@ export default function AdminPromoCodes() {
   // Send Notification Mutation
   const sendNotificationMutation = useMutation({
     mutationFn: async (promo: PromoCode) => {
-      // 1. Get users with marketing notifications enabled
-      const { data: users, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, marketing_notifications") // Assuming this column exists or we join preferences
-        .eq("marketing_notifications", true)
-        .not("email", "is", null);
+      // 1. Get users with marketing notifications enabled using secure RPC
+      const { data: users, error } = await supabase.rpc('get_marketing_recipients');
 
       if (error) throw error;
       if (!users || users.length === 0) throw new Error("No users found with marketing notifications enabled");
 
-      // 2. Send emails in batches
-      const emailService = ResendEmailService.getInstance();
+      // 2. Create in-app notifications (Email temporarily disabled)
+      // const emailService = ResendEmailService.getInstance(); // Disabled
       let sentCount = 0;
       let failCount = 0;
+      const notificationsToInsert = [];
 
       for (const user of users) {
-        if (!user.email) continue;
+        // if (!user.email) continue; // Not needed if only doing in-app
 
+        // Email sending code commented out
+        /*
         const result = await emailService.sendPromoNotification(
           {
             id: user.id,
@@ -133,9 +132,38 @@ export default function AdminPromoCodes() {
             validUntil: promo.valid_until ? format(new Date(promo.valid_until), "PPP") : undefined
           }
         );
+        */
 
-        if (result.success) sentCount++;
-        else failCount++;
+        // Directly assume success for in-app notification creation
+        // if (result.success) { 
+          sentCount++;
+          
+          // Prepare in-app notification
+          notificationsToInsert.push({
+            user_id: user.id,
+            type: 'system_notification',
+            title: `Promo Code: ${promo.code}`,
+            description: `${promo.description || "Special Offer!"} Use code ${promo.code} for ${promo.discount_type === 'percentage' ? `${promo.discount_amount}%` : `P${promo.discount_amount}`} OFF.`,
+            is_read: false,
+            role_target: 'system_wide'
+          });
+        // } else {
+        //   failCount++;
+        // }
+      }
+
+      // Batch insert in-app notifications
+      if (notificationsToInsert.length > 0) {
+        const { error: notifError } = await supabase
+          .from('notifications')
+          .insert(notificationsToInsert);
+        
+        if (notifError) {
+          console.error("Failed to create in-app notifications:", notifError);
+          toast.error("Failed to create in-app notifications.");
+          failCount = notificationsToInsert.length; // Mark all as failed if batch fails
+          sentCount = 0;
+        }
       }
 
       return { sentCount, failCount };
