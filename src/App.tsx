@@ -98,6 +98,7 @@ const AdminVerifications = lazy(() => import("@/pages/admin/AdminVerifications")
 const AdminMessages = lazy(() => import("@/pages/admin/AdminMessages"));
 const AdminManagement = lazy(() => import("@/pages/admin/AdminManagement"));
 const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
+const SuperAdminAnalytics = lazy(() => import("@/pages/SuperAdminAnalytics"));
 
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
@@ -422,6 +423,11 @@ function App() {
                         <Route path="/admin/audit" element={
                           <Suspense fallback={<LoadingView />}>
                             <AdminAudit />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/analytics" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <SuperAdminAnalytics />
                           </Suspense>
                         } />
 

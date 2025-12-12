@@ -10,7 +10,8 @@ import {
   Home,
   MessageSquare,
   UserCog,
-  Shield
+  Shield,
+  TrendingUp
 } from "lucide-react";
 import {
   Sidebar,
@@ -27,6 +28,7 @@ import {
 
 const adminMenuItems = [
   { title: "Overview", url: "/admin", icon: BarChart3 },
+  { title: "Analytics", url: "/admin/analytics", icon: TrendingUp },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Cars", url: "/admin/cars", icon: Car },
   { title: "Bookings", url: "/admin/bookings", icon: CreditCard },
