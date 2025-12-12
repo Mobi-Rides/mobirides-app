@@ -79,6 +79,7 @@ const NotificationPreferencesPage = lazy(() => import("@/pages/NotificationPrefe
 const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
+const PromoCodeHistory = lazy(() => import("@/pages/PromoCodeHistory"));
 
 
 
@@ -98,6 +99,7 @@ const AdminVerifications = lazy(() => import("@/pages/admin/AdminVerifications")
 const AdminMessages = lazy(() => import("@/pages/admin/AdminMessages"));
 const AdminManagement = lazy(() => import("@/pages/admin/AdminManagement"));
 const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
+const AdminPromoCodes = lazy(() => import("@/pages/admin/AdminPromoCodes"));
 
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
@@ -245,6 +247,13 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <NotificationPreferencesPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/promo-codes" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <PromoCodeHistory />
                             </ProtectedRoute>
                           </Suspense>
                         } />
@@ -422,6 +431,11 @@ function App() {
                         <Route path="/admin/audit" element={
                           <Suspense fallback={<LoadingView />}>
                             <AdminAudit />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/promo-codes" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminPromoCodes />
                           </Suspense>
                         } />
 

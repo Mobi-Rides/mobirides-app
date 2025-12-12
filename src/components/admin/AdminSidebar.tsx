@@ -10,7 +10,8 @@ import {
   Home,
   MessageSquare,
   UserCog,
-  Shield
+  Shield,
+  Tag
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ const adminMenuItems = [
   { title: "Cars", url: "/admin/cars", icon: Car },
   { title: "Bookings", url: "/admin/bookings", icon: CreditCard },
   { title: "Transactions", url: "/admin/transactions", icon: CreditCard },
+  { title: "Promo Codes", url: "/admin/promo-codes", icon: Tag },
   { title: "Verifications", url: "/admin/verifications", icon: ClipboardCheck },
   { title: "Messages", url: "/admin/messages", icon: MessageSquare },
   { title: "Admin Management", url: "/admin/management", icon: UserCog },

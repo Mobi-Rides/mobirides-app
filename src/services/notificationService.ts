@@ -204,6 +204,38 @@ export class ResendEmailService {
       `Return Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
     );
   }
+
+  /**
+   * Send promo code notification email
+   */
+  async sendPromoNotification(
+    recipient: NotificationRecipient,
+    promoData: {
+      code: string;
+      discount: string;
+      description: string;
+      validUntil?: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      promoCode: promoData.code,
+      discountValue: promoData.discount,
+      description: promoData.description,
+      validUntil: promoData.validUntil || 'Limited time only',
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'promo-notification', // Requires this template ID in Resend
+      templateData,
+      `Special Offer: ${promoData.discount} with code ${promoData.code}`
+    );
+  }
 }
 
 // Twilio WhatsApp Service Class

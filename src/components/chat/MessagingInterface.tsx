@@ -47,7 +47,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
           // Fetch user profile data with error handling
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('full_name, avatar_url')
+            .select('full_name, avatar_url, role')
             .eq('id', user.id)
             .maybeSingle();
           
@@ -62,6 +62,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
               supabase.storage.from('avatars').getPublicUrl(profileData.avatar_url).data.publicUrl : 
               'https://i.pravatar.cc/150?img=32',
             status: 'online' as const,
+            role: (profileData?.role as 'host' | 'renter' | 'admin' | 'super_admin') || 'renter'
           };
           
           console.log("👤 [MESSAGING] Setting current user:", newUser.id, newUser.name);
@@ -299,7 +300,10 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>
       <div className="flex flex-1 overflow-hidden">
         {/* Conversation List */}
-        <div className="w-80 flex-shrink-0">
+        <div className={cn(
+          "w-full md:w-80 flex-shrink-0 transition-all duration-300",
+          selectedConversationId ? "hidden md:block" : "block"
+        )}>
           <ConversationList
             conversations={filteredConversations}
             selectedConversationId={selectedConversationId}
@@ -312,7 +316,10 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
         </div>
 
       {/* Chat Window */}
-      <div className="flex-1">
+      <div className={cn(
+        "flex-1 transition-all duration-300",
+        selectedConversationId ? "block" : "hidden md:block"
+      )}>
         {selectedConversation ? (
           <ChatWindow
             conversation={selectedConversation}
@@ -321,6 +328,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             typingUsers={[]}
             onSendMessage={handleSendMessage}
             isLoading={isSendingMessage}
+            onBack={() => setSelectedConversationId(undefined)}
           />
         ) : (
           <div className="flex items-center justify-center h-full">
