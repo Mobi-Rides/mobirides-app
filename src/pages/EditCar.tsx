@@ -14,6 +14,9 @@ import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
 
+import { HostAvailabilityCalendar } from "@/components/host/HostAvailabilityCalendar";
+import { Separator } from "@/components/ui/separator";
+
 const EditCar = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -156,6 +159,19 @@ const EditCar = () => {
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />
+
+        {id && (
+          <div className="mt-8 space-y-6">
+            <Separator />
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Availability Management</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Tap dates to block or unblock them. Blocked dates will not be available for booking.
+              </p>
+              <HostAvailabilityCalendar carId={id} />
+            </div>
+          </div>
+        )}
       </div>
       <Navigation />
     </div>

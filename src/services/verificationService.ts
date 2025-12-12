@@ -389,10 +389,15 @@ export class VerificationService {
       const completionStatus = this.determineCompletionStatus(profileData);
 
       // Determine initial step based on profile completeness
+      // FORCE STEP 1: Always start at personal_info regardless of profile data
       let currentStep: any = "personal_info";
+      
+      /* 
+      // Previously skipped step 1 if profile was complete
       if (completionStatus.personal_info_completed) {
         currentStep = "document_upload";
       }
+      */
 
       // Create new verification record with mapped data
       const { data, error } = await supabase

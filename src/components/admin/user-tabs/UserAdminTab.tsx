@@ -18,6 +18,7 @@ interface Profile {
   phone_number: string | null;
   created_at: string;
   avatar_url: string | null;
+  email?: string;
 }
 
 interface UserAdminTabProps {
@@ -55,7 +56,7 @@ export const UserAdminTab = ({ user, onUpdate }: UserAdminTabProps) => {
         .from("admins")
         .insert({
           id: user.id,
-          email: "email@example.com", // We don't have email access, using placeholder
+          email: user.email || `${user.id}@placeholder.com`, // Use actual email or fallback
           full_name: user.full_name,
           is_super_admin: isSuperAdmin,
         });

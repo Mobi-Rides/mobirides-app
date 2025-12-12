@@ -5,13 +5,16 @@ import { Badge } from "@/components/ui/badge";
 type Props = {
   calculation: PricingCalculation | null;
   basePrice: number;
+  discountAmount?: number;
+  promoCode?: string;
 };
 
-export const PriceBreakdown = ({ calculation, basePrice }: Props) => {
+export const PriceBreakdown = ({ calculation, basePrice, discountAmount = 0, promoCode }: Props) => {
   if (!calculation || calculation.applied_rules.length === 0) return null;
 
   const hasSavings = calculation.savings && calculation.savings > 0;
   const hasPremium = calculation.premium && calculation.premium > 0;
+  const finalPrice = Math.max(0, calculation.final_price - discountAmount);
 
   return (
     <div className="space-y-2">
@@ -35,10 +38,18 @@ export const PriceBreakdown = ({ calculation, basePrice }: Props) => {
             </span>
           </div>
         ))}
+        
+        {discountAmount > 0 && (
+          <div className="flex justify-between items-center text-green-600">
+            <span>Promo Code {promoCode ? `(${promoCode})` : ''}</span>
+            <span>- BWP {discountAmount.toFixed(2)}</span>
+          </div>
+        )}
+
         <div className="border-t border-border pt-2 mt-2 flex justify-between items-center">
           <span className="font-medium text-primary">Final price</span>
           <div className="flex items-center gap-2">
-            {hasSavings && (
+            {hasSavings && !discountAmount && (
               <span className="text-xs text-green-600 flex items-center gap-1">
                 <TrendingDown className="h-3 w-3" />
                 Save BWP {calculation.savings?.toFixed(2)}
@@ -50,7 +61,7 @@ export const PriceBreakdown = ({ calculation, basePrice }: Props) => {
                 +BWP {calculation.premium?.toFixed(2)}
               </span>
             )}
-            <span className="font-medium text-primary">BWP {calculation.final_price.toFixed(2)}</span>
+            <span className="font-medium text-primary">BWP {finalPrice.toFixed(2)}</span>
           </div>
         </div>
       </div>

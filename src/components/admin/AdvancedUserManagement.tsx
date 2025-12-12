@@ -85,10 +85,12 @@ const useUsers = () => {
             .select("id", { count: "exact", head: true })
             .or(`renter_id.eq.${profile.id},host_id.eq.${profile.id}`);
 
-          const { count: reviewsCount } = await supabase
-            .from("reviews")
-            .select("id", { count: "exact", head: true })
-            .or(`reviewer_id.eq.${profile.id},reviewee_id.eq.${profile.id}`);
+          // Temporarily disabled due to network errors
+          // const { count: reviewsCount } = await supabase
+          //   .from("reviews")
+          //   .select("id", { count: "exact", head: true })
+          //   .or(`reviewer_id.eq.${profile.id},reviewee_id.eq.${profile.id}`);
+          const reviewsCount = 0;
 
           return {
             ...profile,

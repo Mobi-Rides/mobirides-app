@@ -80,7 +80,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[480px] border border-blue-200">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
@@ -98,7 +98,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value: "renter" | "host" | "admin") => setRole(value)}>
+            <Select value={role} onValueChange={(value: "renter" | "host" | "admin" | "super_admin") => setRole(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
@@ -106,6 +106,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
                 <SelectItem value="renter">Renter</SelectItem>
                 <SelectItem value="host">Host</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>

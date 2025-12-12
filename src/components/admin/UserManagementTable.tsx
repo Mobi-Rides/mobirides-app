@@ -55,17 +55,13 @@ const useAdminUsers = () => {
           role, 
           phone_number, 
           created_at, 
-          avatar_url,
-          user_verifications (
-            overall_status,
-            requires_reverification
-          )
+          avatar_url
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      // Transform the data to flatten verification fields
+      // Transform the data - verification fields will be null since we removed the join
       return (data || []).map((user: any) => ({
         id: user.id,
         full_name: user.full_name,
@@ -73,8 +69,8 @@ const useAdminUsers = () => {
         phone_number: user.phone_number,
         created_at: user.created_at,
         avatar_url: user.avatar_url,
-        verification_status: user.user_verifications?.[0]?.overall_status || null,
-        requires_reverification: user.user_verifications?.[0]?.requires_reverification || false,
+        verification_status: null,
+        requires_reverification: false,
       })) as Profile[];
     },
   });
@@ -88,6 +84,11 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+
+  // Debug effect to monitor state changes
+  React.useEffect(() => {
+    console.log("State changed - selectedUser:", selectedUser?.id, "isEditDialogOpen:", isEditDialogOpen, "isDetailDialogOpen:", isDetailDialogOpen);
+  }, [selectedUser, isEditDialogOpen, isDetailDialogOpen]);
   
   const { data: users, isLoading, error, refetch } = useAdminUsers();
 
@@ -129,13 +130,17 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   };
 
   const handleEditUser = (user: Profile) => {
+    console.log("handleEditUser called with:", user);
     setSelectedUser(user);
     setIsEditDialogOpen(true);
+    console.log("Edit dialog state set to true");
   };
 
   const handleViewUser = (user: Profile) => {
+    console.log("handleViewUser called with:", user);
     setSelectedUser(user);
     setIsDetailDialogOpen(true);
+    console.log("Detail dialog state set to true");
   };
 
   const handleUpdateSuccess = () => {
@@ -190,6 +195,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
             variant="ghost"
             size="sm"
             onClick={(e) => {
+              console.log("Eye button clicked for user:", user.id);
               e.stopPropagation();
               handleViewUser(user);
             }}
@@ -201,6 +207,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
             variant="ghost"
             size="sm"
             onClick={(e) => {
+              console.log("Edit button clicked for user:", user.id);
               e.stopPropagation();
               handleEditUser(user);
             }}
@@ -318,6 +325,27 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
               No users found
             </div>
           )}
+
+          {selectedUser && (
+            <>
+              {console.log("Rendering dialogs for user:", selectedUser.id, "Edit open:", isEditDialogOpen, "Detail open:", isDetailDialogOpen)}
+              <UserEditDialog
+                user={selectedUser}
+                isOpen={isEditDialogOpen}
+                onClose={() => setIsEditDialogOpen(false)}
+                onSuccess={handleUpdateSuccess}
+              />
+              <UserDetailDialog
+                user={selectedUser}
+                isOpen={isDetailDialogOpen}
+                onClose={handleCloseDetailDialog}
+                onUserUpdate={() => {
+                  refetch();
+                  handleUpdateSuccess();
+                }}
+              />
+             </>
+          )}
         </CardContent>
       </Card>
     );
@@ -365,6 +393,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
 
       {selectedUser && (
         <>
+          {console.log("Rendering dialogs for user:", selectedUser.id, "Edit open:", isEditDialogOpen, "Detail open:", isDetailDialogOpen)}
           <UserEditDialog
             user={selectedUser}
             isOpen={isEditDialogOpen}
@@ -380,7 +409,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
               handleUpdateSuccess();
             }}
           />
-        </>
+         </>
       )}
     </>
   );
