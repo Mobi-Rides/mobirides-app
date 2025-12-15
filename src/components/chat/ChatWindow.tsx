@@ -14,6 +14,7 @@ import {
 import { Conversation, Message, User, TypingIndicator } from '@/types/message';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
+import { QuickReplySuggestions } from './QuickReplySuggestions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -34,6 +35,7 @@ interface ChatWindowProps {
   onStartTyping?: () => void;
   onStopTyping?: () => void;
   isLoading?: boolean;
+  onBack?: () => void;
 }
 
 export function ChatWindow({
@@ -47,7 +49,8 @@ export function ChatWindow({
   onReactToMessage,
   onStartTyping,
   onStopTyping,
-  isLoading = false
+  isLoading = false,
+  onBack
 }: ChatWindowProps) {
   const navigate = useNavigate();
   const [replyToMessage, setReplyToMessage] = useState<{
@@ -157,8 +160,31 @@ export function ChatWindow({
   const isMobile = useIsMobile();
   
   const handleBackClick = () => {
-    navigate('/messages');
+    // Instead of navigating, we should clear the selected conversation
+    // This is handled by the parent component, but we can emit an event or rely on prop
+    // Since this component is tightly coupled with MessagingInterface via routing usually,
+    // but here it's rendered conditionally.
+    // If we are in MessagingInterface, we need a way to go back to list.
+    // The parent MessagingInterface doesn't pass a "onBack" prop.
+    // We should probably add it or use a query param.
+    // For now, let's assume the back button is only needed on mobile where we want to show the list again.
+    // The simplest way is to check if onBack is passed, or hack it via navigate.
+    // But since we are using state for selection, navigate('/messages') might re-mount everything.
+    
+    // Better: Add onBack prop.
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/messages');
+    }
   };
+
+  const handleQuickReply = (text: string) => {
+    onSendMessage(text);
+  };
+
+  const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
+  const isOnline = otherParticipant?.status === 'online';
 
   return (
     <div className="flex flex-col h-full bg-card">
@@ -183,17 +209,29 @@ export function ChatWindow({
               <Users className="w-5 h-5 text-primary" />
             </div>
           ) : (
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={conversation.participants.find(p => p.id !== currentUser.id)?.avatar} />
-              <AvatarFallback>
-                {getConversationTitle().charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={conversation.participants.find(p => p.id !== currentUser.id)?.avatar} />
+                <AvatarFallback>
+                  {getConversationTitle().charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {isOnline && (
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full" />
+              )}
+            </div>
           )}
 
           {/* Title and status */}
           <div>
-            <h3 className="font-medium text-foreground">{getConversationTitle()}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-foreground">{getConversationTitle()}</h3>
+              {isOnline && (
+                <span className="text-xs text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-full">
+                  Active now
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">{getConversationSubtitle()}</p>
           </div>
         </div>
@@ -308,6 +346,15 @@ export function ChatWindow({
           )}
         </div>
       </ScrollArea>
+
+      {/* Quick Replies - Only show for direct conversations and when messages are few or empty (optional logic) */}
+      {conversation.type === 'direct' && (
+        <QuickReplySuggestions
+          onSelect={handleQuickReply}
+          userRole={currentUser.role || 'renter'}
+          isVisible={true}
+        />
+      )}
 
       {/* Message Input */}
       <MessageInput

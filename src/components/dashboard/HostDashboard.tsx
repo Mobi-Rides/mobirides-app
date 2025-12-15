@@ -10,11 +10,14 @@ import { BookingStatus } from "@/types/booking";
 import { WalletBalanceIndicator } from "./WalletBalanceIndicator";
 import { walletService } from "@/services/walletService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Plus } from "lucide-react";
 import { HandoverNotificationCard } from "@/components/handover/HandoverNotificationCard";
 import { useHandoverPrompts } from "@/hooks/useHandoverPrompts";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
+import { HostCarCard } from "@/components/host/HostCarCard";
+import { toSafeCar } from "@/types/car";
+import { Button } from "@/components/ui/button";
 
 export const HostDashboard = () => {
   const navigate = useNavigate();
@@ -69,6 +72,23 @@ export const HostDashboard = () => {
       
       console.log("Host bookings:", data);
       return data;
+    }
+  });
+
+  const { data: hostCars } = useQuery({
+    queryKey: ["host-cars"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data, error } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data.map(car => ({ ...toSafeCar(car as any), view_count: car.view_count }));
     }
   });
 
@@ -224,9 +244,10 @@ export const HostDashboard = () => {
       <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
           <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
-          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="pending">Booking Requests</TabsTrigger>
-          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="expired">Expired Requests</TabsTrigger>
-          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="completed">Past Rentals</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="pending">Requests</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="vehicles">My Vehicles</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="expired">Expired</TabsTrigger>
+          <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="completed">Past</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active">
@@ -245,6 +266,30 @@ export const HostDashboard = () => {
             emptyMessage="No booking requests"
             onCardClick={handlePendingCardClick}
           />
+        </TabsContent>
+
+        <TabsContent value="vehicles">
+          {hostCars?.length === 0 ? (
+            <div className="text-center py-12 border rounded-lg bg-muted/10 border-dashed">
+              <p className="text-muted-foreground mb-4">You haven't listed any cars yet.</p>
+              <Button onClick={() => navigate('/add-car')}>
+                <Plus className="w-4 h-4 mr-2" />
+                List Your First Car
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {hostCars?.map(car => (
+                <HostCarCard key={car.id} car={car} />
+              ))}
+              <div className="flex items-center justify-center h-full min-h-[200px] border-2 border-dashed rounded-lg hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => navigate('/add-car')}>
+                <div className="text-center">
+                  <Plus className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="font-medium text-muted-foreground">Add Another Car</p>
+                </div>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="expired">

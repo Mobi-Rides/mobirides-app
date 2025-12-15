@@ -33,8 +33,12 @@ export const Navigation = () => {
         .select('conversation_id, last_read_at')
         .eq('user_id', user.id);
 
-      if (participationError || !userParticipations?.length) {
+      if (participationError) {
         console.error("Error fetching user participations:", participationError);
+        return 0;
+      }
+      
+      if (!userParticipations?.length) {
         return 0;
       }
 

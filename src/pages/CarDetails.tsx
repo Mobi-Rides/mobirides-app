@@ -16,6 +16,8 @@ import { useUser } from "@supabase/auth-helpers-react";
 import type { Car } from "@/types/car";
 import { useTheme } from "@/contexts/ThemeContext";
 import { AlertTriangle } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { incrementCarViewCount } from "@/services/carViewsService";
 
 interface CarWithProfiles extends Car {
   profiles?: {
@@ -63,6 +65,7 @@ const CarDetails = () => {
   const { carId } = useParams();
   const { theme } = useTheme();
   const user = useUser();
+  const viewIncremented = useRef(false);
   
   console.log('=== CarDetails component rendered ===');
   console.log('Current URL:', window.location.href);
@@ -84,6 +87,16 @@ const CarDetails = () => {
       return toSafeCarWithProfiles(data as CarWithProfiles);
     },
   });
+
+  useEffect(() => {
+    if (carId && car && !viewIncremented.current) {
+      // Only increment if user is not the owner
+      if (user?.id !== car.owner_id) {
+        incrementCarViewCount(carId);
+      }
+      viewIncremented.current = true;
+    }
+  }, [carId, car, user]);
 
   if (isLoading) {
     return (
