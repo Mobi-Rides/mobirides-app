@@ -32,6 +32,8 @@ export interface UserActivityMetrics {
   new_users: number;
   suspended_users: number;
   role_distribution: Record<string, number>;
+  admin_users: number;
+  admin_user_details: any[];
 }
 
 export interface SystemMetrics {
@@ -112,7 +114,16 @@ export const useSuperAdminAnalytics = () => {
       // Set analytics data
       setAnalytics(analyticsData);
       setEvents(securityEvents);
-      setUserMetrics(userMetricsData);
+      
+      // Merge service user metrics with admin users data
+      if (userMetricsData) {
+        setUserMetrics({
+          ...userMetricsData,
+          admin_users: adminUsers?.length || 0,
+          admin_user_details: adminUsers || []
+        });
+      }
+      
       setSystemMetrics(systemMetricsData);
       setSecurityMetrics(securityMetricsData);
 
@@ -171,33 +182,32 @@ export const useSuperAdminAnalytics = () => {
         .select('*', { count: 'exact', head: true });
 
       // Get active users (logged in last 30 days)
-      const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+      const thirtyDaysAgo = subDays(new Date(), 30);
       const { count: activeUsers } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .gte('last_sign_in_at', thirtyDaysAgo);
+        .gte('last_sign_in_at', thirtyDaysAgo.toISOString());
 
       // Get new users (last 7 days)
-      const sevenDaysAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd');
+      const sevenDaysAgo = subDays(new Date(), 7);
       const { count: newUsers } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', sevenDaysAgo);
+        .gte('created_at', sevenDaysAgo.toISOString());
 
-      // Get suspended users
+      // Get suspended users (accounts that are locked)
       const { count: suspendedUsers } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'suspended');
+        .not('account_locked_until', 'is', null);
 
       // Get role distribution
       const { data: roleData } = await supabase
         .from('user_roles')
-        .select('role, count: user_id.count()')
-        .group('role');
+        .select('role, count: user_id.count()');
 
       const roleDistribution = roleData?.reduce((acc, item) => {
-        acc[item.role] = item.count;
+        acc[item.role] = Number(item.count);
         return acc;
       }, {} as Record<string, number>) || {};
 

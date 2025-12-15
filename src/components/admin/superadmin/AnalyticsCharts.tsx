@@ -62,40 +62,6 @@ export const AnalyticsCharts = ({
 }: Props) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'security' | 'system'>('overview');
 
-  // If in preview mode, show only overview tab with limited content
-  if (isPreview) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">User Activity Trends</CardTitle>
-              <CardDescription>Daily user registrations and activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={getActivityTrends().slice(-7)}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke={COLORS.primary}
-                    fill={COLORS.primary}
-                    fillOpacity={0.3}
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   // Process time series data for activity trends
   const getActivityTrends = (): TimeSeriesData[] => {
     const dailyActivity = analytics.reduce((acc, item) => {
@@ -135,6 +101,40 @@ export const AnalyticsCharts = ({
     if (!userMetrics) return [];
     return Object.entries(userMetrics.role_distribution).map(([name, value]) => ({ name, value }));
   };
+
+  // If in preview mode, show only overview tab with limited content
+  if (isPreview) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">User Activity Trends</CardTitle>
+              <CardDescription>Daily user registrations and activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={getActivityTrends().slice(-7)}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={COLORS.primary}
+                    fill={COLORS.primary}
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const StatCard = ({ title, value, icon: Icon, trend, color = "primary" }: {
     title: string;
