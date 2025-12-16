@@ -77,6 +77,18 @@ export const useUserLocationTracking = () => {
   // Get current location once (not continuous tracking)
   const getCurrentLocation = (): Promise<LocationData> => {
     return new Promise((resolve, reject) => {
+      // Fallback for localhost development without HTTPS or GPS
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.warn('Using mock location for localhost development');
+        const mockLocation: LocationData = {
+          latitude: -24.65451, // Gaborone default
+          longitude: 25.90859,
+          accuracy: 10
+        };
+        resolve(mockLocation);
+        return;
+      }
+
       if (!navigator.geolocation) {
         reject(new Error("Geolocation is not supported"));
         return;
