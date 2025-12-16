@@ -10,6 +10,15 @@ interface Props {
   events: SecurityEvent[];
   onRefresh: () => void;
   loading: boolean;
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasMore: boolean;
+  };
+  onPageChange?: (page: number) => void;
+  onNextPage?: () => void;
+  onPreviousPage?: () => void;
 }
 
 interface AdminActivity {
@@ -35,7 +44,15 @@ const ACTION_COLORS = {
   'system.config': 'bg-cyan-100 text-cyan-800'
 };
 
-export const AdminActivity = ({ events, onRefresh, loading }: Props) => {
+export const AdminActivity = ({ 
+  events, 
+  onRefresh, 
+  loading,
+  pagination,
+  onPageChange,
+  onNextPage,
+  onPreviousPage
+}: Props) => {
   const [filterAdmin, setFilterAdmin] = useState<string>('all');
   const [filterAction, setFilterAction] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'timeline' | 'summary'>('timeline');
@@ -321,6 +338,33 @@ export const AdminActivity = ({ events, onRefresh, loading }: Props) => {
                 {filteredEvents.slice(0, 30).map(event => (
                   <ActivityCard key={event.id} event={event} />
                 ))}
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {pagination && onPageChange && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Page {pagination.page} of {Math.ceil(pagination.total / pagination.pageSize)}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onPreviousPage}
+                    disabled={pagination.page <= 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onNextPage}
+                    disabled={!pagination.hasMore}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
