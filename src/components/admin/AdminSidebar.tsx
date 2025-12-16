@@ -11,6 +11,7 @@ import {
   MessageSquare,
   UserCog,
   Shield,
+  TrendingUp,
   Tag
 } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ import {
 
 const adminMenuItems = [
   { title: "Overview", url: "/admin", icon: BarChart3 },
+  { title: "Analytics", url: "/admin/analytics", icon: TrendingUp },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Cars", url: "/admin/cars", icon: Car },
   { title: "Bookings", url: "/admin/bookings", icon: CreditCard },

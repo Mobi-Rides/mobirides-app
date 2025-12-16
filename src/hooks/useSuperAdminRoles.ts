@@ -38,6 +38,11 @@ export const useSuperAdminRoles = () => {
       // Get unique user IDs
       const userIds = Object.keys(rolesByUser);
 
+      // If no user IDs, return empty array
+      if (userIds.length === 0) {
+        return [];
+      }
+
       // Get user profiles
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
