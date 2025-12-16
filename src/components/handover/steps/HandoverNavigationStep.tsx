@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { NavigationInterface } from "@/components/navigation/NavigationInterface";
 import { RouteStepsPanel } from "@/components/navigation/RouteStepsPanel";
 import { useUserLocationTracking } from "@/hooks/useUserLocationTracking";
-import { navigationService } from "@/services/navigationService";
+import { navigationService, NavigationRoute, NavigationStep } from "@/services/navigationService";
 import { toast } from "@/utils/toast-utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,14 +22,6 @@ interface HandoverNavigationStepProps {
   isHost: boolean;
   onStepComplete: () => void;
   onNavigationStart?: () => void;
-}
-
-interface NavigationStep {
-  instruction: string;
-  distance: number;
-  duration: number;
-  maneuver: string;
-  road_name?: string;
 }
 
 export const HandoverNavigationStep = ({
@@ -52,6 +44,33 @@ export const HandoverNavigationStep = ({
   const [isServiceReady, setIsServiceReady] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showManualOptions, setShowManualOptions] = useState(false);
+  const [showTraffic, setShowTraffic] = useState(false);
+
+  // Subscribe to active navigation service
+  useEffect(() => {
+    const unsubscribe = navigationService.subscribe((state) => {
+      // Sync traffic state
+      setShowTraffic(state.showTraffic || false);
+
+      // Only sync if we are actually navigating or if the state implies we should be
+      if (state.isNavigating && state.activeRoute) {
+        setIsNavigating(true);
+        // We can update these, but if they are already set by startNavigation it might be redundant.
+        // However, if we reload the component while navigation is active (e.g. close/open sheet), this restores state.
+        setRoute(state.activeRoute.steps);
+        setCurrentStepIndex(state.currentStepIndex);
+        setTotalDistance(state.activeRoute.distance);
+        setTotalDuration(state.activeRoute.duration);
+      } else if (!state.isNavigating && isNavigating) {
+         // Navigation stopped externally or finished
+         setIsNavigating(false);
+      } else if (state.isNavigating) {
+         // Update step index
+         setCurrentStepIndex(state.currentStepIndex);
+      }
+    });
+    return unsubscribe;
+  }, [isNavigating]);
 
   // Initialize navigation service on component mount
   useEffect(() => {
@@ -129,7 +148,7 @@ export const HandoverNavigationStep = ({
   }, [userLocation, destinationLocation, isNavigating, hasArrived, arrivalRadius, isVoiceEnabled, isHost, handoverSessionId]);
 
   // Updated fetchRoute with better error handling
-  const fetchRoute = async () => {
+  const fetchRoute = async (): Promise<NavigationRoute | null> => {
     let currentLocation = userLocation;
     
     if (!currentLocation) {
@@ -139,14 +158,14 @@ export const HandoverNavigationStep = ({
       } catch (error) {
         setLocationError("Unable to access your location. Please check your GPS settings.");
         setShowManualOptions(true);
-        return false;
+        return null;
       }
     }
 
     if (!isServiceReady) {
       setLocationError("Navigation service is not available.");
       setShowManualOptions(true);
-      return false;
+      return null;
     }
 
     try {
@@ -159,7 +178,7 @@ export const HandoverNavigationStep = ({
         setTotalDistance(routeData.distance);
         setTotalDuration(routeData.duration);
         setRoute(routeData.steps);
-        return true;
+        return routeData;
       } else {
         throw new Error("No route found");
       }
@@ -167,13 +186,27 @@ export const HandoverNavigationStep = ({
       console.error("Error fetching route:", error);
       setLocationError("Unable to calculate route.");
       setShowManualOptions(true);
-      return false;
+      return null;
     }
   };
 
   const startNavigation = async () => {
-    const routeFetched = await fetchRoute();
-    if (routeFetched) {
+    const routeData = await fetchRoute();
+    if (routeData) {
+      navigationService.startActiveNavigation(
+        routeData, 
+        destinationLocation,
+        (index) => {
+          setCurrentStepIndex(index);
+        },
+        (newRoute) => {
+          // Route recalculated
+          setRoute(newRoute.steps);
+          setTotalDistance(newRoute.distance);
+          setTotalDuration(newRoute.duration);
+          setCurrentStepIndex(0);
+        }
+      );
       setIsNavigating(true);
       setCurrentStepIndex(0);
       onNavigationStart?.();
@@ -193,14 +226,27 @@ export const HandoverNavigationStep = ({
   };
 
   const stopNavigation = () => {
+    navigationService.stopActiveNavigation();
     setIsNavigating(false);
     setCurrentStepIndex(0);
     toast.info("Navigation stopped");
   };
 
   const toggleVoice = () => {
-    setIsVoiceEnabled(!isVoiceEnabled);
-    toast.info(isVoiceEnabled ? "Voice guidance disabled" : "Voice guidance enabled");
+    const newState = !isVoiceEnabled;
+    setIsVoiceEnabled(newState);
+    navigationService.enableVoice(newState);
+    toast.info(newState ? "Voice guidance enabled" : "Voice guidance disabled");
+  };
+
+  const toggleTraffic = () => {
+    const newState = navigationService.toggleTraffic();
+    setShowTraffic(newState);
+    toast.info(newState ? "Traffic layer enabled" : "Traffic layer disabled");
+  };
+
+  const handleShareETA = async (eta: string) => {
+    await navigationService.shareETA(destinationLocation.address, eta);
   };
 
   const handleConfirmArrival = () => {
@@ -247,14 +293,14 @@ export const HandoverNavigationStep = ({
                 Start Navigation
               </Button>
               
-              {/* Manual arrival option */}
+              {/* Manual arrival option - Always visible now */}
               <Button 
-                onClick={() => setShowManualOptions(true)}
+                onClick={handleSkipNavigation}
                 variant="outline"
                 size="lg"
-                className="w-full"
+                className="w-full border-green-200 hover:bg-green-50 text-green-700"
               >
-                <Map className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-4 w-4 mr-2" />
                 I've Already Arrived
               </Button>
               
@@ -370,6 +416,9 @@ export const HandoverNavigationStep = ({
           onArrived={handleManualArrival}
           destination={destinationLocation.address}
           showArrivedButton={true}
+          onShareETA={handleShareETA}
+          onToggleTraffic={toggleTraffic}
+          showTraffic={showTraffic}
         />
       )}
 
