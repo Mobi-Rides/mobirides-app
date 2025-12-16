@@ -61,6 +61,8 @@ const toSafeCarWithProfiles = (car: CarWithProfiles): SafeCarWithProfiles => ({
   is_available: car.is_available ?? true,
 });
 
+import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+
 const CarDetails = () => {
   const { carId } = useParams();
   const { theme } = useTheme();
@@ -102,6 +104,9 @@ const CarDetails = () => {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
         <div className="container mx-auto">
+          <div className="p-4">
+             <Skeleton className="h-6 w-32 mb-4" />
+          </div>
           <div className="flex flex-col items-center justify-center min-h-[200px] w-full p-4">
             <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">
               Loading vehicle details...
@@ -129,6 +134,12 @@ const CarDetails = () => {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
         <div className="container mx-auto">
+          <div className="p-4">
+            <Breadcrumbs items={[
+              { label: "Cars", path: "/" },
+              { label: "Error", path: "#" }
+            ]} />
+          </div>
           <div className="p-4 text-center space-y-4">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
             <h2 className="text-xl font-semibold text-red-500">Error loading vehicle details</h2>
@@ -145,6 +156,13 @@ const CarDetails = () => {
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
       <div className="container mx-auto">
+        <div className="px-4 pt-4">
+          <Breadcrumbs items={[
+            { label: "Home", path: "/" },
+            { label: "Cars", path: "/" },
+            { label: `${car.brand} ${car.model}`, path: `/cars/${car.id}` }
+          ]} />
+        </div>
         <div className="space-y-4 p-4">
           <CarImageCarousel carId={car.id} mainImageUrl={car.image_url} />
           
