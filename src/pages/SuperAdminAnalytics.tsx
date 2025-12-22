@@ -14,6 +14,7 @@ import { Calendar, Download, Filter, BarChart3, Shield, Users, Activity, FileTex
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 export default function SuperAdminAnalytics() {
   const { 
@@ -68,8 +69,11 @@ export default function SuperAdminAnalytics() {
       enableDebouncing: true,
       enableMemoization: true,
       enableLazyLoading: true,
+      debounceDelay: 300,
       maxItemsPerPage: 20,
-      maxVisibleItems: 100
+      maxVisibleItems: 100,
+      enableCache: true,
+      cacheTimeout: 30
     }
   );
 
@@ -164,7 +168,7 @@ export default function SuperAdminAnalytics() {
     const alerts: SecurityAlert[] = criticalEvents.map(event => ({
       id: event.id,
       title: `${event.event_type} Alert`,
-      description: `Security event detected: ${event.description || 'No description available'}`,
+      description: `Security event detected: ${event.action_details ? JSON.stringify(event.action_details) : 'No details available'}`,
       severity: event.severity as 'critical' | 'high' | 'medium' | 'low',
       category: 'security',
       timestamp: new Date(event.created_at),
@@ -172,7 +176,7 @@ export default function SuperAdminAnalytics() {
       action_required: event.severity === 'critical' || event.severity === 'high',
       acknowledged: false,
       auto_dismiss: event.severity === 'low' || event.severity === 'medium',
-      metadata: event.metadata || {}
+      metadata: event.action_details || {}
     }));
     
     setSecurityAlerts(alerts);
@@ -180,7 +184,7 @@ export default function SuperAdminAnalytics() {
 
   // Auto-refresh functionality
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (autoRefresh) {
       interval = setInterval(() => {
         refreshData();
@@ -409,9 +413,9 @@ export default function SuperAdminAnalytics() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Today</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Users</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {userMetrics?.active_today || 0}
+                      {userMetrics?.active_users || 0}
                     </p>
                   </div>
                   <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
@@ -443,7 +447,7 @@ export default function SuperAdminAnalytics() {
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">System Health</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {systemMetrics?.system_health || 'Good'}
+                      {systemMetrics?.total_bookings ? 'Good' : 'N/A'}
                     </p>
                   </div>
                   <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
@@ -484,8 +488,8 @@ export default function SuperAdminAnalytics() {
               onExport={(format) => handleExport(format as any)}
             />
             <MobileOptimizedChart
-              data={systemMetrics?.bookingTrends || []}
-              title="Booking Trends"
+              data={[]}
+              title="System Trends"
               type="line"
               height={300}
               responsive={true}
@@ -516,14 +520,19 @@ export default function SuperAdminAnalytics() {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <MobileOptimizedChart
-              data={securityMetrics?.eventTypes || []}
+              data={securityMetrics?.top_event_types?.map(e => ({ name: e.type, value: e.count })) || []}
               title="Security Events by Type"
               type="pie"
               height={300}
               responsive={true}
             />
             <MobileOptimizedChart
-              data={securityMetrics?.severityDistribution || []}
+              data={[
+                { name: 'Critical', value: securityMetrics?.critical_events || 0 },
+                { name: 'High', value: securityMetrics?.high_severity_events || 0 },
+                { name: 'Medium', value: securityMetrics?.medium_severity_events || 0 },
+                { name: 'Low', value: securityMetrics?.low_severity_events || 0 }
+              ]}
               title="Severity Distribution"
               type="bar"
               height={300}

@@ -26,17 +26,26 @@ interface UserAdminTabProps {
   onUpdate?: () => void;
 }
 
+interface AdminData {
+  id: string;
+  email: string;
+  full_name: string | null;
+  is_super_admin: boolean | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+}
+
 const useAdminStatus = (userId: string) => {
   return useQuery({
     queryKey: ["admin-status", userId],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdminData | null> => {
       const { data, error } = await supabase
         .from("admins")
-        .select("*")
+        .select("id, email, full_name, is_super_admin, created_at, last_sign_in_at")
         .eq("id", userId)
         .single();
       
-      return error ? null : data;
+      return error ? null : data as AdminData;
     },
   });
 };
@@ -207,10 +216,12 @@ export const UserAdminTab = ({ user, onUpdate }: UserAdminTabProps) => {
               <span className="text-muted-foreground">Added:</span>
               <span>{new Date(adminData.created_at).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Last Updated:</span>
-              <span>{new Date(adminData.updated_at).toLocaleString()}</span>
-            </div>
+            {adminData.last_sign_in_at && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Last Activity:</span>
+                <span>{new Date(adminData.last_sign_in_at).toLocaleString()}</span>
+              </div>
+            )}
             {adminData.last_sign_in_at && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Last Sign In:</span>

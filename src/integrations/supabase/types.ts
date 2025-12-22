@@ -519,6 +519,41 @@ export type Database = {
           },
         ]
       }
+      car_blocked_dates: {
+        Row: {
+          blocked_date: string
+          car_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_date: string
+          car_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_date?: string
+          car_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_blocked_dates_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       car_images: {
         Row: {
           car_id: string
@@ -577,6 +612,7 @@ export type Database = {
           transmission: string
           updated_at: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          view_count: number | null
           year: number
         }
         Insert: {
@@ -601,6 +637,7 @@ export type Database = {
           transmission: string
           updated_at?: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          view_count?: number | null
           year: number
         }
         Update: {
@@ -625,6 +662,7 @@ export type Database = {
           transmission?: string
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+          view_count?: number | null
           year?: number
         }
         Relationships: [
@@ -2143,6 +2181,7 @@ export type Database = {
           latitude: number | null
           location_sharing_scope: string | null
           longitude: number | null
+          marketing_notifications: boolean | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
@@ -2169,6 +2208,7 @@ export type Database = {
           latitude?: number | null
           location_sharing_scope?: string | null
           longitude?: number | null
+          marketing_notifications?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -2195,6 +2235,7 @@ export type Database = {
           latitude?: number | null
           location_sharing_scope?: string | null
           longitude?: number | null
+          marketing_notifications?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -2203,6 +2244,114 @@ export type Database = {
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
+        }
+        Relationships: []
+      }
+      promo_code_usage: {
+        Row: {
+          booking_id: string | null
+          discount_applied: number
+          final_amount: number | null
+          id: string
+          original_amount: number | null
+          promo_code_id: string | null
+          used_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          discount_applied: number
+          final_amount?: number | null
+          id?: string
+          original_amount?: number | null
+          promo_code_id?: string | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          discount_applied?: number
+          final_amount?: number | null
+          id?: string
+          original_amount?: number | null
+          promo_code_id?: string | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_usage_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_usage_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_codes: {
+        Row: {
+          applicable_vehicle_types: string[] | null
+          code: string
+          created_at: string | null
+          created_by: string | null
+          current_uses: number | null
+          description: string | null
+          discount_amount: number
+          discount_type: string
+          id: string
+          is_active: boolean | null
+          max_discount_amount: number | null
+          max_uses: number | null
+          min_booking_amount: number | null
+          terms_conditions: string | null
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_vehicle_types?: string[] | null
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_amount: number
+          discount_type?: string
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          max_uses?: number | null
+          min_booking_amount?: number | null
+          terms_conditions?: string | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_vehicle_types?: string[] | null
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_amount?: number
+          discount_type?: string
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          max_uses?: number | null
+          min_booking_amount?: number | null
+          terms_conditions?: string | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
         }
         Relationships: []
       }
@@ -3357,6 +3506,14 @@ export type Database = {
         | {
             Args: {
               p_booking_id: string
+              p_content: string
+              p_notification_type: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_booking_id: string
               p_description: string
               p_host_notification_type: Database["public"]["Enums"]["notification_type"]
               p_metadata?: Json
@@ -3374,14 +3531,6 @@ export type Database = {
               p_renter_notification_type: Database["public"]["Enums"]["notification_type"]
               p_role_target?: Database["public"]["Enums"]["notification_role"]
               p_title: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_booking_id: string
-              p_content: string
-              p_notification_type: string
             }
             Returns: undefined
           }
@@ -3414,6 +3563,15 @@ export type Database = {
       create_handover_notification:
         | {
             Args: {
+              p_booking_id: string
+              p_handover_type: string
+              p_location?: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
               p_car_brand: string
               p_car_model: string
               p_handover_type: string
@@ -3425,16 +3583,8 @@ export type Database = {
             }
             Returns: number
           }
-        | {
-            Args: {
-              p_booking_id: string
-              p_handover_type: string
-              p_location?: string
-              p_user_id: string
-            }
-            Returns: undefined
-          }
       create_handover_progress_notification:
+        | { Args: { p_handover_session_id: string }; Returns: undefined }
         | {
             Args: {
               p_completed_steps: number
@@ -3443,16 +3593,7 @@ export type Database = {
             }
             Returns: number
           }
-        | { Args: { p_handover_session_id: string }; Returns: undefined }
       create_handover_step_notification:
-        | {
-            Args: {
-              p_handover_session_id: string
-              p_step_name: string
-              p_step_status: string
-            }
-            Returns: number
-          }
         | {
             Args: {
               p_completed_by: string
@@ -3460,6 +3601,14 @@ export type Database = {
               p_step_name: string
             }
             Returns: undefined
+          }
+        | {
+            Args: {
+              p_handover_session_id: string
+              p_step_name: string
+              p_step_status: string
+            }
+            Returns: number
           }
       create_message_notification: {
         Args: {
@@ -3584,6 +3733,14 @@ export type Database = {
         }[]
       }
       get_encryption_key: { Args: never; Returns: string }
+      get_marketing_recipients: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+        }[]
+      }
       get_notification_expiration_info: {
         Args: {
           p_notification_type: Database["public"]["Enums"]["notification_type"]
@@ -3808,6 +3965,11 @@ export type Database = {
         Args: { curlopt: string; value: string }
         Returns: boolean
       }
+      increment_car_view_count: { Args: { car_id: string }; Returns: undefined }
+      increment_promo_code_uses: {
+        Args: { promo_id: string }
+        Returns: undefined
+      }
       initialize_conversation: {
         Args: {
           p_participant_ids?: string[]
@@ -3817,8 +3979,8 @@ export type Database = {
         Returns: string
       }
       is_admin:
-        | { Args: { user_uuid: string }; Returns: boolean }
         | { Args: never; Returns: boolean }
+        | { Args: { user_uuid: string }; Returns: boolean }
       is_conversation_admin: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
@@ -3831,6 +3993,14 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_conversation_participant_secure: {
+        Args: { conversation_uuid: string }
+        Returns: boolean
+      }
+      is_participant: { Args: { p_conversation_id: string }; Returns: boolean }
+      is_profile_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
+      is_super_admin_from_admins: { Args: never; Returns: boolean }
       log_admin_activity:
         | {
             Args: {

@@ -60,9 +60,21 @@ export default function AdminPromoCodes() {
   // Create Promo Code Mutation
   const createMutation = useMutation({
     mutationFn: async (newPromo: Partial<PromoCode>) => {
+      if (!newPromo.code || !newPromo.discount_amount) {
+        throw new Error('Code and discount amount are required');
+      }
       const { data, error } = await supabase
         .from("promo_codes")
-        .insert([newPromo])
+        .insert([{
+          code: newPromo.code,
+          discount_amount: newPromo.discount_amount,
+          discount_type: newPromo.discount_type || 'fixed',
+          max_uses: newPromo.max_uses,
+          min_booking_amount: newPromo.min_booking_amount,
+          description: newPromo.description,
+          valid_until: newPromo.valid_until,
+          is_active: newPromo.is_active ?? true
+        }])
         .select()
         .single();
 
