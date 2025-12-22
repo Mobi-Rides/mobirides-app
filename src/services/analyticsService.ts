@@ -26,6 +26,17 @@ export interface RealtimeSubscription {
   unsubscribe: () => void;
 }
 
+// Helper function to escape CSV values
+function escapeCSVValue(value: any): string {
+  if (value === null || value === undefined) return '';
+  const stringValue = String(value);
+  // Escape quotes and wrap in quotes if contains comma, quote, or newline
+  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
 export const analyticsService = {
   // Fetch analytics data with filters
   async getAnalytics(filters: AnalyticsFilters = {}) {
@@ -308,7 +319,8 @@ export const analyticsService = {
   async exportAnalytics(options: ExportOptions) {
     const exportData: any = {
       exported_at: new Date().toISOString(),
-      format: options.format
+      format: options.format,
+      version: '2.0'
     };
 
     if (options.dateRange) {
@@ -334,6 +346,17 @@ export const analyticsService = {
       exportData.users = await this.getUserMetrics(options.dateRange);
     }
 
+    if (options.includeSecurityAlerts) {
+      // Include security alerts data
+      exportData.security_alerts = {
+        total_alerts: 0,
+        critical_alerts: 0,
+        acknowledged_alerts: 0,
+        unacknowledged_alerts: 0,
+        alerts: []
+      };
+    }
+
     if (options.format === 'csv') {
       // Convert to CSV format
       return this.convertToCSV(exportData);
@@ -346,17 +369,151 @@ export const analyticsService = {
   convertToCSV(data: any): string {
     const csvRows: string[] = [];
     
-    if (data.events && data.events.length > 0) {
-      csvRows.push('Events Data:');
-      const eventHeaders = Object.keys(data.events[0]);
-      csvRows.push(eventHeaders.join(','));
+    // Add summary information
+    csvRows.push('MobiRides Analytics Export');
+    csvRows.push(`Exported at: ${new Date().toISOString()}`);
+    csvRows.push(`Format: CSV`);
+    csvRows.push(`Version: ${data.version || '1.0'}`);
+    if (data.date_range) {
+      csvRows.push(`Date Range: ${data.date_range.start} to ${data.date_range.end}`);
+    }
+    csvRows.push('');
+
+    // Applied Filters Section
+    if (data.applied_filters) {
+      csvRows.push('Applied Filters:');
+      csvRows.push('Filter,Value');
+      if (data.applied_filters.severity_levels?.length > 0) {
+        csvRows.push(`Severity Levels,"${data.applied_filters.severity_levels.join(', ')}"`);
+      }
+      if (data.applied_filters.event_types?.length > 0) {
+        csvRows.push(`Event Types,"${data.applied_filters.event_types.join(', ')}"`);
+      }
+      if (data.applied_filters.actor_ids?.length > 0) {
+        csvRows.push(`Actor IDs,"${data.applied_filters.actor_ids.join(', ')}"`);
+      }
+      if (data.applied_filters.resource_types?.length > 0) {
+        csvRows.push(`Resource Types,"${data.applied_filters.resource_types.join(', ')}"`);
+      }
+      if (data.applied_filters.search_term) {
+        csvRows.push(`Search Term,"${data.applied_filters.search_term}"`);
+      }
+      if (data.applied_filters.status) {
+        csvRows.push(`Status,"${data.applied_filters.status}"`);
+      }
+      if (data.applied_filters.user_status) {
+        csvRows.push(`User Status,"${data.applied_filters.user_status}"`);
+      }
+      csvRows.push('');
+    }
+
+    // User Metrics Section
+    if (data.users) {
+      csvRows.push('User Metrics:');
+      csvRows.push('Metric,Value');
+      csvRows.push(`Total Users,${data.users.total_users || 0}`);
+      csvRows.push(`Active Users,${data.users.active_users || 0}`);
+      csvRows.push(`New Users,${data.users.new_users || 0}`);
+      csvRows.push(`Suspended Users,${data.users.suspended_users || 0}`);
       
-      data.events.forEach((event: any) => {
-        const values = eventHeaders.map(header => {
-          const value = event[header];
-          return typeof value === 'object' ? JSON.stringify(value) : value;
+      // Role Distribution
+      if (data.users.role_distribution) {
+        csvRows.push('');
+        csvRows.push('Role Distribution:');
+        csvRows.push('Role,Count');
+        Object.entries(data.users.role_distribution).forEach(([role, count]) => {
+          csvRows.push(`${role},${count}`);
         });
-        csvRows.push(values.join(','));
+      }
+      csvRows.push('');
+    }
+
+    // System Metrics Section
+    if (data.metrics?.system) {
+      csvRows.push('System Metrics:');
+      csvRows.push('Metric,Value');
+      csvRows.push(`Total Bookings,${data.metrics.system.total_bookings || 0}`);
+      csvRows.push(`Completed Bookings,${data.metrics.system.completed_bookings || 0}`);
+      csvRows.push(`Cancelled Bookings,${data.metrics.system.cancelled_bookings || 0}`);
+      csvRows.push(`Revenue,${data.metrics.system.revenue || 0}`);
+      csvRows.push(`Average Booking Value,${data.metrics.system.average_booking_value || 0}`);
+      csvRows.push('');
+    }
+
+    // Security Metrics Section
+    if (data.metrics?.security) {
+      csvRows.push('Security Metrics:');
+      csvRows.push('Metric,Value');
+      csvRows.push(`Total Security Events,${data.metrics.security.total_events || 0}`);
+      csvRows.push(`Critical Events,${data.metrics.security.critical_events || 0}`);
+      csvRows.push(`High Severity Events,${data.metrics.security.high_severity_events || 0}`);
+      csvRows.push(`Medium Severity Events,${data.metrics.security.medium_severity_events || 0}`);
+      csvRows.push(`Low Severity Events,${data.metrics.security.low_severity_events || 0}`);
+      csvRows.push('');
+
+      // Top Event Types
+      if (data.metrics.security.top_event_types?.length > 0) {
+        csvRows.push('Top Event Types:');
+        csvRows.push('Event Type,Count');
+        data.metrics.security.top_event_types.forEach((item: any) => {
+          csvRows.push(`${item.type},${item.count}`);
+        });
+        csvRows.push('');
+      }
+    }
+
+    // Security Alerts Section
+    if (data.security_alerts) {
+      csvRows.push('Security Alerts Summary:');
+      csvRows.push('Metric,Value');
+      csvRows.push(`Total Alerts,${data.security_alerts.total_alerts || 0}`);
+      csvRows.push(`Critical Alerts,${data.security_alerts.critical_alerts || 0}`);
+      csvRows.push(`Acknowledged Alerts,${data.security_alerts.acknowledged_alerts || 0}`);
+      csvRows.push(`Unacknowledged Alerts,${data.security_alerts.unacknowledged_alerts || 0}`);
+      csvRows.push('');
+
+      // Individual alerts
+      if (data.security_alerts.alerts?.length > 0) {
+        csvRows.push('Security Alerts Details:');
+        csvRows.push('ID,Title,Description,Severity,Category,Timestamp,Source,Action Required,Acknowledged');
+        data.security_alerts.alerts.forEach((alert: any) => {
+          const values = [
+            alert.id || '',
+            alert.title || '',
+            alert.description || '',
+            alert.severity || '',
+            alert.category || '',
+            alert.timestamp || '',
+            alert.source || '',
+            alert.action_required ? 'Yes' : 'No',
+            alert.acknowledged ? 'Yes' : 'No'
+          ];
+          csvRows.push(values.map(val => escapeCSVValue(val)).join(','));
+        });
+        csvRows.push('');
+      }
+    }
+
+    // Events Data Section
+    if (data.events && data.events.length > 0) {
+      csvRows.push('Security Events:');
+      
+      // Prepare headers
+      const headers = ['ID', 'Event Type', 'Severity', 'Actor ID', 'Target ID', 'Created At', 'Resource Type'];
+      csvRows.push(headers.join(','));
+      
+      // Add event data
+      data.events.forEach((event: any) => {
+        const values = [
+          event.id || '',
+          event.event_type || '',
+          event.severity || '',
+          event.actor_id || '',
+          event.target_id || '',
+          event.created_at || '',
+          event.resource_type || ''
+        ];
+        csvRows.push(values.map(val => escapeCSVValue(val)).join(','));
       });
       csvRows.push('');
     }

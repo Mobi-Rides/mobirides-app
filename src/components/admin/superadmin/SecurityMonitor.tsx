@@ -11,6 +11,15 @@ interface Props {
   onRefresh: () => void;
   loading: boolean;
   isPreview?: boolean;
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasMore: boolean;
+  };
+  onPageChange?: (page: number) => void;
+  onNextPage?: () => void;
+  onPreviousPage?: () => void;
 }
 
 const SEVERITY_COLORS = {
@@ -27,7 +36,16 @@ const SEVERITY_ICONS = {
   low: Shield
 };
 
-export const SecurityMonitor = ({ events, onRefresh, loading, isPreview = false }: Props) => {
+export const SecurityMonitor = ({ 
+  events, 
+  onRefresh, 
+  loading, 
+  isPreview = false,
+  pagination,
+  onPageChange,
+  onNextPage,
+  onPreviousPage
+}: Props) => {
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterEventType, setFilterEventType] = useState<string>('all');
 
@@ -279,6 +297,33 @@ export const SecurityMonitor = ({ events, onRefresh, loading, isPreview = false 
               {filteredEvents.slice(0, 20).map(event => (
                 <EventCard key={event.id} event={event} />
               ))}
+            </div>
+          )}
+          
+          {/* Pagination Controls */}
+          {pagination && onPageChange && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Page {pagination.page} of {Math.ceil(pagination.total / pagination.pageSize)}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onPreviousPage}
+                  disabled={pagination.page <= 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onNextPage}
+                  disabled={!pagination.hasMore}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

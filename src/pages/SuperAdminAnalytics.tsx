@@ -1,13 +1,17 @@
 import { useSuperAdminAnalytics } from "@/hooks/useSuperAdminAnalytics";
+import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization";
 import { AnalyticsCharts } from "@/components/admin/superadmin/AnalyticsCharts";
 import { SecurityMonitor } from "@/components/admin/superadmin/SecurityMonitor";
 import { AdminActivity } from "@/components/admin/superadmin/AdminActivity";
 import { UserBehavior } from "@/components/admin/superadmin/UserBehavior";
+import { AdvancedFilters, FilterOptions } from "@/components/admin/superadmin/AdvancedFilters";
+import { SecurityAlertSystem, SecurityAlert, AlertSettings } from "@/components/admin/superadmin/SecurityAlertSystem";
+import { MobileOptimizedChart } from "@/components/admin/superadmin/MobileOptimizedChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Download, Filter, BarChart3, Shield, Users, Activity, FileText, RefreshCw, Wifi, WifiOff } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Calendar, Download, Filter, BarChart3, Shield, Users, Activity, FileText, RefreshCw, Wifi, WifiOff, Bell } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -25,17 +29,102 @@ export default function SuperAdminAnalytics() {
     setDateRange
   } = useSuperAdminAnalytics();
 
+  // Performance optimization hook
+  const {
+    data: optimizedEvents,
+    loading: optimizedLoading,
+    pagination,
+    goToPage,
+    nextPage,
+    previousPage,
+    handleSort,
+    handleFilterChange,
+    loadMore
+  } = usePerformanceOptimization(
+    async (options) => {
+      // Simulate API call with filters and pagination
+      const filteredEvents = events.filter(event => {
+        if (options.filters?.severityLevels?.length > 0) {
+          return options.filters.severityLevels.includes(event.severity);
+        }
+        if (options.filters?.eventTypes?.length > 0) {
+          return options.filters.eventTypes.includes(event.event_type);
+        }
+        return true;
+      });
+      
+      const startIndex = (options.page - 1) * options.pageSize;
+      const endIndex = startIndex + options.pageSize;
+      const paginatedEvents = filteredEvents.slice(startIndex, endIndex);
+      
+      return {
+        data: paginatedEvents,
+        total: filteredEvents.length
+      };
+    },
+    {
+      enablePagination: true,
+      enableVirtualization: true,
+      enableDebouncing: true,
+      enableMemoization: true,
+      enableLazyLoading: true,
+      maxItemsPerPage: 20,
+      maxVisibleItems: 100
+    }
+  );
+
   const [showFilters, setShowFilters] = useState(false);
+  const [showSecurityAlerts, setShowSecurityAlerts] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'security' | 'admin' | 'users'>('overview');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [advancedFilters, setAdvancedFilters] = useState<FilterOptions>({
+    dateRange: dateRange,
+    severityLevels: [],
+    eventTypes: [],
+    actorIds: [],
+    resourceTypes: [],
+    searchTerm: '',
+    status: 'all',
+    userStatus: 'all'
+  });
+
+  // Security alerts state
+  const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([]);
+  const [alertSettings, setAlertSettings] = useState<AlertSettings>({
+    enabled: true,
+    critical_alerts: true,
+    high_alerts: true,
+    medium_alerts: true,
+    low_alerts: false,
+    sound_enabled: true,
+    desktop_notifications: true,
+    email_notifications: false,
+    auto_dismiss_delay: 10
+  });
 
   const handleExport = async (format: 'json' | 'csv' = 'json') => {
-    const success = await exportAnalytics(format);
-    if (success) {
-      toast.success(`Analytics data exported as ${format.toUpperCase()}`);
-    } else {
-      toast.error('Failed to export analytics data');
+    const exportStartTime = Date.now();
+    
+    try {
+      // Show loading state
+      toast.loading('Preparing export data...', { id: 'export-loading' });
+      
+      const success = await exportAnalytics(format);
+      
+      if (success) {
+        const exportTime = ((Date.now() - exportStartTime) / 1000).toFixed(1);
+        toast.success(`Analytics data exported as ${format.toUpperCase()} (${exportTime}s)`, {
+          id: 'export-loading',
+          duration: 5000,
+          description: `File includes data from ${dateRange.start} to ${dateRange.end}`
+        });
+      } else {
+        toast.error('Failed to export analytics data', { id: 'export-loading' });
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Export failed. Please try again.', { id: 'export-loading' });
     }
   };
 
@@ -45,6 +134,49 @@ export default function SuperAdminAnalytics() {
       [field]: value
     }));
   };
+
+  // Security alert handlers
+  const handleAlertAcknowledge = useCallback((alertId: string) => {
+    setSecurityAlerts(prev => 
+      prev.map(alert => 
+        alert.id === alertId ? { ...alert, acknowledged: true } : alert
+      )
+    );
+    toast.success('Alert acknowledged');
+  }, []);
+
+  const handleAlertDismiss = useCallback((alertId: string) => {
+    setSecurityAlerts(prev => prev.filter(alert => alert.id !== alertId));
+    toast.info('Alert dismissed');
+  }, []);
+
+  const handleAlertSettingsChange = useCallback((settings: AlertSettings) => {
+    setAlertSettings(settings);
+    toast.success('Alert settings updated');
+  }, []);
+
+  // Generate security alerts from events
+  const generateSecurityAlerts = useCallback(() => {
+    const criticalEvents = events.filter(event => 
+      event.severity === 'critical' || event.severity === 'high'
+    );
+    
+    const alerts: SecurityAlert[] = criticalEvents.map(event => ({
+      id: event.id,
+      title: `${event.event_type} Alert`,
+      description: `Security event detected: ${event.description || 'No description available'}`,
+      severity: event.severity as 'critical' | 'high' | 'medium' | 'low',
+      category: 'security',
+      timestamp: new Date(event.created_at),
+      source: event.actor_id || 'System',
+      action_required: event.severity === 'critical' || event.severity === 'high',
+      acknowledged: false,
+      auto_dismiss: event.severity === 'low' || event.severity === 'medium',
+      metadata: event.metadata || {}
+    }));
+    
+    setSecurityAlerts(alerts);
+  }, [events]);
 
   // Auto-refresh functionality
   useEffect(() => {
@@ -64,6 +196,11 @@ export default function SuperAdminAnalytics() {
   useEffect(() => {
     setLastUpdated(new Date());
   }, [analytics, events]);
+
+  // Generate security alerts when events change
+  useEffect(() => {
+    generateSecurityAlerts();
+  }, [events, generateSecurityAlerts]);
 
   // Listen for real-time event notifications
   useEffect(() => {
@@ -120,6 +257,19 @@ export default function SuperAdminAnalytics() {
         <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
                     <Button
+                      variant={showSecurityAlerts ? "destructive" : "outline"}
+                      size="sm"
+                      onClick={() => setShowSecurityAlerts(!showSecurityAlerts)}
+                    >
+                      <Bell className="h-4 w-4 mr-2" />
+                      Security Alerts
+                      {securityAlerts.filter(a => !a.acknowledged).length > 0 && (
+                        <Badge variant="destructive" className="ml-2">
+                          {securityAlerts.filter(a => !a.acknowledged).length}
+                        </Badge>
+                      )}
+                    </Button>
+                    <Button
                       variant={autoRefresh ? "default" : "outline"}
                       size="sm"
                       onClick={() => setAutoRefresh(!autoRefresh)}
@@ -167,43 +317,52 @@ export default function SuperAdminAnalytics() {
                 </div>
       </div>
 
-      {/* Date Range Filter */}
-      {showFilters && (
+      {/* Security Alerts */}
+      {showSecurityAlerts && (
         <Card>
           <CardHeader>
-            <CardTitle>Date Range Filter</CardTitle>
-            <CardDescription>Filter analytics data by date range</CardDescription>
+            <CardTitle className="flex items-center space-x-2">
+              <Shield className="h-5 w-5" />
+              <span>Security Alerts</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                <label className="text-sm font-medium">From:</label>
-                <input
-                  type="date"
-                  value={dateRange.start}
-                  onChange={(e) => handleDateRangeChange('start', e.target.value)}
-                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium">To:</label>
-                <input
-                  type="date"
-                  value={dateRange.end}
-                  onChange={(e) => handleDateRangeChange('end', e.target.value)}
-                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <Button
-                onClick={refreshData}
-                size="sm"
-              >
-                Apply Filter
-              </Button>
-            </div>
+            <SecurityAlertSystem
+              alerts={securityAlerts}
+              settings={alertSettings}
+              onAlertAcknowledge={handleAlertAcknowledge}
+              onAlertDismiss={handleAlertDismiss}
+              onSettingsChange={handleAlertSettingsChange}
+              onRefresh={refreshData}
+              loading={loading}
+            />
           </CardContent>
         </Card>
+      )}
+
+      {/* Advanced Filters */}
+      {showFilters && (
+        <AdvancedFilters
+          onFiltersChange={(filters) => {
+            setAdvancedFilters(filters);
+            setDateRange(filters.dateRange);
+            handleFilterChange(filters);
+          }}
+          onClearFilters={() => {
+            setAdvancedFilters({
+              dateRange: dateRange,
+              severityLevels: [],
+              eventTypes: [],
+              actorIds: [],
+              resourceTypes: [],
+              searchTerm: '',
+              status: 'all',
+              userStatus: 'all'
+            });
+            handleFilterChange({});
+          }}
+          initialFilters={advancedFilters}
+        />
       )}
 
       {/* Main Tabs */}
@@ -296,29 +455,102 @@ export default function SuperAdminAnalytics() {
           </div>
 
           {/* Analytics Charts */}
-          <AnalyticsCharts 
-            analytics={analytics}
-            userMetrics={userMetrics}
-            systemMetrics={systemMetrics}
-            securityMetrics={securityMetrics}
-            onRefresh={refreshData}
-            loading={loading}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MobileOptimizedChart
+              data={[]}
+              title="User Growth Trend"
+              type="line"
+              height={300}
+              responsive={true}
+              onExport={(format) => handleExport(format as any)}
+            />
+            <MobileOptimizedChart
+              data={[]}
+              title="Booking Trends"
+              type="bar"
+              height={300}
+              responsive={true}
+              onExport={(format) => handleExport(format as any)}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MobileOptimizedChart
+              data={Array.isArray(userMetrics?.role_distribution) ? userMetrics.role_distribution : []}
+              title="User Role Distribution"
+              type="pie"
+              height={300}
+              responsive={true}
+              onExport={(format) => handleExport(format as any)}
+            />
+            <MobileOptimizedChart
+              data={systemMetrics?.bookingTrends || []}
+              title="Booking Trends"
+              type="line"
+              height={300}
+              responsive={true}
+              onExport={(format) => handleExport(format as any)}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
+          {/* Security Alert System */}
+          {showSecurityAlerts && (
+            <SecurityAlertSystem
+              alerts={securityAlerts}
+              settings={alertSettings}
+              onAlertAcknowledge={(alertId) => {
+                setSecurityAlerts(alerts => alerts.map(alert => 
+                  alert.id === alertId ? {...alert, acknowledged: true} : alert
+                ));
+              }}
+              onAlertDismiss={(alertId) => {
+                setSecurityAlerts(alerts => alerts.filter(alert => alert.id !== alertId));
+              }}
+              onSettingsChange={setAlertSettings}
+              onRefresh={refreshData}
+              loading={loading}
+            />
+          )}
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MobileOptimizedChart
+              data={securityMetrics?.eventTypes || []}
+              title="Security Events by Type"
+              type="pie"
+              height={300}
+              responsive={true}
+            />
+            <MobileOptimizedChart
+              data={securityMetrics?.severityDistribution || []}
+              title="Severity Distribution"
+              type="bar"
+              height={300}
+              responsive={true}
+            />
+          </div>
+          
           <SecurityMonitor 
-            events={events}
+            events={optimizedEvents}
             onRefresh={refreshData}
-            loading={loading}
+            loading={optimizedLoading || loading}
+            pagination={pagination}
+            onPageChange={goToPage}
+            onNextPage={nextPage}
+            onPreviousPage={previousPage}
           />
         </TabsContent>
 
         <TabsContent value="admin" className="space-y-6">
           <AdminActivity 
-            events={events}
+            events={optimizedEvents}
             onRefresh={refreshData}
-            loading={loading}
+            loading={optimizedLoading || loading}
+            pagination={pagination}
+            onPageChange={goToPage}
+            onNextPage={nextPage}
+            onPreviousPage={previousPage}
           />
         </TabsContent>
 
