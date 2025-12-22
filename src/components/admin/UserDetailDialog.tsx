@@ -31,10 +31,12 @@ export const UserDetailDialog = ({ user, isOpen, onClose, onUserUpdate }: UserDe
 
   if (!user) return null;
 
+  // Debug logging moved outside JSX
+  console.log("UserDetailDialog rendered with isOpen:", isOpen, "user:", user?.id);
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {console.log("UserDetailDialog rendered with isOpen:", isOpen, "user:", user?.id)}
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden" style={{ border: '2px solid blue' }}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
             {user.full_name || "Unnamed User"} - User Profile

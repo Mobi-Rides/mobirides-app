@@ -88,7 +88,7 @@ export const HostDashboard = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data.map(car => ({ ...toSafeCar(car as any), view_count: car.view_count }));
+      return data.map(car => ({ ...toSafeCar(car as any), view_count: (car as any).view_count || 0 }));
     }
   });
 
