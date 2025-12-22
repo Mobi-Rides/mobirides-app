@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, MapPin, CalendarClock, Bell, User, Search, Settings } from "lucide-react";
+import { Home, MapPin, CalendarClock, Bell, Menu, Search, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -155,9 +155,9 @@ export const Navigation = () => {
       badge: unreadCount > 0 ? unreadCount : undefined
     },
     { 
-      path: "/profile", 
-      label: "Profile", 
-      icon: <User className="w-5 h-5" />, 
+      path: "/more", 
+      label: "More", 
+      icon: <Menu className="w-5 h-5" />, 
       activeIndex: 4 
     },
   ], [unreadCount]);
@@ -179,30 +179,51 @@ export const Navigation = () => {
   }, [location.pathname, items]);
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
-      <nav className="container max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 h-16">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-0 pb-safe-area-inset-bottom pointer-events-none">
+      <nav className="w-full max-w-md mx-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-gray-100 dark:border-gray-800 h-[68px] pb-2 pointer-events-auto md:rounded-t-2xl md:mb-4 md:border md:h-16 md:pb-0 transition-all duration-300">
         <div className="grid grid-cols-5 h-full w-full">
           {items.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center h-full transition-all duration-200 px-1 relative hover-scale",
+                "group flex flex-col items-center justify-center h-full transition-all duration-300 relative select-none",
                 activeIndex === item.activeIndex
-                  ? "text-primary dark:text-primary animate-scale-in"
-                  : "text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary"
+                  ? "text-primary dark:text-primary"
+                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               )}
               onClick={() => setActiveIndex(item.activeIndex)}
             >
-              <div className="relative">
-                {item.icon}
+              {/* Active Indicator Line */}
+              <span className={cn(
+                "absolute top-0 w-8 h-1 rounded-b-full bg-primary transition-all duration-300 ease-out",
+                activeIndex === item.activeIndex ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+              )} />
+              
+              <div className="relative p-1 transition-transform duration-200 group-active:scale-95">
+                <div className={cn(
+                  "transition-all duration-300",
+                  activeIndex === item.activeIndex ? "transform -translate-y-0.5" : ""
+                )}>
+                  {item.icon}
+                </div>
                 {item.badge && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center p-0 text-xs animate-pulse">
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center p-0 text-[10px] animate-in zoom-in-50 duration-300 border-2 border-white dark:border-gray-900 shadow-sm"
+                  >
                     {item.badge > 99 ? '99+' : item.badge}
                   </Badge>
                 )}
               </div>
-              <span className="text-xs mt-1">{item.label}</span>
+              <span className={cn(
+                "text-[10px] font-medium transition-all duration-300 mt-0.5",
+                activeIndex === item.activeIndex 
+                  ? "opacity-100 translate-y-0" 
+                  : "opacity-70 group-hover:opacity-100"
+              )}>
+                {item.label}
+              </span>
             </Link>
           ))}
         </div>

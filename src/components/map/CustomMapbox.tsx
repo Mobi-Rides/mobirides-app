@@ -11,6 +11,8 @@ import { HostPopup } from "./HostPopup";
 import { HostCarsSideTray } from "./HostCarsSideTray";
 import { Host } from "@/services/hostService";
 import ReactDOM from "react-dom";
+import { navigationService } from "@/services/navigationService";
+import { RouteLayer } from "@/components/navigation/RouteLayer";
 
 // Host interface for route calculations
 interface HostLocation {
@@ -33,6 +35,7 @@ interface CustomMapboxProps {
   zoom?: number;
   locationToggle?: boolean;
   destination?: { latitude: number; longitude: number } | null;
+  onRouteFound?: (steps: any[]) => void;
 }
 
 const CustomMapbox = ({
@@ -49,6 +52,7 @@ const CustomMapbox = ({
   locationToggle,
   destination,
   returnLocation,
+  onRouteFound,
 }: CustomMapboxProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -59,6 +63,20 @@ const CustomMapbox = ({
   const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
   const [isHostTrayOpen, setIsHostTrayOpen] = useState(false);
+  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+  const [activeNavigationState, setActiveNavigationState] = useState({
+    activeRoute: null,
+    currentStepIndex: 0,
+    isNavigating: false,
+    showTraffic: false
+  });
+
+  useEffect(() => {
+    const unsubscribe = navigationService.subscribe((state) => {
+      setActiveNavigationState(state);
+    });
+    return unsubscribe;
+  }, []);
 
   // Always call hooks - move conditional logic to usage
   const handoverData = useHandover();
@@ -89,32 +107,72 @@ const CustomMapbox = ({
 
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      const geolocateControl = new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-        },
-        trackUserLocation: true,
-      });
+      // Only add GeolocateControl if in a secure context or not localhost (browsers block geolocation on insecure origins)
+      // Also allow if it looks like a local network IP (192.168.x.x, 10.x.x.x, etc)
+      const isLocalNetwork = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1' ||
+                            window.location.hostname.startsWith('192.168.') ||
+                            window.location.hostname.startsWith('10.') ||
+                            window.location.hostname.endsWith('.local');
 
-      map.current.addControl(geolocateControl, "top-right");
-      geolocateControlRef.current = geolocateControl;
+      if (window.isSecureContext || isLocalNetwork) {
+        try {
+          const geolocateControl = new mapboxgl.GeolocateControl({
+            positionOptions: {
+              enableHighAccuracy: true,
+              timeout: 10000, // 10 seconds timeout
+            },
+            trackUserLocation: true,
+            showUserHeading: true,
+          });
 
-      geolocateControl.on("error", (e: GeolocationPositionError) => {
-        console.error("Geolocation error:", e);
-        toast.error(
-          "Unable to access your location. Please check your browser permissions."
-        );
+          map.current.addControl(geolocateControl, "top-right");
+          geolocateControlRef.current = geolocateControl;
 
-        if (isHandoverMode && handover) {
-          toast.error(
-            "Location sharing is required for the handover process. Please enable location access."
-          );
+          geolocateControl.on("error", (e: GeolocationPositionError) => {
+            console.error("Geolocation error:", e);
+            
+            // If geolocation fails (e.g. denied or timeout), fallback to default
+            if (!userLocation.latitude || !userLocation.longitude) {
+               console.log("Geolocation failed, using default location");
+               // Default to Gaborone if no location
+               setUserLocation({
+                 latitude: -24.65451,
+                 longitude: 25.90859
+               });
+            }
+
+            toast.error(
+              "Unable to access your location. Using default location."
+            );
+          });
+        } catch (e) {
+          console.warn("GeolocateControl failed to initialize:", e);
         }
-      });
+      } else {
+         console.warn("Insecure context detected, skipping GeolocateControl");
+         toast.info("Location services unavailable (Insecure connection). Using default location.");
+      }
 
       map.current.on("load", () => {
         console.log("Map loaded successfully");
         setMapInit(true);
+        setMapInstance(map.current);
+        
+        // If on localhost/insecure context, fly to default location manually since GeolocateControl might fail
+        if (isLocalNetwork) {
+          // Try to trigger geolocation first
+          if (geolocateControlRef.current) {
+            console.log("Triggering geolocation on local network...");
+            geolocateControlRef.current.trigger();
+          } else {
+             // Fallback if no control
+             map.current?.flyTo({
+              center: [25.90859, -24.65451], // Gaborone
+              zoom: 14
+            });
+          }
+        }
         if (geolocateControlRef.current) {
           geolocateControlRef.current.on("geolocate", (e: { coords: { latitude: number; longitude: number } }) => {
             console.log("Geolocate event fired:", e.coords);
@@ -227,12 +285,23 @@ const CustomMapbox = ({
     const fetchRouteToHost = async () => {
       try {
         const response = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${host.longitude},${host.latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${host.longitude},${host.latitude}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`
         );
         const data = await response.json();
 
         if (data.routes && data.routes.length > 0) {
           const route = data.routes[0].geometry;
+          const steps = data.routes[0].legs[0].steps;
+
+          if (onRouteFound && steps) {
+            onRouteFound(steps.map((step: any) => ({
+              instruction: step.maneuver.instruction,
+              distance: step.distance,
+              duration: step.duration,
+              maneuver: step.maneuver.type,
+              road_name: step.name
+            })));
+          }
 
           // Remove existing route
           if (map.current!.getSource("host-route")) {
@@ -450,16 +519,38 @@ const CustomMapbox = ({
     if (!map.current || !mapInit || !destination) return;
 
     const { latitude, longitude } = destination;
+    
+    // Guard clause: Ensure destination coordinates are valid before fetching
+    if (!latitude || !longitude || !userLocation.latitude || !userLocation.longitude) {
+      return;
+    }
 
     const fetchRoute = async () => {
       try {
         const response = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${longitude},${latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${longitude},${latitude}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`
         );
+        
+        if (!response.ok) {
+          console.warn('Route fetch failed:', response.statusText);
+          return;
+        }
+
         const data = await response.json();
 
         if (data.routes && data.routes.length > 0) {
           const route = data.routes[0].geometry;
+          const steps = data.routes[0].legs[0].steps;
+
+          if (onRouteFound && steps) {
+            onRouteFound(steps.map((step: any) => ({
+              instruction: step.maneuver.instruction,
+              distance: step.distance,
+              duration: step.duration,
+              maneuver: step.maneuver.type,
+              road_name: step.name
+            })));
+          }
 
           if (map.current.getSource("route")) {
             (map.current.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
@@ -672,6 +763,15 @@ const CustomMapbox = ({
         onClose={() => setIsHostTrayOpen(false)}
         host={selectedHost}
       />
+      
+      {activeNavigationState.isNavigating && (
+        <RouteLayer 
+          map={mapInstance} 
+          route={activeNavigationState.activeRoute} 
+          userLocation={userLocation} 
+          showTraffic={activeNavigationState.showTraffic}
+        />
+      )}
     </div>
   );
 };

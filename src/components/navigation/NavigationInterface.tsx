@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Navigation2, Volume2, VolumeX, MapPin, Clock, Timer } from "lucide-react";
+import { Navigation2, Volume2, VolumeX, MapPin, Clock, Timer, Share2, Layers, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { IntersectionPreview } from "./IntersectionPreview";
 
 interface NavigationStep {
   instruction: string;
@@ -10,6 +11,7 @@ interface NavigationStep {
   duration: number;
   maneuver: string;
   road_name?: string;
+  geometry?: any;
 }
 
 interface NavigationInterfaceProps {
@@ -23,6 +25,9 @@ interface NavigationInterfaceProps {
   onArrived?: () => void;
   destination: string;
   showArrivedButton?: boolean;
+  onShareETA?: (eta: string) => void;
+  onToggleTraffic?: () => void;
+  showTraffic?: boolean;
 }
 
 export const NavigationInterface = ({
@@ -35,9 +40,14 @@ export const NavigationInterface = ({
   onStopNavigation,
   onArrived,
   destination,
-  showArrivedButton = false
+  showArrivedButton = false,
+  onShareETA,
+  onToggleTraffic,
+  showTraffic = false
 }: NavigationInterfaceProps) => {
   const [eta, setEta] = useState<string>("");
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewLocation, setPreviewLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   useEffect(() => {
     if (totalDuration > 0) {
@@ -45,6 +55,24 @@ export const NavigationInterface = ({
       setEta(arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
   }, [totalDuration]);
+
+  // Update preview location when step changes
+  useEffect(() => {
+    if (currentStep?.geometry?.coordinates?.length) {
+      // Use the last coordinate of the current step as it usually represents the maneuver point
+      // Or first coordinate if it's a point geometry
+      const coords = currentStep.geometry.coordinates;
+      const point = coords.length > 0 ? coords[coords.length - 1] : coords;
+      
+      if (Array.isArray(point) && point.length >= 2) {
+         // Mapbox uses [lng, lat]
+         setPreviewLocation({
+           latitude: point[1],
+           longitude: point[0]
+         });
+      }
+    }
+  }, [currentStep]);
 
   const formatDistance = (distance: number) => {
     if (distance < 1000) {
@@ -71,17 +99,51 @@ export const NavigationInterface = ({
   }
 
   return (
-    <Card className="mx-4 mt-4 shadow-lg border-primary/20">
-      <CardContent className="p-4">
-        {/* Header with destination and controls */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <MapPin className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-muted-foreground">
-              To {destination}
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
+    <>
+      <Card className="mx-4 mt-4 shadow-lg border-primary/20">
+        <CardContent className="p-4">
+          {/* Header with destination and controls */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-muted-foreground truncate max-w-[150px]">
+                To {destination}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+               {previewLocation && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPreview(true)}
+                  className="h-8 w-8 p-0"
+                  title="Preview Intersection"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+               )}
+               {onToggleTraffic && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleTraffic}
+                  className={`h-8 w-8 p-0 ${showTraffic ? 'text-primary bg-primary/10' : ''}`}
+                  title="Toggle Traffic"
+                >
+                  <Layers className="h-4 w-4" />
+                </Button>
+              )}
+             {onShareETA && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onShareETA(eta)}
+                className="h-8 w-8 p-0"
+                title="Share ETA"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -167,5 +229,15 @@ export const NavigationInterface = ({
         )}
       </CardContent>
     </Card>
+
+    {previewLocation && (
+      <IntersectionPreview
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        location={previewLocation}
+        instruction={currentStep.instruction}
+      />
+    )}
+    </>
   );
 };
