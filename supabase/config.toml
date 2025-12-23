@@ -14,6 +14,9 @@ max_rows = 1000
 [functions.add-admin]
 verify_jwt = true
 
+[functions.bulk-delete-users]
+verify_jwt = true
+
 [api.tls]
 # Enable HTTPS endpoints locally using a self-signed certificate.
 enabled = false

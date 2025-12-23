@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { UserEditDialog } from "./UserEditDialog";
 import { UserDetailDialog } from "./UserDetailDialog";
 import {
@@ -24,7 +25,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Eye, Edit, UserCheck, UserX } from "lucide-react";
+import { Search, Eye, Edit } from "lucide-react";
 import { toast } from "sonner";
 
 interface Profile {
@@ -41,6 +42,9 @@ interface Profile {
 interface UserManagementTableProps {
   isPreview?: boolean;
   maxItems?: number;
+  selectedUsers?: string[];
+  onUserSelect?: (userId: string, selected: boolean) => void;
+  onSelectAll?: (userIds: string[], selected: boolean) => void;
 }
 
 const useAdminUsers = () => {
@@ -61,7 +65,6 @@ const useAdminUsers = () => {
 
       if (error) throw error;
       
-      // Transform the data - verification fields will be null since we removed the join
       return (data || []).map((user: any) => ({
         id: user.id,
         full_name: user.full_name,
@@ -78,17 +81,15 @@ const useAdminUsers = () => {
 
 export const UserManagementTable: React.FC<UserManagementTableProps> = ({ 
   isPreview = false, 
-  maxItems = 5 
+  maxItems = 5,
+  selectedUsers = [],
+  onUserSelect,
+  onSelectAll
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-
-  // Debug effect to monitor state changes
-  React.useEffect(() => {
-    console.log("State changed - selectedUser:", selectedUser?.id, "isEditDialogOpen:", isEditDialogOpen, "isDetailDialogOpen:", isDetailDialogOpen);
-  }, [selectedUser, isEditDialogOpen, isDetailDialogOpen]);
   
   const { data: users, isLoading, error, refetch } = useAdminUsers();
 
@@ -156,69 +157,84 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
     setSelectedUser(null);
   };
 
-  const renderUserRow = (user: Profile) => (
-    <TableRow 
-      key={user.id} 
-      className="cursor-pointer hover:bg-muted/50" 
-      onClick={() => handleViewUser(user)}
-    >
-      <TableCell className="font-medium">
-        {user.full_name || "No name"}
-      </TableCell>
-      <TableCell>
-        <Badge variant={getRoleBadgeVariant(user.role)}>
-          {user.role}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <Badge variant="default">Active</Badge>
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <Badge variant={getKYCBadgeVariant(user.verification_status || "not_started")}>
-            {user.verification_status || "not started"}
+  const userIds = filteredUsers.map(u => u.id);
+  const allSelected = userIds.length > 0 && userIds.every(id => selectedUsers.includes(id));
+  const someSelected = userIds.some(id => selectedUsers.includes(id));
+
+  const renderUserRow = (user: Profile) => {
+    const isSelected = selectedUsers.includes(user.id);
+    
+    return (
+      <TableRow 
+        key={user.id} 
+        className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted/30' : ''}`}
+        onClick={() => handleViewUser(user)}
+      >
+        {onUserSelect && (
+          <TableCell onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) => onUserSelect(user.id, !!checked)}
+              aria-label={`Select ${user.full_name || user.id}`}
+            />
+          </TableCell>
+        )}
+        <TableCell className="font-medium">
+          {user.full_name || "No name"}
+        </TableCell>
+        <TableCell>
+          <Badge variant={getRoleBadgeVariant(user.role)}>
+            {user.role}
           </Badge>
-          {user.requires_reverification && (
-            <Badge variant="destructive" className="text-xs">
-              Re-verify
+        </TableCell>
+        <TableCell>
+          <Badge variant="default">Active</Badge>
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Badge variant={getKYCBadgeVariant(user.verification_status || "not_started")}>
+              {user.verification_status || "not started"}
             </Badge>
-          )}
-        </div>
-      </TableCell>
-      <TableCell>{user.phone_number || "N/A"}</TableCell>
-      <TableCell>
-        {new Date(user.created_at).toLocaleDateString()}
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              console.log("Eye button clicked for user:", user.id);
-              e.stopPropagation();
-              handleViewUser(user);
-            }}
-            title="View User Details"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              console.log("Edit button clicked for user:", user.id);
-              e.stopPropagation();
-              handleEditUser(user);
-            }}
-            title="Edit User"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
+            {user.requires_reverification && (
+              <Badge variant="destructive" className="text-xs">
+                Re-verify
+              </Badge>
+            )}
+          </div>
+        </TableCell>
+        <TableCell>{user.phone_number || "N/A"}</TableCell>
+        <TableCell>
+          {new Date(user.created_at).toLocaleDateString()}
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewUser(user);
+              }}
+              title="View User Details"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditUser(user);
+              }}
+              title="Edit User"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   if (error) {
     return (
@@ -266,6 +282,15 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      {onSelectAll && (
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={(checked) => onSelectAll(userIds, !!checked)}
+                            aria-label="Select all"
+                          />
+                        </TableHead>
+                      )}
                       <TableHead>Name</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Account Status</TableHead>
