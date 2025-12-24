@@ -12,20 +12,20 @@ export interface PremiumCalculation {
   packageName: string;
   displayName: string;
   description: string;
-  
+
   // Pricing calculation
   dailyRentalAmount: number; // Base car rental per day (e.g., P 500)
   premiumPercentage: number; // 0.00, 0.25, 0.50, 1.00
   premiumPerDay: number; // dailyRentalAmount × premiumPercentage
   numberOfDays: number;
   totalPremium: number; // premiumPerDay × numberOfDays
-  
+
   // Coverage details
   coverageCap: number | null; // P 15,000 or P 50,000
   excessAmount: number | null; // P 300, P 500, or P 1,000
   coversMinorDamage: boolean;
   coversMajorIncidents: boolean;
-  
+
   // T&C
   features: string[];
   exclusions: string[];
@@ -77,7 +77,7 @@ export class InsuranceService {
     endDate: Date
   ): Promise<PremiumCalculation> {
     const insurancePackage = await this.getPackageById(packageId);
-    
+
     // Calculate number of rental days (minimum 1 day)
     const numberOfDays = Math.max(
       1,
@@ -93,18 +93,18 @@ export class InsuranceService {
       packageName: insurancePackage.name,
       displayName: insurancePackage.display_name,
       description: insurancePackage.description,
-      
+
       dailyRentalAmount,
       premiumPercentage: insurancePackage.premium_percentage,
       premiumPerDay: Math.round(premiumPerDay * 100) / 100, // Round to 2 decimals
       numberOfDays,
       totalPremium: Math.round(totalPremium * 100) / 100,
-      
+
       coverageCap: insurancePackage.coverage_cap,
       excessAmount: insurancePackage.excess_amount,
       coversMinorDamage: insurancePackage.covers_minor_damage,
       coversMajorIncidents: insurancePackage.covers_major_incidents,
-      
+
       features: insurancePackage.features || [],
       exclusions: insurancePackage.exclusions || [],
     };
@@ -119,9 +119,9 @@ export class InsuranceService {
     endDate: Date
   ): Promise<PremiumCalculation[]> {
     const packages = await this.getInsurancePackages();
-    
+
     const calculations = await Promise.all(
-      packages.map(pkg => 
+      packages.map(pkg =>
         this.calculatePremium(pkg.id, dailyRentalAmount, startDate, endDate)
       )
     );
@@ -131,6 +131,7 @@ export class InsuranceService {
 
   /**
    * Create insurance policy when booking is confirmed
+   * Automatically generates and uploads PDF policy document
    */
   static async createPolicy(
     bookingId: string,
@@ -143,9 +144,9 @@ export class InsuranceService {
     termsVersion: string = 'v1.0-2025-11'
   ): Promise<InsurancePolicy> {
     const calculation = await this.calculatePremium(
-      packageId, 
-      dailyRentalAmount, 
-      startDate, 
+      packageId,
+      dailyRentalAmount,
+      startDate,
       endDate
     );
 
@@ -178,8 +179,48 @@ export class InsuranceService {
       .single();
 
     if (error) throw new Error(`Failed to create insurance policy: ${error.message}`);
-    
-    return (data as unknown) as InsurancePolicy;
+
+    const policy = (data as unknown) as InsurancePolicy;
+
+    // Generate and upload PDF policy document (non-blocking)
+    try {
+      const insurancePackage = await this.getPackageById(packageId);
+
+      // Get renter and car details for PDF
+      const { data: renterData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', renterId)
+        .single();
+
+      const { data: carData } = await supabase
+        .from('cars')
+        .select('brand, model, year')
+        .eq('id', carId)
+        .single();
+
+      const renterName = renterData?.full_name || 'Policy Holder';
+      const carDetails = carData ? `${carData.year} ${carData.brand} ${carData.model}` : 'Vehicle';
+
+      // Generate PDF
+      const pdfBlob = generatePolicyPDF(policy, insurancePackage, renterName, carDetails);
+
+      // Upload to Supabase Storage
+      const pdfUrl = await this.uploadPolicyPDF(policy.id, renterId, pdfBlob, policyNumber);
+
+      // Update policy with PDF URL
+      await supabase
+        .from('insurance_policies')
+        .update({ policy_document_url: pdfUrl })
+        .eq('id', policy.id);
+
+      console.log(`✅ Policy PDF generated and uploaded: ${pdfUrl}`);
+    } catch (pdfError) {
+      console.error('Failed to generate/upload policy PDF (non-blocking):', pdfError);
+      // Don't throw - PDF generation failure shouldn't block policy creation
+    }
+
+    return policy;
   }
 
   /**
@@ -188,14 +229,14 @@ export class InsuranceService {
    */
   private static async generatePolicyNumber(): Promise<string> {
     const { data, error } = await supabase.rpc('generate_policy_number' as any);
-    
+
     if (error) {
       // Fallback if function doesn't exist yet
       const year = new Date().getFullYear();
       const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
       return `INS-${year}-${random}`;
     }
-    
+
     return data;
   }
 
@@ -244,7 +285,7 @@ export class InsuranceService {
    * Update policy status
    */
   static async updatePolicyStatus(
-    policyId: string, 
+    policyId: string,
     status: 'active' | 'expired' | 'cancelled' | 'claimed'
   ): Promise<void> {
     const { error } = await supabase
@@ -261,10 +302,10 @@ export class InsuranceService {
   static isPolicyValid(policy: InsurancePolicy, checkDate: Date = new Date()): boolean {
     const startDate = new Date(policy.start_date);
     const endDate = new Date(policy.end_date);
-    
+
     return (
-      policy.status === 'active' && 
-      checkDate >= startDate && 
+      policy.status === 'active' &&
+      checkDate >= startDate &&
       checkDate <= endDate
     );
   }
@@ -289,14 +330,14 @@ export class InsuranceService {
   } {
     // Approved amount is capped at coverage limit
     const approvedAmount = Math.min(damageCost, coverageCap);
-    
+
     // Renter pays excess (deductible) + admin fee
     const excessPaid = excess;
     const renterPays = excessPaid + adminFee;
-    
+
     // Insurance pays the rest (up to coverage cap)
     const payoutAmount = Math.max(0, approvedAmount - excessPaid);
-    
+
     // Total cost to insurance (payout + admin fee)
     const totalClaimCost = payoutAmount + adminFee;
 
@@ -339,36 +380,88 @@ export class InsuranceService {
 
   /**
    * Process Financial Payout for a Claim
-   * Credits the user's wallet or records the transaction
+   * Credits the user's wallet with the approved payout amount
    */
   static async processClaimPayout(claimId: string, amount: number): Promise<void> {
     // Fetch claim to get renter_id
-    const { data: claim } = await supabase
+    const { data: claim, error: claimError } = await supabase
       .from('insurance_claims')
-      .select('renter_id, claim_number')
+      .select('renter_id, claim_number, payout_amount')
       .eq('id', claimId)
       .single();
 
-    if (!claim) throw new Error('Claim not found');
+    if (claimError || !claim) {
+      throw new Error('Claim not found');
+    }
 
-    // Call Wallet Service to credit funds (if wallet exists)
-    // Assuming walletService has a method for system credits or we use a direct DB operation
-    // For now, we'll log it and maybe call a mock function if walletService doesn't support system credits yet
     console.log(`💰 Processing Payout of P${amount} for Claim ${claim.claim_number} to User ${claim.renter_id}`);
-    
-    // In a real implementation:
-    // await walletService.creditWallet(claim.renter_id, amount, 'insurance_payout', claim.claim_number);
-    
+
+    try {
+      // Import wallet service dynamically to avoid circular dependencies
+      const { walletService } = await import('./walletService');
+
+      // Credit user's wallet
+      const success = await walletService.creditInsurancePayout(
+        claim.renter_id,
+        claimId,
+        amount,
+        claim.claim_number
+      );
+
+      if (!success) {
+        throw new Error('Failed to credit wallet');
+      }
+
+      console.log(`✅ Wallet credited successfully for claim ${claim.claim_number}`);
+    } catch (walletError) {
+      console.error('Failed to credit wallet:', walletError);
+      throw new Error(`Wallet credit failed: ${walletError instanceof Error ? walletError.message : 'Unknown error'}`);
+    }
+
     // Update claim status to 'paid'
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('insurance_claims' as any)
-      .update({ 
+      .update({
         status: 'paid',
         paid_at: new Date().toISOString()
       })
       .eq('id', claimId);
 
-    if (error) throw new Error(`Failed to update claim status: ${error.message}`);
+    if (updateError) {
+      throw new Error(`Failed to update claim status: ${updateError.message}`);
+    }
+
+    console.log(`✅ Claim ${claim.claim_number} marked as paid`);
+  }
+  /**
+   * Upload policy PDF to Supabase Storage
+   * @private
+   */
+  private static async uploadPolicyPDF(
+    policyId: string,
+    renterId: string,
+    pdfBlob: Blob,
+    policyNumber: string
+  ): Promise<string> {
+    const fileName = `${renterId}/${policyNumber}.pdf`;
+
+    const { data, error } = await supabase.storage
+      .from('insurance-policies')
+      .upload(fileName, pdfBlob, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (error) {
+      throw new Error(`Failed to upload policy PDF: ${error.message}`);
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('insurance-policies')
+      .getPublicUrl(fileName);
+
+    return urlData.publicUrl;
   }
 }
 
