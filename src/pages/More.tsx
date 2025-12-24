@@ -9,7 +9,8 @@ import {
   User, 
   ChevronRight,
   Wallet,
-  Car
+  Car,
+  FileText
 } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
@@ -58,6 +59,13 @@ const More = () => {
           description: "Manage your vehicles",
           onClick: () => navigate("/car-listing"),
           color: "text-purple-600",
+        },
+        {
+          icon: FileText,
+          label: "Insurance Claims",
+          description: "View and manage your claims",
+          onClick: () => navigate("/claims"),
+          color: "text-orange-600",
         },
       ]
     },

@@ -61,7 +61,7 @@ export default function AdminPromoCodes() {
   const createMutation = useMutation({
     mutationFn: async (newPromo: Partial<PromoCode>) => {
       const { data, error } = await supabase
-        .from("promo_codes")
+        .from("promo_codes" as any)
         .insert([newPromo])
         .select()
         .single();
@@ -83,7 +83,7 @@ export default function AdminPromoCodes() {
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       const { error } = await supabase
-        .from("promo_codes")
+        .from("promo_codes" as any)
         .update({ is_active: isActive })
         .eq("id", id);
 
@@ -102,7 +102,7 @@ export default function AdminPromoCodes() {
   const sendNotificationMutation = useMutation({
     mutationFn: async (promo: PromoCode) => {
       // 1. Get users with marketing notifications enabled using secure RPC
-      const { data: users, error } = await supabase.rpc('get_marketing_recipients');
+      const { data: users, error } = await supabase.rpc('get_marketing_recipients' as any);
 
       if (error) throw error;
       if (!users || users.length === 0) throw new Error("No users found with marketing notifications enabled");
@@ -178,7 +178,7 @@ export default function AdminPromoCodes() {
   });
 
   return (
-    <AdminLayout title="Promo Codes">
+    <AdminLayout title="Promo Codes" children={undefined}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Manage Promotions</h2>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

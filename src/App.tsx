@@ -102,6 +102,10 @@ const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
 const SuperAdminAnalytics = lazy(() => import("@/pages/SuperAdminAnalytics"));
 const AdminPromoCodes = lazy(() => import("@/pages/admin/AdminPromoCodes"));
 
+// Insurance claims pages
+const UserClaimsList = lazy(() => import("@/components/insurance/UserClaimsList"));
+const AdminClaimsDashboard = lazy(() => import("@/components/insurance/AdminClaimsDashboard"));
+
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
 const RenterBookings = lazy(() => import("@/pages/RenterBookings"));
@@ -442,6 +446,20 @@ function App() {
                         <Route path="/admin/promo-codes" element={
                           <Suspense fallback={<LoadingView />}>
                             <AdminPromoCodes />
+                          </Suspense>
+                        } />
+                        
+                        {/* Insurance Claims Routes */}
+                        <Route path="/claims" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <UserClaimsList />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/admin/claims" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminClaimsDashboard />
                           </Suspense>
                         } />
 

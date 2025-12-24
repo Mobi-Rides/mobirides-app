@@ -30,8 +30,8 @@ import { BookingSuccessModal } from "./BookingSuccessModal";
 import { useDynamicPricing } from "@/hooks/useDynamicPricing";
 import { isFeatureEnabled } from "@/lib/featureFlags";
 import { PriceBreakdown } from "./PriceBreakdown";
-import { InsurancePlanSelector } from "@/components/insurance/InsurancePlanSelector";
-import { CoverageCalculator } from "@/components/insurance/CoverageCalculator";
+import { InsurancePackageSelector } from "@/components/insurance/InsurancePackageSelector";
+import { InsuranceService } from "@/services/insuranceService";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { 
   validatePromoCode, 
@@ -101,6 +101,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     userId ?? undefined,
   );
 
+  const [selectedInsurancePackageId, setSelectedInsurancePackageId] = useState<string | null>(null);
   const [insurancePremium, setInsurancePremium] = useState<number | null>(null);
 
   // Calculate prices for display and booking
@@ -347,6 +348,37 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         .single();
 
       if (bookingError) throw bookingError;
+
+      // Create insurance policy if selected
+      if (selectedInsurancePackageId) {
+        try {
+          const insurancePackage = await InsuranceService.getPackageById(selectedInsurancePackageId);
+          
+          // Only create policy if not "no_coverage" (assuming no_coverage might be a package ID or we check name)
+          // The selector returns a package ID. getPackageById will return the package details.
+          if (insurancePackage.name !== 'no_coverage') {
+            console.log("[BookingDialog] Creating insurance policy...");
+            await InsuranceService.createPolicy(
+              booking.id,
+              selectedInsurancePackageId,
+              session.session.user.id,
+              car.id,
+              startDate,
+              endDate,
+              car.price_per_day
+            );
+            console.log("[BookingDialog] Insurance policy created successfully");
+          }
+        } catch (insuranceError) {
+          console.error("[BookingDialog] Failed to create insurance policy:", insuranceError);
+          // Non-blocking for booking flow, but should be logged/alerted
+          toast({
+            title: "Warning",
+            description: "Booking successful, but insurance policy creation failed. Please contact support.",
+            variant: "destructive"
+          });
+        }
+      }
 
       // Apply promo code usage if applicable
       if (appliedPromo) {
@@ -601,7 +633,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="sm:max-w-[425px] md:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           <BookingBreadcrumbs currentStep="confirmation" />
           <div className="p-6">
             <DialogHeader>
@@ -720,22 +752,28 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 )}
                 {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined && (
                   <>
-                    <InsurancePlanSelector
-                      basePrice={basePrice}
-                      onSelected={(_, premium) => setInsurancePremium(premium)}
+                    <InsurancePackageSelector
+                      dailyRentalAmount={car.price_per_day}
+                      startDate={startDate}
+                      endDate={endDate}
+                      selectedPackageId={selectedInsurancePackageId || undefined}
+                      onPackageSelect={(pkgId, premium) => {
+                        setSelectedInsurancePackageId(pkgId);
+                        setInsurancePremium(premium);
+                      }}
                     />
-                    <CoverageCalculator
-                      premium={insurancePremium}
-                      totalWithoutInsurance={(
-                        isFeatureEnabled("DYNAMIC_PRICING") && finalPrice
-                          ? finalPrice
-                          : Math.ceil(
-                              (endDate.getTime() - startDate.getTime()) /
-                                (1000 * 60 * 60 * 24) +
-                                1,
-                            ) * car.price_per_day
-                      )}
-                    />
+                    {insurancePremium !== null && insurancePremium > 0 && (
+                      <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="font-medium text-blue-900">Insurance Premium:</span>
+                          <span className="font-bold text-blue-700">BWP {insurancePremium.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm mt-1 pt-1 border-t border-blue-200">
+                          <span className="font-medium text-blue-900">Total with Insurance:</span>
+                          <span className="font-bold text-blue-700">BWP {(totalDisplayPrice + insurancePremium).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
