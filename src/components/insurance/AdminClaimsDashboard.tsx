@@ -11,7 +11,7 @@ interface Booking {
   car_id: string;
   start_date: string;
   end_date: string;
-  total_amount: number;
+  total_price: number;
   status: string;
 }
 
@@ -41,7 +41,7 @@ export default function AdminClaimsDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+  const [selectedClaim, setSelectedClaim] = useState<InsuranceClaim | null>(null);
   const [stats, setStats] = useState<ClaimsStats>({
     totalClaims: 0,
     pendingClaims: 0,
@@ -110,7 +110,7 @@ export default function AdminClaimsDashboard() {
     }
   };
 
-  const calculateStats = (claims: Claim[]): ClaimsStats => {
+  const calculateStats = (claims: InsuranceClaim[]): ClaimsStats => {
     return {
       totalClaims: claims.length,
       pendingClaims: claims.filter(c => c.status === 'submitted' || c.status === 'pending').length, // Handle 'submitted' as pending
@@ -209,11 +209,11 @@ export default function AdminClaimsDashboard() {
 
   const filteredClaims = claims.filter(claim => {
     const matchesSearch = claim.claim_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         claim.incident_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         claim.incident_description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      claim.incident_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      claim.incident_description.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === 'all' || claim.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -322,6 +322,17 @@ export default function AdminClaimsDashboard() {
                       {formatDate(booking.start_date)} - {formatDate(booking.end_date)}
                     </p>
                   </div>
+                  {policy.policy_document_url && (
+                    <div className="pt-2">
+                      <button
+                        onClick={() => window.open(policy.policy_document_url, '_blank')}
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View Policy Document
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -376,7 +387,7 @@ export default function AdminClaimsDashboard() {
                     defaultValue={selectedClaim.estimated_damage_cost || 0}
                     id="approved-amount"
                   />
-                  
+
                   <label className="block text-sm font-medium text-gray-700 mb-2">Review Notes</label>
                   <textarea
                     rows={3}

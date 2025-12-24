@@ -24,30 +24,30 @@ export default function UserClaimsList() {
   const fetchUserClaims = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch user's bookings to get their policy IDs
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, car_id, start_date, end_date, total_amount, status')
-        .eq('user_id', user?.id)
+        .select('id, car_id, start_date, end_date, total_price, status')
+        .eq('renter_id', user?.id)
         .eq('status', 'completed');
 
       if (bookingsError) throw bookingsError;
 
       if (bookings && bookings.length > 0) {
         const bookingIds = bookings.map(b => b.id);
-        
+
         // Fetch policies for these bookings
         const { data: policies, error: policiesError } = await supabase
           .from('insurance_policies')
-          .select('id, booking_id, package_id, premium_amount, status')
+          .select('id, booking_id, package_id, total_premium, status')
           .in('booking_id', bookingIds);
 
         if (policiesError) throw policiesError;
 
         if (policies && policies.length > 0) {
           const policyIds = policies.map(p => p.id);
-          
+
           // Fetch claims for these policies
           const { data: claimsData, error: claimsError } = await supabase
             .from('insurance_claims')
@@ -56,7 +56,7 @@ export default function UserClaimsList() {
             .order('created_at', { ascending: false });
 
           if (claimsError) throw claimsError;
-          
+
           setClaims(claimsData || []);
         } else {
           setClaims([]);
@@ -80,15 +80,15 @@ export default function UserClaimsList() {
       case 'under_review':
         return <AlertCircle className="w-5 h-5 text-blue-500" />;
       case 'more_info_needed':
-          return <AlertCircle className="w-5 h-5 text-orange-500" />;
+        return <AlertCircle className="w-5 h-5 text-orange-500" />;
       case 'approved':
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'paid':
-          return <DollarSign className="w-5 h-5 text-green-600" />;
+        return <DollarSign className="w-5 h-5 text-green-600" />;
       case 'rejected':
         return <AlertCircle className="w-5 h-5 text-red-500" />;
       case 'closed':
-          return <CheckCircle className="w-5 h-5 text-gray-500" />;
+        return <CheckCircle className="w-5 h-5 text-gray-500" />;
       default:
         return <Clock className="w-5 h-5 text-gray-500" />;
     }
@@ -142,11 +142,11 @@ export default function UserClaimsList() {
 
   const filteredClaims = claims.filter(claim => {
     const matchesSearch = claim.claim_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         claim.incident_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         claim.incident_description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      claim.incident_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      claim.incident_description.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === 'all' || claim.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -165,25 +165,109 @@ export default function UserClaimsList() {
     }).format(amount);
   };
 
+  const [activePolicies, setActivePolicies] = useState<{ id: string, booking_id: string, policy_number: string, insurance_packages: any }[]>([]);
+  const [selectedPolicyForClaim, setSelectedPolicyForClaim] = useState<{ id: string, booking_id: string } | null>(null);
+
+  useEffect(() => {
+    if (showNewClaimForm) {
+      fetchActivePolicies();
+    }
+  }, [showNewClaimForm]);
+
+  const fetchActivePolicies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('insurance_policies')
+        .select('id, booking_id, policy_number, status, insurance_packages(display_name)')
+        .eq('renter_id', user?.id)
+        .in('status', ['active', 'expired']) // Allow claiming on recent expired policies too
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setActivePolicies(data || []);
+    } catch (error) {
+      console.error('Error fetching policies:', error);
+    }
+  };
+
   if (showNewClaimForm) {
+    if (!selectedPolicyForClaim) {
+      return (
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="mb-6">
+            <button
+              onClick={() => setShowNewClaimForm(false)}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              ← Back to Claims List
+            </button>
+            <h2 className="text-2xl font-bold mt-4">Select Policy for Claim</h2>
+            <p className="text-gray-600">Choose the insurance policy related to the incident.</p>
+          </div>
+
+          {activePolicies.length === 0 ? (
+            <div className="bg-yellow-50 p-6 rounded-lg text-center">
+              <p className="text-yellow-800 font-medium mb-2">No eligible insurance policies found.</p>
+              <p className="text-sm text-yellow-700 max-w-md mx-auto">
+                You can only make a claim if you have an active or recently expired insurance policy associated with a booking.
+                Please ensure you have purchased insurance for your rental.
+              </p>
+              <button
+                onClick={() => setShowNewClaimForm(false)}
+                className="mt-4 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200"
+              >
+                Go Back
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {activePolicies.map((policy) => (
+                <div
+                  key={policy.id}
+                  onClick={() => setSelectedPolicyForClaim({ id: policy.id, booking_id: policy.booking_id })}
+                  className="bg-white p-4 rounded-lg shadow-sm border hover:border-blue-500 cursor-pointer transition-all"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-semibold text-lg">{policy.insurance_packages?.display_name || 'Insurance Policy'}</h3>
+                      <p className="text-sm text-gray-500">Policy #: {policy.policy_number}</p>
+                    </div>
+                    <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      Select
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
           <button
-            onClick={() => setShowNewClaimForm(false)}
+            onClick={() => {
+              setSelectedPolicyForClaim(null);
+            }}
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
-            ← Back to Claims List
+            ← Back to Policy Selection
           </button>
         </div>
         <ClaimsSubmissionForm
-          policyId="placeholder-policy-id"
-          bookingId="placeholder-booking-id"
+          policyId={selectedPolicyForClaim.id}
+          bookingId={selectedPolicyForClaim.booking_id}
           onSuccess={() => {
             setShowNewClaimForm(false);
+            setSelectedPolicyForClaim(null);
             fetchUserClaims();
           }}
-          onCancel={() => setShowNewClaimForm(false)}
+          onCancel={() => {
+            setShowNewClaimForm(false);
+            setSelectedPolicyForClaim(null);
+          }}
         />
       </div>
     );
@@ -200,7 +284,7 @@ export default function UserClaimsList() {
             ← Back to Claims List
           </button>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -336,7 +420,7 @@ export default function UserClaimsList() {
             {claims.length === 0 ? 'No Claims Found' : 'No Claims Match Your Search'}
           </h3>
           <p className="text-gray-600 mb-4">
-            {claims.length === 0 
+            {claims.length === 0
               ? "You haven't submitted any insurance claims yet."
               : "Try adjusting your search or filter criteria."
             }

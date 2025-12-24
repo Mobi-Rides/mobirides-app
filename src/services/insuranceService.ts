@@ -354,20 +354,43 @@ export class InsuranceService {
   /**
    * Submit a new insurance claim
    */
-  static async submitClaim(claimData: Omit<InsuranceClaim, 'id' | 'claim_number' | 'status' | 'created_at' | 'updated_at'> & { supporting_documents?: string[] }): Promise<{ success: boolean; error?: string }> {
+  static async submitClaim(claimData: Partial<InsuranceClaim> & {
+    policy_id: string;
+    booking_id: string;
+    incident_date: string; // Date string YYYY-MM-DD
+    incident_time: string; // Time string HH:MM
+    incident_description: string;
+    damage_description: string;
+    supporting_documents?: string[]
+  }): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       // Generate claim number
       const claimNumber = `CLM-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
 
-      const { error } = await supabase
+      // Combine date and time
+      const dateTimeString = `${claimData.incident_date}T${claimData.incident_time}:00`;
+      const incidentTimestamp = new Date(dateTimeString).toISOString();
+
+      // Prepare data for insertion (remove incident_time, map documents)
+      const { incident_time, supporting_documents, ...dbData } = claimData;
+
+      const { data, error } = await supabase
         .from('insurance_claims' as any)
         .insert({
-          ...claimData,
+          ...dbData,
+          renter_id: user.id, // Explicitly set renter_id from auth context
+          incident_date: incidentTimestamp,
           claim_number: claimNumber,
           status: 'submitted',
-          evidence_urls: claimData.supporting_documents || [], // Map supporting_documents to evidence_urls
+          evidence_urls: supporting_documents || [],
           submitted_at: new Date().toISOString(),
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 

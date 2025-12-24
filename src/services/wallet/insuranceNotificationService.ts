@@ -1,5 +1,5 @@
 import { ResendEmailService } from './notificationService';
-import { InsurancePolicy, InsurancePackage, InsuranceClaim } from '../insuranceService';
+import { InsurancePolicy, InsurancePackage, InsuranceClaim } from '@/types/insurance-schema';
 
 export class InsuranceNotificationService {
   private static instance: InsuranceNotificationService;
@@ -27,11 +27,11 @@ export class InsuranceNotificationService {
     pdfUrl: string
   ) {
     console.log(`📧 Sending Policy Confirmation to ${email}`);
-    
+
     // In a real scenario, we would attach the PDF or include the link
     // For now, we use a generic template or the booking confirmation one with extra data
     // Or we create a new template 'insurance-policy-confirmation'
-    
+
     return this.emailService.sendEmail(
       email,
       'insurance-policy-confirmation', // Needs to be set up in Resend
@@ -57,7 +57,7 @@ export class InsuranceNotificationService {
     claim: InsuranceClaim
   ) {
     console.log(`📧 Sending Claim Receipt to ${email}`);
-    
+
     return this.emailService.sendEmail(
       email,
       'insurance-claim-received',
@@ -80,9 +80,9 @@ export class InsuranceNotificationService {
     claim: InsuranceClaim
   ) {
     console.log(`📧 Sending Claim Update to ${email}`);
-    
+
     const subject = `Claim Status Update - ${claim.claim_number}: ${claim.status.toUpperCase()}`;
-    
+
     return this.emailService.sendEmail(
       email,
       'insurance-claim-update',

@@ -105,6 +105,7 @@ const AdminPromoCodes = lazy(() => import("@/pages/admin/AdminPromoCodes"));
 // Insurance claims pages
 const UserClaimsList = lazy(() => import("@/components/insurance/UserClaimsList"));
 const AdminClaimsDashboard = lazy(() => import("@/components/insurance/AdminClaimsDashboard"));
+const InsurancePoliciesPage = lazy(() => import("@/pages/InsurancePoliciesPage"));
 
 // Role-specific booking pages
 const HostBookings = lazy(() => import("@/pages/HostBookings"));
@@ -364,7 +365,7 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
-                        
+
                         {/* Help Center Routes */}
                         <Route path="/help/:role" element={
                           <Suspense fallback={<LoadingView />}>
@@ -380,7 +381,7 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
-                        
+
                         <Route path="/messages" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -388,7 +389,7 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
-                        
+
 
 
 
@@ -448,12 +449,19 @@ function App() {
                             <AdminPromoCodes />
                           </Suspense>
                         } />
-                        
+
                         {/* Insurance Claims Routes */}
                         <Route path="/claims" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <UserClaimsList />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/insurance/policies" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <InsurancePoliciesPage />
                             </ProtectedRoute>
                           </Suspense>
                         } />
@@ -474,13 +482,13 @@ function App() {
                           </Suspense>
                         } />
                       </Routes>
-                      
+
                       {/* Global Chat Manager */}
                       <ChatManager />
 
                       <Toaster position="top-center" />
                       <Analytics />
-                      <SpeedInsights/>
+                      <SpeedInsights />
                     </BrowserRouter>
                   </TooltipProvider>
                 </VerificationProvider>

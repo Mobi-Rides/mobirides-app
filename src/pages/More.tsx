@@ -1,12 +1,12 @@
 
-import { 
-  Settings, 
-  Info, 
-  HelpCircle, 
-  Shield, 
-  Bell, 
-  LogOut, 
-  User, 
+import {
+  Settings,
+  Info,
+  HelpCircle,
+  Shield,
+  Bell,
+  LogOut,
+  User,
   ChevronRight,
   Wallet,
   Car,
@@ -67,6 +67,13 @@ const More = () => {
           onClick: () => navigate("/claims"),
           color: "text-orange-600",
         },
+        {
+          icon: Shield,
+          label: "Insurance Policies",
+          description: "View your policy documents",
+          onClick: () => navigate("/insurance/policies"),
+          color: "text-indigo-600",
+        },
       ]
     },
     {
@@ -109,7 +116,7 @@ const More = () => {
           icon: Info,
           label: "About Mobirides",
           description: "Version 1.0.0",
-          onClick: () => {},
+          onClick: () => { },
           color: "text-indigo-600",
         },
       ]
@@ -138,8 +145,8 @@ const More = () => {
               <p className="text-xs text-gray-500 dark:text-gray-400">Adjust app appearance</p>
             </div>
           </div>
-          <Switch 
-            id="dark-mode" 
+          <Switch
+            id="dark-mode"
             checked={theme === 'dark'}
             onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
           />

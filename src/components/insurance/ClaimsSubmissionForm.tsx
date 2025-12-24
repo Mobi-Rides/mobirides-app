@@ -9,10 +9,13 @@ import { supabase } from '@/integrations/supabase/client';
 const claimSchema = z.object({
   incident_date: z.string().min(1, 'Incident date is required'),
   incident_time: z.string().min(1, 'Incident time is required'),
+  incident_type: z.string().min(1, 'Incident type is required'),
   incident_location: z.string().min(10, 'Please provide detailed incident location'),
   incident_description: z.string().min(50, 'Please provide detailed incident description (minimum 50 characters)'),
   damage_description: z.string().min(30, 'Please describe the damage (minimum 30 characters)'),
-  estimated_repair_cost: z.number().min(0, 'Estimated repair cost must be positive'),
+  estimated_repair_cost: z.number()
+    .min(0, 'Estimated repair cost must be positive')
+    .max(99999999.99, 'Amount exceeds allowed limit (99,999,999.99)'),
   police_report_filed: z.boolean(),
   police_report_number: z.string().optional(),
   police_station: z.string().optional(),
@@ -60,17 +63,40 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
+
+    // Get current user for RLS-compliant path
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('You must be logged in to upload files.');
+      return;
+    }
+
+    // Validate file types client-side first
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/heic', 'application/pdf'];
+    const maxSizeBytes = 10 * 1024 * 1024; // 10MB
 
     try {
       for (const file of Array.from(files)) {
-        const fileName = `claims/${policyId}/${Date.now()}-${file.name}`;
+        if (!allowedTypes.includes(file.type)) {
+          alert(`File type ${file.type} is not supported. Please upload JPG, PNG, or PDF.`);
+          continue;
+        }
+
+        if (file.size > maxSizeBytes) {
+          alert(`File ${file.name} is too large. Max size is 10MB.`);
+          continue;
+        }
+
+        // RLS Policy requires first folder to be the user ID
+        const fileName = `${user.id}/claims/${policyId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         const { data, error } = await supabase.storage
-          .from('insurance-documents')
+          .from('insurance-claims')
           .upload(fileName, file);
 
         if (error) {
           console.error('File upload error:', error);
+          alert(`Failed to upload ${file.name}: ${error.message}`);
           continue;
         }
 
@@ -80,6 +106,11 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
       }
     } catch (error) {
       console.error('File upload failed:', error);
+      alert('An unexpected error occurred during file upload.');
+    } finally {
+      // Reset input so verify same file can be selected again if needed, 
+      // but strictly speaking not required. 
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -88,25 +119,31 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
     setSubmitError(null);
 
     try {
-      const result = await insuranceService.submitClaim({
+      // Append extra details to incident description since DB doesn't have dedicated columns
+      let fullDescription = data.incident_description;
+      if (data.other_vehicle_involved) {
+        fullDescription += `\n\n[Other Vehicle Involved]\nName: ${data.other_driver_name || 'N/A'}\nContact: ${data.other_driver_contact || 'N/A'}\nRegistration: ${data.other_vehicle_registration || 'N/A'}`;
+      }
+      if (data.witness_name) {
+        fullDescription += `\n\n[Witness]\nName: ${data.witness_name}\nContact: ${data.witness_contact || 'N/A'}`;
+      }
+      if (data.additional_notes) {
+        fullDescription += `\n\n[Notes]\n${data.additional_notes}`;
+      }
+
+      const result = await InsuranceService.submitClaim({
         policy_id: policyId,
         booking_id: bookingId,
         incident_date: data.incident_date,
         incident_time: data.incident_time,
-        incident_location: data.incident_location,
-        incident_description: data.incident_description,
+        incident_type: data.incident_type,
+        location: data.incident_location,
+        incident_description: fullDescription,
         damage_description: data.damage_description,
-        estimated_repair_cost: data.estimated_repair_cost,
+        estimated_damage_cost: data.estimated_repair_cost, // Map repair cost to damage cost
         police_report_filed: data.police_report_filed,
         police_report_number: data.police_report_number,
         police_station: data.police_station,
-        other_vehicle_involved: data.other_vehicle_involved,
-        other_driver_name: data.other_driver_name,
-        other_driver_contact: data.other_driver_contact,
-        other_vehicle_registration: data.other_vehicle_registration,
-        witness_name: data.witness_name,
-        witness_contact: data.witness_contact,
-        additional_notes: data.additional_notes,
         supporting_documents: uploadedFiles,
       });
 
@@ -124,9 +161,9 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
 
   const nextStep = async () => {
     let isValid = false;
-    
+
     if (currentStep === 1) {
-      isValid = await trigger(['incident_date', 'incident_time', 'incident_location', 'incident_description']);
+      isValid = await trigger(['incident_date', 'incident_time', 'incident_type', 'incident_location', 'incident_description']);
     } else if (currentStep === 2) {
       isValid = await trigger(['damage_description', 'estimated_repair_cost']);
     }
@@ -214,6 +251,28 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
                   <p className="text-red-500 text-sm mt-1">{errors.incident_time.message}</p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Incident Type
+              </label>
+              <select
+                {...register('incident_type')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="">Select type...</option>
+                <option value="collision">Collision</option>
+                <option value="minor_damage">Minor Damage (scratches, dents)</option>
+                <option value="theft">Theft</option>
+                <option value="vandalism">Vandalism</option>
+                <option value="fire">Fire</option>
+                <option value="weather">Weather (Hail, Flood)</option>
+                <option value="third_party">Third Party Only</option>
+              </select>
+              {errors.incident_type && (
+                <p className="text-red-500 text-sm mt-1">{errors.incident_type.message}</p>
+              )}
             </div>
 
             <div>
@@ -371,6 +430,7 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
                 placeholder="0.00"
                 step="0.01"
                 min="0"
+                max="99999999.99"
               />
               {errors.estimated_repair_cost && (
                 <p className="text-red-500 text-sm mt-1">{errors.estimated_repair_cost.message}</p>
@@ -426,13 +486,14 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
                 Supporting Documents
               </label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 mb-2">Upload photos of the damage, police report, and other relevant documents</p>
+                <p className="text-xs text-gray-500 mb-4">Supported formats: JPG, PNG, PDF (Max 10MB)</p>
                 <input
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept="image/*,.pdf"
+                  accept="image/jpeg,image/png,image/heic,application/pdf"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -444,15 +505,15 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
                   Choose Files
                 </button>
               </div>
-              
-              {uploadedFiles.length > 0 && (
+
+              {uploadedFiles && uploadedFiles.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-700 mb-2">Uploaded Files:</p>
                   <ul className="space-y-1">
                     {uploadedFiles.map((file, index) => (
                       <li key={index} className="text-sm text-green-600 flex items-center">
                         <FileText className="w-4 h-4 mr-1" />
-                        {file.split('/').pop()}
+                        {file ? file.split('/').pop() : 'Unknown file'}
                       </li>
                     ))}
                   </ul>
@@ -462,7 +523,7 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
-                <strong>Note:</strong> Please ensure all information provided is accurate and complete. 
+                <strong>Note:</strong> Please ensure all information provided is accurate and complete.
                 False information may result in claim denial.
               </p>
             </div>
