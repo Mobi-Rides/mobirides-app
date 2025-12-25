@@ -18,17 +18,17 @@ const useAdminStats = () => {
   return useQuery({
     queryKey: ["admin-stats"],
     queryFn: async (): Promise<AdminStatsData> => {
-      const [usersResult, carsResult, bookingsResult, verificationsResult, transactionsResult] = 
+      const [usersResult, carsResult, bookingsResult, verificationsResult, revenueResult] = 
         await Promise.all([
           supabase.from("profiles").select("id", { count: "exact", head: true }),
           supabase.from("cars").select("id", { count: "exact", head: true }),
           supabase.from("bookings").select("id", { count: "exact", head: true }),
           supabase.from("user_verifications").select("id", { count: "exact", head: true }).neq("overall_status", "completed"),
-          supabase.from("wallet_transactions").select("amount").eq("status", "completed")
+          supabase.from("bookings").select("total_price").in("status", ["completed", "confirmed"])
         ]);
 
-      const totalRevenue = transactionsResult.data?.reduce((sum, transaction) => 
-        sum + Number(transaction.amount), 0) || 0;
+      const totalRevenue = revenueResult.data?.reduce((sum, booking) => 
+        sum + Number(booking.total_price), 0) || 0;
 
       return {
         totalUsers: usersResult.count || 0,
