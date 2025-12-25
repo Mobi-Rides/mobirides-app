@@ -1598,6 +1598,224 @@ export type Database = {
           },
         ]
       }
+      insurance_claim_activities: {
+        Row: {
+          activity_type: string
+          claim_id: string
+          created_at: string | null
+          description: string
+          id: string
+          metadata: Json | null
+          performed_by: string | null
+        }
+        Insert: {
+          activity_type: string
+          claim_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string | null
+        }
+        Update: {
+          activity_type?: string
+          claim_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claim_activities_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_claims: {
+        Row: {
+          actual_damage_cost: number | null
+          admin_fee: number | null
+          admin_notes: string | null
+          approved_amount: number | null
+          booking_id: string
+          claim_number: string
+          created_at: string | null
+          damage_description: string
+          estimated_damage_cost: number | null
+          evidence_urls: string[] | null
+          excess_paid: number | null
+          id: string
+          incident_date: string
+          incident_description: string
+          incident_type: string
+          location: string | null
+          more_info_requested_at: string | null
+          paid_at: string | null
+          payout_amount: number | null
+          police_report_filed: boolean | null
+          police_report_number: string | null
+          police_station: string | null
+          policy_id: string
+          rejection_reason: string | null
+          renter_id: string
+          repair_invoices_urls: string[] | null
+          repair_quotes_urls: string[] | null
+          resolved_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          total_claim_cost: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_damage_cost?: number | null
+          admin_fee?: number | null
+          admin_notes?: string | null
+          approved_amount?: number | null
+          booking_id: string
+          claim_number: string
+          created_at?: string | null
+          damage_description: string
+          estimated_damage_cost?: number | null
+          evidence_urls?: string[] | null
+          excess_paid?: number | null
+          id?: string
+          incident_date: string
+          incident_description: string
+          incident_type: string
+          location?: string | null
+          more_info_requested_at?: string | null
+          paid_at?: string | null
+          payout_amount?: number | null
+          police_report_filed?: boolean | null
+          police_report_number?: string | null
+          police_station?: string | null
+          policy_id: string
+          rejection_reason?: string | null
+          renter_id: string
+          repair_invoices_urls?: string[] | null
+          repair_quotes_urls?: string[] | null
+          resolved_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_claim_cost?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_damage_cost?: number | null
+          admin_fee?: number | null
+          admin_notes?: string | null
+          approved_amount?: number | null
+          booking_id?: string
+          claim_number?: string
+          created_at?: string | null
+          damage_description?: string
+          estimated_damage_cost?: number | null
+          evidence_urls?: string[] | null
+          excess_paid?: number | null
+          id?: string
+          incident_date?: string
+          incident_description?: string
+          incident_type?: string
+          location?: string | null
+          more_info_requested_at?: string | null
+          paid_at?: string | null
+          payout_amount?: number | null
+          police_report_filed?: boolean | null
+          police_report_number?: string | null
+          police_station?: string | null
+          policy_id?: string
+          rejection_reason?: string | null
+          renter_id?: string
+          repair_invoices_urls?: string[] | null
+          repair_quotes_urls?: string[] | null
+          resolved_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_claim_cost?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claims_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_claims_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_packages: {
+        Row: {
+          coverage_cap: number | null
+          covers_major_incidents: boolean | null
+          covers_minor_damage: boolean | null
+          created_at: string | null
+          description: string
+          display_name: string
+          excess_amount: number | null
+          exclusions: string[]
+          features: string[]
+          id: string
+          is_active: boolean | null
+          name: string
+          premium_percentage: number
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          coverage_cap?: number | null
+          covers_major_incidents?: boolean | null
+          covers_minor_damage?: boolean | null
+          created_at?: string | null
+          description: string
+          display_name: string
+          excess_amount?: number | null
+          exclusions: string[]
+          features: string[]
+          id?: string
+          is_active?: boolean | null
+          name: string
+          premium_percentage: number
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          coverage_cap?: number | null
+          covers_major_incidents?: boolean | null
+          covers_minor_damage?: boolean | null
+          created_at?: string | null
+          description?: string
+          display_name?: string
+          excess_amount?: number | null
+          exclusions?: string[]
+          features?: string[]
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          premium_percentage?: number
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       insurance_plans: {
         Row: {
           base_rate: number
@@ -1630,6 +1848,97 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      insurance_policies: {
+        Row: {
+          booking_id: string
+          car_id: string
+          coverage_cap: number | null
+          created_at: string | null
+          end_date: string
+          excess_amount: number | null
+          id: string
+          number_of_days: number
+          package_id: string
+          policy_document_url: string | null
+          policy_number: string
+          premium_per_day: number
+          rental_amount_per_day: number
+          renter_id: string
+          start_date: string
+          status: string
+          terms_accepted_at: string
+          terms_version: string
+          total_premium: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id: string
+          car_id: string
+          coverage_cap?: number | null
+          created_at?: string | null
+          end_date: string
+          excess_amount?: number | null
+          id?: string
+          number_of_days: number
+          package_id: string
+          policy_document_url?: string | null
+          policy_number: string
+          premium_per_day: number
+          rental_amount_per_day: number
+          renter_id: string
+          start_date: string
+          status?: string
+          terms_accepted_at: string
+          terms_version?: string
+          total_premium: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string
+          car_id?: string
+          coverage_cap?: number | null
+          created_at?: string | null
+          end_date?: string
+          excess_amount?: number | null
+          id?: string
+          number_of_days?: number
+          package_id?: string
+          policy_document_url?: string | null
+          policy_number?: string
+          premium_per_day?: number
+          rental_amount_per_day?: number
+          renter_id?: string
+          start_date?: string
+          status?: string
+          terms_accepted_at?: string
+          terms_version?: string
+          total_premium?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_policies_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_policies_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_policies_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       license_verifications: {
         Row: {
@@ -3699,6 +4008,7 @@ export type Database = {
         Returns: number
       }
       encrypt_message_content: { Args: { p_text: string }; Returns: string }
+      expire_insurance_policies: { Args: never; Returns: undefined }
       generate_audit_hash: {
         Args: {
           action_details: Json
@@ -3710,6 +4020,8 @@ export type Database = {
         }
         Returns: string
       }
+      generate_claim_number: { Args: never; Returns: string }
+      generate_policy_number: { Args: never; Returns: string }
       get_bypass_statistics: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
