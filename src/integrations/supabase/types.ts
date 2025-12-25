@@ -4035,6 +4035,24 @@ export type Database = {
           verification_status: Database["public"]["Enums"]["verification_status"]
         }[]
       }
+      get_admin_users_complete: {
+        Args: never
+        Returns: {
+          active_restrictions: Json
+          avatar_url: string
+          bookings_count: number
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_restricted: boolean
+          phone_number: string
+          role: string
+          user_roles: string[]
+          vehicles_count: number
+          verification_status: string
+        }[]
+      }
       get_bypass_statistics: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {

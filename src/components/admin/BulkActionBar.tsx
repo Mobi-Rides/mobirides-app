@@ -42,6 +42,7 @@ export function BulkActionBar({ selectedUsers, onClearSelection, className }: Bu
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-complete'] });
       onClearSelection();
       setAction(null);
       toast.success(`Successfully assigned ${selectedRole} role to ${selectedUsers.length} users`);
@@ -67,6 +68,7 @@ export function BulkActionBar({ selectedUsers, onClearSelection, className }: Bu
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-complete'] });
       onClearSelection();
       setAction(null);
       setDeleteReason('');
