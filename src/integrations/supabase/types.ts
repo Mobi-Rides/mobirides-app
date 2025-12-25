@@ -4022,6 +4022,19 @@ export type Database = {
       }
       generate_claim_number: { Args: never; Returns: string }
       generate_policy_number: { Args: never; Returns: string }
+      get_admin_users: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone_number: string
+          role: Database["public"]["Enums"]["user_role"]
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
+      }
       get_bypass_statistics: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {

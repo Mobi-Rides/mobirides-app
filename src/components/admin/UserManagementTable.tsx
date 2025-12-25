@@ -30,6 +30,7 @@ import { toast } from "sonner";
 
 interface Profile {
   id: string;
+  email: string | null;
   full_name: string | null;
   role: "renter" | "host" | "admin" | "super_admin";
   phone_number: string | null;
@@ -47,32 +48,26 @@ interface UserManagementTableProps {
   onSelectAll?: (userIds: string[], selected: boolean) => void;
 }
 
+import { getDisplayName } from "@/utils/displayName";
+
 const useAdminUsers = () => {
   return useQuery({
     queryKey: ["admin-users"],
     queryFn: async (): Promise<Profile[]> => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(`
-          id, 
-          full_name, 
-          role, 
-          phone_number, 
-          created_at, 
-          avatar_url
-        `)
-        .order("created_at", { ascending: false });
+      // Use the RPC function that joins profiles with auth.users to get email
+      const { data, error } = await supabase.rpc('get_admin_users');
 
       if (error) throw error;
       
       return (data || []).map((user: any) => ({
         id: user.id,
+        email: user.email,
         full_name: user.full_name,
         role: user.role,
         phone_number: user.phone_number,
         created_at: user.created_at,
         avatar_url: user.avatar_url,
-        verification_status: null,
+        verification_status: user.verification_status,
         requires_reverification: false,
       })) as Profile[];
     },
@@ -95,6 +90,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
 
   const filteredUsers = users?.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone_number?.includes(searchTerm)
   ) || [];
@@ -175,12 +171,17 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
             <Checkbox
               checked={isSelected}
               onCheckedChange={(checked) => onUserSelect(user.id, !!checked)}
-              aria-label={`Select ${user.full_name || user.id}`}
+              aria-label={`Select ${getDisplayName(user)}`}
             />
           </TableCell>
         )}
         <TableCell className="font-medium">
-          {user.full_name || "No name"}
+          <div className="flex flex-col">
+            <span>{getDisplayName(user)}</span>
+            {user.email && user.full_name && (
+              <span className="text-xs text-muted-foreground">{user.email}</span>
+            )}
+          </div>
         </TableCell>
         <TableCell>
           <Badge variant={getRoleBadgeVariant(user.role)}>
