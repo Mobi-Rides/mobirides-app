@@ -15,7 +15,6 @@ interface RoleItem {
 interface ProfileItem {
   id: string
   full_name: string | null
-  email?: string
 }
 
 Deno.serve(async (req) => {
@@ -59,6 +58,19 @@ Deno.serve(async (req) => {
     // Get unique user IDs
     const userIds = Object.keys(rolesByUser)
 
+    if (userIds.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: []
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    }
+
     // Get user profiles
     const { data: profileData, error: profileError } = await supabaseClient
       .from('profiles')
@@ -67,9 +79,29 @@ Deno.serve(async (req) => {
 
     if (profileError) throw profileError
 
-    // Combine profile data with roles
+    // Fetch emails from auth.users using admin API
+    const { data: authData, error: authError } = await supabaseClient.auth.admin.listUsers({
+      perPage: 1000, // Adjust if you have more users
+    })
+
+    if (authError) {
+      console.warn('Could not fetch auth users for emails:', authError)
+    }
+
+    // Create email lookup map
+    const emailMap: Record<string, string> = {}
+    if (authData?.users) {
+      for (const user of authData.users) {
+        if (user.id && user.email) {
+          emailMap[user.id] = user.email
+        }
+      }
+    }
+
+    // Combine profile data with roles and emails
     const usersWithRoles = (profileData as ProfileItem[]).map((profile: ProfileItem) => ({
       id: profile.id,
+      email: emailMap[profile.id] || null,
       full_name: profile.full_name,
       current_roles: rolesByUser[profile.id] || []
     }))
