@@ -351,3 +351,6 @@ verify_jwt = true
 
 [functions.bulk-delete-users]
 verify_jwt = true
+
+[functions.users-with-roles]
+verify_jwt = true
