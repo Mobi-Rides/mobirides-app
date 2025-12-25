@@ -11,12 +11,6 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
-[functions.add-admin]
-verify_jwt = true
-
-[functions.bulk-delete-users]
-verify_jwt = true
-
 [api.tls]
 # Enable HTTPS endpoints locally using a self-signed certificate.
 enabled = false
@@ -347,3 +341,13 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+# Edge Functions configuration - must be at end of file
+[functions.add-admin]
+verify_jwt = true
+
+[functions.bulk-assign-role]
+verify_jwt = true
+
+[functions.bulk-delete-users]
+verify_jwt = true
