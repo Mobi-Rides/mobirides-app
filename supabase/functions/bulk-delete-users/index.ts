@@ -83,8 +83,7 @@ async function deleteUser(
     // 3. Delete conversations created by user
     await supabaseAdmin.from("conversations").delete().eq("created_by", userId);
 
-    // 4. Delete messages
-    await supabaseAdmin.from("messages").delete().or(`sender_id.eq.${userId},receiver_id.eq.${userId}`);
+    // 4. Legacy messages table no longer exists (migrated to conversation_messages)
 
     // 5. Delete reviews
     await supabaseAdmin.from("reviews").delete().eq("reviewer_id", userId);
