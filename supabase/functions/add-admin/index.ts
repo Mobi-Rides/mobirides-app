@@ -61,6 +61,26 @@ Deno.serve(async (req) => {
 
     console.log(`[add-admin] Successfully added admin: ${userId}`);
 
+    // Log audit event
+    try {
+      await supabaseClient.rpc('log_audit_event', {
+        p_event_type: 'system_config_changed',
+        p_severity: 'high',
+        p_target_id: userId,
+        p_resource_type: 'admin',
+        p_resource_id: userId,
+        p_action_details: {
+          action: 'admin_created',
+          email: userEmail,
+          full_name: userName || 'Unknown User',
+          is_super_admin: isSuperAdmin || false
+        }
+      });
+      console.log(`[add-admin] Audit event logged for: ${userId}`);
+    } catch (auditError) {
+      console.log('[add-admin] Audit logging skipped:', auditError);
+    }
+
     return new Response(
       JSON.stringify({ success: true, email: userEmail }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
