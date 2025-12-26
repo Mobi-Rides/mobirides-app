@@ -182,19 +182,19 @@ CREATE TABLE IF NOT EXISTS public.insurance_claim_activities (
 -- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
-CREATE INDEX idx_insurance_policies_booking ON public.insurance_policies(booking_id);
-CREATE INDEX idx_insurance_policies_renter ON public.insurance_policies(renter_id);
-CREATE INDEX idx_insurance_policies_status ON public.insurance_policies(status);
-CREATE INDEX idx_insurance_policies_dates ON public.insurance_policies(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_booking ON public.insurance_policies(booking_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_renter ON public.insurance_policies(renter_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_status ON public.insurance_policies(status);
+CREATE INDEX IF NOT EXISTS idx_insurance_policies_dates ON public.insurance_policies(start_date, end_date);
 
-CREATE INDEX idx_insurance_claims_policy ON public.insurance_claims(policy_id);
-CREATE INDEX idx_insurance_claims_booking ON public.insurance_claims(booking_id);
-CREATE INDEX idx_insurance_claims_renter ON public.insurance_claims(renter_id);
-CREATE INDEX idx_insurance_claims_status ON public.insurance_claims(status);
-CREATE INDEX idx_insurance_claims_submitted ON public.insurance_claims(submitted_at);
+CREATE INDEX IF NOT EXISTS idx_insurance_claims_policy ON public.insurance_claims(policy_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_claims_booking ON public.insurance_claims(booking_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_claims_renter ON public.insurance_claims(renter_id);
+CREATE INDEX IF NOT EXISTS idx_insurance_claims_status ON public.insurance_claims(status);
+CREATE INDEX IF NOT EXISTS idx_insurance_claims_submitted ON public.insurance_claims(submitted_at);
 
-CREATE INDEX idx_claim_activities_claim ON public.insurance_claim_activities(claim_id);
-CREATE INDEX idx_claim_activities_date ON public.insurance_claim_activities(created_at);
+CREATE INDEX IF NOT EXISTS idx_claim_activities_claim ON public.insurance_claim_activities(claim_id);
+CREATE INDEX IF NOT EXISTS idx_claim_activities_date ON public.insurance_claim_activities(created_at);
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -205,19 +205,23 @@ ALTER TABLE public.insurance_claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.insurance_claim_activities ENABLE ROW LEVEL SECURITY;
 
 -- Insurance Packages: Public read
+DROP POLICY IF EXISTS "Insurance packages are viewable by everyone" ON public.insurance_packages;
 CREATE POLICY "Insurance packages are viewable by everyone"
   ON public.insurance_packages FOR SELECT
   USING (is_active = true);
 
+DROP POLICY IF EXISTS "Only admins can manage insurance packages" ON public.insurance_packages;
 CREATE POLICY "Only admins can manage insurance packages"
   ON public.insurance_packages FOR ALL
   USING (is_admin(auth.uid()));
 
 -- Insurance Policies: Users see their own, hosts see for their cars, admins see all
+DROP POLICY IF EXISTS "Users can view their own insurance policies" ON public.insurance_policies;
 CREATE POLICY "Users can view their own insurance policies"
   ON public.insurance_policies FOR SELECT
   USING (renter_id = auth.uid());
 
+DROP POLICY IF EXISTS "Car owners can view policies for their cars" ON public.insurance_policies;
 CREATE POLICY "Car owners can view policies for their cars"
   ON public.insurance_policies FOR SELECT
   USING (
@@ -228,23 +232,28 @@ CREATE POLICY "Car owners can view policies for their cars"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can view all insurance policies" ON public.insurance_policies;
 CREATE POLICY "Admins can view all insurance policies"
   ON public.insurance_policies FOR SELECT
   USING (is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "System can create insurance policies during booking" ON public.insurance_policies;
 CREATE POLICY "System can create insurance policies during booking"
   ON public.insurance_policies FOR INSERT
   WITH CHECK (renter_id = auth.uid());
 
+DROP POLICY IF EXISTS "System can update policy status" ON public.insurance_policies;
 CREATE POLICY "System can update policy status"
   ON public.insurance_policies FOR UPDATE
   USING (renter_id = auth.uid() OR is_admin(auth.uid()));
 
 -- Insurance Claims: Users see their own, hosts see for their cars, admins manage all
+DROP POLICY IF EXISTS "Users can view their own claims" ON public.insurance_claims;
 CREATE POLICY "Users can view their own claims"
   ON public.insurance_claims FOR SELECT
   USING (renter_id = auth.uid());
 
+DROP POLICY IF EXISTS "Car owners can view claims for their cars" ON public.insurance_claims;
 CREATE POLICY "Car owners can view claims for their cars"
   ON public.insurance_claims FOR SELECT
   USING (
@@ -256,10 +265,12 @@ CREATE POLICY "Car owners can view claims for their cars"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can view all claims" ON public.insurance_claims;
 CREATE POLICY "Admins can view all claims"
   ON public.insurance_claims FOR SELECT
   USING (is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Users can submit claims for their active policies" ON public.insurance_claims;
 CREATE POLICY "Users can submit claims for their active policies"
   ON public.insurance_claims FOR INSERT
   WITH CHECK (
@@ -272,15 +283,18 @@ CREATE POLICY "Users can submit claims for their active policies"
     )
   );
 
+DROP POLICY IF EXISTS "Users can update their own submitted claims" ON public.insurance_claims;
 CREATE POLICY "Users can update their own submitted claims"
   ON public.insurance_claims FOR UPDATE
   USING (renter_id = auth.uid() AND status = 'submitted');
 
+DROP POLICY IF EXISTS "Admins can manage all claims" ON public.insurance_claims;
 CREATE POLICY "Admins can manage all claims"
   ON public.insurance_claims FOR ALL
   USING (is_admin(auth.uid()));
 
 -- Claim Activities: Users see activities for their claims, admins see all
+DROP POLICY IF EXISTS "Users can view activities for their claims" ON public.insurance_claim_activities;
 CREATE POLICY "Users can view activities for their claims"
   ON public.insurance_claim_activities FOR SELECT
   USING (
@@ -291,10 +305,12 @@ CREATE POLICY "Users can view activities for their claims"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can view all claim activities" ON public.insurance_claim_activities;
 CREATE POLICY "Admins can view all claim activities"
   ON public.insurance_claim_activities FOR SELECT
   USING (is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "System can create claim activities" ON public.insurance_claim_activities;
 CREATE POLICY "System can create claim activities"
   ON public.insurance_claim_activities FOR INSERT
   WITH CHECK (true); -- Anyone authenticated can log activities
@@ -310,14 +326,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_insurance_packages_updated_at ON public.insurance_packages;
 CREATE TRIGGER update_insurance_packages_updated_at
   BEFORE UPDATE ON public.insurance_packages
   FOR EACH ROW EXECUTE FUNCTION update_insurance_updated_at();
 
+DROP TRIGGER IF EXISTS update_insurance_policies_updated_at ON public.insurance_policies;
 CREATE TRIGGER update_insurance_policies_updated_at
   BEFORE UPDATE ON public.insurance_policies
   FOR EACH ROW EXECUTE FUNCTION update_insurance_updated_at();
 
+DROP TRIGGER IF EXISTS update_insurance_claims_updated_at ON public.insurance_claims;
 CREATE TRIGGER update_insurance_claims_updated_at
   BEFORE UPDATE ON public.insurance_claims
   FOR EACH ROW EXECUTE FUNCTION update_insurance_updated_at();
@@ -478,7 +497,7 @@ INSERT INTO public.insurance_packages (
     'Underbody damage from off-road use'
   ],
   4
-);
+) ON CONFLICT (name) DO NOTHING;
 
 -- ============================================
 -- HELPER FUNCTION: Generate Policy Number
@@ -532,6 +551,7 @@ VALUES
 ) ON CONFLICT (id) DO NOTHING;
 
 -- RLS Policies for insurance-policies bucket
+DROP POLICY IF EXISTS "Users can view their own policy documents" ON storage.objects;
 CREATE POLICY "Users can view their own policy documents"
   ON storage.objects FOR SELECT
   USING (
@@ -539,6 +559,7 @@ CREATE POLICY "Users can view their own policy documents"
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
+DROP POLICY IF EXISTS "System can upload policy documents" ON storage.objects;
 CREATE POLICY "System can upload policy documents"
   ON storage.objects FOR INSERT
   WITH CHECK (
@@ -547,6 +568,7 @@ CREATE POLICY "System can upload policy documents"
   );
 
 -- RLS Policies for insurance-claims bucket
+DROP POLICY IF EXISTS "Users can view their own claim evidence" ON storage.objects;
 CREATE POLICY "Users can view their own claim evidence"
   ON storage.objects FOR SELECT
   USING (
@@ -554,6 +576,7 @@ CREATE POLICY "Users can view their own claim evidence"
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
+DROP POLICY IF EXISTS "Users can upload claim evidence" ON storage.objects;
 CREATE POLICY "Users can upload claim evidence"
   ON storage.objects FOR INSERT
   WITH CHECK (
@@ -561,6 +584,7 @@ CREATE POLICY "Users can upload claim evidence"
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
+DROP POLICY IF EXISTS "Admins can access all insurance documents" ON storage.objects;
 CREATE POLICY "Admins can access all insurance documents"
   ON storage.objects FOR ALL
   USING (

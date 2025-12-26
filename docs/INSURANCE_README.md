@@ -15,14 +15,14 @@ The MobiRides insurance system is a comprehensive, production-ready implementati
 ### For Developers
 
 ```bash
-# Install dependencies (if not already done)
+# Install dependencies
 npm install
 
-# Run tests
-npm test
+# Run verification script (New!)
+npx tsx src/scripts/test_insurance_features.ts
 
-# Run tests in watch mode
-npm run test:watch
+# Run standard tests
+npm test
 
 # Build the application
 npm run build
@@ -52,7 +52,9 @@ Insurance System
 │   └── insurance_claim_activities (audit trail)
 │
 ├── Backend Services
-│   ├── insuranceService.ts (15+ methods, 469 lines)
+│   ├── insuranceService.ts (Core logic)
+│   ├── underwriterService.ts (Risk assessment)
+│   ├── insurance/automationService.ts (Expiry & Auto-approval)
 │   ├── walletService.ts (payout integration)
 │   └── Edge Function: calculate-insurance
 │
@@ -99,12 +101,13 @@ Insurance System
 ## Premium Calculation Formula
 
 ```typescript
-Premium = Daily Rental Rate × Premium Percentage × Number of Days
+Premium = Daily Rental Rate × Premium Percentage × Number of Days × Risk Multiplier
 ```
 
 **Example**:
 - Rental: P 500/day × 7 days = P 3,500
-- Standard Package (50%): P 500 × 0.50 × 7 = **P 1,750 premium**
+- Standard Package (50%): P 500 × 0.50 × 7 = P 1,750
+- High Risk Driver (1.5x load): P 1,750 × 1.5 = **P 2,625 Total Premium**
 
 ## Key Features
 
@@ -128,9 +131,9 @@ Premium = Daily Rental Rate × Premium Percentage × Number of Days
 - Automated notifications
 
 ### ✅ Policy Automation
-- Automatic expiration via pg_cron (hourly job)
-- Status updates: active → expired
-- No manual intervention required
+- **Policy Expiration**: Automated checks for end_date (via `automationService.ts` or pg_cron).
+- **Auto-Approval**: Small claims (< P500) are automatically approved by the system.
+- **User Response**: Users can dispute/respond to "More Info Needed" requests via the UI.
 
 ## API Reference
 

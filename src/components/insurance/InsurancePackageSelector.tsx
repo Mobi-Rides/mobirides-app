@@ -16,6 +16,8 @@ interface InsurancePackageSelectorProps {
   selectedPackageId?: string;
   onPackageSelect: (packageId: string, totalPremium: number) => void;
   className?: string;
+  userId?: string;
+  carId?: string;
 }
 
 export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> = ({
@@ -25,6 +27,8 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
   selectedPackageId,
   onPackageSelect,
   className,
+  userId,
+  carId,
 }) => {
   const [calculations, setCalculations] = useState<PremiumCalculation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +36,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
 
   useEffect(() => {
     loadInsuranceOptions();
-  }, [dailyRentalAmount, startDate, endDate]);
+  }, [dailyRentalAmount, startDate, endDate, userId, carId]);
 
   const loadInsuranceOptions = async () => {
     try {
@@ -40,7 +44,9 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
       const premiums = await InsuranceService.calculateAllPremiums(
         dailyRentalAmount,
         startDate,
-        endDate
+        endDate,
+        userId,
+        carId
       );
       setCalculations(premiums);
       setError(null);
@@ -64,7 +70,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
   };
 
   const getPackageBadgeColor = (packageName: string): "destructive" | "secondary" | "default" | "outline" => {
-    switch(packageName) {
+    switch (packageName) {
       case 'no_coverage': return 'destructive';
       case 'basic': return 'secondary';
       case 'standard': return 'default';
@@ -74,7 +80,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
   };
 
   const getPackageGradient = (packageName: string) => {
-    switch(packageName) {
+    switch (packageName) {
       case 'no_coverage': return 'from-orange-50 to-red-50';
       case 'basic': return 'from-blue-50 to-cyan-50';
       case 'standard': return 'from-purple-50 to-pink-50';
@@ -136,14 +142,14 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                       {calc.displayName}
                     </CardTitle>
                     <CardDescription className="text-xs mt-1">
-                      {calc.premiumPercentage === 0 
+                      {calc.premiumPercentage === 0
                         ? 'No insurance coverage'
                         : `${(calc.premiumPercentage * 100).toFixed(0)}% of rental amount`
                       }
                     </CardDescription>
                   </div>
                 </div>
-                
+
                 {selectedPackageId === calc.packageId && (
                   <Badge variant={getPackageBadgeColor(calc.packageName)} className="gap-1">
                     <Check className="h-3 w-3" /> Selected
@@ -168,7 +174,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                       {formatCurrency(calc.premiumPerDay)}/day × {calc.numberOfDays} days
                     </div>
                   </div>
-                  
+
                   {calc.coverageCap && (
                     <div className="text-right">
                       <div className="text-sm font-semibold">Coverage</div>

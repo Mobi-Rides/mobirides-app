@@ -115,6 +115,18 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
   };
 
   const onSubmit = async (data: ClaimFormData) => {
+    // Prevent accidental submission from earlier steps (e.g. pressing Enter)
+    if (currentStep < 3) {
+      nextStep();
+      return;
+    }
+
+    // Prevent accidental double-clicks on "Next" becoming "Submit"
+    if (uploadedFiles.length === 0) {
+      const confirmed = window.confirm("You haven't uploaded any documents (photos, police report). Are you sure you want to submit without them?");
+      if (!confirmed) return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 

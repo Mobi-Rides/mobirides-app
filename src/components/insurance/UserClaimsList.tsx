@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle, Clock, Eye, Plus, Filter, Search, Calendar, D
 import { InsuranceService } from '../../services/insuranceService';
 import { supabase } from '@/integrations/supabase/client';
 import ClaimsSubmissionForm from './ClaimsSubmissionForm';
+import { ClaimResponseDialog } from './ClaimResponseDialog';
 import { useAuth } from '../../hooks/useAuth';
 import { InsuranceClaim } from '@/types/insurance-schema';
 
@@ -14,6 +15,10 @@ export default function UserClaimsList() {
   const [selectedClaim, setSelectedClaim] = useState<InsuranceClaim | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Response Dialog State
+  const [responseClaim, setResponseClaim] = useState<InsuranceClaim | null>(null);
+  const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -30,7 +35,7 @@ export default function UserClaimsList() {
         .from('bookings')
         .select('id, car_id, start_date, end_date, total_price, status')
         .eq('renter_id', user?.id)
-        .eq('status', 'completed');
+        .in('status', ['confirmed', 'in_progress', 'completed'] as any[]);
 
       if (bookingsError) throw bookingsError;
 
@@ -39,25 +44,25 @@ export default function UserClaimsList() {
 
         // Fetch policies for these bookings
         const { data: policies, error: policiesError } = await supabase
-          .from('insurance_policies')
+          .from('insurance_policies' as any)
           .select('id, booking_id, package_id, total_premium, status')
           .in('booking_id', bookingIds);
 
         if (policiesError) throw policiesError;
 
         if (policies && policies.length > 0) {
-          const policyIds = policies.map(p => p.id);
+          const policyIds = (policies as any[]).map(p => p.id);
 
           // Fetch claims for these policies
           const { data: claimsData, error: claimsError } = await supabase
-            .from('insurance_claims')
+            .from('insurance_claims' as any)
             .select('*')
             .in('policy_id', policyIds)
             .order('created_at', { ascending: false });
 
           if (claimsError) throw claimsError;
 
-          setClaims(claimsData || []);
+          setClaims((claimsData as any[]) || []);
         } else {
           setClaims([]);
         }
@@ -177,14 +182,14 @@ export default function UserClaimsList() {
   const fetchActivePolicies = async () => {
     try {
       const { data, error } = await supabase
-        .from('insurance_policies')
+        .from('insurance_policies' as any)
         .select('id, booking_id, policy_number, status, insurance_packages(display_name)')
         .eq('renter_id', user?.id)
         .in('status', ['active', 'expired']) // Allow claiming on recent expired policies too
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActivePolicies(data || []);
+      setActivePolicies((data as any[]) || []);
     } catch (error) {
       console.error('Error fetching policies:', error);
     }
@@ -332,18 +337,49 @@ export default function UserClaimsList() {
             </div>
           </div>
 
-          {selectedClaim.supporting_documents && selectedClaim.supporting_documents.length > 0 && (
+          {selectedClaim.evidence_urls && selectedClaim.evidence_urls.length > 0 && (
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Supporting Documents</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {selectedClaim.supporting_documents.map((doc, index) => (
-                  <div key={index} className="border rounded-lg p-3 text-center">
-                    <div className="w-full h-24 bg-gray-200 rounded mb-2 flex items-center justify-center">
-                      <FileText className="w-8 h-8 text-gray-500" />
+                {selectedClaim.evidence_urls.map((doc, index) => {
+                  const fileName = doc.split('/').pop() || 'document';
+                  const publicUrl = supabase.storage.from('insurance-claims').getPublicUrl(doc).data.publicUrl;
+
+                  return (
+                    <div key={index} className="border rounded-lg p-3 text-center group relative">
+                      <div className="w-full h-24 bg-gray-200 rounded mb-2 flex items-center justify-center overflow-hidden">
+                        {fileName.match(/\.(jpg|jpeg|png|heic)$/i) ? (
+                          <img src={publicUrl} alt={fileName} className="w-full h-full object-cover" />
+                        ) : (
+                          <FileText className="w-8 h-8 text-gray-500" />
+                        )}
+                        <div className="absolute inset-x-3 bottom-14 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <a
+                            href={publicUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-blue-600 text-white text-[10px] px-2 py-1 rounded shadow-sm hover:bg-blue-700"
+                          >
+                            View
+                          </a>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 truncate">{fileName}</p>
+                      <a
+                        href={publicUrl}
+                        download={fileName}
+                        className="text-[10px] text-blue-600 hover:underline mt-1 inline-block"
+                        onClick={(e) => {
+                          // Prevent default only if we want to handle download manually
+                          // For public URLs, simple <a> with download attribute works for same-origin
+                          // or if CORS is set up.
+                        }}
+                      >
+                        Download
+                      </a>
                     </div>
-                    <p className="text-xs text-gray-600 truncate">{doc.split('/').pop()}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -493,14 +529,27 @@ export default function UserClaimsList() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
                         onClick={() => setSelectedClaim(claim)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center"
+                        className="text-blue-600 hover:text-blue-900 flex items-center inline-block"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         View
                       </button>
+
+                      {claim.status === 'more_info_needed' && (
+                        <button
+                          onClick={() => {
+                            setResponseClaim(claim);
+                            setIsResponseDialogOpen(true);
+                          }}
+                          className="text-orange-600 hover:text-orange-900 flex items-center inline-block ml-3"
+                        >
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                          Respond
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -508,6 +557,20 @@ export default function UserClaimsList() {
             </table>
           </div>
         </div>
+      )}
+      {responseClaim && (
+        <ClaimResponseDialog
+          isOpen={isResponseDialogOpen}
+          onClose={() => {
+            setIsResponseDialogOpen(false);
+            setResponseClaim(null);
+          }}
+          onSuccess={() => {
+            fetchUserClaims();
+          }}
+          claimId={responseClaim.id}
+          claimNumber={responseClaim.claim_number}
+        />
       )}
     </div>
   );

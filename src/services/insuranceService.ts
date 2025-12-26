@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { generatePolicyPDF } from '@/utils/pdfGenerator';
 import { insuranceNotificationService } from '@/services/wallet/insuranceNotificationService';
 import { UnderwriterService } from '@/services/underwriterService';
+
 import { InsurancePackage, InsurancePolicy, InsuranceClaim } from '@/types/insurance-schema';
 
 /**
@@ -74,9 +75,29 @@ export class InsuranceService {
     packageId: string,
     dailyRentalAmount: number,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    renterId?: string,
+    carId?: string
   ): Promise<PremiumCalculation> {
     const insurancePackage = await this.getPackageById(packageId);
+
+    // Get Risk Adjustment (if eligible)
+    let premiumMultiplier = 1.0;
+
+    if (renterId && carId) {
+      const risk = await UnderwriterService.assessRisk(renterId, carId);
+
+      // If risk is prohibitive, we might want to throw or return unavailable
+      // For now, we'll just apply the load. If load is 0, it means prohibited.
+      if (risk.premiumLoad === 0) {
+        // Logic to handle prohibited could go here, 
+        // e.g. set premium to explicitly high number or handle in UI
+        // For simplistic MVP, we'll force a very high multiplier to discourage/block
+        premiumMultiplier = 10.0; // Prohibitive pricing as fallback
+      } else {
+        premiumMultiplier = risk.premiumLoad;
+      }
+    }
 
     // Calculate number of rental days (minimum 1 day)
     const numberOfDays = Math.max(
@@ -84,9 +105,9 @@ export class InsuranceService {
       Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
     );
 
-    // Apply rental-based formula
-    const premiumPerDay = dailyRentalAmount * insurancePackage.premium_percentage;
-    const totalPremium = premiumPerDay * numberOfDays;
+    // Apply rental-based formula with risk adjustment
+    let premiumPerDay = dailyRentalAmount * insurancePackage.premium_percentage * premiumMultiplier;
+    let totalPremium = premiumPerDay * numberOfDays;
 
     return {
       packageId: insurancePackage.id,
@@ -116,13 +137,15 @@ export class InsuranceService {
   static async calculateAllPremiums(
     dailyRentalAmount: number,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    renterId?: string,
+    carId?: string
   ): Promise<PremiumCalculation[]> {
     const packages = await this.getInsurancePackages();
 
     const calculations = await Promise.all(
       packages.map(pkg =>
-        this.calculatePremium(pkg.id, dailyRentalAmount, startDate, endDate)
+        this.calculatePremium(pkg.id, dailyRentalAmount, startDate, endDate, renterId, carId)
       )
     );
 
@@ -147,7 +170,9 @@ export class InsuranceService {
       packageId,
       dailyRentalAmount,
       startDate,
-      endDate
+      endDate,
+      renterId,
+      carId
     );
 
     // Generate policy number
@@ -210,7 +235,7 @@ export class InsuranceService {
 
       // Update policy with PDF URL
       await supabase
-        .from('insurance_policies')
+        .from('insurance_policies' as any)
         .update({ policy_document_url: pdfUrl })
         .eq('id', policy.id);
 
@@ -289,7 +314,7 @@ export class InsuranceService {
     status: 'active' | 'expired' | 'cancelled' | 'claimed'
   ): Promise<void> {
     const { error } = await supabase
-      .from('insurance_policies')
+      .from('insurance_policies' as any)
       .update({ status })
       .eq('id', policyId);
 
@@ -394,7 +419,60 @@ export class InsuranceService {
 
       if (error) throw error;
 
-      return { success: true };
+      // --- Send Notifications ---
+      try {
+        // Get user profile for email notification
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        const renterName = profile?.full_name || 'Valued Customer';
+        // Use email from auth user object, as profiles table doesn't have email column
+        const renterEmail = user.email;
+
+        // 1. Send Email Notification to Renter
+        if (renterEmail) {
+          await insuranceNotificationService.sendClaimReceived(
+            renterEmail,
+            renterName,
+            data as any
+          );
+          console.log(`📧 Claim submission email sent to ${renterEmail}`);
+        }
+
+        // 2. Create In-App Notification for Renter
+        await supabase.rpc('create_claim_notification' as any, {
+          p_user_id: user.id,
+          p_claim_number: claimNumber,
+          p_status: 'submitted',
+          p_is_new_claim: true
+        });
+        console.log(`🔔 In-app notification created for claim ${claimNumber}`);
+
+        // 3. Notify Host/Owner of the vehicle
+        await InsuranceService.notifyHostOfClaim(claimData.booking_id, data as any);
+
+      } catch (notificationError) {
+        // Log but don't fail the claim submission if notifications fail
+        console.error('Failed to send claim notifications (non-blocking):', notificationError);
+      }
+
+      // --- Log Claim Activity (Audit Trail) ---
+      await InsuranceService.logClaimActivity(
+        (data as any).id,
+        'submitted',
+        `Claim ${claimNumber} submitted by renter for ${claimData.incident_type || 'incident'}`,
+        user.id,
+        {
+          incident_type: claimData.incident_type,
+          estimated_damage_cost: claimData.estimated_damage_cost,
+          booking_id: claimData.booking_id
+        }
+      );
+
+      return { success: true, data };
     } catch (error) {
       console.error('Submit claim error:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -407,17 +485,19 @@ export class InsuranceService {
    */
   static async processClaimPayout(claimId: string, amount: number): Promise<void> {
     // Fetch claim to get renter_id
-    const { data: claim, error: claimError } = await supabase
-      .from('insurance_claims')
+    const { data: rawClaim, error: claimError } = await supabase
+      .from('insurance_claims' as any)
       .select('renter_id, claim_number, payout_amount')
       .eq('id', claimId)
       .single();
 
-    if (claimError || !claim) {
+    if (claimError || !rawClaim) {
       throw new Error('Claim not found');
     }
 
-    console.log(`💰 Processing Payout of P${amount} for Claim ${claim.claim_number} to User ${claim.renter_id}`);
+    const claim = rawClaim as any;
+
+    console.log(`💰 Processing Payout of P${amount} for Claim ${(claim as any).claim_number} to User ${(claim as any).renter_id}`);
 
     try {
       // Import wallet service dynamically to avoid circular dependencies
@@ -428,14 +508,14 @@ export class InsuranceService {
         claim.renter_id,
         claimId,
         amount,
-        claim.claim_number
+        (claim as any).claim_number
       );
 
       if (!success) {
         throw new Error('Failed to credit wallet');
       }
 
-      console.log(`✅ Wallet credited successfully for claim ${claim.claim_number}`);
+      console.log(`✅ Wallet credited successfully for claim ${(claim as any).claim_number}`);
     } catch (walletError) {
       console.error('Failed to credit wallet:', walletError);
       throw new Error(`Wallet credit failed: ${walletError instanceof Error ? walletError.message : 'Unknown error'}`);
@@ -455,6 +535,18 @@ export class InsuranceService {
     }
 
     console.log(`✅ Claim ${claim.claim_number} marked as paid`);
+
+    // --- Log Claim Activity (Audit Trail) ---
+    await InsuranceService.logClaimActivity(
+      claimId,
+      'paid',
+      `Payout of P${amount.toFixed(2)} processed for claim ${(claim as any).claim_number}`,
+      undefined, // System action
+      {
+        payout_amount: amount,
+        renter_id: (claim as any).renter_id
+      }
+    );
   }
   /**
    * Upload policy PDF to Supabase Storage
@@ -486,6 +578,161 @@ export class InsuranceService {
 
     return urlData.publicUrl;
   }
+
+  /**
+   * Log claim activity for audit trail
+   * Creates a record in insurance_claim_activities table
+   */
+  static async logClaimActivity(
+    claimId: string,
+    activityType: 'submitted' | 'reviewed' | 'info_requested' | 'info_provided' | 'approved' | 'rejected' | 'paid' | 'note_added' | 'document_uploaded' | 'status_changed',
+    description: string,
+    performedBy?: string,
+    metadata?: Record<string, any>
+  ): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('insurance_claim_activities' as any)
+        .insert({
+          claim_id: claimId,
+          activity_type: activityType,
+          description,
+          performed_by: performedBy,
+          metadata: metadata || null
+        });
+
+      if (error) {
+        console.error('Failed to log claim activity:', error);
+      } else {
+        console.log(`📝 Logged activity: ${activityType} for claim ${claimId}`);
+      }
+    } catch (err) {
+      // Non-blocking - don't fail the main operation
+      console.error('Error logging claim activity:', err);
+    }
+  }
+
+  /**
+   * Notify car host/owner when a claim is filed on their vehicle
+   */
+  static async notifyHostOfClaim(
+    bookingId: string,
+    claim: InsuranceClaim
+  ): Promise<void> {
+    try {
+      // Get booking with car and owner info
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          car_id,
+          cars!inner(
+            id,
+            owner_id,
+            make,
+            model,
+            profiles!owner_id(id, full_name)
+          )
+        `)
+        .eq('id', bookingId)
+        .single();
+
+      if (bookingError || !booking) {
+        console.error('Failed to fetch booking for host notification:', bookingError);
+        return;
+      }
+
+      const car = (booking as any).cars;
+      const hostProfile = car?.profiles;
+      const hostId = car?.owner_id;
+      const hostName = hostProfile?.full_name || 'Host';
+
+      // Get host email securely via RPC
+      const { data: hostEmail } = await supabase.rpc('get_user_email_for_notification', {
+        user_uuid: hostId
+      });
+
+      const carName = `${car?.make} ${car?.model}`;
+
+      // 1. Send email notification to host
+      if (hostEmail) {
+        await insuranceNotificationService.sendHostClaimNotification(
+          hostEmail,
+          hostName,
+          claim,
+          carName
+        );
+        console.log(`📧 Host claim notification sent to ${hostEmail}`);
+      }
+
+      // 2. Create in-app notification for host
+      const { error: notifError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: hostId,
+          type: 'booking_request_received' as any, // Temporary fix: notification types need update
+          title: 'Insurance Claim Filed',
+          description: `An insurance claim (#${claim.claim_number}) has been filed for your ${carName}.`,
+          is_read: false,
+          metadata: {
+            claim_id: claim.id,
+            claim_number: claim.claim_number,
+            car_id: car?.id,
+            incident_type: claim.incident_type
+          }
+        });
+
+      if (notifError) {
+        console.error('Failed to create in-app notification for host:', notifError);
+      } else {
+        console.log(`🔔 In-app notification created for host ${hostId}`);
+      }
+
+    } catch (err) {
+      // Non-blocking
+      console.error('Error notifying host of claim:', err);
+    }
+  }
+
+  /**
+   * Add a response to a claim (from user)
+   * Used when status is 'more_info_needed'
+   */
+  static async addClaimResponse(
+    claimId: string,
+    responseComment: string,
+    fileUrls: string[] = []
+  ): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // 1. Log the activity
+    await this.logClaimActivity(
+      claimId,
+      'info_provided',
+      `User provided additional info: ${responseComment}`,
+      user.id,
+      { file_count: fileUrls.length, files: fileUrls }
+    );
+
+    // 2. Update claim status back to 'under_review' (or stay as is, but usually moves back to review)
+    // We also append the new files to evidence_urls if possible, or just link them in activity
+    // For simplicity, we'll just update status. The activity log holds the new files context.
+
+    // Ideally we append to arrays in DB, but let's just update status for now.
+    const { error } = await supabase
+      .from('insurance_claims' as any)
+      .update({
+        status: 'under_review',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', claimId);
+
+    if (error) throw new Error(`Failed to update claim status: ${error.message}`);
+
+    // 3. Notify Admins (Logic to be added if we had admin notification service)
+  }
 }
 
 export default InsuranceService;
+

@@ -1,15 +1,15 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { InsurancePolicy, InsurancePackage } from '@/services/insuranceService';
+import type { InsurancePolicy, InsurancePackage } from '@/types/insurance-schema';
 
 export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: InsurancePackage, renterName: string, carDetails: string): Blob => {
   const doc = new jsPDF();
-  
+
   // Header
   doc.setFontSize(22);
   doc.setTextColor(0, 51, 102); // Dark Blue
   doc.text('MobiRides Insurance Certificate', 105, 20, { align: 'center' });
-  
+
   doc.setFontSize(10);
   doc.setTextColor(100);
   doc.text(`Policy Number: ${policy.policy_number}`, 105, 30, { align: 'center' });
@@ -64,7 +64,7 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
   doc.text('Important Terms & Conditions', 20, termsY);
   doc.setFontSize(8);
   doc.setTextColor(80);
-  
+
   const terms = [
     '1. This policy is valid only for the duration specified above.',
     '2. The renter is responsible for the Excess amount stated above for any claim.',

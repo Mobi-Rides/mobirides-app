@@ -1,4 +1,4 @@
-import { ResendEmailService } from './notificationService';
+import { ResendEmailService } from '../notificationService';
 import { InsurancePolicy, InsurancePackage, InsuranceClaim } from '@/types/insurance-schema';
 
 export class InsuranceNotificationService {
@@ -96,6 +96,36 @@ export class InsuranceNotificationService {
       subject
     );
   }
+
+  /**
+   * Notify Host/Owner When a Claim is Filed on Their Vehicle
+   */
+  async sendHostClaimNotification(
+    email: string,
+    hostName: string,
+    claim: InsuranceClaim,
+    carName: string
+  ) {
+    console.log(`📧 Sending Host Claim Notification to ${email}`);
+
+    const subject = `Insurance Claim Filed for Your Vehicle - ${claim.claim_number}`;
+
+    return this.emailService.sendEmail(
+      email,
+      'insurance-host-claim-notification',
+      {
+        name: hostName,
+        claimNumber: claim.claim_number,
+        carName: carName,
+        incidentDate: new Date(claim.incident_date).toLocaleDateString(),
+        incidentType: claim.incident_type.replace(/_/g, ' '),
+        status: 'Submitted',
+        description: claim.incident_description?.substring(0, 200) || 'No description provided'
+      },
+      subject
+    );
+  }
 }
 
 export const insuranceNotificationService = InsuranceNotificationService.getInstance();
+

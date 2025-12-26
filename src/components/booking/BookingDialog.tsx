@@ -771,6 +771,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                           setSelectedInsurancePackageId(pkgId);
                           setInsurancePremium(premium);
                         }}
+                        userId={userId || undefined}
+                        carId={car.id}
                       />
                       {insurancePremium !== null && insurancePremium > 0 && (
                         <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
