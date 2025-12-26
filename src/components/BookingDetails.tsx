@@ -7,7 +7,7 @@ import { LoadingView } from '@/components/home/LoadingView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Car, MapPin, User, Clock, DollarSign } from 'lucide-react';
+import { Calendar, Car, MapPin, User, Clock, DollarSign, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -27,13 +27,14 @@ export const BookingDetails: React.FC = () => {
     queryKey: ['booking', id],
     queryFn: async () => {
       if (!id) throw new Error('Booking ID is required');
-      
+
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
           cars (*, owner:profiles!owner_id (*)),
-          renter:profiles!renter_id (*)
+          renter:profiles!renter_id (*),
+          insurance_policies (*)
         `)
         .eq('id', id)
         .single();
@@ -67,7 +68,7 @@ export const BookingDetails: React.FC = () => {
   // Check if user has permission to view this booking
   const isRenter = user?.id === booking.renter_id;
   const isHost = user?.id === booking.cars?.owner_id;
-  
+
   if (!isRenter && !isHost) {
     return <Navigate to="/bookings" replace />;
   }
@@ -94,8 +95,8 @@ export const BookingDetails: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <div className="mb-6">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => navigate('/bookings')}
           className="mb-4"
         >
@@ -157,10 +158,10 @@ export const BookingDetails: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                  <h3 className="font-semibold text-lg">
-                    {booking.cars.year} {booking.cars.brand} {booking.cars.model}
-                  </h3>
-                </div>
+                <h3 className="font-semibold text-lg">
+                  {booking.cars.year} {booking.cars.brand} {booking.cars.model}
+                </h3>
+              </div>
 
               <div className="flex justify-between items-center">
                 <span className="font-medium">Daily Rate:</span>
@@ -195,9 +196,9 @@ export const BookingDetails: React.FC = () => {
             ) : isHost && booking.renter ? (
               <div className="flex items-center gap-4">
                 {booking.renter.avatar_url ? (
-                  <img 
-                    src={supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl} 
-                    alt={booking.renter.full_name || 'Renter'} 
+                  <img
+                    src={supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl}
+                    alt={booking.renter.full_name || 'Renter'}
                     className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
                   />
                 ) : (
@@ -208,7 +209,7 @@ export const BookingDetails: React.FC = () => {
                 <div>
                   <p className="font-medium text-foreground">{booking.renter.full_name}</p>
                   {booking.renter.phone_number && (
-                    <a 
+                    <a
                       href={`tel:${booking.renter.phone_number}`}
                       className="text-sm text-primary hover:underline"
                     >
@@ -220,9 +221,9 @@ export const BookingDetails: React.FC = () => {
             ) : isRenter && booking.cars?.owner ? (
               <div className="flex items-center gap-4">
                 {booking.cars.owner.avatar_url ? (
-                  <img 
-                    src={supabase.storage.from('avatars').getPublicUrl(booking.cars.owner.avatar_url).data.publicUrl} 
-                    alt={booking.cars.owner.full_name || 'Host'} 
+                  <img
+                    src={supabase.storage.from('avatars').getPublicUrl(booking.cars.owner.avatar_url).data.publicUrl}
+                    alt={booking.cars.owner.full_name || 'Host'}
                     className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
                   />
                 ) : (
@@ -233,7 +234,7 @@ export const BookingDetails: React.FC = () => {
                 <div>
                   <p className="font-medium text-foreground">{booking.cars.owner.full_name}</p>
                   {booking.cars.owner.phone_number && (
-                    <a 
+                    <a
                       href={`tel:${booking.cars.owner.phone_number}`}
                       className="text-sm text-primary hover:underline"
                     >
@@ -267,6 +268,30 @@ export const BookingDetails: React.FC = () => {
               </div>
             )}
 
+            {/* Insurance Policy Section */}
+            {(booking as any).insurance_policies?.[0] && (
+              <div className="pt-4 border-t mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-primary" />
+                    Insurance Policy:
+                  </span>
+                  <Badge variant="outline">Included</Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm text-muted-foreground mb-4">
+                  <span>Policy Number:</span>
+                  <span className="font-mono">{(booking as any).insurance_policies[0].policy_number}</span>
+                </div>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => navigate('/insurance/policies')}
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  View Policy Details
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -25,7 +25,11 @@ export type ResendTemplateKey =
   | 'email_confirmation'
   | 'system_notification'
   | 'booking-confirmation'
-  | 'owner-booking-notification';
+  | 'owner-booking-notification'
+  | 'insurance-claim-received'
+  | 'insurance-claim-update'
+  | 'insurance-policy-confirmation'
+  | 'insurance-host-claim-notification';
 
 export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
   booking_confirmation: {
@@ -129,6 +133,30 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     name: 'New Booking Request',
     subject: '📋 New Booking Request - Action Required',
     description: 'Sent to hosts when they receive a new booking request'
+  },
+  'insurance-claim-received': {
+    id: 'insurance-claim-received',
+    name: 'Insurance Claim Received',
+    subject: '📋 Claim Received - {{claimNumber}}',
+    description: 'Sent when a user submits a new insurance claim'
+  },
+  'insurance-claim-update': {
+    id: 'insurance-claim-update',
+    name: 'Insurance Claim Status Update',
+    subject: '🔔 Claim Status Update - {{claimNumber}}',
+    description: 'Sent when an admin updates claim status'
+  },
+  'insurance-policy-confirmation': {
+    id: 'insurance-policy-confirmation',
+    name: 'Insurance Policy Confirmation',
+    subject: '✅ Insurance Policy Issued - {{policyNumber}}',
+    description: 'Sent when an insurance policy is created'
+  },
+  'insurance-host-claim-notification': {
+    id: 'insurance-host-claim-notification',
+    name: 'Host Claim Notification',
+    subject: '⚠️ Insurance Claim Filed for {{carName}} - {{claimNumber}}',
+    description: 'Sent to car owners when a claim is filed on their vehicle'
   }
 };
 

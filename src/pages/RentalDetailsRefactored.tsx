@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { Receipt } from "lucide-react";
+import { Receipt, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { useRentalDetails } from "@/hooks/useRentalDetails";
@@ -65,24 +65,35 @@ const RentalDetailsRefactored = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20 animate-fade-in">
-      <RentalDetailsHeader 
-        status={booking?.status || 'unknown'} 
-        onBack={() => navigate('/bookings')} 
+      <RentalDetailsHeader
+        status={booking?.status || 'unknown'}
+        onBack={() => navigate('/bookings')}
       />
 
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <h1 className="text-2xl font-bold">Rental Details</h1>
           {isCompletedRental && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 sm:mt-0 flex items-center gap-2"
-              onClick={() => window.print()}
-            >
-              <Receipt className="h-4 w-4" />
-              Download Receipt
-            </Button>
+            <div className="flex gap-2 mt-2 sm:mt-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => navigate("/insurance/policies")}
+              >
+                <Shield className="h-4 w-4" />
+                View Policy
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => window.print()}
+              >
+                <Receipt className="h-4 w-4" />
+                Download Receipt
+              </Button>
+            </div>
           )}
         </div>
 
@@ -98,18 +109,18 @@ const RentalDetailsRefactored = () => {
               ownerId={booking.cars.owner?.id || ''}
             />
           ) : booking?.renter ? (
-            <RentalUserCard 
-              user={booking.renter} 
-              role="Renter" 
+            <RentalUserCard
+              user={booking.renter}
+              role="Renter"
             />
           ) : null}
 
           {/* Rental Duration Card with null checks */}
           {booking?.start_date && booking?.end_date && (
-            <RentalDurationCard 
-              startDate={booking.start_date} 
-              endDate={booking.end_date} 
-              durationDays={rentalDurationDays} 
+            <RentalDurationCard
+              startDate={booking.start_date}
+              endDate={booking.end_date}
+              durationDays={rentalDurationDays}
             />
           )}
         </div>
@@ -121,10 +132,10 @@ const RentalDetailsRefactored = () => {
 
         {/* Payment Details Card with null checks */}
         {booking?.cars?.price_per_day && booking?.total_price && (
-          <RentalPaymentDetails 
-            pricePerDay={booking.cars.price_per_day} 
-            durationDays={rentalDurationDays} 
-            totalPrice={booking.total_price} 
+          <RentalPaymentDetails
+            pricePerDay={booking.cars.price_per_day}
+            durationDays={rentalDurationDays}
+            totalPrice={booking.total_price}
           />
         )}
 
@@ -132,7 +143,7 @@ const RentalDetailsRefactored = () => {
 
         {/* Actions with null check */}
         {booking?.id && (
-          <RentalActions 
+          <RentalActions
             bookingId={booking.id}
             booking={booking}
             canHandover={canHandover}

@@ -8,7 +8,7 @@ export class WalletOperations {
   async deductBookingFee(hostId: string, bookingId: string, feeAmount: number): Promise<boolean> {
     try {
       console.log("WalletOperations: Deducting booking fee", { hostId, bookingId, feeAmount });
-      
+
       const wallet = await getWalletBalance(hostId);
       if (!wallet) {
         console.error("WalletOperations: Wallet not found for fee deduction");
@@ -26,7 +26,7 @@ export class WalletOperations {
       // Update wallet balance
       const { error: walletError } = await supabase
         .from("host_wallets")
-        .update({ 
+        .update({
           balance: newBalance,
           updated_at: new Date().toISOString()
         })
@@ -74,12 +74,12 @@ export class WalletOperations {
 
   async processRentalEarnings(hostId: string, bookingId: string, totalBookingAmount: number): Promise<boolean> {
     try {
-      console.log("WalletOperations: Processing rental earnings", { 
-        hostId, 
-        bookingId, 
+      console.log("WalletOperations: Processing rental earnings", {
+        hostId,
+        bookingId,
         totalBookingAmount
       });
-      
+
       const wallet = await getWalletBalance(hostId);
       if (!wallet) {
         console.error("WalletOperations: Wallet not found for earnings processing");
@@ -133,6 +133,80 @@ export class WalletOperations {
     return true;
   }
 
+  /**
+   * Credit wallet for insurance claim payout
+   * Used by insurance service to process approved claims
+   */
+  async creditInsurancePayout(
+    userId: string,
+    claimId: string,
+    amount: number,
+    claimNumber: string
+  ): Promise<boolean> {
+    try {
+      console.log("WalletOperations: Processing insurance payout", {
+        userId,
+        claimId,
+        amount,
+        claimNumber
+      });
+
+      const wallet = await getWalletBalance(userId);
+      if (!wallet) {
+        console.error("WalletOperations: Wallet not found for insurance payout");
+        return false;
+      }
+
+      const newBalance = wallet.balance + amount;
+
+      // Update wallet balance
+      const { error: walletError } = await supabase
+        .from("host_wallets")
+        .update({
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", wallet.id);
+
+      if (walletError) {
+        console.error("WalletOperations: Error updating wallet for insurance payout:", walletError);
+        return false;
+      }
+
+      // Record transaction
+      const { error: transactionError } = await supabase
+        .from("wallet_transactions")
+        .insert({
+          wallet_id: wallet.id,
+          booking_id: null, // No booking associated with insurance claim
+          transaction_type: "insurance_payout",
+          amount: amount,
+          balance_before: wallet.balance,
+          balance_after: newBalance,
+          description: `Insurance claim payout - ${claimNumber}`,
+          status: "completed",
+          metadata: { claim_id: claimId, claim_number: claimNumber }
+        });
+
+      if (transactionError) {
+        console.error("WalletOperations: Error recording insurance payout transaction:", transactionError);
+        return false;
+      }
+
+      // Create notification for payout
+      await notificationService.createNotification(
+        userId,
+        "insurance_payout",
+        `Insurance claim ${claimNumber} payout of P${amount.toFixed(2)} credited to your wallet`
+      );
+
+      console.log("WalletOperations: Insurance payout processed successfully");
+      return true;
+    } catch (error) {
+      console.error("WalletOperations: Unexpected error in creditInsurancePayout:", error);
+      return false;
+    }
+  }
 
 }
 

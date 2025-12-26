@@ -19,7 +19,10 @@
     "isolatedModules": true,
     "jsx": "react",
     "keyofStringsOnly": false,
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "module": "esnext",
     "moduleDetection": "force",
     "moduleResolution": "node",
@@ -52,12 +55,13 @@
     "suppressImplicitAnyIndexErrors": false,
     "target": "esnext",
     "useDefineForClassFields": true,
-    "useUnknownInCatchVariables": true,
-    "typeRoots": ["./"],
-    "types": ["deno"]
+    "useUnknownInCatchVariables": true
+    // Note: Deno types are provided by Supabase runtime, not needed locally
+    // "typeRoots": ["./"],
+    // "types": ["deno"]
   },
   "include": [
-    "**/*.ts",
-    "deno.d.ts"
+    "**/*.ts"
+    // "deno.d.ts" - not needed, types provided by Supabase Deno runtime
   ]
 }

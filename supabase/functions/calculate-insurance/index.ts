@@ -10,27 +10,82 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { basePrice, plan } = body ?? {};
-    if (typeof basePrice !== "number" || !plan) {
-      return new Response(JSON.stringify({ error: "Invalid input" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const { dailyRentalAmount, premiumPercentage, numberOfDays } = body ?? {};
+
+    // Validate inputs
+    if (
+      typeof dailyRentalAmount !== "number" || 
+      dailyRentalAmount <= 0
+    ) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid dailyRentalAmount. Must be a positive number." 
+        }), 
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
-    const rate = typeof plan.base_rate === "number" ? plan.base_rate : 0;
-    const coverage = typeof plan.coverage_percentage === "number" ? plan.coverage_percentage : 0;
-    const premium = Math.round((basePrice * (coverage / 100) + rate) * 100) / 100;
+    if (
+      typeof premiumPercentage !== "number" || 
+      premiumPercentage < 0 || 
+      premiumPercentage > 1
+    ) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid premiumPercentage. Must be between 0 and 1 (e.g., 0.25 for 25%)." 
+        }), 
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
-    return new Response(JSON.stringify({ premium }), {
+    if (
+      typeof numberOfDays !== "number" || 
+      numberOfDays <= 0 || 
+      !Number.isInteger(numberOfDays)
+    ) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid numberOfDays. Must be a positive integer." 
+        }), 
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Calculate premium using rental-based formula
+    const premiumPerDay = dailyRentalAmount * premiumPercentage;
+    const totalPremium = premiumPerDay * numberOfDays;
+
+    // Round to 2 decimal places (BWP currency)
+    const result = {
+      premiumPerDay: Math.round(premiumPerDay * 100) / 100,
+      totalPremium: Math.round(totalPremium * 100) / 100,
+      numberOfDays,
+      dailyRentalAmount,
+      premiumPercentage,
+    };
+
+    return new Response(JSON.stringify(result), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: e instanceof Error ? e.message : "Unknown error" 
+      }), 
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });
-
