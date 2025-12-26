@@ -1,29 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/**
- * Calculate insurance premium using rental-amount-based formula
- * Formula: Premium = Daily Rental Rate × Premium Percentage × Number of Days
- * 
- * Expected input:
- * {
- *   dailyRentalAmount: number,  // e.g., 500 (BWP per day)
- *   premiumPercentage: number,  // e.g., 0.25 (25%), 0.50 (50%), 1.00 (100%)
- *   numberOfDays: number        // e.g., 7
- * }
- * 
- * Returns:
- * {
- *   premiumPerDay: number,  // dailyRentalAmount × premiumPercentage
- *   totalPremium: number,    // premiumPerDay × numberOfDays
- *   numberOfDays: number
- * }
- */
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }

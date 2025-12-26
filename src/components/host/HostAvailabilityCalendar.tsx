@@ -26,7 +26,7 @@ export const HostAvailabilityCalendar = ({ carId }: HostAvailabilityCalendarProp
       const { bookings, blocked } = await getCarSchedule(carId);
 
       // Process blocked dates
-      setBlockedDates(blocked.map(d => new Date(d.blocked_date)));
+      setBlockedDates(blocked.map((d: any) => new Date(d.blocked_date)));
 
       // Process booked dates (expand ranges)
       const allBookedDates: Date[] = [];

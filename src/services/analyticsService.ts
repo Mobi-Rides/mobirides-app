@@ -15,6 +15,7 @@ export interface ExportOptions {
   includeEvents: boolean;
   includeMetrics: boolean;
   includeUsers: boolean;
+  includeSecurityAlerts?: boolean;
   dateRange?: {
     start: string;
     end: string;
@@ -52,10 +53,10 @@ export const analyticsService = {
       query = query.lte('date', filters.endDate);
     }
     if (filters.eventTypes?.length) {
-      query = query.in('event_type', filters.eventTypes);
+      query = query.in('event_type', filters.eventTypes as any);
     }
     if (filters.severityLevels?.length) {
-      query = query.in('severity', filters.severityLevels);
+      query = query.in('severity', filters.severityLevels as any);
     }
 
     const { data, error } = await query;
@@ -77,10 +78,10 @@ export const analyticsService = {
       query = query.lte('created_at', filters.endDate);
     }
     if (filters.eventTypes?.length) {
-      query = query.in('event_type', filters.eventTypes);
+      query = query.in('event_type', filters.eventTypes as any);
     }
     if (filters.severityLevels?.length) {
-      query = query.in('severity', filters.severityLevels);
+      query = query.in('severity', filters.severityLevels as any);
     }
     if (filters.actorIds?.length) {
       query = query.in('actor_id', filters.actorIds);
@@ -137,31 +138,32 @@ export const analyticsService = {
     const { count: suspendedUsers } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'suspended');
+      .not('account_locked_until', 'is', null);
 
-    // Get role distribution with user details
+    // Get role distribution from profiles
     const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role, user_id')
+      .from('profiles')
+      .select('role, id')
       .order('role');
 
     const roleDistribution: Record<string, number> = {};
     const roleUsers: Record<string, string[]> = {};
 
     roleData?.forEach(item => {
-      roleDistribution[item.role] = (roleDistribution[item.role] || 0) + 1;
-      if (!roleUsers[item.role]) {
-        roleUsers[item.role] = [];
+      const role = item.role || 'renter';
+      roleDistribution[role] = (roleDistribution[role] || 0) + 1;
+      if (!roleUsers[role]) {
+        roleUsers[role] = [];
       }
-      roleUsers[item.role].push(item.user_id);
+      roleUsers[role].push(item.id);
     });
 
-    // Get user profiles for role holders
-    const userIds = roleData?.map(item => item.user_id) || [];
+    // Get user profiles
+    const userIds = roleData?.map(item => item.id) || [];
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('id, full_name, email, created_at, last_sign_in_at')
-      .in('id', userIds);
+      .select('id, full_name, created_at')
+      .in('id', userIds.slice(0, 100)); // Limit for performance
 
     return {
       total_users: totalUsers || 0,
@@ -188,14 +190,13 @@ export const analyticsService = {
 
     const { count: totalBookings } = await bookingQuery;
 
-    // Get booking status breakdown
-    const { data: statusData } = await supabase
+    // Get booking status breakdown manually
+    const { data: allBookings } = await supabase
       .from('bookings')
-      .select('status, count: id.count()')
-      .group('status');
+      .select('status');
 
-    const bookingStats = statusData?.reduce((acc, item) => {
-      acc[item.status] = item.count;
+    const bookingStats = allBookings?.reduce((acc, item) => {
+      acc[item.status] = (acc[item.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>) || {};
 

@@ -26,7 +26,6 @@ const AdminDashboard = () => {
     securityMetrics,
     events,
     loading,
-    error,
     refreshData
   } = useSuperAdminAnalytics();
 
@@ -44,26 +43,6 @@ const AdminDashboard = () => {
             </div>
             <div className="flex items-center justify-center h-64">
               <div className="text-muted-foreground">Loading analytics...</div>
-            </div>
-          </div>
-        </AdminLayout>
-      </AdminProtectedRoute>
-    );
-  }
-
-  if (error) {
-    return (
-      <AdminProtectedRoute>
-        <AdminLayout>
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-muted-foreground">
-                Welcome to the Mobi Rides admin panel
-              </p>
-            </div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">Error loading analytics: {error.message}</p>
             </div>
           </div>
         </AdminLayout>
