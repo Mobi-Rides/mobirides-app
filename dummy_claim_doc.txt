@@ -1,0 +1,3 @@
+This is a dummy document for testing insurance claim uploads.
+Date: 2025-12-25
+Claim Verification Test.

@@ -2497,8 +2497,8 @@ export type Database = {
           verification_completed_at: string | null
           verification_rejected_reason: string | null
           verification_status:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          | Database["public"]["Enums"]["verification_status"]
+          | null
         }
         Insert: {
           account_locked_until?: string | null
@@ -2524,8 +2524,8 @@ export type Database = {
           verification_completed_at?: string | null
           verification_rejected_reason?: string | null
           verification_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          | Database["public"]["Enums"]["verification_status"]
+          | null
         }
         Update: {
           account_locked_until?: string | null
@@ -2551,8 +2551,8 @@ export type Database = {
           verification_completed_at?: string | null
           verification_rejected_reason?: string | null
           verification_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          | Database["public"]["Enums"]["verification_status"]
+          | null
         }
         Relationships: []
       }
@@ -3111,8 +3111,8 @@ export type Database = {
           id: string
           last_updated_at: string | null
           overall_status:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          | Database["public"]["Enums"]["verification_status"]
+          | null
           personal_info: Json | null
           personal_info_completed: boolean | null
           phone_verified: boolean | null
@@ -3130,8 +3130,8 @@ export type Database = {
           id?: string
           last_updated_at?: string | null
           overall_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          | Database["public"]["Enums"]["verification_status"]
+          | null
           personal_info?: Json | null
           personal_info_completed?: boolean | null
           phone_verified?: boolean | null
@@ -3149,8 +3149,8 @@ export type Database = {
           id?: string
           last_updated_at?: string | null
           overall_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          | Database["public"]["Enums"]["verification_status"]
+          | null
           personal_info?: Json | null
           personal_info_completed?: boolean | null
           phone_verified?: boolean | null
@@ -3631,8 +3631,8 @@ export type Database = {
           created_at: string | null
           delivered_at: string | null
           delivery_status:
-            | Database["public"]["Enums"]["message_delivery_status"]
-            | null
+          | Database["public"]["Enums"]["message_delivery_status"]
+          | null
           edited: boolean | null
           edited_at: string | null
           encrypted_content: string | null
@@ -3981,27 +3981,27 @@ export type Database = {
         Returns: undefined
       }
       create_wallet_notification:
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_host_id: string
-              p_type: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_description: string
-              p_metadata?: Json
-              p_role_target?: Database["public"]["Enums"]["notification_role"]
-              p_title: string
-              p_type: Database["public"]["Enums"]["notification_type"]
-              p_user_id: string
-              p_wallet_transaction_id: string
-            }
-            Returns: undefined
-          }
+      | {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_host_id: string
+          p_type: string
+        }
+        Returns: undefined
+      }
+      | {
+        Args: {
+          p_description: string
+          p_metadata?: Json
+          p_role_target?: Database["public"]["Enums"]["notification_role"]
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_user_id: string
+          p_wallet_transaction_id: string
+        }
+        Returns: undefined
+      }
       decrypt_message_content: { Args: { p_cipher: string }; Returns: string }
       delete_old_notifications: {
         Args: { p_days_old?: number }
@@ -4123,32 +4123,32 @@ export type Database = {
         }[]
       }
       get_user_conversations:
-        | {
-            Args: {
-              p_page?: number
-              p_page_size?: number
-              p_search_term?: string
-            }
-            Returns: {
-              conversation_id: string
-              last_message: string
-              last_message_at: string
-              participants: Json
-              title: string
-              type: string
-            }[]
-          }
-        | {
-            Args: { p_user_id?: string }
-            Returns: {
-              conversation_id: string
-              created_at: string
-              is_creator: boolean
-              is_participant: boolean
-              title: string
-              updated_at: string
-            }[]
-          }
+      | {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_search_term?: string
+        }
+        Returns: {
+          conversation_id: string
+          last_message: string
+          last_message_at: string
+          participants: Json
+          title: string
+          type: string
+        }[]
+      }
+      | {
+        Args: { p_user_id?: string }
+        Returns: {
+          conversation_id: string
+          created_at: string
+          is_creator: boolean
+          is_participant: boolean
+          title: string
+          updated_at: string
+        }[]
+      }
       get_user_email_for_notification: {
         Args: { user_uuid: string }
         Returns: string
@@ -4194,47 +4194,47 @@ export type Database = {
         }
       }
       http_delete:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      | {
+        Args: { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      | {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       http_get:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      | {
+        Args: { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      | {
+        Args: { data: Json; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       http_head: {
         Args: { uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
@@ -4273,26 +4273,26 @@ export type Database = {
         }
       }
       http_post:
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      | {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      | {
+        Args: { data: Json; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       http_put: {
         Args: { content: string; content_type: string; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
@@ -4345,26 +4345,26 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
       is_super_admin_from_admins: { Args: never; Returns: boolean }
       log_admin_activity:
-        | {
-            Args: {
-              p_action: string
-              p_admin_id: string
-              p_details?: Json
-              p_resource_id?: string
-              p_resource_type?: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_action: string
-              p_admin_id: string
-              p_details?: Json
-              p_resource_id?: string
-              p_resource_type?: string
-            }
-            Returns: undefined
-          }
+      | {
+        Args: {
+          p_action: string
+          p_admin_id: string
+          p_details?: Json
+          p_resource_id?: string
+          p_resource_type?: string
+        }
+        Returns: undefined
+      }
+      | {
+        Args: {
+          p_action: string
+          p_admin_id: string
+          p_details?: Json
+          p_resource_id?: string
+          p_resource_type?: string
+        }
+        Returns: undefined
+      }
       log_audit_event: {
         Args: {
           p_action_details?: Json
@@ -4438,19 +4438,19 @@ export type Database = {
         Returns: boolean
       }
       urlencode:
-        | { Args: { data: Json }; Returns: string }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
+      | { Args: { data: Json }; Returns: string }
+      | {
+        Args: { string: string }
+        Returns: {
+          error: true
+        } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+      }
+      | {
+        Args: { string: string }
+        Returns: {
+          error: true
+        } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+      }
       user_owns_verification: {
         Args: { verification_uuid: string }
         Returns: boolean
@@ -4530,123 +4530,123 @@ export type Database = {
     }
     Enums: {
       audit_event_type:
-        | "user_restriction_created"
-        | "user_restriction_updated"
-        | "user_restriction_removed"
-        | "user_deleted"
-        | "user_password_reset"
-        | "vehicle_transferred"
-        | "vehicle_deleted"
-        | "admin_login"
-        | "admin_logout"
-        | "system_config_changed"
-        | "notification_campaign_created"
-        | "notification_sent"
-        | "verification_approved"
-        | "verification_rejected"
-        | "booking_cancelled_admin"
-        | "payment_refunded_admin"
+      | "user_restriction_created"
+      | "user_restriction_updated"
+      | "user_restriction_removed"
+      | "user_deleted"
+      | "user_password_reset"
+      | "vehicle_transferred"
+      | "vehicle_deleted"
+      | "admin_login"
+      | "admin_logout"
+      | "system_config_changed"
+      | "notification_campaign_created"
+      | "notification_sent"
+      | "verification_approved"
+      | "verification_rejected"
+      | "booking_cancelled_admin"
+      | "payment_refunded_admin"
       audit_severity: "low" | "medium" | "high" | "critical"
       booking_status:
-        | "pending"
-        | "confirmed"
-        | "cancelled"
-        | "completed"
-        | "expired"
+      | "pending"
+      | "confirmed"
+      | "cancelled"
+      | "completed"
+      | "expired"
       document_status: "pending" | "verified" | "rejected"
       document_type:
-        | "national_id_front"
-        | "national_id_back"
-        | "driving_license_front"
-        | "driving_license_back"
-        | "proof_of_address"
-        | "vehicle_registration"
-        | "vehicle_ownership"
-        | "proof_of_income"
-        | "selfie_photo"
+      | "national_id_front"
+      | "national_id_back"
+      | "driving_license_front"
+      | "driving_license_back"
+      | "proof_of_address"
+      | "vehicle_registration"
+      | "vehicle_ownership"
+      | "proof_of_income"
+      | "selfie_photo"
       handover_type: "pickup" | "return"
       message_delivery_status: "sent" | "delivered" | "read"
       message_status: "sent" | "delivered" | "read"
       notification_campaign_status:
-        | "draft"
-        | "scheduled"
-        | "sending"
-        | "completed"
-        | "cancelled"
-        | "failed"
+      | "draft"
+      | "scheduled"
+      | "sending"
+      | "completed"
+      | "cancelled"
+      | "failed"
       notification_role: "host_only" | "renter_only" | "system_wide"
       notification_type:
-        | "booking_request_received"
-        | "booking_request_sent"
-        | "booking_confirmed_host"
-        | "booking_confirmed_renter"
-        | "booking_cancelled_host"
-        | "booking_cancelled_renter"
-        | "pickup_reminder_host"
-        | "pickup_reminder_renter"
-        | "return_reminder_host"
-        | "return_reminder_renter"
-        | "wallet_topup"
-        | "wallet_deduction"
-        | "message_received"
-        | "handover_ready"
-        | "payment_received"
-        | "payment_failed"
-        | "system_notification"
-        | "navigation_started"
-        | "pickup_location_shared"
-        | "return_location_shared"
-        | "arrival_notification"
-        | "early_return_notification"
-        | "pickup_reminder"
-        | "return_reminder"
+      | "booking_request_received"
+      | "booking_request_sent"
+      | "booking_confirmed_host"
+      | "booking_confirmed_renter"
+      | "booking_cancelled_host"
+      | "booking_cancelled_renter"
+      | "pickup_reminder_host"
+      | "pickup_reminder_renter"
+      | "return_reminder_host"
+      | "return_reminder_renter"
+      | "wallet_topup"
+      | "wallet_deduction"
+      | "message_received"
+      | "handover_ready"
+      | "payment_received"
+      | "payment_failed"
+      | "system_notification"
+      | "navigation_started"
+      | "pickup_location_shared"
+      | "return_location_shared"
+      | "arrival_notification"
+      | "early_return_notification"
+      | "pickup_reminder"
+      | "return_reminder"
       old_notification_type:
-        | "booking_cancelled"
-        | "booking_confirmed"
-        | "booking_request"
-        | "message_received"
-        | "booking_reminder"
-        | "wallet_topup"
-        | "wallet_deduction"
-        | "handover_ready"
-        | "payment_received"
-        | "payment_failed"
-        | "booking_request_sent"
-        | "pickup_reminder"
-        | "return_reminder"
+      | "booking_cancelled"
+      | "booking_confirmed"
+      | "booking_request"
+      | "message_received"
+      | "booking_reminder"
+      | "wallet_topup"
+      | "wallet_deduction"
+      | "handover_ready"
+      | "payment_received"
+      | "payment_failed"
+      | "booking_request_sent"
+      | "pickup_reminder"
+      | "return_reminder"
       restriction_type_enum:
-        | "login_block"
-        | "booking_block"
-        | "messaging_block"
-        | "suspension"
+      | "login_block"
+      | "booking_block"
+      | "messaging_block"
+      | "suspension"
       review_type: "car" | "renter" | "host_to_renter" | "renter_to_host"
       user_role: "host" | "renter" | "admin" | "super_admin"
       vehicle_type:
-        | "Basic"
-        | "Standard"
-        | "Executive"
-        | "4x4"
-        | "SUV"
-        | "Electric"
-        | "Exotic"
+      | "Basic"
+      | "Standard"
+      | "Executive"
+      | "4x4"
+      | "SUV"
+      | "Electric"
+      | "Exotic"
       verification_method: "document" | "utility_bill" | "bank_statement"
       verification_status:
-        | "not_started"
-        | "in_progress"
-        | "completed"
-        | "failed"
-        | "rejected"
-        | "pending_review"
+      | "not_started"
+      | "in_progress"
+      | "completed"
+      | "failed"
+      | "rejected"
+      | "pending_review"
       verification_step:
-        | "personal_info"
-        | "document_upload"
-        | "selfie_verification"
-        | "phone_verification"
-        | "address_confirmation"
-        | "review_submit"
-        | "processing_status"
-        | "completion"
-        | "ADDRESS_CONFIRMATION"
+      | "personal_info"
+      | "document_upload"
+      | "selfie_verification"
+      | "phone_verification"
+      | "address_confirmation"
+      | "review_submit"
+      | "processing_status"
+      | "completion"
+      | "ADDRESS_CONFIRMATION"
     }
     CompositeTypes: {
       http_header: {
@@ -4676,116 +4676,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {

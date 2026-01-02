@@ -11,19 +11,21 @@ import { HandoverNotificationCard } from "@/components/handover/HandoverNotifica
 import { useHandoverPrompts } from "@/hooks/useHandoverPrompts";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
+import { Shield, FileText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const RenterDashboard = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   // Get handover prompts
-  const { 
-    handoverPrompts, 
-    hasHandoverPrompts, 
+  const {
+    handoverPrompts,
+    hasHandoverPrompts,
     hasUrgentPrompts,
-    refetch: refetchPrompts 
+    refetch: refetchPrompts
   } = useHandoverPrompts();
-  
+
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["renter-bookings"],
     queryFn: async () => {
@@ -71,29 +73,29 @@ export const RenterDashboard = () => {
   }
 
   const today = new Date();
-  
+
   const activeBookings = bookings?.filter(b => {
     const endDate = new Date(b.end_date);
     const hasReview = b.reviews && b.reviews.length > 0;
-    
+
     return (
-      b.status === "confirmed" && 
-      new Date(b.start_date) <= today && 
+      b.status === "confirmed" &&
+      new Date(b.start_date) <= today &&
       (endDate >= today || !hasReview)
     );
   });
-  
-  const upcomingBookings = bookings?.filter(b => 
-    (b.status === "pending" || b.status === "confirmed") && 
+
+  const upcomingBookings = bookings?.filter(b =>
+    (b.status === "pending" || b.status === "confirmed") &&
     new Date(b.start_date) > today
   );
-  
+
   const pastBookings = bookings?.filter(b => {
     const endDate = new Date(b.end_date);
     const hasReview = b.reviews && b.reviews.length > 0;
-    
+
     return (
-      b.status === "completed" || 
+      b.status === "completed" ||
       b.status === "cancelled" ||
       (endDate < today && hasReview)
     );
@@ -106,7 +108,7 @@ export const RenterDashboard = () => {
   const handleStartHandover = async (bookingId: string) => {
     try {
       console.log("Starting handover for booking:", bookingId);
-      
+
       // Get booking details to find host and renter IDs
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
@@ -126,7 +128,7 @@ export const RenterDashboard = () => {
 
       // Create handover session
       const session = await createHandoverSession(bookingId, 'pickup', hostId, renterId);
-      
+
       if (session) {
         toast.success("Handover process started");
         // Navigate to map with handover mode
@@ -142,7 +144,7 @@ export const RenterDashboard = () => {
   return (
     <div className="space-y-6">
       <RenterStats />
-      
+
       {/* Handover Prompts */}
       {hasHandoverPrompts && (
         <div className="space-y-3">
@@ -156,7 +158,26 @@ export const RenterDashboard = () => {
           ))}
         </div>
       )}
-      
+
+      {/* Insurance Quick Link */}
+      <Card
+        className="bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-900/20 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/20 transition-colors"
+        onClick={() => navigate('/insurance/policies')}
+      >
+        <CardContent className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-600 rounded-lg text-white">
+              <Shield className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-indigo-900 dark:text-indigo-100">My Insurance Policies</p>
+              <p className="text-xs text-indigo-700 dark:text-indigo-300">View and download your coverage certificates</p>
+            </div>
+          </div>
+          <FileText className="h-5 w-5 text-indigo-400" />
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="active" className="bg-card rounded-lg p-3 sm:p-4 shadow-sm dark:border dark:border-border">
         <TabsList className="mb-4 w-full justify-start overflow-x-auto scrollbar-none">
           <TabsTrigger className="px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" value="active">Active Rentals</TabsTrigger>
@@ -165,27 +186,27 @@ export const RenterDashboard = () => {
         </TabsList>
 
         <TabsContent value="active">
-          <RenterTabContent 
-            bookings={activeBookings} 
-            tabType="active" 
+          <RenterTabContent
+            bookings={activeBookings}
+            tabType="active"
             emptyMessage="No active rentals"
             onCardClick={handleCardClick}
           />
         </TabsContent>
 
         <TabsContent value="upcoming">
-          <RenterTabContent 
-            bookings={upcomingBookings} 
-            tabType="upcoming" 
+          <RenterTabContent
+            bookings={upcomingBookings}
+            tabType="upcoming"
             emptyMessage="No upcoming rentals"
             onCardClick={handleCardClick}
           />
         </TabsContent>
 
         <TabsContent value="past">
-          <RenterTabContent 
-            bookings={pastBookings} 
-            tabType="past" 
+          <RenterTabContent
+            bookings={pastBookings}
+            tabType="past"
             emptyMessage="No past rentals"
             onCardClick={handleCardClick}
           />
