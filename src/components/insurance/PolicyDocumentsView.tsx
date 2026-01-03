@@ -62,7 +62,7 @@ export function PolicyDocumentsView() {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            setPolicies(data || []);
+            setPolicies((data || []) as PolicyWithPackage[]);
         } catch (error) {
             console.error('Error fetching policies:', error);
             toast.error('Failed to load insurance policies');
