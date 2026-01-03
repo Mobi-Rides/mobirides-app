@@ -190,7 +190,7 @@ export default function AdminPromoCodes() {
   });
 
   return (
-    <AdminLayout title="Promo Codes" children={undefined}>
+    <AdminLayout title="Promo Codes">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Manage Promotions</h2>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

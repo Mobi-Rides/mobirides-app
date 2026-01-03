@@ -137,26 +137,8 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     }
   }, [selectedConversationId, currentUser?.id]);
 
-  // Auto-select first conversation if none selected
-  useEffect(() => {
-    try {
-      console.log("🔄 [MESSAGING] Auto-select effect triggered", {
-        selectedConversationId,
-        conversationsLength: Array.isArray(conversations) ? conversations.length : 0,
-        conversationsLoading,
-        isArray: Array.isArray(conversations)
-      });
-      
-      if (!selectedConversationId && Array.isArray(conversations) && conversations.length > 0 && !conversationsLoading) {
-        console.log("✅ [MESSAGING] Auto-selecting first conversation:", conversations[0]?.id);
-        setSelectedConversationId(conversations[0]?.id);
-      } else {
-        console.log("⏸️ [MESSAGING] Auto-select conditions not met");
-      }
-    } catch (error) {
-      console.error("❌ [MESSAGING] Error in auto-select:", error);
-    }
-  }, [conversations, selectedConversationId, conversationsLoading]);
+  // Removed auto-select: Users should see conversation list first and choose which to open
+  // Recipient-based selection (from car details, bookings, etc.) still works via the useEffect below
 
   // Memoize the createConversation function to prevent infinite loops
   const handleCreateConversation = useCallback((params: { participantIds: string[], title?: string }) => {
