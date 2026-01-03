@@ -1,16 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   Search, 
   Plus, 
-  MoreHorizontal, 
   MessageCircle,
-  Users,
-  Circle,
-  ArrowLeft
+  Users
 } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Conversation, User } from '@/types/message';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -38,7 +32,6 @@ export function ConversationList({
   searchTerm,
   onSearchChange
 }: ConversationListProps) {
-  const navigate = useNavigate();
   const filteredConversations = conversations;
 
   const getConversationTitle = (conversation: Conversation) => {
@@ -73,31 +66,12 @@ export function ConversationList({
     return `${senderName}: ${conversation.lastMessage.content}`;
   };
 
-  const isMobile = useIsMobile();
-  
-  const handleBackClick = () => {
-    navigate('/');
-  };
-
   return (
     <div className="flex flex-col h-full bg-card border-r border-notification-border">
       {/* Header */}
       <div className="p-4 border-b border-notification-border">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            {/* Back Button - Only visible on mobile */}
-            {isMobile && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="mr-1 bg-primary/5 hover:bg-primary/10 rounded-full transition-all duration-200 ease-in-out"
-                onClick={handleBackClick}
-              >
-                <ArrowLeft className="h-5 w-5 text-primary" />
-              </Button>
-            )}
-            <h2 className="text-lg font-semibold text-foreground">Messages</h2>
-          </div>
+          <h2 className="text-lg font-semibold text-foreground">Messages</h2>
           <Button
             size="sm"
             onClick={onNewConversation}
