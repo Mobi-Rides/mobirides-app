@@ -284,7 +284,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
         {/* Conversation List */}
         <div className={cn(
           "w-full md:w-80 flex-shrink-0 transition-all duration-300",
-          selectedConversationId ? "hidden md:block" : "block"
+          selectedConversationId ? "max-md:hidden" : ""
         )}>
           <ConversationList
             conversations={filteredConversations}
@@ -300,7 +300,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       {/* Chat Window */}
       <div className={cn(
         "flex-1 transition-all duration-300",
-        selectedConversationId ? "block" : "hidden md:block"
+        selectedConversationId ? "" : "max-md:hidden"
       )}>
         {selectedConversation ? (
           <ChatWindow
