@@ -3552,6 +3552,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          metadata: Json | null
           payment_method: string | null
           payment_reference: string | null
           status: string
@@ -3569,6 +3570,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          metadata?: Json | null
           payment_method?: string | null
           payment_reference?: string | null
           status?: string
@@ -3586,6 +3588,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          metadata?: Json | null
           payment_method?: string | null
           payment_reference?: string | null
           status?: string
@@ -3774,7 +3777,7 @@ export type Database = {
       }
       calculate_user_rating: { Args: { user_uuid: string }; Returns: number }
       check_column_exists: {
-        Args: { column_name: string; table_name: string }
+        Args: { p_column_name: string; p_table_name: string }
         Returns: boolean
       }
       check_conversation_access: {
@@ -3801,7 +3804,6 @@ export type Database = {
           total_deleted: number
         }[]
       }
-      cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       cleanup_verification_temp: {
         Args: never
@@ -3869,14 +3871,7 @@ export type Database = {
           p_title?: string
           p_type?: string
         }
-        Returns: {
-          created_at: string
-          created_by: string
-          id: string
-          title: string
-          type: string
-          updated_at: string
-        }[]
+        Returns: string
       }
       create_handover_notification:
         | {
@@ -3901,33 +3896,18 @@ export type Database = {
             }
             Returns: number
           }
-      create_handover_progress_notification:
-        | { Args: { p_handover_session_id: string }; Returns: undefined }
-        | {
-            Args: {
-              p_completed_steps: number
-              p_handover_session_id: string
-              p_total_steps: number
-            }
-            Returns: number
-          }
-      create_handover_step_notification:
-        | {
-            Args: {
-              p_completed_by: string
-              p_handover_session_id: string
-              p_step_name: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_handover_session_id: string
-              p_step_name: string
-              p_step_status: string
-            }
-            Returns: number
-          }
+      create_handover_progress_notification: {
+        Args: { p_handover_session_id: string }
+        Returns: undefined
+      }
+      create_handover_step_notification: {
+        Args: {
+          p_completed_by: string
+          p_handover_session_id: string
+          p_step_name: string
+        }
+        Returns: undefined
+      }
       create_message_notification: {
         Args: {
           p_message_preview?: string
@@ -3977,7 +3957,7 @@ export type Database = {
         Returns: undefined
       }
       create_renter_arrival_notification: {
-        Args: { p_booking_id: string; p_renter_id: string }
+        Args: { p_booking_id: string }
         Returns: number
       }
       create_system_notification: {
@@ -4139,12 +4119,12 @@ export type Database = {
               p_search_term?: string
             }
             Returns: {
-              conversation_id: string
+              conv_id: string
+              conv_type: string
               last_message: string
               last_message_at: string
               participants: Json
               title: string
-              type: string
             }[]
           }
         | {
@@ -4323,12 +4303,11 @@ export type Database = {
         Returns: undefined
       }
       initialize_conversation: {
-        Args: {
-          p_participant_ids?: string[]
-          p_title?: string
-          p_type?: string
-        }
-        Returns: string
+        Args: { p_participant_ids: string[]; p_title: string; p_type: string }
+        Returns: {
+          conversation_id: string
+          participant_ids: string[]
+        }[]
       }
       is_admin:
         | { Args: never; Returns: boolean }
@@ -4397,17 +4376,12 @@ export type Database = {
         Args: { p_notification_ids: number[] }
         Returns: number
       }
-      migrate_legacy_messages: { Args: never; Returns: undefined }
-      migrate_legacy_messages_to_conversations: {
-        Args: never
-        Returns: undefined
-      }
       save_push_subscription: {
         Args: {
-          auth_key: string
-          endpoint: string
-          p256dh_key: string
-          user_id: string
+          p_auth_key: string
+          p_endpoint: string
+          p_p256dh_key: string
+          p_user_id: string
         }
         Returns: undefined
       }
@@ -4483,11 +4457,7 @@ export type Database = {
         Returns: Json
       }
       validate_step_dependencies: {
-        Args: {
-          handover_session_id_param: string
-          step_name_param: string
-          step_order_param: number
-        }
+        Args: { handover_session_id_param: string; step_order_param: number }
         Returns: boolean
       }
       verify_audit_chain_integrity: {
@@ -4496,8 +4466,8 @@ export type Database = {
           actual_hash: string
           audit_id: string
           chain_valid: boolean
-          event_timestamp: string
           expected_hash: string
+          log_event_timestamp: string
         }[]
       }
       verify_conversation_policies: {
@@ -4519,8 +4489,9 @@ export type Database = {
       verify_no_recursive_policies: {
         Args: never
         Returns: {
-          policy_definition: string
           policy_name: string
+          policy_qual: string
+          policy_with_check: string
           table_name: string
         }[]
       }
