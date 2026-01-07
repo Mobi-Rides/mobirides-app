@@ -258,7 +258,7 @@ export function AdvancedFilters({
                   <div className="flex flex-wrap gap-1">
                     <Button
                       variant="outline"
-                      size="xs"
+                      size="sm"
                       onClick={() => handleQuickDateRange(7)}
                       className="text-xs"
                     >
@@ -266,7 +266,7 @@ export function AdvancedFilters({
                     </Button>
                     <Button
                       variant="outline"
-                      size="xs"
+                      size="sm"
                       onClick={() => handleQuickDateRange(30)}
                       className="text-xs"
                     >
@@ -274,7 +274,7 @@ export function AdvancedFilters({
                     </Button>
                     <Button
                       variant="outline"
-                      size="xs"
+                      size="sm"
                       onClick={() => handleQuickDateRange(90)}
                       className="text-xs"
                     >

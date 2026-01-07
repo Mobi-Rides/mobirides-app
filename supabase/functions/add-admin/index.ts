@@ -1,12 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -61,6 +60,26 @@ serve(async (req) => {
     }
 
     console.log(`[add-admin] Successfully added admin: ${userId}`);
+
+    // Log audit event
+    try {
+      await supabaseClient.rpc('log_audit_event', {
+        p_event_type: 'system_config_changed',
+        p_severity: 'high',
+        p_target_id: userId,
+        p_resource_type: 'admin',
+        p_resource_id: userId,
+        p_action_details: {
+          action: 'admin_created',
+          email: userEmail,
+          full_name: userName || 'Unknown User',
+          is_super_admin: isSuperAdmin || false
+        }
+      });
+      console.log(`[add-admin] Audit event logged for: ${userId}`);
+    } catch (auditError) {
+      console.log('[add-admin] Audit logging skipped:', auditError);
+    }
 
     return new Response(
       JSON.stringify({ success: true, email: userEmail }),

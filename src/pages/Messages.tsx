@@ -21,10 +21,10 @@ const Messages = () => {
   const recipientName = location.state?.recipientName;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Header removed for Messages page */}
       
-      <div className="flex-1 flex flex-col pb-16">
+      <div className="flex-1 flex flex-col pb-16 min-h-0">
         <MessagingErrorBoundary>
           <MessagingInterface 
             className="flex-1" 

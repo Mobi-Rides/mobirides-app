@@ -60,9 +60,21 @@ export default function AdminPromoCodes() {
   // Create Promo Code Mutation
   const createMutation = useMutation({
     mutationFn: async (newPromo: Partial<PromoCode>) => {
+      if (!newPromo.code || !newPromo.discount_amount) {
+        throw new Error('Code and discount amount are required');
+      }
       const { data, error } = await supabase
         .from("promo_codes")
-        .insert([newPromo])
+        .insert([{
+          code: newPromo.code,
+          discount_amount: newPromo.discount_amount,
+          discount_type: newPromo.discount_type || 'fixed',
+          max_uses: newPromo.max_uses,
+          min_booking_amount: newPromo.min_booking_amount,
+          description: newPromo.description,
+          valid_until: newPromo.valid_until,
+          is_active: newPromo.is_active ?? true
+        }])
         .select()
         .single();
 
@@ -83,7 +95,7 @@ export default function AdminPromoCodes() {
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       const { error } = await supabase
-        .from("promo_codes")
+        .from("promo_codes" as any)
         .update({ is_active: isActive })
         .eq("id", id);
 
@@ -102,7 +114,7 @@ export default function AdminPromoCodes() {
   const sendNotificationMutation = useMutation({
     mutationFn: async (promo: PromoCode) => {
       // 1. Get users with marketing notifications enabled using secure RPC
-      const { data: users, error } = await supabase.rpc('get_marketing_recipients');
+      const { data: users, error } = await supabase.rpc('get_marketing_recipients' as any);
 
       if (error) throw error;
       if (!users || users.length === 0) throw new Error("No users found with marketing notifications enabled");

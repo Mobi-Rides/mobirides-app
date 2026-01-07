@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Calendar, Activity, Filter, TrendingUp, Users, Shield } from "lucide-react";
+import { User, Calendar, Activity, Filter, TrendingUp, Users, Shield, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { SecurityEvent } from "@/hooks/useSuperAdminAnalytics";
 

@@ -54,7 +54,7 @@ export const useSuperAdminRoles = () => {
       // Combine profile data with roles
       return profileData.map(profile => ({
         id: profile.id,
-        email: '', // Email not available in profiles table
+        email: '', // Email not directly available in profiles table - use edge function for email
         full_name: profile.full_name,
         current_roles: rolesByUser[profile.id] || []
       }));

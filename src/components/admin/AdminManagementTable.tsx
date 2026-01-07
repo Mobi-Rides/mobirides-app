@@ -35,11 +35,11 @@ const useAdmins = () => {
     queryFn: async (): Promise<Admin[]> => {
       const { data, error } = await supabase
         .from("admins")
-        .select("*")
+        .select("id, email, full_name, is_super_admin, created_at, last_sign_in_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as Admin[];
     },
   });
 };

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
+import { getDisplayName } from '@/utils/displayName';
 
 type UserRole = Database['public']['Enums']['user_role'];
 
@@ -85,7 +86,7 @@ export const SuperAdminUserRoles: React.FC<SuperAdminUserRolesProps> = ({
 
       return (profiles || []).map((profile: any) => ({
         id: profile.id,
-        email: profile.id,
+        email: null, // Email not available in fallback mode
         full_name: profile.full_name,
         current_roles: rolesByUser[profile.id] || [],
       }));
@@ -163,10 +164,17 @@ export const SuperAdminUserRoles: React.FC<SuperAdminUserRolesProps> = ({
                     type="checkbox"
                     checked={!!selectedIds[user.id]}
                     onChange={(e) => toggleOne(user.id, e.target.checked)}
-                    aria-label={`Select ${user.full_name || user.email}`}
+                    aria-label={`Select ${getDisplayName(user)}`}
                   />
                 </TableCell>
-                <TableCell>{user.full_name || user.email}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span>{getDisplayName(user)}</span>
+                    {user.email && user.full_name && (
+                      <span className="text-xs text-muted-foreground">{user.email}</span>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     {user.current_roles.map(role => (
@@ -177,7 +185,7 @@ export const SuperAdminUserRoles: React.FC<SuperAdminUserRolesProps> = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Button 
+                    <Button 
                     variant="outline" 
                     onClick={() => setSelectedUserId(user.id)}
                   >
@@ -187,7 +195,7 @@ export const SuperAdminUserRoles: React.FC<SuperAdminUserRolesProps> = ({
                     <Button
                       variant="ghost"
                       className="ml-2"
-                      onClick={() => onSelectUserForCapabilities({ id: user.id, name: user.full_name || user.email })}
+                      onClick={() => onSelectUserForCapabilities({ id: user.id, name: getDisplayName(user) })}
                     >
                       Manage Capabilities
                     </Button>
