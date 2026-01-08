@@ -1,0 +1,162 @@
+﻿node.exe : Initialising login role...
+At line:1 char:1
++ & "D:\Program Files\Node.js/node.exe" "D:\npm-global/node_modules/npm ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Initialising login role...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Connecting to remote database...
+Linting schema: archive
+Linting schema: extensions
+Linting schema: public
+[
+  {
+    "function": "public.create_handover_progress_notification",
+    "issues": [
+      {
+        "level": "warning",
+        "message": "target type is different type than source type",
+        "statement": {
+          "lineNumber": "28",
+          "text": "SQL statement"
+        },
+        "hint": "The input expression type does not have an assignment cast to the target type.",
+        "detail": "cast \"jsonb\" value to \"integer\" type",
+        "sqlState": "42804"
+      },
+      {
+        "level": "warning",
+        "message": "unused variable \"booking_record\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.create_handover_step_notification",
+    "issues": [
+      {
+        "level": "warning",
+        "message": "target type is different type than source type",
+        "statement": {
+          "lineNumber": "27",
+          "text": "SQL statement"
+        },
+        "hint": "The input expression type does not have an assignment cast to the target type.",
+        "detail": "cast \"jsonb\" value to \"integer\" type",
+        "sqlState": "42804"
+      }
+    ]
+  },
+  {
+    "function": "public.create_renter_arrival_notification",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "unused parameter \"p_renter_id\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.calculate_category_ratings",
+    "issues": [
+      {
+        "level": "warning",
+        "message": "target type is different type than source type",
+        "statement": {
+          "lineNumber": "7",
+          "text": "statement block"
+        },
+        "hint": "The input expression type does not have an assignment cast to the target type.",
+        "detail": "cast \"text\" value to \"jsonb\" type",
+        "context": "during statement block local variable \"result\" initialization on line 3",
+        "sqlState": "42804"
+      }
+    ]
+  },
+  {
+    "function": "public.create_booking_notification",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "unused parameter \"p_content\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.create_notification_with_expiration",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "unused parameter \"p_related_user_id\"",
+        "sqlState": "00000"
+      },
+      {
+        "level": "warning extra",
+        "message": "unused parameter \"p_priority\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.get_user_review_stats",
+    "issues": [
+      {
+        "level": "warning",
+        "message": "target type is different type than source type",
+        "statement": {
+          "lineNumber": "7",
+          "text": "statement block"
+        },
+        "hint": "The input expression type does not have an assignment cast to the target type.",
+        "detail": "cast \"text\" value to \"jsonb\" type",
+        "context": "during statement block local variable \"result\" initialization on line 3",
+        "sqlState": "42804"
+      }
+    ]
+  },
+  {
+    "function": "public.handle_new_user",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "never read variable \"user_metadata\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.send_conversation_message",
+    "issues": [
+      {
+        "level": "warning",
+        "message": "unused variable \"v_result\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+  {
+    "function": "public.validate_admin_session",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "never read variable \"session_record\"",
+        "sqlState": "00000"
+      }
+    ]
+  },
+A new version of Supabase CLI is available: v2.67.1 (currently installed v2.54.11)
+We recommend updating regularly for new features and bug fixes: 
+https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+  {
+    "function": "public.validate_step_dependencies",
+    "issues": [
+      {
+        "level": "warning extra",
+        "message": "unused parameter \"step_name_param\"",
+        "sqlState": "00000"
+      }
+    ]
+  }
+]
