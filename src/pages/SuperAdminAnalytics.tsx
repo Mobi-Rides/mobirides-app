@@ -9,6 +9,7 @@ import { SecurityAlertSystem, SecurityAlert, AlertSettings } from "@/components/
 import { MobileOptimizedChart } from "@/components/admin/superadmin/MobileOptimizedChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Download, Filter, BarChart3, Shield, Users, Activity, FileText, RefreshCw, Wifi, WifiOff, Bell } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
@@ -64,6 +65,9 @@ export default function SuperAdminAnalytics() {
     },
     {
       enablePagination: true,
+      debounceDelay: 300,
+      enableCache: true,
+      cacheTimeout: 60000,
       enableVirtualization: true,
       enableDebouncing: true,
       enableMemoization: true,
@@ -164,7 +168,7 @@ export default function SuperAdminAnalytics() {
     const alerts: SecurityAlert[] = criticalEvents.map(event => ({
       id: event.id,
       title: `${event.event_type} Alert`,
-      description: `Security event detected: ${event.description || 'No description available'}`,
+      description: `Security event detected: ${(event as any).description || 'No description available'}`,
       severity: event.severity as 'critical' | 'high' | 'medium' | 'low',
       category: 'security',
       timestamp: new Date(event.created_at),
@@ -172,7 +176,7 @@ export default function SuperAdminAnalytics() {
       action_required: event.severity === 'critical' || event.severity === 'high',
       acknowledged: false,
       auto_dismiss: event.severity === 'low' || event.severity === 'medium',
-      metadata: event.metadata || {}
+      metadata: (event as any).metadata || {}
     }));
     
     setSecurityAlerts(alerts);
@@ -180,7 +184,7 @@ export default function SuperAdminAnalytics() {
 
   // Auto-refresh functionality
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (autoRefresh) {
       interval = setInterval(() => {
         refreshData();
@@ -411,7 +415,7 @@ export default function SuperAdminAnalytics() {
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Today</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {userMetrics?.active_today || 0}
+                      {(userMetrics as any)?.active_today ?? 0}
                     </p>
                   </div>
                   <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
@@ -443,7 +447,7 @@ export default function SuperAdminAnalytics() {
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">System Health</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {systemMetrics?.system_health || 'Good'}
+                      {(systemMetrics as any)?.system_health ?? 'Good'}
                     </p>
                   </div>
                   <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
@@ -484,7 +488,7 @@ export default function SuperAdminAnalytics() {
               onExport={(format) => handleExport(format as any)}
             />
             <MobileOptimizedChart
-              data={systemMetrics?.bookingTrends || []}
+              data={(analytics as any)?.bookingTrends || []}
               title="Booking Trends"
               type="line"
               height={300}
@@ -516,14 +520,14 @@ export default function SuperAdminAnalytics() {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <MobileOptimizedChart
-              data={securityMetrics?.eventTypes || []}
+              data={(securityMetrics as any)?.eventTypeCounts || []}
               title="Security Events by Type"
               type="pie"
               height={300}
               responsive={true}
             />
             <MobileOptimizedChart
-              data={securityMetrics?.severityDistribution || []}
+              data={(securityMetrics as any)?.severityDistribution || []}
               title="Severity Distribution"
               type="bar"
               height={300}

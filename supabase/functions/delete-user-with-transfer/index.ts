@@ -111,15 +111,125 @@ serve(async (req) => {
 
     console.log(`Delete user request from ${user.id} for user ${userId}, reason: ${reason}`);
 
+    // 🔍 DETAILED USER INVESTIGATION LOGGING
+    console.log(`🔍 Investigating user ${userId} for potential deletion issues...`);
+    
+    try {
+      // Get target user details
+      const { data: targetUserProfile, error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email, full_name, role, created_at, last_sign_in_at, is_verified")
+        .eq("id", userId)
+        .single();
+      
+      if (profileError) {
+        console.error(`❌ Failed to fetch target user profile:`, profileError);
+      } else {
+        console.log(`👤 Target user profile:`, {
+          id: targetUserProfile?.id,
+          email: targetUserProfile?.email,
+          role: targetUserProfile?.role,
+          created_at: targetUserProfile?.created_at,
+          last_sign_in_at: targetUserProfile?.last_sign_in_at,
+          is_verified: targetUserProfile?.is_verified
+        });
+      }
+
+      // Check auth user status
+      try {
+        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (authError) {
+          console.error(`❌ Failed to fetch auth user:`, authError);
+        } else {
+          console.log(`🔐 Auth user status:`, {
+            id: authUser?.user?.id,
+            email: authUser?.user?.email,
+            email_confirmed_at: authUser?.user?.email_confirmed_at,
+            last_sign_in_at: authUser?.user?.last_sign_in_at,
+            created_at: authUser?.user?.created_at,
+            app_metadata: authUser?.user?.app_metadata,
+            user_metadata: authUser?.user?.user_metadata
+          });
+        }
+      } catch (authCheckErr) {
+        console.error(`❌ Exception checking auth user:`, authCheckErr);
+      }
+
+      // Check for associated data that might cause issues
+      const { data: userCars, error: carsError } = await supabaseAdmin
+        .from("cars")
+        .select("id, make, model, year, status")
+        .eq("owner_id", userId);
+      
+      if (carsError) {
+        console.error(`❌ Failed to fetch user cars:`, carsError);
+      } else {
+        console.log(`🚗 User cars (${userCars?.length || 0}):`, userCars?.map(car => ({
+          id: car.id,
+          make: car.make,
+          model: car.model,
+          year: car.year,
+          status: car.status
+        })));
+      }
+
+      const { data: userBookings, error: bookingsError } = await supabaseAdmin
+        .from("bookings")
+        .select("id, status, car_id, start_date, end_date")
+        .or(`renter_id.eq.${userId},car.owner_id.eq.${userId}`);
+      
+      if (bookingsError) {
+        console.error(`❌ Failed to fetch user bookings:`, bookingsError);
+      } else {
+        console.log(`📅 User bookings (${userBookings?.length || 0}):`, userBookings?.map(booking => ({
+          id: booking.id,
+          status: booking.status,
+          car_id: booking.car_id,
+          start_date: booking.start_date,
+          end_date: booking.end_date
+        })));
+      }
+
+      // Check for admin/special roles
+      const { data: userRoles, error: rolesError } = await supabaseAdmin
+        .from("user_roles")
+        .select("role, permissions")
+        .eq("user_id", userId);
+      
+      if (rolesError) {
+        console.error(`❌ Failed to fetch user roles:`, rolesError);
+      } else {
+        console.log(`👑 User roles (${userRoles?.length || 0}):`, userRoles);
+      }
+
+      console.log(`✅ User ${userId} investigation complete`);
+    } catch (investigationError) {
+      console.error(`❌ User investigation failed:`, investigationError);
+    }
+
     // Check if user is admin
+    console.log(`🔐 Checking admin permissions for user: ${user.id}`);
     const { data: isAdminRaw, error: adminCheckError } = await supabaseUser.rpc('is_admin', { 
       user_uuid: user.id 
     });
 
     if (adminCheckError) {
-      console.error("Error calling is_admin RPC:", adminCheckError);
+      console.error("❌ Error calling is_admin RPC:", adminCheckError);
+      console.error("❌ Admin check failed:", {
+        message: adminCheckError.message,
+        code: adminCheckError.code,
+        details: adminCheckError.details,
+        hint: adminCheckError.hint,
+        userId: user.id,
+        targetUserId: userId
+      });
       return new Response(
-        JSON.stringify({ error: "Insufficient permissions. Admin access required.", code: "NOT_ADMIN" }),
+        JSON.stringify({ 
+          error: "Insufficient permissions. Admin access required.", 
+          code: "NOT_ADMIN",
+          details: adminCheckError.message,
+          userId: user.id
+        }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -148,8 +258,19 @@ serve(async (req) => {
     }
 
     if (!isAdmin) {
+      console.error("❌ User is not admin:", {
+        userId: user.id,
+        targetUserId: userId,
+        isAdminRaw: isAdminRaw,
+        isAdmin: isAdmin
+      });
       return new Response(
-        JSON.stringify({ error: "Insufficient permissions. Admin access required.", code: "NOT_ADMIN" }),
+        JSON.stringify({ 
+          error: "Insufficient permissions. Admin access required.", 
+          code: "NOT_ADMIN",
+          userId: user.id,
+          isAdmin: false
+        }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -165,17 +286,35 @@ serve(async (req) => {
     console.log("Profile fetch result:", { userProfile, profileError });
 
     if (profileError) {
-      console.error("Error fetching user profile:", profileError);
+      console.error("❌ Error fetching user profile:", profileError);
+      console.error("❌ Profile fetch error details:", {
+        message: profileError.message,
+        code: profileError.code,
+        details: profileError.details,
+        hint: profileError.hint,
+        userId: userId,
+        adminId: user.id
+      });
       return new Response(
-        JSON.stringify({ error: `Failed to fetch profile: ${profileError.message}`, code: "PROFILE_FETCH_ERROR" }),
+        JSON.stringify({ 
+          error: `Failed to fetch profile: ${profileError.message}`, 
+          code: "PROFILE_FETCH_ERROR",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!userProfile) {
-      console.error("User profile not found for userId:", userId);
+      console.error("❌ User profile not found for userId:", userId);
       return new Response(
-        JSON.stringify({ error: "User profile not found in database", code: "PROFILE_NOT_FOUND" }),
+        JSON.stringify({ 
+          error: "User profile not found in database", 
+          code: "PROFILE_NOT_FOUND",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -187,27 +326,61 @@ serve(async (req) => {
     console.log("Auth user fetch result:", { authUser: authUser?.user ? { id: authUser.user.id, email: authUser.user.email } : null, authUserError });
 
     if (authUserError) {
-      console.error("Error fetching auth user:", authUserError);
+      console.error("❌ Error fetching auth user:", authUserError);
+      console.error("❌ Auth user fetch error details:", {
+        message: authUserError.message,
+        code: authUserError.code,
+        details: authUserError.details,
+        hint: authUserError.hint,
+        userId: userId,
+        adminId: user.id
+      });
       return new Response(
-        JSON.stringify({ error: `Failed to fetch auth user: ${authUserError.message}`, code: "AUTH_USER_FETCH_ERROR" }),
+        JSON.stringify({ 
+          error: `Failed to fetch auth user: ${authUserError.message}`, 
+          code: "AUTH_USER_FETCH_ERROR",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!authUser?.user) {
-      console.error("Auth user not found for userId:", userId);
+      console.error("❌ Auth user not found for userId:", userId);
       return new Response(
-        JSON.stringify({ error: "User not found in authentication system", code: "AUTH_USER_NOT_FOUND" }),
+        JSON.stringify({ 
+          error: "User not found in authentication system", 
+          code: "AUTH_USER_NOT_FOUND",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const userEmail = authUser.user.email;
 
+    // 🔍 DETAILED ROLE CHECK LOGGING
+    console.log(`🔍 Role check for user ${userId}:`, {
+      role: userProfile.role,
+      email: userEmail,
+      isAdmin: userProfile.role === "admin",
+      isSuperAdmin: userProfile.role === "super_admin",
+      canDelete: userProfile.role !== "admin" && userProfile.role !== "super_admin"
+    });
+
     // Prevent deletion of admin or super_admin users
     if (userProfile.role === "admin" || userProfile.role === "super_admin") {
+      console.error(`❌ Cannot delete ${userProfile.role} user ${userId} (${userEmail})`);
       return new Response(
-        JSON.stringify({ error: "Cannot delete admin or super_admin users", code: "CANNOT_DELETE_ADMIN" }),
+        JSON.stringify({ 
+          error: "Cannot delete admin or super_admin users", 
+          code: "CANNOT_DELETE_ADMIN",
+          userId: userId,
+          role: userProfile.role,
+          email: userEmail
+        }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -349,6 +522,17 @@ serve(async (req) => {
         console.log("notifications_backup table not found or error:", backupError);
         deletionSteps.push("Skipped notifications_backup (table may not exist)");
       }
+
+      // 7.5 CRITICAL: Verify auth user deletion and handle edge cases
+      // This prevents the handle_new_user trigger from recreating the profile
+      const verifyAuthUserDeleted = async (userId: string): Promise<boolean> => {
+        try {
+          const { data: authUser, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+          return !authUser || !!error;
+        } catch {
+          return true; // Assume deleted if we can't check
+        }
+      };
 
       // 8. Delete notifications related to user's bookings and cars (BEFORE bookings deletion)
       // Delete notifications where user_id = userId
@@ -496,7 +680,81 @@ serve(async (req) => {
         // Don't fail the operation if audit logging fails
       }
 
-      // 13. Delete user profile
+      // 13. Delete user from auth FIRST (this is critical - must happen before profile deletion)
+      try {
+        console.log("🗑️ Attempting to delete auth user...");
+        console.log(`🗑️ Auth deletion details: userId=${userId}, adminId=${user.id}, reason=${reason}`);
+        
+        const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+        if (authDeleteError) {
+          console.error("❌ Error deleting auth user:", authDeleteError);
+          
+          // Enhanced error analysis for specific auth deletion failures
+          const errorCode = (authDeleteError as any).code;
+          const errorStatus = (authDeleteError as any).status;
+          const errorMessage = authDeleteError.message;
+          
+          console.error("❌ Auth deletion error analysis:", {
+            message: errorMessage,
+            name: authDeleteError.name,
+            code: errorCode,
+            status: errorStatus,
+            userId: userId,
+            adminId: user.id,
+            isAdminUser: userId === user.id,
+            isRateLimited: errorStatus === 429,
+            isForbidden: errorStatus === 403,
+            isNotFound: errorStatus === 404,
+            isServerError: errorStatus >= 500
+          });
+          
+          // Provide more specific error messages based on error type
+          let detailedErrorMessage = `Failed to delete auth user: ${errorMessage}`;
+          
+          if (errorStatus === 403) {
+            detailedErrorMessage = `Permission denied: Admin ${user.id} cannot delete user ${userId}. This may be due to insufficient admin privileges or trying to delete a protected user.`;
+          } else if (errorStatus === 404) {
+            detailedErrorMessage = `User ${userId} not found in authentication system. The user may have already been deleted or does not exist.`;
+          } else if (errorStatus === 429) {
+            detailedErrorMessage = `Rate limit exceeded while attempting to delete user ${userId}. Please try again later.`;
+          } else if (errorStatus >= 500) {
+            detailedErrorMessage = `Server error while deleting user ${userId}: ${errorMessage}. This may be a temporary issue with the authentication service.`;
+          } else if (errorCode === 'user_not_found') {
+            detailedErrorMessage = `User ${userId} does not exist in the authentication system.`;
+          } else if (errorCode === 'insufficient_permissions') {
+            detailedErrorMessage = `Admin ${user.id} has insufficient permissions to delete user ${userId}.`;
+          }
+          
+          // This is a critical failure - we should NOT continue
+          throw new Error(detailedErrorMessage);
+        }
+        
+        console.log("✅ Auth user deleted successfully");
+        
+        // CRITICAL: Verify the auth user was actually deleted
+        const isAuthUserDeleted = await verifyAuthUserDeleted(userId);
+        if (!isAuthUserDeleted) {
+          console.error("❌ Auth user still exists after deletion attempt");
+          throw new Error("Auth user deletion verification failed - user may still exist");
+        }
+        
+        deletionSteps.push("Deleted auth user");
+      } catch (authError) {
+        console.error("❌ Exception deleting auth user:", authError);
+        console.error("❌ Auth deletion exception details:", {
+          message: (authError as Error).message,
+          name: (authError as Error).name,
+          stack: (authError as Error).stack,
+          userId: userId,
+          adminId: user.id,
+          reason: reason
+        });
+        // This is a critical failure - we should NOT continue
+        throw new Error(`Failed to delete auth user: ${(authError as Error).message}`);
+      }
+
+      // 14. Delete user profile AFTER auth deletion (to prevent trigger recreation)
       const { error: profileDeleteError } = await supabaseAdmin
         .from("profiles")
         .delete()
@@ -504,26 +762,32 @@ serve(async (req) => {
 
       if (profileDeleteError) {
         console.error("Error deleting profile:", profileDeleteError);
-        throw new Error(`Failed to delete profile: ${profileDeleteError.message}`);
-      }
-      deletionSteps.push("Deleted user profile");
-
-      // 14. Delete user from auth (this should be last)
-      try {
-        const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
-        if (authDeleteError) {
-          console.error("Error deleting auth user:", authDeleteError);
-          console.warn("⚠️ Auth user deletion failed, but audit log was already created. Continuing...");
-          deletionSteps.push(`Warning: Failed to delete auth user: ${authDeleteError.message}`);
-        } else {
-          deletionSteps.push("Deleted auth user");
+        // Profile might already be deleted if cascade worked, but log it
+        if (profileDeleteError.code !== 'PGRST116') { // Not found error
+          console.warn("⚠️ Profile deletion failed, but auth user was already deleted");
         }
-      } catch (authError) {
-        console.error("Exception deleting auth user:", authError);
-        console.warn("⚠️ Auth user deletion exception, but audit log was already created. Continuing...");
-        deletionSteps.push(`Warning: Exception deleting auth user: ${(authError as Error).message}`);
+      } else {
+        deletionSteps.push("Deleted user profile");
       }
+
+      // FINAL VERIFICATION: Ensure user is completely deleted
+      console.log("🔍 Performing final verification...");
+      const finalAuthCheck = await verifyAuthUserDeleted(userId);
+      const { data: finalProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+      
+      if (!finalAuthCheck || finalProfile) {
+        console.error("❌ Final verification failed:", {
+          authUserDeleted: finalAuthCheck,
+          profileExists: !!finalProfile
+        });
+        throw new Error("Final verification failed - user may not be completely deleted");
+      }
+      
+      console.log("✅ Final verification passed - user completely deleted");
 
       console.log(`User deleted successfully:`, {
         userId,
@@ -542,28 +806,53 @@ serve(async (req) => {
           message: "User and all related data deleted successfully",
           details: {
             vehiclesDeleted: vehiclesCount || 0,
-            deletionSteps
+            deletionSteps,
+            verification: {
+              authUserDeleted: true,
+              profileDeleted: true
+            }
           }
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } catch (error) {
-      console.error("Error during deletion process:", error);
+      console.error("❌ Error during deletion process:", error);
+      console.error("❌ Error details:", {
+        message: (error as Error).message,
+        name: (error as Error).name,
+        stack: (error as Error).stack,
+        completedSteps: deletionSteps,
+        userId: userId,
+        reason: reason,
+        adminUserId: user.id
+      });
+      
       return new Response(
         JSON.stringify({ 
           error: (error as Error).message || "Deletion process failed",
           code: "DELETION_FAILED",
-          completedSteps: deletionSteps
+          completedSteps: deletionSteps,
+          userId: userId,
+          adminUserId: user.id
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
   } catch (error) {
-    console.error("Error in delete-user function:", error);
+    console.error("❌ Error in delete-user function:", error);
+    console.error("❌ Top-level error details:", {
+      message: (error as Error).message,
+      name: (error as Error).name,
+      stack: (error as Error).stack,
+      requestBody: { userId: userId, reason: reason },
+      adminUserId: user?.id
+    });
+    
     return new Response(
       JSON.stringify({ 
         error: (error as Error).message || "An unexpected error occurred",
-        code: "DELETE_USER_ERROR"
+        code: "DELETE_USER_ERROR",
+        userId: userId
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

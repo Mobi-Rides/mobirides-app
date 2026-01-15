@@ -32,6 +32,8 @@ export interface UserActivityMetrics {
   new_users: number;
   suspended_users: number;
   role_distribution: Record<string, number>;
+  role_users?: Record<string, string[]>;
+  user_profiles?: any[];
   admin_users: number;
   admin_user_details: any[];
 }
@@ -346,10 +348,10 @@ export const useSuperAdminAnalytics = () => {
   }, [refreshData]);
 
   // Export analytics data
-  const exportAnalytics = useCallback(async (format: 'json' | 'csv' = 'json') => {
+  const exportAnalytics = useCallback(async (exportFormat: 'json' | 'csv' = 'json') => {
     try {
       const exportData = await analyticsService.exportAnalytics({
-        format,
+        format: exportFormat,
         includeEvents: true,
         includeMetrics: true,
         includeUsers: true,
@@ -360,14 +362,14 @@ export const useSuperAdminAnalytics = () => {
       });
       
       // Create download link
-      const blob = new Blob([format === 'json' ? JSON.stringify(exportData, null, 2) : exportData], {
-        type: format === 'json' ? 'application/json' : 'text/csv'
+      const blob = new Blob([exportFormat === 'json' ? JSON.stringify(exportData, null, 2) : exportData], {
+        type: exportFormat === 'json' ? 'application/json' : 'text/csv'
       });
       
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `mobirides-analytics-${format(new Date(), 'yyyy-MM-dd')}.${format}`;
+      a.download = `mobirides-analytics-${format(new Date(), 'yyyy-MM-dd')}.${exportFormat}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

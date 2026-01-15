@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,14 @@ import { format } from "date-fns";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { logUserRestrictionCreated, logUserDeleted } from "@/utils/auditLogger";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface UserProfile {
   id: string;
@@ -110,6 +118,8 @@ const useUsers = () => {
 
 export const AdvancedUserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -125,6 +135,11 @@ export const AdvancedUserManagement = () => {
   const queryClient = useQueryClient();
   const { data: users, isLoading, error } = useUsers();
   const { isSuperAdmin } = useIsAdmin();
+
+  // Reset pagination when search term changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const restrictUserMutation = useMutation({
     mutationFn: async ({ userId, restriction }: { userId: string; restriction: RestrictionFormData }) => {
@@ -313,126 +328,125 @@ export const AdvancedUserManagement = () => {
     },
   });
 
-  // Add this to your AdvancedUserManagement component to replace the deleteUserMutation
-const deleteUserMutation = useMutation({
-  mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-    console.log("🔍 Starting delete user mutation...");
-    console.log("User ID:", userId);
-    console.log("Reason:", reason);
+  const deleteUserMutation = useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      console.log("🔍 Starting delete user mutation...");
+      console.log("User ID:", userId);
+      console.log("Reason:", reason);
 
-    // Get session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
-    console.log("Session data:", sessionData ? "✅ Found" : "❌ Missing");
-    
-    if (sessionError) {
-      console.error("❌ Session error:", sessionError);
-      throw new Error(`Failed to get session: ${sessionError.message}`);
-    }
+      // Get session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log("Session data:", sessionData ? "✅ Found" : "❌ Missing");
+      
+      if (sessionError) {
+        console.error("❌ Session error:", sessionError);
+        throw new Error(`Failed to get session: ${sessionError.message}`);
+      }
 
-    const accessToken = sessionData?.session?.access_token;
-    if (!accessToken) {
-      console.error("❌ No access token found");
-      throw new Error("No active session. Please sign in again.");
-    }
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        console.error("❌ No access token found");
+        throw new Error("No active session. Please sign in again.");
+      }
 
-    console.log("✅ Access token found:", accessToken.substring(0, 20) + "...");
+      console.log("✅ Access token found:", accessToken.substring(0, 20) + "...");
 
-    // Prepare function call
-    console.log("Request body:", { userId, reason });
+      // Prepare function call
+      console.log("Request body:", { userId, reason });
 
-    try {
-      // Call the Edge Function
-      const { data, error } = await supabase.functions.invoke('delete-user-with-transfer', {
-        body: { userId, reason },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      try {
+        // Call the Edge Function
+        const { data, error } = await supabase.functions.invoke('delete-user-with-transfer', {
+          body: { userId, reason },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
 
-      console.log("📥 Function response received");
-      console.log("Data:", data);
-      console.log("Error:", error);
+        console.log("📥 Function response received");
+        console.log("Data:", data);
+        console.log("Error:", error);
 
-      if (error) {
-        console.error("❌ Edge function returned error:", error);
-        
-        // Try to parse error details
-        let parsed: { error?: string; code?: string; details?: string } | null = null;
-        try {
-          const resp = error?.context?.response as Response | undefined;
-          if (resp) {
-            console.log("Response status:", resp.status);
-            console.log("Response headers:", Object.fromEntries(resp.headers.entries()));
-            
-            const contentType = resp.headers.get('content-type') || '';
-            console.log("Content-Type:", contentType);
-            
-            if (contentType.includes('application/json')) {
-              parsed = await resp.json();
-              console.log("Parsed error response:", parsed);
-            } else {
-              const text = await resp.text();
-              console.log("Text response:", text);
-              try { 
-                parsed = JSON.parse(text); 
-                console.log("Parsed text as JSON:", parsed);
-              } catch { 
-                console.log("Could not parse text as JSON");
+        if (error) {
+          console.error("❌ Edge function returned error:", error);
+          
+          // Try to parse error details
+          let parsed: { error?: string; code?: string; details?: string } | null = null;
+          try {
+            const resp = error?.context?.response as Response | undefined;
+            if (resp) {
+              console.log("Response status:", resp.status);
+              console.log("Response headers:", Object.fromEntries(resp.headers.entries()));
+              
+              const contentType = resp.headers.get('content-type') || '';
+              console.log("Content-Type:", contentType);
+              
+              if (contentType.includes('application/json')) {
+                parsed = await resp.json();
+                console.log("Parsed error response:", parsed);
+              } else {
+                const text = await resp.text();
+                console.log("Text response:", text);
+                try { 
+                  parsed = JSON.parse(text); 
+                  console.log("Parsed text as JSON:", parsed);
+                } catch { 
+                  console.log("Could not parse text as JSON");
+                }
               }
             }
+          } catch (parseErr) {
+            console.error('❌ Failed to parse function error response', parseErr);
           }
-        } catch (parseErr) {
-          console.error('❌ Failed to parse function error response', parseErr);
+
+          const msg = parsed?.error || error.message || "Failed to delete user. Please try again.";
+          const composed = [
+            msg,
+            parsed?.code ? `(code: ${parsed.code})` : null,
+            parsed?.details ? `details: ${parsed.details}` : null,
+          ].filter(Boolean).join(' ');
+          
+          console.error("❌ Final error message:", composed);
+          throw new Error(composed);
         }
 
-        const msg = parsed?.error || error.message || "Failed to delete user. Please try again.";
-        const composed = [
-          msg,
-          parsed?.code ? `(code: ${parsed.code})` : null,
-          parsed?.details ? `details: ${parsed.details}` : null,
-        ].filter(Boolean).join(' ');
-        
-        console.error("❌ Final error message:", composed);
-        throw new Error(composed);
-      }
+        if (data?.error) {
+          console.error("❌ Data contains error:", data);
+          const composed = [
+            data.error,
+            data.code ? `(code: ${data.code})` : null,
+            data.details ? `details: ${data.details}` : null,
+          ].filter(Boolean).join(' ');
+          throw new Error(composed);
+        }
 
-      if (data?.error) {
-        console.error("❌ Data contains error:", data);
-        const composed = [
-          data.error,
-          data.code ? `(code: ${data.code})` : null,
-          data.details ? `details: ${data.details}` : null,
-        ].filter(Boolean).join(' ');
-        throw new Error(composed);
+        console.log("✅ Delete user successful!");
+        return data;
+      } catch (err) {
+        console.error("❌ Exception during function call:", err);
+        throw err;
       }
-
-      console.log("✅ Delete user successful!");
-      return data;
-    } catch (err) {
-      console.error("❌ Exception during function call:", err);
-      throw err;
-    }
-  },
-  onSuccess: async (data) => {
-    console.log("✅ Mutation success callback:", data);
-    
-    // Invalidate both admin-users and audit-logs queries to refresh the UI
-    // The edge function already logged the audit event
-    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-    queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
-    
-    toast.success("User deleted successfully");
-    setIsDeleteDialogOpen(false);
-    setIsVehicleWarningDialogOpen(false);
-    setDeletionReason("");
-    setSelectedUser(null);
-  },
-  onError: (error: Error) => {
-    console.error("❌ Mutation error callback:", error);
-    toast.error(`Failed to delete user: ${error.message}`);
-  },
-});
+    },
+    onSuccess: async (data) => {
+      console.log("✅ Mutation success callback:", data);
+      
+      // Invalidate both admin-users and audit-logs queries to refresh the UI
+      // The edge function already logged the audit event
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+      
+      toast.success("User deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setIsVehicleWarningDialogOpen(false);
+      setDeletionReason("");
+      setSelectedUser(null);
+    },
+    onError: (error: Error) => {
+      console.error("❌ Mutation error callback:", error);
+      toast.error(`Failed to delete user: ${error.message}`);
+    },
+  });
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -582,6 +596,11 @@ const deleteUserMutation = useMutation({
     user.role?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
   if (error) {
     return (
       <Card>
@@ -601,6 +620,11 @@ const deleteUserMutation = useMutation({
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
                 Advanced User Management ({filteredUsers.length})
+                {totalPages > 1 && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                )}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 Manage user accounts, restrictions, and administrative actions
@@ -633,118 +657,157 @@ const deleteUserMutation = useMutation({
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Activity</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">
-                          {user.full_name || "No name"}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {user.email || "No email"}
-                        </div>
-                        {user.phone_number && (
-                          <div className="text-sm text-muted-foreground">
-                            {user.phone_number}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {user.is_restricted ? (
-                        <Badge variant="destructive" className="flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          {`Restricted (${user.restrictions?.length ?? 0})`}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <UserCheck className="h-3 w-3" />
-                          Active
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{user.vehicles_count} vehicles</div>
-                        <div>{user.bookings_count} bookings</div>
-                        <div>{user.reviews_count} reviews</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {format(new Date(user.created_at), "MMM dd, yyyy")}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {user.is_restricted ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveRestriction(user)}
-                            className="text-green-600 hover:text-green-700"
-                            title="Remove Restriction"
-                            disabled={removeRestrictionMutation.isPending}
-                          >
-                            <UserCheck className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRestrictUser(user)}
-                            className="text-orange-600 hover:text-orange-700"
-                            title="Restrict User"
-                            disabled={restrictUserMutation.isPending}
-                          >
-                            <UserX className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {isSuperAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleResetPassword(user)}
-                            className="text-blue-600 hover:text-blue-700"
-                            title="Send Password Reset"
-                            disabled={resetPasswordMutation.isPending}
-                          >
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteUser(user)}
-                          className="text-destructive hover:text-red-700"
-                          title="Delete User"
-                          disabled={deleteUserMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {user.full_name || "No name"}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {user.email || "No email"}
+                          </div>
+                          {user.phone_number && (
+                            <div className="text-sm text-muted-foreground">
+                              {user.phone_number}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.is_restricted ? (
+                          <Badge variant="destructive" className="flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {`Restricted (${user.restrictions?.length ?? 0})`}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <UserCheck className="h-3 w-3" />
+                            Active
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{user.vehicles_count} vehicles</div>
+                          <div>{user.bookings_count} bookings</div>
+                          <div>{user.reviews_count} reviews</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {format(new Date(user.created_at), "MMM dd, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {user.is_restricted ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveRestriction(user)}
+                              className="text-green-600 hover:text-green-700"
+                              title="Remove Restriction"
+                              disabled={removeRestrictionMutation.isPending}
+                            >
+                              <UserCheck className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRestrictUser(user)}
+                              className="text-orange-600 hover:text-orange-700"
+                              title="Restrict User"
+                              disabled={restrictUserMutation.isPending}
+                            >
+                              <UserX className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {isSuperAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleResetPassword(user)}
+                              className="text-blue-600 hover:text-blue-700"
+                              title="Send Password Reset"
+                              disabled={resetPasswordMutation.isPending}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user)}
+                            className="text-destructive hover:text-red-700"
+                            title="Delete User"
+                            disabled={deleteUserMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(pageNum)}
+                              isActive={currentPage === pageNum}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
