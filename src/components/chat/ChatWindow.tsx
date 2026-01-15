@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, isSameDay, format } from 'date-fns';
-import { 
-  Phone, 
-  Video, 
-  Info, 
+import {
+  Phone,
+  Video,
+  Info,
   MoreVertical,
   Users,
   Search,
@@ -28,7 +28,7 @@ interface ChatWindowProps {
   messages: Message[];
   currentUser: User;
   typingUsers: TypingIndicator[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, type?: 'text' | 'image' | 'video' | 'audio' | 'file', metadata?: any, replyToMessageId?: string) => void;
   onEditMessage?: (messageId: string) => void;
   onDeleteMessage?: (messageId: string) => void;
   onReactToMessage?: (messageId: string, emoji: string) => void;
@@ -58,7 +58,7 @@ export function ChatWindow({
     content: string;
     senderName: string;
   } | null>(null);
-  
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -73,10 +73,10 @@ export function ChatWindow({
       const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
       return otherParticipant?.name || 'Unknown User';
     }
-    
+
     // For group conversations, use stored title or generate from participants
     if (conversation.title) return conversation.title;
-    
+
     const otherParticipants = conversation.participants.filter(p => p.id !== currentUser.id);
     return otherParticipants.map(p => p.name).join(', ');
   };
@@ -85,38 +85,38 @@ export function ChatWindow({
     if (conversation.type === 'group') {
       return `${conversation.participants.length} members`;
     }
-    
+
     const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
     if (!otherParticipant) return '';
-    
+
     if (otherParticipant.status === 'online') return 'Online';
     if (otherParticipant.status === 'away') return 'Away';
     if (otherParticipant.lastSeen) {
       return `Last seen ${formatDistanceToNow(otherParticipant.lastSeen, { addSuffix: true })}`;
     }
-    
+
     return 'Offline';
   };
 
   const shouldShowAvatar = (message: Message, index: number) => {
     if (index === messages.length - 1) return true;
-    
+
     const nextMessage = messages[index + 1];
     return nextMessage.senderId !== message.senderId ||
-           nextMessage.timestamp.getTime() - message.timestamp.getTime() > 300000; // 5 minutes
+      nextMessage.timestamp.getTime() - message.timestamp.getTime() > 300000; // 5 minutes
   };
 
   const shouldShowTimestamp = (message: Message, index: number) => {
     if (index === 0) return true;
-    
+
     const prevMessage = messages[index - 1];
     return !isSameDay(message.timestamp, prevMessage.timestamp) ||
-           message.timestamp.getTime() - prevMessage.timestamp.getTime() > 300000; // 5 minutes
+      message.timestamp.getTime() - prevMessage.timestamp.getTime() > 300000; // 5 minutes
   };
 
   const shouldShowDateSeparator = (message: Message, index: number) => {
     if (index === 0) return true;
-    
+
     const prevMessage = messages[index - 1];
     return !isSameDay(message.timestamp, prevMessage.timestamp);
   };
@@ -126,7 +126,7 @@ export function ChatWindow({
     if (message) {
       // Transform sender data to match expected format
       let senderName = 'Unknown User';
-      
+
       if (message.sender?.full_name) {
         senderName = message.sender.full_name;
       } else {
@@ -134,7 +134,7 @@ export function ChatWindow({
         const sender = conversation.participants.find(p => p.id === message.senderId);
         senderName = sender?.name || 'Unknown User';
       }
-      
+
       setReplyToMessage({
         id: messageId,
         content: message.content,
@@ -158,7 +158,7 @@ export function ChatWindow({
   };
 
   const isMobile = useIsMobile();
-  
+
   const handleBackClick = () => {
     // Instead of navigating, we should clear the selected conversation
     // This is handled by the parent component, but we can emit an event or rely on prop
@@ -170,7 +170,7 @@ export function ChatWindow({
     // For now, let's assume the back button is only needed on mobile where we want to show the list again.
     // The simplest way is to check if onBack is passed, or hack it via navigate.
     // But since we are using state for selection, navigate('/messages') might re-mount everything.
-    
+
     // Better: Add onBack prop.
     if (onBack) {
       onBack();
@@ -193,16 +193,16 @@ export function ChatWindow({
         <div className="flex items-center gap-3">
           {/* Back Button - Only visible on mobile */}
           {isMobile && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="mr-1 bg-primary/5 hover:bg-primary/10 rounded-full transition-all duration-200 ease-in-out"
               onClick={handleBackClick}
             >
               <ArrowLeft className="h-5 w-5 text-primary" />
             </Button>
           )}
-          
+
           {/* Avatar */}
           {conversation.type === 'group' ? (
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -241,19 +241,19 @@ export function ChatWindow({
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
             <Search className="w-4 h-4" />
           </Button>
-          
+
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Audio call feature coming soon!')}>
             <Phone className="w-4 h-4" />
           </Button>
-          
+
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Video call feature coming soon!')}>
             <Video className="w-4 h-4" />
           </Button>
-          
+
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
             <Info className="w-4 h-4" />
           </Button>
-          
+
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
             <MoreVertical className="w-4 h-4" />
           </Button>
@@ -277,7 +277,7 @@ export function ChatWindow({
               {messages.map((message, index) => {
                 // Transform sender data to match MessageBubble expectations
                 let senderForBubble;
-                
+
                 if (message.sender?.full_name) {
                   // Use sender data from message
                   senderForBubble = {
@@ -296,9 +296,9 @@ export function ChatWindow({
                     status: 'offline' as const
                   };
                 }
-                
+
                 return (
-                  <div key={message.id}>
+                  <div key={message.id} id={`message-${message.id}`} className="scroll-mt-4">
                     {/* Date separator */}
                     {shouldShowDateSeparator(message, index) && (
                       <div className="flex items-center justify-center py-4">
@@ -309,7 +309,7 @@ export function ChatWindow({
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Message */}
                     <MessageBubble
                       message={message}
@@ -326,7 +326,7 @@ export function ChatWindow({
                   </div>
                 );
               })}
-              
+
               {/* Typing indicator */}
               {typingUsers.length > 0 && (
                 <div className="px-4 py-2">
@@ -340,7 +340,7 @@ export function ChatWindow({
                   </div>
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </>
           )}
@@ -364,6 +364,7 @@ export function ChatWindow({
         replyToMessage={replyToMessage}
         onCancelReply={() => setReplyToMessage(null)}
         isLoading={isLoading}
+        currentUserId={currentUser?.id}
       />
     </div>
   );
