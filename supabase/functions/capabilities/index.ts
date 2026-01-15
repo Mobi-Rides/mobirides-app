@@ -1,3 +1,4 @@
+// Capabilities function - Deno 2 compatible
 console.log("Capabilities function invoked")
 
 const corsHeaders = {

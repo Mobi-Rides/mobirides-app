@@ -62,21 +62,13 @@ const useUsers = () => {
   return useQuery<UserProfile[], Error>({
     queryKey: ["admin-users"],
     queryFn: async (): Promise<UserProfile[]> => {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          phone_number,
-          role,
-          created_at
-        `)
-        .order("created_at", { ascending: false });
+      // Use the RPC function that joins profiles with auth.users to get email
+      const { data: profiles, error: profilesError } = await supabase.rpc('get_admin_users');
 
       if (profilesError) throw profilesError;
 
       const usersWithRestrictions = await Promise.all(
-        (profiles || []).map(async (profile) => {
+        (profiles || []).map(async (profile: any) => {
           const { data: restrictions } = await supabase
             .from("user_restrictions")
             .select("*")
@@ -91,17 +83,17 @@ const useUsers = () => {
           const { count: bookingsCount } = await supabase
             .from("bookings")
             .select("id", { count: "exact", head: true })
-            .or(`renter_id.eq.${profile.id},host_id.eq.${profile.id}`);
+            .or(`renter_id.eq.${profile.id}`);
 
-          // Temporarily disabled due to network errors
-          // const { count: reviewsCount } = await supabase
-          //   .from("reviews")
-          //   .select("id", { count: "exact", head: true })
-          //   .or(`reviewer_id.eq.${profile.id},reviewee_id.eq.${profile.id}`);
           const reviewsCount = 0;
 
           return {
-            ...profile,
+            id: profile.id,
+            email: profile.email || undefined,
+            full_name: profile.full_name,
+            phone_number: profile.phone_number,
+            role: profile.role,
+            created_at: profile.created_at,
             is_restricted: (restrictions?.length || 0) > 0,
             restrictions: restrictions || [],
             vehicles_count: vehiclesCount || 0,

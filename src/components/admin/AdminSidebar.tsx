@@ -12,7 +12,8 @@ import {
   UserCog,
   Shield,
   TrendingUp,
-  Tag
+  Tag,
+  FileText
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,7 @@ const adminMenuItems = [
   { title: "Transactions", url: "/admin/transactions", icon: CreditCard },
   { title: "Promo Codes", url: "/admin/promo-codes", icon: Tag },
   { title: "Verifications", url: "/admin/verifications", icon: ClipboardCheck },
+  { title: "Insurance Claims", url: "/admin/claims", icon: FileText },
   { title: "Messages", url: "/admin/messages", icon: MessageSquare },
   { title: "Admin Management", url: "/admin/management", icon: UserCog },
   { title: "Audit Logs", url: "/admin/audit", icon: Shield },

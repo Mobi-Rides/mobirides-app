@@ -107,18 +107,18 @@ export default function SuperAdminAnalytics() {
     auto_dismiss_delay: 10
   });
 
-  const handleExport = async (format: 'json' | 'csv' = 'json') => {
+  const handleExport = async (exportFormat: 'json' | 'csv' = 'json') => {
     const exportStartTime = Date.now();
     
     try {
       // Show loading state
       toast.loading('Preparing export data...', { id: 'export-loading' });
       
-      const success = await exportAnalytics(format);
+      const success = await exportAnalytics(exportFormat);
       
       if (success) {
         const exportTime = ((Date.now() - exportStartTime) / 1000).toFixed(1);
-        toast.success(`Analytics data exported as ${format.toUpperCase()} (${exportTime}s)`, {
+        toast.success(`Analytics data exported as ${exportFormat.toUpperCase()} (${exportTime}s)`, {
           id: 'export-loading',
           duration: 5000,
           description: `File includes data from ${dateRange.start} to ${dateRange.end}`
@@ -259,66 +259,66 @@ export default function SuperAdminAnalytics() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant={showSecurityAlerts ? "destructive" : "outline"}
-                      size="sm"
-                      onClick={() => setShowSecurityAlerts(!showSecurityAlerts)}
-                    >
-                      <Bell className="h-4 w-4 mr-2" />
-                      Security Alerts
-                      {securityAlerts.filter(a => !a.acknowledged).length > 0 && (
-                        <Badge variant="destructive" className="ml-2">
-                          {securityAlerts.filter(a => !a.acknowledged).length}
-                        </Badge>
-                      )}
-                    </Button>
-                    <Button
-                      variant={autoRefresh ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setAutoRefresh(!autoRefresh)}
-                    >
-                      {autoRefresh ? <Wifi className="h-4 w-4 mr-2" /> : <WifiOff className="h-4 w-4 mr-2" />}
-                      Auto-refresh
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        refreshData();
-                        setLastUpdated(new Date());
-                        toast.success('Data refreshed');
-                      }}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Refresh
-                    </Button>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filters
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleExport('json')}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export JSON
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleExport('csv')}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Export CSV
-                  </Button>
-                </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant={showSecurityAlerts ? "destructive" : "outline"}
+              size="sm"
+              onClick={() => setShowSecurityAlerts(!showSecurityAlerts)}
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              Security Alerts
+              {securityAlerts.filter(a => !a.acknowledged).length > 0 && (
+                <Badge variant="destructive" className="ml-2">
+                  {securityAlerts.filter(a => !a.acknowledged).length}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant={autoRefresh ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+            >
+              {autoRefresh ? <Wifi className="h-4 w-4 mr-2" /> : <WifiOff className="h-4 w-4 mr-2" />}
+              Auto-refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                refreshData();
+                setLastUpdated(new Date());
+                toast.success('Data refreshed');
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport('json')}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export JSON
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport('csv')}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Security Alerts */}
@@ -413,7 +413,7 @@ export default function SuperAdminAnalytics() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Today</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Users</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(userMetrics as any)?.active_today ?? 0}
                     </p>
@@ -466,7 +466,7 @@ export default function SuperAdminAnalytics() {
               type="line"
               height={300}
               responsive={true}
-              onExport={(format) => handleExport(format as any)}
+              onExport={(exportFormat) => handleExport(exportFormat as any)}
             />
             <MobileOptimizedChart
               data={[]}
@@ -474,7 +474,7 @@ export default function SuperAdminAnalytics() {
               type="bar"
               height={300}
               responsive={true}
-              onExport={(format) => handleExport(format as any)}
+              onExport={(exportFormat) => handleExport(exportFormat as any)}
             />
           </div>
           
@@ -485,7 +485,7 @@ export default function SuperAdminAnalytics() {
               type="pie"
               height={300}
               responsive={true}
-              onExport={(format) => handleExport(format as any)}
+              onExport={(exportFormat) => handleExport(exportFormat as any)}
             />
             <MobileOptimizedChart
               data={(analytics as any)?.bookingTrends || []}
@@ -493,7 +493,7 @@ export default function SuperAdminAnalytics() {
               type="line"
               height={300}
               responsive={true}
-              onExport={(format) => handleExport(format as any)}
+              onExport={(exportFormat) => handleExport(exportFormat as any)}
             />
           </div>
         </TabsContent>
@@ -527,9 +527,14 @@ export default function SuperAdminAnalytics() {
               responsive={true}
             />
             <MobileOptimizedChart
-              data={(securityMetrics as any)?.severityDistribution || []}
-              title="Severity Distribution"
-              type="bar"
+              data={[
+                { name: 'Critical', value: securityMetrics?.critical_events || 0 },
+                { name: 'High', value: securityMetrics?.high_severity_events || 0 },
+                { name: 'Medium', value: securityMetrics?.medium_severity_events || 0 },
+                { name: 'Low', value: securityMetrics?.low_severity_events || 0 }
+              ]}
+              title="Security Events by Severity"
+              type="pie"
               height={300}
               responsive={true}
             />

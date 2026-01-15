@@ -30,14 +30,14 @@ import { BookingSuccessModal } from "./BookingSuccessModal";
 import { useDynamicPricing } from "@/hooks/useDynamicPricing";
 import { isFeatureEnabled } from "@/lib/featureFlags";
 import { PriceBreakdown } from "./PriceBreakdown";
-import { InsurancePlanSelector } from "@/components/insurance/InsurancePlanSelector";
-import { CoverageCalculator } from "@/components/insurance/CoverageCalculator";
+import { InsurancePackageSelector } from "@/components/insurance/InsurancePackageSelector";
+import { InsuranceService } from "@/services/insuranceService";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
-import { 
-  validatePromoCode, 
-  applyPromoCode, 
-  calculateDiscount, 
-  PromoCode 
+import {
+  validatePromoCode,
+  applyPromoCode,
+  calculateDiscount,
+  PromoCode
 } from "@/services/promoCodeService";
 
 interface BookingDialogProps {
@@ -101,6 +101,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     userId ?? undefined,
   );
 
+  const [selectedInsurancePackageId, setSelectedInsurancePackageId] = useState<string | null>(null);
   const [insurancePremium, setInsurancePremium] = useState<number | null>(null);
 
   // Calculate prices for display and booking
@@ -348,15 +349,57 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
       if (bookingError) throw bookingError;
 
+      // Create insurance policy if selected
+      if (selectedInsurancePackageId) {
+        try {
+          const insurancePackage = await InsuranceService.getPackageById(selectedInsurancePackageId);
+
+          // Only create policy if not "no_coverage" (assuming no_coverage might be a package ID or we check name)
+          // The selector returns a package ID. getPackageById will return the package details.
+          if (insurancePackage.name !== 'no_coverage') {
+            console.log("[BookingDialog] Creating insurance policy...");
+
+            // Construct dates with time components to ensure end_date > start_date
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            const [endHour, endMinute] = endTime.split(':').map(Number);
+
+            const policyStartDate = new Date(startDate);
+            policyStartDate.setHours(startHour, startMinute, 0, 0);
+
+            const policyEndDate = new Date(endDate);
+            policyEndDate.setHours(endHour, endMinute, 0, 0);
+
+            await InsuranceService.createPolicy(
+              booking.id,
+              selectedInsurancePackageId,
+              session.session.user.id,
+              car.id,
+              policyStartDate,
+              policyEndDate,
+              car.price_per_day
+            );
+            console.log("[BookingDialog] Insurance policy created successfully");
+          }
+        } catch (insuranceError) {
+          console.error("[BookingDialog] Failed to create insurance policy:", insuranceError);
+          // Non-blocking for booking flow, but should be logged/alerted
+          toast({
+            title: "Warning",
+            description: "Booking successful, but insurance policy creation failed. Please contact support.",
+            variant: "destructive"
+          });
+        }
+      }
+
       // Apply promo code usage if applicable
       if (appliedPromo) {
         try {
           await applyPromoCode(
-            appliedPromo.id, 
-            session.session.user.id, 
-            booking.id, 
-            discountValue, 
-            priceBeforeDiscount, 
+            appliedPromo.id,
+            session.session.user.id,
+            booking.id,
+            discountValue,
+            priceBeforeDiscount,
             totalPrice
           );
           console.log("[BookingDialog] Promo code usage recorded");
@@ -394,7 +437,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       const bookingNotificationData = {
         bookingId: booking.id,
         customerName: renterProfile?.full_name || "Customer",
-        hostName: hostProfile?.full_name || "Host", 
+        hostName: hostProfile?.full_name || "Host",
         carBrand: car.brand,
         carModel: car.model,
         pickupDate: format(startDate, "PPP"),
@@ -421,7 +464,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             },
             bookingNotificationData
           );
-          
+
           // Send WhatsApp to renter
           await whatsappService.sendBookingConfirmation(
             {
@@ -431,7 +474,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             },
             bookingNotificationData
           );
-          
+
           console.log("✅ Renter notifications sent successfully");
         } catch (error) {
           console.error("❌ Failed to send renter notifications:", error);
@@ -444,7 +487,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           const { data: emailResponse, error: emailError } = await supabase.functions.invoke('get-user-email', {
             body: { userId: car.owner_id }
           });
-          
+
           if (!emailError && emailResponse?.email) {
             // Send email to host
             await emailService.sendBookingConfirmation(
@@ -460,7 +503,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               true // isHost flag
             );
           }
-          
+
           // Send WhatsApp to host
           await whatsappService.sendBookingConfirmation(
             {
@@ -474,7 +517,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             },
             true // isHost flag
           );
-          
+
           console.log("✅ Host notifications sent successfully");
         } catch (error) {
           console.error("❌ Failed to send host notifications:", error);
@@ -508,8 +551,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         await createNotification(
           car.owner_id,
           "booking_request",
-          `New booking request received for your ${car.brand} ${
-            car.model
+          `New booking request received for your ${car.brand} ${car.model
           } from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
           car.id,
           booking.id,
@@ -601,7 +643,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="sm:max-w-[425px] md:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           <BookingBreadcrumbs currentStep="confirmation" />
           <div className="p-6">
             <DialogHeader>
@@ -613,94 +655,62 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               </DialogDescription>
             </DialogHeader>
 
-          {isOwner && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Not allowed</AlertTitle>
-              <AlertDescription>
-                You cannot book your own car. This is for other renters only.
-              </AlertDescription>
-            </Alert>
-          )}
+            {isOwner && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Not allowed</AlertTitle>
+                <AlertDescription>
+                  You cannot book your own car. This is for other renters only.
+                </AlertDescription>
+              </Alert>
+            )}
 
-          {!isAvailable && startDate && endDate && (
-            <Alert variant="destructive" className="mb-4">
-              <CalendarX className="h-4 w-4" />
-              <AlertTitle>Not available</AlertTitle>
-              <AlertDescription>
-                This car is not available for the selected dates. Please choose
-                different dates.
-              </AlertDescription>
-            </Alert>
-          )}
+            {!isAvailable && startDate && endDate && (
+              <Alert variant="destructive" className="mb-4">
+                <CalendarX className="h-4 w-4" />
+                <AlertTitle>Not available</AlertTitle>
+                <AlertDescription>
+                  This car is not available for the selected dates. Please choose
+                  different dates.
+                </AlertDescription>
+              </Alert>
+            )}
 
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">Select dates</h4>
-              <Calendar
-                mode="range"
-                selected={{
-                  from: startDate,
-                  to: endDate,
-                }}
-                onSelect={(range) => {
-                  setStartDate(range?.from);
-                  setEndDate(range?.to);
-                }}
-                numberOfMonths={1}
-                disabled={isDateDisabled}
-                modifiers={{
-                  booked: bookedDates,
-                }}
-                modifiersStyles={{
-                  booked: {
-                    backgroundColor: "rgba(239, 68, 68, 0.1)",
-                    color: "rgb(239, 68, 68)",
-                    textDecoration: "line-through",
-                  },
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium">Pickup Location</h4>
-              <div className="flex items-center justify-between p-3 border rounded-md">
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div className="text-sm">
-                    <p>{formatLocationDescription()}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsLocationPickerOpen(true)}
-                >
-                  Change
-                </Button>
-              </div>
-            </div>
-            {startDate && endDate && (
+            <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <h4 className="font-medium">Summary</h4>
-                <div className="text-sm space-y-1 p-4 bg-primary/5 rounded-md">
-                  <p>Start date: {format(startDate, "PPP")}</p>
-                  <p>End date: {format(endDate, "PPP")}</p>
-                  
-                  {/* Promo Code Input */}
-                  <div className="py-2 border-y border-border/50 my-2">
-                    <PromoCodeInput
-                      userId={userId}
-                      bookingAmount={isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : basePrice || 0}
-                      onApply={handlePromoApplied}
-                      onRemove={handlePromoRemoved}
-                      appliedPromo={appliedPromo}
-                    />
-                  </div>
-
-                  <div className="border-t border-border pt-2 mt-2">
-                    <p className="font-medium text-primary">
-                      Total: BWP {totalDisplayPrice.toFixed(2)}
-                    </p>
+                <h4 className="font-medium">Select dates</h4>
+                <Calendar
+                  mode="range"
+                  selected={{
+                    from: startDate,
+                    to: endDate,
+                  }}
+                  onSelect={(range) => {
+                    setStartDate(range?.from);
+                    setEndDate(range?.to);
+                  }}
+                  numberOfMonths={1}
+                  disabled={isDateDisabled}
+                  modifiers={{
+                    booked: bookedDates,
+                  }}
+                  modifiersStyles={{
+                    booked: {
+                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                      color: "rgb(239, 68, 68)",
+                      textDecoration: "line-through",
+                    },
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium">Pickup Location</h4>
+                <div className="flex items-center justify-between p-3 border rounded-md">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div className="text-sm">
+                      <p>{formatLocationDescription()}</p>
+                    </div>
                   </div>
                   <Button
                     variant="outline"
@@ -710,84 +720,124 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     Change
                   </Button>
                 </div>
-                {isFeatureEnabled("DYNAMIC_PRICING") && basePrice !== undefined && (
-                  <PriceBreakdown 
-                    calculation={calculation} 
-                    basePrice={basePrice} 
-                    discountAmount={discountAmount}
-                    promoCode={appliedPromo?.code}
-                  />
-                )}
-                {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined && (
-                  <>
-                    <InsurancePlanSelector
+              </div>
+              {startDate && endDate && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Summary</h4>
+                  <div className="text-sm space-y-1 p-4 bg-primary/5 rounded-md">
+                    <p>Start date: {format(startDate, "PPP")}</p>
+                    <p>End date: {format(endDate, "PPP")}</p>
+
+                    {/* Promo Code Input */}
+                    <div className="py-2 border-y border-border/50 my-2">
+                      <PromoCodeInput
+                        userId={userId}
+                        bookingAmount={isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : basePrice || 0}
+                        onApply={handlePromoApplied}
+                        onRemove={handlePromoRemoved}
+                        appliedPromo={appliedPromo}
+                      />
+                    </div>
+
+                    <div className="border-t border-border pt-2 mt-2">
+                      <p className="font-medium text-primary">
+                        Total: BWP {totalDisplayPrice.toFixed(2)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsLocationPickerOpen(true)}
+                    >
+                      Change
+                    </Button>
+                  </div>
+                  {isFeatureEnabled("DYNAMIC_PRICING") && basePrice !== undefined && (
+                    <PriceBreakdown
+                      calculation={calculation}
                       basePrice={basePrice}
-                      onSelected={(_, premium) => setInsurancePremium(premium)}
+                      discountAmount={discountAmount}
+                      promoCode={appliedPromo?.code}
                     />
-                    <CoverageCalculator
-                      premium={insurancePremium}
-                      totalWithoutInsurance={(
-                        isFeatureEnabled("DYNAMIC_PRICING") && finalPrice
-                          ? finalPrice
-                          : Math.ceil(
-                              (endDate.getTime() - startDate.getTime()) /
-                                (1000 * 60 * 60 * 24) +
-                                1,
-                            ) * car.price_per_day
+                  )}
+                  {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined && (
+                    <>
+                      <InsurancePackageSelector
+                        dailyRentalAmount={car.price_per_day}
+                        startDate={startDate}
+                        endDate={endDate}
+                        selectedPackageId={selectedInsurancePackageId || undefined}
+                        onPackageSelect={(pkgId, premium) => {
+                          setSelectedInsurancePackageId(pkgId);
+                          setInsurancePremium(premium);
+                        }}
+                        userId={userId || undefined}
+                        carId={car.id}
+                      />
+                      {insurancePremium !== null && insurancePremium > 0 && (
+                        <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="font-medium text-blue-900">Insurance Premium:</span>
+                            <span className="font-bold text-blue-700">BWP {insurancePremium.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm mt-1 pt-1 border-t border-blue-200">
+                            <span className="font-medium text-blue-900">Total with Insurance:</span>
+                            <span className="font-bold text-blue-700">BWP {(totalDisplayPrice + insurancePremium).toFixed(2)}</span>
+                          </div>
+                        </div>
                       )}
-                    />
-                  </>
-                )}
-              </div>
-            )}
-           </div>
-           <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={
-                !isVerified && !isVerificationLoading
-                  ? () => setIsVerificationDialogOpen(true)
-                  : handleBooking
-              }
-              disabled={
-                !startDate ||
-                !endDate ||
-                isLoading ||
-                isOwner ||
-                isCheckingAvailability ||
-                !isAvailable ||
-                !pickupLocation ||
-                isVerificationLoading
-              }
-              className="w-full sm:w-auto"
-              variant={
-                !isVerified && !isVerificationLoading ? "outline" : "default"
-              }
-            >
-              {isLoading || dpLoading
-                ? "Booking..."
-                : isCheckingAvailability
-                  ? "Checking..."
-                  : isVerificationLoading
-                    ? "Checking verification..."
-                    : !isVerified
-                      ? "Start Verification"
-                      : "Confirm"}
-            </Button>
-            {(!startDate || !endDate || !pickupLocation || !isAvailable) && (
-              <div className="text-xs text-destructive mt-1 text-center">
-                {(!startDate || !endDate) && 'Please select dates'}
-                {!pickupLocation && 'Please select pickup location'}
-                {!isAvailable && 'Car not available for selected dates'}
-              </div>
-            )}
-           </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={
+                  !isVerified && !isVerificationLoading
+                    ? () => setIsVerificationDialogOpen(true)
+                    : handleBooking
+                }
+                disabled={
+                  !startDate ||
+                  !endDate ||
+                  isLoading ||
+                  isOwner ||
+                  isCheckingAvailability ||
+                  !isAvailable ||
+                  !pickupLocation ||
+                  isVerificationLoading
+                }
+                className="w-full sm:w-auto"
+                variant={
+                  !isVerified && !isVerificationLoading ? "outline" : "default"
+                }
+              >
+                {isLoading || dpLoading
+                  ? "Booking..."
+                  : isCheckingAvailability
+                    ? "Checking..."
+                    : isVerificationLoading
+                      ? "Checking verification..."
+                      : !isVerified
+                        ? "Start Verification"
+                        : "Confirm"}
+              </Button>
+              {(!startDate || !endDate || !pickupLocation || !isAvailable) && (
+                <div className="text-xs text-destructive mt-1 text-center">
+                  {(!startDate || !endDate) && 'Please select dates'}
+                  {!pickupLocation && 'Please select pickup location'}
+                  {!isAvailable && 'Car not available for selected dates'}
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

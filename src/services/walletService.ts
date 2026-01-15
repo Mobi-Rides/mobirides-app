@@ -21,7 +21,7 @@ class WalletService {
 
   async topUpWallet(hostId: string, request: TopUpRequest) {
     const result = await topUpWallet(hostId, request);
-    
+
     if (result) {
       // Create notification for successful top-up using new method
       await notificationService.createWalletNotification(
@@ -30,7 +30,7 @@ class WalletService {
         request.amount
       );
     }
-    
+
     return result;
   }
 
@@ -52,7 +52,7 @@ class WalletService {
 
   async createWalletForHost(hostId: string) {
     const result = await createWalletForHost(hostId);
-    
+
     if (result) {
       // Create notification for wallet creation
       await notificationService.createNotification(
@@ -61,10 +61,13 @@ class WalletService {
         "Your wallet has been created successfully"
       );
     }
-    
+
     return result;
   }
 
+  async creditInsurancePayout(userId: string, claimId: string, amount: number, claimNumber: string) {
+    return walletOperations.creditInsurancePayout(userId, claimId, amount, claimNumber);
+  }
 
 }
 
