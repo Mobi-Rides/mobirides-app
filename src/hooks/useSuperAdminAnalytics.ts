@@ -32,6 +32,8 @@ export interface UserActivityMetrics {
   new_users: number;
   suspended_users: number;
   role_distribution: Record<string, number>;
+  role_users?: Record<string, string[]>;
+  user_profiles?: any[];
   admin_users: number;
   admin_user_details: any[];
 }
