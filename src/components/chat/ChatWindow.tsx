@@ -9,7 +9,8 @@ import {
   Users,
   Search,
   ChevronDown,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 import { Conversation, Message, User, TypingIndicator } from '@/types/message';
 import { MessageBubble } from './MessageBubble';
@@ -36,6 +37,8 @@ interface ChatWindowProps {
   onStopTyping?: () => void;
   isLoading?: boolean;
   onBack?: () => void;
+  onStartCall?: () => void;
+  onStartVideoCall?: () => void;
 }
 
 export function ChatWindow({
@@ -50,7 +53,9 @@ export function ChatWindow({
   onStartTyping,
   onStopTyping,
   isLoading = false,
-  onBack
+  onBack,
+  onStartCall,
+  onStartVideoCall
 }: ChatWindowProps) {
   const navigate = useNavigate();
   const [replyToMessage, setReplyToMessage] = useState<{
@@ -61,6 +66,66 @@ export function ChatWindow({
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // In-chat search state
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [matches, setMatches] = useState<string[]>([]); // Array of message IDs
+
+  // Debounce search and find matches
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setMatches([]);
+      setCurrentMatchIndex(0);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const foundMsgIds = messages
+      .filter(m => m.content && m.content.toLowerCase().includes(query))
+      .map(m => m.id);
+
+    // Reverse to match visual order (bottom to top usually, but we scroll down)
+    // Actually standard is top-to-bottom for "Next" usually going down.
+    // If we want "Next" to go to the *next older* message or *next newer*?
+    // Usually "Next" means "Find next occurrence downwards". 
+    // "Previous" means "Find upwards".
+    // Let's assume matches are time-ordered (oldest to newest).
+    // When we start search, we might want to jump to the most recent match?
+    // Let's just store them in order.
+
+    setMatches(foundMsgIds);
+    // If we were already at a match, try to keep it, otherwise jump to last (newest)
+    setCurrentMatchIndex(prev => Math.max(0, foundMsgIds.length - 1));
+
+  }, [searchQuery, messages]);
+
+  // Handle navigation
+  const navigateMatch = (direction: 'next' | 'prev') => {
+    if (matches.length === 0) return;
+
+    let newIndex = direction === 'next' ? currentMatchIndex + 1 : currentMatchIndex - 1;
+
+    // Wrap around
+    if (newIndex >= matches.length) newIndex = 0;
+    if (newIndex < 0) newIndex = matches.length - 1;
+
+    setCurrentMatchIndex(newIndex);
+
+    // Scroll to message
+    const messageId = matches[newIndex];
+    if (messageId) {
+      const el = document.getElementById(`message-${messageId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add highlight effect
+        el.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'bg-primary/5'), 2000);
+      }
+    }
+  };
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -238,15 +303,15 @@ export function ChatWindow({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setShowSearch(!showSearch)}>
             <Search className="w-4 h-4" />
           </Button>
 
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Audio call feature coming soon!')}>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onStartCall}>
             <Phone className="w-4 h-4" />
           </Button>
 
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => toast.info('Video call feature coming soon!')}>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onStartVideoCall}>
             <Video className="w-4 h-4" />
           </Button>
 
@@ -259,6 +324,72 @@ export function ChatWindow({
           </Button>
         </div>
       </div>
+
+      {/* In-Chat Search Bar */}
+      {showSearch && (
+        <div className="border-b border-notification-border p-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center gap-2 animate-in slide-in-from-top-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search in conversation..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.shiftKey) {
+                    navigateMatch('prev');
+                  } else {
+                    navigateMatch('next');
+                  }
+                }
+                if (e.key === 'Escape') {
+                  setShowSearch(false);
+                  setSearchQuery('');
+                }
+              }}
+              className="w-full pl-8 pr-4 py-1.5 text-sm bg-muted/50 border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
+              autoFocus
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground whitespace-nowrap px-2">
+              {matches.length > 0 ? `${currentMatchIndex + 1} of ${matches.length}` : 'No results'}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0"
+              onClick={() => navigateMatch('prev')}
+              disabled={matches.length === 0}
+            >
+              <ChevronDown className="w-4 h-4 rotate-180" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0"
+              onClick={() => navigateMatch('next')}
+              disabled={matches.length === 0}
+            >
+              <ChevronDown className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 ml-1 hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => {
+                setShowSearch(false);
+                setSearchQuery('');
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
@@ -322,6 +453,7 @@ export function ChatWindow({
                       onDelete={onDeleteMessage}
                       onReply={handleReply}
                       onReact={onReactToMessage}
+                      highlightTerm={searchQuery}
                     />
                   </div>
                 );

@@ -2,11 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
 import { NewConversationModal } from './NewConversationModal';
-import { Button } from '@/components/ui/button';
+import { CallInterface } from './CallInterface';
+import { VideoCallInterface } from './VideoCallInterface';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useOptimizedConversations, useConversationMessages } from '@/hooks/useOptimizedConversations';
+import { useVoiceCall } from '@/hooks/useVoiceCall';
+import { useVideoCall } from '@/hooks/useVideoCall';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Loader2, MessageSquare } from 'lucide-react';
 
 interface MessagingInterfaceProps {
   className?: string;
@@ -32,7 +38,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       try {
         const userStart = Date.now();
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        console.log(`⏱️ [MESSAGING] User fetch took ${Date.now() - userStart}ms`);
+        console.log(`⏱️[MESSAGING] User fetch took ${Date.now() - userStart}ms`);
 
         if (userError) {
           console.error('❌ [MESSAGING] Auth error:', userError);
@@ -108,7 +114,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   // Get messages for selected conversation using the stable hook
   const { data: messages = [], isLoading: isLoadingMessages, error: messagesError } = useConversationMessages(selectedConversationId);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
+  const [isNewConversationDialogOpen, setIsNewConversationDialogOpen] = useState(false);
 
   // Update last_read_at when conversation is selected
   useEffect(() => {
@@ -137,9 +143,6 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     }
   }, [selectedConversationId, currentUser?.id]);
 
-  // Removed auto-select: Users should see conversation list first and choose which to open
-  // Recipient-based selection (from car details, bookings, etc.) still works via the useEffect below
-
   // Memoize the createConversation function to prevent infinite loops
   const handleCreateConversation = useCallback((params: { participantIds: string[], title?: string }) => {
     if (!isCreatingConversation) {
@@ -153,11 +156,10 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   // Handle recipient-based conversation creation/selection
   useEffect(() => {
     try {
-      console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser.id);
+      console.log("MessagingInterface: recipientId=", recipientId, "recipientName=", recipientName, "currentUser.id=", currentUser?.id);
 
       if (recipientId && recipientName && currentUser?.id && !conversationsLoading) {
         console.log("MessagingInterface: Processing recipient data, looking for existing conversation");
-        console.log("MessagingInterface: Current conversations:", Array.isArray(conversations) ? conversations.length : 'not array');
 
         const existingConversation = Array.isArray(conversations) ? conversations.find(conv =>
           conv?.type === 'direct' &&
@@ -196,29 +198,15 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             console.warn("MessagingInterface: Max creation attempts reached for recipient:", recipientId);
           }
         }
-      } else {
-        console.log("MessagingInterface: Missing required data, user not loaded, or conversations loading");
       }
     } catch (error) {
       console.error("MessagingInterface: Error in recipient handling:", error);
     }
   }, [recipientId, recipientName, conversations, currentUser?.id, conversationsLoading, isCreatingConversation]);
 
-  const filteredConversations = Array.isArray(conversations) ? conversations.filter(conv => {
-    if (!conv) return false;
-    const title = conv.title || (Array.isArray(conv.participants) ? conv.participants : [])
-      .filter(p => p?.id !== currentUser?.id)
-      .map(p => p?.name || 'Unknown')
-      .join(', ');
+  const selectedConversation = Array.isArray(conversations) ? conversations.find(c => c.id === selectedConversationId) : undefined;
 
-    return title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (conv.lastMessage?.content && conv.lastMessage.content.toLowerCase().includes(searchTerm.toLowerCase()));
-  }) : [];
-
-  const selectedConversation = filteredConversations.find(c => c.id === selectedConversationId);
-
-
-  const handleSendMessage = useCallback((content: string, type: 'text' | 'image' | 'file' = 'text', metadata: any = {}, replyToMessageId?: string) => {
+  const handleSendMessage = useCallback((content: string, type: 'text' | 'image' | 'file' | 'audio' | 'video' = 'text', metadata: any = {}, replyToMessageId?: string) => {
     if (selectedConversationId && content.trim()) {
       console.log('Sending message:', { conversationId: selectedConversationId, content, type, replyToMessageId });
       sendMessage({
@@ -234,25 +222,26 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   }, [selectedConversationId, sendMessage]);
 
   const handleNewConversation = () => {
-    setIsNewConversationModalOpen(true);
+    setIsNewConversationDialogOpen(true);
   };
 
   const handleStartConversation = async (participant: User) => {
     try {
       handleCreateConversation({
         participantIds: [participant.id]
-        // Don't set title for direct conversations - let UI determine display name
       });
-      setIsNewConversationModalOpen(false);
+      setIsNewConversationDialogOpen(false);
     } catch (error) {
       console.error('Error creating conversation:', error);
     }
   };
 
+  const queryClient = useQueryClient();
+
   const handleReactToMessage = useCallback(async (messageId: string, emoji: string) => {
     if (!currentUser) {
-        console.warn('Cannot react: No current user');
-        return;
+      console.warn('Cannot react: No current user');
+      return;
     }
 
     try {
@@ -264,7 +253,6 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
       if (existingReaction) {
         // Remove reaction
-        console.log('Removing reaction...');
         const { error } = await supabase
           .from('message_reactions')
           .delete()
@@ -272,13 +260,9 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
           .eq('user_id', currentUser.id)
           .eq('emoji', emoji);
 
-        if (error) {
-            console.error('Failed to remove reaction:', error);
-            throw error;
-        }
+        if (error) throw error;
       } else {
         // Add reaction
-        console.log('Adding reaction...');
         const { error } = await supabase
           .from('message_reactions')
           .insert({
@@ -287,16 +271,73 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             emoji: emoji
           });
 
-        if (error) {
-            console.error('Failed to add reaction:', error);
-            throw error;
-        }
+        if (error) throw error;
       }
+
+      // Invalidate cache to trigger re-fetch and show the updated reactions
+      queryClient.invalidateQueries({ queryKey: ['conversation-messages', selectedConversationId] });
+
     } catch (error) {
       console.error('Error handling reaction:', error);
       toast.error('Failed to update reaction');
     }
-  }, [currentUser, messages]);
+  }, [currentUser, messages, queryClient, selectedConversationId]);
+
+  // Voice Call logic
+  const {
+    callStatus,
+    caller,
+    isMuted,
+    startCall,
+    acceptCall,
+    endCall,
+    toggleMute
+  } = useVoiceCall({ currentUserId: currentUser?.id });
+
+  const handleStartCall = () => {
+    if (selectedConversation) {
+      // Find other participant
+      const otherParticipant = selectedConversation.type === 'direct'
+        ? selectedConversation.participants.find(p => p.id !== currentUser?.id)
+        : null; // Group calls not supported yet
+
+      if (otherParticipant) {
+        startCall(otherParticipant.id, otherParticipant.name || 'User', otherParticipant.avatar);
+      } else {
+        toast.error('Cannot call this user');
+      }
+    }
+  };
+
+  // Video Call logic
+  const {
+    callStatus: videoCallStatus,
+    caller: videoCaller,
+    isMuted: isVideoMuted,
+    isCameraOff,
+    startCall: startVideoCall,
+    acceptCall: acceptVideoCall,
+    endCall: endVideoCall,
+    toggleMute: toggleVideoMute,
+    toggleCamera,
+    setLocalVideoElement,
+    setRemoteVideoElement
+  } = useVideoCall({ currentUserId: currentUser?.id });
+
+  const handleStartVideoCall = () => {
+    if (selectedConversation) {
+      // Find other participant
+      const otherParticipant = selectedConversation.type === 'direct'
+        ? selectedConversation.participants.find(p => p.id !== currentUser?.id)
+        : null; // Group calls not supported yet
+
+      if (otherParticipant) {
+        startVideoCall(otherParticipant.id, otherParticipant.name || 'User', otherParticipant.avatar);
+      } else {
+        toast.error('Cannot video call this user');
+      }
+    }
+  };
 
   // Phase 1: Show loading state while authentication is in progress
   if (authLoading || !currentUser) {
@@ -304,7 +345,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     return (
       <div className={cn("flex items-center justify-center h-full bg-card rounded-lg border border-notification-border", className)}>
         <div className="text-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <Loader2 className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
           <div className="text-muted-foreground">
             {authError ? `Error: ${authError}` : 'Loading conversations...'}
           </div>
@@ -321,80 +362,84 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
     );
   }
 
-  console.log("🎯 [MESSAGING] Rendering interface", {
-    conversationsLoading,
-    filteredConversationsCount: filteredConversations.length,
-    selectedConversationId,
-    currentUserId: currentUser.id,
-    messagesCount: Array.isArray(messages) ? messages.length : 0
-  });
-
   return (
-    <div className={cn("flex flex-col h-full bg-card rounded-lg border border-notification-border overflow-hidden", className)}>
-      <div className="flex flex-1 overflow-hidden">
-        {/* Conversation List */}
-        <div className={cn(
-          "w-full md:w-80 flex-shrink-0 transition-all duration-300",
-          selectedConversationId ? "max-md:hidden" : ""
-        )}>
-          <ConversationList
-            conversations={filteredConversations}
-            selectedConversationId={selectedConversationId}
-            currentUser={currentUser}
-            onSelectConversation={setSelectedConversationId}
-            onNewConversation={handleNewConversation}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
-        </div>
+    <div className={cn("flex h-[calc(100vh-4rem)] bg-background overflow-hidden relative", className)}>
+      {/* Voice Call Interface Overlay */}
+      <CallInterface
+        status={callStatus}
+        callerName={caller?.name}
+        callerAvatar={caller?.avatar}
+        isMuted={isMuted}
+        onAccept={acceptCall}
+        onDecline={() => endCall(true)}
+        onEnd={() => endCall(true)}
+        onToggleMute={toggleMute}
+      />
 
-        {/* Chat Window */}
-        <div className={cn(
-          "flex-1 transition-all duration-300",
-          selectedConversationId ? "" : "max-md:hidden"
-        )}>
-          {selectedConversation ? (
-            <ChatWindow
-              conversation={selectedConversation}
-              messages={Array.isArray(messages) ? messages : []}
-              currentUser={currentUser}
-              typingUsers={[]}
-              onSendMessage={handleSendMessage}
-              onReactToMessage={handleReactToMessage}
-              isLoading={isSendingMessage}
-              onBack={() => setSelectedConversationId(undefined)}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg
-                    className="w-8 h-8 text-primary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">No conversation selected</h3>
-                <p className="text-muted-foreground">Choose a conversation to start messaging</p>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Video Call Interface Overlay */}
+      <VideoCallInterface
+        status={videoCallStatus}
+        callerName={videoCaller?.name}
+        callerAvatar={videoCaller?.avatar}
+        isMuted={isVideoMuted}
+        isCameraOff={isCameraOff}
+        onAccept={acceptVideoCall}
+        onDecline={() => endVideoCall(true)}
+        onEnd={() => endVideoCall(true)}
+        onToggleMute={toggleVideoMute}
+        onToggleCamera={toggleCamera}
+        setLocalVideoElement={setLocalVideoElement}
+        setRemoteVideoElement={setRemoteVideoElement}
+      />
+
+      {/* Sidebar - Conversation List */}
+      <div className={cn(
+        "w-full md:w-80 lg:w-96 border-r border-notification-border bg-card flex flex-col transition-all duration-300 ease-in-out absolute md:relative z-10 h-full",
+        selectedConversationId ? "max-md:-translate-x-full" : "translate-x-0"
+      )}>
+        <ConversationList
+          conversations={Array.isArray(conversations) ? conversations : []}
+          selectedConversationId={selectedConversationId}
+          currentUser={currentUser}
+          onSelectConversation={setSelectedConversationId}
+          onNewConversation={handleNewConversation}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+        />
       </div>
 
-      {/* New Conversation Modal */}
+      {/* Main Chat Area */}
+      <div className={cn(
+        "flex-1 flex flex-col bg-background transition-all duration-300 ease-in-out absolute md:relative w-full h-full",
+        selectedConversationId ? "translate-x-0" : "max-md:translate-x-full"
+      )}>
+        {selectedConversation ? (
+          <ChatWindow
+            conversation={selectedConversation}
+            messages={Array.isArray(messages) ? messages : []}
+            currentUser={currentUser}
+            typingUsers={[]} // Placeholder until real typing logic is hooked up if available
+            onSendMessage={handleSendMessage}
+            onReactToMessage={handleReactToMessage}
+            isLoading={isSendingMessage}
+            onBack={() => setSelectedConversationId(undefined)}
+            onStartCall={handleStartCall}
+            onStartVideoCall={handleStartVideoCall}
+          />
+        ) : (
+          <div className="hidden md:flex flex-col items-center justify-center h-full text-muted-foreground">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <MessageSquare className="w-8 h-8 text-primary" />
+            </div>
+            <p className="text-lg font-medium">Select a conversation to start messaging</p>
+          </div>
+        )}
+      </div>
+
+      {/* New Conversation Dialog */}
       <NewConversationModal
-        isOpen={isNewConversationModalOpen}
-        onClose={() => setIsNewConversationModalOpen(false)}
+        isOpen={isNewConversationDialogOpen}
+        onClose={() => setIsNewConversationDialogOpen(false)}
         onStartConversation={handleStartConversation}
         currentUser={currentUser}
       />

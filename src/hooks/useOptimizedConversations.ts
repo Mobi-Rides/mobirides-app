@@ -27,7 +27,7 @@ interface DatabaseConversation {
     content: string;
     sender_id: string;
     created_at: string;
-    message_type: 'text' | 'image' | 'file';
+    message_type: 'text' | 'image' | 'file' | 'audio' | 'video';
   }>;
 }
 
@@ -399,7 +399,7 @@ export const useOptimizedConversations = (userId?: string) => {
                 senderId: lastMessage.sender_id,
                 conversationId: conv.id,
                 timestamp: new Date(lastMessage.created_at),
-                type: lastMessage.message_type as 'text' | 'image' | 'file',
+                type: lastMessage.message_type as 'text' | 'image' | 'file' | 'audio' | 'video',
                 sender: lastMessage.sender
               } : undefined,
               unreadCount: unreadCount,
@@ -610,7 +610,7 @@ export const useOptimizedConversations = (userId?: string) => {
     mutationFn: async (params: {
       conversationId: string;
       content: string;
-      messageType?: 'text' | 'image' | 'file';
+      messageType?: 'text' | 'image' | 'file' | 'audio' | 'video';
       metadata?: Record<string, any>;
       replyToMessageId?: string;
     }) => {
@@ -732,7 +732,7 @@ export const useOptimizedConversations = (userId?: string) => {
     error,
     createConversation: createConversationMutation.mutate,
     isCreatingConversation: createConversationMutation.isPending,
-    sendMessage: (params: { conversationId: string; content: string; messageType?: 'text' | 'image' | 'file'; metadata?: Record<string, any>; replyToMessageId?: string }) => sendMessageMutation.mutate(params),
+    sendMessage: (params: { conversationId: string; content: string; messageType?: 'text' | 'image' | 'file' | 'audio' | 'video'; metadata?: Record<string, any>; replyToMessageId?: string }) => sendMessageMutation.mutate(params),
     isSendingMessage: sendMessageMutation.isPending,
     sendMessageError: sendMessageMutation.error,
     sendMessageSuccess: sendMessageMutation.isSuccess
@@ -884,7 +884,7 @@ export const useConversationMessages = (conversationId?: string) => {
 
       if (replyIds.length > 0) {
         console.log(`🔄 [MESSAGES] Fetching ${replyIds.length} parent messages for replies`);
-        
+
         const { data: parentMessages, error: parentError } = await supabase
           .from('conversation_messages')
           .select(`
@@ -902,7 +902,7 @@ export const useConversationMessages = (conversationId?: string) => {
         } else if (parentMessages) {
           // Create a lookup map
           const parentMap = new Map(parentMessages.map(p => [p.id, p]));
-          
+
           // Attach parent messages to the original messages
           messagesWithReplies = messagesWithReplies.map((m: any) => {
             if (m.reply_to_message_id) {

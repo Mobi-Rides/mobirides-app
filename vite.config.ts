@@ -29,7 +29,15 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      process: "process/browser",
+      stream: "stream-browserify",
+      zlib: "browserify-zlib",
+      util: "util",
     },
+  },
+  define: {
+    'process.env': {},
+    'global': 'window', // Fix for simple-peer
   },
   build: {
     rollupOptions: {
@@ -41,7 +49,8 @@ export default defineConfig(({ mode }) => ({
           'mapbox-vendor': ['mapbox-gl'],
           'form-vendor': ['react-hook-form', 'zod'],
           'date-vendor': ['date-fns'],
-          'supabase-vendor': ['@supabase/supabase-js']
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'webrtc-vendor': ['simple-peer']
         }
       }
     },

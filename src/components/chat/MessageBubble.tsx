@@ -35,6 +35,7 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void;
   onReply?: (messageId: string) => void;
   onReact?: (messageId: string, emoji: string) => void;
+  highlightTerm?: string;
 }
 
 export function MessageBubble({
@@ -47,7 +48,8 @@ export function MessageBubble({
   onEdit,
   onDelete,
   onReply,
-  onReact
+  onReact,
+  highlightTerm
 }: MessageBubbleProps) {
   const [showActions, setShowActions] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -200,14 +202,28 @@ export function MessageBubble({
               </a>
             ) : null}
 
-            {/* Only show content if it's not the default auto-generated message for media */}
+            {/* Highlighted Content */}
             {!(
               (message.type === 'image' && (message.content === 'Sent an image' || message.content.startsWith('Sent a file:'))) ||
               (message.type === 'video' && (message.content === 'Sent a video' || message.content.startsWith('Sent a file:'))) ||
               (message.type === 'audio' && message.content === 'Sent a voice message') ||
               (message.type === 'file' && message.content.startsWith('Sent a file:'))
             ) && (
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm">
+                  {highlightTerm && message.content ? (
+                    message.content.split(new RegExp(`(${highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')).map((part, i) =>
+                      part.toLowerCase() === highlightTerm.toLowerCase() ? (
+                        <span key={i} className="bg-yellow-200 text-black px-0.5 rounded animate-pulse">
+                          {part}
+                        </span>
+                      ) : (
+                        <span key={i}>{part}</span>
+                      )
+                    )
+                  ) : (
+                    message.content
+                  )}
+                </p>
               )}
 
             {message.edited && (
