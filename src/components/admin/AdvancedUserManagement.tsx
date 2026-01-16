@@ -4,14 +4,42 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, UserX, UserCheck, Trash2, Shield, Mail, AlertTriangle } from "lucide-react";
+import {
+  Search,
+  UserX,
+  UserCheck,
+  Trash2,
+  Shield,
+  Mail,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -41,7 +69,11 @@ interface UserProfile {
     ends_at: string;
     id: string;
     reason: string;
-    restriction_type: "booking_block" | "login_block" | "messaging_block" | "suspension";
+    restriction_type:
+      | "booking_block"
+      | "login_block"
+      | "messaging_block"
+      | "suspension";
     starts_at: string;
     updated_at: string;
     user_id: string;
@@ -63,7 +95,9 @@ const useUsers = () => {
     queryKey: ["admin-users"],
     queryFn: async (): Promise<UserProfile[]> => {
       // Use the RPC function that joins profiles with auth.users to get email
-      const { data: profiles, error: profilesError } = await supabase.rpc('get_admin_users');
+      const { data: profiles, error: profilesError } = await supabase.rpc(
+        "get_admin_users"
+      );
 
       if (profilesError) throw profilesError;
 
@@ -115,7 +149,8 @@ export const AdvancedUserManagement = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isVehicleWarningDialogOpen, setIsVehicleWarningDialogOpen] = useState(false);
+  const [isVehicleWarningDialogOpen, setIsVehicleWarningDialogOpen] =
+    useState(false);
   const [deletionReason, setDeletionReason] = useState("");
   const [restrictionForm, setRestrictionForm] = useState<RestrictionFormData>({
     restrictionType: "suspend",
@@ -134,11 +169,15 @@ export const AdvancedUserManagement = () => {
   }, [searchTerm]);
 
   const restrictUserMutation = useMutation({
-    mutationFn: async ({ userId, restriction }: { userId: string; restriction: RestrictionFormData }) => {
-      const {
-        data: sessionData,
-        error: sessionError,
-      } = await supabase.auth.getSession();
+    mutationFn: async ({
+      userId,
+      restriction,
+    }: {
+      userId: string;
+      restriction: RestrictionFormData;
+    }) => {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
 
       if (sessionError) {
         throw new Error(`Failed to get session: ${sessionError.message}`);
@@ -149,7 +188,7 @@ export const AdvancedUserManagement = () => {
         throw new Error("No active session. Please sign in again.");
       }
 
-      const { data, error } = await supabase.functions.invoke('suspend-user', {
+      const { data, error } = await supabase.functions.invoke("suspend-user", {
         body: {
           userId,
           restrictionType: restriction.restrictionType,
@@ -164,28 +203,38 @@ export const AdvancedUserManagement = () => {
 
       if (error) {
         console.error("Edge function error:", error);
-        let parsed: { error?: string; code?: string; details?: string } | null = null;
+        let parsed: { error?: string; code?: string; details?: string } | null =
+          null;
         try {
           const resp = error?.context?.response as Response | undefined;
           if (resp) {
-            const contentType = resp.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
+            const contentType = resp.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
               parsed = await resp.json();
             } else {
               const text = await resp.text();
-              try { parsed = JSON.parse(text); } catch { /* ignore parse error */ }
+              try {
+                parsed = JSON.parse(text);
+              } catch {
+                /* ignore parse error */
+              }
             }
           }
         } catch (parseErr) {
-          console.warn('Failed to parse function error response', parseErr);
+          console.warn("Failed to parse function error response", parseErr);
         }
 
-        const msg = parsed?.error || error.message || "Failed to restrict user. Please try again.";
+        const msg =
+          parsed?.error ||
+          error.message ||
+          "Failed to restrict user. Please try again.";
         const composed = [
           msg,
           parsed?.code ? `(code: ${parsed.code})` : null,
           parsed?.details ? `details: ${parsed.details}` : null,
-        ].filter(Boolean).join(' ');
+        ]
+          .filter(Boolean)
+          .join(" ");
         throw new Error(composed);
       }
 
@@ -194,7 +243,9 @@ export const AdvancedUserManagement = () => {
           data.error,
           data.code ? `(code: ${data.code})` : null,
           data.details ? `details: ${data.details}` : null,
-        ].filter(Boolean).join(' ');
+        ]
+          .filter(Boolean)
+          .join(" ");
         throw new Error(composed);
       }
 
@@ -206,7 +257,9 @@ export const AdvancedUserManagement = () => {
         try {
           await logUserRestrictionCreated(
             selectedUser.id,
-            restrictionForm.restrictionType === 'ban' ? 'login_block' : 'suspension',
+            restrictionForm.restrictionType === "ban"
+              ? "login_block"
+              : "suspension",
             restrictionForm.reason,
             (await supabase.auth.getUser()).data.user?.id || undefined
           );
@@ -216,32 +269,41 @@ export const AdvancedUserManagement = () => {
 
         // Send system notification to the user about the restriction
         try {
-          const isBan = restrictionForm.restrictionType === 'ban';
+          const isBan = restrictionForm.restrictionType === "ban";
           const title = isBan ? "Account Banned" : "Account Suspended";
           const description = isBan
             ? `Your account has been permanently banned. Reason: ${restrictionForm.reason}`
             : `Your account has been suspended. Reason: ${restrictionForm.reason}`;
 
-          const { error: notifyError } = await supabase.rpc("create_system_notification", {
-            p_user_id: selectedUser.id,
-            p_title: title,
-            p_description: description,
-            p_metadata: {
-              source: "admin_restriction",
-              restriction_type: restrictionForm.restrictionType,
-              reason: restrictionForm.reason,
-              duration: restrictionForm.duration,
-              duration_value: restrictionForm.durationValue,
-              applied_by: (await supabase.auth.getUser()).data.user?.id,
-              applied_at: new Date().toISOString(),
-            },
-          });
+          const { error: notifyError } = await supabase.rpc(
+            "create_system_notification",
+            {
+              p_user_id: selectedUser.id,
+              p_title: title,
+              p_description: description,
+              p_metadata: {
+                source: "admin_restriction",
+                restriction_type: restrictionForm.restrictionType,
+                reason: restrictionForm.reason,
+                duration: restrictionForm.duration,
+                duration_value: restrictionForm.durationValue,
+                applied_by: (await supabase.auth.getUser()).data.user?.id,
+                applied_at: new Date().toISOString(),
+              },
+            }
+          );
 
           if (notifyError) {
-            console.warn("[AdvancedUserManagement] Failed to create restriction notification:", notifyError);
+            console.warn(
+              "[AdvancedUserManagement] Failed to create restriction notification:",
+              notifyError
+            );
           }
         } catch (notifyErr) {
-          console.warn("[AdvancedUserManagement] Notification RPC error:", notifyErr);
+          console.warn(
+            "[AdvancedUserManagement] Notification RPC error:",
+            notifyErr
+          );
         }
       }
 
@@ -260,7 +322,9 @@ export const AdvancedUserManagement = () => {
     mutationFn: async (userId: string) => {
       const { error } = await supabase
         .from("user_restrictions")
-        .update({ active: false } as Database["public"]["Tables"]["user_restrictions"]["Update"])
+        .update({
+          active: false,
+        } as Database["public"]["Tables"]["user_restrictions"]["Update"])
         .eq("user_id", userId)
         .eq("active", true);
 
@@ -279,7 +343,9 @@ export const AdvancedUserManagement = () => {
 
         if (restrictions && restrictions.length > 0) {
           const restriction = restrictions[0];
-          const { logUserRestrictionRemoved } = await import("@/utils/auditLogger");
+          const { logUserRestrictionRemoved } = await import(
+            "@/utils/auditLogger"
+          );
           await logUserRestrictionRemoved(
             userId,
             restriction.id,
@@ -294,22 +360,32 @@ export const AdvancedUserManagement = () => {
 
       // Send system notification to the user about restriction removal
       try {
-        const { error: notifyError } = await supabase.rpc("create_system_notification", {
-          p_user_id: userId,
-          p_title: "Account Restriction Removed",
-          p_description: "Your account restriction has been removed. You now have full access to the platform.",
-          p_metadata: {
-            source: "admin_restriction_removal",
-            removed_by: (await supabase.auth.getUser()).data.user?.id,
-            removed_at: new Date().toISOString(),
-          },
-        });
+        const { error: notifyError } = await supabase.rpc(
+          "create_system_notification",
+          {
+            p_user_id: userId,
+            p_title: "Account Restriction Removed",
+            p_description:
+              "Your account restriction has been removed. You now have full access to the platform.",
+            p_metadata: {
+              source: "admin_restriction_removal",
+              removed_by: (await supabase.auth.getUser()).data.user?.id,
+              removed_at: new Date().toISOString(),
+            },
+          }
+        );
 
         if (notifyError) {
-          console.warn("[AdvancedUserManagement] Failed to create restriction removal notification:", notifyError);
+          console.warn(
+            "[AdvancedUserManagement] Failed to create restriction removal notification:",
+            notifyError
+          );
         }
       } catch (notifyErr) {
-        console.warn("[AdvancedUserManagement] Notification RPC error:", notifyErr);
+        console.warn(
+          "[AdvancedUserManagement] Notification RPC error:",
+          notifyErr
+        );
       }
 
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -321,16 +397,23 @@ export const AdvancedUserManagement = () => {
   });
 
   const deleteUserMutation = useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason: string;
+    }) => {
       console.log("🔍 Starting delete user mutation...");
       console.log("User ID:", userId);
       console.log("Reason:", reason);
 
       // Get session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
       console.log("Session data:", sessionData ? "✅ Found" : "❌ Missing");
-      
+
       if (sessionError) {
         console.error("❌ Session error:", sessionError);
         throw new Error(`Failed to get session: ${sessionError.message}`);
@@ -342,19 +425,24 @@ export const AdvancedUserManagement = () => {
         throw new Error("No active session. Please sign in again.");
       }
 
-      console.log("✅ Access token found:", accessToken.substring(0, 20) + "...");
-
-      // Prepare function call
-      console.log("Request body:", { userId, reason });
+      console.log(
+        "✅ Access token found:",
+        accessToken.substring(0, 20) + "..."
+      );
 
       try {
         // Call the Edge Function
-        const { data, error } = await supabase.functions.invoke('delete-user-with-transfer', {
-          body: { userId, reason },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        console.log("📤 Invoking delete-user-with-transfer function...");
+
+        const { data, error } = await supabase.functions.invoke(
+          "delete-user-with-transfer",
+          {
+            body: { userId, reason },
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
         console.log("📥 Function response received");
         console.log("Data:", data);
@@ -362,43 +450,58 @@ export const AdvancedUserManagement = () => {
 
         if (error) {
           console.error("❌ Edge function returned error:", error);
-          
+
           // Try to parse error details
-          let parsed: { error?: string; code?: string; details?: string } | null = null;
+          let parsed: {
+            error?: string;
+            code?: string;
+            details?: string;
+          } | null = null;
           try {
             const resp = error?.context?.response as Response | undefined;
             if (resp) {
               console.log("Response status:", resp.status);
-              console.log("Response headers:", Object.fromEntries(resp.headers.entries()));
-              
-              const contentType = resp.headers.get('content-type') || '';
+              console.log(
+                "Response headers:",
+                Object.fromEntries(resp.headers.entries())
+              );
+
+              const contentType = resp.headers.get("content-type") || "";
               console.log("Content-Type:", contentType);
-              
-              if (contentType.includes('application/json')) {
+
+              if (contentType.includes("application/json")) {
                 parsed = await resp.json();
                 console.log("Parsed error response:", parsed);
               } else {
                 const text = await resp.text();
                 console.log("Text response:", text);
-                try { 
-                  parsed = JSON.parse(text); 
+                try {
+                  parsed = JSON.parse(text);
                   console.log("Parsed text as JSON:", parsed);
-                } catch { 
+                } catch {
                   console.log("Could not parse text as JSON");
                 }
               }
             }
           } catch (parseErr) {
-            console.error('❌ Failed to parse function error response', parseErr);
+            console.error(
+              "❌ Failed to parse function error response",
+              parseErr
+            );
           }
 
-          const msg = parsed?.error || error.message || "Failed to delete user. Please try again.";
+          const msg =
+            parsed?.error ||
+            error.message ||
+            "Failed to delete user. Please try again.";
           const composed = [
             msg,
             parsed?.code ? `(code: ${parsed.code})` : null,
             parsed?.details ? `details: ${parsed.details}` : null,
-          ].filter(Boolean).join(' ');
-          
+          ]
+            .filter(Boolean)
+            .join(" ");
+
           console.error("❌ Final error message:", composed);
           throw new Error(composed);
         }
@@ -409,7 +512,9 @@ export const AdvancedUserManagement = () => {
             data.error,
             data.code ? `(code: ${data.code})` : null,
             data.details ? `details: ${data.details}` : null,
-          ].filter(Boolean).join(' ');
+          ]
+            .filter(Boolean)
+            .join(" ");
           throw new Error(composed);
         }
 
@@ -422,12 +527,12 @@ export const AdvancedUserManagement = () => {
     },
     onSuccess: async (data) => {
       console.log("✅ Mutation success callback:", data);
-      
+
       // Invalidate both admin-users and audit-logs queries to refresh the UI
       // The edge function already logged the audit event
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
-      
+
       toast.success("User deleted successfully");
       setIsDeleteDialogOpen(false);
       setIsVehicleWarningDialogOpen(false);
@@ -436,16 +541,37 @@ export const AdvancedUserManagement = () => {
     },
     onError: (error: Error) => {
       console.error("❌ Mutation error callback:", error);
-      toast.error(`Failed to delete user: ${error.message}`);
+      
+      // Extract error code and provide more specific messages
+      const errorMessage = error.message;
+      let userFriendlyMessage = "Failed to delete user";
+      
+      if (errorMessage.includes("CANNOT_DELETE_ADMIN")) {
+        userFriendlyMessage = "Cannot delete admin or super admin users";
+      } else if (errorMessage.includes("NOT_ADMIN")) {
+        userFriendlyMessage = "You don't have permission to delete users";
+      } else if (errorMessage.includes("PROFILE_NOT_FOUND")) {
+        userFriendlyMessage = "User profile not found";
+      } else if (errorMessage.includes("AUTH_USER_NOT_FOUND")) {
+        userFriendlyMessage = "User account not found in authentication system";
+      } else if (errorMessage.includes("insufficient_permissions")) {
+        userFriendlyMessage = "Insufficient permissions to delete this user";
+      } else if (errorMessage.includes("AUTH_DELETION_FAILED")) {
+        userFriendlyMessage = "User data cleaned up but auth deletion failed. This may be a temporary issue. Please try again later.";
+      } else if (errorMessage.includes("Database error deleting user")) {
+        userFriendlyMessage = "Authentication service error. Please try again later or contact support.";
+      } else {
+        userFriendlyMessage = errorMessage || "Failed to delete user. Please try again.";
+      }
+      
+      toast.error(userFriendlyMessage);
     },
   });
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const {
-        data: sessionData,
-        error: sessionError,
-      } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
 
       if (sessionError) {
         throw new Error(`Failed to get session: ${sessionError.message}`);
@@ -456,37 +582,50 @@ export const AdvancedUserManagement = () => {
         throw new Error("No active session. Please sign in again.");
       }
 
-      const { data, error } = await supabase.functions.invoke('send-password-reset', {
-        body: { userId },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "send-password-reset",
+        {
+          body: { userId },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       if (error) {
         console.error("Edge function error:", error);
-        let parsed: { error?: string; code?: string; details?: string } | null = null;
+        let parsed: { error?: string; code?: string; details?: string } | null =
+          null;
         try {
           const resp = error?.context?.response as Response | undefined;
           if (resp) {
-            const contentType = resp.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
+            const contentType = resp.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
               parsed = await resp.json();
             } else {
               const text = await resp.text();
-              try { parsed = JSON.parse(text); } catch { /* ignore parse error */ }
+              try {
+                parsed = JSON.parse(text);
+              } catch {
+                /* ignore parse error */
+              }
             }
           }
         } catch (parseErr) {
-          console.warn('Failed to parse function error response', parseErr);
+          console.warn("Failed to parse function error response", parseErr);
         }
 
-        const msg = parsed?.error || error.message || "Failed to send password reset. Please try again.";
+        const msg =
+          parsed?.error ||
+          error.message ||
+          "Failed to send password reset. Please try again.";
         const composed = [
           msg,
           parsed?.code ? `(code: ${parsed.code})` : null,
           parsed?.details ? `details: ${parsed.details}` : null,
-        ].filter(Boolean).join(' ');
+        ]
+          .filter(Boolean)
+          .join(" ");
         throw new Error(composed);
       }
 
@@ -495,7 +634,9 @@ export const AdvancedUserManagement = () => {
           data.error,
           data.code ? `(code: ${data.code})` : null,
           data.details ? `details: ${data.details}` : null,
-        ].filter(Boolean).join(' ');
+        ]
+          .filter(Boolean)
+          .join(" ");
         throw new Error(composed);
       }
 
@@ -507,16 +648,16 @@ export const AdvancedUserManagement = () => {
         try {
           const { logAuditEvent } = await import("@/utils/auditLogger");
           await logAuditEvent({
-            event_type: 'user_password_reset',
-            severity: 'medium',
+            event_type: "user_password_reset",
+            severity: "medium",
             target_id: selectedUser.id,
             action_details: {
-              action: 'password_reset_requested',
-              reason: 'Admin initiated password reset'
+              action: "password_reset_requested",
+              reason: "Admin initiated password reset",
             },
-            resource_type: 'user',
+            resource_type: "user",
             resource_id: selectedUser.id,
-            reason: 'Admin initiated password reset'
+            reason: "Admin initiated password reset",
           });
         } catch (e) {
           console.warn("Failed to log audit event for password reset", e);
@@ -552,7 +693,7 @@ export const AdvancedUserManagement = () => {
   const handleDeleteUser = (user: UserProfile) => {
     setSelectedUser(user);
     setDeletionReason("");
-    
+
     // If user has vehicles, show warning first
     if (user.vehicles_count > 0) {
       setIsVehicleWarningDialogOpen(true);
@@ -563,6 +704,7 @@ export const AdvancedUserManagement = () => {
   };
 
   const handleResetPassword = (user: UserProfile) => {
+    setSelectedUser(user);
     resetPasswordMutation.mutate(user.id);
   };
 
@@ -582,22 +724,29 @@ export const AdvancedUserManagement = () => {
     });
   };
 
-  const filteredUsers = users?.filter(user =>
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredUsers =
+    users?.filter(
+      (user) =>
+        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   // Pagination logic
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   if (error) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-destructive">Failed to load users: {error.message}</p>
+          <p className="text-destructive">
+            Failed to load users: {error.message}
+          </p>
         </CardContent>
       </Card>
     );
@@ -680,18 +829,28 @@ export const AdvancedUserManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                        <Badge
+                          variant={
+                            user.role === "admin" ? "default" : "secondary"
+                          }
+                        >
                           {user.role}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {user.is_restricted ? (
-                          <Badge variant="destructive" className="flex items-center gap-1">
+                          <Badge
+                            variant="destructive"
+                            className="flex items-center gap-1"
+                          >
                             <AlertTriangle className="h-3 w-3" />
                             {`Restricted (${user.restrictions?.length ?? 0})`}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="flex items-center gap-1">
+                          <Badge
+                            variant="outline"
+                            className="flex items-center gap-1"
+                          >
                             <UserCheck className="h-3 w-3" />
                             Active
                           </Badge>
@@ -751,8 +910,8 @@ export const AdvancedUserManagement = () => {
                             size="sm"
                             onClick={() => handleDeleteUser(user)}
                             className="text-destructive hover:text-red-700"
-                            title="Delete User"
-                            disabled={deleteUserMutation.isPending}
+                            title={user.role === "admin" || user.role === "super_admin" ? "Cannot delete admin users" : "Delete User"}
+                            disabled={deleteUserMutation.isPending || user.role === "admin" || user.role === "super_admin"}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -762,18 +921,24 @@ export const AdvancedUserManagement = () => {
                   ))}
                 </TableBody>
               </Table>
-            
+
               {totalPages > 1 && (
                 <div className="flex justify-center mt-6">
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious
-                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(prev - 1, 1))
+                          }
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
-                      
+
                       {[...Array(Math.min(totalPages, 5))].map((_, i) => {
                         const pageNum = i + 1;
                         return (
@@ -788,11 +953,19 @@ export const AdvancedUserManagement = () => {
                           </PaginationItem>
                         );
                       })}
-                      
+
                       <PaginationItem>
                         <PaginationNext
-                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(prev + 1, totalPages)
+                            )
+                          }
+                          className={
+                            currentPage === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
                     </PaginationContent>
@@ -805,12 +978,16 @@ export const AdvancedUserManagement = () => {
       </Card>
 
       {/* Restriction Dialog */}
-      <Dialog open={isRestrictionDialogOpen} onOpenChange={setIsRestrictionDialogOpen}>
+      <Dialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Restrict User Access</DialogTitle>
             <DialogDescription>
-              Apply a restriction to {selectedUser?.full_name}. This will limit their access to the platform.
+              Apply a restriction to {selectedUser?.full_name}. This will limit
+              their access to the platform.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -819,15 +996,22 @@ export const AdvancedUserManagement = () => {
               <Select
                 value={restrictionForm.restrictionType}
                 onValueChange={(value: "suspend" | "ban") =>
-                  setRestrictionForm({ ...restrictionForm, restrictionType: value })
+                  setRestrictionForm({
+                    ...restrictionForm,
+                    restrictionType: value,
+                  })
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="suspend">Suspend (Temporary Access Removal)</SelectItem>
-                  <SelectItem value="ban">Ban (Permanent Access Removal)</SelectItem>
+                  <SelectItem value="suspend">
+                    Suspend (Temporary Access Removal)
+                  </SelectItem>
+                  <SelectItem value="ban">
+                    Ban (Permanent Access Removal)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -838,7 +1022,10 @@ export const AdvancedUserManagement = () => {
                 placeholder="Enter the reason for this restriction..."
                 value={restrictionForm.reason}
                 onChange={(e) =>
-                  setRestrictionForm({ ...restrictionForm, reason: e.target.value })
+                  setRestrictionForm({
+                    ...restrictionForm,
+                    reason: e.target.value,
+                  })
                 }
                 className="min-h-[80px]"
               />
@@ -891,7 +1078,9 @@ export const AdvancedUserManagement = () => {
             </Button>
             <Button
               onClick={confirmRestriction}
-              disabled={!restrictionForm.reason.trim() || restrictUserMutation.isPending}
+              disabled={
+                !restrictionForm.reason.trim() || restrictUserMutation.isPending
+              }
             >
               Apply Restriction
             </Button>
@@ -900,7 +1089,10 @@ export const AdvancedUserManagement = () => {
       </Dialog>
 
       {/* Vehicle Warning Dialog */}
-      <Dialog open={isVehicleWarningDialogOpen} onOpenChange={setIsVehicleWarningDialogOpen}>
+      <Dialog
+        open={isVehicleWarningDialogOpen}
+        onOpenChange={setIsVehicleWarningDialogOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -909,15 +1101,18 @@ export const AdvancedUserManagement = () => {
             </DialogTitle>
             <DialogDescription className="space-y-3 pt-2">
               <p className="font-medium">
-                {selectedUser?.full_name} has {selectedUser?.vehicles_count} vehicle(s) registered.
+                {selectedUser?.full_name} has {selectedUser?.vehicles_count}{" "}
+                vehicle(s) registered.
               </p>
               <p>
-                Before deleting this user, you must transfer their vehicles to another user. 
-                Please go to the <span className="font-semibold">Cars</span> section in the dashboard 
-                to transfer the vehicles first.
+                Before deleting this user, you must transfer their vehicles to
+                another user. Please go to the{" "}
+                <span className="font-semibold">Cars</span> section in the
+                dashboard to transfer the vehicles first.
               </p>
               <p className="text-sm text-muted-foreground">
-                Once all vehicles are transferred, you can proceed with user deletion.
+                Once all vehicles are transferred, you can proceed with user
+                deletion.
               </p>
             </DialogDescription>
           </DialogHeader>
@@ -959,7 +1154,9 @@ export const AdvancedUserManagement = () => {
                 This action cannot be undone!
               </p>
               <p>
-                You are about to permanently delete <span className="font-semibold">{selectedUser?.full_name}</span>'s account.
+                You are about to permanently delete{" "}
+                <span className="font-semibold">{selectedUser?.full_name}</span>
+                's account.
               </p>
               <p>This will delete:</p>
               <ul className="list-disc list-inside text-sm space-y-1 ml-2">
@@ -967,11 +1164,13 @@ export const AdvancedUserManagement = () => {
                 <li>All bookings ({selectedUser?.bookings_count || 0})</li>
                 <li>All reviews ({selectedUser?.reviews_count || 0})</li>
                 <li>All restrictions and history</li>
-                {selectedUser?.vehicles_count && selectedUser.vehicles_count > 0 && (
-                  <li className="text-orange-600 font-semibold">
-                    {selectedUser.vehicles_count} vehicle(s) - These will be permanently deleted!
-                  </li>
-                )}
+                {selectedUser?.vehicles_count &&
+                  selectedUser.vehicles_count > 0 && (
+                    <li className="text-orange-600 font-semibold">
+                      {selectedUser.vehicles_count} vehicle(s) - These will be
+                      permanently deleted!
+                    </li>
+                  )}
               </ul>
             </DialogDescription>
           </DialogHeader>
@@ -1006,7 +1205,9 @@ export const AdvancedUserManagement = () => {
               onClick={confirmDelete}
               disabled={!deletionReason.trim() || deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending ? "Deleting..." : "Delete User Permanently"}
+              {deleteUserMutation.isPending
+                ? "Deleting..."
+                : "Delete User Permanently"}
             </Button>
           </DialogFooter>
         </DialogContent>
