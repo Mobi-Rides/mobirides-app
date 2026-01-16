@@ -1,7 +1,8 @@
+import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { 
-  Search, 
-  Plus, 
+import {
+  Search,
+  Plus,
   MessageCircle,
   Users
 } from 'lucide-react';
@@ -32,7 +33,40 @@ export function ConversationList({
   searchTerm,
   onSearchChange
 }: ConversationListProps) {
-  const filteredConversations = conversations;
+  const filteredConversations = React.useMemo(() => {
+    if (!searchTerm.trim()) return conversations;
+
+    const term = searchTerm.toLowerCase().trim();
+
+    return conversations.filter(conversation => {
+      // Check title or generated title
+      let title = conversation.title;
+      if (!title) {
+        if (conversation.type === 'direct') {
+          const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
+          title = otherParticipant?.name || 'Unknown User';
+        } else {
+          const otherParticipants = (conversation.participants || []).filter(p => p.id !== currentUser.id);
+          title = otherParticipants.map(p => p.name).join(', ');
+        }
+      }
+
+      if (title && title.toLowerCase().includes(term)) return true;
+
+      // Check participants
+      const hasParticipantMatch = (conversation.participants || []).some(p =>
+        p.name && p.name.toLowerCase().includes(term)
+      );
+      if (hasParticipantMatch) return true;
+
+      // Check last message content
+      if (conversation.lastMessage?.content && conversation.lastMessage.content.toLowerCase().includes(term)) {
+        return true;
+      }
+
+      return false;
+    });
+  }, [conversations, searchTerm, currentUser.id]);
 
   const getConversationTitle = (conversation: Conversation) => {
     // For direct conversations, always show the counterparty name, ignore stored title
@@ -40,10 +74,10 @@ export function ConversationList({
       const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
       return otherParticipant?.name || 'Unknown User';
     }
-    
+
     // For group conversations, use stored title or generate from participants
     if (conversation.title) return conversation.title;
-    
+
     const otherParticipants = (conversation.participants || []).filter(p => p.id !== currentUser.id);
     return otherParticipants.map(p => p.name).join(', ');
   };
@@ -52,17 +86,17 @@ export function ConversationList({
     if (conversation.type === 'group') {
       return null; // Will show group icon instead
     }
-    
+
     const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
     return otherParticipant?.avatar;
   };
 
   const getLastMessagePreview = (conversation: Conversation) => {
     if (!conversation.lastMessage) return 'No messages yet';
-    
+
     const sender = (conversation.participants || []).find(p => p.id === conversation.lastMessage?.senderId);
     const senderName = sender?.id === currentUser.id ? 'You' : sender?.name;
-    
+
     return `${senderName}: ${conversation.lastMessage.content}`;
   };
 
@@ -80,15 +114,18 @@ export function ConversationList({
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        
+
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative z-10">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground z-20 pointer-events-none" />
           <Input
             placeholder="Search conversations..."
             value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 bg-notification border-notification-border"
+            onChange={(e) => {
+              console.log('🔍 [SEARCH INPUT] Value changed:', e.target.value);
+              onSearchChange(e.target.value);
+            }}
+            className="pl-9 bg-notification border-notification-border relative z-10"
           />
         </div>
       </div>
@@ -108,7 +145,7 @@ export function ConversationList({
               {filteredConversations.map((conversation) => {
                 const isSelected = conversation.id === selectedConversationId;
                 const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
-                
+
                 return (
                   <div
                     key={conversation.id}
@@ -133,7 +170,7 @@ export function ConversationList({
                           </AvatarFallback>
                         </Avatar>
                       )}
-                      
+
                       {/* Online status for direct messages */}
                       {conversation.type === 'direct' && otherParticipant && (
                         <div className={cn(
@@ -151,17 +188,17 @@ export function ConversationList({
                         <h3 className="font-medium text-foreground truncate">
                           {getConversationTitle(conversation)}
                         </h3>
-                        
+
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {conversation.lastMessage && (
                             <span className="text-xs text-muted-foreground">
                               {formatDistanceToNow(conversation.lastMessage.timestamp, { addSuffix: true })}
                             </span>
                           )}
-                          
+
                           {conversation.unreadCount > 0 && (
-                            <Badge 
-                              variant="default" 
+                            <Badge
+                              variant="default"
                               className="h-5 min-w-5 flex items-center justify-center text-xs px-1.5"
                             >
                               {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
@@ -169,7 +206,7 @@ export function ConversationList({
                           )}
                         </div>
                       </div>
-                      
+
                       <p className="text-sm text-muted-foreground truncate mt-1">
                         {getLastMessagePreview(conversation)}
                       </p>
