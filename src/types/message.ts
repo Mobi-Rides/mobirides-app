@@ -13,7 +13,7 @@ export interface Message {
   senderId: string;
   conversationId: string;
   timestamp: Date;
-  type: 'text' | 'image' | 'file';
+  type: 'text' | 'image' | 'video' | 'audio' | 'file';
   edited?: boolean;
   editedAt?: Date;
   reactions?: MessageReaction[];
@@ -25,6 +25,16 @@ export interface Message {
   };
   sender_id?: string;
   created_at?: string;
+  metadata?: Record<string, any>;
+  replyToMessageId?: string;
+  replyTo?: {
+    id: string;
+    content: string;
+    sender: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 export interface MessageReaction {

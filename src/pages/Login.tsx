@@ -49,6 +49,16 @@ const Login = () => {
     try {
       console.log("Checking profile for user:", userId);
       
+      // First verify the user still exists in auth
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        console.error("Auth user not found or error:", authError);
+        // Sign out and redirect to login
+        await supabase.auth.signOut();
+        navigate("/login");
+        return;
+      }
+      
       // Check if the user has a complete profile
       const { data, error: profileError } = await supabase
         .from("profiles")
@@ -59,54 +69,21 @@ const Login = () => {
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         
-        // If profile doesn't exist, create it automatically
+        // If profile doesn't exist, it might mean the user was deleted
         if (profileError.code === 'PGRST116') { // Not found
-          console.log("Profile not found, creating basic profile...");
+          console.log("Profile not found - user may have been deleted");
           
-          // Get user details from auth
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            console.error("No authenticated user found");
-            navigate("/");
-            return;
-          }
-
-          // Create basic profile with user metadata
-          const { error: createError } = await supabase
-            .from("profiles")
-            .insert({
-              id: userId,
-              full_name: user.user_metadata?.full_name || '',
-              phone_number: user.user_metadata?.phone_number || '',
-              email_confirmed: !!user.email_confirmed_at,
-              role: 'renter'
-            });
-
-          if (createError) {
-            console.error("Error creating profile:", createError);
-            // Continue to home and let them handle it there
-            navigate("/");
-            return;
-          }
-
-          // Now check if profile needs completion
-          const newProfile = {
-            full_name: user.user_metadata?.full_name || '',
-            phone_number: user.user_metadata?.phone_number || ''
-          };
-
-          if (!newProfile.full_name || !newProfile.phone_number) {
-            console.log("Profile created but incomplete, prompting for completion");
-            setShowProfilePrompt(true);
-          } else {
-            console.log("Profile created and complete, navigating to home");
-            navigate("/");
-          }
+          // Sign out and redirect to login
+          await supabase.auth.signOut();
+          toast.error("User account not found. Please sign in again.");
+          navigate("/login");
           return;
         }
         
-        // For other errors, continue to home and let user handle it there
-        navigate("/");
+        // For other errors, sign out and redirect
+        await supabase.auth.signOut();
+        toast.error("Account verification failed. Please sign in again.");
+        navigate("/login");
         return;
       }
   
@@ -123,8 +100,10 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Error checking profile:", error);
-      // Continue to home page if there's an error
-      navigate("/");
+      // Sign out and redirect on any error
+      await supabase.auth.signOut();
+      toast.error("Account verification failed. Please sign in again.");
+      navigate("/login");
     }
   };
 
@@ -202,11 +181,22 @@ const Login = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
       if (event === "SIGNED_IN" && session) {
         console.log("User signed in, checking profile");
-        checkUserProfile(session.user.id);
+        try {
+          await checkUserProfile(session.user.id);
+        } catch (error) {
+          console.error("Error in auth state change handler:", error);
+          // If there's an error, sign out to prevent infinite loops
+          try {
+            await supabase.auth.signOut();
+            toast.error("Account verification failed. Please sign in again.");
+          } catch (signOutError) {
+            console.error("Error signing out:", signOutError);
+          }
+        }
       }
 
       if (event === "SIGNED_OUT") {
@@ -234,11 +224,29 @@ const Login = () => {
 
       if (session) {
         console.log("Active session found, checking profile");
+        
+        // First verify the user still exists in auth
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        if (authError || !authUser) {
+          console.error("Auth user not found or error:", authError);
+          // Sign out and redirect to login
+          await supabase.auth.signOut();
+          toast.error("Session expired. Please sign in again.");
+          return;
+        }
+        
         await checkUserProfile(session.user.id);
       }
     } catch (error) {
       console.error("Error in checkSession:", error);
       toast.error("There was an error checking your session");
+      
+      // If there's an error, sign out to be safe
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error("Error signing out:", signOutError);
+      }
     }
   };
 

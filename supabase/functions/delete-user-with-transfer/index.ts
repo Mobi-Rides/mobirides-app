@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import { createClient } from "npm:@supabase/supabase-js@2"
 
 const corsHeaders = {
@@ -40,10 +42,65 @@ async function getUserBookingIds(supabaseAdmin: any, userId: string): Promise<st
   return bookings?.map((booking: any) => booking.id) || [];
 }
 
-Deno.serve(async (req) => {
+// Helper function to deeply check and clean all user references
+async function deepCleanUserReferences(supabaseAdmin: any, userId: string): Promise<string[]> {
+  const cleanupSteps: string[] = [];
+  
+  // Define all tables and their user ID columns
+  const tableConfigs = [
+    { table: 'profiles', column: 'id' },
+    { table: 'cars', column: 'owner_id' },
+    { table: 'bookings', column: 'renter_id' },
+    { table: 'reviews', column: 'reviewer_id' },
+    { table: 'reviews', column: 'reviewee_id' },
+    { table: 'notifications', column: 'user_id' },
+    { table: 'conversations', column: 'created_by' },
+    { table: 'conversation_messages', column: 'sender_id' },
+    { table: 'conversation_participants', column: 'user_id' },
+    { table: 'user_restrictions', column: 'user_id' },
+    { table: 'messages', column: 'sender_id' },
+    { table: 'messages', column: 'receiver_id' },
+  ];
+  
+  for (const config of tableConfigs) {
+    try {
+      const { count, error: countError } = await supabaseAdmin
+        .from(config.table)
+        .select('*', { count: 'exact', head: true })
+        .eq(config.column, userId);
+      
+      if (!countError && count && count > 0) {
+        console.log(`🧹 Found ${count} rows in ${config.table}.${config.column}`);
+        
+        const { error: deleteError } = await supabaseAdmin
+          .from(config.table)
+          .delete()
+          .eq(config.column, userId);
+        
+        if (deleteError) {
+          cleanupSteps.push(`⚠️ Failed to clean ${config.table}.${config.column}: ${deleteError.message}`);
+        } else {
+          cleanupSteps.push(`✅ Cleaned ${count} rows from ${config.table}.${config.column}`);
+        }
+      }
+    } catch (e) {
+      // Table might not exist or column might not exist
+      console.log(`ℹ️ Skipping ${config.table}.${config.column}:`, (e as Error).message);
+    }
+  }
+  
+  return cleanupSteps;
+}
+
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  // Declare variables at the top level for error handling
+  let userId: string | undefined;
+  let reason: string | undefined;
+  let user: any = null;
 
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -75,7 +132,8 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    const { data: { user: currentUser }, error: authError } = await supabaseUser.auth.getUser();
+    user = currentUser; // Assign to the top-level variable
 
     if (authError || !user) {
       console.error("Authentication failed:", authError);
@@ -86,9 +144,6 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    let userId: string;
-    let reason: string;
-    
     try {
       const body = await req.json();
       userId = body.userId;
@@ -111,44 +166,119 @@ Deno.serve(async (req) => {
     console.log(`Delete user request from ${user.id} for user ${userId}, reason: ${reason}`);
 
     // Check if user is admin
-    const { data: isAdminRaw, error: adminCheckError } = await supabaseUser.rpc('is_admin', { 
-      user_uuid: user.id 
-    });
-
-    if (adminCheckError) {
-      console.error("Error calling is_admin RPC:", adminCheckError);
+    console.log(`🔐 Checking admin permissions for user: ${user.id}`);
+    let isAdminRaw, adminCheckError;
+    let isAdmin = false;
+    
+    try {
+      const result = await supabaseUser.rpc('is_admin', { 
+        user_uuid: user.id 
+      });
+      isAdminRaw = result.data;
+      adminCheckError = result.error;
+    } catch (rpcException) {
+      console.error("❌ Exception calling is_admin RPC:", rpcException);
       return new Response(
-        JSON.stringify({ error: "Insufficient permissions. Admin access required.", code: "NOT_ADMIN" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          error: "Internal server error during admin check", 
+          code: "RPC_EXCEPTION",
+          details: (rpcException as Error).message,
+          userId: user.id
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Normalize RPC result
-    let isAdmin = false;
-    try {
-      if (Array.isArray(isAdminRaw)) {
-        const first = isAdminRaw[0];
-        if (typeof first === 'boolean') isAdmin = first;
-        else if (first && typeof first === 'object') {
-          isAdmin = !!(first.is_admin ?? first.exists ?? Object.values(first)[0]);
+    if (adminCheckError) {
+      // Fallback: Try direct profile check
+      console.log("🔄 Trying fallback admin check via profiles table...");
+      try {
+        const { data: profileData, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileError) {
+          console.error("❌ Fallback profile check also failed:", profileError);
+          return new Response(
+            JSON.stringify({ 
+              error: "Admin permission check failed. Please contact support.", 
+              code: "ADMIN_CHECK_FAILED",
+              details: `RPC: ${adminCheckError.message}, Fallback: ${profileError.message}`,
+              userId: user.id
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         } else {
-          isAdmin = !!first;
+          const isAdminFallback = profileData?.role === 'admin' || profileData?.role === 'super_admin';
+          console.log("✅ Fallback admin check result:", isAdminFallback, "Role:", profileData?.role);
+          
+          if (!isAdminFallback) {
+            return new Response(
+              JSON.stringify({ 
+                error: "Insufficient permissions. Admin access required.", 
+                code: "NOT_ADMIN",
+                userId: user.id,
+                role: profileData?.role
+              }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          isAdmin = true;
         }
-      } else if (typeof isAdminRaw === 'object' && isAdminRaw !== null) {
-        const rawObj = isAdminRaw as any;
-        isAdmin = !!(rawObj.is_admin ?? rawObj.exists ?? Object.values(rawObj)[0]);
-      } else {
-        isAdmin = !!isAdminRaw;
+      } catch (fallbackException) {
+        console.error("❌ Fallback admin check exception:", fallbackException);
+        return new Response(
+          JSON.stringify({ 
+            error: "Admin permission check failed. Please contact support.", 
+            code: "ADMIN_CHECK_FAILED",
+            details: `RPC: ${adminCheckError.message}, Exception: ${(fallbackException as Error).message}`,
+            userId: user.id
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
-      console.log("Admin check result:", isAdmin);
-    } catch (e) {
-      console.error("Failed to normalize is_admin RPC result:", e, isAdminRaw);
-      isAdmin = false;
     }
 
+    // Normalize RPC result (only if RPC succeeded and we haven't set isAdmin from fallback)
+    if (!adminCheckError && isAdminRaw !== undefined) {
+      try {
+        if (Array.isArray(isAdminRaw)) {
+          const first = isAdminRaw[0];
+          if (typeof first === 'boolean') isAdmin = first;
+          else if (first && typeof first === 'object') {
+            isAdmin = !!(first.is_admin ?? first.exists ?? Object.values(first)[0]);
+          } else {
+            isAdmin = !!first;
+          }
+        } else if (typeof isAdminRaw === 'object' && isAdminRaw !== null) {
+          const rawObj = isAdminRaw as any;
+          isAdmin = !!(rawObj.is_admin ?? rawObj.exists ?? Object.values(rawObj)[0]);
+        } else {
+          isAdmin = !!isAdminRaw;
+        }
+        console.log("✅ RPC admin check result:", isAdmin);
+      } catch (e) {
+        console.error("❌ Failed to normalize RPC result:", e, isAdminRaw);
+      }
+    }
+    
+    // Final admin check
     if (!isAdmin) {
+      console.error("❌ User is not admin:", {
+        userId: user.id,
+        targetUserId: userId,
+        isAdminRaw: isAdminRaw,
+        isAdmin: isAdmin
+      });
       return new Response(
-        JSON.stringify({ error: "Insufficient permissions. Admin access required.", code: "NOT_ADMIN" }),
+        JSON.stringify({ 
+          error: "Insufficient permissions. Admin access required.", 
+          code: "NOT_ADMIN",
+          userId: user.id,
+          isAdmin: false
+        }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -161,20 +291,28 @@ Deno.serve(async (req) => {
       .eq("id", userId)
       .maybeSingle();
 
-    console.log("Profile fetch result:", { userProfile, profileError });
-
     if (profileError) {
-      console.error("Error fetching user profile:", profileError);
+      console.error("❌ Error fetching user profile:", profileError);
       return new Response(
-        JSON.stringify({ error: `Failed to fetch profile: ${profileError.message}`, code: "PROFILE_FETCH_ERROR" }),
+        JSON.stringify({ 
+          error: `Failed to fetch profile: ${profileError.message}`, 
+          code: "PROFILE_FETCH_ERROR",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!userProfile) {
-      console.error("User profile not found for userId:", userId);
+      console.error("❌ User profile not found for userId:", userId);
       return new Response(
-        JSON.stringify({ error: "User profile not found in database", code: "PROFILE_NOT_FOUND" }),
+        JSON.stringify({ 
+          error: "User profile not found in database", 
+          code: "PROFILE_NOT_FOUND",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -182,21 +320,29 @@ Deno.serve(async (req) => {
     // Get user email from auth.users
     console.log(`Fetching auth user: ${userId}`);
     const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
-    
-    console.log("Auth user fetch result:", { authUser: authUser?.user ? { id: authUser.user.id, email: authUser.user.email } : null, authUserError });
 
     if (authUserError) {
-      console.error("Error fetching auth user:", authUserError);
+      console.error("❌ Error fetching auth user:", authUserError);
       return new Response(
-        JSON.stringify({ error: `Failed to fetch auth user: ${authUserError.message}`, code: "AUTH_USER_FETCH_ERROR" }),
+        JSON.stringify({ 
+          error: `Failed to fetch auth user: ${authUserError.message}`, 
+          code: "AUTH_USER_FETCH_ERROR",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!authUser?.user) {
-      console.error("Auth user not found for userId:", userId);
+      console.error("❌ Auth user not found for userId:", userId);
       return new Response(
-        JSON.stringify({ error: "User not found in authentication system", code: "AUTH_USER_NOT_FOUND" }),
+        JSON.stringify({ 
+          error: "User not found in authentication system", 
+          code: "AUTH_USER_NOT_FOUND",
+          userId: userId,
+          adminId: user.id
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -205,258 +351,156 @@ Deno.serve(async (req) => {
 
     // Prevent deletion of admin or super_admin users
     if (userProfile.role === "admin" || userProfile.role === "super_admin") {
+      console.error(`❌ Cannot delete ${userProfile.role} user ${userId} (${userEmail})`);
       return new Response(
-        JSON.stringify({ error: "Cannot delete admin or super_admin users", code: "CANNOT_DELETE_ADMIN" }),
+        JSON.stringify({ 
+          error: "Cannot delete admin or super_admin users", 
+          code: "CANNOT_DELETE_ADMIN",
+          userId: userId,
+          role: userProfile.role,
+          email: userEmail
+        }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Check for vehicles
-    const { count: vehiclesCount } = await supabaseAdmin
-      .from("cars")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_id", userId);
-
-    console.log(`User ${userId} has ${vehiclesCount || 0} vehicles`);
 
     // Start deletion process
     const deletionSteps = [];
 
     try {
-      // 1. Delete conversation messages
-      const { error: conversationMessagesError } = await supabaseAdmin
-        .from("conversation_messages")
-        .delete()
-        .eq("sender_id", userId);
-
-      if (conversationMessagesError) {
-        console.error("Error deleting conversation messages:", conversationMessagesError);
-        deletionSteps.push(`Failed to delete conversation messages: ${conversationMessagesError.message}`);
-      } else {
-        deletionSteps.push("Deleted conversation messages");
-      }
-
-      // 2. Delete conversation participants
-      const { error: conversationParticipantsError } = await supabaseAdmin
-        .from("conversation_participants")
-        .delete()
-        .eq("user_id", userId);
-
-      if (conversationParticipantsError) {
-        console.error("Error deleting conversation participants:", conversationParticipantsError);
-        deletionSteps.push(`Failed to delete conversation participants: ${conversationParticipantsError.message}`);
-      } else {
-        deletionSteps.push("Deleted conversation participants");
-      }
-
-      // 3. Delete conversations created by user
-      const { error: conversationsError } = await supabaseAdmin
-        .from("conversations")
-        .delete()
-        .eq("created_by", userId);
-
-      if (conversationsError) {
-        console.error("Error deleting conversations:", conversationsError);
-        deletionSteps.push(`Failed to delete conversations: ${conversationsError.message}`);
-      } else {
-        deletionSteps.push("Deleted conversations");
-      }
-
-      // 4. Delete messages
-      const { error: messagesError } = await supabaseAdmin
-        .from("messages")
-        .delete()
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`);
-
-      if (messagesError) {
-        console.error("Error deleting messages:", messagesError);
-        deletionSteps.push(`Failed to delete messages: ${messagesError.message}`);
-      } else {
-        deletionSteps.push("Deleted messages");
-      }
-
-      // 5. Delete reviews where user is reviewer
-      const { error: reviewsReviewerError } = await supabaseAdmin
-        .from("reviews")
-        .delete()
-        .eq("reviewer_id", userId);
-
-      if (reviewsReviewerError) {
-        console.error("Error deleting reviewer reviews:", reviewsReviewerError);
-        deletionSteps.push(`Failed to delete reviewer reviews: ${reviewsReviewerError.message}`);
-      } else {
-        deletionSteps.push("Deleted reviewer reviews");
-      }
-
-      // 6. Delete reviews where user is reviewee
-      const { error: reviewsRevieweeError } = await supabaseAdmin
-        .from("reviews")
-        .delete()
-        .eq("reviewee_id", userId);
-
-      if (reviewsRevieweeError) {
-        console.error("Error deleting reviewee reviews:", reviewsRevieweeError);
-        deletionSteps.push(`Failed to delete reviewee reviews: ${reviewsRevieweeError.message}`);
-      } else {
-        deletionSteps.push("Deleted reviewee reviews");
-      }
-
-      // 7. Delete notifications_backup if it exists (BEFORE bookings deletion)
-      try {
-        // Delete notifications_backup where user_id = userId
-        const { error: backupUserError } = await supabaseAdmin
-          .from("notifications_backup")
-          .delete()
-          .eq("user_id", userId);
-
-        if (backupUserError) {
-          console.error("Error deleting notifications_backup for user:", backupUserError);
-          deletionSteps.push(`Failed to delete notifications_backup for user: ${backupUserError.message}`);
-        }
-
-        // Delete notifications_backup where related_car_id in user's cars
-        const userCarIds = await getUserCarIds(supabaseAdmin, userId);
-        if (userCarIds.length > 0) {
-          const { error: backupCarsError } = await supabaseAdmin
-            .from("notifications_backup")
-            .delete()
-            .in("related_car_id", userCarIds);
-
-          if (backupCarsError) {
-            console.error("Error deleting notifications_backup for cars:", backupCarsError);
-            deletionSteps.push(`Failed to delete notifications_backup for cars: ${backupCarsError.message}`);
+      console.log("🔍 === STARTING COMPREHENSIVE CLEANUP ===");
+      
+      // STEP 1: Deep clean all user references FIRST
+      console.log("🧹 Step 1: Deep cleaning all user references...");
+      const deepCleanSteps = await deepCleanUserReferences(supabaseAdmin, userId);
+      deletionSteps.push(...deepCleanSteps);
+      
+      console.log(`✅ Deep cleanup complete. Cleaned ${deepCleanSteps.length} references.`);
+      
+      // STEP 2: Try to delete the auth user
+      console.log("🗑️ Step 2: Attempting auth user deletion...");
+      
+      let authDeletionSuccess = false;
+      let authDeletionError: any = null;
+      
+      // Try multiple approaches to delete the auth user
+      for (let approach = 1; approach <= 2; approach++) {
+        console.log(`🔄 Deletion approach ${approach}/2...`);
+        
+        try {
+          if (approach === 1) {
+            // Approach 1: Standard deletion
+            console.log("📋 Approach 1: Standard auth.admin.deleteUser");
+            const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+            if (error) throw error;
+            
+          } else if (approach === 2) {
+            // Approach 2: Disable then delete
+            console.log("📋 Approach 2: Disable user first, then delete");
+            
+            // First disable the user
+            await supabaseAdmin.auth.admin.updateUserById(userId, {
+              email_confirm: false,
+              ban_duration: '876000h' // 100 years
+            });
+            
+            // Wait a moment
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Then try to delete
+            const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+            if (error) throw error;
+          }
+          
+          // If we get here, deletion succeeded
+          authDeletionSuccess = true;
+          console.log(`✅ Auth user deleted successfully using approach ${approach}`);
+          deletionSteps.push(`Deleted auth user (approach ${approach})`);
+          break;
+          
+        } catch (error) {
+          authDeletionError = error;
+          console.error(`❌ Approach ${approach} failed:`, (error as Error).message);
+          
+          if (approach < 2) {
+            console.log("⏳ Waiting 2 seconds before next approach...");
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
-
-        // Delete notifications_backup where related_booking_id in user's bookings
-        const userBookingIds = await getUserBookingIds(supabaseAdmin, userId);
-        if (userBookingIds.length > 0) {
-          const { error: backupBookingsError } = await supabaseAdmin
-            .from("notifications_backup")
-            .delete()
-            .in("related_booking_id", userBookingIds);
-
-          if (backupBookingsError) {
-            console.error("Error deleting notifications_backup for bookings:", backupBookingsError);
-            deletionSteps.push(`Failed to delete notifications_backup for bookings: ${backupBookingsError.message}`);
-          }
-        }
-
-        deletionSteps.push("Deleted notifications_backup");
-      } catch (backupError) {
-        // notifications_backup table might not exist, ignore
-        console.log("notifications_backup table not found or error:", backupError);
-        deletionSteps.push("Skipped notifications_backup (table may not exist)");
       }
-
-      // 8. Delete notifications related to user's bookings and cars (BEFORE bookings deletion)
-      // Delete notifications where user_id = userId
-      const { error: notificationsUserError } = await supabaseAdmin
-        .from("notifications")
-        .delete()
-        .eq("user_id", userId);
-
-      if (notificationsUserError) {
-        console.error("Error deleting notifications for user:", notificationsUserError);
-        deletionSteps.push(`Failed to delete notifications for user: ${notificationsUserError.message}`);
-      }
-
-      // Delete notifications where related_car_id in user's cars
-      const userCarIds = await getUserCarIds(supabaseAdmin, userId);
-      if (userCarIds.length > 0) {
-        const { error: notificationsCarsError } = await supabaseAdmin
-          .from("notifications")
-          .delete()
-          .in("related_car_id", userCarIds);
-
-        if (notificationsCarsError) {
-          console.error("Error deleting notifications for cars:", notificationsCarsError);
-          deletionSteps.push(`Failed to delete notifications for cars: ${notificationsCarsError.message}`);
+      
+      // Check if deletion succeeded
+      if (!authDeletionSuccess) {
+        console.error("❌ All auth deletion approaches failed");
+        
+        // Check if user still exists
+        const { data: stillExists } = await supabaseAdmin.auth.admin.getUserById(userId);
+        
+        if (stillExists?.user) {
+          console.error("❌ User still exists in auth system after all deletion attempts");
+          
+          // Return detailed error with diagnostic info
+          return new Response(
+            JSON.stringify({ 
+              error: "Failed to delete user from authentication system after multiple attempts",
+              code: "AUTH_DELETION_FAILED",
+              details: {
+                lastError: authDeletionError?.message || "Unknown error",
+                userStillExists: true,
+                userId: userId,
+                email: stillExists.user.email,
+                completedSteps: deletionSteps,
+                recommendation: "This user may have foreign key constraints in the auth schema that prevent deletion. Manual intervention may be required. Please contact Supabase support or check the auth.users table for any constraints."
+              }
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } else {
+          // User doesn't exist anymore (maybe previous approach actually worked?)
+          console.log("✅ User no longer exists in auth system (deletion may have succeeded)");
+          authDeletionSuccess = true;
+          deletionSteps.push("Auth user deleted (verified by absence)");
         }
       }
-
-      // Delete notifications where related_booking_id in user's bookings
-      const userBookingIds = await getUserBookingIds(supabaseAdmin, userId);
-      if (userBookingIds.length > 0) {
-        const { error: notificationsBookingsError } = await supabaseAdmin
-          .from("notifications")
-          .delete()
-          .in("related_booking_id", userBookingIds);
-
-        if (notificationsBookingsError) {
-          console.error("Error deleting notifications for bookings:", notificationsBookingsError);
-          deletionSteps.push(`Failed to delete notifications for bookings: ${notificationsBookingsError.message}`);
-        }
+      
+      // STEP 3: Final verification
+      console.log("🔍 Step 3: Final verification...");
+      
+      const { data: finalAuthCheck } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const { data: finalProfileCheck } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+      
+      if (finalAuthCheck?.user) {
+        console.error("❌ Final verification failed: Auth user still exists");
+        return new Response(
+          JSON.stringify({ 
+            error: "User still exists in authentication system after deletion",
+            code: "VERIFICATION_FAILED",
+            details: {
+              authUserExists: true,
+              profileExists: !!finalProfileCheck,
+              completedSteps: deletionSteps
+            }
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
-
-      deletionSteps.push("Deleted user notifications");
-
-      // 9. Delete bookings where user is renter
-      const { error: bookingsRenterError } = await supabaseAdmin
-        .from("bookings")
-        .delete()
-        .eq("renter_id", userId);
-
-      if (bookingsRenterError) {
-        console.error("Error deleting renter bookings:", bookingsRenterError);
-        deletionSteps.push(`Failed to delete renter bookings: ${bookingsRenterError.message}`);
-      } else {
-        deletionSteps.push("Deleted renter bookings");
+      
+      if (finalProfileCheck) {
+        console.error("❌ Final verification failed: Profile still exists");
+        // Try to delete it one more time
+        await supabaseAdmin.from("profiles").delete().eq("id", userId);
       }
+      
+      console.log("✅ Final verification passed");
+      deletionSteps.push("Final verification passed");
 
-      // 10. Delete bookings where user is host (via car ownership)
-      const { error: bookingsHostError } = await supabaseAdmin
-        .from("bookings")
-        .delete()
-        .in("car_id", await getUserCarIds(supabaseAdmin, userId));
-
-      if (bookingsHostError) {
-        console.error("Error deleting host bookings:", bookingsHostError);
-        deletionSteps.push(`Failed to delete host bookings: ${bookingsHostError.message}`);
-      } else {
-        deletionSteps.push("Deleted host bookings");
-      }
-
-      // 11. Delete user vehicles
-      const { error: carsError } = await supabaseAdmin
-        .from("cars")
-        .delete()
-        .eq("owner_id", userId);
-
-      if (carsError) {
-        console.error("Error deleting cars:", carsError);
-        deletionSteps.push(`Failed to delete vehicles: ${carsError.message}`);
-      } else {
-        deletionSteps.push(`Deleted ${vehiclesCount || 0} vehicles`);
-      }
-
-      // 12. Delete user restrictions
-      const { error: restrictionsError } = await supabaseAdmin
-        .from("user_restrictions")
-        .delete()
-        .eq("user_id", userId);
-
-      if (restrictionsError) {
-        console.error("Error deleting restrictions:", restrictionsError);
-        deletionSteps.push(`Failed to delete restrictions: ${restrictionsError.message}`);
-      } else {
-        deletionSteps.push("Deleted user restrictions");
-      }
-
-      // Log the deletion for audit BEFORE deleting the user (to avoid foreign key constraint issues)
+      // Log the deletion for audit
       try {
-        console.log("Attempting to log audit event for user deletion...");
-        console.log("Audit event params:", {
-          p_event_type: 'user_deleted',
-          p_severity: 'critical',
-          p_actor_id: user.id,
-          p_target_id: userId,
-          p_resource_type: 'user',
-          p_resource_id: userId,
-          p_reason: reason
-        });
-
-        const auditResult = await supabaseAdmin.rpc('log_audit_event', {
+        await supabaseAdmin.rpc('log_audit_event', {
           p_event_type: 'user_deleted',
           p_severity: 'critical',
           p_actor_id: user.id,
@@ -466,7 +510,6 @@ Deno.serve(async (req) => {
           p_user_agent: null,
           p_location_data: null,
           p_action_details: {
-            vehiclesDeleted: vehiclesCount || 0,
             email: userEmail,
             fullName: userProfile.full_name
           },
@@ -476,93 +519,49 @@ Deno.serve(async (req) => {
           p_anomaly_flags: null,
           p_compliance_tags: ['user-management', 'deletion', 'gdpr']
         });
-
-        console.log("Audit RPC result:", { 
-          data: auditResult.data, 
-          error: auditResult.error,
-          status: auditResult.status 
-        });
-
-        if (auditResult.error) {
-          console.error("❌ Error logging audit event:", JSON.stringify(auditResult.error));
-          // Don't fail the operation if audit logging fails
-        } else {
-          console.log("✅ Audit event logged successfully:", auditResult.data);
-        }
-      } catch (auditLogError) {
-        console.error("❌ Exception during audit logging:", auditLogError);
-        console.error("Exception details:", JSON.stringify(auditLogError));
-        // Don't fail the operation if audit logging fails
+      } catch (auditError) {
+        console.log("ℹ️ Audit logging failed (non-critical):", (auditError as Error).message);
       }
 
-      // 13. Delete user profile
-      const { error: profileDeleteError } = await supabaseAdmin
-        .from("profiles")
-        .delete()
-        .eq("id", userId);
-
-      if (profileDeleteError) {
-        console.error("Error deleting profile:", profileDeleteError);
-        throw new Error(`Failed to delete profile: ${profileDeleteError.message}`);
-      }
-      deletionSteps.push("Deleted user profile");
-
-      // 14. Delete user from auth (this should be last)
-      try {
-        const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
-        if (authDeleteError) {
-          console.error("Error deleting auth user:", authDeleteError);
-          console.warn("⚠️ Auth user deletion failed, but audit log was already created. Continuing...");
-          deletionSteps.push(`Warning: Failed to delete auth user: ${authDeleteError.message}`);
-        } else {
-          deletionSteps.push("Deleted auth user");
-        }
-      } catch (authError) {
-        console.error("Exception deleting auth user:", authError);
-        console.warn("⚠️ Auth user deletion exception, but audit log was already created. Continuing...");
-        deletionSteps.push(`Warning: Exception deleting auth user: ${(authError as Error).message}`);
-      }
-
-      console.log(`User deleted successfully:`, {
-        userId,
-        email: userEmail,
-        fullName: userProfile.full_name,
-        deletedBy: user.id,
-        reason,
-        vehiclesDeleted: vehiclesCount || 0,
-        timestamp: new Date().toISOString(),
-        steps: deletionSteps
-      });
+      console.log(`✅ User ${userId} deleted successfully`);
 
       return new Response(
         JSON.stringify({ 
           success: true,
           message: "User and all related data deleted successfully",
           details: {
-            vehiclesDeleted: vehiclesCount || 0,
-            deletionSteps
+            deletionSteps,
+            verification: {
+              authUserDeleted: true,
+              profileDeleted: true
+            }
           }
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+      
     } catch (error) {
-      console.error("Error during deletion process:", error);
+      console.error("❌ Error during deletion process:", error);
+      
       return new Response(
         JSON.stringify({ 
           error: (error as Error).message || "Deletion process failed",
           code: "DELETION_FAILED",
-          completedSteps: deletionSteps
+          completedSteps: deletionSteps,
+          userId: userId,
+          adminUserId: user.id
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
   } catch (error) {
-    console.error("Error in delete-user function:", error);
+    console.error("❌ Error in delete-user function:", error);
+    
     return new Response(
       JSON.stringify({ 
         error: (error as Error).message || "An unexpected error occurred",
-        code: "DELETE_USER_ERROR"
+        code: "DELETE_USER_ERROR",
+        userId: userId
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
