@@ -77,9 +77,9 @@ export const BookingLocationPicker = ({
   // Map style based on theme
   const getMapStyle = () => {
     if (theme === "dark") {
-      return "mapbox://styles/mapbox/navigation-night-v1";
+      return "mapbox://styles/mapbox/dark-v11";
     }
-    return "mapbox://styles/mapbox/navigation-day-v1";
+    return "mapbox://styles/mapbox/streets-v12";
   };
 
   useEffect(() => {

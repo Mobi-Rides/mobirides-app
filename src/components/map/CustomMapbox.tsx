@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { HandoverLocation } from "@/services/handoverService";
 import { HostPopup } from "./HostPopup";
 import { HostCarsSideTray } from "./HostCarsSideTray";
 import { Host } from "@/services/hostService";
-import ReactDOM from "react-dom";
+import { createRoot, Root } from "react-dom/client";
 import { navigationService } from "@/services/navigationService";
 import { RouteLayer } from "@/components/navigation/RouteLayer";
 
@@ -57,6 +57,11 @@ const CustomMapbox = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const geolocateControlRef = useRef<mapboxgl.GeolocateControl | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const handoverMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const popupRootsRef = useRef<Map<HTMLElement, Root>>(new Map());
+  const geolocateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoRouteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [mapInit, setMapInit] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState({ latitude, longitude });
   const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
@@ -82,14 +87,19 @@ const CustomMapbox = ({
   const handoverData = useHandover();
   const handover = isHandoverMode ? handoverData : null;
 
-  useEffect(() => {
+  // Memoize returnLocation callback to prevent unnecessary re-renders
+  const returnLocationCallback = useCallback(() => {
     if (!returnLocation) {
       return;
     }
     const long = userLocation.longitude;
     const lat = userLocation.latitude;
     returnLocation(long, lat);
-  }, [userLocation]);
+  }, [returnLocation, userLocation.longitude, userLocation.latitude]);
+
+  useEffect(() => {
+    returnLocationCallback();
+  }, [returnLocationCallback]);
 
   useEffect(() => {
     if (mapbox_token) {
@@ -201,7 +211,7 @@ const CustomMapbox = ({
           });
         }
 
-        setTimeout(() => {
+        geolocateTimeoutRef.current = setTimeout(() => {
           if (geolocateControlRef.current) {
             geolocateControlRef.current.trigger();
           }
@@ -223,12 +233,35 @@ const CustomMapbox = ({
     }
 
     return () => {
+      // Clear all timeouts
+      if (geolocateTimeoutRef.current) {
+        clearTimeout(geolocateTimeoutRef.current);
+        geolocateTimeoutRef.current = null;
+      }
+      if (autoRouteTimeoutRef.current) {
+        clearTimeout(autoRouteTimeoutRef.current);
+        autoRouteTimeoutRef.current = null;
+      }
+
+      // Clean up all markers
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
+      handoverMarkersRef.current.forEach((marker) => marker.remove());
+      handoverMarkersRef.current = [];
+
+      // Clean up all React roots for popups
+      popupRootsRef.current.forEach((root) => {
+        root.unmount();
+      });
+      popupRootsRef.current.clear();
+
+      // Remove map
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
-  }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover]);
+  }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover, zoom, interactive, returnLocation]);
 
   const fetchAddressFromCoordinates = async (
     lat: number,
@@ -350,6 +383,9 @@ const CustomMapbox = ({
     if (!map.current || !mapInit || !onlineHosts?.length)
       return;
 
+    // Clean up old markers
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
     markers.forEach((marker) => marker.remove());
     setMarkers([]);
 
@@ -365,11 +401,11 @@ const CustomMapbox = ({
         el.style.borderRadius = "50%";
         el.style.backgroundColor = host.isActiveHandover ? "#ef4444" : "#4ade80";
         el.style.border = host.isActiveHandover ? "3px solid white" : "2px solid white";
-        el.style.boxShadow = host.isActiveHandover 
-          ? "0 0 15px rgba(239, 68, 68, 0.5)" 
+        el.style.boxShadow = host.isActiveHandover
+          ? "0 0 15px rgba(239, 68, 68, 0.5)"
           : "0 0 10px rgba(0, 0, 0, 0.3)";
         el.style.cursor = "pointer";
-        
+
         // Add pulsing animation for active handover
         if (host.isActiveHandover) {
           el.style.animation = "pulse 2s infinite";
@@ -377,7 +413,7 @@ const CustomMapbox = ({
 
         // Create popup container
         const popupDiv = document.createElement('div');
-        
+
         // Create marker with custom popup
         const marker = new mapboxgl.Marker(el)
           .setLngLat([host.longitude, host.latitude])
@@ -385,11 +421,15 @@ const CustomMapbox = ({
 
         // Add hover events
         el.addEventListener('mouseenter', () => {
-          ReactDOM.render(
-            <HostPopup host={host as Host} onViewCars={handleViewHostCars} />,
-            popupDiv
-          );
-          
+          // Use createRoot instead of deprecated ReactDOM.render
+          if (!popupRootsRef.current.has(popupDiv)) {
+            const root = createRoot(popupDiv);
+            popupRootsRef.current.set(popupDiv, root);
+            root.render(
+              <HostPopup host={host as Host} onViewCars={handleViewHostCars} />
+            );
+          }
+
           const popup = new mapboxgl.Popup({
             offset: 25,
             closeButton: false,
@@ -415,8 +455,8 @@ const CustomMapbox = ({
         // Click to open side tray and show route
         el.addEventListener('click', () => {
           handleViewHostCars(host.id);
-          
-          // Add route to this host
+
+          // Add route to this host using unique source name
           if (map.current && mapInit) {
             const fetchRouteToHost = async () => {
               try {
@@ -427,20 +467,22 @@ const CustomMapbox = ({
 
                 if (data.routes && data.routes.length > 0) {
                   const route = data.routes[0].geometry;
+                  const hostRouteSourceId = "host-route";
+                  const hostRouteLayerId = "host-route-layer";
 
-                  // Remove existing route
-                  if (map.current!.getSource("route")) {
-                    (map.current!.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
+                  // Remove existing host route
+                  if (map.current!.getSource(hostRouteSourceId)) {
+                    (map.current!.getSource(hostRouteSourceId) as mapboxgl.GeoJSONSource).setData(route);
                   } else {
-                    map.current!.addSource("route", {
+                    map.current!.addSource(hostRouteSourceId, {
                       type: "geojson",
                       data: route,
                     });
 
                     map.current!.addLayer({
-                      id: "route",
+                      id: hostRouteLayerId,
                       type: "line",
-                      source: "route",
+                      source: hostRouteSourceId,
                       layout: {
                         "line-join": "round",
                         "line-cap": "round",
@@ -456,7 +498,7 @@ const CustomMapbox = ({
                   const bounds = new mapboxgl.LngLatBounds()
                     .extend([userLocation.longitude, userLocation.latitude])
                     .extend([host.longitude, host.latitude]);
-                  
+
                   map.current!.fitBounds(bounds, {
                     padding: 50,
                     maxZoom: 15,
@@ -476,15 +518,28 @@ const CustomMapbox = ({
       })
       .filter(Boolean) as mapboxgl.Marker[];
 
+    // Store markers in both state and ref
     setMarkers(newMarkers);
-    
+    markersRef.current = newMarkers;
+
     // Auto-show route to active handover host
     const activeHandoverHost = onlineHosts?.find(host => host.isActiveHandover);
     if (activeHandoverHost && userLocation.latitude && userLocation.longitude) {
-      setTimeout(() => {
+      // Clear previous timeout
+      if (autoRouteTimeoutRef.current) {
+        clearTimeout(autoRouteTimeoutRef.current);
+      }
+
+      autoRouteTimeoutRef.current = setTimeout(() => {
         showRouteToHost(activeHandoverHost);
       }, 1000);
     }
+
+    // Cleanup function for this effect
+    return () => {
+      // Clean up markers when hosts change
+      newMarkers.forEach((marker) => marker.remove());
+    };
   }, [onlineHosts, mapInit, isHandoverMode, userLocation]);
 
   useEffect(() => {
