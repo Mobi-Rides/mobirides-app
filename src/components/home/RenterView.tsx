@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
@@ -34,13 +34,13 @@ export const RenterView = ({
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Get handover prompts for this renter
-  const { 
-    handoverPrompts, 
-    hasHandoverPrompts, 
+  const {
+    handoverPrompts,
+    hasHandoverPrompts,
     hasUrgentPrompts,
-    refetch: refetchPrompts 
+    refetch: refetchPrompts
   } = useHandoverPrompts();
 
   // Check for verification success parameter
@@ -56,15 +56,19 @@ export const RenterView = ({
   }, [searchParams, setSearchParams]);
 
   // For combining the inView ref with our loadMoreRef
-  const setRefs = (node: HTMLDivElement | null) => {
-    // Set the loadMoreRef
-    if (loadMoreRef.current !== node) {
-      loadMoreRef.current = node || null;
-    }
+  // For combining the inViewRef with our loadMoreRef
+  const setRefs = useCallback(
+    (node: HTMLDivElement | null) => {
+      // Set the loadMoreRef
+      if (loadMoreRef.current !== node) {
+        loadMoreRef.current = node || null;
+      }
 
-    // Call the inViewRef
-    inViewRef(node);
-  };
+      // Call the inViewRef
+      inViewRef(node);
+    },
+    [inViewRef]
+  );
 
   useEffect(() => {
     onFiltersChange({
@@ -154,18 +158,18 @@ export const RenterView = ({
       }
 
       console.log(`[RenterView] Fetching ratings for ${allAvailableCars.length} cars`);
-      
+
       const carsWithRatingsPromises = allAvailableCars.map(async (car) => {
         try {
           const { data: rating, error } = await supabase.rpc('calculate_car_rating', {
             car_uuid: car.id
           });
-          
+
           if (error) {
             console.error(`[RenterView] Error fetching rating for car ${car.id}:`, error);
             return { ...car, rating: 0, reviewCount: 0 };
           }
-          
+
           // Fetch review count
           const { count: reviewCount } = await supabase
             .from('reviews')
@@ -173,7 +177,7 @@ export const RenterView = ({
             .eq('car_id', car.id)
             .eq('review_type', 'car')
             .eq('status', 'published');
-          
+
           console.log(`[RenterView] Car ${car.brand} ${car.model} (${car.id}) rating:`, rating, 'reviews:', reviewCount);
           return { ...car, rating: rating || 0, reviewCount: reviewCount || 0 };
         } catch (error) {
@@ -203,7 +207,7 @@ export const RenterView = ({
   const handleStartHandover = async (bookingId: string) => {
     try {
       console.log("Starting handover for booking:", bookingId);
-      
+
       // Get booking details to find host and renter IDs
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
@@ -223,7 +227,7 @@ export const RenterView = ({
 
       // Create handover session
       const session = await createHandoverSession(bookingId, 'pickup', hostId, renterId);
-      
+
       if (session) {
         toast.success("Handover process started");
         // Navigate to map with handover mode
@@ -254,9 +258,8 @@ export const RenterView = ({
         <Button
           variant={sortOrder ? "secondary" : "outline"}
           onClick={toggleSortOrder}
-          className={`flex items-center gap-2 transition-colors ${
-            sortOrder ? "bg-accent text-accent-foreground" : ""
-          }`}
+          className={`flex items-center gap-2 transition-colors ${sortOrder ? "bg-accent text-accent-foreground" : ""
+            }`}
         >
           {sortOrder === "asc" ? (
             <>
@@ -290,7 +293,7 @@ export const RenterView = ({
           Load more trigger
         </div>
       )}
-      
+
       {/* Success Popup */}
       <SuccessPopup
         isVisible={showSuccessPopup}
