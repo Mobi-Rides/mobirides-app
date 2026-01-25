@@ -190,7 +190,7 @@ export function MessagingInterface({ className, recipientId, recipientName, init
 
       updateLastReadAt();
     }
-  }, [selectedConversationId, currentUser?.id, messages?.length, queryClient]);
+  }, [selectedConversationId, currentUser?.id, messages, queryClient]);
 
   // Memoize the createConversation function to prevent infinite loops
   const handleCreateConversation = useCallback((params: { participantIds: string[], title?: string }) => {
@@ -251,7 +251,7 @@ export function MessagingInterface({ className, recipientId, recipientName, init
     } catch (error) {
       console.error("MessagingInterface: Error in recipient handling:", error);
     }
-  }, [recipientId, recipientName, conversations, currentUser?.id, conversationsLoading, isCreatingConversation]);
+  }, [recipientId, recipientName, conversations, currentUser?.id, conversationsLoading, isCreatingConversation, creationAttempts, handleCreateConversation]);
 
   const selectedConversation = Array.isArray(conversations) ? conversations.find(c => c.id === selectedConversationId) : undefined;
 
@@ -260,7 +260,7 @@ export function MessagingInterface({ className, recipientId, recipientName, init
     ? `Hi, I'm interested in your ${initialCarTitle}. Is it available?`
     : undefined;
 
-  const handleSendMessage = useCallback((content: string, type: 'text' | 'image' | 'file' | 'audio' | 'video' = 'text', metadata: any = {}, replyToMessageId?: string) => {
+  const handleSendMessage = useCallback((content: string, type: 'text' | 'image' | 'file' | 'audio' | 'video' = 'text', metadata: Record<string, unknown> = {}, replyToMessageId?: string) => {
     if (selectedConversationId && content.trim()) {
       console.log('Sending message:', { conversationId: selectedConversationId, content, type, replyToMessageId });
       sendMessage({

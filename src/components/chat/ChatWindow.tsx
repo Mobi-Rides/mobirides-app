@@ -30,7 +30,7 @@ interface ChatWindowProps {
   messages: Message[];
   currentUser: User;
   typingUsers: TypingIndicator[];
-  onSendMessage: (content: string, type?: 'text' | 'image' | 'video' | 'audio' | 'file', metadata?: any, replyToMessageId?: string) => void;
+  onSendMessage: (content: string, type?: 'text' | 'image' | 'video' | 'audio' | 'file', metadata?: Record<string, unknown>, replyToMessageId?: string) => void;
   onEditMessage?: (messageId: string) => void;
   onDeleteMessage?: (messageId: string) => void;
   onReactToMessage?: (messageId: string, emoji: string) => void;
@@ -71,7 +71,10 @@ export function ChatWindow({
   const [showQuickReplies, setShowQuickReplies] = useState(true);
 
   // Reset quick replies when conversation changes
+  // Using a key on the QuickReplySuggestions component is better than an effect
+  // But since we control visibility state here:
   useEffect(() => {
+    // Only reset if it was hidden
     setShowQuickReplies(true);
   }, [conversation.id]);
 
@@ -88,8 +91,8 @@ export function ChatWindow({
   // Debounce search and find matches
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setMatches([]);
-      setCurrentMatchIndex(0);
+      if (matches.length > 0) setMatches([]);
+      if (currentMatchIndex !== 0) setCurrentMatchIndex(0);
       return;
     }
 
