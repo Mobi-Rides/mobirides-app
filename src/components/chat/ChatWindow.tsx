@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, isSameDay, format } from 'date-fns';
 import {
@@ -71,12 +71,10 @@ export function ChatWindow({
   const [showQuickReplies, setShowQuickReplies] = useState(true);
 
   // Reset quick replies when conversation changes
-  // Using a key on the QuickReplySuggestions component is better than an effect
-  // But since we control visibility state here:
-  useEffect(() => {
-    // Only reset if it was hidden
-    setShowQuickReplies(true);
-  }, [conversation.id]);
+  // Handled by key prop in parent component (MessagingInterface)
+  // useEffect(() => {
+  //   setShowQuickReplies(true);
+  // }, [conversation.id]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -88,33 +86,34 @@ export function ChatWindow({
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [matches, setMatches] = useState<string[]>([]); // Array of message IDs
 
-  // Debounce search and find matches
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      if (matches.length > 0) setMatches([]);
-      if (currentMatchIndex !== 0) setCurrentMatchIndex(0);
-      return;
-    }
-
+  // Reset search when query is empty or conversation changes (handled by key)
+  // Use a simple effect that doesn't set state conditionally if possible
+  // Or better, derive matches during render? 
+  // No, we need matches for navigation state.
+  // Let's use useMemo for matches to avoid effect for derivation
+  
+  const derivedMatches = useMemo(() => {
+    if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
-    const foundMsgIds = messages
+    return messages
       .filter(m => m.content && m.content.toLowerCase().includes(query))
       .map(m => m.id);
-
-    // Reverse to match visual order (bottom to top usually, but we scroll down)
-    // Actually standard is top-to-bottom for "Next" usually going down.
-    // If we want "Next" to go to the *next older* message or *next newer*?
-    // Usually "Next" means "Find next occurrence downwards". 
-    // "Previous" means "Find upwards".
-    // Let's assume matches are time-ordered (oldest to newest).
-    // When we start search, we might want to jump to the most recent match?
-    // Let's just store them in order.
-
-    setMatches(foundMsgIds);
-    // If we were already at a match, try to keep it, otherwise jump to last (newest)
-    setCurrentMatchIndex(prev => Math.max(0, foundMsgIds.length - 1));
-
   }, [searchQuery, messages]);
+
+  // Sync state or just use derivedMatches?
+  // We need to store matches for navigation.
+  // Actually we can just use derivedMatches directly!
+  // And we need to reset currentMatchIndex when derivedMatches changes.
+
+  useEffect(() => {
+    // Reset index when matches change
+    setCurrentMatchIndex(prev => {
+      if (derivedMatches.length === 0) return 0;
+      // Try to keep relative position? No, jump to newest (last)
+      return Math.max(0, derivedMatches.length - 1);
+    });
+    setMatches(derivedMatches);
+  }, [derivedMatches]);
 
   // Handle navigation
   const navigateMatch = (direction: 'next' | 'prev') => {
