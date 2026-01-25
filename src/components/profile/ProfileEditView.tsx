@@ -8,30 +8,32 @@ interface ProfileEditViewProps {
   setAvatarUrl: (url: string) => void;
   initialFormValues: { full_name: string };
   onBack: () => void;
+  onSuccess?: () => void;
 }
 
-export const ProfileEditView = ({ 
-  avatarUrl, 
-  setAvatarUrl, 
+export const ProfileEditView = ({
+  avatarUrl,
+  setAvatarUrl,
   initialFormValues,
-  onBack
+  onBack,
+  onSuccess
 }: ProfileEditViewProps) => {
   return (
     <>
-      <Button 
+      <Button
         variant="ghost"
         onClick={onBack}
         className="mb-6"
       >
         ← Back to Settings
       </Button>
-      
+
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-4">Profile Picture</h2>
         <ProfileAvatar avatarUrl={avatarUrl} setAvatarUrl={setAvatarUrl} />
       </div>
-      
-      <ProfileForm initialValues={initialFormValues} />
+
+      <ProfileForm initialValues={initialFormValues} onSuccess={onSuccess} />
     </>
   );
 };

@@ -54,7 +54,7 @@ const BookingRequestDetails = () => {
         `)
         .eq('id', id)
         .single();
-      
+
       if (error) throw error;
       return data;
     }
@@ -68,11 +68,11 @@ const BookingRequestDetails = () => {
     queryKey: ['renter-rating', booking?.renter_id],
     queryFn: async () => {
       if (!booking?.renter_id) return null;
-      
+
       const { data } = await supabase.rpc('calculate_user_rating', {
         user_uuid: booking.renter_id
       });
-      
+
       return data;
     },
     enabled: !!booking?.renter_id
@@ -90,53 +90,53 @@ const BookingRequestDetails = () => {
   const updateBookingStatus = useMutation({
     mutationFn: async ({ status }: { status: 'confirmed' | 'cancelled'; }) => {
       console.log('Updating booking status:', status);
-      
+
       if (status === 'confirmed' && booking && userId) {
         const canAccept = await commissionService.checkHostCanAcceptBooking(userId, booking.total_price);
-        
+
         if (!canAccept.canAccept) {
           throw new Error(canAccept.message || 'Insufficient wallet balance');
         }
 
         const commissionDeducted = await commissionService.processCommissionOnBookingConfirmation(
-          userId, 
-          booking.id, 
+          userId,
+          booking.id,
           booking.total_price
         );
-        
+
         if (!commissionDeducted) {
           throw new Error('Failed to process commission payment');
         }
       }
-      
+
       const { error } = await supabase
         .from('bookings')
         .update({ status })
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
       const action = variables.status === 'confirmed' ? 'approved' : 'cancelled';
-      
+
       toast({
         title: `Booking ${action}`,
-        description: variables.status === 'confirmed' 
+        description: variables.status === 'confirmed'
           ? `Booking approved and commission deducted from your wallet.`
           : `The booking request has been cancelled.`
       });
-      
+
       queryClient.invalidateQueries({
         queryKey: ['booking-request', id]
       });
-      
+
       queryClient.invalidateQueries({
         queryKey: ['wallet-balance']
       });
     },
     onError: error => {
       console.error('Error updating booking status:', error);
-      
+
       toast({
         title: "Error",
         description: error.message || "Failed to update the booking status. Please try again.",
@@ -155,17 +155,20 @@ const BookingRequestDetails = () => {
 
   const handleContactRenter = async () => {
     if (!booking?.renter_id) return;
-    
+
     try {
       // Simply navigate to messages with recipient info
       // Let MessagingInterface handle conversation creation
+      const recipientId = isCarOwner ? booking.renter_id : booking.car.owner_id;
+      const recipientName = isCarOwner ? booking.renter.full_name : booking.car.brand; // Or fetch owner name if available, currently using car brand as fallback or need to fetch owner profile in query
+
       navigate('/messages', {
         state: {
-          recipientId: booking.renter_id,
-          recipientName: booking.renter.full_name
+          recipientId,
+          recipientName: isCarOwner ? booking.renter.full_name : "Car Owner" // Ideally we should have owner name here
         }
       });
-      
+
       toast({
         title: "Opening conversation",
         description: `Starting conversation with ${booking.renter.full_name}`
@@ -203,9 +206,9 @@ const BookingRequestDetails = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      <Button 
-        variant="ghost" 
-        className="mb-6 flex items-center" 
+      <Button
+        variant="ghost"
+        className="mb-6 flex items-center"
         onClick={() => navigate('/host-bookings')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -215,15 +218,15 @@ const BookingRequestDetails = () => {
       <div className="space-y-6">
         <Card className="overflow-hidden">
           <BookingRequestHeader status={booking.status} />
-          
+
           <CardContent className="p-6 space-y-8">
-            <RenterInformation 
-              renter={booking.renter} 
+            <RenterInformation
+              renter={booking.renter}
               renterRating={renterRating}
             />
             <CarInformation car={booking.car} />
-            <BookingDates 
-              startDate={booking.start_date} 
+            <BookingDates
+              startDate={booking.start_date}
               endDate={booking.end_date}
               startTime={booking.start_time}
               endTime={booking.end_time}
@@ -232,14 +235,14 @@ const BookingRequestDetails = () => {
           </CardContent>
 
           {isCarOwner && booking.status === 'pending' && (
-            <WalletCommissionSection 
+            <WalletCommissionSection
               bookingTotal={booking.total_price}
               canApproveBooking={canApproveBooking}
             />
           )}
 
           {booking.status === 'pending' && (
-            <BookingActions 
+            <BookingActions
               isCarOwner={isCarOwner}
               isRenter={isRenter}
               canApproveBooking={canApproveBooking}

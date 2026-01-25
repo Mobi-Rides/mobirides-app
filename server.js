@@ -17,10 +17,10 @@ const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-app.all('/api/*', async (req, res) => {
-  const apiPath = req.params[0];
+app.all('/api/{*path}', async (req, res) => {
+  const apiPath = req.params.path;
   console.log(`API Request: ${apiPath}`);
-  
+
   try {
     let handler;
     // Map paths to files
@@ -35,14 +35,14 @@ app.all('/api/*', async (req, res) => {
     } else if (apiPath === 'notifications/booking-confirmation') {
       handler = await import('./api/notifications/booking-confirmation.js');
     } else if (apiPath.startsWith('admin/')) {
-       // Admin routes temporarily disabled due to missing files/merge conflict
-       console.warn(`Admin route ${apiPath} requested but admin handlers are missing.`);
-       return res.status(503).json({ error: 'Admin services temporarily unavailable' });
+      // Admin routes temporarily disabled due to missing files/merge conflict
+      console.warn(`Admin route ${apiPath} requested but admin handlers are missing.`);
+      return res.status(503).json({ error: 'Admin services temporarily unavailable' });
     } else {
       console.warn(`Route not found: ${apiPath}`);
       return res.status(404).json({ error: 'Route not found' });
     }
-    
+
     if (handler && handler.default) {
       await handler.default(req, res);
     } else {
@@ -52,7 +52,7 @@ app.all('/api/*', async (req, res) => {
     console.error(`Error handling ${apiPath}:`, error);
     // If module not found
     if (error.code === 'ERR_MODULE_NOT_FOUND') {
-         return res.status(404).json({ error: 'Handler not found' });
+      return res.status(404).json({ error: 'Handler not found' });
     }
     res.status(500).json({ error: error.message });
   }

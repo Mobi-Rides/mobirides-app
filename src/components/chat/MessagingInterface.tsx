@@ -18,10 +18,13 @@ interface MessagingInterfaceProps {
   className?: string;
   recipientId?: string;
   recipientName?: string;
+  initialCarId?: string;
+  initialCarTitle?: string;
 }
 
-export function MessagingInterface({ className, recipientId, recipientName }: MessagingInterfaceProps) {
-  console.log("MessagingInterface: Loading with", { recipientId, recipientName });
+export function MessagingInterface({ className, recipientId, recipientName, initialCarId, initialCarTitle }: MessagingInterfaceProps) {
+  const queryClient = useQueryClient();
+  console.log("MessagingInterface: Loading with", { recipientId, recipientName, initialCarId });
 
   // Phase 1: Authentication state management
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -116,23 +119,69 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewConversationDialogOpen, setIsNewConversationDialogOpen] = useState(false);
 
-  // Update last_read_at when conversation is selected
+  // Update last_read_at when conversation is selected or new messages arrive
   useEffect(() => {
     if (selectedConversationId && currentUser?.id) {
       const updateLastReadAt = async () => {
         try {
           console.log("📖 [READ_TRACKING] Updating last_read_at for conversation:", selectedConversationId);
 
+          // Calculate the correct timestamp to avoid clock skew issues
+          let newLastReadAt = new Date().toISOString();
+          
+          if (messages && messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            // Use the message's created_at if available to ensure we mark up to this specific message as read
+            // This handles cases where client clock is behind server clock
+            if (lastMessage.created_at) {
+              newLastReadAt = lastMessage.created_at;
+            } else if (lastMessage.timestamp) {
+              newLastReadAt = lastMessage.timestamp.toISOString();
+            }
+          }
+
+          // Optimistic updates to UI before DB confirmation
+          if (currentUser?.id) {
+            // Cancel any in-flight queries to prevent overwriting optimistic updates
+            await queryClient.cancelQueries({ queryKey: ['unreadMessagesCount'] });
+            await queryClient.cancelQueries({ queryKey: ['optimized-conversations', currentUser.id] });
+
+            // 1. Update global unread count
+            const previousConversations = queryClient.getQueryData<Conversation[]>(['optimized-conversations', currentUser.id]);
+            const conversation = previousConversations?.find(c => c.id === selectedConversationId);
+            
+            if (conversation && conversation.unreadCount > 0) {
+              const unreadToSubtract = conversation.unreadCount;
+              console.log(`📉 [READ_TRACKING] Optimistically subtracting ${unreadToSubtract} from unread count`);
+
+              queryClient.setQueryData(['unreadMessagesCount'], (old: number | undefined) => {
+                return Math.max(0, (old || 0) - unreadToSubtract);
+              });
+
+              // 2. Update conversation list unread count
+              queryClient.setQueryData(['optimized-conversations', currentUser.id], (old: Conversation[] | undefined) => {
+                if (!old) return old;
+                return old.map(c => c.id === selectedConversationId ? { ...c, unreadCount: 0 } : c);
+              });
+            }
+          }
+
           const { error } = await supabase
             .from('conversation_participants')
-            .update({ last_read_at: new Date().toISOString() })
+            .update({ last_read_at: newLastReadAt })
             .eq('conversation_id', selectedConversationId)
             .eq('user_id', currentUser.id);
 
           if (error) {
             console.error("❌ [READ_TRACKING] Error updating last_read_at:", error);
+            // Revert optimistic updates if needed (optional, or just invalidate)
+            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
+            queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
           } else {
             console.log("✅ [READ_TRACKING] Successfully updated last_read_at");
+            // Force refresh of unread count and conversation list to ensure eventual consistency
+            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
+            queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
           }
         } catch (error) {
           console.error("❌ [READ_TRACKING] Error in updateLastReadAt:", error);
@@ -141,7 +190,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
       updateLastReadAt();
     }
-  }, [selectedConversationId, currentUser?.id]);
+  }, [selectedConversationId, currentUser?.id, messages?.length, queryClient]);
 
   // Memoize the createConversation function to prevent infinite loops
   const handleCreateConversation = useCallback((params: { participantIds: string[], title?: string }) => {
@@ -206,6 +255,11 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
 
   const selectedConversation = Array.isArray(conversations) ? conversations.find(c => c.id === selectedConversationId) : undefined;
 
+  // Generate initial message if coming from car details
+  const initialMessage = (initialCarTitle && recipientId && selectedConversation?.participants.some(p => p.id === recipientId))
+    ? `Hi, I'm interested in your ${initialCarTitle}. Is it available?`
+    : undefined;
+
   const handleSendMessage = useCallback((content: string, type: 'text' | 'image' | 'file' | 'audio' | 'video' = 'text', metadata: any = {}, replyToMessageId?: string) => {
     if (selectedConversationId && content.trim()) {
       console.log('Sending message:', { conversationId: selectedConversationId, content, type, replyToMessageId });
@@ -235,8 +289,6 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
       console.error('Error creating conversation:', error);
     }
   };
-
-  const queryClient = useQueryClient();
 
   const handleReactToMessage = useCallback(async (messageId: string, emoji: string) => {
     if (!currentUser) {
@@ -425,6 +477,7 @@ export function MessagingInterface({ className, recipientId, recipientName }: Me
             onBack={() => setSelectedConversationId(undefined)}
             onStartCall={handleStartCall}
             onStartVideoCall={handleStartVideoCall}
+            initialMessage={initialMessage}
           />
         ) : (
           <div className="hidden md:flex flex-col items-center justify-center h-full text-muted-foreground">

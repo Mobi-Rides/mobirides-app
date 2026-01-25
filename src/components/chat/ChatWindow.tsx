@@ -23,6 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/utils/toast-utils';
 import { cn } from '@/lib/utils';
+import { usePresence } from '@/hooks/usePresence';
 
 interface ChatWindowProps {
   conversation: Conversation;
@@ -39,6 +40,7 @@ interface ChatWindowProps {
   onBack?: () => void;
   onStartCall?: () => void;
   onStartVideoCall?: () => void;
+  initialMessage?: string;
 }
 
 export function ChatWindow({
@@ -55,14 +57,23 @@ export function ChatWindow({
   isLoading = false,
   onBack,
   onStartCall,
-  onStartVideoCall
+  onStartVideoCall,
+  initialMessage
 }: ChatWindowProps) {
   const navigate = useNavigate();
+  const { onlineUsers } = usePresence(conversation.id, currentUser.id);
   const [replyToMessage, setReplyToMessage] = useState<{
     id: string;
     content: string;
     senderName: string;
   } | null>(null);
+
+  const [showQuickReplies, setShowQuickReplies] = useState(true);
+
+  // Reset quick replies when conversation changes
+  useEffect(() => {
+    setShowQuickReplies(true);
+  }, [conversation.id]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -249,7 +260,7 @@ export function ChatWindow({
   };
 
   const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
-  const isOnline = otherParticipant?.status === 'online';
+  const isOnline = otherParticipant ? onlineUsers.has(otherParticipant.id) : false;
 
   return (
     <div className="flex flex-col h-full bg-card">
@@ -483,8 +494,9 @@ export function ChatWindow({
       {conversation.type === 'direct' && (
         <QuickReplySuggestions
           onSelect={handleQuickReply}
+          onClose={() => setShowQuickReplies(false)}
           userRole={currentUser.role || 'renter'}
-          isVisible={true}
+          isVisible={showQuickReplies}
         />
       )}
 
@@ -497,6 +509,7 @@ export function ChatWindow({
         onCancelReply={() => setReplyToMessage(null)}
         isLoading={isLoading}
         currentUserId={currentUser?.id}
+        initialValue={initialMessage}
       />
     </div>
   );

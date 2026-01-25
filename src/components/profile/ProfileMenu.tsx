@@ -70,7 +70,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     {
       icon: UserRound,
       label: "Edit Profile",
-      onClick: () => setActiveView('profile'),
+      onClick: () => navigate('/profile-view'),
     },
     {
       icon: Bookmark,

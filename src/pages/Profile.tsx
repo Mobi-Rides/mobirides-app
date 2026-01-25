@@ -96,9 +96,9 @@ const Profile = () => {
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
       {activeView === 'menu' && (
-        <ProfileMenu 
-          fullName={initialFormValues.full_name} 
-          avatarUrl={avatarUrl} 
+        <ProfileMenu
+          fullName={initialFormValues.full_name}
+          avatarUrl={avatarUrl}
           setActiveView={setActiveView}
           role={userRole}
         />
@@ -112,11 +112,12 @@ const Profile = () => {
       )}
 
       {activeView === 'profile' && (
-        <ProfileEditView 
+        <ProfileEditView
           avatarUrl={avatarUrl}
           setAvatarUrl={setAvatarUrl}
           initialFormValues={initialFormValues}
           onBack={() => setActiveView('menu')}
+          onSuccess={() => setActiveView('display')}
         />
       )}
 

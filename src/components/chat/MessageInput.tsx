@@ -53,9 +53,18 @@ export function MessageInput({
   isLoading = false,
   replyToMessage,
   onCancelReply,
-  currentUserId
-}: MessageInputProps) {
-  const [message, setMessage] = useState('');
+  currentUserId,
+  initialValue = ''
+}: MessageInputProps & { initialValue?: string }) {
+  const [message, setMessage] = useState(initialValue);
+  
+  // Update message if initialValue changes
+  useEffect(() => {
+    if (initialValue) {
+      setMessage(initialValue);
+    }
+  }, [initialValue]);
+
   const [isTyping, setIsTyping] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);

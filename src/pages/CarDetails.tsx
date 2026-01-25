@@ -204,6 +204,8 @@ const CarDetails = () => {
               ownerName={car.profiles?.full_name || "Car Owner"}
               avatarUrl={avatarUrl}
               ownerId={car.owner_id}
+              carId={car.id}
+              carTitle={`${car.brand} ${car.model}`}
             />
             
             <CarReviews car={car} />
