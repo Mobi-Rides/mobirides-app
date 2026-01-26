@@ -397,20 +397,23 @@ export const Header = ({
             className="w-full h-12 md:h-14 pl-10 pr-4 py-2 rounded-2xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:border-primary dark:focus:border-primary text-xs md:text-sm lg:text-base placeholder:text-xs md:placeholder:text-sm lg:placeholder:text-base dark:placeholder:text-gray-400"
           />
         </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-2xl w-12 md:w-14 h-12 md:h-14 flex items-center justify-center"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SearchFilters onFiltersChange={handleFiltersChange} />
-          </SheetContent>
-        </Sheet>
+      {/* Filter button - hidden via feature flag */}
+        {false && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-2xl w-12 md:w-14 h-12 md:h-14 flex items-center justify-center"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SearchFilters onFiltersChange={handleFiltersChange} />
+            </SheetContent>
+          </Sheet>
+        )}
       </div>
 
       <AuthModal

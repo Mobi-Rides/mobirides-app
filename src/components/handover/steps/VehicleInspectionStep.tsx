@@ -176,7 +176,7 @@ export const VehicleInspectionStep = ({
                     onClick={() => handlePhotoUploadClick(requirement.type)}
                   >
                     <input
-                      ref={(el) => (fileInputRefs.current[requirement.type] = el)}
+                      ref={(el) => { fileInputRefs.current[requirement.type] = el; }}
                       type="file"
                       accept="image/*"
                       capture="environment"

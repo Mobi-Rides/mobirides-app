@@ -159,7 +159,7 @@ export const PhoneVerificationSchema = z.object({
  */
 export const DocumentUploadSchema = z.object({
   type: z.nativeEnum(DocumentType, {
-    errorMap: () => ({ message: "Invalid document type" }),
+    message: "Invalid document type",
   }),
 
   file: z
@@ -205,8 +205,8 @@ export const DocumentUploadSchema = z.object({
 export const AddressConfirmationSchema = z.object({
   currentAddress: PersonalInfoSchema.shape.address,
 
-  confirmationMethod: z.enum(["document", "utility_bill", "bank_statement"], {
-    errorMap: () => ({ message: "Please select a valid confirmation method" }),
+  confirmationMethod: z.enum(["document", "utility_bill", "bank_statement"] as const, {
+    message: "Please select a valid confirmation method",
   }),
 
   isConfirmed: z
@@ -316,7 +316,7 @@ export function formatValidationErrors(
 ): Record<string, string> {
   const formattedErrors: Record<string, string> = {};
 
-  errors.errors.forEach((error) => {
+  errors.issues.forEach((error) => {
     const path = error.path.join(".");
     formattedErrors[path] = error.message;
   });

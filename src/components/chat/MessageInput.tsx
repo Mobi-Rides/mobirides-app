@@ -74,7 +74,7 @@ export function MessageInput({
   const [recordingDuration, setRecordingDuration] = useState(0);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -82,7 +82,7 @@ export function MessageInput({
   // Voice recording refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const recordingIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   // Cleanup preview URL on unmount or change
   useEffect(() => {
@@ -470,7 +470,7 @@ export function MessageInput({
             ref={audioInputRef}
             className="hidden"
             accept="audio/*"
-            onChange={(e) => handleFileSelect(e, 'audio')}
+            onChange={(e) => handleFileSelect(e, 'file')}
           />
 
           {/* Attachment button - hidden during recording */}
