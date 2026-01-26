@@ -39,6 +39,10 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
     setIsLoading(null);
   };
 
+  const handleCardClick = () => {
+    navigate(`/rental-details/${booking.id}`);
+  };
+
   const getStatusBadge = (status: string) => {
     // Check for early return first
     if (booking.early_return && status === "completed") {
@@ -73,7 +77,10 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-all duration-200 animate-fade-in">
+      <Card 
+        className="hover:shadow-lg transition-all duration-200 animate-fade-in cursor-pointer"
+        onClick={handleCardClick}
+      >
         <CardContent className="p-4">
           <div className="flex items-start gap-4">
             {/* Selection Checkbox (only for pending bookings) */}
@@ -81,6 +88,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={onSelect}
+                onClick={(e) => e.stopPropagation()}
                 className="mt-1"
               />
             )}
@@ -165,7 +173,10 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                   <>
                     <Button
                       size="sm"
-                      onClick={() => handleAction("approve")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAction("approve");
+                      }}
                       disabled={isLoading === "approve"}
                       className="flex-1 sm:flex-none animate-scale-in"
                     >
@@ -175,7 +186,10 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleAction("decline")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAction("decline");
+                      }}
                       disabled={isLoading === "decline"}
                       className="flex-1 sm:flex-none"
                     >
@@ -189,7 +203,10 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleAction("cancel")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAction("cancel");
+                    }}
                     disabled={isLoading === "cancel"}
                     className="hover-scale"
                   >
@@ -201,7 +218,10 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowReceiptModal(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowReceiptModal(true);
+                    }}
                     className="hover-scale"
                   >
                     <Receipt className="h-3 w-3 mr-1" />
@@ -212,12 +232,15 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => navigate('/messages', {
-                    state: {
-                      recipientId: booking.renter?.id,
-                      recipientName: booking.renter?.full_name || 'Renter'
-                    }
-                  })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/messages', {
+                      state: {
+                        recipientId: booking.renter?.id,
+                        recipientName: booking.renter?.full_name || 'Renter'
+                      }
+                    });
+                  }}
                   className="hover-scale"
                 >
                   <MessageCircle className="h-3 w-3 mr-1" />
