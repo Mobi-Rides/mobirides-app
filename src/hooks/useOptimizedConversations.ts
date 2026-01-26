@@ -594,14 +594,64 @@ export const useOptimizedConversations = (userId?: string) => {
         throw error;
       }
     },
-    onSuccess: (data) => {
+    onMutate: async ({ participantIds, title }) => {
+      console.log('⚡ [OPTIMISTIC] Starting conversation creation optimistic update');
+      await queryClient.cancelQueries({ queryKey: ['optimized-conversations', userId] });
+
+      const previousConversations = queryClient.getQueryData<Conversation[]>(['optimized-conversations', userId]);
+
+      // Create optimistic conversation
+      const optimisticId = `temp-${Date.now()}`;
+
+      // We need profile info for participants to display them correctly
+      // We can try to find them in existing conversations or just use placeholders
+      // If we are mostly creating direct chats from "Contact Host", we usually have the data in the UI already but not here in the hook
+      // So we will do a best effort with IDs.
+
+      const newConversation: Conversation = {
+        id: optimisticId,
+        title: title || 'New Conversation',
+        type: participantIds.length === 1 ? 'direct' : 'group',
+        participants: participantIds.map(id => ({
+          id,
+          name: 'Loading...', // We don't have name here easily without fetching
+          status: 'offline' as const
+        })).concat(userId ? [{ id: userId, name: 'You', status: 'online' as const }] : []),
+
+        unreadCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastMessage: undefined
+      };
+
+      if (previousConversations) {
+        queryClient.setQueryData<Conversation[]>(['optimized-conversations', userId], (old) => {
+          return [newConversation, ...(old || [])];
+        });
+      }
+
+      return { previousConversations, optimisticId };
+    },
+    onSuccess: (data, variables, context) => {
       console.log('✅ [CONVERSATIONS] Successfully created/found conversation:', data);
       toast.success('Conversation ready!');
+
+      // Update the optimistic entry with real data
+      queryClient.setQueryData<Conversation[]>(['optimized-conversations', userId], (old) => {
+        if (!old) return [data as unknown as Conversation];
+        return old.map(c => c.id === context?.optimisticId ? (data as unknown as Conversation) : c);
+      });
+
+      // Standard invalidation to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['optimized-conversations', userId] });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _, context) => {
       console.error('❌ [CONVERSATIONS] Failed to create conversation:', error);
       toast.error(error.message || 'Failed to create conversation. Please try again.');
+      // Rollback
+      if (context?.previousConversations) {
+        queryClient.setQueryData(['optimized-conversations', userId], context.previousConversations);
+      }
     }
   });
 
@@ -794,6 +844,38 @@ export const useConversationMessages = (conversationId?: string) => {
           .subscribe((status) => {
             console.log('🔗 [MESSAGE_SUB] Message channel status:', status);
           });
+
+        // Setup separate channel for read receipts logic (conversation_participants)
+        // We need this to update the UI when OTHER users read messages
+        const receiptsChannel = supabase
+          .channel(`auth-aware-receipts-${conversationId}-${Date.now()}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'conversation_participants',
+              filter: `conversation_id=eq.${conversationId}`
+            },
+            async (payload) => {
+              console.log('👀 [RECEIPTS] Read receipt update:', payload);
+              queryClient.invalidateQueries({
+                queryKey: ['optimized-conversations'] // Refresh conversation list to update unread counts
+              });
+              // We might also want to invalidate messages if we display read receipts per message
+              queryClient.invalidateQueries({
+                queryKey: ['conversation-messages', conversationId]
+              });
+            }
+          )
+          .subscribe();
+
+        // Cleanup function needs to handle both checks
+        return () => {
+          if (currentChannel) supabase.removeChannel(currentChannel);
+          if (receiptsChannel) supabase.removeChannel(receiptsChannel);
+        };
+
 
         // Set up auth state listener for message subscription
         authListener = supabase.auth.onAuthStateChange(async (event, session) => {

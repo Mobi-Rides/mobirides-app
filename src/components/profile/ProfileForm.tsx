@@ -16,9 +16,10 @@ interface ProfileFormValues {
 
 interface ProfileFormProps {
   initialValues: ProfileFormValues;
+  onSuccess?: () => void;
 }
 
-export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
+export const ProfileForm = ({ initialValues, onSuccess }: ProfileFormProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
@@ -98,6 +99,10 @@ export const ProfileForm = ({ initialValues }: ProfileFormProps) => {
         title: "Success",
         description: "Profile updated successfully",
       });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({

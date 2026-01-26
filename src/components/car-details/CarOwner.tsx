@@ -20,9 +20,11 @@ interface CarOwnerProps {
   ownerName: string;
   avatarUrl: string;
   ownerId: string;
+  carId?: string;
+  carTitle?: string;
 }
 
-export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
+export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId, carTitle }: CarOwnerProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
 
@@ -54,7 +56,9 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId }: CarOwnerProps) => {
     navigate("/messages", { 
       state: { 
         recipientId: ownerId, 
-        recipientName: ownerName 
+        recipientName: ownerName,
+        carId,
+        carTitle
       } 
     });
   };

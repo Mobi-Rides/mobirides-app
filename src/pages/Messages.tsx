@@ -19,6 +19,8 @@ const Messages = () => {
   // Extract recipientId and recipientName from location state if available
   const recipientId = location.state?.recipientId;
   const recipientName = location.state?.recipientName;
+  const initialCarId = location.state?.carId;
+  const initialCarTitle = location.state?.carTitle;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -30,6 +32,8 @@ const Messages = () => {
             className="flex-1" 
             recipientId={recipientId}
             recipientName={recipientName}
+            initialCarId={initialCarId}
+            initialCarTitle={initialCarTitle}
           />
         </MessagingErrorBoundary>
       </div>

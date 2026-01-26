@@ -352,11 +352,6 @@ export function MessageBubble({
 
                     {isOwnMessage && (
                       <>
-                        <DropdownMenuItem onClick={() => onEdit?.(message.id)}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-
                         <DropdownMenuItem
                           onClick={() => onDelete?.(message.id)}
                           className="text-destructive"
