@@ -60,6 +60,7 @@ export interface ChartDataPoint {
   value: number;
   date?: string;
   color?: string;
+  [key: string]: string | number | undefined;
 }
 
 export interface TimeSeriesData {

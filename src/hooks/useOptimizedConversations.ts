@@ -612,11 +612,11 @@ export const useOptimizedConversations = (userId?: string) => {
         id: optimisticId,
         title: title || 'New Conversation',
         type: participantIds.length === 1 ? 'direct' : 'group',
-        participants: participantIds.map(id => ({
+        participants: (participantIds.map(id => ({
           id,
           name: 'Loading...', // We don't have name here easily without fetching
           status: 'offline' as const
-        })).concat(userId ? [{ id: userId, name: 'You', status: 'online' as const }] : []),
+        })) as Array<{ id: string; name: string; status: 'online' | 'offline' }>).concat(userId ? [{ id: userId, name: 'You', status: 'online' as const }] : []),
 
         unreadCount: 0,
         createdAt: new Date(),
@@ -1001,7 +1001,7 @@ export const useConversationMessages = (conversationId?: string) => {
       if (messagesWithReplies.length > 0) {
         const msgWithReply = messagesWithReplies.find((m: any) => m.reply_to_message_id);
         if (msgWithReply) {
-          console.log('🔍 [MESSAGES LOG] Detail reply object:', msgWithReply.reply_to_message);
+          console.log('🔍 [MESSAGES LOG] Detail reply object:', msgWithReply.reply_to_message_id);
         }
       }
 
