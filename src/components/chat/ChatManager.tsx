@@ -53,11 +53,14 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
 
   // Don't show floating button if we're already on the messages page
   const isOnMessagesPage = window.location.pathname === '/messages';
+  
+  // Feature flag to control floating chat button visibility
+  const SHOW_FLOATING_CHAT = false;
 
   return (
     <>
       {/* Floating Chat Button */}
-      {!isOnMessagesPage && !isPopupOpen && (
+      {SHOW_FLOATING_CHAT && !isOnMessagesPage && !isPopupOpen && (
         <FloatingChatButton
           onClick={handleOpenChat}
           unreadCount={unreadCount}
