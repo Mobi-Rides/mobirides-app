@@ -39,6 +39,9 @@ export default defineConfig(({ mode }) => ({
     'process.env': {},
     'global': 'window', // Fix for simple-peer
   },
+  optimizeDeps: {
+    exclude: ['lucide-react'], // Exclude lucide-react from pre-bundling to avoid entry resolution issues
+  },
   build: {
     rollupOptions: {
       output: {

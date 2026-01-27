@@ -110,7 +110,7 @@ export const HostAvailabilityCalendar = ({ carId }: HostAvailabilityCalendarProp
       <CardContent>
         <div className="flex flex-col items-center space-y-4">
           <Calendar
-            mode="default"
+            mode="multiple"
             selected={blockedDates}
             onDayClick={handleDayClick}
             disabled={(date) => isBefore(date, startOfDay(new Date()))}

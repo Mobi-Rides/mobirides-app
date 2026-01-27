@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { fetchCars } from "@/utils/carFetching";
@@ -28,7 +28,7 @@ export const RenterView = ({
   onFiltersChange,
 }: RenterViewProps) => {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const sortOrder = filters.sortOrder || "asc";
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const { ref: inViewRef, inView } = useInView();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -56,7 +56,7 @@ export const RenterView = ({
   }, [searchParams, setSearchParams]);
 
   // For combining the inView ref with our loadMoreRef
-  const setRefs = (node: HTMLDivElement | null) => {
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
     // Set the loadMoreRef
     if (loadMoreRef.current !== node) {
       loadMoreRef.current = node || null;
@@ -64,14 +64,9 @@ export const RenterView = ({
 
     // Call the inViewRef
     inViewRef(node);
-  };
+  }, [inViewRef]);
 
-  useEffect(() => {
-    onFiltersChange({
-      ...filters,
-      sortOrder: sortOrder,
-    });
-  }, [sortOrder, onFiltersChange, filters]);
+
 
   // Update filters when brand selection changes
   const handleBrandSelect = (brand: string | null) => {
@@ -197,7 +192,10 @@ export const RenterView = ({
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const toggleSortOrder = () => {
-    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    onFiltersChange({
+      ...filters,
+      sortOrder: sortOrder === "asc" ? "desc" : "asc",
+    });
   };
 
   const handleStartHandover = async (bookingId: string) => {

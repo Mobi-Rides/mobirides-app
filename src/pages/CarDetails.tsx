@@ -12,12 +12,12 @@ import { CarImageCarousel } from "@/components/car-details/CarImageCarousel";
 import { CarReviews } from "@/components/car-details/CarReviews";
 import { CarLocation } from "@/components/car-details/CarLocation";
 import { BarLoader } from "react-spinners";
-import { useUser } from "@supabase/auth-helpers-react";
 import type { Car } from "@/types/car";
 import { useTheme } from "@/contexts/ThemeContext";
 import { AlertTriangle } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { incrementCarViewCount } from "@/services/carViewsService";
+import type { User } from "@supabase/supabase-js";
 
 interface CarWithProfiles extends Car {
   profiles?: {
@@ -66,9 +66,17 @@ import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 const CarDetails = () => {
   const { carId } = useParams();
   const { theme } = useTheme();
-  const user = useUser();
+  const [user, setUser] = useState<User | null>(null);
   const viewIncremented = useRef(false);
-  
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
+
   console.log('=== CarDetails component rendered ===');
   console.log('Current URL:', window.location.href);
   console.log('carId from useParams:', carId);
@@ -196,6 +204,8 @@ const CarDetails = () => {
               ownerName={car.profiles?.full_name || "Car Owner"}
               avatarUrl={avatarUrl}
               ownerId={car.owner_id}
+              carId={car.id}
+              carTitle={`${car.brand} ${car.model}`}
             />
             
             <CarReviews car={car} />

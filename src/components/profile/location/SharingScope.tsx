@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
 import { hasLocationFields } from "@/utils/profileTypes";
+import type { User } from "@supabase/supabase-js";
 
 export interface SharingScopeProps {
   initialScope: string;
@@ -15,7 +15,15 @@ export interface SharingScopeProps {
 
 export const SharingScope = ({ initialScope, isLoading, disabled = false }: SharingScopeProps) => {
   const [sharingScope, setSharingScope] = useState(initialScope);
-  const user = useUser();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   const handleScopeChange = async (value: string) => {
     if (!user) return;

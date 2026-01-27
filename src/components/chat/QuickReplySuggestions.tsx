@@ -1,14 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useAuth } from "@/hooks/useAuth";
+import { X } from "lucide-react";
 
 interface QuickReplySuggestionsProps {
   onSelect: (text: string) => void;
+  onClose: () => void;
   userRole: 'host' | 'renter' | 'admin' | 'super_admin';
   isVisible: boolean;
 }
 
-export const QuickReplySuggestions = ({ onSelect, userRole, isVisible }: QuickReplySuggestionsProps) => {
+export const QuickReplySuggestions = ({ onSelect, onClose, userRole, isVisible }: QuickReplySuggestionsProps) => {
   if (!isVisible) return null;
 
   const renterReplies = [
@@ -31,9 +32,19 @@ export const QuickReplySuggestions = ({ onSelect, userRole, isVisible }: QuickRe
   const replies = (userRole === 'host' || userRole === 'admin' || userRole === 'super_admin') ? hostReplies : renterReplies;
 
   return (
-    <div className="w-full border-t border-border/50 bg-background/50 backdrop-blur-sm py-2">
+    <div className="w-full border-t border-border/50 bg-background/50 backdrop-blur-sm py-2 relative group">
+      <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 rounded-full bg-background/80 hover:bg-background shadow-sm"
+          onClick={onClose}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex w-max space-x-2 px-4">
+        <div className="flex w-max space-x-2 px-4 pr-10">
           {replies.map((reply, index) => (
             <Button
               key={index}

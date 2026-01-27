@@ -7,7 +7,29 @@ import { InsuranceService } from '../../services/insuranceService';
 import { supabase } from '@/integrations/supabase/client';
 
 const claimSchema = z.object({
-  incident_date: z.string().min(1, 'Incident date is required'),
+  incident_date: z.string()
+    .min(1, 'Incident date is required')
+    .refine((val) => {
+      if (!val) return false;
+      const [year, month, day] = val.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // Local midnight
+      
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // End of today
+      
+      return date <= today;
+    }, 'Incident date cannot be in the future')
+    .refine((val) => {
+      if (!val) return false;
+      const [year, month, day] = val.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // Local midnight
+      
+      const limit = new Date();
+      limit.setDate(limit.getDate() - 30);
+      limit.setHours(0, 0, 0, 0); // Start of 30 days ago
+      
+      return date >= limit;
+    }, 'Incident date cannot be more than 30 days ago'),
   incident_time: z.string().min(1, 'Incident time is required'),
   incident_type: z.string().min(1, 'Incident type is required'),
   incident_location: z.string().min(10, 'Please provide detailed incident location'),
@@ -189,6 +211,12 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // Calculate date limits for the input
+  const today = new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const minDate = thirtyDaysAgo.toISOString().split('T')[0];
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-8">
@@ -243,7 +271,8 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
                   type="date"
                   {...register('incident_date')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  max={new Date().toISOString().split('T')[0]}
+                  max={today}
+                  min={minDate}
                 />
                 {errors.incident_date && (
                   <p className="text-red-500 text-sm mt-1">{errors.incident_date.message}</p>

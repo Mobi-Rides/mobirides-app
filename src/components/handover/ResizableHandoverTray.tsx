@@ -88,8 +88,8 @@ export const ResizableHandoverTray = ({
   }, []);
 
   // Save panel size to session storage and update display mode
-  const handlePanelResize = useCallback((sizes: number[]) => {
-    const traySize = sizes[1]; // Second panel is the tray
+  const handlePanelResize = useCallback((layout: Record<string, number>) => {
+    const traySize = Object.values(layout)[1] || panelSize; // Second panel is the tray
     if (traySize !== panelSize) {
       setPanelSize(traySize);
       sessionStorage.setItem('handover-tray-size', traySize.toString());
@@ -484,8 +484,8 @@ export const ResizableHandoverTray = ({
       {/* Resizable container */}
       <div className="absolute inset-0">
         <ResizablePanelGroup
-          direction="vertical"
-          onLayout={handlePanelResize}
+          orientation="vertical"
+          onLayoutChange={handlePanelResize}
           className="h-full"
         >
           {/* Invisible spacer panel */}

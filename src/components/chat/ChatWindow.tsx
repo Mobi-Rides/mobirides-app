@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, isSameDay, format } from 'date-fns';
 import {
@@ -23,13 +23,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/utils/toast-utils';
 import { cn } from '@/lib/utils';
+import { usePresence } from '@/hooks/usePresence';
 
 interface ChatWindowProps {
   conversation: Conversation;
   messages: Message[];
   currentUser: User;
   typingUsers: TypingIndicator[];
-  onSendMessage: (content: string, type?: 'text' | 'image' | 'video' | 'audio' | 'file', metadata?: any, replyToMessageId?: string) => void;
+  onSendMessage: (content: string, type?: 'text' | 'image' | 'video' | 'audio' | 'file', metadata?: Record<string, unknown>, replyToMessageId?: string) => void;
   onEditMessage?: (messageId: string) => void;
   onDeleteMessage?: (messageId: string) => void;
   onReactToMessage?: (messageId: string, emoji: string) => void;
@@ -39,6 +40,7 @@ interface ChatWindowProps {
   onBack?: () => void;
   onStartCall?: () => void;
   onStartVideoCall?: () => void;
+  initialMessage?: string;
 }
 
 export function ChatWindow({
@@ -55,14 +57,24 @@ export function ChatWindow({
   isLoading = false,
   onBack,
   onStartCall,
-  onStartVideoCall
+  onStartVideoCall,
+  initialMessage
 }: ChatWindowProps) {
   const navigate = useNavigate();
+  const { onlineUsers } = usePresence(conversation.id, currentUser.id);
   const [replyToMessage, setReplyToMessage] = useState<{
     id: string;
     content: string;
     senderName: string;
   } | null>(null);
+
+  const [showQuickReplies, setShowQuickReplies] = useState(true);
+
+  // Reset quick replies when conversation changes
+  // Handled by key prop in parent component (MessagingInterface)
+  // useEffect(() => {
+  //   setShowQuickReplies(true);
+  // }, [conversation.id]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -74,33 +86,34 @@ export function ChatWindow({
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [matches, setMatches] = useState<string[]>([]); // Array of message IDs
 
-  // Debounce search and find matches
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setMatches([]);
-      setCurrentMatchIndex(0);
-      return;
-    }
-
+  // Reset search when query is empty or conversation changes (handled by key)
+  // Use a simple effect that doesn't set state conditionally if possible
+  // Or better, derive matches during render? 
+  // No, we need matches for navigation state.
+  // Let's use useMemo for matches to avoid effect for derivation
+  
+  const derivedMatches = useMemo(() => {
+    if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
-    const foundMsgIds = messages
+    return messages
       .filter(m => m.content && m.content.toLowerCase().includes(query))
       .map(m => m.id);
-
-    // Reverse to match visual order (bottom to top usually, but we scroll down)
-    // Actually standard is top-to-bottom for "Next" usually going down.
-    // If we want "Next" to go to the *next older* message or *next newer*?
-    // Usually "Next" means "Find next occurrence downwards". 
-    // "Previous" means "Find upwards".
-    // Let's assume matches are time-ordered (oldest to newest).
-    // When we start search, we might want to jump to the most recent match?
-    // Let's just store them in order.
-
-    setMatches(foundMsgIds);
-    // If we were already at a match, try to keep it, otherwise jump to last (newest)
-    setCurrentMatchIndex(prev => Math.max(0, foundMsgIds.length - 1));
-
   }, [searchQuery, messages]);
+
+  // Sync state or just use derivedMatches?
+  // We need to store matches for navigation.
+  // Actually we can just use derivedMatches directly!
+  // And we need to reset currentMatchIndex when derivedMatches changes.
+
+  useEffect(() => {
+    // Reset index when matches change
+    setCurrentMatchIndex(prev => {
+      if (derivedMatches.length === 0) return 0;
+      // Try to keep relative position? No, jump to newest (last)
+      return Math.max(0, derivedMatches.length - 1);
+    });
+    setMatches(derivedMatches);
+  }, [derivedMatches]);
 
   // Handle navigation
   const navigateMatch = (direction: 'next' | 'prev') => {
@@ -249,7 +262,7 @@ export function ChatWindow({
   };
 
   const otherParticipant = conversation.participants.find(p => p.id !== currentUser.id);
-  const isOnline = otherParticipant?.status === 'online';
+  const isOnline = otherParticipant ? onlineUsers.has(otherParticipant.id) : false;
 
   return (
     <div className="flex flex-col h-full bg-card">
@@ -483,8 +496,9 @@ export function ChatWindow({
       {conversation.type === 'direct' && (
         <QuickReplySuggestions
           onSelect={handleQuickReply}
+          onClose={() => setShowQuickReplies(false)}
           userRole={currentUser.role || 'renter'}
-          isVisible={true}
+          isVisible={showQuickReplies}
         />
       )}
 
@@ -497,6 +511,7 @@ export function ChatWindow({
         onCancelReply={() => setReplyToMessage(null)}
         isLoading={isLoading}
         currentUserId={currentUser?.id}
+        initialValue={initialMessage}
       />
     </div>
   );
