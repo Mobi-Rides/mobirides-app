@@ -6,6 +6,8 @@ import { InsuranceService } from '../../services/insuranceService';
 import { InsuranceAutomationService } from '@/services/insurance/automationService';
 import { toast } from 'sonner';
 import { InsuranceClaim, InsurancePolicy } from '@/types/insurance-schema';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 
 interface Booking {
   id: string;
@@ -612,7 +614,9 @@ export default function AdminClaimsDashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <AdminProtectedRoute>
+      <AdminLayout>
+        <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -837,6 +841,8 @@ export default function AdminClaimsDashboard() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </AdminLayout>
+    </AdminProtectedRoute>
   );
 }
