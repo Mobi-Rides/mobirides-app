@@ -1841,6 +1841,61 @@ The following items were identified from the Feedback Triage Board and Status Re
 
 ---
 
+## UI/DISPLAY ISSUES FIX EPIC (Feb 2, 2026)
+
+**Major UX Fix:** Addressing critical display issues across multiple modules affecting user experience.
+
+**Full Specification:** [`docs/UI_DISPLAY_ISSUES_2026-02-02.md`](./UI_DISPLAY_ISSUES_2026-02-02.md)
+
+### Issues Addressed:
+1. **User avatars not displaying** - CarOwner, HostBookingCard, ConversationRow, Maps sidebar
+2. **Mobile tab overflow** - Booking tabs unreadable on 375px screens
+3. **Dark/Light mode contrast** - 54+ files with hardcoded gray colors
+4. **Auth flow duplication** - Welcome page vs direct sign-in
+
+### New Tasks Added:
+
+| Story ID | Name | Points | Sprint | Priority |
+|----------|------|--------|--------|----------|
+| **Issue 1: Avatar Display** | | | | |
+| DISP-001 | Create avatarUtils.ts utility | 1 | Sprint 3 | P0 |
+| DISP-002 | Fix CarOwner.tsx avatar | 1 | Sprint 3 | P0 |
+| DISP-003 | Fix HostBookingCard.tsx avatar | 1 | Sprint 3 | P0 |
+| DISP-004 | Fix RenterBookingCard.tsx - add host avatar | 1 | Sprint 3 | P0 |
+| DISP-005 | Fix ConversationRow.tsx avatar | 1 | Sprint 3 | P0 |
+| DISP-006 | Fix ChatHeader.tsx avatar | 1 | Sprint 3 | P0 |
+| DISP-007 | Fix Maps host sidebar avatars | 1 | Sprint 3 | P0 |
+| **Issue 2: Icon-Based Responsive Tabs** | | | | |
+| DISP-008 | Create ResponsiveTabTrigger component | 3 | Sprint 3 | P1 |
+| DISP-009 | Update HostBookings.tsx tabs (Active, Requests, Expired, Past) | 2 | Sprint 3 | P1 |
+| DISP-010 | Update RenterDashboard.tsx tabs (Active, Upcoming, Past) | 2 | Sprint 3 | P1 |
+| DISP-011 | Update NotificationsRefactored.tsx tabs | 2 | Sprint 3 | P1 |
+| DISP-012 | Test responsive behavior on mobile viewports | 1 | Sprint 4 | P1 |
+| **Issue 3: Dark/Light Mode Colors** | | | | |
+| DISP-013 | Fix Login.tsx color tokens | 2 | Sprint 3 | P1 |
+| DISP-014 | Fix signup.tsx color tokens | 2 | Sprint 3 | P1 |
+| DISP-015 | Fix UnauthenticatedView.tsx colors | 1 | Sprint 3 | P0 |
+| DISP-016 | Audit and fix remaining files (50+ batch) | 5 | Sprint 4 | P2 |
+| DISP-017 | Fix button contrast issues | 2 | Sprint 4 | P1 |
+| **Issue 4: Auth Flow** | | | | |
+| DISP-018 | Auto-open AuthModal in UnauthenticatedView | 2 | Sprint 3 | P0 |
+| DISP-019 | Review/update AuthModal close behavior | 1 | Sprint 3 | P1 |
+| DISP-020 | Consider deprecating /login and /signup routes | 1 | Sprint 4 | P2 |
+| **Total** | | **34** | | |
+
+### Tab Label Changes:
+| Page | Mode | Old Labels | New Labels |
+|------|------|------------|------------|
+| HostBookings.tsx | Host | Active Rentals, Requests, Expired, Past Rentals | **Active**, Requests, Expired, **Past** |
+| RenterDashboard.tsx | Renter | Active Rentals, Upcoming, Past Rentals | **Active**, Upcoming, **Past** |
+| NotificationsRefactored.tsx | Both | (keep as-is, add icons) | (keep as-is, add icons) |
+
+### Files to Create:
+- `src/utils/avatarUtils.ts` - Centralized avatar URL conversion
+- `src/components/ui/responsive-tab-trigger.tsx` - Icon-first responsive tabs
+
+---
+
 ## RISK MITIGATION
 
 | Risk | Probability | Impact | Mitigation |
@@ -1849,9 +1904,10 @@ The following items were identified from the Feedback Triage Board and Status Re
 | Beta tester dropout | Low | Medium | Over-recruit to 75; incentive program |
 | Sprint overrun | Medium | High | Daily standups; scope adjustment authority |
 | Payment security issues | Low | Critical | Code review for all payment code; no secrets in client |
-| Sprint 3 overload (68 SP) | Medium | High | Prioritize P0/P1 items; defer P2/P3 if needed |
+| Sprint 3 overload (68 SP + 34 UI SP) | High | High | Prioritize P0/P1 items; parallelize avatar fixes |
 | Navigation styles unavailable | Low | Medium | Use custom layer overlay fallback (documented in plan) |
 | Lane guidance data missing for Botswana | Medium | Low | Hide component gracefully when data unavailable |
+| Avatar utility breaks existing displays | Low | Medium | Test across all affected components before merge |
 
 ---
 
@@ -1867,6 +1923,10 @@ The following items were identified from the Feedback Triage Board and Status Re
 - [ ] 100% route accessibility
 - [ ] Beta tester sign-off
 - [ ] Navigation UX matches Google Maps/Waze quality
+- [ ] All avatars display correctly across all modules
+- [ ] Tabs usable on 375px mobile screens without overflow
+- [ ] All text readable in both light and dark modes (WCAG AA)
+- [ ] Single, streamlined auth entry experience
 
 **Post-Launch (March):**
 - Move PayGate to production
@@ -1887,14 +1947,15 @@ The following items were identified from the Feedback Triage Board and Status Re
 | Handover Analysis | `.trae/documents/handover-module-analysis.md` | Handover gaps |
 | **Interactive Handover System** | **`docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md`** | **Interactive handover specification** |
 | **Navigation UX Improvement** | **`docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md`** | **Google Maps/Waze-style navigation spec** |
+| **UI/Display Issues** | **`docs/UI_DISPLAY_ISSUES_2026-02-02.md`** | **Avatar, tabs, colors, auth flow fixes** |
 | Insurance README | `docs/INSURANCE_README.md` | Insurance implementation |
 | Jira Tasks v2.4.0 | `docs/JIRA_TASKS_V2.4.0.md` | Prior sprint context |
 | Feedback Triage Board | `.trae/documents/MOBIRIDES_FEEDBACK_TRIAGE_BOARD.md` | User feedback issues |
 
 ---
 
-**Document Version:** 1.3  
+**Document Version:** 1.4  
 **Created:** February 2, 2026  
-**Updated:** February 2, 2026 (Added navigation UX tasks NAV-001 to NAV-018, Epic 12 overhaul)  
+**Updated:** February 2, 2026 (Added UI/Display Issues Epic DISP-001 to DISP-020, 34 SP)  
 **Author:** Development Team  
 **Status:** Ready for Team Review
