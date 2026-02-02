@@ -69,8 +69,11 @@ This plan consolidates all remaining development work from 15+ documentation sou
 | 11 | Insurance System | 52%* | 90% | 38%* | Medium |
 | 12 | Map & Location | 65% | 90% | 25% | Medium |
 | 13 | Help & Support | 58% | 90% | 32% | Low |
+| 14 | **Host Management** | **70%** | **90%** | **20%** | **Medium** |
 
 *Insurance backend is 100% complete; 52% reflects UI/UX integration and claim workflow testing.
+
+**New Items Added (Feb 2, 2026):** Based on Feedback Triage Board review, the following gaps were identified and added: HOST-001 (car deletion), BOOK-001/002 (booking filtering/insurance info), MSG-003/004 (self-messaging/sounds), UI-001/002 (receipts/dashboard).
 
 ---
 
@@ -347,6 +350,51 @@ This is the #1 production blocker. Payment integration plan exists in `docs/PAYM
 
 ---
 
+### EPIC 3: BOOKING SYSTEM
+
+**Current:** 78% | **Target:** 90% | **Gap:** 12%
+
+---
+
+#### BOOK-001: Booking Request Filtering & Sorting
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Add filtering and sorting options for booking requests (host view).
+
+**Source:** Feedback Triage Board (October 2025) - Hosts cannot filter or sort booking requests.
+
+**Deliverables:**
+- [ ] Filter by status (pending, confirmed, completed, cancelled)
+- [ ] Filter by date range
+- [ ] Sort by date, price, status
+- [ ] Search by renter name or car
+- [ ] Save filter preferences
+
+**Files:**
+- `src/pages/HostBookings.tsx`
+- `src/components/host-bookings/BookingFilters.tsx` (new)
+
+---
+
+#### BOOK-002: Insurance Info on Booking Pages
+**Type:** Story | **Priority:** P2 | **Points:** 2 | **Sprint:** 3
+
+**Description:** Display insurance package information on booking detail pages.
+
+**Source:** Feedback Triage Board - Insurance info not visible in booking details.
+
+**Deliverables:**
+- [ ] Show selected insurance package name and coverage
+- [ ] Display policy number after booking confirmed
+- [ ] Link to full policy details
+- [ ] Show coverage summary
+
+**Files:**
+- `src/components/booking/BookingDetails.tsx`
+- `src/components/insurance/InsuranceSummaryCard.tsx` (new)
+
+---
+
 ### EPIC 4: HANDOVER MANAGEMENT
 
 **Current:** 75% | **Target:** 90% | **Gap:** 15%
@@ -426,6 +474,46 @@ Reference: `.trae/documents/handover-module-analysis.md`
 - [ ] Broadcast typing events via Supabase
 - [ ] Display typing indicator in chat
 - [ ] Debounce typing events
+
+---
+
+#### MSG-003: Self-Messaging Prevention
+**Type:** Bug Fix | **Priority:** P1 | **Points:** 2 | **Sprint:** 3
+
+**Description:** Prevent users from starting conversations with themselves.
+
+**Source:** Feedback Triage Board (October 2025) - Users can currently message themselves which creates confusing UX.
+
+**Deliverables:**
+- [ ] Add validation in `useOptimizedConversations.createConversation()` to block self-messaging
+- [ ] Hide "Contact Owner" button when viewing own car listing
+- [ ] Add client-side validation in MessagingInterface
+- [ ] Return user-friendly error message if attempted
+
+**Files:**
+- `src/hooks/useOptimizedConversations.ts`
+- `src/components/car-details/CarHeader.tsx`
+- `src/components/chat/MessagingInterface.tsx`
+
+---
+
+#### MSG-004: Notification Sounds
+**Type:** Story | **Priority:** P3 | **Points:** 2 | **Sprint:** 4
+
+**Description:** Add audio notifications for new messages and alerts.
+
+**Source:** Feedback Triage Board - Users want audio feedback for critical events.
+
+**Deliverables:**
+- [ ] Add sound files for message received, booking alert
+- [ ] User preference toggle in settings
+- [ ] Respect system mute/volume settings
+- [ ] Only play when app not in focus (optional)
+
+**Files:**
+- `public/sounds/` (new folder)
+- `src/hooks/useNotificationSound.ts` (new)
+- `src/pages/Settings.tsx` (add preference)
 
 ---
 
@@ -833,6 +921,51 @@ Reference: `.trae/documents/user-deletion-implementation-plan.md`
 
 ---
 
+#### HOST-001: Host Car Deletion
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Allow hosts to delete their own car listings.
+
+**Source:** Feedback Triage Board (October 2025) - Hosts cannot delete a car, only edit.
+
+**Deliverables:**
+- [ ] Add "Delete Car" button to car edit page
+- [ ] Confirmation dialog with warning about impact
+- [ ] Check for active bookings before allowing deletion
+- [ ] Soft delete (set `is_available = false`, add `deleted_at` column) or hard delete with cascade
+- [ ] Admin notification of deletion (optional)
+- [ ] Update host car list after deletion
+
+**Business Rules:**
+- Cannot delete car with active/confirmed bookings
+- Pending bookings should be auto-cancelled with notification to renters
+- Completed bookings history preserved for reviews
+
+**Files:**
+- `src/pages/EditCar.tsx` (add delete button)
+- `src/components/host/DeleteCarDialog.tsx` (new)
+- `src/services/carService.ts` (add delete function)
+
+---
+
+#### HOST-002: Add Car Visibility Improvement
+**Type:** Task | **Priority:** P2 | **Points:** 2 | **Sprint:** 4
+
+**Description:** Make "Add Car" functionality more discoverable for hosts.
+
+**Source:** Feedback Triage Board - Poor visibility for "Add Car" feature.
+
+**Deliverables:**
+- [ ] Add prominent "Add Car" button on host dashboard
+- [ ] Empty state with CTA when host has no cars
+- [ ] Quick add from navigation menu
+
+**Files:**
+- `src/pages/HostDashboard.tsx`
+- `src/components/Navigation.tsx`
+
+---
+
 ### EPIC 13: HELP & SUPPORT
 
 **Current:** 58% | **Target:** 90% | **Gap:** 32%
@@ -864,6 +997,74 @@ Reference: `.trae/documents/user-deletion-implementation-plan.md`
 
 ---
 
+### UI/UX IMPROVEMENTS
+
+---
+
+#### UI-001: Receipt Generation
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Complete receipt generation functionality for completed rentals.
+
+**Source:** Feedback Triage Board - Missing receipt generation after rental completion.
+
+**Deliverables:**
+- [ ] Generate PDF receipt with booking details
+- [ ] Include payment breakdown (rental, insurance, fees)
+- [ ] Add vehicle and host/renter information
+- [ ] Email receipt option
+- [ ] Download from booking history
+
+**Files:**
+- `src/components/shared/ReceiptModal.tsx` (update - implement PDF generation)
+- `src/services/receiptService.ts` (new)
+- `supabase/functions/generate-receipt/index.ts` (optional - server-side PDF)
+
+**Technical Notes:**
+- Use jsPDF library (already installed) for client-side generation
+- Consider server-side for consistent formatting
+
+---
+
+#### UI-002: Dashboard Metrics Enhancement
+**Type:** Story | **Priority:** P2 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Add comprehensive metrics to host and renter dashboards.
+
+**Source:** Feedback Triage Board - Missing dashboard metrics.
+
+**Deliverables:**
+- [ ] Host: Total earnings, active bookings, car views
+- [ ] Host: Earnings trend chart
+- [ ] Renter: Total spent, upcoming bookings, saved cars count
+- [ ] Both: Rating summary
+
+**Files:**
+- `src/pages/HostDashboard.tsx`
+- `src/pages/Dashboard.tsx`
+- `src/components/dashboard/MetricsCard.tsx` (new)
+
+---
+
+#### UI-003: Role Switching Improvement
+**Type:** Task | **Priority:** P2 | **Points:** 2 | **Sprint:** 4
+
+**Description:** Improve host/renter role switching experience.
+
+**Source:** Feedback Triage Board - Role switching is not seamless.
+
+**Deliverables:**
+- [ ] Clear visual indicator of current role
+- [ ] One-click role toggle in navigation
+- [ ] Remember last used role per session
+- [ ] Contextual navigation based on role
+
+**Files:**
+- `src/components/Navigation.tsx`
+- `src/hooks/useUserRole.ts` (update or new)
+
+---
+
 ## TECHNICAL DEBT ITEMS (To Address)
 
 From `TECHNICAL_DEBT.md`, these are resolved via the above epics:
@@ -881,6 +1082,7 @@ From `TECHNICAL_DEBT.md`, these are resolved via the above epics:
 - TD-009: File Validation
 - Function search_path warnings (9 remaining)
 - RLS policy review
+- Type safety (50+ `any` types to fix)
 
 ---
 
@@ -959,7 +1161,7 @@ Per `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`:
 | INS-001 | Insurance UI Testing | 5 | QA |
 | **Total** | | **49** | |
 
-### Sprint 3 (Feb 17-23): Handover, Messaging, Admin
+### Sprint 3 (Feb 17-23): Handover, Messaging, Admin, UI
 
 | Story ID | Name | Points | Owner |
 |----------|------|--------|-------|
@@ -968,13 +1170,19 @@ Per `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`:
 | HAND-003 | Offline Support | 8 | Full-stack |
 | NOTIF-003 | SMS Service | 5 | Backend |
 | MSG-001 | Search Enhancement | 3 | Frontend |
+| MSG-003 | Self-Messaging Prevention | 2 | Frontend |
 | ADMIN-001 | Transaction Dashboard | 5 | Frontend |
 | ADMIN-002 | Withdrawal Management | 5 | Frontend |
 | ADMIN-003 | Analytics Completion | 5 | Frontend |
 | REV-001 | Review Analytics | 3 | Frontend |
 | REV-002 | Review Moderation | 3 | Frontend |
 | INS-002 | Claims Workflow | 5 | Frontend |
-| **Total** | | **52** | |
+| BOOK-001 | Booking Request Filtering | 3 | Frontend |
+| BOOK-002 | Insurance Info on Booking | 2 | Frontend |
+| HOST-001 | Host Car Deletion | 3 | Frontend |
+| UI-001 | Receipt Generation | 3 | Frontend |
+| UI-002 | Dashboard Metrics | 3 | Frontend |
+| **Total** | | **68** | |
 
 ### Sprint 4 (Feb 24-28): Polish, Testing, Launch Prep
 
@@ -988,11 +1196,33 @@ Per `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`:
 | AUTH-002 | Account Deletion | 3 | Full-stack |
 | CAR-001 | Image Optimization | 5 | Full-stack |
 | MSG-002 | Typing Indicators | 3 | Frontend |
+| MSG-004 | Notification Sounds | 2 | Frontend |
+| HOST-002 | Add Car Visibility | 2 | Frontend |
+| UI-003 | Role Switching | 2 | Frontend |
 | HELP-001 | FAQ System | 5 | Frontend |
 | TEST-001 | Beta Testing Complete | 10 | All |
 | TEST-002 | Payment E2E Testing | 5 | QA |
 | TEST-003 | Route Audit | 3 | QA |
-| **Total** | | **50** | |
+| **Total** | | **56** | |
+
+---
+
+## NEW ITEMS ADDED (Feb 2, 2026)
+
+The following items were identified from the Feedback Triage Board and Status Reports as missing from the original plan:
+
+| Story ID | Name | Points | Sprint | Source |
+|----------|------|--------|--------|--------|
+| HOST-001 | Host Car Deletion | 3 | Sprint 3 | Feedback Triage Board |
+| HOST-002 | Add Car Visibility | 2 | Sprint 4 | Feedback Triage Board |
+| BOOK-001 | Booking Request Filtering | 3 | Sprint 3 | Feedback Triage Board |
+| BOOK-002 | Insurance Info on Booking | 2 | Sprint 3 | Feedback Triage Board |
+| MSG-003 | Self-Messaging Prevention | 2 | Sprint 3 | Feedback Triage Board |
+| MSG-004 | Notification Sounds | 2 | Sprint 4 | Feedback Triage Board |
+| UI-001 | Receipt Generation | 3 | Sprint 3 | Feedback Triage Board |
+| UI-002 | Dashboard Metrics | 3 | Sprint 3 | Feedback Triage Board |
+| UI-003 | Role Switching | 2 | Sprint 4 | Feedback Triage Board |
+| **Total** | | **22** | | |
 
 ---
 
@@ -1004,6 +1234,7 @@ Per `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`:
 | Beta tester dropout | Low | Medium | Over-recruit to 75; incentive program |
 | Sprint overrun | Medium | High | Daily standups; scope adjustment authority |
 | Payment security issues | Low | Critical | Code review for all payment code; no secrets in client |
+| Sprint 3 overload (68 SP) | Medium | High | Prioritize P0/P1 items; defer P2/P3 if needed |
 
 ---
 
@@ -1038,10 +1269,12 @@ Per `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`:
 | Handover Analysis | `.trae/documents/handover-module-analysis.md` | Handover gaps |
 | Insurance README | `docs/INSURANCE_README.md` | Insurance implementation |
 | Jira Tasks v2.4.0 | `docs/JIRA_TASKS_V2.4.0.md` | Prior sprint context |
+| Feedback Triage Board | `.trae/documents/MOBIRIDES_FEEDBACK_TRIAGE_BOARD.md` | User feedback issues |
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Created:** February 2, 2026  
+**Updated:** February 2, 2026 (Added feedback triage items)  
 **Author:** Development Team  
 **Status:** Ready for Team Review
