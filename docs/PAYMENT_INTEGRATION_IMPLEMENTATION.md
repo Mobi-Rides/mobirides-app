@@ -1,8 +1,8 @@
 # MobiRides Payment Integration - Technical Implementation Document
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** February 2, 2026  
-**Status:** Pending Review  
+**Status:** Pending Review
 **Authors:** Development Team  
 **Reviewers:** Dev Team & Engineers
 
@@ -12,14 +12,17 @@
 
 1. [Executive Summary](#executive-summary)
 2. [Payment Flow Architecture](#payment-flow-architecture)
-3. [Database Schema](#database-schema)
-4. [Edge Functions](#edge-functions)
-5. [Frontend Components](#frontend-components)
-6. [Integration Specifications](#integration-specifications)
-7. [Security Considerations](#security-considerations)
-8. [Testing Strategy](#testing-strategy)
-9. [Implementation Timeline](#implementation-timeline)
-10. [Risk Assessment](#risk-assessment)
+3. [Payment Flow Comparison](#payment-flow-comparison)
+4. [Database Schema](#database-schema)
+5. [Edge Functions](#edge-functions)
+6. [Frontend Components](#frontend-components)
+7. [Wallet UI Updates](#wallet-ui-updates)
+8. [Integration Specifications](#integration-specifications)
+9. [Security Considerations](#security-considerations)
+10. [Testing Strategy](#testing-strategy)
+11. [Implementation Timeline](#implementation-timeline)
+12. [Risk Assessment](#risk-assessment)
+13. [Legacy Mock Logic Migration](#legacy-mock-logic-migration)
 
 ---
 
@@ -40,6 +43,21 @@ Implement end-to-end payment processing for MobiRides car rental platform, enabl
 | Withdrawal Method | Automated via payment gateway | Reduces manual processing |
 | Withdrawal Minimum | P200 | Balances transaction costs |
 | Commission Model | 15% platform fee | Existing commission_rates table |
+| **Host Wallet Minimum** | P50 minimum balance to accept bookings | Platform cashflow buffer; foundation for future subscription model |
+
+### P50 Minimum Wallet Balance
+
+The P50 minimum wallet balance requirement serves multiple purposes:
+
+1. **Platform Cashflow Buffer**: Ensures positive cash relationship between MobiRides and hosts
+2. **Commitment Signal**: Demonstrates host commitment to the platform
+3. **Future Subscription Foundation**: Provides infrastructure for planned monthly host subscription fee
+
+**Future Enhancement (Post-MVP):**
+- Monthly subscription fee (P50 or configurable) for hosts using the platform
+- Automatic deduction from wallet balance
+- Subscription status affects listing visibility
+- Grace period handling for insufficient balance
 
 ### Payment Providers
 
@@ -170,6 +188,92 @@ Implement end-to-end payment processing for MobiRides car rental platform, enabl
                                                │completed │
                                                └──────────┘
 ```
+
+---
+
+## Payment Flow Comparison
+
+This section compares the current mock behavior with the new production custodial architecture.
+
+### Current Mock Flow (Pre-payment Commission Model)
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CURRENT MOCK FLOW (Pre-payment Commission Model)                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   HOST accepts booking                                                      │
+│     └─► Check: wallet >= P50 + commission?                                  │
+│           └─► YES: Deduct commission from host wallet                       │
+│                 └─► Booking status: confirmed                               │
+│                       └─► (No actual payment collected from renter)         │
+│                                                                             │
+│   PROBLEM: Commission taken from host before any payment received           │
+│   PROBLEM: No real payment collection from renter                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### New Custodial Flow (Production Payment Model)
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ NEW CUSTODIAL FLOW (Production Payment Model)                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   HOST accepts booking                                                      │
+│     └─► Check: wallet >= P50? (cashflow buffer only)                        │
+│           └─► YES: Booking status: awaiting_payment                         │
+│                 └─► Renter pays via PayGate/Ooze                            │
+│                       └─► MobiRides receives full amount (P1000)            │
+│                             └─► Split: P150 (15%) retained as commission    │
+│                                   └─► P850 (85%) credited to host wallet    │
+│                                         (as pending_balance)                │
+│                                                                             │
+│   RESULT: Platform holds funds, host sees their share in wallet             │
+│   RESULT: Commission collected from actual payment, not host wallet         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Money Flow Comparison
+
+```text
+MOCK FLOW (Current):
+┌──────────┐      P150 (commission)      ┌──────────────┐
+│   HOST   │ ──────────────────────────► │   PLATFORM   │
+│  WALLET  │                             │   (nowhere)  │
+└──────────┘                             └──────────────┘
+     No actual renter payment occurs
+
+
+NEW CUSTODIAL FLOW (Production):
+┌──────────┐                             ┌──────────────┐
+│  RENTER  │ ─────── P1000 ────────────► │  MOBIRIDES   │
+└──────────┘                             │   MERCHANT   │
+                                         │   ACCOUNT    │
+                                         └──────┬───────┘
+                                                │
+                               ┌────────────────┼────────────────┐
+                               │                                 │
+                               ▼                                 ▼
+                        ┌──────────────┐                 ┌──────────────┐
+                        │   PLATFORM   │                 │     HOST     │
+                        │  COMMISSION  │                 │   WALLET     │
+                        │    (15%)     │                 │  (85% held)  │
+                        │    P150      │                 │    P850      │
+                        └──────────────┘                 └──────────────┘
+```
+
+### Key Architectural Understanding
+
+| Concept | Description |
+|---------|-------------|
+| **Custodial Account** | MobiRides business account that holds all renter payments |
+| **Host Wallet** | Ledger entry reflecting host's share of funds held by MobiRides |
+| **Pending Balance** | Earnings from active rentals (held until completion) |
+| **Available Balance** | Funds cleared for withdrawal |
+| **P50 Minimum** | Ensures positive cash relationship between platform and hosts |
 
 ---
 
@@ -338,11 +442,16 @@ CREATE TABLE payment_config (
 INSERT INTO payment_config (key, value, description) VALUES
   ('payment_deadline_hours', '"24"', 'Hours renter has to pay after booking approved'),
   ('minimum_withdrawal', '"200"', 'Minimum withdrawal amount in BWP'),
+  ('minimum_wallet_balance', '"50"', 'Minimum wallet balance to accept bookings'),
   ('auto_release_earnings_hours', '"24"', 'Hours after rental end to auto-release earnings'),
   ('paygate_enabled', 'true', 'Enable card payments via PayGate'),
   ('orange_money_enabled', 'true', 'Enable OrangeMoney payments'),
   ('myzaka_enabled', 'false', 'Enable MyZaka payments (Q2 2026)'),
   ('smega_enabled', 'false', 'Enable Smega payments (Q2 2026)'),
+  -- Future subscription config (disabled by default)
+  ('host_subscription_enabled', 'false', 'Enable monthly host subscription'),
+  ('host_subscription_amount', '"50"', 'Monthly subscription fee in BWP'),
+  ('subscription_grace_days', '"7"', 'Grace period days for insufficient balance'),
   ('max_withdrawal_per_day', '"10000"', 'Maximum withdrawal amount per day in BWP'),
   ('withdrawal_cooldown_hours', '"24"', 'Hours between withdrawal requests');
 ```
@@ -894,6 +1003,106 @@ interface QueryPaymentRequest {
 
 ---
 
+## Wallet UI Updates
+
+This section documents the visual changes needed for the host wallet interface when transitioning from the mock to production payment flow.
+
+### Current Wallet UI (Mock)
+
+```text
+┌──────────────────────────────────┐
+│ 💰 Wallet Balance                │
+│                                  │
+│ Balance: P850.00                 │
+│                                  │
+│ ⚠️ Need P50 + commission to      │
+│    accept bookings               │
+│                                  │
+│ [Top Up Wallet]                  │
+└──────────────────────────────────┘
+```
+
+### New Wallet UI (Production)
+
+```text
+┌──────────────────────────────────┐
+│ 💰 Your Wallet                   │
+│                                  │
+│ Available Balance    P850.00     │
+│ (can withdraw)                   │
+│ ────────────────────────────     │
+│ Pending Earnings     P450.00     │
+│ (from 2 active rentals)          │
+│ ℹ️ Released when rentals complete │
+│ ────────────────────────────     │
+│ Total               P1,300.00    │
+│                                  │
+│ ✓ Ready to accept bookings       │
+│   (P50 minimum met)              │
+│                                  │
+│ [Withdraw Available Funds]       │
+│ [View Earnings Breakdown]        │
+└──────────────────────────────────┘
+```
+
+### Component Changes
+
+| Component | Current State | New State |
+|-----------|---------------|-----------|
+| `WalletBalanceCard` | Shows single balance | Shows available + pending + total |
+| `WalletBalanceIndicator` | Shows commission warning | Shows P50 minimum status only |
+| `WalletCommissionSection` | "Commission will be deducted from wallet" | "15% commission is retained from payment" |
+| `TopUpModal` | "Top up to accept bookings" | "Maintain P50 minimum for platform access" |
+| `WalletTransactionHistory` | Shows commission deductions | Shows pending credits + releases |
+
+### New Transaction Types Displayed
+
+| Type | Display Label | Icon | Color |
+|------|---------------|------|-------|
+| `rental_earnings_pending` | "Earnings (Pending)" | 🕐 Clock | Amber |
+| `earnings_released` | "Earnings Released" | ✓ Check | Green |
+| `withdrawal` | "Withdrawal" | ↗️ Arrow | Orange |
+| `withdrawal_reversal` | "Withdrawal Reversed" | ↩️ Return | Blue |
+| `topup` | "Top Up" | + Plus | Green |
+
+### Wallet Balance Display Logic
+
+```typescript
+// New display structure
+interface WalletDisplay {
+  availableBalance: number;    // Can withdraw
+  pendingEarnings: number;     // From active rentals
+  totalBalance: number;        // available + pending
+  canAcceptBookings: boolean;  // available >= P50
+  activeRentalsCount: number;  // Number of rentals with pending earnings
+}
+
+// Status messages
+const getStatusMessage = (wallet: WalletDisplay): string => {
+  if (wallet.availableBalance >= 50) {
+    return "✓ Ready to accept bookings (P50 minimum met)";
+  }
+  const needed = 50 - wallet.availableBalance;
+  return `⚠️ Top up P${needed.toFixed(2)} to accept bookings`;
+};
+```
+
+### Transaction History Enhancement
+
+Add filtering by transaction type:
+- All Transactions
+- Earnings Only
+- Withdrawals Only
+- Top-ups Only
+
+Add grouping by:
+- Today
+- This Week
+- This Month
+- Older
+
+---
+
 ## Integration Specifications
 
 ### PayGate PayWeb3
@@ -1043,6 +1252,152 @@ OOZE_WEBHOOK_SECRET=<webhook_secret>
 
 ---
 
+## Legacy Mock Logic Migration
+
+This section documents the migration path from the current mock commission/wallet behavior to the new production custodial payment architecture.
+
+### Components to Deprecate
+
+| File | Current Purpose | Migration Action |
+|------|-----------------|------------------|
+| `src/services/commission/commissionDeduction.ts` | Deducts commission from host wallet on booking approval | **Remove** - Commission now retained from renter payment |
+| `src/services/commission/walletValidation.ts` | Checks P50 + commission amount | **Refactor** - Check only P50 minimum |
+| `src/components/booking-request/WalletCommissionSection.tsx` | Shows "commission will be deducted" warning | **Update messaging** - Show commission is retained from payment |
+
+### Components to Refactor
+
+| File | Current State | New State |
+|------|---------------|-----------|
+| `src/components/dashboard/WalletBalanceIndicator.tsx` | Shows pre-funded balance + commission check | Shows available + pending, P50 minimum only |
+| `src/components/dashboard/WalletBalanceCard.tsx` | Single balance display | Available + pending + total display |
+| `HostBookingCard.tsx` | Shows net earnings (85%) | Shows gross credited, commission as "already deducted" |
+| `TopUpModal.tsx` | "Top up to cover commission" | "Maintain P50 minimum for platform access" |
+
+### Logic Changes Summary
+
+| Behavior | Current Mock | New Production |
+|----------|--------------|----------------|
+| Booking acceptance check | `wallet >= P50 + commission_amount` | `wallet >= P50` (cashflow buffer only) |
+| Commission timing | Immediately deducted from host wallet on approval | Retained from renter's payment |
+| Host earnings display | Net amount (85%) as "what they'll earn" | Gross amount credited, commission shown as "already deducted" |
+| Wallet function called | `deductCommissionFromEarnings()` takes from wallet | `credit_pending_earnings()` adds 85% to pending_balance |
+| Transaction recorded | `commission_deduction` (negative amount) | `rental_earnings_pending` (positive amount) |
+
+### Migration Steps
+
+#### Step 1: Database Migration
+```sql
+-- Add pending_balance column to host_wallets
+ALTER TABLE host_wallets 
+  ADD COLUMN IF NOT EXISTS pending_balance NUMERIC(10,2) DEFAULT 0;
+
+COMMENT ON COLUMN host_wallets.pending_balance IS 'Earnings from active rentals, released after completion';
+```
+
+#### Step 2: Update walletValidation.ts
+
+**Before:**
+```typescript
+export const checkHostCanAcceptBooking = async (
+  hostId: string, 
+  bookingTotal: number
+): Promise<WalletValidationResult> => {
+  const commissionRate = await getCurrentCommissionRate();
+  const commissionAmount = bookingTotal * commissionRate;
+  const minimumRequired = 50 + commissionAmount;
+  
+  // Check wallet balance >= minimumRequired
+  // ...
+};
+```
+
+**After:**
+```typescript
+export const checkHostCanAcceptBooking = async (
+  hostId: string
+): Promise<WalletValidationResult> => {
+  const minimumRequired = 50; // P50 platform cashflow buffer
+  
+  // Check wallet balance >= minimumRequired
+  // Commission is no longer checked - it's retained from payment
+  // ...
+};
+```
+
+#### Step 3: Disable commissionDeduction.ts
+
+Option A: Feature flag
+```typescript
+export const deductCommissionFromEarnings = async (
+  hostId: string, 
+  bookingId: string, 
+  bookingTotal: number
+): Promise<boolean> => {
+  // Feature flag to disable legacy behavior
+  const useLegacyCommission = await getPaymentConfig('use_legacy_commission');
+  
+  if (!useLegacyCommission) {
+    console.log("CommissionDeduction: Skipped - using new payment flow");
+    return true; // No-op in new flow
+  }
+  
+  // Legacy logic for rollback if needed
+  // ...
+};
+```
+
+Option B: Remove entirely (after production validation)
+```typescript
+// @deprecated - Commission is now handled via payment webhook
+// See: payment-webhook edge function
+export const deductCommissionFromEarnings = async (): Promise<boolean> => {
+  console.warn("deductCommissionFromEarnings is deprecated");
+  return true;
+};
+```
+
+#### Step 4: Update UI Components
+
+Update messaging across all wallet-related components:
+
+| Old Message | New Message |
+|-------------|-------------|
+| "Commission of P{x} will be deducted from your wallet" | "15% commission (P{x}) will be retained from payment" |
+| "Need P{x} to accept this booking" | "Maintain P50 minimum to accept bookings" |
+| "Your earnings: P{x}" (net) | "You'll earn: P{x} (after 15% commission)" |
+| "Wallet balance too low" | "Top up wallet to meet P50 minimum" |
+
+#### Step 5: Deploy Payment Webhook
+
+The `payment-webhook` edge function handles the new commission flow:
+```typescript
+// On successful payment:
+// 1. Calculate split: 15% platform, 85% host
+// 2. Call credit_pending_earnings(booking_id, host_earnings, platform_commission)
+// 3. Update booking status to 'confirmed'
+// 4. Send notifications
+```
+
+### Rollback Plan
+
+If issues arise during migration:
+
+1. **Re-enable legacy commission** via feature flag
+2. **Revert UI messaging** to show commission deduction
+3. **Manual reconciliation** for any payments processed during partial rollout
+
+### Testing Checklist
+
+- [ ] Verify P50 minimum check works without commission calculation
+- [ ] Verify booking approval flow without commission deduction
+- [ ] Verify payment webhook credits pending_balance correctly
+- [ ] Verify wallet UI shows available + pending correctly
+- [ ] Verify earnings release moves pending → available
+- [ ] Verify withdrawal only considers available balance
+- [ ] Verify all notifications have correct messaging
+
+---
+
 ## Dependencies
 
 ### External
@@ -1151,6 +1506,7 @@ You can withdraw your earnings at any time from your wallet.
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-02-02 | Dev Team | Initial document |
+| 1.1 | 2026-02-02 | Dev Team | Added P50 minimum wallet balance requirement; Payment Flow Comparison section; Wallet UI Updates section; Legacy Mock Logic Migration section; updated payment_config with subscription placeholders |
 
 ---
 
