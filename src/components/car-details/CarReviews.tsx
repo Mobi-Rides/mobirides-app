@@ -22,25 +22,14 @@ interface CarReviewsProps {
 }
 
 export const CarReviews = ({ car }: CarReviewsProps) => {
-  console.log("🚀 [CarReviews] COMPONENT FUNCTION CALLED!");
-  console.log("🚀 [CarReviews] Car prop received:", car);
-  console.log("🚀 [CarReviews] Car ID:", car?.id);
-  console.log("🚀 [CarReviews] Car type:", typeof car);
-  
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const { toast } = useToast();
 
-  console.log("🔍 [CarReviews] Component mounted with car:", car);
-  console.log("🔍 [CarReviews] Car ID:", car?.id);
-  console.log("🔍 [CarReviews] Car object keys:", Object.keys(car || {}));
-
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["car-reviews", car.id],
     queryFn: async () => {
-      console.log("🔍 [CarReviews] Fetching reviews for car:", car.id);
-      console.log("🔍 [CarReviews] Query function called");
       const { data, error } = await supabase
         .from("reviews")
         .select(`
@@ -59,12 +48,9 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         throw error;
       }
 
-      console.log("🔍 [CarReviews] Retrieved reviews:", data);
       return data;
     },
   });
-
-  console.log("🔍 [CarReviews] Query state - isLoading:", isLoading, "reviews:", reviews);
 
   const handleSubmitReview = async () => {
     try {

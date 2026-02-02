@@ -13,7 +13,8 @@ import {
   Shield,
   TrendingUp,
   Tag,
-  FileText
+  FileText,
+  Star
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,6 +36,7 @@ const adminMenuItems = [
   { title: "Cars", url: "/admin/cars", icon: Car },
   { title: "Bookings", url: "/admin/bookings", icon: CreditCard },
   { title: "Transactions", url: "/admin/transactions", icon: CreditCard },
+  { title: "Reviews", url: "/admin/reviews", icon: Star },
   { title: "Promo Codes", url: "/admin/promo-codes", icon: Tag },
   { title: "Verifications", url: "/admin/verifications", icon: ClipboardCheck },
   { title: "Insurance Claims", url: "/admin/claims", icon: FileText },
