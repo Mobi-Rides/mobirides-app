@@ -395,18 +395,239 @@ This is the #1 production blocker. Payment integration plan exists in `docs/PAYM
 
 ---
 
-### EPIC 4: HANDOVER MANAGEMENT
+### EPIC 4: HANDOVER MANAGEMENT (MAJOR OVERHAUL)
 
 **Current:** 75% | **Target:** 90% | **Gap:** 15%
 
-Reference: `.trae/documents/handover-module-analysis.md`
+**References:** 
+- `docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md` (Primary specification)
+- `.trae/documents/handover-module-analysis.md`
+
+> **Critical Rewrite:** The current handover system is a single-party linear checklist. This epic implements a **ride-hailing style interactive UX** with alternating host/renter steps, real-time synchronization, and session persistence. See specification document for full architecture.
 
 ---
 
-#### HAND-001: GPS Fallback Mechanism
+#### HAND-010: Database Schema for Interactive Handover
+**Type:** Task | **Priority:** P0 | **Points:** 5 | **Sprint:** 3
+
+**Description:** Update database schema to support turn-based handover with dual-party completion tracking.
+
+**Deliverables:**
+- [ ] Add `step_owner` column to `handover_step_completion` (enum: 'host', 'renter', 'both')
+- [ ] Add `host_completed`, `renter_completed` boolean flags
+- [ ] Add `host_completed_at`, `renter_completed_at` timestamps
+- [ ] Add `current_step_order`, `waiting_for` to `handover_sessions`
+- [ ] Add `handover_location_*` columns for flexible location selection
+- [ ] Create `advance_handover_step()` SQL function
+- [ ] Update RLS policies for dual-party access
+- [ ] Migrate existing handover data to new format
+
+**Files:**
+- `supabase/migrations/[ts]_interactive_handover_schema.sql`
+
+---
+
+#### HAND-011: Location Selection for Handover
 **Type:** Story | **Priority:** P0 | **Points:** 5 | **Sprint:** 3
 
+**Description:** Allow host to select handover location (renter's location, car location, or searchable landmark).
+
+**Deliverables:**
+- [ ] Create `HandoverLocationSelector.tsx` component with 3 options
+- [ ] Integrate Mapbox search for landmarks (malls, petrol stations, etc.)
+- [ ] Show distance/ETA from renter's current location
+- [ ] Renter receives location and can confirm/negotiate
+- [ ] Store selected location in handover session
+
+**Files:**
+- `src/components/handover/HandoverLocationSelector.tsx` (new)
+- `src/components/handover/steps/LocationSelectionStep.tsx` (new)
+- `src/components/handover/steps/LocationConfirmationStep.tsx` (new)
+
+---
+
+#### HAND-012: Interactive Handover Hook
+**Type:** Story | **Priority:** P0 | **Points:** 8 | **Sprint:** 3
+
+**Description:** Create core hook for managing turn-based handover state with real-time sync.
+
+**Deliverables:**
+- [ ] Create `useInteractiveHandover.ts` hook with role-aware state
+- [ ] Expose: `currentStep`, `isMyTurn`, `waitingFor`, `canProceed`
+- [ ] Subscribe to real-time step completion updates
+- [ ] Auto-advance UI when other party completes their step
+- [ ] Handle "both" steps requiring dual completion
+- [ ] Session persistence for resume capability
+
+**Files:**
+- `src/hooks/useInteractiveHandover.ts` (new)
+- `src/services/interactiveHandoverService.ts` (new)
+
+---
+
+#### HAND-013: Waiting State UI Component
+**Type:** Story | **Priority:** P0 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Display waiting state when it's not the current user's turn.
+
+**Deliverables:**
+- [ ] Create `WaitingForPartyCard.tsx` with animated indicator
+- [ ] Show other party's name and avatar
+- [ ] Display current step description
+- [ ] Contact button for messaging
+- [ ] Refresh status option
+
+**Files:**
+- `src/components/handover/WaitingForPartyCard.tsx` (new)
+
+---
+
+#### HAND-014: Dual-Party Step UI Component
+**Type:** Story | **Priority:** P0 | **Points:** 3 | **Sprint:** 3
+
+**Description:** UI for steps requiring both parties to complete (e.g., arrival confirmation).
+
+**Deliverables:**
+- [ ] Create `DualPartyStepCard.tsx` with dual status display
+- [ ] Show host completion status (✅/⏳)
+- [ ] Show renter completion status (✅/⏳)
+- [ ] Display action button for current user
+- [ ] Real-time status updates
+
+**Files:**
+- `src/components/handover/DualPartyStepCard.tsx` (new)
+
+---
+
+#### HAND-015: Handover Progress Timeline
+**Type:** Story | **Priority:** P1 | **Points:** 5 | **Sprint:** 3
+
+**Description:** Visual timeline showing all handover steps with ownership and status.
+
+**Deliverables:**
+- [ ] Create `HandoverProgressTimeline.tsx` component
+- [ ] Show all 14 pickup steps (or 12 return steps)
+- [ ] Indicate step owner (host/renter/both)
+- [ ] Highlight current step with "YOUR TURN" badge
+- [ ] Show completion status for past steps
+- [ ] Collapse/expand future steps
+
+**Files:**
+- `src/components/handover/HandoverProgressTimeline.tsx` (new)
+
+---
+
+#### HAND-016: Refactor EnhancedHandoverSheet
+**Type:** Story | **Priority:** P0 | **Points:** 8 | **Sprint:** 3
+
+**Description:** Update main handover sheet for role-aware interactive flow.
+
+**Deliverables:**
+- [ ] Integrate `useInteractiveHandover` hook
+- [ ] Show `WaitingForPartyCard` when not user's turn
+- [ ] Show `DualPartyStepCard` for "both" steps
+- [ ] Role-aware step rendering based on `step_owner`
+- [ ] Auto-navigate to current step when other party completes
+- [ ] Handle pickup (14 steps) vs return (12 steps) flows
+
+**Files:**
+- `src/components/handover/EnhancedHandoverSheet.tsx`
+
+---
+
+#### HAND-017: New Interactive Step Components
+**Type:** Story | **Priority:** P0 | **Points:** 5 | **Sprint:** 3
+
+**Description:** Create new step components for interactive handover flow.
+
+**Deliverables:**
+- [ ] `EnRouteConfirmationStep.tsx` - Renter confirms heading to location
+- [ ] `ArrivalConfirmationStep.tsx` - Both parties confirm arrival
+- [ ] `KeyReceiptStep.tsx` - Renter confirms key receipt
+- [ ] `CompletionStep.tsx` - Both parties confirm handover complete
+
+**Files:**
+- `src/components/handover/steps/EnRouteConfirmationStep.tsx` (new)
+- `src/components/handover/steps/ArrivalConfirmationStep.tsx` (new)
+- `src/components/handover/steps/KeyReceiptStep.tsx` (new)
+- `src/components/handover/steps/CompletionStep.tsx` (new)
+
+---
+
+#### HAND-018: Update Existing Step Components
+**Type:** Story | **Priority:** P1 | **Points:** 5 | **Sprint:** 3
+
+**Description:** Add role-aware props and rendering to existing step components.
+
+**Deliverables:**
+- [ ] Add `StepProps` interface with role and completion status
+- [ ] Update `IdentityVerificationStep.tsx` (host only)
+- [ ] Update `VehicleInspectionStep.tsx` (renter only)
+- [ ] Update `DamageDocumentationStep.tsx` (both parties)
+- [ ] Update `FuelMileageStep.tsx` (renter only)
+- [ ] Update `KeyTransferStep.tsx` (host only)
+- [ ] Update `DigitalSignatureStep.tsx` (both parties)
+
+**Files:**
+- All files in `src/components/handover/steps/`
+
+---
+
+#### HAND-019: Turn-Based Notifications
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Send notifications when it becomes a party's turn in the handover.
+
+**Deliverables:**
+- [ ] Create `handover_your_turn` notification type
+- [ ] Send push when other party completes their step
+- [ ] Include step name and action description
+- [ ] Deep link to handover screen
+
+**Files:**
+- `src/services/notificationService.ts`
+- Update notification templates
+
+---
+
+#### HAND-020: Handover Session Resume Logic
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Enable either party to resume handover from last completed step.
+
+**Deliverables:**
+- [ ] Detect existing incomplete handover session on app load
+- [ ] Show resume prompt on home page and booking details
+- [ ] Navigate directly to current step
+- [ ] Sync with other party's progress
+
+**Files:**
+- `src/components/handover/HandoverResumePrompt.tsx` (new)
+- Update `src/hooks/useHandoverPrompts.ts`
+
+---
+
+#### HAND-021: Interactive Handover E2E Testing
+**Type:** Task | **Priority:** P1 | **Points:** 5 | **Sprint:** 4
+
+**Description:** End-to-end testing of the complete interactive handover flow.
+
+**Deliverables:**
+- [ ] Test full 14-step pickup flow with two devices
+- [ ] Test full 12-step return flow
+- [ ] Test session resume after app close
+- [ ] Test edge cases (network loss, timeout)
+- [ ] Verify real-time sync accuracy
+- [ ] Load testing with concurrent handovers
+
+---
+
+#### HAND-001: GPS Fallback Mechanism (Deferred)
+**Type:** Story | **Priority:** P2 | **Points:** 5 | **Sprint:** 4
+
 **Description:** Allow handover to proceed when GPS permission denied.
+
+**Note:** Deferred to Sprint 4 as interactive handover is higher priority.
 
 **Deliverables:**
 - [ ] Add manual location entry option
@@ -420,8 +641,8 @@ Reference: `.trae/documents/handover-module-analysis.md`
 
 ---
 
-#### HAND-002: API Resilience for Mapbox
-**Type:** Story | **Priority:** P1 | **Points:** 5 | **Sprint:** 3
+#### HAND-002: API Resilience for Mapbox (Deferred)
+**Type:** Story | **Priority:** P2 | **Points:** 5 | **Sprint:** 4
 
 **Description:** Add fallback for Mapbox API failures.
 
@@ -433,10 +654,12 @@ Reference: `.trae/documents/handover-module-analysis.md`
 
 ---
 
-#### HAND-003: Handover Offline Support
-**Type:** Story | **Priority:** P2 | **Points:** 8 | **Sprint:** 3
+#### HAND-003: Handover Offline Support (Deferred)
+**Type:** Story | **Priority:** P3 | **Points:** 8 | **Sprint:** 4
 
 **Description:** Enable handover in poor connectivity areas.
+
+**Note:** Deferred to post-launch due to complexity. Interactive flow takes priority.
 
 **Deliverables:**
 - [ ] Local data persistence with IndexedDB
@@ -1226,6 +1449,44 @@ The following items were identified from the Feedback Triage Board and Status Re
 
 ---
 
+## INTERACTIVE HANDOVER SYSTEM (Feb 2, 2026)
+
+**Major Feature Overhaul:** The handover system is being completely rebuilt to support a ride-hailing style interactive UX.
+
+**Full Specification:** [`docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md`](./INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md)
+
+### Key Changes:
+- **Turn-based flow:** Alternating steps between host and renter (14 pickup steps, 12 return steps)
+- **Real-time sync:** Both parties see updates instantly via Supabase subscriptions
+- **Location selection:** Host can choose renter location, car location, or search landmarks
+- **Session persistence:** Either party can resume from last completed step
+- **Dual-party steps:** Some steps require both parties to complete before advancing
+
+### New Tasks Added:
+
+| Story ID | Name | Points | Sprint | Priority |
+|----------|------|--------|--------|----------|
+| HAND-010 | DB Schema for Interactive Handover | 5 | Sprint 3 | P0 |
+| HAND-011 | Location Selection for Handover | 5 | Sprint 3 | P0 |
+| HAND-012 | Interactive Handover Hook | 8 | Sprint 3 | P0 |
+| HAND-013 | Waiting State UI Component | 3 | Sprint 3 | P0 |
+| HAND-014 | Dual-Party Step UI Component | 3 | Sprint 3 | P0 |
+| HAND-015 | Handover Progress Timeline | 5 | Sprint 3 | P1 |
+| HAND-016 | Refactor EnhancedHandoverSheet | 8 | Sprint 3 | P0 |
+| HAND-017 | New Interactive Step Components | 5 | Sprint 3 | P0 |
+| HAND-018 | Update Existing Step Components | 5 | Sprint 3 | P1 |
+| HAND-019 | Turn-Based Notifications | 3 | Sprint 3 | P1 |
+| HAND-020 | Handover Session Resume Logic | 3 | Sprint 3 | P1 |
+| HAND-021 | Interactive Handover E2E Testing | 5 | Sprint 4 | P1 |
+| **Total** | | **58** | | |
+
+### Deferred Tasks:
+- HAND-001 (GPS Fallback) → Sprint 4
+- HAND-002 (Mapbox Resilience) → Sprint 4
+- HAND-003 (Offline Support) → Post-launch
+
+---
+
 ## RISK MITIGATION
 
 | Risk | Probability | Impact | Mitigation |
@@ -1267,14 +1528,15 @@ The following items were identified from the Feedback Triage Board and Status Re
 | Technical Debt Tracker | `TECHNICAL_DEBT.md` | Debt inventory |
 | Testing Protocol | `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md` | QA procedures |
 | Handover Analysis | `.trae/documents/handover-module-analysis.md` | Handover gaps |
+| **Interactive Handover System** | **`docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md`** | **Interactive handover specification** |
 | Insurance README | `docs/INSURANCE_README.md` | Insurance implementation |
 | Jira Tasks v2.4.0 | `docs/JIRA_TASKS_V2.4.0.md` | Prior sprint context |
 | Feedback Triage Board | `.trae/documents/MOBIRIDES_FEEDBACK_TRIAGE_BOARD.md` | User feedback issues |
 
 ---
 
-**Document Version:** 1.1  
+**Document Version:** 1.2  
 **Created:** February 2, 2026  
-**Updated:** February 2, 2026 (Added feedback triage items)  
+**Updated:** February 2, 2026 (Added interactive handover tasks HAND-010 to HAND-021)  
 **Author:** Development Team  
 **Status:** Ready for Team Review
