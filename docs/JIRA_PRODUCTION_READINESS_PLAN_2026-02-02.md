@@ -1062,14 +1062,311 @@ Backend is 100% complete per `docs/INSURANCE_README.md`.
 
 ---
 
-### EPIC 12: MAP & LOCATION
+### EPIC 12: MAP & LOCATION (MAJOR UX OVERHAUL)
 
 **Current:** 65% | **Target:** 90% | **Gap:** 25%
+
+**References:**
+- `docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md` (Primary specification)
+- [Mapbox Navigation SDK](https://docs.mapbox.com/android/navigation/overview/)
+
+> **Critical UX Upgrade:** Current navigation experience uses generic map styles, static camera, and basic voice guidance. This epic implements **Google Maps/Waze-style navigation** with 3D perspective, heading-locked camera, maneuver icons, lane guidance, and enhanced voice announcements. See specification document for full architecture.
+
+---
+
+#### NAV-001: Navigation Map Style Configuration
+**Type:** Task | **Priority:** P0 | **Points:** 3 | **Sprint:** 4
+
+**Description:** Switch from `streets-v12` to navigation-optimized Mapbox styles.
+
+**Deliverables:**
+- [ ] Configure `navigation-day-v1` and `navigation-night-v1` styles
+- [ ] Create `src/utils/mapbox/navigationStyles.ts` with style constants
+- [ ] Add automatic day/night switching based on time
+- [ ] Fallback to custom layer overlay if navigation styles unavailable
+
+**Files:**
+- `src/utils/mapbox/navigationStyles.ts` (new)
+- `src/components/map/CustomMapbox.tsx` (update)
+
+---
+
+#### NAV-002: Landmark & POI Layer Visibility
+**Type:** Story | **Priority:** P0 | **Points:** 5 | **Sprint:** 4
+
+**Description:** Enable landmark visibility (malls, gas stations, hospitals) at navigation zoom levels.
+
+**Deliverables:**
+- [ ] Configure POI layer visibility at zoom 10+
+- [ ] Filter POI categories: fuel, hospital, police, mall, restaurant, hotel
+- [ ] Add icon sprites for common Botswana categories
+- [ ] Ensure landmarks visible during active navigation
+
+**Files:**
+- `src/components/map/CustomMapbox.tsx`
+
+---
+
+#### NAV-003: 3D Buildings Layer
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 4
+
+**Description:** Enable 3D extruded buildings in urban areas for navigation context.
+
+**Deliverables:**
+- [ ] Add `fill-extrusion` layer for buildings
+- [ ] Configure `minzoom: 14` for performance
+- [ ] Match urban area styling to navigation context
+
+---
+
+#### NAV-004: Street Name Visibility Enhancement
+**Type:** Story | **Priority:** P0 | **Points:** 3 | **Sprint:** 4
+
+**Description:** Ensure street names always visible at navigation zoom levels (14+).
+
+**Deliverables:**
+- [ ] Override label layers for zoom 14+
+- [ ] Use larger font sizes during active navigation
+- [ ] Add street names to route geometry display
+
+---
+
+#### NAV-005: Maneuver Icon Library
+**Type:** Task | **Priority:** P0 | **Points:** 5 | **Sprint:** 4
+
+**Description:** Create comprehensive SVG icon library for all navigation maneuvers.
+
+**Deliverables:**
+- [ ] Create `src/components/navigation/icons/` folder
+- [ ] Design 15+ icons: turn-left, turn-right, slight-left, slight-right, sharp-left, sharp-right
+- [ ] U-turn icons (left/right), merge icons (left/right)
+- [ ] Roundabout icons with exit numbers (1-8)
+- [ ] Straight, arrive, arrive-left, arrive-right, fork icons
+- [ ] Export all icons from `index.ts`
+
+**Files:**
+- `src/components/navigation/icons/*.svg` (new)
+- `src/components/navigation/icons/index.ts` (new)
+
+---
+
+#### NAV-006: ManeuverIcon Component
+**Type:** Story | **Priority:** P0 | **Points:** 3 | **Sprint:** 4
+
+**Description:** Create dynamic component to display correct maneuver icon based on instruction type.
+
+**Deliverables:**
+- [ ] Create `ManeuverIcon.tsx` component
+- [ ] Map Mapbox maneuver types to icon files
+- [ ] Support sizing variants (small, medium, large)
+- [ ] Animate on upcoming maneuver
+
+**Files:**
+- `src/components/navigation/ManeuverIcon.tsx` (new)
+
+---
+
+#### NAV-007: DriverModeNavigationView Shell
+**Type:** Story | **Priority:** P0 | **Points:** 8 | **Sprint:** 4
+
+**Description:** Create fullscreen immersive navigation view matching Google Maps/Waze UX.
+
+**Deliverables:**
+- [ ] Create `DriverModeNavigationView.tsx` with fullscreen layout
+- [ ] Header bar: ETA, remaining time, remaining distance, exit button
+- [ ] Main area: 3D map with route overlay
+- [ ] Maneuver card: icon, distance countdown, street name
+- [ ] Next-next preview card showing upcoming maneuver
+- [ ] Bottom bar: mute, recenter, report, speed display
+
+**Layout:**
+```
+┌─────────────────────────────────────────┐
+│ [ETA] [Time] [Distance]        [× Exit] │
+├─────────────────────────────────────────┤
+│      ┌───────────────┐                  │
+│      │ [→] 500m      │ ← Maneuver       │
+│      │ Main Street   │                  │
+│      └───────────────┘                  │
+│                                         │
+│        [ 3D Map View ]                  │
+│        [ Pitch: 60° ]                   │
+│                                         │
+│   ┌─────────────────────────────┐       │
+│   │ Then: Left onto Oak Ave     │       │
+│   └─────────────────────────────┘       │
+├─────────────────────────────────────────┤
+│ [🔇] [📍] [⚠️]  │ 85 km/h │ Limit: 80  │
+└─────────────────────────────────────────┘
+```
+
+**Files:**
+- `src/components/navigation/DriverModeNavigationView.tsx` (new)
+- `src/components/navigation/NavigationHeader.tsx` (new)
+- `src/components/navigation/NavigationBottomBar.tsx` (new)
+
+---
+
+#### NAV-008: Heading-Locked Camera
+**Type:** Story | **Priority:** P0 | **Points:** 5 | **Sprint:** 4
+
+**Description:** Implement camera that follows user heading (not north-up) with 3D perspective.
+
+**Deliverables:**
+- [ ] Update `RouteLayer.tsx` with heading-locked bearing
+- [ ] Set `pitch: 60` and `bearing: userLocation.heading`
+- [ ] Smooth camera transitions (1000ms easing)
+- [ ] Auto-zoom adjustment based on next maneuver distance
+
+**Files:**
+- `src/components/navigation/RouteLayer.tsx` (update)
+
+---
+
+#### NAV-009: LaneGuidance Component
+**Type:** Story | **Priority:** P1 | **Points:** 5 | **Sprint:** 5
+
+**Description:** Display lane guidance showing which lane to be in for upcoming maneuver.
+
+**Deliverables:**
+- [ ] Create `LaneGuidance.tsx` component
+- [ ] Parse lane data from Mapbox Directions API
+- [ ] Visual lane diagram with active lane highlighted
+- [ ] Hide when lane data unavailable (graceful degradation)
+
+**Files:**
+- `src/components/navigation/LaneGuidance.tsx` (new)
+
+---
+
+#### NAV-010: NextManeuverPreview Component
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 5
+
+**Description:** Display next-next instruction card for advanced route awareness.
+
+**Deliverables:**
+- [ ] Create `NextManeuverPreview.tsx` component
+- [ ] Show upcoming maneuver after current one
+- [ ] Compact display with icon and street name
+
+**Files:**
+- `src/components/navigation/NextManeuverPreview.tsx` (new)
+
+---
+
+#### NAV-011: Voice Guidance Service Enhancement
+**Type:** Story | **Priority:** P0 | **Points:** 5 | **Sprint:** 5
+
+**Description:** Create enhanced voice guidance with distance-aware phrasing.
+
+**Deliverables:**
+- [ ] Create `src/services/voiceGuidanceService.ts`
+- [ ] Distance-aware announcements: "In 500 meters, turn right onto Main Street"
+- [ ] Progressive announcements: 1km, 500m, 100m, "now"
+- [ ] Announcement queue for overlapping instructions
+
+**Files:**
+- `src/services/voiceGuidanceService.ts` (new)
+
+---
+
+#### NAV-012: Street Name Voice Announcements
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 5
+
+**Description:** Add street names to voice announcements with proper pronunciation.
+
+**Deliverables:**
+- [ ] Include street name in turn announcements
+- [ ] Handle abbreviations (St → Street, Ave → Avenue)
+- [ ] Localization support for Botswana place names
+
+---
+
+#### NAV-013: SpeedDisplay Component
+**Type:** Story | **Priority:** P2 | **Points:** 3 | **Sprint:** 5
+
+**Description:** Display current speed with optional speed limit.
+
+**Deliverables:**
+- [ ] Create `SpeedDisplay.tsx` component
+- [ ] Show current GPS speed in km/h
+- [ ] Color coding (normal, warning, over limit)
+
+**Files:**
+- `src/components/navigation/SpeedDisplay.tsx` (new)
+
+---
+
+#### NAV-014: Speed Limit Data Integration
+**Type:** Story | **Priority:** P2 | **Points:** 5 | **Sprint:** 5
+
+**Description:** Query and display speed limit data from Mapbox.
+
+**Deliverables:**
+- [ ] Create `src/services/speedLimitService.ts`
+- [ ] Query Mapbox Map Matching API for speed limits
+- [ ] Display limit in SpeedDisplay component
+- [ ] Optional overspeed warning
+
+**Files:**
+- `src/services/speedLimitService.ts` (new)
+
+---
+
+#### NAV-015: Traffic-Colored Route Segments
+**Type:** Story | **Priority:** P1 | **Points:** 5 | **Sprint:** 5
+
+**Description:** Color route line based on real-time traffic conditions.
+
+**Deliverables:**
+- [ ] Enhance existing traffic layer in `RouteLayer.tsx`
+- [ ] Apply traffic colors to route line (green/yellow/red)
+- [ ] Add traffic delay to ETA calculation
+
+---
+
+#### NAV-016: Automatic Arrival Detection
+**Type:** Story | **Priority:** P1 | **Points:** 5 | **Sprint:** 5
+
+**Description:** Detect arrival at destination with parking guidance.
+
+**Deliverables:**
+- [ ] Auto-detect when user reaches destination (50m threshold)
+- [ ] Display "You have arrived" announcement
+- [ ] Show nearby parking options if available
+- [ ] Transition from navigation to arrival state
+
+---
+
+#### NAV-017: Route Preview Fly-Along Animation
+**Type:** Story | **Priority:** P2 | **Points:** 5 | **Sprint:** 5
+
+**Description:** Animated camera fly-along route preview before starting navigation.
+
+**Deliverables:**
+- [ ] Animate camera along full route on navigation start
+- [ ] Show key landmarks and turn points
+- [ ] "Skip Preview" option
+
+---
+
+#### NAV-018: Navigation Integration Testing
+**Type:** Task | **Priority:** P0 | **Points:** 8 | **Sprint:** 5
+
+**Description:** End-to-end testing of complete navigation experience.
+
+**Deliverables:**
+- [ ] Test all maneuver icon types display correctly
+- [ ] Verify voice announcements timing and content
+- [ ] Test camera behavior during navigation
+- [ ] Verify landmark/POI visibility
+- [ ] Performance testing (60fps animations, battery usage)
+- [ ] Cross-device testing
 
 ---
 
 #### MAP-001: Location Privacy Controls
-**Type:** Story | **Priority:** P2 | **Points:** 3 | **Sprint:** 4
+**Type:** Story | **Priority:** P2 | **Points:** 3 | **Sprint:** 5
 
 **Description:** Add location privacy settings.
 
@@ -1081,7 +1378,7 @@ Backend is 100% complete per `docs/INSURANCE_README.md`.
 ---
 
 #### MAP-002: Offline Maps
-**Type:** Story | **Priority:** P3 | **Points:** 5 | **Sprint:** 4
+**Type:** Story | **Priority:** P3 | **Points:** 5 | **Sprint:** 5
 
 **Description:** Enable offline map access.
 
@@ -1089,6 +1386,10 @@ Backend is 100% complete per `docs/INSURANCE_README.md`.
 - [ ] Cache frequently used map areas
 - [ ] Show cached maps when offline
 - [ ] Indicate offline status
+
+---
+
+**Epic 12 Total Story Points:** 90 (Navigation: 82 + Privacy/Offline: 8)
 
 ---
 
@@ -1487,6 +1788,59 @@ The following items were identified from the Feedback Triage Board and Status Re
 
 ---
 
+## NAVIGATION UX IMPROVEMENT SYSTEM (Feb 2, 2026)
+
+**Major UX Overhaul:** The handover navigation experience is being completely rebuilt to match Google Maps/Waze standards.
+
+**Full Specification:** [`docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md`](./NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md)
+
+### Key Changes:
+- **Map styles:** Switch from `streets-v12` to `navigation-day-v1`/`navigation-night-v1` for proper POI/landmark visibility
+- **3D perspective:** Heading-locked camera with 60° pitch (vs current static top-down)
+- **Maneuver icons:** 15+ distinct icons (turn-left, u-turn, roundabout, etc.) replacing single generic icon
+- **Lane guidance:** Display lane diagrams showing which lane to be in
+- **Voice guidance:** Distance-aware announcements with street names ("In 500m, turn right onto Main Street")
+- **Driver mode:** Fullscreen immersive `DriverModeNavigationView` component
+
+### Current Issues Addressed:
+| Issue | Before | After |
+|-------|--------|-------|
+| Landmarks | Missing at navigation zoom | Visible at zoom 10+ (malls, gas stations, hospitals) |
+| Street names | Inconsistent visibility | Always visible at zoom 14+ during navigation |
+| Camera | Static north-up | 3D heading-locked with 60° pitch |
+| Maneuver icons | Single `Navigation2` icon | 15+ contextual icons |
+| Voice | Basic SpeechSynthesis | "In 500 meters, turn right onto [street]" |
+
+### New Tasks Added:
+
+| Story ID | Name | Points | Sprint | Priority |
+|----------|------|--------|--------|----------|
+| NAV-001 | Navigation Map Style Configuration | 3 | Sprint 4 | P0 |
+| NAV-002 | Landmark & POI Layer Visibility | 5 | Sprint 4 | P0 |
+| NAV-003 | 3D Buildings Layer | 3 | Sprint 4 | P1 |
+| NAV-004 | Street Name Visibility Enhancement | 3 | Sprint 4 | P0 |
+| NAV-005 | Maneuver Icon Library (15 icons) | 5 | Sprint 4 | P0 |
+| NAV-006 | ManeuverIcon Component | 3 | Sprint 4 | P0 |
+| NAV-007 | DriverModeNavigationView Shell | 8 | Sprint 4 | P0 |
+| NAV-008 | Heading-Locked Camera | 5 | Sprint 4 | P0 |
+| NAV-009 | LaneGuidance Component | 5 | Sprint 5 | P1 |
+| NAV-010 | NextManeuverPreview Component | 3 | Sprint 5 | P1 |
+| NAV-011 | Voice Guidance Service Enhancement | 5 | Sprint 5 | P0 |
+| NAV-012 | Street Name Voice Announcements | 3 | Sprint 5 | P1 |
+| NAV-013 | SpeedDisplay Component | 3 | Sprint 5 | P2 |
+| NAV-014 | Speed Limit Data Integration | 5 | Sprint 5 | P2 |
+| NAV-015 | Traffic-Colored Route Segments | 5 | Sprint 5 | P1 |
+| NAV-016 | Automatic Arrival Detection | 5 | Sprint 5 | P1 |
+| NAV-017 | Route Preview Fly-Along Animation | 5 | Sprint 5 | P2 |
+| NAV-018 | Navigation Integration Testing | 8 | Sprint 5 | P0 |
+| **Total** | | **82** | | |
+
+### Deferred Tasks:
+- MAP-001 (Location Privacy Controls) → Sprint 5
+- MAP-002 (Offline Maps) → Sprint 5
+
+---
+
 ## RISK MITIGATION
 
 | Risk | Probability | Impact | Mitigation |
@@ -1496,6 +1850,8 @@ The following items were identified from the Feedback Triage Board and Status Re
 | Sprint overrun | Medium | High | Daily standups; scope adjustment authority |
 | Payment security issues | Low | Critical | Code review for all payment code; no secrets in client |
 | Sprint 3 overload (68 SP) | Medium | High | Prioritize P0/P1 items; defer P2/P3 if needed |
+| Navigation styles unavailable | Low | Medium | Use custom layer overlay fallback (documented in plan) |
+| Lane guidance data missing for Botswana | Medium | Low | Hide component gracefully when data unavailable |
 
 ---
 
@@ -1510,6 +1866,7 @@ The following items were identified from the Feedback Triage Board and Status Re
 - [ ] <5 high-priority bugs with workarounds
 - [ ] 100% route accessibility
 - [ ] Beta tester sign-off
+- [ ] Navigation UX matches Google Maps/Waze quality
 
 **Post-Launch (March):**
 - Move PayGate to production
@@ -1529,14 +1886,15 @@ The following items were identified from the Feedback Triage Board and Status Re
 | Testing Protocol | `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md` | QA procedures |
 | Handover Analysis | `.trae/documents/handover-module-analysis.md` | Handover gaps |
 | **Interactive Handover System** | **`docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md`** | **Interactive handover specification** |
+| **Navigation UX Improvement** | **`docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md`** | **Google Maps/Waze-style navigation spec** |
 | Insurance README | `docs/INSURANCE_README.md` | Insurance implementation |
 | Jira Tasks v2.4.0 | `docs/JIRA_TASKS_V2.4.0.md` | Prior sprint context |
 | Feedback Triage Board | `.trae/documents/MOBIRIDES_FEEDBACK_TRIAGE_BOARD.md` | User feedback issues |
 
 ---
 
-**Document Version:** 1.2  
+**Document Version:** 1.3  
 **Created:** February 2, 2026  
-**Updated:** February 2, 2026 (Added interactive handover tasks HAND-010 to HAND-021)  
+**Updated:** February 2, 2026 (Added navigation UX tasks NAV-001 to NAV-018, Epic 12 overhaul)  
 **Author:** Development Team  
 **Status:** Ready for Team Review
