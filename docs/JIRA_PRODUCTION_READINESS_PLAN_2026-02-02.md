@@ -485,9 +485,11 @@ Reference: `docs/JIRA_TASKS_V2.4.0.md` (MOBI-702)
 
 ### EPIC 6: REVIEW SYSTEM
 
-**Current:** 65% → **85%** (after REV-003 to REV-007 completion) | **Target:** 90% | **Gap:** 5%
+**Current:** 65% → **85%** (after REV-003 to REV-007 completion) | **Target:** 95% | **Gap:** 10%
 
-**Note:** The following tasks (REV-003 to REV-007) were previously flagged in `.trae/documents/MOBIRIDES_FEEDBACK_TRIAGE_BOARD.md` (October 2025) and have now been completed:
+**Note:** The following tasks (REV-003 to REV-007) were previously flagged in `.trae/documents/MOBIRIDES_FEEDBACK_TRIAGE_BOARD.md` (October 2025) and have now been completed.
+
+**Detailed Category Ratings:** Tasks REV-008 to REV-014 implement the detailed category rating system per Epic 8 PRD requirements. The database `category_ratings` JSONB column and `calculate_category_ratings()` function already exist. Public car views show aggregate ratings only; individual hosts/renters can view their detailed category ratings from their profile.
 
 ---
 
@@ -550,6 +552,113 @@ Reference: `docs/JIRA_TASKS_V2.4.0.md` (MOBI-702)
 **Completed Deliverables:**
 - [x] Updated `src/components/admin/AdminSidebar.tsx` with Reviews menu item
 - [x] Added route `/admin/reviews` in `src/App.tsx`
+
+---
+
+#### REV-008: Category Rating Input Component
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Create star rating inputs for individual categories (cleanliness, punctuality, etc.).
+
+**Deliverables:**
+- [ ] Create `src/components/reviews/CategoryRatingInput.tsx`
+- [ ] Create `src/components/reviews/RatingCategories.ts` (constants)
+- [ ] Individual star rating for each category
+- [ ] Visual grouping with clear labels
+- [ ] Progressive disclosure after overall rating
+
+---
+
+#### REV-009: Update RentalReview with Category Inputs
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Integrate category ratings into the review submission form.
+
+**Deliverables:**
+- [ ] Add `categoryRatings` state to `src/pages/RentalReview.tsx`
+- [ ] Role-based categories: Renter rates (cleanliness, car_condition, responsiveness, rental_experience)
+- [ ] Role-based categories: Host rates (punctuality, communication, car_care, adherence_to_rules)
+- [ ] Update insert to include `category_ratings` JSONB
+- [ ] Overall rating required, category ratings encouraged
+
+---
+
+#### REV-010: Category Rating Display Component
+**Type:** Story | **Priority:** P1 | **Points:** 2 | **Sprint:** 3
+
+**Description:** Create component to display aggregated category ratings.
+
+**Deliverables:**
+- [ ] Create `src/components/reviews/CategoryRatingDisplay.tsx`
+- [ ] Show breakdown with star/bar visualization
+- [ ] Call `calculate_category_ratings(car_id)` RPC function
+- [ ] Handle empty category data gracefully
+
+---
+
+#### REV-011: Update CarReviews with Category Breakdown
+**Type:** Story | **Priority:** P1 | **Points:** 2 | **Sprint:** 3
+
+**Description:** Display category rating breakdown on car detail pages (aggregate only for public view).
+
+**Deliverables:**
+- [ ] Update `src/components/car-details/CarReviews.tsx`
+- [ ] Show aggregated category ratings (not individual reviews)
+- [ ] Use CategoryRatingDisplay component
+- [ ] Only show categories with sufficient data (3+ reviews)
+
+---
+
+#### REV-012: Profile Rating Details Page
+**Type:** Story | **Priority:** P1 | **Points:** 3 | **Sprint:** 3
+
+**Description:** Allow hosts and renters to view their detailed ratings from their profile.
+
+**Deliverables:**
+- [ ] Create `src/pages/MyRatings.tsx` (or add section to profile)
+- [ ] Show all category ratings user has received
+- [ ] Filter by: review type (as host / as renter), date range
+- [ ] Clickable from profile summary rating
+- [ ] Show trends over time
+- [ ] Comparison to platform average (optional)
+
+---
+
+#### REV-013: Backfill Existing Reviews
+**Type:** Task | **Priority:** P2 | **Points:** 2 | **Sprint:** 3
+
+**Description:** Backfill category_ratings for existing reviews with overall rating value.
+
+**Deliverables:**
+- [ ] Create migration to populate empty `category_ratings`
+- [ ] Set all categories to the existing `rating` value
+- [ ] Only affect reviews with empty/null `category_ratings`
+- [ ] Document backfill in migration comments
+
+**SQL Migration:**
+```sql
+UPDATE reviews 
+SET category_ratings = jsonb_build_object(
+  'cleanliness', rating,
+  'punctuality', rating,
+  'responsiveness', rating,
+  'car_condition', rating,
+  'rental_experience', rating
+)
+WHERE category_ratings IS NULL OR category_ratings = '{}'::jsonb;
+```
+
+---
+
+#### REV-014: Admin Review Details - Category Ratings
+**Type:** Task | **Priority:** P2 | **Points:** 1 | **Sprint:** 3
+
+**Description:** Display category ratings in admin review detail dialog.
+
+**Deliverables:**
+- [ ] Update `src/components/admin/ReviewDetailsDialog.tsx`
+- [ ] Show category ratings if populated
+- [ ] Flag reviews with significantly deviant category ratings (potential gaming)
 
 ---
 
