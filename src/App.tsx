@@ -101,6 +101,7 @@ const AdminManagement = lazy(() => import("@/pages/admin/AdminManagement"));
 const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
 const SuperAdminAnalytics = lazy(() => import("@/pages/SuperAdminAnalytics"));
 const AdminPromoCodes = lazy(() => import("@/pages/admin/AdminPromoCodes"));
+const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"));
 
 // Insurance claims pages
 const UserClaimsList = lazy(() => import("@/components/insurance/UserClaimsList"));
@@ -447,6 +448,11 @@ function App() {
                         <Route path="/admin/promo-codes" element={
                           <Suspense fallback={<LoadingView />}>
                             <AdminPromoCodes />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/reviews" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminReviews />
                           </Suspense>
                         } />
 
