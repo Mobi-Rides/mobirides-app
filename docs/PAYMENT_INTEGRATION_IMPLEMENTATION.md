@@ -23,7 +23,7 @@
 11. [Implementation Timeline](#implementation-timeline)
 12. [Risk Assessment](#risk-assessment)
 13. [Legacy Mock Logic Migration](#legacy-mock-logic-migration)
-14. [Insurance Premium Escrow](#insurance-premium-escrow)
+14. [Insurance Premium Integration](#insurance-premium-integration)
 
 ---
 
@@ -1516,262 +1516,148 @@ You can withdraw your earnings at any time from your wallet.
 
 ---
 
-## Insurance Premium Escrow
-
-This section documents the handling of insurance premiums as a separate escrow account, distinct from the rental payment flow.
+## 14. Insurance Premium Integration
 
 ### Overview
 
-Insurance premiums are **optional** and collected alongside rental payments but managed in a **separate insurance escrow account**. This separation ensures:
+MobiRides partners with **Pay-U** as the insurance underwriter. Insurance protects the **host** (vehicle owner) against damage or loss caused by renters during the rental period.
 
-1. **Clear fund segregation** - Insurance funds are not commingled with rental revenue
-2. **Claims liability tracking** - Escrow balance represents available funds for claim payouts
-3. **Regulatory compliance** - Separate accounting for insurance vs. rental revenue
-4. **Risk management** - Monitor escrow health ratio (balance vs. average claims)
+**Key Points:**
+- MobiRides collects insurance premiums as part of the booking payment
+- MobiRides remits premiums to Pay-U (manually via Admin portal)
+- MobiRides retains a **10% commission** on insurance premiums
+- Claims are processed externally by MobiRides + Pay-U partnership
+- Repair quotes are managed by MobiRides, not sourced by hosts
+- Claim payouts are handled by Pay-U directly (not through platform wallets)
 
-### Insurance Premium Flow
+### Business Model
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ INSURANCE PREMIUM COLLECTION                                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   Booking with Insurance Selected                                           │
-│     └─► Rental: P1000 + Insurance Premium: P250 = P1250 Total              │
-│           └─► Renter pays P1250 via PayGate/Ooze                           │
-│                 └─► payment-webhook processes payment                       │
-│                       └─► SPLIT:                                            │
-│                             ├─► Rental P1000:                               │
-│                             │     ├─► Host Wallet (85%): P850              │
-│                             │     └─► Platform Commission (15%): P150       │
-│                             └─► Insurance P250:                             │
-│                                   └─► Insurance Escrow (100%): P250        │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     PREMIUM COLLECTION                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Renter pays P1250 total                                        │
+│      │                                                          │
+│      ├─► Rental: P1000                                          │
+│      │      ├─► Host (85%): P850                                │
+│      │      └─► Platform (15%): P150                            │
+│      │                                                          │
+│      └─► Insurance Premium: P250                                │
+│             ├─► Pay-U (90%): P225                               │
+│             └─► MobiRides Commission (10%): P25                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ INSURANCE CLAIM PAYOUT                                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   Claim Approved by Admin                                                   │
-│     └─► Approved Amount: P5000                                              │
-│           └─► Verify escrow balance >= P5000                                │
-│                 └─► Debit insurance escrow: -P5000                          │
-│                       └─► Credit renter wallet: +P5000                      │
-│                             └─► Notification sent to renter                 │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     CLAIM PROCESSING                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Host reports damage → MobiRides + Pay-U review                 │
+│      │                                                          │
+│      ├─► Approved: Pay-U pays for repairs/replacement           │
+│      │             (Repairs arranged by MobiRides)              │
+│      │                                                          │
+│      └─► Rejected: Renter is liable for full cost               │
+│                    (Excess payment collected via platform)      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Database Schema
-
-#### 1. bookings table additions
+### Premium Split Configuration
 
 ```sql
--- Add insurance premium tracking to bookings
+-- Commission rate configuration
+CREATE TABLE insurance_commission_rates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  package_id UUID REFERENCES insurance_packages(id), -- NULL = default for all
+  mobirides_percentage NUMERIC(5,4) NOT NULL DEFAULT 0.10, -- 10%
+  payu_percentage NUMERIC(5,4) NOT NULL DEFAULT 0.90,      -- 90%
+  effective_from DATE NOT NULL,
+  effective_to DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id)
+);
+
+-- Seed with default 10/90 split
+INSERT INTO insurance_commission_rates 
+  (package_id, mobirides_percentage, payu_percentage, effective_from)
+VALUES 
+  (NULL, 0.10, 0.90, '2026-01-01');
+```
+
+### Database Schema Updates
+
+#### bookings table additions
+
+```sql
 ALTER TABLE bookings 
   ADD COLUMN insurance_premium NUMERIC(10,2) DEFAULT 0,
   ADD COLUMN insurance_policy_id UUID REFERENCES insurance_policies(id);
-
-COMMENT ON COLUMN bookings.insurance_premium IS 'Insurance premium amount selected at booking time';
-COMMENT ON COLUMN bookings.insurance_policy_id IS 'Reference to the insurance policy if coverage selected';
 ```
 
-#### 2. insurance_escrow (Singleton)
+#### insurance_policies table additions
 
 ```sql
-CREATE TABLE insurance_escrow (
+ALTER TABLE insurance_policies 
+  ADD COLUMN payu_remittance_status VARCHAR(20) DEFAULT 'pending',
+  -- Values: 'pending', 'remitted', 'failed'
+  ADD COLUMN payu_remittance_date TIMESTAMPTZ,
+  ADD COLUMN payu_remittance_reference VARCHAR(100),
+  ADD COLUMN mobirides_commission NUMERIC(10,2),
+  ADD COLUMN payu_amount NUMERIC(10,2);
+```
+
+#### insurance_claims table additions
+
+```sql
+ALTER TABLE insurance_claims 
+  ADD COLUMN payu_claim_reference VARCHAR(100),
+  ADD COLUMN external_status VARCHAR(50),
+  -- Values: 'submitted_to_payu', 'under_payu_review', 'payu_approved', 'payu_rejected', 'repairs_in_progress', 'repairs_completed'
+  ADD COLUMN excess_requested BOOLEAN DEFAULT FALSE,
+  ADD COLUMN excess_amount_due NUMERIC(10,2),
+  ADD COLUMN excess_paid BOOLEAN DEFAULT FALSE,
+  ADD COLUMN excess_payment_date TIMESTAMPTZ,
+  ADD COLUMN renter_liability_amount NUMERIC(10,2),
+  ADD COLUMN renter_liability_paid BOOLEAN DEFAULT FALSE;
+```
+
+#### premium_remittance_batches table (new)
+
+```sql
+CREATE TABLE premium_remittance_batches (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  
-  -- Running balance
-  balance NUMERIC(12,2) NOT NULL DEFAULT 0,
-  
-  -- Audit
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Singleton enforcement (only one row)
-  CONSTRAINT insurance_escrow_singleton CHECK (id = '00000000-0000-0000-0000-000000000001')
+  batch_date DATE NOT NULL,
+  total_policies INTEGER NOT NULL,
+  total_premium_collected NUMERIC(12,2) NOT NULL,
+  mobirides_commission_total NUMERIC(12,2) NOT NULL,
+  payu_amount_total NUMERIC(12,2) NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  -- Values: 'pending', 'remitted', 'confirmed'
+  remitted_by UUID REFERENCES auth.users(id),
+  remitted_at TIMESTAMPTZ,
+  payu_confirmation_reference VARCHAR(100),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Insert the single escrow account
-INSERT INTO insurance_escrow (id, balance) 
-VALUES ('00000000-0000-0000-0000-000000000001', 0);
-
--- RLS: Admin read-only
-ALTER TABLE insurance_escrow ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins can view insurance escrow"
-  ON insurance_escrow FOR SELECT
-  USING (EXISTS (SELECT 1 FROM admins WHERE id = auth.uid()));
 ```
 
-#### 3. insurance_escrow_transactions
+### Premium Collection Flow
 
-```sql
-CREATE TABLE insurance_escrow_transactions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  
-  -- Transaction details
-  booking_id UUID REFERENCES bookings(id),
-  policy_id UUID REFERENCES insurance_policies(id),
-  claim_id UUID REFERENCES insurance_claims(id),
-  
-  -- Amount and type
-  amount NUMERIC(10,2) NOT NULL,
-  transaction_type VARCHAR(50) NOT NULL,
-  -- Values: 'premium_collected', 'claim_payout', 'admin_fee', 'refund'
-  
-  -- Balances
-  balance_before NUMERIC(12,2) NOT NULL,
-  balance_after NUMERIC(12,2) NOT NULL,
-  
-  -- Description
-  description TEXT,
-  
-  -- Timestamps
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Indexes
-CREATE INDEX idx_escrow_tx_booking ON insurance_escrow_transactions(booking_id);
-CREATE INDEX idx_escrow_tx_policy ON insurance_escrow_transactions(policy_id);
-CREATE INDEX idx_escrow_tx_claim ON insurance_escrow_transactions(claim_id);
-CREATE INDEX idx_escrow_tx_type ON insurance_escrow_transactions(transaction_type);
-CREATE INDEX idx_escrow_tx_created ON insurance_escrow_transactions(created_at DESC);
-
--- RLS
-ALTER TABLE insurance_escrow_transactions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins can view escrow transactions"
-  ON insurance_escrow_transactions FOR SELECT
-  USING (EXISTS (SELECT 1 FROM admins WHERE id = auth.uid()));
-```
-
-#### 4. payment_transactions additions
-
-```sql
--- Add insurance tracking to payment transactions
-ALTER TABLE payment_transactions 
-  ADD COLUMN insurance_premium NUMERIC(10,2) DEFAULT 0,
-  ADD COLUMN rental_amount NUMERIC(10,2);
-
-COMMENT ON COLUMN payment_transactions.insurance_premium IS 'Insurance premium portion of payment';
-COMMENT ON COLUMN payment_transactions.rental_amount IS 'Rental amount portion (before commission split)';
-```
-
-### Database Functions
-
-#### 1. credit_insurance_escrow
-
-```sql
-CREATE OR REPLACE FUNCTION credit_insurance_escrow(
-  p_booking_id UUID,
-  p_policy_id UUID,
-  p_amount NUMERIC
-)
-RETURNS BOOLEAN
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_balance_before NUMERIC;
-  v_balance_after NUMERIC;
-BEGIN
-  -- Get current balance
-  SELECT balance INTO v_balance_before
-  FROM insurance_escrow
-  WHERE id = '00000000-0000-0000-0000-000000000001'
-  FOR UPDATE;
-  
-  v_balance_after := v_balance_before + p_amount;
-  
-  -- Update escrow balance
-  UPDATE insurance_escrow
-  SET balance = v_balance_after, updated_at = NOW()
-  WHERE id = '00000000-0000-0000-0000-000000000001';
-  
-  -- Record transaction
-  INSERT INTO insurance_escrow_transactions (
-    booking_id, policy_id, amount, transaction_type,
-    balance_before, balance_after, description
-  ) VALUES (
-    p_booking_id, p_policy_id, p_amount, 'premium_collected',
-    v_balance_before, v_balance_after,
-    'Insurance premium collected for booking ' || p_booking_id::TEXT
-  );
-  
-  RETURN TRUE;
-END;
-$$;
-```
-
-#### 2. debit_insurance_escrow (for claim payouts)
-
-```sql
-CREATE OR REPLACE FUNCTION debit_insurance_escrow(
-  p_claim_id UUID,
-  p_amount NUMERIC
-)
-RETURNS BOOLEAN
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_balance_before NUMERIC;
-  v_balance_after NUMERIC;
-  v_policy_id UUID;
-  v_booking_id UUID;
-BEGIN
-  -- Get current balance
-  SELECT balance INTO v_balance_before
-  FROM insurance_escrow
-  WHERE id = '00000000-0000-0000-0000-000000000001'
-  FOR UPDATE;
-  
-  IF v_balance_before < p_amount THEN
-    RAISE EXCEPTION 'Insufficient escrow balance. Available: P%, Required: P%', 
-      v_balance_before, p_amount;
-  END IF;
-  
-  -- Get claim references
-  SELECT policy_id, booking_id INTO v_policy_id, v_booking_id
-  FROM insurance_claims WHERE id = p_claim_id;
-  
-  v_balance_after := v_balance_before - p_amount;
-  
-  -- Update escrow balance
-  UPDATE insurance_escrow
-  SET balance = v_balance_after, updated_at = NOW()
-  WHERE id = '00000000-0000-0000-0000-000000000001';
-  
-  -- Record transaction
-  INSERT INTO insurance_escrow_transactions (
-    booking_id, policy_id, claim_id, amount, transaction_type,
-    balance_before, balance_after, description
-  ) VALUES (
-    v_booking_id, v_policy_id, p_claim_id, -p_amount, 'claim_payout',
-    v_balance_before, v_balance_after,
-    'Claim payout for claim ' || p_claim_id::TEXT
-  );
-  
-  RETURN TRUE;
-END;
-$$;
-```
-
-### Edge Function Updates
-
-#### payment-webhook (Updated Flow)
+When a renter pays for a booking with insurance:
 
 ```typescript
-// supabase/functions/payment-webhook/index.ts
-
-// On successful payment, split funds correctly:
+// In payment-webhook/index.ts
 const processSuccessfulPayment = async (transaction: PaymentTransaction) => {
-  const { booking_id, rental_amount, insurance_premium, host_earnings, platform_commission } = 
-    transaction;
+  const { 
+    booking_id, 
+    rental_amount, 
+    insurance_premium, 
+    host_earnings, 
+    platform_commission 
+  } = transaction;
 
   // 1. Credit host wallet (85% of rental)
   await supabase.rpc('credit_pending_earnings', {
@@ -1780,24 +1666,33 @@ const processSuccessfulPayment = async (transaction: PaymentTransaction) => {
     p_platform_commission: platform_commission
   });
 
-  // 2. Credit insurance escrow (100% of premium)
+  // 2. Process insurance premium split
   if (insurance_premium > 0) {
-    const { data: policy } = await supabase
+    const MOBIRIDES_COMMISSION_RATE = 0.10; // 10%
+    const mobiridesCut = insurance_premium * MOBIRIDES_COMMISSION_RATE;
+    const payuAmount = insurance_premium - mobiridesCut;
+    
+    // Get policy ID from booking
+    const { data: booking } = await supabase
       .from('bookings')
       .select('insurance_policy_id')
       .eq('id', booking_id)
       .single();
       
-    await supabase.rpc('credit_insurance_escrow', {
-      p_booking_id: booking_id,
-      p_policy_id: policy.insurance_policy_id,
-      p_amount: insurance_premium
-    });
+    // Update policy with premium split details
+    await supabase
+      .from('insurance_policies')
+      .update({
+        mobirides_commission: mobiridesCut,
+        payu_amount: payuAmount,
+        payu_remittance_status: 'pending'
+      })
+      .eq('id', booking.insurance_policy_id);
   }
 
   // 3. Update booking status
   await supabase.from('bookings')
-    .update({ status: 'confirmed', payment_status: 'paid' })
+    .update({ status: 'confirmed' })
     .eq('id', booking_id);
     
   // 4. Send notifications
@@ -1805,216 +1700,365 @@ const processSuccessfulPayment = async (transaction: PaymentTransaction) => {
 };
 ```
 
-### Frontend Updates
+### Premium Remittance Process (Manual)
 
-#### BookingDialog.tsx Updates
+Premiums are remitted to Pay-U daily via the Admin Portal.
 
-When creating a booking with insurance:
+#### Admin Portal Workflow
+
+1. **Finance Team Access**: Navigate to `/admin/insurance/remittance`
+2. **View Pending Remittance**: See all policies with `payu_remittance_status = 'pending'`
+3. **Create Batch**: Group pending policies into a daily batch
+4. **Manual Transfer**: Transfer `payu_amount_total` to Pay-U account
+5. **Record Confirmation**: Enter Pay-U confirmation reference
+6. **Mark as Remitted**: Update all policies in batch as `remitted`
+
+#### Remittance Dashboard Features
+
+| Feature | Description |
+|---------|-------------|
+| Pending Remittance Total | Sum of Pay-U amounts awaiting transfer |
+| Today's Collections | Premiums collected today |
+| Create Remittance Batch | Select date range, create batch |
+| Batch History | View past remittance batches |
+| Mark Batch Remitted | Record confirmation after manual transfer |
+| Export Report | CSV export for accounting |
+
+#### Admin Service Functions
 
 ```typescript
-// Save insurance premium in booking record
-const { data: booking } = await supabase
-  .from("bookings")
-  .insert({
-    car_id: car.id,
-    renter_id: userId,
-    start_date: format(startDate, "yyyy-MM-dd"),
-    end_date: format(endDate, "yyyy-MM-dd"),
-    total_price: rentalTotal,           // Rental amount only
-    insurance_premium: insurancePremium, // Separate field
-    status: "pending",
-  })
-  .select()
-  .single();
+// src/services/insurance/remittanceService.ts
 
-// After policy creation, link to booking
-if (insurancePolicy?.id) {
-  await supabase
-    .from("bookings")
-    .update({ insurance_policy_id: insurancePolicy.id })
-    .eq("id", booking.id);
+export class InsuranceRemittanceService {
+  
+  // Get all policies pending remittance
+  static async getPendingRemittance(): Promise<InsurancePolicy[]> {
+    const { data } = await supabase
+      .from('insurance_policies')
+      .select('*, booking:bookings(*)')
+      .eq('payu_remittance_status', 'pending')
+      .order('created_at', { ascending: true });
+    return data || [];
+  }
+  
+  // Create a remittance batch
+  static async createRemittanceBatch(
+    policyIds: string[],
+    batchDate: Date
+  ): Promise<RemittanceBatch> {
+    // Calculate totals
+    const { data: policies } = await supabase
+      .from('insurance_policies')
+      .select('total_premium, mobirides_commission, payu_amount')
+      .in('id', policyIds);
+      
+    const totals = policies.reduce((acc, p) => ({
+      premium: acc.premium + p.total_premium,
+      commission: acc.commission + p.mobirides_commission,
+      payu: acc.payu + p.payu_amount
+    }), { premium: 0, commission: 0, payu: 0 });
+    
+    const { data: batch } = await supabase
+      .from('premium_remittance_batches')
+      .insert({
+        batch_date: batchDate,
+        total_policies: policyIds.length,
+        total_premium_collected: totals.premium,
+        mobirides_commission_total: totals.commission,
+        payu_amount_total: totals.payu,
+        status: 'pending'
+      })
+      .select()
+      .single();
+      
+    return batch;
+  }
+  
+  // Mark batch as remitted (after manual transfer)
+  static async markBatchRemitted(
+    batchId: string,
+    payuReference: string,
+    remittedBy: string,
+    notes?: string
+  ): Promise<void> {
+    // Update batch
+    await supabase
+      .from('premium_remittance_batches')
+      .update({
+        status: 'remitted',
+        remitted_by: remittedBy,
+        remitted_at: new Date().toISOString(),
+        payu_confirmation_reference: payuReference,
+        notes
+      })
+      .eq('id', batchId);
+      
+    // Update all policies in batch
+    // (requires linking policies to batch via junction table or batch_id column)
+  }
 }
 ```
 
-#### Price Breakdown Display
+### Claims Processing Flow
 
-```typescript
-// PriceBreakdown component shows:
-// - Rental: P1000
-// - Insurance Premium: P250 (if selected)
-// - Total: P1250
+Claims are submitted via the MobiRides platform but processed externally by Pay-U.
+
+#### Claim Submission Flow
+
+```
+1. Host reports damage via MobiRides platform
+   └─► /insurance/claims/new
+   
+2. MobiRides admin performs initial review
+   └─► Verify policy is valid
+   └─► Check incident is covered
+   └─► Gather initial evidence
+   
+3. Claim forwarded to Pay-U
+   └─► Email: support@mobirides.africa
+   └─► Include: claim details, evidence, policy info
+   └─► Update: external_status = 'submitted_to_payu'
+   └─► Record: payu_claim_reference (email thread ID or case #)
+   
+4. Pay-U assesses claim
+   └─► May request additional info (via MobiRides)
+   └─► Update: external_status = 'under_payu_review'
+   
+5. Pay-U decision
+   ├─► APPROVED:
+   │     └─► external_status = 'payu_approved'
+   │     └─► MobiRides arranges repairs (quotes managed by us)
+   │     └─► Pay-U pays repair costs
+   │     └─► external_status = 'repairs_completed'
+   │     └─► Claim closed
+   │
+   └─► REJECTED:
+         └─► external_status = 'payu_rejected'
+         └─► Renter becomes liable for full cost
+         └─► renter_liability_amount = damage cost
+         └─► Excess payment request sent to renter
 ```
 
-### Admin Portal - Insurance Tab
+#### Excess Collection Process
 
-The Admin portal includes an **Insurance** section with the following features:
+When a claim requires excess payment from the renter, or if a claim is rejected:
 
-#### 1. Insurance Dashboard (`/admin/insurance`)
+1. **Request Excess Payment**
+   - Admin sets `excess_requested = true` and `excess_amount_due`
+   - System sends notification to renter
+   - Renter sees "Pay Excess" button on `/rental-details/:id`
 
-| Widget | Purpose |
-|--------|---------|
-| Escrow Balance | Current insurance escrow balance |
-| Monthly Premiums | Total premiums collected this month |
-| Monthly Payouts | Total claim payouts this month |
-| Health Ratio | Escrow balance ÷ avg monthly claims (target: >3x) |
-| Active Policies | Count of active insurance policies |
-| Pending Claims | Claims awaiting review |
+2. **Renter Payment**
+   - Renter clicks "Make Additional Payment" on rental details page
+   - Initiates payment for excess/liability amount
+   - Uses same payment flow (PayGate/Ooze)
 
-#### 2. Claims Management (`/admin/insurance/claims`)
+3. **Payment Confirmation**
+   - On successful payment: `excess_paid = true`, `excess_payment_date` set
+   - Notification sent to admin and host
+   - Funds available for repair costs
 
-Features:
-- View all submitted claims with filters (status, date, amount)
-- Claim detail view with evidence, policy info, booking info
-- Approve/Reject claims with notes
-- Request additional information from renter
-- Process payout (debits escrow, credits renter wallet)
-- Claim history and audit trail
+#### Claim Rejection - Renter Liability
 
-#### 3. Policies View (`/admin/insurance/policies`)
-
-Features:
-- List all insurance policies with status
-- Filter by status (active, expired, claimed, cancelled)
-- View policy details and linked booking/claim
-- Policy document download
-
-#### 4. Escrow Transactions (`/admin/insurance/escrow`)
-
-Features:
-- Full transaction history (premiums in, payouts out)
-- Filter by type, date range
-- Running balance visualization
-- Export for accounting
-
-### Insurance Service Updates
-
-The `insuranceService.ts` is updated to use escrow:
+If Pay-U rejects a claim, the renter is liable for the full repair cost:
 
 ```typescript
-// src/services/insuranceService.ts
-
-async processClaimPayout(claimId: string, amount: number): Promise<boolean> {
-  // 1. Verify escrow has sufficient balance
-  const { data: escrow } = await supabase
-    .from('insurance_escrow')
-    .select('balance')
-    .single();
-    
-  if (escrow.balance < amount) {
-    throw new Error(`Insufficient escrow balance. Available: P${escrow.balance}`);
-  }
-  
-  // 2. Get claim and renter info
-  const { data: claim } = await supabase
-    .from('insurance_claims')
-    .select('*, policy:insurance_policies(renter_id)')
-    .eq('id', claimId)
-    .single();
-  
-  // 3. Debit escrow
-  await supabase.rpc('debit_insurance_escrow', {
-    p_claim_id: claimId,
-    p_amount: amount
-  });
-  
-  // 4. Credit renter wallet
-  await walletService.creditInsurancePayout(
-    claim.policy.renter_id,
-    claimId,
-    amount,
-    claim.claim_number
-  );
-  
-  // 5. Update claim status
+// When Pay-U rejects claim
+async function handleClaimRejection(
+  claimId: string, 
+  liabilityAmount: number,
+  rejectionReason: string
+): Promise<void> {
+  // 1. Update claim status
   await supabase
     .from('insurance_claims')
     .update({
-      status: 'paid',
-      payout_amount: amount,
-      paid_at: new Date().toISOString()
+      status: 'rejected',
+      external_status: 'payu_rejected',
+      rejection_reason: rejectionReason,
+      renter_liability_amount: liabilityAmount,
+      renter_liability_paid: false,
+      resolved_at: new Date().toISOString()
     })
     .eq('id', claimId);
-  
-  // 6. Send notification
-  await notifyClaimPaid(claim);
-  
-  return true;
-}
-```
-
-### Refund Handling
-
-If a booking with insurance is cancelled before the rental starts:
-
-```typescript
-// Refund scenarios:
-// 1. Full cancellation before start: 100% premium refunded to renter
-// 2. Mid-rental cancellation: Pro-rated based on unused days
-// 3. After rental complete: No refund (policy expired)
-
-async refundInsurancePremium(
-  bookingId: string, 
-  refundType: 'full' | 'pro_rata'
-): Promise<void> {
-  const { data: booking } = await supabase
-    .from('bookings')
-    .select('insurance_premium, insurance_policy_id, start_date, end_date')
-    .eq('id', bookingId)
+    
+  // 2. Get renter details
+  const { data: claim } = await supabase
+    .from('insurance_claims')
+    .select('renter_id, booking_id, claim_number')
+    .eq('id', claimId)
     .single();
     
-  if (!booking.insurance_premium || booking.insurance_premium === 0) return;
-  
-  let refundAmount = booking.insurance_premium;
-  
-  if (refundType === 'pro_rata') {
-    const totalDays = differenceInDays(new Date(booking.end_date), new Date(booking.start_date));
-    const usedDays = differenceInDays(new Date(), new Date(booking.start_date));
-    const unusedDays = Math.max(0, totalDays - usedDays);
-    refundAmount = (booking.insurance_premium / totalDays) * unusedDays;
-  }
-  
-  // Debit escrow for refund
-  await supabase.rpc('debit_insurance_escrow', {
-    p_claim_id: null, // Not a claim
-    p_booking_id: bookingId,
-    p_amount: refundAmount,
-    p_transaction_type: 'refund'
+  // 3. Send notification to renter
+  await supabase.from('notifications').insert({
+    user_id: claim.renter_id,
+    title: 'Insurance Claim Rejected - Payment Required',
+    message: `Your insurance claim ${claim.claim_number} was not approved. You are liable for P${liabilityAmount.toFixed(2)} in repair costs. Please make payment to avoid further action.`,
+    type: 'insurance_liability',
+    action_url: `/rental-details/${claim.booking_id}`,
+    priority: 'high'
   });
-  
-  // Credit renter's payment method or wallet
-  // ...
 }
 ```
 
-### Risk Monitoring
+### Rental Details Page - Additional Payment
 
-The admin dashboard monitors insurance escrow health:
+The `/rental-details/:id` page includes an "Additional Payment" section for:
+- Insurance excess payments
+- Renter liability payments (rejected claims)
 
-| Metric | Warning | Critical | Action |
-|--------|---------|----------|--------|
-| Escrow Balance | < 3x avg monthly claims | < 1x avg monthly claims | Alert admins |
-| Monthly Loss Ratio | > 70% | > 90% | Review premium pricing |
-| Claim Approval Rate | > 80% | > 95% | Review claim criteria |
-| Large Claims (>P10k) | Any | Multiple | Manual review required |
+```typescript
+// Component: RentalDetailsExcessPayment.tsx
+
+interface ExcessPaymentProps {
+  bookingId: string;
+  claim: InsuranceClaim;
+}
+
+export const RentalDetailsExcessPayment: React.FC<ExcessPaymentProps> = ({
+  bookingId,
+  claim
+}) => {
+  const showExcessPayment = 
+    (claim.excess_requested && !claim.excess_paid) ||
+    (claim.renter_liability_amount > 0 && !claim.renter_liability_paid);
+    
+  const amountDue = claim.excess_amount_due || claim.renter_liability_amount;
+  const paymentType = claim.excess_requested ? 'excess' : 'liability';
+  
+  if (!showExcessPayment) return null;
+  
+  return (
+    <Card className="border-destructive">
+      <CardHeader>
+        <CardTitle className="text-destructive flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5" />
+          Payment Required
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground mb-4">
+          {paymentType === 'excess' 
+            ? `An excess payment of P${amountDue?.toFixed(2)} is required for your insurance claim.`
+            : `Your insurance claim was not approved. You are liable for P${amountDue?.toFixed(2)} in repair costs.`
+          }
+        </p>
+        <Button 
+          onClick={() => initiateExcessPayment(bookingId, claim.id, amountDue)}
+          className="w-full"
+        >
+          Make Additional Payment - P{amountDue?.toFixed(2)}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+### Admin Portal - Insurance Section
+
+#### Navigation
+
+```
+/admin/insurance
+├── /dashboard          - Overview metrics
+├── /claims             - Claims management
+├── /policies           - Policy listing
+├── /remittance         - Premium remittance to Pay-U
+├── /excess-payments    - Track excess/liability payments
+└── /reports            - Financial reports
+```
+
+#### Claims Dashboard Updates
+
+The Admin Claims Dashboard includes Pay-U integration fields:
+
+| Field | Description |
+|-------|-------------|
+| Pay-U Reference | External case/reference number |
+| External Status | Status from Pay-U (submitted, under_review, approved, rejected) |
+| Submit to Pay-U | Action button to forward claim via email |
+| Excess Required | Toggle to request excess from renter |
+| Renter Liability | Amount renter owes if claim rejected |
+
+#### Key Actions
+
+1. **Submit to Pay-U**: Opens email template with claim details
+2. **Update Pay-U Status**: Record status updates from Pay-U
+3. **Request Excess**: Set excess amount and trigger notification
+4. **Record Liability**: Set renter liability if claim rejected
+5. **Mark Excess Paid**: Confirm excess payment received
+
+### Notifications
+
+#### Insurance-Related Notifications
+
+| Event | Recipient | Message |
+|-------|-----------|---------|
+| Claim Submitted | Host, Admin | "Insurance claim submitted for [car]" |
+| Claim Forwarded to Pay-U | Host | "Your claim has been forwarded for review" |
+| Excess Payment Required | Renter | "Excess payment of P[amount] required" |
+| Claim Approved | Host | "Your insurance claim has been approved" |
+| Claim Rejected | Renter | "Claim rejected - you are liable for P[amount]" |
+| Repairs Completed | Host | "Repairs completed for [car]" |
+| Premium Remitted | Admin | "Daily premium batch remitted to Pay-U" |
+
+### Revenue Model Summary
+
+```text
+Per Booking with Insurance:
+
+  Rental: P1000
+    ├─ Host Earnings (85%):           P850
+    └─ Platform Commission (15%):     P150
+
+  Insurance Premium: P250
+    ├─ Pay-U (90%):                   P225 (remitted daily)
+    └─ MobiRides Commission (10%):    P25
+
+  MobiRides Total Revenue:            P175 (P150 + P25)
+```
 
 ### Implementation Tasks
 
-| ID | Task | Points |
-|----|------|--------|
-| INS-ESC-001 | Add `insurance_premium`, `insurance_policy_id` to bookings | 2 |
-| INS-ESC-002 | Create `insurance_escrow` table | 1 |
-| INS-ESC-003 | Create `insurance_escrow_transactions` table | 2 |
-| INS-ESC-004 | Create `credit_insurance_escrow` function | 2 |
-| INS-ESC-005 | Create `debit_insurance_escrow` function | 2 |
-| INS-ESC-006 | Update `payment-webhook` for insurance split | 3 |
-| INS-ESC-007 | Update `BookingDialog.tsx` for premium storage | 2 |
-| INS-ESC-008 | Update `insuranceService.processClaimPayout` | 2 |
-| INS-ESC-009 | Create `InsuranceEscrowService` | 3 |
-| INS-ESC-010 | Create Admin Insurance Dashboard page | 5 |
-| INS-ESC-011 | Create Escrow Balance widget | 2 |
-| INS-ESC-012 | Create Escrow Transactions view | 3 |
-| INS-ESC-013 | Add insurance to `PriceBreakdown` display | 1 |
-| INS-ESC-014 | Implement refund handling | 3 |
-| INS-ESC-015 | End-to-end testing | 3 |
+| ID | Task | Points | Priority |
+|----|------|--------|----------|
+| INS-PAY-001 | Add `insurance_premium`, `insurance_policy_id` to bookings | 2 | P0 |
+| INS-PAY-002 | Add remittance fields to `insurance_policies` | 2 | P0 |
+| INS-PAY-003 | Add external status & liability fields to `insurance_claims` | 2 | P0 |
+| INS-PAY-004 | Create `insurance_commission_rates` table | 1 | P1 |
+| INS-PAY-005 | Create `premium_remittance_batches` table | 2 | P1 |
+| INS-PAY-006 | Update `payment-webhook` for premium split | 3 | P0 |
+| INS-PAY-007 | Update `BookingDialog.tsx` for premium storage | 2 | P0 |
+| INS-PAY-008 | Create `InsuranceRemittanceService` | 3 | P1 |
+| INS-PAY-009 | Create Admin Remittance Dashboard (`/admin/insurance/remittance`) | 5 | P1 |
+| INS-PAY-010 | Update Admin Claims Dashboard for Pay-U flow | 3 | P1 |
+| INS-PAY-011 | Create `RentalDetailsExcessPayment` component | 3 | P1 |
+| INS-PAY-012 | Implement excess payment collection flow | 3 | P1 |
+| INS-PAY-013 | Add renter liability handling for rejected claims | 2 | P1 |
+| INS-PAY-014 | Create insurance notification templates | 2 | P2 |
+| INS-PAY-015 | Update `PriceBreakdown.tsx` for insurance display | 1 | P1 |
+| INS-PAY-016 | Create Commission Report | 2 | P2 |
+| INS-PAY-017 | Update documentation | 2 | P1 |
+| INS-PAY-018 | End-to-end testing | 3 | P0 |
 
-**Total: 36 Story Points**
+**Total: 43 Story Points**
+
+### Key Differences from Previous (Incorrect) Model
+
+| Aspect | Previous (Wrong) | Corrected |
+|--------|------------------|-----------|
+| Escrow | Internal platform escrow | No escrow - remit to Pay-U |
+| Commission | Not defined | 10% to MobiRides |
+| Claim Payout | Platform credits renter wallet | Pay-U pays directly |
+| Beneficiary | Renter | Host (vehicle owner) |
+| Remittance | Automatic | Manual via Admin portal (daily) |
+| Claim Submission | In-platform only | Forwarded to support@mobirides.africa |
+| Repair Quotes | Host sourced | MobiRides managed |
+| Rejected Claims | Not addressed | Renter liable for full cost |
+
+### Contact Information
+
+- **Claims Submission**: support@mobirides.africa
+- **Pay-U Partnership**: [Contact details TBD]
+- **Finance Team**: [Internal contact for remittance]
