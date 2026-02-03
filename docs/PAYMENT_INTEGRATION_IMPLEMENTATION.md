@@ -25,6 +25,7 @@
 13. [Legacy Mock Logic Migration](#legacy-mock-logic-migration)
 14. [Insurance Premium Integration](#insurance-premium-integration)
 15. [Dynamic Pricing & Price Transparency](#dynamic-pricing--price-transparency)
+16. [Payment Flow Separation & Mock Renter Service](#payment-flow-separation--mock-renter-service)
 
 ---
 
@@ -2500,6 +2501,493 @@ FROM insurance_policies ip
 WHERE ip.booking_id = b.id
   AND b.insurance_policy_id IS NULL;
 ```
+
+---
+
+## 16. Payment Flow Separation & Mock Renter Service
+
+**Assigned To:** Arnold (Senior Software Engineer)  
+**Status:** Planned  
+**Estimated Effort:** 26 Story Points  
+**Priority:** P1 - Required for Testing Complete Booking Flow
+
+---
+
+### 16.1 Problem Statement
+
+The current implementation has **confusion between two distinct payment flows**:
+
+| Flow | Current State | Issue |
+|------|---------------|-------|
+| **Host Wallet Top-ups** | Implemented via `mockPaymentService.ts` | Working, but undocumented as host-only |
+| **Renter Booking Payments** | **NOT IMPLEMENTED** | No mock service, no UI, no edge functions |
+
+The existing `mockPaymentService.ts` only supports host wallet top-ups via `TopUpModal.tsx`. There is no renter-side booking payment flow, which blocks testing of the complete booking + insurance + dynamic pricing integration.
+
+---
+
+### 16.2 Current Infrastructure Audit
+
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| `src/services/mockPaymentService.ts` | Host wallet top-ups only | ✅ Implemented |
+| `src/components/wallet/TopUpModal.tsx` | UI for hosts to add funds | ✅ Implemented |
+| `src/services/walletService.ts` | Host wallet balance management | ✅ Implemented |
+| `initiate-payment` edge function | Renter booking payments | ❌ **NOT IMPLEMENTED** |
+| `payment-webhook` edge function | Handle provider callbacks | ❌ **NOT IMPLEMENTED** |
+| Renter "Pay Now" UI | Booking payment interface | ❌ **NOT IMPLEMENTED** |
+| `mockBookingPaymentService.ts` | Mock renter payments for testing | ❌ **NOT IMPLEMENTED** |
+
+---
+
+### 16.3 Two Payment Flows (Clear Separation)
+
+#### Flow A: Host Wallet Top-ups
+
+**Purpose:** Hosts add funds to maintain P50 minimum balance for accepting bookings.
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ FLOW A: HOST WALLET TOP-UP                                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Host Dashboard                                                    │
+│     └─► Clicks "Top Up Wallet"                                      │
+│           └─► TopUpModal.tsx opens                                  │
+│                 └─► Selects amount (P50, P100, P200, etc.)          │
+│                       └─► Selects payment method                    │
+│                             └─► mockPaymentService.processPayment() │
+│                                   └─► walletService.topUpWallet()   │
+│                                         └─► Wallet balance updated  │
+│                                                                     │
+│   Current Service: mockPaymentService.ts                            │
+│   Current UI: TopUpModal.tsx                                        │
+│   Status: ✅ IMPLEMENTED                                            │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Flow B: Renter Booking Payments
+
+**Purpose:** Renters pay for approved bookings (rental + insurance - discounts).
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ FLOW B: RENTER BOOKING PAYMENT                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Host approves booking request                                     │
+│     └─► Booking status: awaiting_payment                            │
+│           └─► Payment deadline set (NOW + 24 hours)                 │
+│                 └─► Renter notified: "Pay Now to confirm"           │
+│                                                                     │
+│   Renter opens "My Rentals"                                         │
+│     └─► Sees "Pay Now" button on approved booking                   │
+│           └─► RenterPaymentModal.tsx opens                          │
+│                 └─► Shows price breakdown:                          │
+│                       • Base Rental: P600.00                        │
+│                       • Weekend Premium: +P40.00                    │
+│                       • Early Bird Discount: -P64.00                │
+│                       • Insurance Premium: +P69.12                  │
+│                       • TOTAL: P645.12                              │
+│                             └─► Selects payment method              │
+│                                   └─► mockBookingPaymentService     │
+│                                         .processPayment()           │
+│                                           └─► Simulates payment     │
+│                                                 └─► On success:     │
+│                                                       • Booking confirmed   │
+│                                                       • Host wallet credited│
+│                                                       • Notifications sent  │
+│                                                                     │
+│   Target Service: mockBookingPaymentService.ts (NEW)                │
+│   Target UI: RenterPaymentModal.tsx (NEW)                           │
+│   Status: ❌ NOT IMPLEMENTED                                        │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 16.4 Implementation Tasks
+
+#### Task 1: Update Existing Mock Service Documentation (2 SP)
+
+**File:** `src/services/mockPaymentService.ts`
+
+Add header comments clarifying this is for host wallet top-ups only:
+
+```typescript
+/**
+ * Mock Payment Service - HOST WALLET TOP-UPS ONLY
+ * 
+ * This service handles mock payment processing for host wallet top-ups.
+ * Used by: TopUpModal.tsx
+ * 
+ * FOR RENTER BOOKING PAYMENTS, use: mockBookingPaymentService.ts
+ * 
+ * @see docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md Section 16
+ */
+```
+
+---
+
+#### Task 2: Create Mock Renter Booking Payment Service (4 SP)
+
+**New File:** `src/services/mockBookingPaymentService.ts`
+
+```typescript
+// Interface matching the production payment flow
+export interface BookingPaymentRequest {
+  booking_id: string;
+  payment_method: 'card' | 'orange_money' | 'myzaka' | 'smega';
+  mobile_number?: string;  // Required for mobile money
+  
+  // Price breakdown (from UnifiedPriceSummary)
+  base_rental_price: number;
+  dynamic_pricing_adjustment: number;
+  insurance_premium: number;
+  discount_amount: number;
+  grand_total: number;
+}
+
+export interface BookingPaymentResult {
+  success: boolean;
+  transaction_id?: string;
+  provider_reference?: string;
+  
+  // Split calculations (for verification/display)
+  platform_commission?: number;           // 15% of rental portion
+  host_earnings?: number;                 // 85% of rental portion
+  mobirides_insurance_commission?: number;// 10% of insurance premium
+  payu_remittance_amount?: number;        // 90% of insurance premium
+  
+  error_code?: string;
+  error_message?: string;
+  requires_user_action?: boolean;         // true for OrangeMoney USSD
+}
+```
+
+**Deterministic Test Triggers:**
+
+| Grand Total Ending | Mock Behavior | Purpose |
+|--------------------|---------------|---------|
+| `.99` (e.g., P99.99, P199.99, P645.99) | Always success | Happy path testing |
+| `.01` | Fail: Insufficient funds | Error UI testing |
+| `.02` | Fail: Gateway timeout | Timeout handling |
+| `.03` | Fail: Card declined | Decline handling |
+| `.04` | Pending (OrangeMoney USSD simulation) | Async flow testing |
+| Any other | 95% success, 5% random failure | Realistic simulation |
+
+---
+
+#### Task 3: Create Renter Payment Modal Component (5 SP)
+
+**New File:** `src/components/booking/RenterPaymentModal.tsx`
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     Complete Your Payment                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Toyota Corolla • Feb 10-13, 2026                              │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ Price Breakdown                                           │  │
+│  │ ─────────────────────────────────────────────────────     │  │
+│  │ Base Rental (3 days × P200)              P600.00          │  │
+│  │ Weekend Premium (+20%)                   +P40.00          │  │
+│  │ Early Bird Discount (-10%)               -P64.00          │  │
+│  │ ───────────────────────────────────────                   │  │
+│  │ Rental Subtotal                          P576.00          │  │
+│  │ Standard Insurance (12%)                 P69.12           │  │
+│  │ ───────────────────────────────────────                   │  │
+│  │ TOTAL TO PAY                             P645.12          │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  Select Payment Method:                                         │
+│  ┌─────────────────┐ ┌─────────────────┐                       │
+│  │  💳 Card        │ │  📱 OrangeMoney │                       │
+│  └─────────────────┘ └─────────────────┘                       │
+│                                                                 │
+│  [OrangeMoney selected]                                         │
+│  Mobile Number: [+267 ___ ___ ___]                             │
+│                                                                 │
+│  ⏰ Payment deadline: 23h 45m remaining                         │
+│                                                                 │
+│  🔒 This is a test payment. No real money will be charged.     │
+│                                                                 │
+│                    [ Cancel ]  [ Pay P645.12 ]                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### Task 4: Create Payment Hook (3 SP)
+
+**New File:** `src/hooks/useBookingPayment.ts`
+
+Encapsulates payment logic and will be swapped for production implementation:
+
+```typescript
+interface UseBookingPaymentOptions {
+  onSuccess?: (result: BookingPaymentResult) => void;
+  onError?: (error: string) => void;
+}
+
+interface UseBookingPaymentReturn {
+  initiatePayment: (request: BookingPaymentRequest) => Promise<void>;
+  isProcessing: boolean;
+  processingStep: 'idle' | 'validating' | 'processing' | 'confirming' | 'complete' | 'error';
+  error: string | null;
+}
+```
+
+---
+
+#### Task 5: Add `awaiting_payment` Booking Status (2 SP)
+
+**Files to Update:**
+
+1. `src/types/booking.ts` - Add to BookingStatus enum:
+   ```typescript
+   export enum BookingStatus {
+     PENDING = "pending",
+     AWAITING_PAYMENT = "awaiting_payment",  // NEW
+     CONFIRMED = "confirmed",
+     CANCELLED = "cancelled",
+     COMPLETED = "completed",
+     EXPIRED = "expired"
+   }
+   ```
+
+2. Database migration for payment tracking columns:
+   ```sql
+   ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_status VARCHAR(30) DEFAULT 'unpaid';
+   -- Values: unpaid, awaiting, processing, paid, refunded
+   
+   ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_deadline TIMESTAMPTZ;
+   -- Set to NOW() + 24 hours when host approves
+   
+   ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_transaction_id UUID;
+   -- Reference to payment_transactions table when paid
+   ```
+
+---
+
+#### Task 6: Update RenterBookingCard with "Pay Now" Button (2 SP)
+
+**File:** `src/components/my-rentals/RenterBookingCard.tsx`
+
+Add conditional "Pay Now" button when booking status is `awaiting_payment`:
+
+```tsx
+{booking.status === 'awaiting_payment' && (
+  <Button 
+    onClick={() => setShowPaymentModal(true)}
+    className="w-full bg-primary"
+  >
+    <CreditCard className="mr-2 h-4 w-4" />
+    Pay Now - P{booking.total_price.toFixed(2)}
+  </Button>
+)}
+```
+
+---
+
+#### Task 7: Add Payment Deadline Timer Component (2 SP)
+
+**New File:** `src/components/booking/PaymentDeadlineTimer.tsx`
+
+Displays countdown to payment deadline with visual urgency:
+
+```tsx
+// < 2 hours: Red, pulsing
+// 2-6 hours: Orange
+// > 6 hours: Normal
+<div className="flex items-center gap-2">
+  <Clock className="h-4 w-4" />
+  <span>Payment deadline: {formatTimeRemaining(deadline)}</span>
+</div>
+```
+
+---
+
+#### Task 8: Implement Payment Deadline Expiry Handling (3 SP)
+
+Create scheduled job or trigger to expire unpaid bookings:
+
+```sql
+-- Option A: Database function called by cron
+CREATE OR REPLACE FUNCTION expire_unpaid_bookings()
+RETURNS void AS $$
+BEGIN
+  UPDATE bookings 
+  SET status = 'expired'
+  WHERE status = 'awaiting_payment'
+    AND payment_deadline < NOW();
+    
+  -- Notify affected parties
+  INSERT INTO notifications (user_id, type, title, content, ...)
+  SELECT renter_id, 'booking_expired', 'Booking Expired', ...
+  FROM bookings 
+  WHERE status = 'expired' 
+    AND updated_at >= NOW() - INTERVAL '1 minute';
+END;
+$$ LANGUAGE plpgsql;
+```
+
+---
+
+#### Task 9: Create Supporting UI Components (3 SP)
+
+**New Files:**
+
+1. `src/components/booking/PaymentMethodSelector.tsx` - Card vs OrangeMoney selection
+2. `src/components/booking/PaymentProcessingOverlay.tsx` - Loading states during payment
+3. `src/components/booking/PaymentSuccessDialog.tsx` - Confirmation after successful payment
+
+---
+
+### 16.5 Technical Architecture
+
+#### Mock vs Production Swap
+
+```text
+MOCK MODE (Development/Testing):
+┌──────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│   RenterPaymentModal                                             │
+│         │                                                        │
+│         ▼                                                        │
+│   useBookingPayment (hook)                                       │
+│         │                                                        │
+│         ▼                                                        │
+│   mockBookingPaymentService.processPayment()                     │
+│         │                                                        │
+│         ▼                                                        │
+│   [Simulated delay + deterministic result based on amount]       │
+│         │                                                        │
+│         ▼                                                        │
+│   Update booking status via Supabase                             │
+│   Credit host wallet (mock transaction)                          │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+
+PRODUCTION MODE (Future - PayGate/Ooze):
+┌──────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│   RenterPaymentModal                                             │
+│         │                                                        │
+│         ▼                                                        │
+│   useBookingPayment (hook)                                       │
+│         │                                                        │
+│         ▼                                                        │
+│   Edge Function: initiate-payment                                │
+│         │                                                        │
+│         ├─► PayGate API (cards)                                  │
+│         └─► Ooze API (mobile money)                              │
+│                    │                                             │
+│                    ▼                                             │
+│   Provider redirects renter to payment page                      │
+│                    │                                             │
+│                    ▼                                             │
+│   Edge Function: payment-webhook                                 │
+│         │                                                        │
+│         ▼                                                        │
+│   Update booking + credit wallet + send notifications            │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 16.6 Implementation Order & Timeline
+
+| Order | Task | Story Points | Dependencies | Estimated Days |
+|-------|------|--------------|--------------|----------------|
+| 1 | Update `mockPaymentService.ts` documentation | 2 SP | None | 0.5 |
+| 2 | Add `awaiting_payment` status + DB migration | 2 SP | None | 1 |
+| 3 | Create `mockBookingPaymentService.ts` | 4 SP | Task 1 | 1.5 |
+| 4 | Create `useBookingPayment.ts` hook | 3 SP | Task 3 | 1 |
+| 5 | Create `RenterPaymentModal.tsx` | 5 SP | Tasks 3, 4 | 2 |
+| 6 | Create supporting UI components | 3 SP | Task 5 | 1 |
+| 7 | Update `RenterBookingCard.tsx` with "Pay Now" | 2 SP | Tasks 5, 6 | 0.5 |
+| 8 | Add `PaymentDeadlineTimer.tsx` | 2 SP | Task 2 | 0.5 |
+| 9 | Implement payment deadline expiry | 3 SP | Task 2 | 1 |
+
+**Total: 26 Story Points (~9 days)**
+
+---
+
+### 16.7 Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/services/mockBookingPaymentService.ts` | Mock service for renter booking payments |
+| `src/hooks/useBookingPayment.ts` | Payment flow hook (swappable for production) |
+| `src/components/booking/RenterPaymentModal.tsx` | Payment UI for renters |
+| `src/components/booking/PaymentMethodSelector.tsx` | Card vs OrangeMoney selection |
+| `src/components/booking/PaymentDeadlineTimer.tsx` | 24-hour countdown display |
+| `src/components/booking/PaymentProcessingOverlay.tsx` | Loading states |
+| `src/components/booking/PaymentSuccessDialog.tsx` | Success confirmation |
+
+### 16.8 Files to Update
+
+| File | Changes |
+|------|---------|
+| `src/services/mockPaymentService.ts` | Add header comments clarifying host-wallet-only scope |
+| `src/types/booking.ts` | Add `AWAITING_PAYMENT` to BookingStatus enum |
+| `src/components/my-rentals/RenterBookingCard.tsx` | Add "Pay Now" button for awaiting_payment status |
+| `src/components/booking-request/BookingRequestActions.tsx` | Handle status transition to awaiting_payment |
+
+---
+
+### 16.9 Testing Matrix
+
+#### Two Mock Payment Services
+
+| Service | Purpose | Test Triggers |
+|---------|---------|---------------|
+| `mockPaymentService.ts` | Host wallet top-ups | Standard 95% success rate |
+| `mockBookingPaymentService.ts` | Renter booking payments | Deterministic triggers below |
+
+#### Renter Booking Payment Test Triggers
+
+| Total Ending | Behavior | Test Purpose |
+|--------------|----------|--------------|
+| `.99` | Always success | E2E happy path |
+| `.01` | Insufficient funds | Error handling UI |
+| `.02` | Gateway timeout | Retry logic |
+| `.03` | Card declined | Decline handling |
+| `.04` | Pending (async) | Mobile money USSD flow |
+| Other | 95% success | Realistic simulation |
+
+#### Integration Test Scenarios
+
+| Scenario | Mock Payment Amount | Expected Flow |
+|----------|---------------------|---------------|
+| Successful card payment | P199.99 | Booking confirmed, host wallet credited |
+| Successful OrangeMoney | P299.99 | USSD prompt shown, async confirm |
+| Payment declined | P100.01 | Error shown, retry available |
+| Payment timeout | P100.02 | Timeout message, manual retry |
+| Deadline expired | Any | Booking expired, notifications sent |
+
+---
+
+### 16.10 Success Criteria
+
+After implementation, verify:
+
+- [ ] Documentation clearly separates host wallet top-ups from renter booking payments
+- [ ] `mockPaymentService.ts` has comments clarifying its scope
+- [ ] Developers can test complete booking payment flow without external APIs
+- [ ] Mock service supports deterministic test triggers for automated testing
+- [ ] "Pay Now" button appears for renters when booking is `awaiting_payment`
+- [ ] Payment modal shows complete price breakdown including insurance
+- [ ] Successful mock payment updates booking to `confirmed`
+- [ ] Successful mock payment credits host wallet (85% of rental)
+- [ ] 24-hour payment deadline is visible and enforced
+- [ ] Expired bookings are handled gracefully with notifications
 
 ---
 
