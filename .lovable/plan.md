@@ -1,252 +1,213 @@
 
-# Update Payment Implementation Document
+# MobiRides Week 1 February 2026 Status Report - Plan
 
-## Overview
+## Document Overview
 
-Update the `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` to incorporate the P50 minimum wallet balance requirement and add three new sections requested by stakeholders.
+I will create a comprehensive Week 1 February 2026 Status Report following the established structure from previous reports, incorporating all planning work completed this week and maintaining the project's trajectory toward 90% production readiness by February 28, 2026.
 
-## Changes Summary
+---
 
-### 1. Update Executive Summary - Key Design Decisions Table
+## Document Structure
 
-Add the P50 minimum wallet balance as a key design decision:
+### 1. Header & Metadata
+- Report Date: February 2, 2026
+- Report Period: Week 1 (January 27 - February 2, 2026)
+- Version: v2.4.3
+- Reference to JIRA Production Readiness Plan
 
-| Decision | Chosen Approach | Rationale |
-|----------|-----------------|-----------|
-| **Host Wallet Minimum** | P50 minimum balance to accept bookings | Platform cashflow buffer; foundation for future subscription model |
+### 2. Executive Summary
+**Key Achievements This Week:**
+- Phase 3 Beta Testing commenced (Jan 27)
+- JIRA Production Readiness Plan v1.3 finalized (185+ story points)
+- Interactive Handover System specification completed
+- Navigation UX Improvement Plan completed
+- UI/Display Issues catalog created (34 story points)
+- Review System admin page completed (REV-003 to REV-007)
 
-### 2. New Section: Legacy Mock Logic Migration
+**Updated Metrics:**
+| Metric | Week 4 Jan | Week 1 Feb | Change | Target |
+|--------|-----------|------------|--------|--------|
+| Build Errors | 0 | 0 | - | 0 |
+| Linter Warnings | 15 | 15 | - | <20 |
+| System Health | 85% | 86% | +1% | 95% |
+| Production Readiness | 72% | 74% | +2% | 95% |
+| Test Coverage | 45% | 47% | +2% | 85% |
+| Security Vulnerabilities | 4 | 4 | - | 0 |
 
-Insert after the Risk Assessment section (line ~1042). This section will document:
+### 3. February 2026 Sprint Overview
 
-**Components to Deprecate:**
-- `src/services/commission/commissionDeduction.ts` - Remove upfront commission deduction from wallet
-- `src/services/commission/walletValidation.ts` - Refactor to check P50 minimum only (not commission amount)
-- `src/components/booking-request/WalletCommissionSection.tsx` - Update messaging to reflect new flow
+**Sprint Structure (from JIRA Plan):**
+| Sprint | Dates | Focus | Story Points |
+|--------|-------|-------|--------------|
+| Sprint 1 | Feb 3-9 | Payment Infrastructure | 36 SP |
+| Sprint 2 | Feb 10-16 | Payment UI + Notifications | 49 SP |
+| Sprint 3 | Feb 17-23 | Handover, Messaging, Admin, UI | 102 SP* |
+| Sprint 4 | Feb 24-28 | Polish, Testing, Navigation | 56 SP |
+| Sprint 5 | Post-Feb | Navigation Enhancement Cont. | 43 SP |
 
-**Components to Refactor:**
-- `src/components/dashboard/WalletBalanceIndicator.tsx` - Show available + pending, not pre-funded balance
-- `src/components/dashboard/WalletBalanceCard.tsx` - Add pending balance display
-- `HostBookingCard.tsx` - Keep earnings display but clarify it's credited after renter pays
+*Sprint 3 now includes Interactive Handover (58 SP) + UI/Display Issues (34 SP)
 
-**Logic Changes:**
+### 4. New Planning Documents Created This Week
 
-| Current Mock Behavior | New Production Behavior |
-|-----------------------|-------------------------|
-| Host must pre-fund wallet with commission + P50 to accept | Host needs P50 minimum to accept (cashflow buffer) |
-| Commission deducted immediately from host wallet on approval | Commission retained from renter's payment |
-| Host sees net amount (85%) as "what they'll earn" | Host sees gross amount credited, commission shown as "already deducted" |
-| `deductCommissionFromEarnings()` takes from wallet balance | `credit_pending_earnings()` adds 85% to pending_balance |
+| Document | Purpose | Story Points |
+|----------|---------|--------------|
+| `JIRA_PRODUCTION_READINESS_PLAN_2026-02-02.md` | Master checklist for Feb development | 250+ SP |
+| `INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md` | Ride-hailing style handover UX | 58 SP |
+| `NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md` | Google Maps/Waze quality navigation | 82 SP |
+| `UI_DISPLAY_ISSUES_2026-02-02.md` | Avatar, tabs, contrast, auth fixes | 34 SP |
 
-**Migration Steps:**
-1. Add `pending_balance` column to `host_wallets`
-2. Update `walletValidation.ts` to check only P50 minimum (remove commission check)
-3. Disable `commissionDeduction.ts` logic (or feature-flag for rollback)
-4. Update all UI components showing commission flow
-5. Deploy new payment webhook to handle real commission split
+### 5. Epic Status Update (14 Epics)
 
-### 3. New Section: Payment Flow Comparison
+Update from Week 4 with new planning incorporated:
 
-Visual comparison of current mock vs new custodial architecture:
+| Epic | Name | Week 4 | Week 1 Feb | Status |
+|------|------|--------|------------|--------|
+| 1 | User Auth & Onboarding | 88% | 88% | Near Complete |
+| 2 | Car Listing & Discovery | 82% | 82% | Near Complete |
+| 3 | Booking System | 78% | 78% | In Progress |
+| 4 | Handover Management | 75% | 75% | Major Overhaul Planned |
+| 5 | Messaging System | 72% | 72% | In Progress |
+| 6 | Review System | 65% | 70% | +5% (REV-003 to REV-007 done) |
+| 7 | Wallet & Payments | 45% | 45% | CRITICAL PATH |
+| 8 | Notification System | 75% | 75% | In Progress |
+| 9 | Admin Dashboard | 58% | 60% | Reviews page added |
+| 10 | Verification System | 70% | 70% | In Progress |
+| 11 | Insurance System | 52% | 52% | UI Integration Pending |
+| 12 | Map & Location | 65% | 65% | Major Overhaul Planned |
+| 13 | Help & Support | 58% | 58% | In Progress |
+| 14 | Host Management | 70% | 70% | New Tasks Added |
+| NEW | UI/Display Fixes | - | 0% | 34 SP Planned |
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ CURRENT MOCK FLOW (Pre-payment Commission Model)                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   HOST accepts booking                                                      │
-│     └─► Check: wallet >= P50 + commission?                                  │
-│           └─► YES: Deduct commission from host wallet                       │
-│                 └─► Booking status: confirmed                               │
-│                       └─► (No actual payment collected from renter)         │
-│                                                                             │
-│   PROBLEM: Commission taken from host before any payment received           │
-│   PROBLEM: No real payment collection from renter                           │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+### 6. Major Features Planned
 
-                                    ▼
+**Interactive Handover System (Epic 4 Overhaul):**
+- Turn-based flow with alternating host/renter steps
+- Location selection (renter's location, car location, search)
+- Real-time sync via Supabase subscriptions
+- Session persistence for resume capability
+- 14 pickup steps, 12 return steps
+- Tasks: HAND-010 to HAND-021 (58 SP)
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ NEW CUSTODIAL FLOW (Production Payment Model)                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   HOST accepts booking                                                      │
-│     └─► Check: wallet >= P50? (cashflow buffer only)                        │
-│           └─► YES: Booking status: awaiting_payment                         │
-│                 └─► Renter pays via PayGate/Ooze                            │
-│                       └─► MobiRides receives full amount (P1000)            │
-│                             └─► Split: P150 (15%) retained as commission    │
-│                                   └─► P850 (85%) credited to host wallet    │
-│                                         (as pending_balance)                │
-│                                                                             │
-│   RESULT: Platform holds funds, host sees their share in wallet             │
-│   RESULT: Commission collected from actual payment, not host wallet         │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+**Navigation UX Improvement (Epic 12 Overhaul):**
+- Switch to `navigation-day-v1` / `navigation-night-v1` styles
+- Landmark/POI visibility at zoom 10+
+- 3D buildings layer
+- Maneuver icon library (15+ icons)
+- `DriverModeNavigationView` fullscreen component
+- Heading-locked camera with 60 pitch
+- Voice guidance with street names
+- Tasks: NAV-001 to NAV-018 (82 SP)
 
-**Money Flow Comparison:**
+**UI/Display Issues Fix:**
+- Avatar utility and fixes across 7 components
+- ResponsiveTabTrigger for mobile-friendly tabs
+- Dark/light mode color token migration (54+ files)
+- Auth flow streamlining (auto-open AuthModal)
+- Tasks: DISP-001 to DISP-020 (34 SP)
 
-```text
-MOCK FLOW (Current):
-┌──────────┐      P150 (commission)      ┌──────────────┐
-│   HOST   │ ──────────────────────────► │   PLATFORM   │
-│  WALLET  │                             │   (nowhere)  │
-└──────────┘                             └──────────────┘
-     No actual renter payment occurs
+### 7. Pre-Launch Testing Protocol Status
 
+| Phase | Dates | Status | Participants |
+|-------|-------|--------|--------------|
+| Phase 1: Internal Testing | Jan 6-17 | Complete | Arnold, Duma, Tebogo |
+| Phase 2: Extended Team | Jan 20-24 | Complete | Business team |
+| Phase 3: Beta Group | Jan 27 - Feb 7 | In Progress | 50 beta users |
+| Phase 4: Soft Launch | Feb 10-21 | Scheduled | Limited public |
 
-NEW CUSTODIAL FLOW (Production):
-┌──────────┐                             ┌──────────────┐
-│  RENTER  │ ─────── P1000 ────────────► │  MOBIRIDES   │
-└──────────┘                             │   MERCHANT   │
-                                         │   ACCOUNT    │
-                                         └──────┬───────┘
-                                                │
-                               ┌────────────────┼────────────────┐
-                               │                                 │
-                               ▼                                 ▼
-                        ┌──────────────┐                 ┌──────────────┐
-                        │   PLATFORM   │                 │     HOST     │
-                        │  COMMISSION  │                 │   WALLET     │
-                        │    (15%)     │                 │  (85% held)  │
-                        │    P150      │                 │    P850      │
-                        └──────────────┘                 └──────────────┘
-```
+### 8. Security Posture Update
 
-### 4. New Section: Wallet UI Updates
+**Status:** Security fixes deferred to final sprint (Sprint 4/5) per stakeholder direction
 
-Document the visual changes needed for the wallet interface:
+| ID | Severity | Description | Status | ETA |
+|----|----------|-------------|--------|-----|
+| SEC-001 | High | Payment service mock | Open | Feb 16 |
+| SEC-002 | Medium | Function search_path | Deferred | Feb 28 |
+| SEC-003 | Low | Extension in public schema | Deferred | Post-launch |
+| SEC-004 | Medium | Permissive RLS | Deferred | Feb 28 |
 
-**Current Wallet UI:**
-```text
-┌──────────────────────────────────┐
-│ 💰 Wallet Balance                │
-│                                  │
-│ Balance: P850.00                 │
-│                                  │
-│ ⚠️ Need P50 + commission to      │
-│    accept bookings               │
-│                                  │
-│ [Top Up Wallet]                  │
-└──────────────────────────────────┘
-```
+### 9. Database & Infrastructure
 
-**New Wallet UI:**
-```text
-┌──────────────────────────────────┐
-│ 💰 Your Wallet                   │
-│                                  │
-│ Available Balance    P850.00     │
-│ (can withdraw)                   │
-│ ────────────────────────────     │
-│ Pending Earnings     P450.00     │
-│ (from 2 active rentals)          │
-│ ℹ️ Released when rentals complete │
-│ ────────────────────────────     │
-│ Total               P1,300.00    │
-│                                  │
-│ ✓ Ready to accept bookings       │
-│   (P50 minimum met)              │
-│                                  │
-│ [Withdraw Available Funds]       │
-│ [View Earnings Breakdown]        │
-└──────────────────────────────────┘
-```
+- Migrations: 216 synchronized
+- Schema health: Verified
+- New tables planned: `payment_transactions`, `withdrawal_requests`, `payout_details`
+- Handover schema updates for interactive flow
 
-**Component Changes:**
+### 10. Risk Assessment
 
-| Component | Current State | New State |
-|-----------|---------------|-----------|
-| `WalletBalanceCard` | Shows single balance | Shows available + pending + total |
-| `WalletBalanceIndicator` | Shows commission warning | Shows P50 minimum status only |
-| `WalletCommissionSection` | "Commission will be deducted from wallet" | "15% commission is retained from payment" |
-| `TopUpModal` | "Top up to accept bookings" | "Maintain P50 minimum for platform access" |
-| `WalletTransactionHistory` | Shows commission deductions | Shows pending credits + releases |
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Payment integration delay | Medium | Critical | Start sandbox Day 1 |
+| Sprint 3 overload (102 SP) | High | High | Prioritize P0/P1, parallelize |
+| Navigation styles unavailable | Low | Medium | Custom layer fallback |
+| Beta tester dropout | Low | Medium | Over-recruit to 75 |
 
-**New Transaction Types Displayed:**
+### 11. Action Items for Week 2 (Feb 3-9)
 
-| Type | Display Label | Icon |
-|------|---------------|------|
-| `rental_earnings_pending` | "Earnings (Pending)" | 🕐 |
-| `earnings_released` | "Earnings Released" | ✓ |
-| `withdrawal` | "Withdrawal" | ↗️ |
-| `topup` | "Top Up" | + |
+**High Priority:**
+- Begin Sprint 1: Payment Infrastructure
+- MPAY-001: Create payment database schema
+- MPAY-002: Configure PayGate secrets
+- MPAY-010: Payment initiation edge function
+- MPAY-011: Payment webhook handler
 
-### 5. Update: Host Wallet Minimum Business Logic
+**Medium Priority:**
+- Continue Phase 3 Beta Testing monitoring
+- Collect beta user feedback
+- Review handover system PRD with team
 
-Add to the Executive Summary / Key Design Decisions section:
+### 12. Success Criteria (Feb 28, 2026)
 
-**P50 Minimum Wallet Balance:**
+From JIRA Production Readiness Plan:
+- All P0 stories completed
+- 90%+ P1 stories completed
+- Payment integration live in sandbox
+- Push notifications functional
+- Zero critical bugs
+- Navigation UX matches Google Maps/Waze quality
+- All avatars display correctly
+- Tabs usable on 375px mobile screens
+- All text readable in light/dark modes (WCAG AA)
 
-The P50 minimum wallet balance requirement serves multiple purposes:
+### 13. Document References
 
-1. **Platform Cashflow Buffer**: Ensures positive cash relationship between MobiRides and hosts
-2. **Commitment Signal**: Demonstrates host commitment to the platform
-3. **Future Subscription Foundation**: Provides infrastructure for planned monthly host subscription fee
+| Document | Location | Last Updated |
+|----------|----------|--------------|
+| JIRA Production Readiness Plan | `docs/JIRA_PRODUCTION_READINESS_PLAN_2026-02-02.md` | Feb 2, 2026 |
+| Interactive Handover Spec | `docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md` | Feb 2, 2026 |
+| Navigation UX Plan | `docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md` | Feb 2, 2026 |
+| UI Display Issues | `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Feb 2, 2026 |
+| Week 4 Jan Status | `docs/Product Status/WEEK_4_JANUARY_2026_STATUS_REPORT.md` | Jan 26, 2026 |
+| Pre-Launch Testing Protocol | `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md` | Jan 5, 2026 |
 
-**Future Enhancement (Post-MVP):**
-- Monthly subscription fee (P50 or configurable) for hosts using the platform
-- Automatic deduction from wallet balance
-- Subscription status affects listing visibility
-- Grace period handling for insufficient balance
+### 14. Key Metrics Dashboard (ASCII)
 
-### 6. Update payment_config Defaults
+Visual health dashboard showing current state vs targets.
 
-Add subscription-related config keys for future use:
+### 15. Conclusion
 
-```sql
--- Existing
-('minimum_wallet_balance', '"50"', 'Minimum wallet balance to accept bookings'),
+Summary of Week 1 February accomplishments, outlook for Sprint 1, and confirmation of February 28, 2026 target.
 
--- Future (disabled by default)
-('host_subscription_enabled', 'false', 'Enable monthly host subscription'),
-('host_subscription_amount', '"50"', 'Monthly subscription fee in BWP'),
-('subscription_grace_days', '"7"', 'Grace period days for insufficient balance');
-```
+---
 
-### 7. Update Document Revision History
+## Technical Notes
 
-```
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2026-02-02 | Dev Team | Initial document |
-| 1.1 | 2026-02-02 | Dev Team | Added Legacy Migration, Flow Comparison, Wallet UI sections; P50 minimum requirement |
-```
+**File Location:** `docs/Product Status/WEEK_1_FEBRUARY_2026_STATUS_REPORT.md`
 
-## Files to Modify
+**Key Differences from Week 4 January Report:**
+1. Added new "Major Features Planned" section for the three overhaul specifications
+2. Expanded Sprint Overview to cover full February + spillover
+3. Added document references for all four new planning documents
+4. Included detailed breakdown of new JIRA tasks by epic
+5. Updated epic table to reflect completed review system tasks
+6. Added new UI/Display Fixes epic tracking
 
-| File | Action |
-|------|--------|
-| `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` | Add new sections and updates described above |
-
-## New Sections Order (in document)
-
-1. Executive Summary (updated)
-2. Payment Flow Architecture
-3. **Payment Flow Comparison** (NEW - insert after architecture)
-4. Database Schema
-5. Edge Functions
-6. Frontend Components
-7. **Wallet UI Updates** (NEW - insert after Frontend Components)
-8. Integration Specifications
-9. Security Considerations
-10. Testing Strategy
-11. Implementation Timeline
-12. Risk Assessment
-13. **Legacy Mock Logic Migration** (NEW - insert after Risk Assessment)
-14. Dependencies
-15. Success Metrics
-16. Appendices
-17. Document Revision History (updated)
-
-## Technical Notes for Engineers
-
-**Key Understanding:**
-- The MobiRides business account is the **custodial account** that holds all renter payments
-- Host wallets are **ledger entries** reflecting their share of funds held by MobiRides
-- Withdrawals are actual payouts from the business account to hosts
-- The P50 minimum ensures there's always a positive balance in the platform-host relationship
-- This architecture supports future features like instant payouts, credit lines, or subscription billing
-
+**Sections Maintained:**
+- Executive Summary format
+- Progress metrics table
+- Epic status matrix
+- Testing protocol status
+- Security posture update
+- Risk assessment table
+- Action items structure
+- ASCII health dashboard
+- Document references appendix

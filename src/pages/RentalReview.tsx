@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Slash, Star } from "lucide-react";
+import { ArrowLeft, Slash, Star, Check } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/add-car/ImageUpload";
 import { toast } from "sonner";
 import { FaStar } from "react-icons/fa";
 import { RxDividerHorizontal } from "react-icons/rx";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
 
 export const RentalReview = () => {
   const { bookingId } = useParams();
@@ -20,6 +21,25 @@ export const RentalReview = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [isRenter, setIsRenter] = useState(false);
+
+  // Check for existing review first
+  const { data: existingReview, isLoading: isCheckingExisting } = useQuery({
+    queryKey: ["existing-review", bookingId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .eq("reviewer_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["booking-review", bookingId],
@@ -83,7 +103,6 @@ export const RentalReview = () => {
         }
       }
 
-      console.log("Booking data:", bookingData);
       return bookingData;
     },
   });
@@ -174,8 +193,8 @@ export const RentalReview = () => {
     }
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  if (isLoading || isCheckingExisting) {
+    return <div className="container max-w-2xl py-8 flex items-center justify-center min-h-[50vh]">Loading...</div>;
   }
 
   if (!booking || !booking.cars) {
@@ -191,6 +210,85 @@ export const RentalReview = () => {
           </CardHeader>
           <CardContent>
             <p>This booking doesn't exist or has been removed.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show existing review if already submitted
+  if (existingReview) {
+    return (
+      <div className="container max-w-2xl py-8">
+        <div className="rounded-lg overflow-hidden mb-6">
+          <div className="flex items-center mb-4 relative">
+            <div className="absolute left-0">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/bookings')}
+                className="p-0"
+              >
+                <div className="flex items-center bg-gray-200 rounded-full p-1">
+                  <ArrowLeft className="h-10 w-10" />
+                </div>
+              </Button>
+            </div>
+            <div className="flex-1 text-center">
+              <h2 className="text-base md:text-lg text-slate-800 font-semibold">
+                Your Review
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        <Card className="rounded-lg overflow-hidden border-none">
+          <div className="flex justify-center mt-8">
+            <img
+              src={booking.cars.image_url}
+              alt="Car Image"
+              className="w-80 h-full rounded-2xl"
+            />
+          </div>
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Check className="h-8 w-8 text-green-500" />
+              <span className="text-lg font-medium text-green-600">Review Submitted</span>
+            </div>
+            <CardTitle className="font-medium text-lg md:text-xl text-gray-800">
+              {booking.cars.brand} {booking.cars.model}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Your Rating</p>
+              <div className="flex gap-1 justify-center">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <Star
+                    key={value}
+                    className={`h-8 w-8 ${value <= existingReview.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {existingReview.comment && (
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm font-medium mb-1">Your Comment:</p>
+                <p className="text-muted-foreground">{existingReview.comment}</p>
+              </div>
+            )}
+
+            <p className="text-sm text-center text-muted-foreground">
+              Submitted on {format(new Date(existingReview.created_at), "MMMM d, yyyy")}
+            </p>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate('/bookings')}
+            >
+              Back to Bookings
+            </Button>
           </CardContent>
         </Card>
       </div>

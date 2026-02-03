@@ -1,8 +1,8 @@
 # MobiRides Payment Integration - Technical Implementation Document
 
-**Version:** 1.1  
-**Date:** February 2, 2026  
-**Status:** Pending Review
+**Version:** 1.3  
+**Date:** February 3, 2026  
+**Status:** Active Development
 **Authors:** Development Team  
 **Reviewers:** Dev Team & Engineers
 
@@ -23,6 +23,9 @@
 11. [Implementation Timeline](#implementation-timeline)
 12. [Risk Assessment](#risk-assessment)
 13. [Legacy Mock Logic Migration](#legacy-mock-logic-migration)
+14. [Insurance Premium Integration](#insurance-premium-integration)
+15. [Dynamic Pricing & Price Transparency](#dynamic-pricing--price-transparency)
+16. [Payment Flow Separation & Mock Renter Service](#payment-flow-separation--mock-renter-service)
 
 ---
 
@@ -1185,40 +1188,149 @@ OOZE_WEBHOOK_SECRET=<webhook_secret>
 
 ## Testing Strategy
 
+### Mock vs Production API Strategy
+
+MobiRides implements a **dual-mode payment system** that can operate in either mock or production mode. This enables full end-to-end testing without requiring live payment credentials.
+
+#### Mock Payment Service
+
+**Location:** `src/services/mockPaymentService.ts`
+
+The mock service simulates:
+- Payment initiation with configurable success rate (95% default)
+- Payment method selection (GCash, Maya, Bank Transfer, Credit Card)
+- Transaction reference generation
+- Configurable delays to simulate real-world latency
+
+```typescript
+// Mock service provides:
+interface MockPaymentService {
+  getPresetAmounts(): number[];              // [50, 100, 200, 500, 1000]
+  getAvailablePaymentMethods(): PaymentMethod[];
+  processPayment(request: PaymentRequest): Promise<PaymentResult>;
+  isValidAmount(amount: number): boolean;    // Min 10, Max 50,000
+  getPaymentMethodById(id: string): PaymentMethod | undefined;
+}
+```
+
+#### Environment Configuration
+
+```typescript
+// Payment mode controlled via environment
+const PAYMENT_MODE = Deno.env.get('PAYMENT_MODE') || 'mock';
+
+// In edge functions:
+if (PAYMENT_MODE === 'mock') {
+  return mockPaymentService.processPayment(request);
+} else {
+  return productionPaymentGateway.processPayment(request);
+}
+```
+
+#### Testing Phases
+
+| Phase | Payment Mode | Purpose |
+|-------|--------------|---------|
+| Local Development | Mock | Fast iteration, no credentials needed |
+| Staging | Mock + Sandbox | Test with provider sandbox APIs |
+| Pre-Production | Sandbox | Full provider integration testing |
+| Production | Production | Live payments |
+
 ### Unit Tests
 
 | Function | Test Cases |
 |----------|------------|
-| Commission calculation | Various amounts, edge cases |
+| Commission calculation | Various amounts, edge cases (0, negative, very large) |
 | Checksum generation | Known PayGate test vectors |
-| Withdrawal validation | Min amount, balance check |
+| Withdrawal validation | Min amount, balance check, concurrent requests |
+| Dynamic pricing calculation | Base price, multipliers, seasonal rules |
+| Insurance premium split | 10/90 split accuracy, rounding |
+| Price breakdown display | All components visible, correct totals |
 
 ### Integration Tests
 
 | Flow | Test Cases |
 |------|------------|
 | Payment initiation | Valid booking, invalid booking, expired deadline |
-| Webhook processing | Success, decline, cancelled, duplicate |
+| Webhook processing | Success, decline, cancelled, duplicate (idempotency) |
 | Withdrawal | Sufficient balance, insufficient, concurrent requests |
+| Insurance premium | Premium calculation, policy creation, remittance tracking |
+| Excess payment | Request creation, notification, payment completion |
 
 ### End-to-End Tests
 
-| Scenario | Steps |
-|----------|-------|
-| Complete payment flow | Create booking → Approve → Pay → Confirm |
-| Withdrawal flow | Complete rental → Release earnings → Withdraw |
-| Expired booking | Approve → Wait for deadline → Verify expired |
+| Scenario | Steps | Verification |
+|----------|-------|--------------|
+| Complete payment flow | Create booking → Approve → Pay → Confirm | Booking confirmed, wallet credited |
+| With insurance | Booking + insurance → Pay → Verify split | Premium tracked, remittance pending |
+| Withdrawal flow | Complete rental → Release earnings → Withdraw | Balance updated, transaction recorded |
+| Expired booking | Approve → Wait for deadline → Verify expired | Status = expired, notification sent |
+| Excess payment | Claim rejected → Pay liability | Liability cleared, host notified |
+| Dynamic pricing | Book during peak → Verify premium applied | Price breakdown shows adjustments |
+| Promo code | Apply code → Verify discount | Discount reflected in total |
 
 ### PayGate Sandbox Testing
 
 **Test Cards:**
 - Success: `4000000000000002` (Visa)
 - Decline: `4000000000000036`
+- Cancelled: `4000000000000044`
 
 **Test Amount Triggers:**
 - P1.00 = Approved
 - P2.00 = Declined
 - P4.00 = Cancelled
+
+### Mock API Test Scenarios
+
+The mock payment service supports specific test scenarios:
+
+| Amount | Mock Behavior | Purpose |
+|--------|---------------|---------|
+| P99.99 | Always success | Happy path testing |
+| P0.01 | Always fail (insufficient funds) | Error handling |
+| P0.02 | Always fail (timeout) | Timeout handling |
+| P0.03 | Always fail (gateway error) | Retry logic testing |
+| Any other | 95% success, 5% random failure | Realistic simulation |
+
+### Price Transparency Test Cases
+
+| Test Case | Expected Result |
+|-----------|-----------------|
+| Booking without insurance | Total = Rental only |
+| Booking with insurance | Total = Rental + Premium |
+| Dynamic pricing applied | Breakdown shows each adjustment |
+| Promo code applied | Discount line item visible |
+| Receipt generation | Matches booking total exactly |
+| Host view | Shows same total as renter paid |
+| Success modal | Displays grand total with insurance |
+
+### Commission Rate Tests
+
+| Scenario | Platform Commission | Host Earnings |
+|----------|---------------------|---------------|
+| P1000 rental | P150 (15%) | P850 (85%) |
+| P500 rental | P75 (15%) | P425 (85%) |
+| P100 rental | P15 (15%) | P85 (85%) |
+| P1.00 minimum | P0.15 (15%) | P0.85 (85%) |
+
+### Automated Test Suite
+
+```bash
+# Run all payment tests
+npm run test:payments
+
+# Run specific test categories
+npm run test:payments:unit
+npm run test:payments:integration
+npm run test:payments:e2e
+
+# Run with mock payment mode
+PAYMENT_MODE=mock npm run test:payments
+
+# Run against sandbox
+PAYMENT_MODE=sandbox npm run test:payments:sandbox
+```
 
 ---
 
@@ -1507,6 +1619,1375 @@ You can withdraw your earnings at any time from your wallet.
 |---------|------|--------|---------|
 | 1.0 | 2026-02-02 | Dev Team | Initial document |
 | 1.1 | 2026-02-02 | Dev Team | Added P50 minimum wallet balance requirement; Payment Flow Comparison section; Wallet UI Updates section; Legacy Mock Logic Migration section; updated payment_config with subscription placeholders |
+| 1.2 | 2026-02-03 | Dev Team | Added Insurance Premium Integration section (Section 14) with Pay-U partnership model, manual remittance, excess/liability handling |
+| 1.3 | 2026-02-03 | Dev Team | Enhanced Testing Strategy with mock API documentation; Added Section 15 Dynamic Pricing & Price Transparency with complete implementation requirements |
+
+---
+
+## 14. Insurance Premium Integration
+
+### Overview
+
+MobiRides partners with **Pay-U** as the insurance underwriter. Insurance protects the **host** (vehicle owner) against damage or loss caused by renters during the rental period.
+
+**Key Points:**
+- MobiRides collects insurance premiums as part of the booking payment
+- MobiRides remits premiums to Pay-U (manually via Admin portal)
+- MobiRides retains a **10% commission** on insurance premiums
+- Claims are processed externally by MobiRides + Pay-U partnership
+- Repair quotes are managed by MobiRides, not sourced by hosts
+- Claim payouts are handled by Pay-U directly (not through platform wallets)
+
+### Business Model
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     PREMIUM COLLECTION                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Renter pays P1250 total                                        │
+│      │                                                          │
+│      ├─► Rental: P1000                                          │
+│      │      ├─► Host (85%): P850                                │
+│      │      └─► Platform (15%): P150                            │
+│      │                                                          │
+│      └─► Insurance Premium: P250                                │
+│             ├─► Pay-U (90%): P225                               │
+│             └─► MobiRides Commission (10%): P25                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     CLAIM PROCESSING                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Host reports damage → MobiRides + Pay-U review                 │
+│      │                                                          │
+│      ├─► Approved: Pay-U pays for repairs/replacement           │
+│      │             (Repairs arranged by MobiRides)              │
+│      │                                                          │
+│      └─► Rejected: Renter is liable for full cost               │
+│                    (Excess payment collected via platform)      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Premium Split Configuration
+
+```sql
+-- Commission rate configuration
+CREATE TABLE insurance_commission_rates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  package_id UUID REFERENCES insurance_packages(id), -- NULL = default for all
+  mobirides_percentage NUMERIC(5,4) NOT NULL DEFAULT 0.10, -- 10%
+  payu_percentage NUMERIC(5,4) NOT NULL DEFAULT 0.90,      -- 90%
+  effective_from DATE NOT NULL,
+  effective_to DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id)
+);
+
+-- Seed with default 10/90 split
+INSERT INTO insurance_commission_rates 
+  (package_id, mobirides_percentage, payu_percentage, effective_from)
+VALUES 
+  (NULL, 0.10, 0.90, '2026-01-01');
+```
+
+### Database Schema Updates
+
+#### bookings table additions
+
+```sql
+ALTER TABLE bookings 
+  ADD COLUMN insurance_premium NUMERIC(10,2) DEFAULT 0,
+  ADD COLUMN insurance_policy_id UUID REFERENCES insurance_policies(id);
+```
+
+#### insurance_policies table additions
+
+```sql
+ALTER TABLE insurance_policies 
+  ADD COLUMN payu_remittance_status VARCHAR(20) DEFAULT 'pending',
+  -- Values: 'pending', 'remitted', 'failed'
+  ADD COLUMN payu_remittance_date TIMESTAMPTZ,
+  ADD COLUMN payu_remittance_reference VARCHAR(100),
+  ADD COLUMN mobirides_commission NUMERIC(10,2),
+  ADD COLUMN payu_amount NUMERIC(10,2);
+```
+
+#### insurance_claims table additions
+
+```sql
+ALTER TABLE insurance_claims 
+  ADD COLUMN payu_claim_reference VARCHAR(100),
+  ADD COLUMN external_status VARCHAR(50),
+  -- Values: 'submitted_to_payu', 'under_payu_review', 'payu_approved', 'payu_rejected', 'repairs_in_progress', 'repairs_completed'
+  ADD COLUMN excess_requested BOOLEAN DEFAULT FALSE,
+  ADD COLUMN excess_amount_due NUMERIC(10,2),
+  ADD COLUMN excess_paid BOOLEAN DEFAULT FALSE,
+  ADD COLUMN excess_payment_date TIMESTAMPTZ,
+  ADD COLUMN renter_liability_amount NUMERIC(10,2),
+  ADD COLUMN renter_liability_paid BOOLEAN DEFAULT FALSE;
+```
+
+#### premium_remittance_batches table (new)
+
+```sql
+CREATE TABLE premium_remittance_batches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  batch_date DATE NOT NULL,
+  total_policies INTEGER NOT NULL,
+  total_premium_collected NUMERIC(12,2) NOT NULL,
+  mobirides_commission_total NUMERIC(12,2) NOT NULL,
+  payu_amount_total NUMERIC(12,2) NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  -- Values: 'pending', 'remitted', 'confirmed'
+  remitted_by UUID REFERENCES auth.users(id),
+  remitted_at TIMESTAMPTZ,
+  payu_confirmation_reference VARCHAR(100),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### Premium Collection Flow
+
+When a renter pays for a booking with insurance:
+
+```typescript
+// In payment-webhook/index.ts
+const processSuccessfulPayment = async (transaction: PaymentTransaction) => {
+  const { 
+    booking_id, 
+    rental_amount, 
+    insurance_premium, 
+    host_earnings, 
+    platform_commission 
+  } = transaction;
+
+  // 1. Credit host wallet (85% of rental)
+  await supabase.rpc('credit_pending_earnings', {
+    p_booking_id: booking_id,
+    p_host_earnings: host_earnings,
+    p_platform_commission: platform_commission
+  });
+
+  // 2. Process insurance premium split
+  if (insurance_premium > 0) {
+    const MOBIRIDES_COMMISSION_RATE = 0.10; // 10%
+    const mobiridesCut = insurance_premium * MOBIRIDES_COMMISSION_RATE;
+    const payuAmount = insurance_premium - mobiridesCut;
+    
+    // Get policy ID from booking
+    const { data: booking } = await supabase
+      .from('bookings')
+      .select('insurance_policy_id')
+      .eq('id', booking_id)
+      .single();
+      
+    // Update policy with premium split details
+    await supabase
+      .from('insurance_policies')
+      .update({
+        mobirides_commission: mobiridesCut,
+        payu_amount: payuAmount,
+        payu_remittance_status: 'pending'
+      })
+      .eq('id', booking.insurance_policy_id);
+  }
+
+  // 3. Update booking status
+  await supabase.from('bookings')
+    .update({ status: 'confirmed' })
+    .eq('id', booking_id);
+    
+  // 4. Send notifications
+  await sendPaymentNotifications(booking_id);
+};
+```
+
+### Premium Remittance Process (Manual)
+
+Premiums are remitted to Pay-U daily via the Admin Portal.
+
+#### Admin Portal Workflow
+
+1. **Finance Team Access**: Navigate to `/admin/insurance/remittance`
+2. **View Pending Remittance**: See all policies with `payu_remittance_status = 'pending'`
+3. **Create Batch**: Group pending policies into a daily batch
+4. **Manual Transfer**: Transfer `payu_amount_total` to Pay-U account
+5. **Record Confirmation**: Enter Pay-U confirmation reference
+6. **Mark as Remitted**: Update all policies in batch as `remitted`
+
+#### Remittance Dashboard Features
+
+| Feature | Description |
+|---------|-------------|
+| Pending Remittance Total | Sum of Pay-U amounts awaiting transfer |
+| Today's Collections | Premiums collected today |
+| Create Remittance Batch | Select date range, create batch |
+| Batch History | View past remittance batches |
+| Mark Batch Remitted | Record confirmation after manual transfer |
+| Export Report | CSV export for accounting |
+
+#### Admin Service Functions
+
+```typescript
+// src/services/insurance/remittanceService.ts
+
+export class InsuranceRemittanceService {
+  
+  // Get all policies pending remittance
+  static async getPendingRemittance(): Promise<InsurancePolicy[]> {
+    const { data } = await supabase
+      .from('insurance_policies')
+      .select('*, booking:bookings(*)')
+      .eq('payu_remittance_status', 'pending')
+      .order('created_at', { ascending: true });
+    return data || [];
+  }
+  
+  // Create a remittance batch
+  static async createRemittanceBatch(
+    policyIds: string[],
+    batchDate: Date
+  ): Promise<RemittanceBatch> {
+    // Calculate totals
+    const { data: policies } = await supabase
+      .from('insurance_policies')
+      .select('total_premium, mobirides_commission, payu_amount')
+      .in('id', policyIds);
+      
+    const totals = policies.reduce((acc, p) => ({
+      premium: acc.premium + p.total_premium,
+      commission: acc.commission + p.mobirides_commission,
+      payu: acc.payu + p.payu_amount
+    }), { premium: 0, commission: 0, payu: 0 });
+    
+    const { data: batch } = await supabase
+      .from('premium_remittance_batches')
+      .insert({
+        batch_date: batchDate,
+        total_policies: policyIds.length,
+        total_premium_collected: totals.premium,
+        mobirides_commission_total: totals.commission,
+        payu_amount_total: totals.payu,
+        status: 'pending'
+      })
+      .select()
+      .single();
+      
+    return batch;
+  }
+  
+  // Mark batch as remitted (after manual transfer)
+  static async markBatchRemitted(
+    batchId: string,
+    payuReference: string,
+    remittedBy: string,
+    notes?: string
+  ): Promise<void> {
+    // Update batch
+    await supabase
+      .from('premium_remittance_batches')
+      .update({
+        status: 'remitted',
+        remitted_by: remittedBy,
+        remitted_at: new Date().toISOString(),
+        payu_confirmation_reference: payuReference,
+        notes
+      })
+      .eq('id', batchId);
+      
+    // Update all policies in batch
+    // (requires linking policies to batch via junction table or batch_id column)
+  }
+}
+```
+
+### Claims Processing Flow
+
+Claims are submitted via the MobiRides platform but processed externally by Pay-U.
+
+#### Claim Submission Flow
+
+```
+1. Host reports damage via MobiRides platform
+   └─► /insurance/claims/new
+   
+2. MobiRides admin performs initial review
+   └─► Verify policy is valid
+   └─► Check incident is covered
+   └─► Gather initial evidence
+   
+3. Claim forwarded to Pay-U
+   └─► Email: support@mobirides.africa
+   └─► Include: claim details, evidence, policy info
+   └─► Update: external_status = 'submitted_to_payu'
+   └─► Record: payu_claim_reference (email thread ID or case #)
+   
+4. Pay-U assesses claim
+   └─► May request additional info (via MobiRides)
+   └─► Update: external_status = 'under_payu_review'
+   
+5. Pay-U decision
+   ├─► APPROVED:
+   │     └─► external_status = 'payu_approved'
+   │     └─► MobiRides arranges repairs (quotes managed by us)
+   │     └─► Pay-U pays repair costs
+   │     └─► external_status = 'repairs_completed'
+   │     └─► Claim closed
+   │
+   └─► REJECTED:
+         └─► external_status = 'payu_rejected'
+         └─► Renter becomes liable for full cost
+         └─► renter_liability_amount = damage cost
+         └─► Excess payment request sent to renter
+```
+
+#### Excess Collection Process
+
+When a claim requires excess payment from the renter, or if a claim is rejected:
+
+1. **Request Excess Payment**
+   - Admin sets `excess_requested = true` and `excess_amount_due`
+   - System sends notification to renter
+   - Renter sees "Pay Excess" button on `/rental-details/:id`
+
+2. **Renter Payment**
+   - Renter clicks "Make Additional Payment" on rental details page
+   - Initiates payment for excess/liability amount
+   - Uses same payment flow (PayGate/Ooze)
+
+3. **Payment Confirmation**
+   - On successful payment: `excess_paid = true`, `excess_payment_date` set
+   - Notification sent to admin and host
+   - Funds available for repair costs
+
+#### Claim Rejection - Renter Liability
+
+If Pay-U rejects a claim, the renter is liable for the full repair cost:
+
+```typescript
+// When Pay-U rejects claim
+async function handleClaimRejection(
+  claimId: string, 
+  liabilityAmount: number,
+  rejectionReason: string
+): Promise<void> {
+  // 1. Update claim status
+  await supabase
+    .from('insurance_claims')
+    .update({
+      status: 'rejected',
+      external_status: 'payu_rejected',
+      rejection_reason: rejectionReason,
+      renter_liability_amount: liabilityAmount,
+      renter_liability_paid: false,
+      resolved_at: new Date().toISOString()
+    })
+    .eq('id', claimId);
+    
+  // 2. Get renter details
+  const { data: claim } = await supabase
+    .from('insurance_claims')
+    .select('renter_id, booking_id, claim_number')
+    .eq('id', claimId)
+    .single();
+    
+  // 3. Send notification to renter
+  await supabase.from('notifications').insert({
+    user_id: claim.renter_id,
+    title: 'Insurance Claim Rejected - Payment Required',
+    message: `Your insurance claim ${claim.claim_number} was not approved. You are liable for P${liabilityAmount.toFixed(2)} in repair costs. Please make payment to avoid further action.`,
+    type: 'insurance_liability',
+    action_url: `/rental-details/${claim.booking_id}`,
+    priority: 'high'
+  });
+}
+```
+
+### Rental Details Page - Additional Payment
+
+The `/rental-details/:id` page includes an "Additional Payment" section for:
+- Insurance excess payments
+- Renter liability payments (rejected claims)
+
+```typescript
+// Component: RentalDetailsExcessPayment.tsx
+
+interface ExcessPaymentProps {
+  bookingId: string;
+  claim: InsuranceClaim;
+}
+
+export const RentalDetailsExcessPayment: React.FC<ExcessPaymentProps> = ({
+  bookingId,
+  claim
+}) => {
+  const showExcessPayment = 
+    (claim.excess_requested && !claim.excess_paid) ||
+    (claim.renter_liability_amount > 0 && !claim.renter_liability_paid);
+    
+  const amountDue = claim.excess_amount_due || claim.renter_liability_amount;
+  const paymentType = claim.excess_requested ? 'excess' : 'liability';
+  
+  if (!showExcessPayment) return null;
+  
+  return (
+    <Card className="border-destructive">
+      <CardHeader>
+        <CardTitle className="text-destructive flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5" />
+          Payment Required
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground mb-4">
+          {paymentType === 'excess' 
+            ? `An excess payment of P${amountDue?.toFixed(2)} is required for your insurance claim.`
+            : `Your insurance claim was not approved. You are liable for P${amountDue?.toFixed(2)} in repair costs.`
+          }
+        </p>
+        <Button 
+          onClick={() => initiateExcessPayment(bookingId, claim.id, amountDue)}
+          className="w-full"
+        >
+          Make Additional Payment - P{amountDue?.toFixed(2)}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+### Admin Portal - Insurance Section
+
+#### Navigation
+
+```
+/admin/insurance
+├── /dashboard          - Overview metrics
+├── /claims             - Claims management
+├── /policies           - Policy listing
+├── /remittance         - Premium remittance to Pay-U
+├── /excess-payments    - Track excess/liability payments
+└── /reports            - Financial reports
+```
+
+#### Claims Dashboard Updates
+
+The Admin Claims Dashboard includes Pay-U integration fields:
+
+| Field | Description |
+|-------|-------------|
+| Pay-U Reference | External case/reference number |
+| External Status | Status from Pay-U (submitted, under_review, approved, rejected) |
+| Submit to Pay-U | Action button to forward claim via email |
+| Excess Required | Toggle to request excess from renter |
+| Renter Liability | Amount renter owes if claim rejected |
+
+#### Key Actions
+
+1. **Submit to Pay-U**: Opens email template with claim details
+2. **Update Pay-U Status**: Record status updates from Pay-U
+3. **Request Excess**: Set excess amount and trigger notification
+4. **Record Liability**: Set renter liability if claim rejected
+5. **Mark Excess Paid**: Confirm excess payment received
+
+### Notifications
+
+#### Insurance-Related Notifications
+
+| Event | Recipient | Message |
+|-------|-----------|---------|
+| Claim Submitted | Host, Admin | "Insurance claim submitted for [car]" |
+| Claim Forwarded to Pay-U | Host | "Your claim has been forwarded for review" |
+| Excess Payment Required | Renter | "Excess payment of P[amount] required" |
+| Claim Approved | Host | "Your insurance claim has been approved" |
+| Claim Rejected | Renter | "Claim rejected - you are liable for P[amount]" |
+| Repairs Completed | Host | "Repairs completed for [car]" |
+| Premium Remitted | Admin | "Daily premium batch remitted to Pay-U" |
+
+### Revenue Model Summary
+
+```text
+Per Booking with Insurance:
+
+  Rental: P1000
+    ├─ Host Earnings (85%):           P850
+    └─ Platform Commission (15%):     P150
+
+  Insurance Premium: P250
+    ├─ Pay-U (90%):                   P225 (remitted daily)
+    └─ MobiRides Commission (10%):    P25
+
+  MobiRides Total Revenue:            P175 (P150 + P25)
+```
+
+### Implementation Tasks
+
+| ID | Task | Points | Priority |
+|----|------|--------|----------|
+| INS-PAY-001 | Add `insurance_premium`, `insurance_policy_id` to bookings | 2 | P0 |
+| INS-PAY-002 | Add remittance fields to `insurance_policies` | 2 | P0 |
+| INS-PAY-003 | Add external status & liability fields to `insurance_claims` | 2 | P0 |
+| INS-PAY-004 | Create `insurance_commission_rates` table | 1 | P1 |
+| INS-PAY-005 | Create `premium_remittance_batches` table | 2 | P1 |
+| INS-PAY-006 | Update `payment-webhook` for premium split | 3 | P0 |
+| INS-PAY-007 | Update `BookingDialog.tsx` for premium storage | 2 | P0 |
+| INS-PAY-008 | Create `InsuranceRemittanceService` | 3 | P1 |
+| INS-PAY-009 | Create Admin Remittance Dashboard (`/admin/insurance/remittance`) | 5 | P1 |
+| INS-PAY-010 | Update Admin Claims Dashboard for Pay-U flow | 3 | P1 |
+| INS-PAY-011 | Create `RentalDetailsExcessPayment` component | 3 | P1 |
+| INS-PAY-012 | Implement excess payment collection flow | 3 | P1 |
+| INS-PAY-013 | Add renter liability handling for rejected claims | 2 | P1 |
+| INS-PAY-014 | Create insurance notification templates | 2 | P2 |
+| INS-PAY-015 | Update `PriceBreakdown.tsx` for insurance display | 1 | P1 |
+| INS-PAY-016 | Create Commission Report | 2 | P2 |
+| INS-PAY-017 | Update documentation | 2 | P1 |
+| INS-PAY-018 | End-to-end testing | 3 | P0 |
+
+**Total: 43 Story Points**
+
+### Key Differences from Previous (Incorrect) Model
+
+| Aspect | Previous (Wrong) | Corrected |
+|--------|------------------|-----------|
+| Escrow | Internal platform escrow | No escrow - remit to Pay-U |
+| Commission | Not defined | 10% to MobiRides |
+| Claim Payout | Platform credits renter wallet | Pay-U pays directly |
+| Beneficiary | Renter | Host (vehicle owner) |
+| Remittance | Automatic | Manual via Admin portal (daily) |
+| Claim Submission | In-platform only | Forwarded to support@mobirides.africa |
+| Repair Quotes | Host sourced | MobiRides managed |
+| Rejected Claims | Not addressed | Renter liable for full cost |
+
+### Contact Information
+
+- **Claims Submission**: support@mobirides.africa
+- **Pay-U Partnership**: [Contact details TBD]
+- **Finance Team**: [Internal contact for remittance]
+
+---
+
+## 15. Dynamic Pricing & Price Transparency
+
+### Overview
+
+This section documents the requirements and implementation for ensuring complete price transparency throughout the booking flow. Renters must see the **exact total amount** they will pay before confirming a booking, including all dynamic pricing adjustments, insurance premiums, and discounts.
+
+### Current Issues Identified
+
+| Issue | Severity | Location | Fix Required |
+|-------|----------|----------|--------------|
+| Insurance premium not included in final total | Critical | `BookingDialog.tsx` | Include in grand total |
+| Database missing insurance price fields | Critical | `bookings` table | Add columns |
+| Success modal understates total | High | `BookingSuccessModal.tsx` | Show grand total |
+| Host cannot see insurance selection | Medium | `BookingRequestDetails.tsx` | Add insurance info |
+| Rental details missing breakdown | Medium | `RentalPaymentDetails.tsx` | Show full breakdown |
+| Receipt shows 10% instead of 15% fee | Low | `ReceiptModal.tsx` | Fix rate |
+
+### Database Schema Updates
+
+#### bookings table additions
+
+```sql
+ALTER TABLE bookings 
+  ADD COLUMN base_rental_price NUMERIC(10,2),
+  ADD COLUMN dynamic_pricing_multiplier NUMERIC(6,4) DEFAULT 1.0,
+  ADD COLUMN discount_amount NUMERIC(10,2) DEFAULT 0,
+  ADD COLUMN promo_code_id UUID REFERENCES promo_codes(id),
+  ADD COLUMN insurance_premium NUMERIC(10,2) DEFAULT 0,
+  ADD COLUMN insurance_policy_id UUID REFERENCES insurance_policies(id);
+
+COMMENT ON COLUMN bookings.base_rental_price IS 'Price before dynamic pricing: price_per_day × days';
+COMMENT ON COLUMN bookings.dynamic_pricing_multiplier IS 'Composite multiplier from all pricing rules';
+COMMENT ON COLUMN bookings.discount_amount IS 'Total discount applied (promo codes, etc.)';
+COMMENT ON COLUMN bookings.total_price IS 'Grand total: rental + insurance - discounts (what renter pays)';
+```
+
+### Price Calculation Formula
+
+```text
+Grand Total = (Base Rental × Dynamic Multiplier) + Insurance Premium - Discounts
+
+Where:
+- Base Rental = price_per_day × number_of_days
+- Dynamic Multiplier = Product of all applicable pricing rules
+- Insurance Premium = Selected package premium (if any)
+- Discounts = Promo code + loyalty discounts (if any)
+```
+
+### Price Display Requirements
+
+#### Before Payment (BookingDialog)
+
+The booking dialog MUST display:
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     BOOKING SUMMARY                             │
+├─────────────────────────────────────────────────────────────────┤
+│ Rental                                                          │
+│   3 days × P200/day                              P600.00        │
+│                                                                 │
+│ Pricing Adjustments                                             │
+│   ● Weekend Premium (+20%)                       +P40.00        │
+│   ● Early Bird Discount (-10%)                   -P64.00        │
+│                                     ────────────────────        │
+│   Rental Subtotal                                P576.00        │
+├─────────────────────────────────────────────────────────────────┤
+│ Protection                                                      │
+│   Standard Coverage (10% of rental)              P57.60         │
+├─────────────────────────────────────────────────────────────────┤
+│ Discounts                                                       │
+│   Promo Code: WELCOME20                         -P126.72        │
+├─────────────────────────────────────────────────────────────────┤
+│ ═══════════════════════════════════════════════════════════════ │
+│ TOTAL TO PAY                                     P506.88        │
+│ ═══════════════════════════════════════════════════════════════ │
+└─────────────────────────────────────────────────────────────────┘
+                        [Confirm Booking]
+```
+
+#### Success Confirmation (BookingSuccessModal)
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│              ✓ Booking Request Submitted!                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Toyota Corolla 2024                                             │
+│ Feb 10 - Feb 13, 2026 (3 days)                                  │
+│                                                                 │
+│ Total Amount: BWP 506.88                                        │
+│ (includes Standard Protection)                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Host View (BookingRequestDetails)
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ Booking Request from John D.                                    │
+├─────────────────────────────────────────────────────────────────┤
+│ Renter Total: P506.88                                           │
+│   ├─ Rental (after adjustments): P576.00                        │
+│   ├─ Insurance: P57.60                                          │
+│   └─ Promo Discount: -P126.72                                   │
+│                                                                 │
+│ Your Earnings: P489.60 (after 15% commission)                   │
+│                                                                 │
+│ 🛡️ Includes Standard Protection                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### UnifiedPriceSummary Component
+
+Create a single reusable component for price display across all screens.
+
+**Location:** `src/components/booking/UnifiedPriceSummary.tsx`
+
+```typescript
+interface UnifiedPriceSummaryProps {
+  // Base calculation
+  basePrice: number;              // price_per_day × days
+  pricePerDay: number;
+  numberOfDays: number;
+  
+  // Dynamic pricing
+  dynamicPricing?: PricingCalculation;
+  
+  // Insurance
+  insurancePremium: number;
+  insurancePackageName?: string;
+  
+  // Discounts
+  discountAmount: number;
+  promoCode?: string;
+  
+  // Display options
+  variant: 'full' | 'compact' | 'receipt';
+  showBreakdown?: boolean;
+  expandable?: boolean;
+}
+
+export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
+  basePrice,
+  pricePerDay,
+  numberOfDays,
+  dynamicPricing,
+  insurancePremium,
+  insurancePackageName,
+  discountAmount,
+  promoCode,
+  variant = 'full',
+  showBreakdown = true,
+  expandable = false
+}) => {
+  // Calculate rental subtotal with dynamic pricing
+  const rentalSubtotal = dynamicPricing?.final_price ?? basePrice;
+  
+  // Calculate grand total
+  const grandTotal = rentalSubtotal + insurancePremium - discountAmount;
+  
+  // ... render based on variant
+};
+```
+
+### Component Updates Required
+
+#### 1. BookingDialog.tsx
+
+**Changes:**
+- Replace separate price displays with `UnifiedPriceSummary`
+- Calculate grand total = rental + insurance - discounts
+- Store all price components in database:
+
+```typescript
+const handleCreateBooking = async () => {
+  const grandTotal = rentalSubtotal + insurancePremium - discountAmount;
+  
+  await supabase.from('bookings').insert({
+    total_price: grandTotal,                    // NEW: Full amount
+    base_rental_price: basePrice,               // NEW
+    dynamic_pricing_multiplier: multiplier,     // NEW
+    insurance_premium: insurancePremium,        // NEW
+    insurance_policy_id: policyId,              // NEW
+    discount_amount: discountAmount,            // NEW
+    promo_code_id: promoCodeId,                 // NEW
+    // ... existing fields
+  });
+};
+```
+
+#### 2. BookingSuccessModal.tsx
+
+**Changes:**
+- Accept full price breakdown in `bookingData` prop
+- Display grand total (not just rental)
+- Show insurance indicator if selected
+
+```typescript
+interface BookingSuccessModalProps {
+  bookingData?: {
+    id: string;
+    carBrand: string;
+    carModel: string;
+    startDate: string;
+    endDate: string;
+    totalPrice: number;           // Grand total
+    insurancePackage?: string;    // NEW
+    hasInsurance: boolean;        // NEW
+  };
+}
+```
+
+#### 3. RentalPaymentDetails.tsx
+
+**Changes:**
+- Fetch and display full price breakdown
+- Show dynamic pricing adjustments
+- Show insurance line if applicable
+
+```typescript
+interface RentalPaymentDetailsProps {
+  booking: BookingWithRelations;
+  showBreakdown?: boolean;
+}
+
+// Display:
+// - Base: price_per_day × days
+// - Dynamic adjustments (if any)
+// - Insurance (if any)
+// - Discounts (if any)
+// - Grand Total
+```
+
+#### 4. ReceiptModal.tsx
+
+**Changes:**
+- Fix service fee from 10% to 15%
+- Add insurance premium line
+- Show correct grand total
+
+```typescript
+// FIX: Change from 0.1 to 0.15
+const serviceFee = totalAmount * 0.15; // 15% service fee (corrected)
+
+// ADD: Insurance line in breakdown
+{booking.insurance_premium > 0 && (
+  <div className="flex justify-between">
+    <span>Insurance Premium</span>
+    <span>BWP {booking.insurance_premium.toFixed(2)}</span>
+  </div>
+)}
+```
+
+#### 5. BookingPrice.tsx (if exists)
+
+**Changes:**
+- Accept full breakdown props OR fetch from booking
+- Deprecate if replaced by UnifiedPriceSummary
+
+### Implementation Tasks
+
+| ID | Task | Points | Priority |
+|----|------|--------|----------|
+| PRICE-001 | Add price breakdown columns to bookings table | 2 | P0 |
+| PRICE-002 | Create `UnifiedPriceSummary` component | 5 | P0 |
+| PRICE-003 | Update `BookingDialog` to calculate grand total | 3 | P0 |
+| PRICE-004 | Update `BookingDialog` to save all price fields | 2 | P0 |
+| PRICE-005 | Update `BookingSuccessModal` with full total | 2 | P1 |
+| PRICE-006 | Update `BookingRequestDetails` for host view | 2 | P1 |
+| PRICE-007 | Update `RentalPaymentDetails` with breakdown | 2 | P1 |
+| PRICE-008 | Fix `ReceiptModal` commission rate (10% → 15%) | 1 | P0 |
+| PRICE-009 | Add insurance line to receipt | 1 | P1 |
+| PRICE-010 | Backfill migration for existing bookings | 2 | P2 |
+| PRICE-011 | Update dynamic pricing display | 2 | P1 |
+| PRICE-012 | End-to-end price transparency testing | 3 | P0 |
+
+**Total: 27 Story Points**
+
+### Verification Criteria
+
+After implementation, verify each of these scenarios:
+
+| Scenario | Verification |
+|----------|--------------|
+| Booking without insurance | Total = Rental (with adjustments) - Discounts |
+| Booking with insurance | Total = Rental + Premium - Discounts |
+| Dynamic pricing active | Each adjustment shown as line item |
+| Promo code applied | Discount shown as negative line item |
+| Success modal | Shows exact same total as confirmation |
+| Host booking request | Shows total renter will pay + earnings |
+| Rental details | Full breakdown matches booking |
+| Receipt | Commission = 15%, includes insurance if paid |
+| Database | `total_price` = rental + insurance - discounts |
+
+### Price Consistency Rule
+
+**Critical:** The `total_price` stored in the database MUST equal exactly what the renter sees before confirming and what they actually pay.
+
+```text
+Database: bookings.total_price = P506.88
+         │
+         ├─► BookingDialog shows: "TOTAL TO PAY: P506.88" ✓
+         ├─► Success Modal shows: "Total: P506.88" ✓
+         ├─► Host sees: "Renter Total: P506.88" ✓
+         ├─► Rental Details shows: "Total Paid: P506.88" ✓
+         └─► Receipt shows: "Total: P506.88" ✓
+```
+
+### Backfill Migration
+
+For existing bookings without the new fields:
+
+```sql
+-- Backfill base_rental_price from total_price (best estimate)
+UPDATE bookings 
+SET base_rental_price = total_price,
+    dynamic_pricing_multiplier = 1.0,
+    discount_amount = 0
+WHERE base_rental_price IS NULL;
+
+-- Link insurance policies if insurance_premium is set elsewhere
+UPDATE bookings b
+SET insurance_policy_id = ip.id,
+    insurance_premium = ip.total_premium
+FROM insurance_policies ip
+WHERE ip.booking_id = b.id
+  AND b.insurance_policy_id IS NULL;
+```
+
+---
+
+## 16. Payment Flow Separation & Mock Renter Service
+
+**Assigned To:** Arnold (Senior Software Engineer)  
+**Status:** Planned  
+**Estimated Effort:** 26 Story Points  
+**Priority:** P1 - Required for Testing Complete Booking Flow
+
+---
+
+### 16.1 Problem Statement
+
+The current implementation has **confusion between two distinct payment flows**:
+
+| Flow | Current State | Issue |
+|------|---------------|-------|
+| **Host Wallet Top-ups** | Implemented via `mockPaymentService.ts` | Working, but undocumented as host-only |
+| **Renter Booking Payments** | **NOT IMPLEMENTED** | No mock service, no UI, no edge functions |
+
+The existing `mockPaymentService.ts` only supports host wallet top-ups via `TopUpModal.tsx`. There is no renter-side booking payment flow, which blocks testing of the complete booking + insurance + dynamic pricing integration.
+
+---
+
+### 16.2 Current Infrastructure Audit
+
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| `src/services/mockPaymentService.ts` | Host wallet top-ups only | ✅ Implemented |
+| `src/components/wallet/TopUpModal.tsx` | UI for hosts to add funds | ✅ Implemented |
+| `src/services/walletService.ts` | Host wallet balance management | ✅ Implemented |
+| `initiate-payment` edge function | Renter booking payments | ❌ **NOT IMPLEMENTED** |
+| `payment-webhook` edge function | Handle provider callbacks | ❌ **NOT IMPLEMENTED** |
+| Renter "Pay Now" UI | Booking payment interface | ❌ **NOT IMPLEMENTED** |
+| `mockBookingPaymentService.ts` | Mock renter payments for testing | ❌ **NOT IMPLEMENTED** |
+
+---
+
+### 16.3 Two Payment Flows (Clear Separation)
+
+#### Flow A: Host Wallet Top-ups
+
+**Purpose:** Hosts add funds to maintain P50 minimum balance for accepting bookings.
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ FLOW A: HOST WALLET TOP-UP                                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Host Dashboard                                                    │
+│     └─► Clicks "Top Up Wallet"                                      │
+│           └─► TopUpModal.tsx opens                                  │
+│                 └─► Selects amount (P50, P100, P200, etc.)          │
+│                       └─► Selects payment method                    │
+│                             └─► mockPaymentService.processPayment() │
+│                                   └─► walletService.topUpWallet()   │
+│                                         └─► Wallet balance updated  │
+│                                                                     │
+│   Current Service: mockPaymentService.ts                            │
+│   Current UI: TopUpModal.tsx                                        │
+│   Status: ✅ IMPLEMENTED                                            │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Flow B: Renter Booking Payments
+
+**Purpose:** Renters pay for approved bookings (rental + insurance - discounts).
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ FLOW B: RENTER BOOKING PAYMENT                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   Host approves booking request                                     │
+│     └─► Booking status: awaiting_payment                            │
+│           └─► Payment deadline set (NOW + 24 hours)                 │
+│                 └─► Renter notified: "Pay Now to confirm"           │
+│                                                                     │
+│   Renter opens "My Rentals"                                         │
+│     └─► Sees "Pay Now" button on approved booking                   │
+│           └─► RenterPaymentModal.tsx opens                          │
+│                 └─► Shows price breakdown:                          │
+│                       • Base Rental: P600.00                        │
+│                       • Weekend Premium: +P40.00                    │
+│                       • Early Bird Discount: -P64.00                │
+│                       • Insurance Premium: +P69.12                  │
+│                       • TOTAL: P645.12                              │
+│                             └─► Selects payment method              │
+│                                   └─► mockBookingPaymentService     │
+│                                         .processPayment()           │
+│                                           └─► Simulates payment     │
+│                                                 └─► On success:     │
+│                                                       • Booking confirmed   │
+│                                                       • Host wallet credited│
+│                                                       • Notifications sent  │
+│                                                                     │
+│   Target Service: mockBookingPaymentService.ts (NEW)                │
+│   Target UI: RenterPaymentModal.tsx (NEW)                           │
+│   Status: ❌ NOT IMPLEMENTED                                        │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 16.4 Implementation Tasks
+
+#### Task 1: Update Existing Mock Service Documentation (2 SP)
+
+**File:** `src/services/mockPaymentService.ts`
+
+Add header comments clarifying this is for host wallet top-ups only:
+
+```typescript
+/**
+ * Mock Payment Service - HOST WALLET TOP-UPS ONLY
+ * 
+ * This service handles mock payment processing for host wallet top-ups.
+ * Used by: TopUpModal.tsx
+ * 
+ * FOR RENTER BOOKING PAYMENTS, use: mockBookingPaymentService.ts
+ * 
+ * @see docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md Section 16
+ */
+```
+
+---
+
+#### Task 2: Create Mock Renter Booking Payment Service (4 SP)
+
+**New File:** `src/services/mockBookingPaymentService.ts`
+
+```typescript
+// Interface matching the production payment flow
+export interface BookingPaymentRequest {
+  booking_id: string;
+  payment_method: 'card' | 'orange_money' | 'myzaka' | 'smega';
+  mobile_number?: string;  // Required for mobile money
+  
+  // Price breakdown (from UnifiedPriceSummary)
+  base_rental_price: number;
+  dynamic_pricing_adjustment: number;
+  insurance_premium: number;
+  discount_amount: number;
+  grand_total: number;
+}
+
+export interface BookingPaymentResult {
+  success: boolean;
+  transaction_id?: string;
+  provider_reference?: string;
+  
+  // Split calculations (for verification/display)
+  platform_commission?: number;           // 15% of rental portion
+  host_earnings?: number;                 // 85% of rental portion
+  mobirides_insurance_commission?: number;// 10% of insurance premium
+  payu_remittance_amount?: number;        // 90% of insurance premium
+  
+  error_code?: string;
+  error_message?: string;
+  requires_user_action?: boolean;         // true for OrangeMoney USSD
+}
+```
+
+**Deterministic Test Triggers:**
+
+| Grand Total Ending | Mock Behavior | Purpose |
+|--------------------|---------------|---------|
+| `.99` (e.g., P99.99, P199.99, P645.99) | Always success | Happy path testing |
+| `.01` | Fail: Insufficient funds | Error UI testing |
+| `.02` | Fail: Gateway timeout | Timeout handling |
+| `.03` | Fail: Card declined | Decline handling |
+| `.04` | Pending (OrangeMoney USSD simulation) | Async flow testing |
+| Any other | 95% success, 5% random failure | Realistic simulation |
+
+---
+
+#### Task 3: Create Renter Payment Modal Component (5 SP)
+
+**New File:** `src/components/booking/RenterPaymentModal.tsx`
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     Complete Your Payment                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Toyota Corolla • Feb 10-13, 2026                              │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ Price Breakdown                                           │  │
+│  │ ─────────────────────────────────────────────────────     │  │
+│  │ Base Rental (3 days × P200)              P600.00          │  │
+│  │ Weekend Premium (+20%)                   +P40.00          │  │
+│  │ Early Bird Discount (-10%)               -P64.00          │  │
+│  │ ───────────────────────────────────────                   │  │
+│  │ Rental Subtotal                          P576.00          │  │
+│  │ Standard Insurance (12%)                 P69.12           │  │
+│  │ ───────────────────────────────────────                   │  │
+│  │ TOTAL TO PAY                             P645.12          │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  Select Payment Method:                                         │
+│  ┌─────────────────┐ ┌─────────────────┐                       │
+│  │  💳 Card        │ │  📱 OrangeMoney │                       │
+│  └─────────────────┘ └─────────────────┘                       │
+│                                                                 │
+│  [OrangeMoney selected]                                         │
+│  Mobile Number: [+267 ___ ___ ___]                             │
+│                                                                 │
+│  ⏰ Payment deadline: 23h 45m remaining                         │
+│                                                                 │
+│  🔒 This is a test payment. No real money will be charged.     │
+│                                                                 │
+│                    [ Cancel ]  [ Pay P645.12 ]                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### Task 4: Create Payment Hook (3 SP)
+
+**New File:** `src/hooks/useBookingPayment.ts`
+
+Encapsulates payment logic and will be swapped for production implementation:
+
+```typescript
+interface UseBookingPaymentOptions {
+  onSuccess?: (result: BookingPaymentResult) => void;
+  onError?: (error: string) => void;
+}
+
+interface UseBookingPaymentReturn {
+  initiatePayment: (request: BookingPaymentRequest) => Promise<void>;
+  isProcessing: boolean;
+  processingStep: 'idle' | 'validating' | 'processing' | 'confirming' | 'complete' | 'error';
+  error: string | null;
+}
+```
+
+---
+
+#### Task 5: Add `awaiting_payment` Booking Status (2 SP)
+
+**Files to Update:**
+
+1. `src/types/booking.ts` - Add to BookingStatus enum:
+   ```typescript
+   export enum BookingStatus {
+     PENDING = "pending",
+     AWAITING_PAYMENT = "awaiting_payment",  // NEW
+     CONFIRMED = "confirmed",
+     CANCELLED = "cancelled",
+     COMPLETED = "completed",
+     EXPIRED = "expired"
+   }
+   ```
+
+2. Database migration for payment tracking columns:
+   ```sql
+   ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_status VARCHAR(30) DEFAULT 'unpaid';
+   -- Values: unpaid, awaiting, processing, paid, refunded
+   
+   ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_deadline TIMESTAMPTZ;
+   -- Set to NOW() + 24 hours when host approves
+   
+   ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_transaction_id UUID;
+   -- Reference to payment_transactions table when paid
+   ```
+
+---
+
+#### Task 6: Update RenterBookingCard with "Pay Now" Button (2 SP)
+
+**File:** `src/components/my-rentals/RenterBookingCard.tsx`
+
+Add conditional "Pay Now" button when booking status is `awaiting_payment`:
+
+```tsx
+{booking.status === 'awaiting_payment' && (
+  <Button 
+    onClick={() => setShowPaymentModal(true)}
+    className="w-full bg-primary"
+  >
+    <CreditCard className="mr-2 h-4 w-4" />
+    Pay Now - P{booking.total_price.toFixed(2)}
+  </Button>
+)}
+```
+
+---
+
+#### Task 7: Add Payment Deadline Timer Component (2 SP)
+
+**New File:** `src/components/booking/PaymentDeadlineTimer.tsx`
+
+Displays countdown to payment deadline with visual urgency:
+
+```tsx
+// < 2 hours: Red, pulsing
+// 2-6 hours: Orange
+// > 6 hours: Normal
+<div className="flex items-center gap-2">
+  <Clock className="h-4 w-4" />
+  <span>Payment deadline: {formatTimeRemaining(deadline)}</span>
+</div>
+```
+
+---
+
+#### Task 8: Implement Payment Deadline Expiry Handling (3 SP)
+
+Create scheduled job or trigger to expire unpaid bookings:
+
+```sql
+-- Option A: Database function called by cron
+CREATE OR REPLACE FUNCTION expire_unpaid_bookings()
+RETURNS void AS $$
+BEGIN
+  UPDATE bookings 
+  SET status = 'expired'
+  WHERE status = 'awaiting_payment'
+    AND payment_deadline < NOW();
+    
+  -- Notify affected parties
+  INSERT INTO notifications (user_id, type, title, content, ...)
+  SELECT renter_id, 'booking_expired', 'Booking Expired', ...
+  FROM bookings 
+  WHERE status = 'expired' 
+    AND updated_at >= NOW() - INTERVAL '1 minute';
+END;
+$$ LANGUAGE plpgsql;
+```
+
+---
+
+#### Task 9: Create Supporting UI Components (3 SP)
+
+**New Files:**
+
+1. `src/components/booking/PaymentMethodSelector.tsx` - Card vs OrangeMoney selection
+2. `src/components/booking/PaymentProcessingOverlay.tsx` - Loading states during payment
+3. `src/components/booking/PaymentSuccessDialog.tsx` - Confirmation after successful payment
+
+---
+
+### 16.5 Technical Architecture
+
+#### Mock vs Production Swap
+
+```text
+MOCK MODE (Development/Testing):
+┌──────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│   RenterPaymentModal                                             │
+│         │                                                        │
+│         ▼                                                        │
+│   useBookingPayment (hook)                                       │
+│         │                                                        │
+│         ▼                                                        │
+│   mockBookingPaymentService.processPayment()                     │
+│         │                                                        │
+│         ▼                                                        │
+│   [Simulated delay + deterministic result based on amount]       │
+│         │                                                        │
+│         ▼                                                        │
+│   Update booking status via Supabase                             │
+│   Credit host wallet (mock transaction)                          │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+
+PRODUCTION MODE (Future - PayGate/Ooze):
+┌──────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│   RenterPaymentModal                                             │
+│         │                                                        │
+│         ▼                                                        │
+│   useBookingPayment (hook)                                       │
+│         │                                                        │
+│         ▼                                                        │
+│   Edge Function: initiate-payment                                │
+│         │                                                        │
+│         ├─► PayGate API (cards)                                  │
+│         └─► Ooze API (mobile money)                              │
+│                    │                                             │
+│                    ▼                                             │
+│   Provider redirects renter to payment page                      │
+│                    │                                             │
+│                    ▼                                             │
+│   Edge Function: payment-webhook                                 │
+│         │                                                        │
+│         ▼                                                        │
+│   Update booking + credit wallet + send notifications            │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 16.6 Implementation Order & Timeline
+
+| Order | Task | Story Points | Dependencies | Estimated Days |
+|-------|------|--------------|--------------|----------------|
+| 1 | Update `mockPaymentService.ts` documentation | 2 SP | None | 0.5 |
+| 2 | Add `awaiting_payment` status + DB migration | 2 SP | None | 1 |
+| 3 | Create `mockBookingPaymentService.ts` | 4 SP | Task 1 | 1.5 |
+| 4 | Create `useBookingPayment.ts` hook | 3 SP | Task 3 | 1 |
+| 5 | Create `RenterPaymentModal.tsx` | 5 SP | Tasks 3, 4 | 2 |
+| 6 | Create supporting UI components | 3 SP | Task 5 | 1 |
+| 7 | Update `RenterBookingCard.tsx` with "Pay Now" | 2 SP | Tasks 5, 6 | 0.5 |
+| 8 | Add `PaymentDeadlineTimer.tsx` | 2 SP | Task 2 | 0.5 |
+| 9 | Implement payment deadline expiry | 3 SP | Task 2 | 1 |
+
+**Total: 26 Story Points (~9 days)**
+
+---
+
+### 16.7 Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/services/mockBookingPaymentService.ts` | Mock service for renter booking payments |
+| `src/hooks/useBookingPayment.ts` | Payment flow hook (swappable for production) |
+| `src/components/booking/RenterPaymentModal.tsx` | Payment UI for renters |
+| `src/components/booking/PaymentMethodSelector.tsx` | Card vs OrangeMoney selection |
+| `src/components/booking/PaymentDeadlineTimer.tsx` | 24-hour countdown display |
+| `src/components/booking/PaymentProcessingOverlay.tsx` | Loading states |
+| `src/components/booking/PaymentSuccessDialog.tsx` | Success confirmation |
+
+### 16.8 Files to Update
+
+| File | Changes |
+|------|---------|
+| `src/services/mockPaymentService.ts` | Add header comments clarifying host-wallet-only scope |
+| `src/types/booking.ts` | Add `AWAITING_PAYMENT` to BookingStatus enum |
+| `src/components/my-rentals/RenterBookingCard.tsx` | Add "Pay Now" button for awaiting_payment status |
+| `src/components/booking-request/BookingRequestActions.tsx` | Handle status transition to awaiting_payment |
+
+---
+
+### 16.9 Testing Matrix
+
+#### Two Mock Payment Services
+
+| Service | Purpose | Test Triggers |
+|---------|---------|---------------|
+| `mockPaymentService.ts` | Host wallet top-ups | Standard 95% success rate |
+| `mockBookingPaymentService.ts` | Renter booking payments | Deterministic triggers below |
+
+#### Renter Booking Payment Test Triggers
+
+| Total Ending | Behavior | Test Purpose |
+|--------------|----------|--------------|
+| `.99` | Always success | E2E happy path |
+| `.01` | Insufficient funds | Error handling UI |
+| `.02` | Gateway timeout | Retry logic |
+| `.03` | Card declined | Decline handling |
+| `.04` | Pending (async) | Mobile money USSD flow |
+| Other | 95% success | Realistic simulation |
+
+#### Integration Test Scenarios
+
+| Scenario | Mock Payment Amount | Expected Flow |
+|----------|---------------------|---------------|
+| Successful card payment | P199.99 | Booking confirmed, host wallet credited |
+| Successful OrangeMoney | P299.99 | USSD prompt shown, async confirm |
+| Payment declined | P100.01 | Error shown, retry available |
+| Payment timeout | P100.02 | Timeout message, manual retry |
+| Deadline expired | Any | Booking expired, notifications sent |
+
+---
+
+### 16.10 Success Criteria
+
+After implementation, verify:
+
+- [ ] Documentation clearly separates host wallet top-ups from renter booking payments
+- [ ] `mockPaymentService.ts` has comments clarifying its scope
+- [ ] Developers can test complete booking payment flow without external APIs
+- [ ] Mock service supports deterministic test triggers for automated testing
+- [ ] "Pay Now" button appears for renters when booking is `awaiting_payment`
+- [ ] Payment modal shows complete price breakdown including insurance
+- [ ] Successful mock payment updates booking to `confirmed`
+- [ ] Successful mock payment credits host wallet (85% of rental)
+- [ ] 24-hour payment deadline is visible and enforced
+- [ ] Expired bookings are handled gracefully with notifications
 
 ---
 
