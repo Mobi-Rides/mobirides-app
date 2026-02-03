@@ -23,6 +23,7 @@
 11. [Implementation Timeline](#implementation-timeline)
 12. [Risk Assessment](#risk-assessment)
 13. [Legacy Mock Logic Migration](#legacy-mock-logic-migration)
+14. [Insurance Premium Escrow](#insurance-premium-escrow)
 
 ---
 
@@ -1507,7 +1508,513 @@ You can withdraw your earnings at any time from your wallet.
 |---------|------|--------|---------|
 | 1.0 | 2026-02-02 | Dev Team | Initial document |
 | 1.1 | 2026-02-02 | Dev Team | Added P50 minimum wallet balance requirement; Payment Flow Comparison section; Wallet UI Updates section; Legacy Mock Logic Migration section; updated payment_config with subscription placeholders |
+| 1.2 | 2026-02-03 | Dev Team | Added Insurance Premium Escrow section (Section 14) |
 
 ---
 
 **END OF DOCUMENT**
+
+---
+
+## Insurance Premium Escrow
+
+This section documents the handling of insurance premiums as a separate escrow account, distinct from the rental payment flow.
+
+### Overview
+
+Insurance premiums are **optional** and collected alongside rental payments but managed in a **separate insurance escrow account**. This separation ensures:
+
+1. **Clear fund segregation** - Insurance funds are not commingled with rental revenue
+2. **Claims liability tracking** - Escrow balance represents available funds for claim payouts
+3. **Regulatory compliance** - Separate accounting for insurance vs. rental revenue
+4. **Risk management** - Monitor escrow health ratio (balance vs. average claims)
+
+### Insurance Premium Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ INSURANCE PREMIUM COLLECTION                                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Booking with Insurance Selected                                           │
+│     └─► Rental: P1000 + Insurance Premium: P250 = P1250 Total              │
+│           └─► Renter pays P1250 via PayGate/Ooze                           │
+│                 └─► payment-webhook processes payment                       │
+│                       └─► SPLIT:                                            │
+│                             ├─► Rental P1000:                               │
+│                             │     ├─► Host Wallet (85%): P850              │
+│                             │     └─► Platform Commission (15%): P150       │
+│                             └─► Insurance P250:                             │
+│                                   └─► Insurance Escrow (100%): P250        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ INSURANCE CLAIM PAYOUT                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Claim Approved by Admin                                                   │
+│     └─► Approved Amount: P5000                                              │
+│           └─► Verify escrow balance >= P5000                                │
+│                 └─► Debit insurance escrow: -P5000                          │
+│                       └─► Credit renter wallet: +P5000                      │
+│                             └─► Notification sent to renter                 │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Database Schema
+
+#### 1. bookings table additions
+
+```sql
+-- Add insurance premium tracking to bookings
+ALTER TABLE bookings 
+  ADD COLUMN insurance_premium NUMERIC(10,2) DEFAULT 0,
+  ADD COLUMN insurance_policy_id UUID REFERENCES insurance_policies(id);
+
+COMMENT ON COLUMN bookings.insurance_premium IS 'Insurance premium amount selected at booking time';
+COMMENT ON COLUMN bookings.insurance_policy_id IS 'Reference to the insurance policy if coverage selected';
+```
+
+#### 2. insurance_escrow (Singleton)
+
+```sql
+CREATE TABLE insurance_escrow (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Running balance
+  balance NUMERIC(12,2) NOT NULL DEFAULT 0,
+  
+  -- Audit
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- Singleton enforcement (only one row)
+  CONSTRAINT insurance_escrow_singleton CHECK (id = '00000000-0000-0000-0000-000000000001')
+);
+
+-- Insert the single escrow account
+INSERT INTO insurance_escrow (id, balance) 
+VALUES ('00000000-0000-0000-0000-000000000001', 0);
+
+-- RLS: Admin read-only
+ALTER TABLE insurance_escrow ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can view insurance escrow"
+  ON insurance_escrow FOR SELECT
+  USING (EXISTS (SELECT 1 FROM admins WHERE id = auth.uid()));
+```
+
+#### 3. insurance_escrow_transactions
+
+```sql
+CREATE TABLE insurance_escrow_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Transaction details
+  booking_id UUID REFERENCES bookings(id),
+  policy_id UUID REFERENCES insurance_policies(id),
+  claim_id UUID REFERENCES insurance_claims(id),
+  
+  -- Amount and type
+  amount NUMERIC(10,2) NOT NULL,
+  transaction_type VARCHAR(50) NOT NULL,
+  -- Values: 'premium_collected', 'claim_payout', 'admin_fee', 'refund'
+  
+  -- Balances
+  balance_before NUMERIC(12,2) NOT NULL,
+  balance_after NUMERIC(12,2) NOT NULL,
+  
+  -- Description
+  description TEXT,
+  
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_escrow_tx_booking ON insurance_escrow_transactions(booking_id);
+CREATE INDEX idx_escrow_tx_policy ON insurance_escrow_transactions(policy_id);
+CREATE INDEX idx_escrow_tx_claim ON insurance_escrow_transactions(claim_id);
+CREATE INDEX idx_escrow_tx_type ON insurance_escrow_transactions(transaction_type);
+CREATE INDEX idx_escrow_tx_created ON insurance_escrow_transactions(created_at DESC);
+
+-- RLS
+ALTER TABLE insurance_escrow_transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can view escrow transactions"
+  ON insurance_escrow_transactions FOR SELECT
+  USING (EXISTS (SELECT 1 FROM admins WHERE id = auth.uid()));
+```
+
+#### 4. payment_transactions additions
+
+```sql
+-- Add insurance tracking to payment transactions
+ALTER TABLE payment_transactions 
+  ADD COLUMN insurance_premium NUMERIC(10,2) DEFAULT 0,
+  ADD COLUMN rental_amount NUMERIC(10,2);
+
+COMMENT ON COLUMN payment_transactions.insurance_premium IS 'Insurance premium portion of payment';
+COMMENT ON COLUMN payment_transactions.rental_amount IS 'Rental amount portion (before commission split)';
+```
+
+### Database Functions
+
+#### 1. credit_insurance_escrow
+
+```sql
+CREATE OR REPLACE FUNCTION credit_insurance_escrow(
+  p_booking_id UUID,
+  p_policy_id UUID,
+  p_amount NUMERIC
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_balance_before NUMERIC;
+  v_balance_after NUMERIC;
+BEGIN
+  -- Get current balance
+  SELECT balance INTO v_balance_before
+  FROM insurance_escrow
+  WHERE id = '00000000-0000-0000-0000-000000000001'
+  FOR UPDATE;
+  
+  v_balance_after := v_balance_before + p_amount;
+  
+  -- Update escrow balance
+  UPDATE insurance_escrow
+  SET balance = v_balance_after, updated_at = NOW()
+  WHERE id = '00000000-0000-0000-0000-000000000001';
+  
+  -- Record transaction
+  INSERT INTO insurance_escrow_transactions (
+    booking_id, policy_id, amount, transaction_type,
+    balance_before, balance_after, description
+  ) VALUES (
+    p_booking_id, p_policy_id, p_amount, 'premium_collected',
+    v_balance_before, v_balance_after,
+    'Insurance premium collected for booking ' || p_booking_id::TEXT
+  );
+  
+  RETURN TRUE;
+END;
+$$;
+```
+
+#### 2. debit_insurance_escrow (for claim payouts)
+
+```sql
+CREATE OR REPLACE FUNCTION debit_insurance_escrow(
+  p_claim_id UUID,
+  p_amount NUMERIC
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_balance_before NUMERIC;
+  v_balance_after NUMERIC;
+  v_policy_id UUID;
+  v_booking_id UUID;
+BEGIN
+  -- Get current balance
+  SELECT balance INTO v_balance_before
+  FROM insurance_escrow
+  WHERE id = '00000000-0000-0000-0000-000000000001'
+  FOR UPDATE;
+  
+  IF v_balance_before < p_amount THEN
+    RAISE EXCEPTION 'Insufficient escrow balance. Available: P%, Required: P%', 
+      v_balance_before, p_amount;
+  END IF;
+  
+  -- Get claim references
+  SELECT policy_id, booking_id INTO v_policy_id, v_booking_id
+  FROM insurance_claims WHERE id = p_claim_id;
+  
+  v_balance_after := v_balance_before - p_amount;
+  
+  -- Update escrow balance
+  UPDATE insurance_escrow
+  SET balance = v_balance_after, updated_at = NOW()
+  WHERE id = '00000000-0000-0000-0000-000000000001';
+  
+  -- Record transaction
+  INSERT INTO insurance_escrow_transactions (
+    booking_id, policy_id, claim_id, amount, transaction_type,
+    balance_before, balance_after, description
+  ) VALUES (
+    v_booking_id, v_policy_id, p_claim_id, -p_amount, 'claim_payout',
+    v_balance_before, v_balance_after,
+    'Claim payout for claim ' || p_claim_id::TEXT
+  );
+  
+  RETURN TRUE;
+END;
+$$;
+```
+
+### Edge Function Updates
+
+#### payment-webhook (Updated Flow)
+
+```typescript
+// supabase/functions/payment-webhook/index.ts
+
+// On successful payment, split funds correctly:
+const processSuccessfulPayment = async (transaction: PaymentTransaction) => {
+  const { booking_id, rental_amount, insurance_premium, host_earnings, platform_commission } = 
+    transaction;
+
+  // 1. Credit host wallet (85% of rental)
+  await supabase.rpc('credit_pending_earnings', {
+    p_booking_id: booking_id,
+    p_host_earnings: host_earnings,
+    p_platform_commission: platform_commission
+  });
+
+  // 2. Credit insurance escrow (100% of premium)
+  if (insurance_premium > 0) {
+    const { data: policy } = await supabase
+      .from('bookings')
+      .select('insurance_policy_id')
+      .eq('id', booking_id)
+      .single();
+      
+    await supabase.rpc('credit_insurance_escrow', {
+      p_booking_id: booking_id,
+      p_policy_id: policy.insurance_policy_id,
+      p_amount: insurance_premium
+    });
+  }
+
+  // 3. Update booking status
+  await supabase.from('bookings')
+    .update({ status: 'confirmed', payment_status: 'paid' })
+    .eq('id', booking_id);
+    
+  // 4. Send notifications
+  await sendPaymentNotifications(booking_id);
+};
+```
+
+### Frontend Updates
+
+#### BookingDialog.tsx Updates
+
+When creating a booking with insurance:
+
+```typescript
+// Save insurance premium in booking record
+const { data: booking } = await supabase
+  .from("bookings")
+  .insert({
+    car_id: car.id,
+    renter_id: userId,
+    start_date: format(startDate, "yyyy-MM-dd"),
+    end_date: format(endDate, "yyyy-MM-dd"),
+    total_price: rentalTotal,           // Rental amount only
+    insurance_premium: insurancePremium, // Separate field
+    status: "pending",
+  })
+  .select()
+  .single();
+
+// After policy creation, link to booking
+if (insurancePolicy?.id) {
+  await supabase
+    .from("bookings")
+    .update({ insurance_policy_id: insurancePolicy.id })
+    .eq("id", booking.id);
+}
+```
+
+#### Price Breakdown Display
+
+```typescript
+// PriceBreakdown component shows:
+// - Rental: P1000
+// - Insurance Premium: P250 (if selected)
+// - Total: P1250
+```
+
+### Admin Portal - Insurance Tab
+
+The Admin portal includes an **Insurance** section with the following features:
+
+#### 1. Insurance Dashboard (`/admin/insurance`)
+
+| Widget | Purpose |
+|--------|---------|
+| Escrow Balance | Current insurance escrow balance |
+| Monthly Premiums | Total premiums collected this month |
+| Monthly Payouts | Total claim payouts this month |
+| Health Ratio | Escrow balance ÷ avg monthly claims (target: >3x) |
+| Active Policies | Count of active insurance policies |
+| Pending Claims | Claims awaiting review |
+
+#### 2. Claims Management (`/admin/insurance/claims`)
+
+Features:
+- View all submitted claims with filters (status, date, amount)
+- Claim detail view with evidence, policy info, booking info
+- Approve/Reject claims with notes
+- Request additional information from renter
+- Process payout (debits escrow, credits renter wallet)
+- Claim history and audit trail
+
+#### 3. Policies View (`/admin/insurance/policies`)
+
+Features:
+- List all insurance policies with status
+- Filter by status (active, expired, claimed, cancelled)
+- View policy details and linked booking/claim
+- Policy document download
+
+#### 4. Escrow Transactions (`/admin/insurance/escrow`)
+
+Features:
+- Full transaction history (premiums in, payouts out)
+- Filter by type, date range
+- Running balance visualization
+- Export for accounting
+
+### Insurance Service Updates
+
+The `insuranceService.ts` is updated to use escrow:
+
+```typescript
+// src/services/insuranceService.ts
+
+async processClaimPayout(claimId: string, amount: number): Promise<boolean> {
+  // 1. Verify escrow has sufficient balance
+  const { data: escrow } = await supabase
+    .from('insurance_escrow')
+    .select('balance')
+    .single();
+    
+  if (escrow.balance < amount) {
+    throw new Error(`Insufficient escrow balance. Available: P${escrow.balance}`);
+  }
+  
+  // 2. Get claim and renter info
+  const { data: claim } = await supabase
+    .from('insurance_claims')
+    .select('*, policy:insurance_policies(renter_id)')
+    .eq('id', claimId)
+    .single();
+  
+  // 3. Debit escrow
+  await supabase.rpc('debit_insurance_escrow', {
+    p_claim_id: claimId,
+    p_amount: amount
+  });
+  
+  // 4. Credit renter wallet
+  await walletService.creditInsurancePayout(
+    claim.policy.renter_id,
+    claimId,
+    amount,
+    claim.claim_number
+  );
+  
+  // 5. Update claim status
+  await supabase
+    .from('insurance_claims')
+    .update({
+      status: 'paid',
+      payout_amount: amount,
+      paid_at: new Date().toISOString()
+    })
+    .eq('id', claimId);
+  
+  // 6. Send notification
+  await notifyClaimPaid(claim);
+  
+  return true;
+}
+```
+
+### Refund Handling
+
+If a booking with insurance is cancelled before the rental starts:
+
+```typescript
+// Refund scenarios:
+// 1. Full cancellation before start: 100% premium refunded to renter
+// 2. Mid-rental cancellation: Pro-rated based on unused days
+// 3. After rental complete: No refund (policy expired)
+
+async refundInsurancePremium(
+  bookingId: string, 
+  refundType: 'full' | 'pro_rata'
+): Promise<void> {
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('insurance_premium, insurance_policy_id, start_date, end_date')
+    .eq('id', bookingId)
+    .single();
+    
+  if (!booking.insurance_premium || booking.insurance_premium === 0) return;
+  
+  let refundAmount = booking.insurance_premium;
+  
+  if (refundType === 'pro_rata') {
+    const totalDays = differenceInDays(new Date(booking.end_date), new Date(booking.start_date));
+    const usedDays = differenceInDays(new Date(), new Date(booking.start_date));
+    const unusedDays = Math.max(0, totalDays - usedDays);
+    refundAmount = (booking.insurance_premium / totalDays) * unusedDays;
+  }
+  
+  // Debit escrow for refund
+  await supabase.rpc('debit_insurance_escrow', {
+    p_claim_id: null, // Not a claim
+    p_booking_id: bookingId,
+    p_amount: refundAmount,
+    p_transaction_type: 'refund'
+  });
+  
+  // Credit renter's payment method or wallet
+  // ...
+}
+```
+
+### Risk Monitoring
+
+The admin dashboard monitors insurance escrow health:
+
+| Metric | Warning | Critical | Action |
+|--------|---------|----------|--------|
+| Escrow Balance | < 3x avg monthly claims | < 1x avg monthly claims | Alert admins |
+| Monthly Loss Ratio | > 70% | > 90% | Review premium pricing |
+| Claim Approval Rate | > 80% | > 95% | Review claim criteria |
+| Large Claims (>P10k) | Any | Multiple | Manual review required |
+
+### Implementation Tasks
+
+| ID | Task | Points |
+|----|------|--------|
+| INS-ESC-001 | Add `insurance_premium`, `insurance_policy_id` to bookings | 2 |
+| INS-ESC-002 | Create `insurance_escrow` table | 1 |
+| INS-ESC-003 | Create `insurance_escrow_transactions` table | 2 |
+| INS-ESC-004 | Create `credit_insurance_escrow` function | 2 |
+| INS-ESC-005 | Create `debit_insurance_escrow` function | 2 |
+| INS-ESC-006 | Update `payment-webhook` for insurance split | 3 |
+| INS-ESC-007 | Update `BookingDialog.tsx` for premium storage | 2 |
+| INS-ESC-008 | Update `insuranceService.processClaimPayout` | 2 |
+| INS-ESC-009 | Create `InsuranceEscrowService` | 3 |
+| INS-ESC-010 | Create Admin Insurance Dashboard page | 5 |
+| INS-ESC-011 | Create Escrow Balance widget | 2 |
+| INS-ESC-012 | Create Escrow Transactions view | 3 |
+| INS-ESC-013 | Add insurance to `PriceBreakdown` display | 1 |
+| INS-ESC-014 | Implement refund handling | 3 |
+| INS-ESC-015 | End-to-end testing | 3 |
+
+**Total: 36 Story Points**
