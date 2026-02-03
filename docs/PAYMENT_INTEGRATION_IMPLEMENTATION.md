@@ -1,8 +1,8 @@
 # MobiRides Payment Integration - Technical Implementation Document
 
-**Version:** 1.1  
-**Date:** February 2, 2026  
-**Status:** Pending Review
+**Version:** 1.3  
+**Date:** February 3, 2026  
+**Status:** Active Development
 **Authors:** Development Team  
 **Reviewers:** Dev Team & Engineers
 
@@ -24,6 +24,7 @@
 12. [Risk Assessment](#risk-assessment)
 13. [Legacy Mock Logic Migration](#legacy-mock-logic-migration)
 14. [Insurance Premium Integration](#insurance-premium-integration)
+15. [Dynamic Pricing & Price Transparency](#dynamic-pricing--price-transparency)
 
 ---
 
@@ -1186,40 +1187,149 @@ OOZE_WEBHOOK_SECRET=<webhook_secret>
 
 ## Testing Strategy
 
+### Mock vs Production API Strategy
+
+MobiRides implements a **dual-mode payment system** that can operate in either mock or production mode. This enables full end-to-end testing without requiring live payment credentials.
+
+#### Mock Payment Service
+
+**Location:** `src/services/mockPaymentService.ts`
+
+The mock service simulates:
+- Payment initiation with configurable success rate (95% default)
+- Payment method selection (GCash, Maya, Bank Transfer, Credit Card)
+- Transaction reference generation
+- Configurable delays to simulate real-world latency
+
+```typescript
+// Mock service provides:
+interface MockPaymentService {
+  getPresetAmounts(): number[];              // [50, 100, 200, 500, 1000]
+  getAvailablePaymentMethods(): PaymentMethod[];
+  processPayment(request: PaymentRequest): Promise<PaymentResult>;
+  isValidAmount(amount: number): boolean;    // Min 10, Max 50,000
+  getPaymentMethodById(id: string): PaymentMethod | undefined;
+}
+```
+
+#### Environment Configuration
+
+```typescript
+// Payment mode controlled via environment
+const PAYMENT_MODE = Deno.env.get('PAYMENT_MODE') || 'mock';
+
+// In edge functions:
+if (PAYMENT_MODE === 'mock') {
+  return mockPaymentService.processPayment(request);
+} else {
+  return productionPaymentGateway.processPayment(request);
+}
+```
+
+#### Testing Phases
+
+| Phase | Payment Mode | Purpose |
+|-------|--------------|---------|
+| Local Development | Mock | Fast iteration, no credentials needed |
+| Staging | Mock + Sandbox | Test with provider sandbox APIs |
+| Pre-Production | Sandbox | Full provider integration testing |
+| Production | Production | Live payments |
+
 ### Unit Tests
 
 | Function | Test Cases |
 |----------|------------|
-| Commission calculation | Various amounts, edge cases |
+| Commission calculation | Various amounts, edge cases (0, negative, very large) |
 | Checksum generation | Known PayGate test vectors |
-| Withdrawal validation | Min amount, balance check |
+| Withdrawal validation | Min amount, balance check, concurrent requests |
+| Dynamic pricing calculation | Base price, multipliers, seasonal rules |
+| Insurance premium split | 10/90 split accuracy, rounding |
+| Price breakdown display | All components visible, correct totals |
 
 ### Integration Tests
 
 | Flow | Test Cases |
 |------|------------|
 | Payment initiation | Valid booking, invalid booking, expired deadline |
-| Webhook processing | Success, decline, cancelled, duplicate |
+| Webhook processing | Success, decline, cancelled, duplicate (idempotency) |
 | Withdrawal | Sufficient balance, insufficient, concurrent requests |
+| Insurance premium | Premium calculation, policy creation, remittance tracking |
+| Excess payment | Request creation, notification, payment completion |
 
 ### End-to-End Tests
 
-| Scenario | Steps |
-|----------|-------|
-| Complete payment flow | Create booking → Approve → Pay → Confirm |
-| Withdrawal flow | Complete rental → Release earnings → Withdraw |
-| Expired booking | Approve → Wait for deadline → Verify expired |
+| Scenario | Steps | Verification |
+|----------|-------|--------------|
+| Complete payment flow | Create booking → Approve → Pay → Confirm | Booking confirmed, wallet credited |
+| With insurance | Booking + insurance → Pay → Verify split | Premium tracked, remittance pending |
+| Withdrawal flow | Complete rental → Release earnings → Withdraw | Balance updated, transaction recorded |
+| Expired booking | Approve → Wait for deadline → Verify expired | Status = expired, notification sent |
+| Excess payment | Claim rejected → Pay liability | Liability cleared, host notified |
+| Dynamic pricing | Book during peak → Verify premium applied | Price breakdown shows adjustments |
+| Promo code | Apply code → Verify discount | Discount reflected in total |
 
 ### PayGate Sandbox Testing
 
 **Test Cards:**
 - Success: `4000000000000002` (Visa)
 - Decline: `4000000000000036`
+- Cancelled: `4000000000000044`
 
 **Test Amount Triggers:**
 - P1.00 = Approved
 - P2.00 = Declined
 - P4.00 = Cancelled
+
+### Mock API Test Scenarios
+
+The mock payment service supports specific test scenarios:
+
+| Amount | Mock Behavior | Purpose |
+|--------|---------------|---------|
+| P99.99 | Always success | Happy path testing |
+| P0.01 | Always fail (insufficient funds) | Error handling |
+| P0.02 | Always fail (timeout) | Timeout handling |
+| P0.03 | Always fail (gateway error) | Retry logic testing |
+| Any other | 95% success, 5% random failure | Realistic simulation |
+
+### Price Transparency Test Cases
+
+| Test Case | Expected Result |
+|-----------|-----------------|
+| Booking without insurance | Total = Rental only |
+| Booking with insurance | Total = Rental + Premium |
+| Dynamic pricing applied | Breakdown shows each adjustment |
+| Promo code applied | Discount line item visible |
+| Receipt generation | Matches booking total exactly |
+| Host view | Shows same total as renter paid |
+| Success modal | Displays grand total with insurance |
+
+### Commission Rate Tests
+
+| Scenario | Platform Commission | Host Earnings |
+|----------|---------------------|---------------|
+| P1000 rental | P150 (15%) | P850 (85%) |
+| P500 rental | P75 (15%) | P425 (85%) |
+| P100 rental | P15 (15%) | P85 (85%) |
+| P1.00 minimum | P0.15 (15%) | P0.85 (85%) |
+
+### Automated Test Suite
+
+```bash
+# Run all payment tests
+npm run test:payments
+
+# Run specific test categories
+npm run test:payments:unit
+npm run test:payments:integration
+npm run test:payments:e2e
+
+# Run with mock payment mode
+PAYMENT_MODE=mock npm run test:payments
+
+# Run against sandbox
+PAYMENT_MODE=sandbox npm run test:payments:sandbox
+```
 
 ---
 
@@ -1508,11 +1618,8 @@ You can withdraw your earnings at any time from your wallet.
 |---------|------|--------|---------|
 | 1.0 | 2026-02-02 | Dev Team | Initial document |
 | 1.1 | 2026-02-02 | Dev Team | Added P50 minimum wallet balance requirement; Payment Flow Comparison section; Wallet UI Updates section; Legacy Mock Logic Migration section; updated payment_config with subscription placeholders |
-| 1.2 | 2026-02-03 | Dev Team | Added Insurance Premium Escrow section (Section 14) |
-
----
-
-**END OF DOCUMENT**
+| 1.2 | 2026-02-03 | Dev Team | Added Insurance Premium Integration section (Section 14) with Pay-U partnership model, manual remittance, excess/liability handling |
+| 1.3 | 2026-02-03 | Dev Team | Enhanced Testing Strategy with mock API documentation; Added Section 15 Dynamic Pricing & Price Transparency with complete implementation requirements |
 
 ---
 
@@ -2062,3 +2169,338 @@ Per Booking with Insurance:
 - **Claims Submission**: support@mobirides.africa
 - **Pay-U Partnership**: [Contact details TBD]
 - **Finance Team**: [Internal contact for remittance]
+
+---
+
+## 15. Dynamic Pricing & Price Transparency
+
+### Overview
+
+This section documents the requirements and implementation for ensuring complete price transparency throughout the booking flow. Renters must see the **exact total amount** they will pay before confirming a booking, including all dynamic pricing adjustments, insurance premiums, and discounts.
+
+### Current Issues Identified
+
+| Issue | Severity | Location | Fix Required |
+|-------|----------|----------|--------------|
+| Insurance premium not included in final total | Critical | `BookingDialog.tsx` | Include in grand total |
+| Database missing insurance price fields | Critical | `bookings` table | Add columns |
+| Success modal understates total | High | `BookingSuccessModal.tsx` | Show grand total |
+| Host cannot see insurance selection | Medium | `BookingRequestDetails.tsx` | Add insurance info |
+| Rental details missing breakdown | Medium | `RentalPaymentDetails.tsx` | Show full breakdown |
+| Receipt shows 10% instead of 15% fee | Low | `ReceiptModal.tsx` | Fix rate |
+
+### Database Schema Updates
+
+#### bookings table additions
+
+```sql
+ALTER TABLE bookings 
+  ADD COLUMN base_rental_price NUMERIC(10,2),
+  ADD COLUMN dynamic_pricing_multiplier NUMERIC(6,4) DEFAULT 1.0,
+  ADD COLUMN discount_amount NUMERIC(10,2) DEFAULT 0,
+  ADD COLUMN promo_code_id UUID REFERENCES promo_codes(id),
+  ADD COLUMN insurance_premium NUMERIC(10,2) DEFAULT 0,
+  ADD COLUMN insurance_policy_id UUID REFERENCES insurance_policies(id);
+
+COMMENT ON COLUMN bookings.base_rental_price IS 'Price before dynamic pricing: price_per_day × days';
+COMMENT ON COLUMN bookings.dynamic_pricing_multiplier IS 'Composite multiplier from all pricing rules';
+COMMENT ON COLUMN bookings.discount_amount IS 'Total discount applied (promo codes, etc.)';
+COMMENT ON COLUMN bookings.total_price IS 'Grand total: rental + insurance - discounts (what renter pays)';
+```
+
+### Price Calculation Formula
+
+```text
+Grand Total = (Base Rental × Dynamic Multiplier) + Insurance Premium - Discounts
+
+Where:
+- Base Rental = price_per_day × number_of_days
+- Dynamic Multiplier = Product of all applicable pricing rules
+- Insurance Premium = Selected package premium (if any)
+- Discounts = Promo code + loyalty discounts (if any)
+```
+
+### Price Display Requirements
+
+#### Before Payment (BookingDialog)
+
+The booking dialog MUST display:
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     BOOKING SUMMARY                             │
+├─────────────────────────────────────────────────────────────────┤
+│ Rental                                                          │
+│   3 days × P200/day                              P600.00        │
+│                                                                 │
+│ Pricing Adjustments                                             │
+│   ● Weekend Premium (+20%)                       +P40.00        │
+│   ● Early Bird Discount (-10%)                   -P64.00        │
+│                                     ────────────────────        │
+│   Rental Subtotal                                P576.00        │
+├─────────────────────────────────────────────────────────────────┤
+│ Protection                                                      │
+│   Standard Coverage (10% of rental)              P57.60         │
+├─────────────────────────────────────────────────────────────────┤
+│ Discounts                                                       │
+│   Promo Code: WELCOME20                         -P126.72        │
+├─────────────────────────────────────────────────────────────────┤
+│ ═══════════════════════════════════════════════════════════════ │
+│ TOTAL TO PAY                                     P506.88        │
+│ ═══════════════════════════════════════════════════════════════ │
+└─────────────────────────────────────────────────────────────────┘
+                        [Confirm Booking]
+```
+
+#### Success Confirmation (BookingSuccessModal)
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│              ✓ Booking Request Submitted!                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Toyota Corolla 2024                                             │
+│ Feb 10 - Feb 13, 2026 (3 days)                                  │
+│                                                                 │
+│ Total Amount: BWP 506.88                                        │
+│ (includes Standard Protection)                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Host View (BookingRequestDetails)
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ Booking Request from John D.                                    │
+├─────────────────────────────────────────────────────────────────┤
+│ Renter Total: P506.88                                           │
+│   ├─ Rental (after adjustments): P576.00                        │
+│   ├─ Insurance: P57.60                                          │
+│   └─ Promo Discount: -P126.72                                   │
+│                                                                 │
+│ Your Earnings: P489.60 (after 15% commission)                   │
+│                                                                 │
+│ 🛡️ Includes Standard Protection                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### UnifiedPriceSummary Component
+
+Create a single reusable component for price display across all screens.
+
+**Location:** `src/components/booking/UnifiedPriceSummary.tsx`
+
+```typescript
+interface UnifiedPriceSummaryProps {
+  // Base calculation
+  basePrice: number;              // price_per_day × days
+  pricePerDay: number;
+  numberOfDays: number;
+  
+  // Dynamic pricing
+  dynamicPricing?: PricingCalculation;
+  
+  // Insurance
+  insurancePremium: number;
+  insurancePackageName?: string;
+  
+  // Discounts
+  discountAmount: number;
+  promoCode?: string;
+  
+  // Display options
+  variant: 'full' | 'compact' | 'receipt';
+  showBreakdown?: boolean;
+  expandable?: boolean;
+}
+
+export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
+  basePrice,
+  pricePerDay,
+  numberOfDays,
+  dynamicPricing,
+  insurancePremium,
+  insurancePackageName,
+  discountAmount,
+  promoCode,
+  variant = 'full',
+  showBreakdown = true,
+  expandable = false
+}) => {
+  // Calculate rental subtotal with dynamic pricing
+  const rentalSubtotal = dynamicPricing?.final_price ?? basePrice;
+  
+  // Calculate grand total
+  const grandTotal = rentalSubtotal + insurancePremium - discountAmount;
+  
+  // ... render based on variant
+};
+```
+
+### Component Updates Required
+
+#### 1. BookingDialog.tsx
+
+**Changes:**
+- Replace separate price displays with `UnifiedPriceSummary`
+- Calculate grand total = rental + insurance - discounts
+- Store all price components in database:
+
+```typescript
+const handleCreateBooking = async () => {
+  const grandTotal = rentalSubtotal + insurancePremium - discountAmount;
+  
+  await supabase.from('bookings').insert({
+    total_price: grandTotal,                    // NEW: Full amount
+    base_rental_price: basePrice,               // NEW
+    dynamic_pricing_multiplier: multiplier,     // NEW
+    insurance_premium: insurancePremium,        // NEW
+    insurance_policy_id: policyId,              // NEW
+    discount_amount: discountAmount,            // NEW
+    promo_code_id: promoCodeId,                 // NEW
+    // ... existing fields
+  });
+};
+```
+
+#### 2. BookingSuccessModal.tsx
+
+**Changes:**
+- Accept full price breakdown in `bookingData` prop
+- Display grand total (not just rental)
+- Show insurance indicator if selected
+
+```typescript
+interface BookingSuccessModalProps {
+  bookingData?: {
+    id: string;
+    carBrand: string;
+    carModel: string;
+    startDate: string;
+    endDate: string;
+    totalPrice: number;           // Grand total
+    insurancePackage?: string;    // NEW
+    hasInsurance: boolean;        // NEW
+  };
+}
+```
+
+#### 3. RentalPaymentDetails.tsx
+
+**Changes:**
+- Fetch and display full price breakdown
+- Show dynamic pricing adjustments
+- Show insurance line if applicable
+
+```typescript
+interface RentalPaymentDetailsProps {
+  booking: BookingWithRelations;
+  showBreakdown?: boolean;
+}
+
+// Display:
+// - Base: price_per_day × days
+// - Dynamic adjustments (if any)
+// - Insurance (if any)
+// - Discounts (if any)
+// - Grand Total
+```
+
+#### 4. ReceiptModal.tsx
+
+**Changes:**
+- Fix service fee from 10% to 15%
+- Add insurance premium line
+- Show correct grand total
+
+```typescript
+// FIX: Change from 0.1 to 0.15
+const serviceFee = totalAmount * 0.15; // 15% service fee (corrected)
+
+// ADD: Insurance line in breakdown
+{booking.insurance_premium > 0 && (
+  <div className="flex justify-between">
+    <span>Insurance Premium</span>
+    <span>BWP {booking.insurance_premium.toFixed(2)}</span>
+  </div>
+)}
+```
+
+#### 5. BookingPrice.tsx (if exists)
+
+**Changes:**
+- Accept full breakdown props OR fetch from booking
+- Deprecate if replaced by UnifiedPriceSummary
+
+### Implementation Tasks
+
+| ID | Task | Points | Priority |
+|----|------|--------|----------|
+| PRICE-001 | Add price breakdown columns to bookings table | 2 | P0 |
+| PRICE-002 | Create `UnifiedPriceSummary` component | 5 | P0 |
+| PRICE-003 | Update `BookingDialog` to calculate grand total | 3 | P0 |
+| PRICE-004 | Update `BookingDialog` to save all price fields | 2 | P0 |
+| PRICE-005 | Update `BookingSuccessModal` with full total | 2 | P1 |
+| PRICE-006 | Update `BookingRequestDetails` for host view | 2 | P1 |
+| PRICE-007 | Update `RentalPaymentDetails` with breakdown | 2 | P1 |
+| PRICE-008 | Fix `ReceiptModal` commission rate (10% → 15%) | 1 | P0 |
+| PRICE-009 | Add insurance line to receipt | 1 | P1 |
+| PRICE-010 | Backfill migration for existing bookings | 2 | P2 |
+| PRICE-011 | Update dynamic pricing display | 2 | P1 |
+| PRICE-012 | End-to-end price transparency testing | 3 | P0 |
+
+**Total: 27 Story Points**
+
+### Verification Criteria
+
+After implementation, verify each of these scenarios:
+
+| Scenario | Verification |
+|----------|--------------|
+| Booking without insurance | Total = Rental (with adjustments) - Discounts |
+| Booking with insurance | Total = Rental + Premium - Discounts |
+| Dynamic pricing active | Each adjustment shown as line item |
+| Promo code applied | Discount shown as negative line item |
+| Success modal | Shows exact same total as confirmation |
+| Host booking request | Shows total renter will pay + earnings |
+| Rental details | Full breakdown matches booking |
+| Receipt | Commission = 15%, includes insurance if paid |
+| Database | `total_price` = rental + insurance - discounts |
+
+### Price Consistency Rule
+
+**Critical:** The `total_price` stored in the database MUST equal exactly what the renter sees before confirming and what they actually pay.
+
+```text
+Database: bookings.total_price = P506.88
+         │
+         ├─► BookingDialog shows: "TOTAL TO PAY: P506.88" ✓
+         ├─► Success Modal shows: "Total: P506.88" ✓
+         ├─► Host sees: "Renter Total: P506.88" ✓
+         ├─► Rental Details shows: "Total Paid: P506.88" ✓
+         └─► Receipt shows: "Total: P506.88" ✓
+```
+
+### Backfill Migration
+
+For existing bookings without the new fields:
+
+```sql
+-- Backfill base_rental_price from total_price (best estimate)
+UPDATE bookings 
+SET base_rental_price = total_price,
+    dynamic_pricing_multiplier = 1.0,
+    discount_amount = 0
+WHERE base_rental_price IS NULL;
+
+-- Link insurance policies if insurance_premium is set elsewhere
+UPDATE bookings b
+SET insurance_policy_id = ip.id,
+    insurance_premium = ip.total_premium
+FROM insurance_policies ip
+WHERE ip.booking_id = b.id
+  AND b.insurance_policy_id IS NULL;
+```
+
+---
+
+**END OF DOCUMENT**
