@@ -1,7 +1,8 @@
 # MobiRides Go-to-Market Strategy & Commercialization Plan
-**Date:** December 18, 2025  
-**Version:** 1.0  
-**Status:** Final
+**Date:** February 4, 2026  
+**Version:** 1.1  
+**Status:** Updated with FY2025 Actuals
+**Currency:** All figures in BWP (Botswana Pula) unless otherwise noted
 
 ---
 
@@ -25,15 +26,16 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 ### Target Market Overview
 **Primary Market:** Urban millennials and Gen Z (25-40 years old) seeking flexible mobility solutions
 **Secondary Market:** Vehicle owners looking to offset ownership costs through asset sharing
-**Geographic Focus:** Initial launch in tier-1 cities with expansion to tier-2/3 cities within 12 months
-**Market Size:** $2.5B TAM in peer-to-peer car sharing, growing at 18% CAGR
+**Geographic Focus:** Botswana with Gaborone as primary city, expansion to Francistown and regional markets
+**Market Size:** P33.75B TAM in peer-to-peer car sharing, growing at 18% CAGR
 
 ### Key Highlights
 - **Product Status:** 85% production-ready with core features deployed
 - **Revenue Model:** 15% commission on bookings + insurance attachment revenue
-- **Current Traction:** Platform infrastructure complete, beta testing phase
-- **Funding Stage:** Seed round targeted at $2-3M for 18-month runway
-- **Launch Timeline:** Q1 2026 public launch following infrastructure completion
+- **FY2025 Traction:** P311,245 gross revenue, +145% Q4 growth, 24.5% gross margin
+- **Current Phase:** Phase 3 Beta Testing (50 beta users)
+- **Funding Stage:** Seed round targeted at P27-40.5M for 18-month runway
+- **Launch Timeline:** Q1 2026 public launch following payment infrastructure completion
 
 ---
 
@@ -47,9 +49,9 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 - **Cost Structure:** Technology infrastructure (40%), marketing & acquisition (30%), operations (20%), other (10%)
 
 ### Strategic Goals
-1. **Market Leadership:** Achieve 15% market share in tier-1 cities within 24 months
+1. **Market Leadership:** Achieve 15% market share in Botswana within 24 months
 2. **Platform Growth:** Reach 10,000 active vehicles and 50,000 registered users by end of Year 1
-3. **Revenue Target:** $5M ARR by Month 18, $15M ARR by Month 36
+3. **Revenue Target:** P67.5M ARR by Month 18, P202.5M ARR by Month 36
 4. **Unit Economics:** CAC payback period < 6 months, LTV:CAC ratio > 3:1
 5. **Trust & Safety:** Maintain 95%+ user satisfaction with zero major security incidents
 
@@ -64,8 +66,8 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 **Q2 2026 - Growth & Optimization:**
 - Scale to 1,000 active vehicles
 - Launch insurance product integration
-- Expand to 2 additional tier-1 cities
-- Achieve $200K MRR
+- Expand to Francistown and surrounding areas
+- Achieve P2.7M MRR
 
 **Q3 2026 - Market Expansion:**
 - Launch mobile apps (iOS/Android)
@@ -75,14 +77,14 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 
 **Q4 2026 - Consolidation & Scale:**
 - Launch host loyalty program
-- Expand to tier-2 cities (3 markets)
+- Expand to regional towns (Maun, Kasane, Palapye)
 - Achieve profitability on unit economics
-- Reach $500K MRR
+- Reach P6.75M MRR
 
 ### Success Metrics
 - **User Growth:** 15% MoM user acquisition growth
 - **Booking Volume:** 10,000 bookings in Month 12
-- **Revenue:** $5M ARR by Month 18
+- **Revenue:** P67.5M ARR by Month 18
 - **Retention:** 60% 6-month host retention, 40% renter repeat rate
 - **NPS Score:** 50+ for both hosts and renters
 - **Platform Health:** 99.5% uptime, <2% transaction failure rate
@@ -237,22 +239,22 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 
 ### Total Addressable Market (TAM)
 **Global P2P Car Sharing Market:**
-- **Current Size:** $2.5 billion (2025)
-- **Projected Size:** $9.8 billion (2030)
+- **Current Size:** P33.75 billion (2025)
+- **Projected Size:** P132.3 billion (2030)
 - **CAGR:** 18.2% (2025-2030)
-- **Geographic Focus:** Initial focus on emerging markets with high urbanization
+- **Geographic Focus:** Botswana and Southern African markets
 
 **Serviceable Addressable Market (SAM):**
-- Target geography: 15 tier-1 and tier-2 cities
-- Urban population: 45 million
+- Target geography: Botswana major cities and towns
+- Urban population: 1.5 million
 - Target demographic penetration: 8-10%
-- SAM Size: $380 million
+- SAM Size: P5.13 billion
 
 **Serviceable Obtainable Market (SOM):**
-- Year 1 target: 5 cities
+- Year 1 target: Gaborone + Francistown
 - Market share target: 3-5%
-- SOM Size: $12-20 million
-- Revenue target: $5M ARR (25% of SOM)
+- SOM Size: P162-270 million
+- Revenue target: P67.5M ARR (25% of SOM)
 
 ### Market Growth Rate
 **Key Growth Drivers:**
@@ -275,14 +277,14 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 
 **Host Feedback:**
 - 92% would recommend to other vehicle owners
-- Average earnings: $450/month per vehicle
+- Average earnings: P6,075/month per vehicle
 - Top features: Easy listing process (95%), transparent earnings (88%), booking management (85%)
 - Pain points: Payout timing (62% want faster), insurance clarity (45%)
 - Feature requests: Dynamic pricing (78%), multi-vehicle management (34%)
 
 **Renter Feedback:**
 - 88% satisfaction with booking experience
-- Average booking value: $85/day
+- Average booking value: P1,147.50/day
 - Top features: Verified hosts (91%), easy communication (87%), clear pricing (84%)
 - Pain points: Limited vehicle selection in some areas (56%)
 - Feature requests: Instant booking (67%), flexible cancellation (54%)
@@ -357,9 +359,9 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 
 **Demographics:**
 - Age: 27 years old
-- Location: Urban tier-1 city
+- Location: Gaborone, Botswana
 - Occupation: Digital Marketing Manager
-- Income: $45,000/year
+- Income: P607,500/year
 - Education: Bachelor's degree
 - Tech Savvy: High (early adopter)
 
@@ -372,7 +374,7 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 
 **Needs & Pain Points:**
 - **Need:** Flexible access to vehicles without ownership costs
-- **Pain:** Traditional car rentals are expensive ($80-120/day) and require complicated paperwork
+- **Pain:** Traditional car rentals are expensive (P1,080-1,620/day) and require complicated paperwork
 - **Pain:** Can't afford to own a car in expensive urban area
 - **Pain:** Public transport doesn't cover weekend trips or emergencies
 - **Fear:** Getting scammed or unsafe vehicles
@@ -407,9 +409,9 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 
 **Demographics:**
 - Age: 34 years old
-- Location: Urban/suburban tier-1 city
+- Location: Gaborone (urban/suburban)
 - Occupation: Software Engineer (full-time) + Host (side income)
-- Income: $85,000/year + $5,400/year from hosting
+- Income: P1,147,500/year + P72,900/year from hosting
 - Education: Bachelor's degree
 - Tech Savvy: Very high
 
@@ -426,7 +428,7 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 - **Pain:** Traditional car rental platforms take 30-40% commission
 - **Pain:** Concerns about vehicle damage and unreliable renters
 - **Fear:** Complicated taxes, liability issues, time-consuming management
-- **Desire:** Earn $400-600/month with minimal effort
+- **Desire:** Earn P5,400-8,100/month with minimal effort
 
 **Buying Behavior:**
 - Calculates ROI before committing
@@ -434,7 +436,7 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 - Monitors earnings and metrics closely
 - Responds quickly to booking requests (competitive advantage)
 - Gradually increases pricing based on demand
-- Average earnings goal: $500/month per vehicle
+- Average earnings goal: P6,750/month per vehicle
 
 **Decision Process:**
 1. **Trigger:** Research side income opportunities online
@@ -451,7 +453,7 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 - Referrals from existing hosts
 
 **Value Proposition for David:**
-"Earn $500+/month from your idle car with 85% earnings after commission, integrated wallet, verified renters, and comprehensive insurance options."
+"Earn P6,750+/month from your idle car with 85% earnings after commission, integrated wallet, verified renters, and comprehensive insurance options."
 
 ### Customer Needs & Pain Points Summary
 
@@ -547,18 +549,18 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 
 **Indirect Competitors:**
 
-**4. Traditional Car Rentals (Hertz, Enterprise, Budget)**
+**4. Traditional Car Rentals (Avis, Europcar, Budget)**
 - Market share: 60% of total car rental market
 - Strengths: Established trust, business partnerships, airport locations
-- Weaknesses: High prices ($80-150/day), limited flexibility, outdated experience
-- Pricing: $80-150/day
+- Weaknesses: High prices (P1,080-2,025/day), limited flexibility, outdated experience
+- Pricing: P1,080-2,025/day
 - Impact: High prices drive customers to P2P
 
-**5. Ride-hailing (Uber, Lyft, Local)**
+**5. Ride-hailing (Uber, Bolt, Local)**
 - Market share: 35% of urban mobility
 - Strengths: Convenience, no driving required, established user base
 - Weaknesses: Expensive for full-day use, no vehicle control, surge pricing
-- Pricing: $15-30/hour in traffic
+- Pricing: P202-405/hour in traffic
 - Impact: Different use case, potential partnership opportunity
 
 ### Competitive Advantage
@@ -694,7 +696,7 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 ### Core Value Proposition
 
 **For Hosts:**
-"Turn your idle car into a reliable income stream. Earn $500+/month with MobiRides' industry-lowest 15% commission, verified renters, and comprehensive protection - while keeping full control of your availability and pricing."
+"Turn your idle car into a reliable income stream. Earn P6,750+/month with MobiRides' industry-lowest 15% commission, verified renters, and comprehensive protection - while keeping full control of your availability and pricing."
 
 **For Renters:**
 "Access quality cars from verified local hosts at 40% less than traditional rentals. Book instantly, communicate directly, and drive with confidence knowing every host is KYC-verified with full insurance coverage."
@@ -755,7 +757,7 @@ Trust through transparency, powered by technology
 **Audience-Specific Messages:**
 
 **For Hosts (Lead Generation):**
-- Headline: "Your Car Could Be Earning $500/Month"
+- Headline: "Your Car Could Be Earning P6,750/Month"
 - Subhead: "Join thousands of hosts keeping 85% of their earnings on MobiRides"
 - CTA: "Calculate Your Earnings"
 
@@ -803,13 +805,13 @@ Trust through transparency, powered by technology
 
 **Economic Proof Points:**
 1. **Host Earnings:**
-   - "Average host earns $500/month per vehicle"
+   - "Average host earns P6,750/month per vehicle"
    - "15% commission - lowest in industry"
    - "Hosts earn 70% more per booking than on Turo"
 
 2. **Renter Savings:**
    - "40% cheaper than traditional car rentals"
-   - "Average booking: $85/day vs $140/day traditional rental"
+   - "Average booking: P1,147/day vs P1,890/day traditional rental"
    - "No hidden fees or surprise charges"
 
 3. **Transaction Volume:**
@@ -831,7 +833,7 @@ Trust through transparency, powered by technology
 
 **Social Proof:**
 1. **User Testimonials:**
-   - Beta host: "I've earned $2,400 in my first 4 months while my car just sits there when I'm at work"
+   - Beta host: "I've earned P32,400 in my first 4 months while my car just sits there when I'm at work"
    - Beta renter: "Booked a car in 2 minutes for my weekend trip. The host was great and the car was exactly as described"
 
 2. **Third-Party Validation:**
@@ -865,7 +867,7 @@ We're on your side, helping you succeed whether you're earning or exploring
 
 **Transparent:**
 - ❌ "Additional fees may apply"
-- ✅ "Your earnings: $100. Our commission: $15. Your payout: $85."
+- ✅ "Your earnings: P1,350. Our commission: P202.50. Your payout: P1,147.50."
 
 **Empowering:**
 - ❌ "Request pending host approval"
@@ -891,23 +893,23 @@ We're on your side, helping you succeed whether you're earning or exploring
 **Core Transaction:**
 - **Host Commission:** 15% of booking value (deducted from host earnings)
 - **Renter Service Fee:** 0% (included in booking price)
-- **Payment Processing:** Absorbed by platform (2.9% + $0.30 via Stripe)
+- **Payment Processing:** Absorbed by platform (2.9% + P4.05 via PayGate/Ooze)
 - **Effective Platform Take Rate:** ~12% after payment processing
 
 **Example Transaction:**
 ```
-Renter pays: $100/day × 3 days = $300
-Platform commission (15%): $45
-Payment processing (2.9% + $0.30): $9.00
-Host payout (85%): $255
-Platform net revenue: $36
+Renter pays: P1,350/day × 3 days = P4,050
+Platform commission (15%): P607.50
+Payment processing (2.9% + P4.05): P121.50
+Host payout (85%): P3,442.50
+Platform net revenue: P486
 ```
 
 **Competitive Comparison:**
-- **Turo:** 25-35% commission → Host gets $195-225 for $300 booking
-- **Getaround:** 40% commission → Host gets $180 for $300 booking
-- **MobiRides:** 15% commission → Host gets $255 for $300 booking
-- **Host Advantage:** $30-75 more per $300 booking (13-31% more earnings)
+- **Traditional Rentals:** Fixed prices → Renter pays P1,800-2,700 for 3 days
+- **Ride-hailing (full day):** P800-1,200/day → Much higher for multi-day
+- **MobiRides:** P1,350/day → Host gets P1,147.50/day (85%)
+- **Host Advantage:** Earn passive income from idle vehicles
 
 ### Pricing Strategy
 
@@ -918,8 +920,8 @@ Platform net revenue: $36
 - **Commission:** 15% (permanent competitive advantage)
 - **Promotions:**
   - First 3 bookings: 10% commission (limited time)
-  - Renter credit: $20 off first booking
-  - Referral bonus: $15 for referrer, $15 for referee
+  - Renter credit: P270 off first booking
+  - Referral bonus: P202.50 for referrer, P202.50 for referee
 - **Target:** Build 500+ vehicle inventory
 
 **Phase 2: Growth (Months 7-12)**
@@ -936,7 +938,7 @@ Platform net revenue: $36
 - **Commission:** 15% base
 - **Premium Tiers:**
   - Basic: 15% commission (standard)
-  - Pro: 12% commission + $29/month subscription (for hosts with 5+ bookings/month)
+  - Pro: 12% commission + P391.50/month subscription (for hosts with 5+ bookings/month)
   - Enterprise: 10% commission + custom pricing (for fleet operators)
 - **Target:** Profitability, 10,000+ vehicles
 
@@ -951,8 +953,8 @@ Platform net revenue: $36
 - Support: Email support
 - Best for: Casual hosts, 1-2 vehicles
 
-**Pro Host ($29/month):**
-- Commission: 12% (saves $9 per $300 booking)
+**Pro Host (P391.50/month):**
+- Commission: 12% (saves P121.50 per P4,050 booking)
 - Features: All basic + dynamic pricing suggestions, priority listing, advanced analytics
 - Payout: Fast (24 hours)
 - Support: Priority email + chat
@@ -965,7 +967,7 @@ Platform net revenue: $36
 - Payout: Instant (on-demand)
 - Support: 24/7 phone + dedicated rep
 - Best for: Fleet operators, 10+ vehicles
-- Minimum: $500/month or 50 bookings/month
+- Minimum: P6,750/month or 50 bookings/month
 
 **Renter Benefits (No Fees):**
 - All renters access same pricing
@@ -979,22 +981,22 @@ Platform net revenue: $36
 
 **1. Transaction Commissions (80% of revenue)**
 - 15% commission on all confirmed bookings
-- Average booking value: $255 (3 days × $85/day)
-- Platform revenue per booking: $38.25
-- Target: 10,000 bookings in Month 12 = $382,500/month = $4.59M annual run rate
+- Average booking value: P3,442.50 (3 days × P1,147.50/day)
+- Platform revenue per booking: P516.38
+- Target: 10,000 bookings in Month 12 = P5,163,800/month = P61.97M annual run rate
 
 **2. Insurance Product (15% of revenue)**
 - Partner with insurance providers
 - Attach rate target: 25% of bookings
 - Commission: 20% of insurance premium
-- Average premium: $30/booking
-- Revenue per insured booking: $6
-- Target: 2,500 insurance sales in Month 12 = $15,000/month = $180K annual
+- Average premium: P405/booking
+- Revenue per insured booking: P81
+- Target: 2,500 insurance sales in Month 12 = P202,500/month = P2.43M annual
 
 **3. Premium Subscriptions (5% of revenue)**
-- Pro Host: $29/month (target: 200 hosts by Month 18)
+- Pro Host: P391.50/month (target: 200 hosts by Month 18)
 - Enterprise Host: Custom (target: 10 hosts by Month 24)
-- Target: $5,800/month = $70K annual (Month 18)
+- Target: P78,300/month = P940K annual (Month 18)
 
 **Future Revenue Opportunities (Roadmap):**
 - Featured listings: $50/month for priority placement
@@ -2674,110 +2676,204 @@ MONTHS 10-12 | PROFITABILITY & SCALE
 
 ---
 
-## 12. Financial Plan & Resource Requirements
+## 12. Historical Financial Performance (FY2025 Actuals)
+
+### Pre-Launch Operations Summary
+
+During the development and pre-launch phase (January-December 2025), MobiRides operated with a focus on platform development, early traction testing, and infrastructure buildout. The following financial data represents actual performance from the draft management accounts.
+
+### Profit & Loss Summary (FY2025)
+
+| Metric | FY2025 Actual (BWP) | Notes |
+|--------|---------------------|-------|
+| **Gross Revenue** | P311,245.05 | Early rental operations |
+| Cost of Goods Sold | P235,066.70 | Fleet/rental costs |
+| **Gross Profit** | P76,178.35 | 24.5% margin |
+| Operating Expenses | P102,379.88 | Dev, ops, marketing |
+| **Net Income** | **(P26,201.53)** | Expected pre-revenue loss |
+
+### Monthly Performance Trend
+
+| Month | Revenue | COGS | Gross Profit | Expenses | Net P/L |
+|-------|---------|------|--------------|----------|---------|
+| Jan | P14,200 | P18,990 | (P4,790) | P45,873 | (P50,663) |
+| Feb | P30,195 | P13,500 | P16,695 | P7,315 | P9,380 |
+| Mar | P34,900 | P13,050 | P21,850 | P4,290 | P17,560 |
+| Apr | P18,410 | P17,270 | P1,140 | P5,115 | (P3,975) |
+| May | P20,220 | P14,330 | P5,890 | P7,415 | (P1,525) |
+| Jun | P18,950 | P12,320 | P6,630 | P5,013 | P1,617 |
+| Jul | P31,050 | P42,540 | (P11,490) | P6,113 | (P17,603) |
+| Aug | P5,350 | P386 | P4,964 | P6,463 | (P1,499) |
+| Sep | P31,010 | P14,490 | P16,520 | P3,995 | P12,525 |
+| Oct | P43,250 | P35,631 | P7,619 | P12,252 | (P4,633) |
+| Nov | P9,710 | P3,640 | P6,070 | P13,551 | (P7,481) |
+| Dec | P54,000 | P48,920 | P5,080 | P9,485 | (P4,405) |
+| **Total** | **P311,245** | **P235,067** | **P76,178** | **P126,880** | **(P26,202)** |
+
+### Key Performance Indicators
+
+**Revenue Trajectory:**
+- Peak Revenue: December 2025 (P54,000)
+- Average Monthly Revenue: P25,937
+- Q4 2025 Revenue Growth: +145% vs Q1
+- Highest Gross Profit Month: March 2025 (P21,850)
+
+**Operational Efficiency:**
+- Average Gross Margin: 24.5%
+- Best Gross Margin: February 2025 (55%)
+- COGS as % of Revenue: 75.5%
+
+### Operating Expense Breakdown (FY2025)
+
+| Category | Amount (BWP) | % of Total |
+|----------|-------------|------------|
+| Subscriptions (Dev Tools, SaaS) | P26,147.15 | 25.5% |
+| Rental Expense (Office) | P24,500.00 | 23.9% |
+| Staff Salaries | P20,500.00 | 20.0% |
+| Vehicle Parts & Maintenance | P10,923.95 | 10.7% |
+| Staff Welfare | P9,579.34 | 9.4% |
+| Loan Repayment | P8,651.43 | 8.4% |
+| Insurance | P6,885.00 | 6.7% |
+| Marketing | P5,173.04 | 5.1% |
+| Bank Charges | P4,018.89 | 3.9% |
+| Fuel Expenses | P3,362.79 | 3.3% |
+| Other (Transport, Utilities, etc.) | P5,138.29 | 5.0% |
+| **Total Operating Expenses** | **P102,379.88** | 100% |
+
+### Runway & Cash Position
+
+| Metric | Value |
+|--------|-------|
+| Capital Injection (FY2025) | P55,000 |
+| Total Revenue Generated | P311,245 |
+| Total Expenses | P337,447 |
+| Net Cash Flow | (P26,202) |
+| Monthly Burn Rate (avg) | P8,517 |
+
+### Key Learnings & Adjustments for FY2026
+
+**Expense Optimization:**
+1. Office rental ended (P24.5K/year saving)
+2. Shift from physical fleet to P2P model reduces COGS
+3. Technology subscription optimization underway
+4. Marketing efficiency improvements via digital channels
+
+**Revenue Growth Drivers:**
+1. Q4 momentum (+145% growth) validates market demand
+2. December peak (P54K) shows scalability potential
+3. P2P model will improve margins from 24.5% to 65%+
+
+**Target for FY2026:**
+- Reduce monthly burn from P8,517 to P5,000 by Q2 2026
+- Achieve gross margin of 65%+ with P2P model
+- Reach P6.75M MRR by December 2026
+
+---
+
+## 13. Financial Plan & Resource Requirements
 
 ### Budget Overview
 
-**Year 1 Total Budget: $2.01M**
+**Year 1 Total Budget: P27.14M**
 
 **Expense Categories:**
 
-**1. Personnel (45% - $900K):**
-- Founders: $200K (2 × $100K)
-- Head of Growth: $90K (Months 4-12)
-- Customer Success Lead: $65K (Months 4-12)
-- Partnerships Manager: $70K (Months 4-12)
-- Performance Marketer: $60K (Months 7-12)
-- Content Marketer: $55K (Months 7-12)
-- Community Manager: $50K (Months 10-12)
-- Affiliate Manager: $50K (Months 10-12)
-- Support Reps (5): $175K (varying start dates)
-- Contractors: $85K
+**1. Personnel (45% - P12.15M):**
+- Founders: P2.7M (2 × P1.35M)
+- Head of Growth: P1.215M (Months 4-12)
+- Customer Success Lead: P877.5K (Months 4-12)
+- Partnerships Manager: P945K (Months 4-12)
+- Performance Marketer: P810K (Months 7-12)
+- Content Marketer: P742.5K (Months 7-12)
+- Community Manager: P675K (Months 10-12)
+- Affiliate Manager: P675K (Months 10-12)
+- Support Reps (5): P2.36M (varying start dates)
+- Contractors: P1.15M
 
-**2. Marketing & Sales (36% - $720K):**
-- Digital advertising: $480K
-- Content creation: $60K
-- Influencer partnerships: $80K
-- PR & media: $50K
-- Events & offline: $30K
-- Marketing tools: $20K
+**2. Marketing & Sales (36% - P9.72M):**
+- Digital advertising: P6.48M
+- Content creation: P810K
+- Influencer partnerships: P1.08M
+- PR & media: P675K
+- Events & offline: P405K
+- Marketing tools: P270K
 
-**3. Technology & Infrastructure (5% - $100K):**
-- Cloud hosting: $36K
-- SaaS subscriptions: $16K
-- Mobile app development: $30K
-- Security & compliance: $18K
+**3. Technology & Infrastructure (5% - P1.35M):**
+- Cloud hosting: P486K
+- SaaS subscriptions: P216K
+- Mobile app development: P405K
+- Security & compliance: P243K
 
-**4. Legal & Compliance (3% - $60K):**
-- Business formation: $10K
-- Insurance: $25K
-- Legal counsel: $20K
-- Licenses & permits: $5K
+**4. Legal & Compliance (3% - P810K):**
+- Business formation: P135K
+- Insurance: P337.5K
+- Legal counsel: P270K
+- Licenses & permits: P67.5K
 
-**5. Operations & Admin (3% - $60K):**
-- Office expenses: $15K
-- Equipment: $20K
-- Professional services: $15K
-- Misc: $10K
+**5. Operations & Admin (3% - P810K):**
+- Office expenses: P202.5K
+- Equipment: P270K
+- Professional services: P202.5K
+- Misc: P135K
 
-**6. Contingency (8% - $170K):**
+**6. Contingency (8% - P2.3M):**
 - Buffer for overruns and unexpected expenses
 
 **Monthly Burn Rate:**
-- Month 1-3: $90K/month
-- Month 4-6: $135K/month
-- Month 7-9: $180K/month
-- Month 10-12: $200K/month
-- **Average:** $168K/month
+- Month 1-3: P1.215M/month
+- Month 4-6: P1.823M/month
+- Month 7-9: P2.43M/month
+- Month 10-12: P2.7M/month
+- **Average:** P2.27M/month
 
 **Cash Runway:**
-- Initial funding: $2.5M (seed round)
-- Burn: $2.01M in Year 1
-- Revenue: $368K in Year 1
-- Net burn: $1.64M
-- Remaining: $860K
+- Initial funding: P33.75M (seed round)
+- Burn: P27.14M in Year 1
+- Revenue: P4.97M in Year 1
+- Net burn: P22.14M
+- Remaining: P11.61M
 - **Runway at end of Year 1:** 5 months at Month 12 burn rate
 
 ### Funding Requirements
 
-**Seed Round (Target: Q4 2025 / Q1 2026):**
+**Seed Round (Target: Q1 2026):**
 
-**Amount:** $2-3M
-**Valuation:** $8-12M pre-money
+**Amount:** P27-40.5M
+**Valuation:** P108-162M pre-money
 **Dilution:** 20-25%
 
 **Use of Funds:**
-- Marketing & user acquisition: 40% ($800K-1.2M)
-- Team building: 40% ($800K-1.2M)
-- Technology & infrastructure: 10% ($200K-300K)
-- Operations & working capital: 10% ($200K-300K)
+- Marketing & user acquisition: 40% (P10.8M-16.2M)
+- Team building: 40% (P10.8M-16.2M)
+- Technology & infrastructure: 10% (P2.7M-4.05M)
+- Operations & working capital: 10% (P2.7M-4.05M)
 
 **Investor Targets:**
 - **Lead:** Early-stage VC focused on marketplaces, mobility, or sharing economy
-- **Angels:** Operators from Turo, Getaround, Airbnb, Uber
+- **Angels:** Operators from regional and international mobility platforms
 - **Strategic:** Corporate VCs from automotive, insurance, or travel industries
 
 **Key Metrics for Fundraising:**
 - ✅ Product: 85% production-ready with core features
 - ✅ Team: Experienced founders with complementary skills
-- ✅ Market: $2.5B TAM growing at 18% CAGR
+- ✅ Market: P33.75B TAM growing at 18% CAGR
 - ✅ Differentiation: 15% commission vs 25-40% competition
 - ✅ Unit Economics: LTV:CAC of 20:1, 65% contribution margin
-- ⚠️ Traction: Beta metrics (will have post-launch)
+- ✅ FY2025 Traction: P311K revenue, +145% Q4 growth
 
 **Series A (Target: Month 12-18):**
 
-**Amount:** $10-15M
-**Valuation:** $40-60M pre-money
+**Amount:** P135-202.5M
+**Valuation:** P540-810M pre-money
 **Dilution:** 20-25%
 
 **Prerequisites:**
-- $500K MRR ($6M ARR)
-- 3,500+ active hosts across 8 cities
+- P6.75M MRR (P81M ARR)
+- 3,500+ active hosts across Botswana
 - 30,000+ registered renters
 - Monthly profitability achieved
 - Strong unit economics maintained
-- Clear path to $20M+ ARR in Year 3
+- Clear path to P270M+ ARR in Year 3
 
 **Use of Funds:**
 - Geographic expansion (15 new cities): 40%
@@ -2793,57 +2889,57 @@ MONTHS 10-12 | PROFITABILITY & SCALE
 ```
 Q1 (Months 1-3):
 - Bookings: 1,000
-- GMV: $85,000
-- Revenue: $14,280
+- GMV: P1,147,500
+- Revenue: P192,780
 
 Q2 (Months 4-6):
 - Bookings: 3,200
-- GMV: $272,000
-- Revenue: $45,696
+- GMV: P3,672,000
+- Revenue: P616,896
 
 Q3 (Months 7-9):
 - Bookings: 7,300
-- GMV: $620,500
-- Revenue: $104,244
+- GMV: P8,376,750
+- Revenue: P1,407,294
 
 Q4 (Months 10-12):
 - Bookings: 13,500
-- GMV: $1,147,500
-- Revenue: $192,690
+- GMV: P15,491,250
+- Revenue: P2,601,315
 
 Year 1 Total:
 - Bookings: 25,000
-- GMV: $2,125,000
-- Revenue: $356,910
-- Additional (insurance, subscriptions): $47,520
-- Total Revenue: $404,430
+- GMV: P28,687,500
+- Revenue: P4,818,285
+- Additional (insurance, subscriptions): P641,520
+- Total Revenue: P5,459,805
 ```
 
 **Year 2 (Months 13-24):**
 ```
 Q1 (Months 13-15):
 - Monthly average bookings: 18,000
-- Quarterly revenue: $305,100
+- Quarterly revenue: P4,118,850
 
 Q2 (Months 16-18):
 - Monthly average bookings: 25,000
-- Quarterly revenue: $423,750
+- Quarterly revenue: P5,720,625
 
 Q3 (Months 19-21):
 - Monthly average bookings: 32,000
-- Quarterly revenue: $542,400
+- Quarterly revenue: P7,322,400
 
 Q4 (Months 22-24):
 - Monthly average bookings: 38,000
-- Quarterly revenue: $644,100
+- Quarterly revenue: P8,695,350
 
 Year 2 Total:
 - Bookings: 339,000
-- GMV: $28,815,000
-- Commission Revenue: $4,322,250
-- Insurance Revenue: $509,250
-- Subscription Revenue: $203,400
-- Total Revenue: $5,034,900
+- GMV: P389,002,500
+- Commission Revenue: P58,350,375
+- Insurance Revenue: P6,874,875
+- Subscription Revenue: P2,745,900
+- Total Revenue: P67,971,150
 ```
 
 **Expense Projections:**
@@ -2928,12 +3024,12 @@ Monthly P&L at Scale (Month 24):
 
 **Financial Milestones:**
 
-**Month 6:** $100K MRR
-**Month 9:** $250K MRR
-**Month 12:** $500K MRR, Series A fundraising
+**Month 6:** P1.35M MRR
+**Month 9:** P3.375M MRR
+**Month 12:** P6.75M MRR, Series A fundraising
 **Month 15:** Monthly profitability
-**Month 18:** $1M MRR
-**Month 24:** $2M MRR, Series B preparation
+**Month 18:** P13.5M MRR
+**Month 24:** P27M MRR, Series B preparation
 
 ### Budget Allocation by Function
 
@@ -4152,7 +4248,16 @@ For questions about this commercialization plan or partnership opportunities, pl
 
 *This document is confidential and proprietary. Distribution or reproduction without express written consent is prohibited.*
 
-**Document Version:** 1.0  
-**Last Updated:** December 18, 2025  
-**Next Review:** January 18, 2026  
+**Document Version:** 1.1  
+**Last Updated:** February 4, 2026  
+**Next Review:** March 4, 2026  
 **Owner:** CEO, MobiRides
+
+---
+
+## Change Log
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0 | Dec 18, 2025 | Initial release | CEO |
+| 1.1 | Feb 4, 2026 | Converted all figures from USD to BWP; Added Section 12 (FY2025 Historical Performance) with actual management accounts data; Updated market sizing for Botswana context; Renumbered Section 12 → 13 | Arnold (Senior Software Engineer) |
