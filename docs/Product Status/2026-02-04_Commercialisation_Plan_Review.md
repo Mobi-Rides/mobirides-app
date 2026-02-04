@@ -17,283 +17,245 @@ This approach ensures all figures are grounded in actual Botswana market data ra
 
 ---
 
-## Phase 1: Align Projections with FY2025 Actuals
+## SECTION COMPARISON: Your Edits vs AI Proposal
 
-### Current FY2025 Baseline Data
+### Key Differences Found
 
-| Metric | FY2025 Actual |
-|--------|---------------|
-| Total Revenue | P311,245.05 |
-| Monthly Average Revenue | P25,937 |
-| December 2025 Revenue | P54,000 |
-| Q4 2025 Growth | +145% vs Q1 |
-| Gross Margin (Fleet Model) | 24.5% |
-| Target Gross Margin (P2P) | 65%+ |
-| FY2025 Marketing Spend | P5,173 |
-
-### Revised Revenue Projections
-
-**Building from Q4 2025 Momentum:**
-
-Using December 2025 (P54,000) as the baseline and applying realistic growth rates:
-
-| Month | Revenue (BWP) | MoM Growth | Calculation Basis |
-|-------|---------------|------------|-------------------|
-| Month 1 (Jan 2026) | P60,000 | +11% | Dec baseline + organic growth |
-| Month 2 | P69,000 | +15% | Marketing ramp begins |
-| Month 3 | P79,000 | +15% | Continued momentum |
-| Month 4 | P95,000 | +20% | Marketing fully operational |
-| Month 5 | P114,000 | +20% | Growth phase |
-| Month 6 | P137,000 | +20% | Growth phase |
-| Month 7 | P171,000 | +25% | Mobile app launch boost |
-| Month 8 | P214,000 | +25% | Mobile adoption |
-| Month 9 | P267,000 | +25% | Peak mobile impact |
-| Month 10 | P320,000 | +20% | Stabilization |
-| Month 11 | P384,000 | +20% | Holiday season |
-| Month 12 | P461,000 | +20% | Year-end peak |
-| **Year 1 Total** | **P2,371,000** | | |
-
-### Commission & Revenue Breakdown
-
-**At 65% P2P Margin:**
-- Platform commission (15% of GMV): P355,650
-- Insurance attachment (20% of bookings × P120 avg): ~P57,000
-- **Total Year 1 Platform Revenue: ~P2.43M**
-
-### GMV Calculations
-
-If platform commission is 15% of GMV:
-- Year 1 GMV = P2,371,000 / 0.15 = **P15.8M**
-
-### Year 2 Projections
-
-Starting from Month 12 baseline (P461,000) with 15% average MoM growth:
-- **Year 2 Total Revenue: ~P12-15M**
+The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below is a comparison of critical metrics:
 
 ---
 
-## Phase 2: Derive Unit Economics from Projections
+## 1. Financial Performance (Section 1A)
 
-### Current Issues (Still in USD in Main Document)
+| Metric | Your Document (v1.9) | AI Proposal | **Recommendation** |
+|--------|---------------------|-------------|-------------------|
+| Total Revenue (Jan-Oct 2025) | **P247,535.05** | P311,245.05 | ✅ **Use Your Figure** |
+| Monthly Average Revenue | P24,753.51 | P25,937 | ✅ **Use Your Figure** |
+| October 2025 Revenue | **P43,300** | P54,000 (Dec) | ✅ **Use Your Figure** (Oct baseline) |
+| December 2025 Revenue | Not specified | P54,000 | ⚠️ **Clarify**: Is Dec P54K correct? |
+| Growth Rate | 305% (Jan P14.2K → Oct P43.3K) | 305% | ✅ Match |
+| Gross Margin | 16.4% | 24.5% | ✅ **Use Your Figure** (16.4%) |
+| Net Loss | -P13,920.14 | -P26,201.53 | ⚠️ **Clarify**: Different figures |
+| Breakeven Months | 5 of 10 | Not specified | ✅ **Use Your Figure** |
 
-Lines 1020-1082 and 1947-2056 use theoretical USD figures that don't match Botswana market realities.
+### Your Monthly Breakdown (Verified as Source of Truth)
 
-### Revised Unit Economics (BWP)
+| Month | Revenue (P) | Host Payouts | Gross Profit | Net Profit/Loss |
+|-------|-------------|--------------|--------------|-----------------|
+| Jan 2025 | P14,200 | P12,070 | P2,130 | -P53,000* |
+| Feb 2025 | P30,195 | P25,666 | P4,529 | P4,529 |
+| Mar 2025 | P18,500 | P15,725 | P2,775 | P2,775 |
+| Apr 2025 | P22,000 | P18,700 | P3,300 | -P1,200 |
+| May 2025 | P19,800 | P16,830 | P2,970 | P2,970 |
+| Jun 2025 | P21,500 | P18,275 | P3,225 | -P13,275** |
+| Jul 2025 | P28,640 | P24,344 | P4,296 | P4,296 |
+| Aug 2025 | P26,400 | P22,440 | P3,960 | -P6,540 |
+| Sep 2025 | P23,000 | P19,550 | P3,450 | -P1,050 |
+| Oct 2025 | P43,300 | P36,805 | P6,495 | P6,495 |
+| **Total** | **P247,535** | **P210,405** | **P37,130** | |
 
-#### Average Booking Value
-
-| Metric | Value | Calculation |
-|--------|-------|-------------|
-| FY2025 Avg Booking | ~P778 | P311,245 / ~400 bookings |
-| P2P Model Avg Daily Rate | P450 | Market research |
-| Average Rental Duration | 2.5 days | Historical data |
-| Average Booking Value | P1,125 | P450 × 2.5 days |
-| **Platform Commission/Booking** | **P168.75** | P1,125 × 15% |
-
-#### Host CAC (Based on Botswana Channels)
-
-| Channel | CPM (BWP) | Conversion Rate | Cost per Signup |
-|---------|-----------|-----------------|-----------------|
-| Facebook/Instagram | P30-50 | 2% | P750-1,500 |
-| Google Ads | P60-80 | 3% | P1,000-1,800 |
-| Referral | P500 flat | 15% | P500 |
-
-- Cost per host signup: P750-1,500
-- Activation rate (host lists car): 20%
-- **Cost to Activated Host: P3,750-7,500**
-- **Conservative Host CAC: P5,000**
-
-#### Renter CAC (Based on Botswana Channels)
-
-| Channel | CPM (BWP) | Conversion Rate | Cost per Signup |
-|---------|-----------|-----------------|-----------------|
-| Facebook/Instagram | P30-50 | 4% | P150-300 |
-| Google Ads | P60-80 | 5% | P200-350 |
-| Referral | P200 flat | 20% | P200 |
-
-- Lower friction than hosts
-- Social ads + Google: P150-300 per signup
-- Activation to first booking: 40%
-- **Cost to First Booking: P375-750**
-- **Conservative Renter CAC: P600**
-
-#### Host LTV
-
-| Metric | Value |
-|--------|-------|
-| Average lifespan | 18 months (conservative) |
-| Bookings per month | 3 (realistic for Botswana) |
-| Commission per booking | P168.75 |
-| **Host LTV** | **P9,112.50** |
-| **LTV:CAC Ratio** | **1.8:1** |
-
-#### Renter LTV
-
-| Metric | Value |
-|--------|-------|
-| Average lifespan | 12 months |
-| Bookings per year | 6 (every 2 months) |
-| Commission per booking | P168.75 |
-| **Renter LTV** | **P1,012.50** |
-| **LTV:CAC Ratio** | **1.7:1** |
-
-### Contribution Margin (BWP)
-
-| Item | Amount |
-|------|--------|
-| Average Booking Commission | P168.75 |
-| Payment processing (2.9% + P4) | -P36.63 |
-| Support allocation | -P15.00 |
-| Infrastructure allocation | -P5.00 |
-| Insurance/fraud reserve | -P10.00 |
-| **Contribution Margin** | **P102.12 (60.5%)** |
+*\*Includes Cerberus investment accounting*
+*\*\*One-time expense impact*
 
 ---
 
-## Phase 3: Align Marketing Budget with Projections and Unit Economics
+## 2. Strategic Goals & Key Objectives (Section 1)
 
-### Marketing Budget Principles
+| Metric | Your Document (v1.9) | AI Proposal | **Recommendation** |
+|--------|---------------------|-------------|-------------------|
+| Year 1 Revenue Target | **P1.368M total** | P2.43M | ⚠️ **Discuss** |
+| Monthly Target (Dec 2026) | **P157.5K/month** | P461K/month | ✅ **Use Your Figure** (realistic) |
+| Fleet Target | 200 vehicles | 200 vehicles | ✅ Match |
+| User Target | 500 users | 500 users | ✅ Match |
+| Rent2Buy Conversions | 5+ | Not specified | ✅ **Use Your Figure** |
+| Funding Target | P700K pre-seed | P700K | ✅ Match |
 
-Based on our revised projections and unit economics:
+### Your Quarterly Targets (Verified)
 
-| Metric | Value |
-|--------|-------|
-| Year 1 Revenue Target | P2.43M |
-| Recommended Marketing % | 15-20% of revenue |
-| **Year 1 Marketing Budget** | **P365,000-486,000** |
-| Proposed Budget | **P420,000** |
-| Growth from FY2025 | ~80x (from P5,173) |
-
-### Revised Marketing Budget (BWP)
-
-**Total Year 1: P420,000**
-
-#### Monthly Progression
-
-| Period | Monthly Budget | Total | Purpose |
-|--------|----------------|-------|---------|
-| Months 1-3 | P25,000/month | P75,000 | Launch & testing |
-| Months 4-6 | P35,000/month | P105,000 | Optimization |
-| Months 7-9 | P45,000/month | P135,000 | Mobile launch push |
-| Months 10-12 | P35,000/month | P105,000 | Holiday & retention |
-| **Total** | | **P420,000** | |
-
-#### Channel Allocation
-
-| Channel | Budget (BWP) | % of Total |
-|---------|-------------|------------|
-| **Digital Marketing** | P252,000 | 60% |
-| - Meta Ads (FB/IG) | P126,000 | 30% |
-| - Google Ads | P63,000 | 15% |
-| - Content Marketing | P42,000 | 10% |
-| - Email/SMS | P21,000 | 5% |
-| **Referral Program** | P42,000 | 10% |
-| **Offline/Guerrilla** | P42,000 | 10% |
-| **PR & Influencers** | P42,000 | 10% |
-| **Partnerships** | P21,000 | 5% |
-| **Contingency** | P21,000 | 5% |
-| **Total** | **P420,000** | 100% |
-
-### Campaign Budgets (Aligned)
-
-| Campaign | Budget (BWP) | Timing |
-|----------|-------------|--------|
-| "Share the Road" Launch | P50,000 | Months 1-2 |
-| "Road Trip Season" | P80,000 | Months 5-7 |
-| "Verified Community" Trust | P60,000 | Months 8-10 |
-| Holiday Campaign | P70,000 | Months 11-12 |
-| **Campaigns Total** | **P260,000** | |
-| Always-on Marketing | P160,000 | Throughout |
-| **Grand Total** | **P420,000** | |
-
-### Expected Returns
-
-| Metric | Value |
-|--------|-------|
-| Marketing Spend | P420,000 |
-| New Hosts Acquired | 150 (at P5,000 CAC × 60% allocated) |
-| New Renters Acquired | 800 (at P600 CAC × 40% allocated) |
-| Revenue Generated | P2.43M |
-| **Marketing Efficiency (ROAS)** | **5.8x** |
-| Marketing as % of Revenue | 17% |
+| Quarter | Revenue Target | Key Milestones |
+|---------|----------------|----------------|
+| Q1 2026 | P72K/month | Mobile launch, 100 vehicles, 500 users |
+| Q2 2026 | P95K/month | Rent2Buy pilot, 120 vehicles, Motshelo |
+| Q3 2026 | P120K/month | Maun/Kasane launch, 150 vehicles |
+| Q4 2026 | P157.5K/month | 200 vehicles, EV preparation |
+| **Year Total** | **P1.368M** | |
 
 ---
 
-## Revised Expense Projections (Year 1)
+## 3. Cost Structure (Section 1)
 
-| Category | Amount (BWP) | % of Revenue |
-|----------|-------------|--------------|
-| Personnel | P810,000 | 33% |
-| Marketing | P420,000 | 17% |
-| Technology | P180,000 | 7% |
-| Legal/Compliance | P90,000 | 4% |
-| Operations | P120,000 | 5% |
-| Contingency | P160,000 | 7% |
-| **Total Expenses** | **P1,780,000** | 73% |
-| **Revenue** | **P2,430,000** | 100% |
-| **Net Income** | **P650,000** | **27% margin** |
-
-This shows a path to profitability in Year 1 when building from actuals.
+| Category | Your Document (v1.9) | AI Proposal | **Recommendation** |
+|----------|---------------------|-------------|-------------------|
+| Platform & Technology | 38% (P20.9K/mo) | 38% | ✅ Match |
+| Operations & Staff | 24% (P13.1K/mo) | 24% | ✅ Match |
+| Vehicle Support | 19% (P10.3K/mo) | 19% | ✅ Match |
+| Banking & Payment Fees | 5.4% (P2.9K/mo) | 5.4% | ✅ Match |
+| Other Operating Costs | 13.2% (P7.2K/mo) | 13.2% | ✅ Match |
+| **Average Monthly Burn** | **P5,442** | P5,442 | ✅ Match |
 
 ---
 
-## Comparison: Current vs Proposed
+## 4. Product Readiness (Section 2)
 
-### Revenue Projections
+| Component | Your Document (v1.9) | AI Proposal | **Recommendation** |
+|-----------|---------------------|-------------|-------------------|
+| Booking System | 97% ✅ | Not specified | ✅ **Use Your Figure** |
+| Vehicle Handover | 95% ✅ | Not specified | ✅ **Use Your Figure** |
+| **Payment & Wallet** | **35% 🔴 BLOCKING** | Not specified | ✅ **Use Your Figure** |
+| Overall Completion | 85% | 85% | ✅ Match |
+| Commercial Launch Block | Feb 28, 2026 | Not specified | ✅ **Use Your Figure** |
 
-| Metric | Current (Main Doc) | Proposed | Change |
-|--------|-------------------|----------|--------|
-| Year 1 Revenue | P67.5M | P2.43M | -96% (realistic) |
-| Year 2 Revenue | P135M | P12-15M | -89% (realistic) |
-| Monthly Growth Rate | Unspecified | 15-25% | Grounded in Q4 momentum |
+### Critical Infrastructure (Your Version)
 
-### Unit Economics
-
-| Metric | Current (Main Doc) | Proposed | Rationale |
-|--------|-------------------|----------|-----------|
-| Host CAC | $150 (P2,775) | P5,000 | Botswana channel costs |
-| Renter CAC | $35 (P648) | P600 | Similar, validated |
-| Host LTV | P67,968 | P9,112 | Conservative lifespan |
-| Renter LTV | P12,744 | P1,012 | Conservative frequency |
-| Host LTV:CAC | 24:1 | 1.8:1 | Realistic |
-| Renter LTV:CAC | 19.7:1 | 1.7:1 | Realistic |
-
-### Marketing Budget
-
-| Metric | Current (Main Doc) | Proposed | Change |
-|--------|-------------------|----------|--------|
-| Year 1 Total | $720K (P13.32M) | P420,000 | -97% (fundable) |
-| % of Revenue | ~20% | 17% | Aligned |
-| FY2025 Growth | 2,575x | 80x | Achievable |
+| System | Current | Target | Deadline |
+|--------|---------|--------|----------|
+| Payment & Wallet | 35% | 95%+ | Jan 31, 2026 |
+| WhatsApp Business | 0% | Live | Jan 15, 2026 |
+| Help Desk Software | 0% | Operational | Feb 1, 2026 |
+| Security Audit | Pending | Complete | Feb 15, 2026 |
+| Penetration Testing | Pending | Complete | Feb 20-25, 2026 |
 
 ---
 
-## Questions for Review
+## 5. Market Validation (Section 3)
 
-### Phase 1: Projections
-1. Is 11-25% MoM growth realistic given Q4 2025 momentum?
-2. Should we adjust the December 2025 baseline (P54,000)?
-3. Is Year 2 target of P12-15M achievable?
+| Metric | Your Document (v1.9) | AI Proposal | **Recommendation** |
+|--------|---------------------|-------------|-------------------|
+| TAM (Car Rental) | P250M+ annually | P250M+ | ✅ Match |
+| SAM | P50M+ | P50M+ | ✅ Match |
+| SOM Year 1 | P2.5-4M | P2.5-4M | ✅ Match |
+| Revenue Target 2026 | **P1.5M** (60% SOM) | P2.43M | ⚠️ **Discuss** |
+| Users | 154 registered | 154 | ✅ Match |
+| Fleet | 56 vehicles | 56 | ✅ Match |
 
-### Phase 2: Unit Economics
-1. Are LTV:CAC ratios of 1.7-1.8:1 acceptable? (Industry standard is 3:1+)
-2. Should we adjust host/renter lifespan assumptions?
-3. Are Botswana-specific channel costs accurate?
+---
 
-### Phase 3: Marketing
-1. Is P420,000 sufficient for Year 1 growth targets?
-2. Is the 60/10/10/10/5/5 channel split appropriate?
-3. Should campaign budgets be redistributed?
+## 6. Target Market Personas (Section 4)
+
+✅ **Your version is comprehensive and should be used as-is**
+
+Key personas defined:
+- **Mabedi (Cost-Conscious Renter)**: 27yo, P180K/year, digital marketing manager
+- **Thabo (Side-Hustle Host)**: 34yo, P300K/year + P151K hosting income
+
+---
+
+## 7. Partnership Priorities (Section 5)
+
+| Partner Tier | Your Document (v1.9) | AI Proposal | **Recommendation** |
+|--------------|---------------------|-------------|-------------------|
+| Tier 1: Motshelo | 3-5 groups, P100K min, 6.5%/mo | Similar | ✅ Match |
+| Tier 2: EV Dealers | BYD, GWM, Chery, JAC, Geely | Not specified | ✅ **Use Your Figure** |
+| Tier 3: Banks | FNB, Bank Gaborone, Access, Stanbic | Not specified | ✅ **Use Your Figure** |
+| Tier 4: Operational | Emergency 911, Rent Gear, etc. | Not specified | ✅ **Use Your Figure** |
+
+---
+
+## 8. Risk Management (Section 6)
+
+✅ **Your risk register is comprehensive and current. Use as-is.**
+
+| Risk ID | Risk | Status | Deadline |
+|---------|------|--------|----------|
+| 1 | Payment System 35% complete | 🔴 CRITICAL | Jan 31, 2026 |
+| 2 | Fleet Partner Concentration (80% Trillo) | 🔴 CRITICAL | Q1 2026 |
+| 3 | Pre-Seed Funding P700K | 🔴 CRITICAL | Dec 15, 2025 |
+| 4 | User Verification Gap (95% incomplete) | 🟡 HIGH | Q1 2026 |
+| 5-7 | Competition, Rent2Buy Financing, Regulatory | 🟡 HIGH-MEDIUM | Ongoing |
+| 8-14 | Insurance, Tech, IP, Platform, Payments, Disputes, Demand | 🟢 LOW | Ongoing |
+
+---
+
+## KEY DECISIONS REQUIRED
+
+### Decision 1: Year 1 Revenue Target
+
+| Option | Value | Rationale |
+|--------|-------|-----------|
+| **A) Your Version** | P1.368M | Based on quarterly targets (P72K→P157K/mo) |
+| B) AI Proposal | P2.43M | Based on Dec P54K baseline + 15-25% MoM |
+
+**Recommendation**: ✅ **Use Your Figure (P1.368M)** - It's grounded in realistic quarterly progression.
+
+### Decision 2: December 2025 Baseline
+
+| Option | Value | Source |
+|--------|-------|--------|
+| **A) October 2025** | P43,300 | Your document (verified) |
+| B) December 2025 | P54,000 | AI assumption |
+| C) Highest Month (Dec) | P50,000 | Your note: "P50k in Dec '25 off P500 social ads" |
+
+**Recommendation**: ⚠️ **Clarify**: Your document mentions "P50k in Dec '25" - should we use P50K or P54K as baseline?
+
+### Decision 3: LTV:CAC Ratios
+
+| Option | Host LTV:CAC | Renter LTV:CAC | Notes |
+|--------|-------------|----------------|-------|
+| A) Current Main Doc | 24:1 | 19.7:1 | Theoretical USD |
+| **B) AI Proposal (Realistic)** | 1.8:1 | 1.7:1 | Botswana-specific |
+
+**Recommendation**: ⚠️ **Discuss**: 1.7-1.8:1 is low (industry standard is 3:1+). Should we:
+- Accept lower ratios as realistic for startup phase?
+- Adjust LTV assumptions (longer lifespan, more bookings)?
+- Accept higher CAC is a growth investment?
+
+### Decision 4: Marketing Budget
+
+| Option | Annual Budget | % of Revenue |
+|--------|---------------|--------------|
+| A) Current Main Doc | $720K (P13.32M) | 20% of P67.5M |
+| **B) AI Proposal** | P420K | 17% of P2.43M |
+| C) Aligned to Your Revenue | P233K | 17% of P1.368M |
+
+**Recommendation**: ⚠️ **Discuss**: If Year 1 revenue is P1.368M:
+- P420K (31% of revenue) may be too aggressive
+- P233K (17% of revenue) aligns with your projections
+- P350K (25% of revenue) is a middle ground for growth push
+
+---
+
+## PROPOSED FINAL FIGURES (Pending Your Input)
+
+### Phase 1: Revenue Projections (Use Your Version)
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| FY2025 Total Revenue | P247,535 | Your monthly breakdown |
+| October 2025 Revenue | P43,300 | Your monthly breakdown |
+| December 2025 Baseline | **TBD: P50K or P54K** | Needs clarification |
+| Q1 2026 Target | P72K/month | Your document |
+| Q4 2026 Target | P157.5K/month | Your document |
+| Year 1 Total Revenue | P1.368M | Your document |
+
+### Phase 2: Unit Economics (Hybrid - Needs Discussion)
+
+| Metric | Proposed Value | Source |
+|--------|----------------|--------|
+| Average Booking Value | P1,125 | AI calculation |
+| Platform Commission/Booking | P168.75 | 15% of P1,125 |
+| Host CAC | P5,000 | AI (Botswana channels) |
+| Renter CAC | P600 | AI (Botswana channels) |
+| Host LTV | **TBD** | Needs validation |
+| Renter LTV | **TBD** | Needs validation |
+| LTV:CAC Target | **TBD** | Needs discussion |
+
+### Phase 3: Marketing Budget (Needs Discussion)
+
+| Metric | Your Implied | AI Proposal | **TBD** |
+|--------|--------------|-------------|---------|
+| Year 1 Budget | ~P233K (17%) | P420K (17% of P2.43M) | **Discuss** |
+| Channel Split | Not specified | 60/10/10/10/5/5 | **Discuss** |
+| Campaign Budgets | Not specified | P260K campaigns + P160K always-on | **Discuss** |
 
 ---
 
 ## Next Steps
 
-1. [ ] Review and validate FY2025 December baseline figure
-2. [ ] Confirm Botswana-specific CAC assumptions
-3. [ ] Validate LTV assumptions against actual retention data
-4. [ ] Approve revised projections
-5. [ ] Update main Commercialization Plan document
+1. [ ] **Confirm December 2025 baseline**: P43.3K (Oct), P50K (Dec mentioned), or P54K?
+2. [ ] **Confirm Year 1 revenue target**: P1.368M (your version) vs P2.43M (AI)?
+3. [ ] **Validate LTV assumptions**: Current retention data needed
+4. [ ] **Set marketing budget**: Aligned with chosen revenue target
+5. [ ] **Update main Commercialization Plan** with agreed figures
 
 ---
 
@@ -302,6 +264,7 @@ This shows a path to profitability in Year 1 when building from actuals.
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-02-04 | Arnold | Initial draft for review |
+| 1.1 | 2026-02-04 | Arnold | Added comparison with user's v1.9 edits |
 
 ---
 
