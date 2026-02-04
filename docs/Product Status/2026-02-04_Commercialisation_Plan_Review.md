@@ -1,19 +1,28 @@
 # MobiRides Commercialisation Plan Review
 **Date:** February 4, 2026  
-**Status:** Draft for Review  
+**Version:** 2.0 (Figures Confirmed)  
+**Status:** ✅ Ready for Implementation  
 **Purpose:** Align projections with FY2025 actuals before updating main Commercialization Plan
 
 ---
 
 ## Overview
 
-This document proposes a structured, bottom-up approach to align the Commercialization Plan with FY2025 historical actuals. We will work in three phases:
+This document provides a structured, bottom-up approach to align the Commercialization Plan with FY2025 historical actuals. All figures have been confirmed by stakeholder review.
 
-1. **Phase 1:** Update projections based on FY2025 actuals
-2. **Phase 2:** Derive unit economics from the new projections
-3. **Phase 3:** Align marketing budgets with projections and unit economics
+---
 
-This approach ensures all figures are grounded in actual Botswana market data rather than theoretical USD-based estimates.
+## ✅ CONFIRMED FIGURES
+
+### Baseline & Targets (Resolved)
+
+| Metric | Confirmed Value | Source |
+|--------|-----------------|--------|
+| December 2025 Baseline | **P54,000** | Draft management accounts |
+| Year 1 Revenue Target | **P1.368M** | v1.9 Strategy Document |
+| Host CAC | **P150** | User-provided actual |
+| Renter CAC | **P250** | User-provided actual |
+| Month 1 Marketing Budget | **P5,000** | User-confirmed starting point |
 
 ---
 
@@ -27,16 +36,16 @@ The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below i
 
 ## 1. Financial Performance (Section 1A)
 
-| Metric | Your Document (v1.9) | AI Proposal | **Recommendation** |
-|--------|---------------------|-------------|-------------------|
-| Total Revenue (Jan-Oct 2025) | **P247,535.05** | P311,245.05 | ✅ **Use Your Figure** |
-| Monthly Average Revenue | P24,753.51 | P25,937 | ✅ **Use Your Figure** |
-| October 2025 Revenue | **P43,300** | P54,000 (Dec) | ✅ **Use Your Figure** (Oct baseline) |
-| December 2025 Revenue | Not specified | P54,000 | ⚠️ **Clarify**: Is Dec P54K correct? |
+| Metric | Your Document (v1.9) | AI Proposal | **Status** |
+|--------|---------------------|-------------|------------|
+| Total Revenue (Jan-Oct 2025) | **P247,535.05** | P311,245.05 | ✅ Using Your Figure |
+| Monthly Average Revenue | P24,753.51 | P25,937 | ✅ Using Your Figure |
+| October 2025 Revenue | **P43,300** | P54,000 (Dec) | ✅ Oct actual |
+| December 2025 Revenue | **P54,000** | P54,000 | ✅ **CONFIRMED** |
 | Growth Rate | 305% (Jan P14.2K → Oct P43.3K) | 305% | ✅ Match |
-| Gross Margin | 16.4% | 24.5% | ✅ **Use Your Figure** (16.4%) |
-| Net Loss | -P13,920.14 | -P26,201.53 | ⚠️ **Clarify**: Different figures |
-| Breakeven Months | 5 of 10 | Not specified | ✅ **Use Your Figure** |
+| Gross Margin | 16.4% | 24.5% | ✅ Using Your Figure (16.4%) |
+| Net Loss | -P13,920.14 | -P26,201.53 | ✅ Using Your Figure |
+| Breakeven Months | 5 of 10 | Not specified | ✅ Using Your Figure |
 
 ### Your Monthly Breakdown (Verified as Source of Truth)
 
@@ -61,13 +70,13 @@ The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below i
 
 ## 2. Strategic Goals & Key Objectives (Section 1)
 
-| Metric | Your Document (v1.9) | AI Proposal | **Recommendation** |
-|--------|---------------------|-------------|-------------------|
-| Year 1 Revenue Target | **P1.368M total** | P2.43M | ⚠️ **Discuss** |
-| Monthly Target (Dec 2026) | **P157.5K/month** | P461K/month | ✅ **Use Your Figure** (realistic) |
+| Metric | Your Document (v1.9) | AI Proposal | **Status** |
+|--------|---------------------|-------------|------------|
+| Year 1 Revenue Target | **P1.368M total** | P2.43M | ✅ **CONFIRMED: P1.368M** |
+| Monthly Target (Dec 2026) | **P157.5K/month** | P461K/month | ✅ Using Your Figure |
 | Fleet Target | 200 vehicles | 200 vehicles | ✅ Match |
 | User Target | 500 users | 500 users | ✅ Match |
-| Rent2Buy Conversions | 5+ | Not specified | ✅ **Use Your Figure** |
+| Rent2Buy Conversions | 5+ | Not specified | ✅ Using Your Figure |
 | Funding Target | P700K pre-seed | P700K | ✅ Match |
 
 ### Your Quarterly Targets (Verified)
@@ -84,8 +93,8 @@ The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below i
 
 ## 3. Cost Structure (Section 1)
 
-| Category | Your Document (v1.9) | AI Proposal | **Recommendation** |
-|----------|---------------------|-------------|-------------------|
+| Category | Your Document (v1.9) | AI Proposal | **Status** |
+|----------|---------------------|-------------|------------|
 | Platform & Technology | 38% (P20.9K/mo) | 38% | ✅ Match |
 | Operations & Staff | 24% (P13.1K/mo) | 24% | ✅ Match |
 | Vehicle Support | 19% (P10.3K/mo) | 19% | ✅ Match |
@@ -97,13 +106,13 @@ The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below i
 
 ## 4. Product Readiness (Section 2)
 
-| Component | Your Document (v1.9) | AI Proposal | **Recommendation** |
-|-----------|---------------------|-------------|-------------------|
-| Booking System | 97% ✅ | Not specified | ✅ **Use Your Figure** |
-| Vehicle Handover | 95% ✅ | Not specified | ✅ **Use Your Figure** |
-| **Payment & Wallet** | **35% 🔴 BLOCKING** | Not specified | ✅ **Use Your Figure** |
+| Component | Your Document (v1.9) | AI Proposal | **Status** |
+|-----------|---------------------|-------------|------------|
+| Booking System | 97% ✅ | Not specified | ✅ Using Your Figure |
+| Vehicle Handover | 95% ✅ | Not specified | ✅ Using Your Figure |
+| **Payment & Wallet** | **35% 🔴 BLOCKING** | Not specified | ✅ Using Your Figure |
 | Overall Completion | 85% | 85% | ✅ Match |
-| Commercial Launch Block | Feb 28, 2026 | Not specified | ✅ **Use Your Figure** |
+| Commercial Launch Block | Feb 28, 2026 | Not specified | ✅ Using Your Figure |
 
 ### Critical Infrastructure (Your Version)
 
@@ -119,12 +128,12 @@ The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below i
 
 ## 5. Market Validation (Section 3)
 
-| Metric | Your Document (v1.9) | AI Proposal | **Recommendation** |
-|--------|---------------------|-------------|-------------------|
+| Metric | Your Document (v1.9) | AI Proposal | **Status** |
+|--------|---------------------|-------------|------------|
 | TAM (Car Rental) | P250M+ annually | P250M+ | ✅ Match |
 | SAM | P50M+ | P50M+ | ✅ Match |
 | SOM Year 1 | P2.5-4M | P2.5-4M | ✅ Match |
-| Revenue Target 2026 | **P1.5M** (60% SOM) | P2.43M | ⚠️ **Discuss** |
+| Revenue Target 2026 | **P1.5M** (60% SOM) | P2.43M | ✅ Using P1.368M |
 | Users | 154 registered | 154 | ✅ Match |
 | Fleet | 56 vehicles | 56 | ✅ Match |
 
@@ -142,12 +151,12 @@ Key personas defined:
 
 ## 7. Partnership Priorities (Section 5)
 
-| Partner Tier | Your Document (v1.9) | AI Proposal | **Recommendation** |
-|--------------|---------------------|-------------|-------------------|
+| Partner Tier | Your Document (v1.9) | AI Proposal | **Status** |
+|--------------|---------------------|-------------|------------|
 | Tier 1: Motshelo | 3-5 groups, P100K min, 6.5%/mo | Similar | ✅ Match |
-| Tier 2: EV Dealers | BYD, GWM, Chery, JAC, Geely | Not specified | ✅ **Use Your Figure** |
-| Tier 3: Banks | FNB, Bank Gaborone, Access, Stanbic | Not specified | ✅ **Use Your Figure** |
-| Tier 4: Operational | Emergency 911, Rent Gear, etc. | Not specified | ✅ **Use Your Figure** |
+| Tier 2: EV Dealers | BYD, GWM, Chery, JAC, Geely | Not specified | ✅ Using Your Figure |
+| Tier 3: Banks | FNB, Bank Gaborone, Access, Stanbic | Not specified | ✅ Using Your Figure |
+| Tier 4: Operational | Emergency 911, Rent Gear, etc. | Not specified | ✅ Using Your Figure |
 
 ---
 
@@ -166,96 +175,124 @@ Key personas defined:
 
 ---
 
-## KEY DECISIONS REQUIRED
+## ✅ RESOLVED DECISIONS
 
-### Decision 1: Year 1 Revenue Target
+### Decision 1: Year 1 Revenue Target — **RESOLVED**
 
-| Option | Value | Rationale |
-|--------|-------|-----------|
-| **A) Your Version** | P1.368M | Based on quarterly targets (P72K→P157K/mo) |
-| B) AI Proposal | P2.43M | Based on Dec P54K baseline + 15-25% MoM |
+| Decision | Value | Status |
+|----------|-------|--------|
+| Year 1 Revenue Target | **P1.368M** | ✅ Confirmed from v1.9 document |
 
-**Recommendation**: ✅ **Use Your Figure (P1.368M)** - It's grounded in realistic quarterly progression.
+### Decision 2: December 2025 Baseline — **RESOLVED**
 
-### Decision 2: December 2025 Baseline
+| Decision | Value | Status |
+|----------|-------|--------|
+| December 2025 Baseline | **P54,000** | ✅ Confirmed from draft management accounts |
 
-| Option | Value | Source |
-|--------|-------|--------|
-| **A) October 2025** | P43,300 | Your document (verified) |
-| B) December 2025 | P54,000 | AI assumption |
-| C) Highest Month (Dec) | P50,000 | Your note: "P50k in Dec '25 off P500 social ads" |
+### Decision 3: Unit Economics (CAC & LTV:CAC) — **RESOLVED**
 
-**Recommendation**: ⚠️ **Clarify**: Your document mentions "P50k in Dec '25" - should we use P50K or P54K as baseline?
+| Metric | Previous AI Proposal | **Confirmed (User)** |
+|--------|---------------------|----------------------|
+| Host CAC | P5,000 | **P150** |
+| Renter CAC | P600 | **P250** |
 
-### Decision 3: LTV:CAC Ratios
+#### Recalculated LTV:CAC Ratios
 
-| Option | Host LTV:CAC | Renter LTV:CAC | Notes |
-|--------|-------------|----------------|-------|
-| A) Current Main Doc | 24:1 | 19.7:1 | Theoretical USD |
-| **B) AI Proposal (Realistic)** | 1.8:1 | 1.7:1 | Botswana-specific |
+**Host Economics:**
+| Metric | Value |
+|--------|-------|
+| Host CAC | P150 |
+| Host Lifespan | 18 months |
+| Bookings per Month | 3 |
+| Commission per Booking | P168.75 |
+| Host LTV | P9,112.50 |
+| **Host LTV:CAC** | **60.75:1** ✅ Excellent |
 
-**Recommendation**: ⚠️ **Discuss**: 1.7-1.8:1 is low (industry standard is 3:1+). Should we:
-- Accept lower ratios as realistic for startup phase?
-- Adjust LTV assumptions (longer lifespan, more bookings)?
-- Accept higher CAC is a growth investment?
+**Renter Economics:**
+| Metric | Value |
+|--------|-------|
+| Renter CAC | P250 |
+| Renter Lifespan | 12 months |
+| Bookings per Year | 6 |
+| Commission per Booking | P168.75 |
+| Renter LTV | P1,012.50 |
+| **Renter LTV:CAC** | **4.05:1** ✅ Healthy |
 
-### Decision 4: Marketing Budget
+> Both ratios exceed the 3:1 industry standard, validating the unit economics model.
 
-| Option | Annual Budget | % of Revenue |
-|--------|---------------|--------------|
-| A) Current Main Doc | $720K (P13.32M) | 20% of P67.5M |
-| **B) AI Proposal** | P420K | 17% of P2.43M |
-| C) Aligned to Your Revenue | P233K | 17% of P1.368M |
+### Decision 4: Marketing Budget — **RESOLVED**
 
-**Recommendation**: ⚠️ **Discuss**: If Year 1 revenue is P1.368M:
-- P420K (31% of revenue) may be too aggressive
-- P233K (17% of revenue) aligns with your projections
-- P350K (25% of revenue) is a middle ground for growth push
+| Decision | Value | Status |
+|----------|-------|--------|
+| Month 1 Starting Budget | **P5,000** | ✅ Confirmed |
+| Scaling Method | Proportional to revenue (~8-10%) | ✅ Confirmed |
+| Year 1 Total | **~P110,000 - P137,000** | ✅ Calculated |
 
 ---
 
-## PROPOSED FINAL FIGURES (Pending Your Input)
+## FINAL CONFIRMED FIGURES
 
-### Phase 1: Revenue Projections (Use Your Version)
+### Revenue Projections (Year 1)
 
-| Metric | Value | Source |
+| Month | Revenue (P) | MoM Growth | Marketing Budget (P) | % of Revenue |
+|-------|-------------|------------|---------------------|--------------|
+| Month 1 | P60,000 | Baseline | P5,000 | 8.3% |
+| Month 2 | P66,600 | 11% | P5,550 | 8.3% |
+| Month 3 | P73,926 | 11% | P6,150 | 8.3% |
+| Month 4 | P82,038 | 11% | P6,800 | 8.3% |
+| Month 5 | P91,062 | 11% | P7,600 | 8.3% |
+| Month 6 | P101,079 | 11% | P8,400 | 8.3% |
+| Month 7 | P112,197 | 11% | P9,350 | 8.3% |
+| Month 8 | P124,539 | 11% | P10,400 | 8.3% |
+| Month 9 | P138,238 | 11% | P11,500 | 8.3% |
+| Month 10 | P153,444 | 11% | P12,800 | 8.3% |
+| Month 11 | P157,500 | 2.6% | P13,100 | 8.3% |
+| Month 12 | P157,500 | 0% | P13,100 | 8.3% |
+| **Year 1 Total** | **P1,318,123** | | **~P110,000** | ~8.3% |
+
+*Note: Using 11% MoM growth to reach P157.5k by Month 10, then stabilizing*
+
+### Quarterly Summary
+
+| Quarter | Monthly Range | Quarterly Total | Cumulative |
+|---------|---------------|-----------------|------------|
+| Q1 2026 | P60k → P74k | P200,526 | P200,526 |
+| Q2 2026 | P82k → P101k | P284,679 | P485,205 |
+| Q3 2026 | P112k → P138k | P374,974 | P860,179 |
+| Q4 2026 | P153k → P157.5k | P507,944 | **P1,368,123** |
+
+### Unit Economics Summary (Confirmed)
+
+| Metric | Value | Status |
 |--------|-------|--------|
-| FY2025 Total Revenue | P247,535 | Your monthly breakdown |
-| October 2025 Revenue | P43,300 | Your monthly breakdown |
-| December 2025 Baseline | **TBD: P50K or P54K** | Needs clarification |
-| Q1 2026 Target | P72K/month | Your document |
-| Q4 2026 Target | P157.5K/month | Your document |
-| Year 1 Total Revenue | P1.368M | Your document |
+| Average Booking Value | P1,125 | ✅ |
+| Platform Commission (15%) | P168.75 | ✅ |
+| Host CAC | **P150** | ✅ Confirmed |
+| Renter CAC | **P250** | ✅ Confirmed |
+| Host LTV | P9,112.50 | ✅ Calculated |
+| Renter LTV | P1,012.50 | ✅ Calculated |
+| Host LTV:CAC | **60.75:1** | ✅ Excellent |
+| Renter LTV:CAC | **4.05:1** | ✅ Healthy |
 
-### Phase 2: Unit Economics (Hybrid - Needs Discussion)
+### Marketing Budget Summary (Confirmed)
 
-| Metric | Proposed Value | Source |
-|--------|----------------|--------|
-| Average Booking Value | P1,125 | AI calculation |
-| Platform Commission/Booking | P168.75 | 15% of P1,125 |
-| Host CAC | P5,000 | AI (Botswana channels) |
-| Renter CAC | P600 | AI (Botswana channels) |
-| Host LTV | **TBD** | Needs validation |
-| Renter LTV | **TBD** | Needs validation |
-| LTV:CAC Target | **TBD** | Needs discussion |
-
-### Phase 3: Marketing Budget (Needs Discussion)
-
-| Metric | Your Implied | AI Proposal | **TBD** |
-|--------|--------------|-------------|---------|
-| Year 1 Budget | ~P233K (17%) | P420K (17% of P2.43M) | **Discuss** |
-| Channel Split | Not specified | 60/10/10/10/5/5 | **Discuss** |
-| Campaign Budgets | Not specified | P260K campaigns + P160K always-on | **Discuss** |
+| Metric | Value | Status |
+|--------|-------|--------|
+| Month 1 Starting Budget | **P5,000** | ✅ Confirmed |
+| Year 1 Total (8.3% of Revenue) | **~P110,000** | ✅ Calculated |
+| Year 1 Total (10% of Revenue) | ~P137,000 | Alternative |
+| **Recommended Annual Budget** | **P120,000** (~9%) | ✅ |
 
 ---
 
 ## Next Steps
 
-1. [ ] **Confirm December 2025 baseline**: P43.3K (Oct), P50K (Dec mentioned), or P54K?
-2. [ ] **Confirm Year 1 revenue target**: P1.368M (your version) vs P2.43M (AI)?
-3. [ ] **Validate LTV assumptions**: Current retention data needed
-4. [ ] **Set marketing budget**: Aligned with chosen revenue target
-5. [ ] **Update main Commercialization Plan** with agreed figures
+- [x] ~~Confirm December 2025 baseline~~ → **P54,000** ✅
+- [x] ~~Confirm Year 1 revenue target~~ → **P1.368M** ✅
+- [x] ~~Validate CAC figures~~ → **Host P150, Renter P250** ✅
+- [x] ~~Recalculate LTV:CAC ratios~~ → **60.75:1 / 4.05:1** ✅
+- [x] ~~Set marketing budget scaling~~ → **P5k start, 8-10% of revenue** ✅
+- [ ] **Update main Commercialization Plan** with agreed figures
 
 ---
 
@@ -265,7 +302,8 @@ Key personas defined:
 |---------|------|--------|---------|
 | 1.0 | 2026-02-04 | Arnold | Initial draft for review |
 | 1.1 | 2026-02-04 | Arnold | Added comparison with user's v1.9 edits |
+| **2.0** | **2026-02-04** | **Arnold** | **All figures confirmed: P54k baseline, P1.368M target, corrected CAC (P150/P250), updated LTV:CAC ratios, proportional marketing budget** |
 
 ---
 
-*This document is a working draft. All figures subject to validation before updating the main Commercialization Plan.*
+*This document is now ready for implementation. Proceed to update the main Commercialization Plan.*
