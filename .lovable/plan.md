@@ -1,164 +1,163 @@
 
-# Plan: Update Commercialisation Plan Review with Confirmed Figures
+# Plan: Update Commercialisation Plan Review with Verified FY2025 Figures
 
-## Confirmed Inputs from User
+## Overview
 
-| Item | Confirmed Value | Notes |
-|------|-----------------|-------|
-| December 2025 Baseline | **P54,000** | From draft management accounts |
-| Year 1 Revenue Target | **P1.368M** | From v1.9 document |
-| Renter CAC | **P250** | User-provided actual |
-| Host CAC | **P150** | User-provided actual |
-| Month 1 Marketing | **P5,000** | Starting point, scales with revenue |
+The uploaded Detailed Management Accounts (FY2025-2.xlsx) reveals discrepancies between the current Review document and actual figures. The Review document was using Jan-Oct 2025 partial data (P247,535.05), but the spreadsheet now provides complete Jan-Dec 2025 figures (P311,245.05).
 
 ---
 
-## Revised Unit Economics (With Corrected CAC)
+## Key Corrections Required
 
-### Customer Acquisition Costs (User Actuals)
+### 1. Total Revenue (FY2025)
 
-| Metric | Previous AI Proposal | **Corrected (User)** |
-|--------|---------------------|----------------------|
-| Host CAC | P5,000 | **P150** |
-| Renter CAC | P600 | **P250** |
+| Metric | Current in Review | Actual from Spreadsheet | Action |
+|--------|-------------------|------------------------|--------|
+| Total Revenue | P247,535.05 | **P311,245.05** | Update |
+| Period | Jan-Oct 2025 | **Jan-Dec 2025** | Clarify |
+| Monthly Average | P24,753.51 | **P25,937.09** | Update |
 
-### Recalculated LTV:CAC Ratios
+### 2. Gross Profit & Margin
 
-**Host Economics:**
-- Host CAC: P150
-- Host LTV: P9,112.50 (18 months × 3 bookings/mo × P168.75)
-- **Host LTV:CAC = 60.75:1** ✅ Excellent
+| Metric | Current in Review | Actual from Spreadsheet | Action |
+|--------|-------------------|------------------------|--------|
+| Gross Profit | P37,130 | **P76,178.35** | Update |
+| Gross Margin | 16.4% | **24.5%** | Update |
+| Cost of Goods Sold | P210,405 | **P235,066.70** | Update |
 
-**Renter Economics:**
-- Renter CAC: P250
-- Renter LTV: P1,012.50 (12 months × 6 bookings × P168.75)
-- **Renter LTV:CAC = 4.05:1** ✅ Healthy (above 3:1 industry standard)
+### 3. Net Profit/Loss
 
-These ratios are exceptional and validate the unit economics model.
+| Metric | Current in Review | Actual from Spreadsheet | Action |
+|--------|-------------------|------------------------|--------|
+| Net Loss | -P13,920.14 | **-P26,201.53** | Update |
+| Total Expenses | - | **P102,379.88** | Add |
 
----
+### 4. Monthly Revenue Breakdown
 
-## Revised Marketing Budget (Scaling with Revenue)
+The Review document has incorrect monthly figures for several months. Update to actuals:
 
-### Calculation Basis
+| Month | Current | Actual | Variance |
+|-------|---------|--------|----------|
+| Mar 2025 | P18,500 | **P34,900** | +P16,400 |
+| Apr 2025 | P22,000 | **P18,410** | -P3,590 |
+| May 2025 | P19,800 | **P20,220** | +P420 |
+| Jun 2025 | P21,500 | **P18,950** | -P2,550 |
+| Jul 2025 | P28,640 | **P31,050** | +P2,410 |
+| Aug 2025 | P26,400 | **P5,350** | -P21,050 |
+| Sep 2025 | P23,000 | **P31,010** | +P8,010 |
+| Nov 2025 | (missing) | **P9,710** | Add |
 
-Starting from P5,000/month and scaling proportionally to revenue growth:
+### 5. Expense Breakdown (Add New Section)
 
-| Month | Revenue (P) | Marketing Budget (P) | % of Revenue |
-|-------|-------------|---------------------|--------------|
-| Month 1 | P60,000 | P5,000 | 8.3% |
-| Month 2 | P66,600 | P5,550 | 8.3% |
-| Month 3 | P73,926 | P6,150 | 8.3% |
-| Month 4 | P82,038 | P6,800 | 8.3% |
-| Month 5 | P91,062 | P7,600 | 8.3% |
-| Month 6 | P101,079 | P8,400 | 8.3% |
-| Month 7 | P112,197 | P9,350 | 8.3% |
-| Month 8 | P124,539 | P10,400 | 8.3% |
-| Month 9 | P138,238 | P11,500 | 8.3% |
-| Month 10 | P153,444 | P12,800 | 8.3% |
-| Month 11 | P157,500 | P13,100 | 8.3% |
-| Month 12 | P157,500 | P13,100 | 8.3% |
-| **Year 1 Total** | **~P1.368M** | **~P110,000** | ~8% |
+Add verified expense categories from the management accounts:
 
-*Note: Using 11% MoM growth to reach P157.5k by Q4, then stabilizing*
-
-### Alternative: 10% of Revenue Scaling
-
-If we use 10% of revenue (slightly more aggressive):
-
-| Period | Revenue | Marketing | % |
-|--------|---------|-----------|---|
-| Q1 2026 | P200k | P20k | 10% |
-| Q2 2026 | P285k | P28.5k | 10% |
-| Q3 2026 | P360k | P36k | 10% |
-| Q4 2026 | P473k | P47.3k | 10% |
-| **Year 1** | **P1.368M** | **~P137k** | 10% |
+| Category | Actual FY2025 (P) | % of Total |
+|----------|-------------------|------------|
+| Subscriptions | P26,147.15 | 25.5% |
+| Staff Salaries | P20,500.00 | 20.0% |
+| Vehicle Parts & Maintenance | P10,923.95 | 10.7% |
+| Staff Welfare | P9,579.34 | 9.4% |
+| Insurance | P6,885.00 | 6.7% |
+| Marketing | P5,173.04 | 5.1% |
+| Bank Charges | P4,018.89 | 3.9% |
+| Fuel Expenses | P3,362.79 | 3.3% |
+| Other (Transport, Stationery, etc.) | P15,763.72 | 15.4% |
+| **Total Expenses** | **P102,379.88** | 100% |
 
 ---
 
-## Updated Projections Summary
+## Updated Summary Table
 
-### Revenue Projections (Year 1)
+### FY2025 Financial Performance (Verified)
 
-| Quarter | Monthly Target | Quarterly Total |
-|---------|----------------|-----------------|
-| Q1 2026 | P60k → P74k | P200,526 |
-| Q2 2026 | P82k → P101k | P284,679 |
-| Q3 2026 | P112k → P138k | P374,974 |
-| Q4 2026 | P153k → P157.5k | P507,944 |
-| **Year 1 Total** | | **P1,368,123** |
+| Metric | Verified Value | Notes |
+|--------|----------------|-------|
+| Total Revenue | **P311,245.05** | Full year Jan-Dec 2025 |
+| Cost of Goods Sold | **P235,066.70** | Host payouts + operational costs |
+| Gross Profit | **P76,178.35** | |
+| Gross Margin | **24.5%** | Improved from 16.4% estimate |
+| Total Expenses | **P102,379.88** | |
+| Net Loss | **(P26,201.53)** | |
+| Dec 2025 Revenue | **P54,000** | Confirmed baseline |
+| Monthly Average | **P25,937.09** | P311,245 / 12 months |
+| FY2025 Marketing | **P5,173.04** | Starting point for Year 1 |
 
-### Unit Economics (Corrected)
+### Unchanged Metrics (Confirmed)
 
-| Metric | Value |
-|--------|-------|
-| Average Booking Value | P1,125 |
-| Platform Commission (15%) | P168.75 |
-| Host CAC | P150 |
-| Renter CAC | P250 |
-| Host LTV | P9,112.50 |
-| Renter LTV | P1,012.50 |
-| Host LTV:CAC | **60.75:1** |
-| Renter LTV:CAC | **4.05:1** |
-
-### Marketing Budget (8-10% of Revenue)
-
-| Metric | Value |
-|--------|-------|
-| Month 1 Starting Budget | P5,000 |
-| Year 1 Total (8.3%) | ~P110,000 |
-| Year 1 Total (10%) | ~P137,000 |
-| **Recommended** | **P120,000** (9% of P1.368M) |
+| Metric | Value | Status |
+|--------|-------|--------|
+| December 2025 Baseline | P54,000 | Confirmed |
+| Year 1 Revenue Target | P1.368M | Confirmed |
+| Host CAC | P150 | Confirmed |
+| Renter CAC | P250 | Confirmed |
+| Month 1 Marketing Budget | P5,000 | Confirmed |
 
 ---
 
-## Technical Implementation
+## Impact on Projections
 
-### File to Update
+### No Changes Required to Year 1 Targets
+
+The Year 1 projections remain valid because:
+- December 2025 baseline (P54,000) is confirmed
+- Year 1 target (P1.368M) was already agreed
+- Growth trajectory remains realistic (~11% MoM)
+
+### Positive Implications
+
+1. **Higher Gross Margin (24.5%)** improves contribution margin assumptions
+2. **Marketing efficiency** - P5,173 marketing spend generated P311K revenue (60:1 return)
+3. **Growth trajectory validated** - Jan P14.2K → Dec P54K = 280% growth in 12 months
+
+---
+
+## Files to Update
+
+### Primary File
 `docs/Product Status/2026-02-04_Commercialisation_Plan_Review.md`
 
 ### Sections to Modify
 
-| Section | Current Lines | Changes |
-|---------|---------------|---------|
-| Decision 2: December Baseline | 181-188 | Mark resolved: P54,000 confirmed |
-| Decision 3: LTV:CAC Ratios | 191-200 | Update with corrected ratios (60:1 / 4:1) |
-| Decision 4: Marketing Budget | 204-214 | Replace with proportional scaling model |
-| Phase 2: Unit Economics | 230-240 | Update CAC and LTV:CAC figures |
-| Phase 3: Marketing Budget | 243-248 | Update with P5k start, proportional scaling |
-| Next Steps | 254-258 | Mark items as resolved |
+| Section | Lines | Changes |
+|---------|-------|---------|
+| Section 1: Financial Performance | 37-68 | Update with verified FY2025 figures |
+| Monthly Breakdown Table | 52-64 | Replace with actual monthly data |
+| Gross Margin | Line 46 | Change 16.4% to 24.5% |
+| Net Loss | Line 47 | Change -P13,920 to -P26,201.53 |
+| Total Revenue | Lines 41-42 | Change P247,535 to P311,245.05 |
+| Add Expense Breakdown | After line 68 | New section with verified expenses |
+| Version & Date | Line 3 | Update to v2.1 |
 
-### New Content to Add
+### Secondary File (After Review Approval)
+`docs/20251218_MobiRides_Commercialization_GTM_Plan.md`
 
-1. **Resolved Decisions Section** - documenting confirmed figures
-2. **Marketing Scaling Table** - month-by-month budget aligned to revenue
-3. **Updated LTV:CAC Analysis** - with corrected ratios and healthy metrics
+Update Section 0 (FY2025 Performance) with verified figures.
 
 ---
 
-## Story Points
+## Technical Summary
 
-| Task | SP |
-|------|-----|
-| Update Decision sections with confirmed figures | 1 |
-| Recalculate and update Unit Economics section | 1 |
-| Add marketing budget scaling table | 1 |
-| Update Next Steps as resolved items | 0.5 |
-| Version bump and changelog | 0.5 |
-| **Total** | **4 SP** |
-
-**Assignee:** Arnold
+| Task | Changes |
+|------|---------|
+| Update Total Revenue | P247,535 → P311,245.05 |
+| Update Gross Margin | 16.4% → 24.5% |
+| Update Net Loss | -P13,920.14 → -P26,201.53 |
+| Fix Monthly Revenue | 7 months need correction |
+| Add November Revenue | P9,710 (was missing) |
+| Add Expense Breakdown | New section with 10 categories |
+| Update Gross Profit | P37,130 → P76,178.35 |
+| Update COGS | P210,405 → P235,066.70 |
 
 ---
 
 ## Verification Criteria
 
 After update:
-1. December baseline shows P54,000 (confirmed)
-2. Year 1 revenue target shows P1.368M (confirmed)
-3. Host CAC shows P150 (corrected)
-4. Renter CAC shows P250 (corrected)
-5. Host LTV:CAC shows 60.75:1 (recalculated)
-6. Renter LTV:CAC shows 4.05:1 (recalculated)
-7. Marketing budget starts at P5k/month and scales proportionally
-8. Year 1 marketing total is ~P110k-P137k (~8-10% of revenue)
+1. Total FY2025 Revenue shows P311,245.05
+2. Gross Margin shows 24.5%
+3. All 12 months have correct revenue figures
+4. December baseline remains P54,000
+5. Net Loss shows -P26,201.53
+6. Expense breakdown totals P102,379.88
+7. Marketing expense shows P5,173.04
+8. Document version updated to 2.1
