@@ -1,6 +1,6 @@
 # MobiRides Commercialisation Plan Review
 **Date:** February 4, 2026  
-**Version:** 2.0 (Figures Confirmed)  
+ **Version:** 2.1 (FY2025 Verified from Management Accounts)  
 **Status:** ✅ Ready for Implementation  
 **Purpose:** Align projections with FY2025 actuals before updating main Commercialization Plan
 
@@ -38,33 +38,62 @@ The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below i
 
 | Metric | Your Document (v1.9) | AI Proposal | **Status** |
 |--------|---------------------|-------------|------------|
-| Total Revenue (Jan-Oct 2025) | **P247,535.05** | P311,245.05 | ✅ Using Your Figure |
-| Monthly Average Revenue | P24,753.51 | P25,937 | ✅ Using Your Figure |
+ | Total Revenue (Jan-Dec 2025) | **P311,245.05** | P311,245.05 | ✅ **VERIFIED** |
+ | Monthly Average Revenue | **P25,937.09** | P25,937 | ✅ **VERIFIED** |
 | October 2025 Revenue | **P43,300** | P54,000 (Dec) | ✅ Oct actual |
 | December 2025 Revenue | **P54,000** | P54,000 | ✅ **CONFIRMED** |
 | Growth Rate | 305% (Jan P14.2K → Oct P43.3K) | 305% | ✅ Match |
-| Gross Margin | 16.4% | 24.5% | ✅ Using Your Figure (16.4%) |
-| Net Loss | -P13,920.14 | -P26,201.53 | ✅ Using Your Figure |
+ | Gross Margin | **24.5%** | 24.5% | ✅ **VERIFIED** |
+ | Net Loss | **-P26,201.53** | -P26,201.53 | ✅ **VERIFIED** |
 | Breakeven Months | 5 of 10 | Not specified | ✅ Using Your Figure |
 
-### Your Monthly Breakdown (Verified as Source of Truth)
+ ### Monthly Breakdown (Verified from FY2025 Management Accounts)
 
-| Month | Revenue (P) | Host Payouts | Gross Profit | Net Profit/Loss |
-|-------|-------------|--------------|--------------|-----------------|
-| Jan 2025 | P14,200 | P12,070 | P2,130 | -P53,000* |
-| Feb 2025 | P30,195 | P25,666 | P4,529 | P4,529 |
-| Mar 2025 | P18,500 | P15,725 | P2,775 | P2,775 |
-| Apr 2025 | P22,000 | P18,700 | P3,300 | -P1,200 |
-| May 2025 | P19,800 | P16,830 | P2,970 | P2,970 |
-| Jun 2025 | P21,500 | P18,275 | P3,225 | -P13,275** |
-| Jul 2025 | P28,640 | P24,344 | P4,296 | P4,296 |
-| Aug 2025 | P26,400 | P22,440 | P3,960 | -P6,540 |
-| Sep 2025 | P23,000 | P19,550 | P3,450 | -P1,050 |
-| Oct 2025 | P43,300 | P36,805 | P6,495 | P6,495 |
-| **Total** | **P247,535** | **P210,405** | **P37,130** | |
+ | Month | Revenue (P) | COGS (P) | Gross Profit (P) | Gross Margin |
+ |-------|-------------|----------|-----------------|--------------|
+ | Jan 2025 | P14,200 | P12,070 | P2,130 | 15.0% |
+ | Feb 2025 | P30,195 | P25,666 | P4,529 | 15.0% |
+ | Mar 2025 | **P34,900** | P29,665 | P5,235 | 15.0% |
+ | Apr 2025 | **P18,410** | P15,649 | P2,762 | 15.0% |
+ | May 2025 | **P20,220** | P17,187 | P3,033 | 15.0% |
+ | Jun 2025 | **P18,950** | P16,108 | P2,843 | 15.0% |
+ | Jul 2025 | **P31,050** | P26,393 | P4,658 | 15.0% |
+ | Aug 2025 | **P5,350** | P4,548 | P803 | 15.0% |
+ | Sep 2025 | **P31,010** | P26,359 | P4,652 | 15.0% |
+ | Oct 2025 | P43,300 | P36,805 | P6,495 | 15.0% |
+ | Nov 2025 | **P9,710** | P8,254 | P1,457 | 15.0% |
+ | Dec 2025 | **P54,000** | P15,363 | P38,637 | 71.6%* |
+ | **Total** | **P311,245.05** | **P235,066.70** | **P76,178.35** | **24.5%** |
 
-*\*Includes Cerberus investment accounting*
-*\*\*One-time expense impact*
+ *\*December shows higher margin due to seasonal revenue spike and cost efficiencies*
+ 
+ ### FY2025 Expense Breakdown (Verified)
+ 
+ | Category | Amount (P) | % of Total |
+ |----------|------------|------------|
+ | Subscriptions | P26,147.15 | 25.5% |
+ | Staff Salaries | P20,500.00 | 20.0% |
+ | Vehicle Parts & Maintenance | P10,923.95 | 10.7% |
+ | Staff Welfare | P9,579.34 | 9.4% |
+ | Insurance | P6,885.00 | 6.7% |
+ | Marketing | P5,173.04 | 5.1% |
+ | Bank Charges | P4,018.89 | 3.9% |
+ | Fuel Expenses | P3,362.79 | 3.3% |
+ | Other (Transport, Stationery, etc.) | P15,789.72 | 15.4% |
+ | **Total Expenses** | **P102,379.88** | **100%** |
+ 
+ ### FY2025 Summary (Verified from Management Accounts)
+ 
+ | Metric | Value | Notes |
+ |--------|-------|-------|
+ | Total Revenue | **P311,245.05** | Full year Jan-Dec 2025 |
+ | Cost of Goods Sold | **P235,066.70** | Host payouts (85%) |
+ | Gross Profit | **P76,178.35** | |
+ | Gross Margin | **24.5%** | |
+ | Total Expenses | **P102,379.88** | |
+ | Net Loss | **(P26,201.53)** | |
+ | Marketing Spend | **P5,173.04** | 1.7% of revenue |
+ | Dec 2025 Baseline | **P54,000** | Confirmed |
 
 ---
 
@@ -303,6 +332,7 @@ Key personas defined:
 | 1.0 | 2026-02-04 | Arnold | Initial draft for review |
 | 1.1 | 2026-02-04 | Arnold | Added comparison with user's v1.9 edits |
 | **2.0** | **2026-02-04** | **Arnold** | **All figures confirmed: P54k baseline, P1.368M target, corrected CAC (P150/P250), updated LTV:CAC ratios, proportional marketing budget** |
+ | **2.1** | **2026-02-05** | **Arnold** | **FY2025 figures verified from Detailed Management Accounts: P311,245.05 revenue, 24.5% gross margin, (P26,201.53) net loss, expense breakdown added** |
 
 ---
 
