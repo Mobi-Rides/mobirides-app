@@ -1,6 +1,6 @@
 # MobiRides Go-to-Market Strategy & Commercialization Plan
 **Date:** February 4, 2026  
-**Version:** 2.0  
+ **Version:** 2.1  
 **Status:** Updated with Confirmed FY2025 Actuals & Revised Projections
 **Currency:** All figures in BWP (Botswana Pula) unless otherwise noted
 
@@ -32,7 +32,7 @@ MobiRides offers a comprehensive P2P car rental solution that combines:
 ### Key Highlights
 - **Product Status:** 85% production-ready with core features deployed
 - **Revenue Model:** 15% commission on bookings + insurance attachment revenue
-- **FY2025 Traction:** P247,535 gross revenue (Jan-Oct 2025), +305% growth (P14.2K→P43.3K), 16.4% gross margin
+ - **FY2025 Traction:** P311,245 gross revenue (Jan-Dec 2025), +280% growth (P14.2K→P54K), 24.5% gross margin
 - **December 2025 Baseline:** P54,000/month (confirmed from draft management accounts)
 - **Year 1 Revenue Target:** P1.368M (P60k→P157.5k/month trajectory)
 - **Current Phase:** Phase 3 Beta Testing (50 beta users)
