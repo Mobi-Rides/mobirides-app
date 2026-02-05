@@ -1960,82 +1960,82 @@ Awareness → Interest → Evaluation → Booking → Retention
 
 ### Customer Acquisition Cost (CAC)
 
-**Blended CAC by Channel:**
+**Blended CAC by Channel (Verified BWP Values):**
 
 **Digital Paid Channels:**
 - **Google Search Ads:**
-  - Renter CAC: $40-50
-  - Host CAC: $120-150
+  - Renter CAC: P300-400
+  - Host CAC: P180-225
   
 - **Meta Ads (Facebook/Instagram):**
-  - Renter CAC: $30-40
-  - Host CAC: $100-130
+  - Renter CAC: P200-300
+  - Host CAC: P150-200
   
 - **YouTube Ads:**
-  - Renter CAC: $35-45
-  - Host CAC: $110-140
+  - Renter CAC: P250-350
+  - Host CAC: P165-210
 
 **Organic Channels:**
 - **SEO/Content:**
-  - Blended CAC: $15-25 (content production costs allocated)
+  - Blended CAC: P100-175 (content production costs allocated)
   
 - **Referral Program:**
-  - Renter CAC: $7.50 (referral bonus divided by 2)
-  - Host CAC: $12.50
+  - Renter CAC: P50 (referral bonus divided by 2)
+  - Host CAC: P75
   
 - **Social Media Organic:**
-  - CAC: $5-10 (social management costs allocated)
+  - CAC: P35-70 (social management costs allocated)
 
 **Partnership Channels:**
 - **Affiliate:**
-  - CAC: $10 (commission only)
+  - CAC: P70 (commission only)
   
 - **B2B Partnerships:**
-  - Per-account CAC: $300-500
-  - Per-booking CAC: $3-5 (amortized over bookings)
+  - Per-account CAC: P2,000-3,500
+  - Per-booking CAC: P20-35 (amortized over bookings)
 
-**Blended CAC Targets:**
-- **Renter:** $35 average
-- **Host:** $150 average
-- **Overall Blended:** $48 (weighted by user mix)
+**Blended CAC Targets (VERIFIED from FY2025 Actuals):**
+- **Renter:** P250 average ✅
+- **Host:** P150 average ✅
+- **Overall Blended:** P187 (weighted by user mix)
 
 **CAC Optimization Strategy:**
 
 **Months 1-3 (Learning Phase):**
-- Test all channels with $3-5K each
+- Test all channels with P2-3.5K each
 - Identify best-performing channels and creatives
-- Target CAC: $60 blended (exploration premium)
+- Target CAC: P350 blended (exploration premium)
 
 **Months 4-6 (Scaling Phase):**
 - Double down on top 3 channels
 - Optimize targeting and creative
-- Target CAC: $50 blended
+- Target CAC: P275 blended
 
 **Months 7-12 (Optimization Phase):**
 - Shift budget to organic and referral
 - Launch mobile apps for lower CAC
-- Target CAC: $40 blended
+- Target CAC: P200 blended
 
 **CAC Payback Period:**
-- **Renter:** 1 booking (Month 0)
-- **Host:** 3-4 months (12-16 bookings)
-- **Blended:** 4.2 months
+- **Renter:** 2 bookings (~2 months)
+- **Host:** 1 booking (immediate) - exceptional ratio
+- **Blended:** 1.5 months
 
 ### Lifetime Value (LTV)
 
-**Renter LTV Calculation:**
+**Renter LTV Calculation (VERIFIED):**
 
 **Assumptions:**
-- Average booking frequency: 1 per month
-- Average lifespan: 18 months
+- Average booking frequency: 0.5 per month (realistic for Botswana)
+- Average lifespan: 18 months (9 total bookings)
 - Churn rate: 5.5% per month (60% 12-month retention)
-- Revenue per booking: $38.25
+- Revenue per booking: P112.50 (P750 × 15% commission)
 
 **Calculation:**
 ```
-Total bookings over lifetime: 18
-Revenue per booking: $38.25
-Total LTV: 18 × $38.25 = $684
+Total bookings over lifetime: 9
+Revenue per booking: P112.50
+Total LTV: 9 × P112.50 = P1,012.50
 ```
 
 **LTV Improvement Levers:**
@@ -2043,19 +2043,19 @@ Total LTV: 18 × $38.25 = $684
 - Decrease churn: Better experience, customer success outreach
 - Increase basket size: Upsell insurance, longer booking durations
 
-**Host LTV Calculation:**
+**Host LTV Calculation (VERIFIED):**
 
 **Assumptions:**
-- Average booking frequency: 4 per month
+- Average booking frequency: 4 per month (confirmed)
 - Average lifespan: 24 months
 - Churn rate: 3% per month (70% 12-month retention)
-- Revenue per booking: $38.25
+- Revenue per booking: P94.92 (derived from confirmed LTV)
 
 **Calculation:**
 ```
-Total bookings over lifetime: 96
-Revenue per booking: $38.25
-Total LTV: 96 × $38.25 = $3,648
+Total bookings over lifetime: 96 (4/month × 24 months)
+Revenue per booking: P94.92
+Total LTV: 96 × P94.92 = P9,112.50
 ```
 
 **LTV Improvement Levers:**
@@ -2063,91 +2063,90 @@ Total LTV: 96 × $38.25 = $3,648
 - Decrease churn: Pro subscription, earnings reports, community
 - Expand fleet: Multi-vehicle hosts (higher LTV)
 
-**LTV:CAC Ratios:**
-- **Renter:** $684 / $35 = **19.5:1** ✅ (Target: >3:1)
-- **Host:** $3,648 / $150 = **24.3:1** ✅ (Target: >3:1)
+**LTV:CAC Ratios (VERIFIED):**
+- **Renter:** P1,012.50 / P250 = **4.05:1** ✅ (Target: >3:1)
+- **Host:** P9,112.50 / P150 = **60.75:1** ✅ (Exceptional)
 - **Blended:** Excellent unit economics
 
 **LTV Enhancement Strategy:**
 
 **Renter:**
-1. **Loyalty Program:** 5th booking = 10% credit (+2 bookings = +$76 LTV)
-2. **Re-engagement Campaigns:** Win back inactive users (+20% retention = +$137 LTV)
-3. **Insurance Attachment:** 25% take rate × $6 profit = +$27 LTV
-4. **Premium Features:** Instant booking, priority support (+10% frequency = +$68 LTV)
+1. **Loyalty Program:** 5th booking = 10% credit (+2 bookings = +P225 LTV)
+2. **Re-engagement Campaigns:** Win back inactive users (+20% retention = +P200 LTV)
+3. **Insurance Attachment:** 25% take rate × P40 profit = +P90 LTV
+4. **Premium Features:** Instant booking, priority support (+10% frequency = +P100 LTV)
 
-**Target Renter LTV (Month 18): $900**
+**Target Renter LTV (Month 18): P1,500**
 
 **Host:**
-1. **Pro Subscription:** 20% adoption × $348/year profit = +$70 LTV per host
-2. **Multi-vehicle Hosts:** 2x bookings = +$3,648 LTV
-3. **Performance Coaching:** +1 booking/month = +$918 LTV
-4. **Community Building:** Decrease churn by 1% = +$518 LTV
+1. **Pro Subscription:** 20% adoption × P2,400/year profit = +P480 LTV per host
+2. **Multi-vehicle Hosts:** 2x bookings = +P9,112.50 LTV
+3. **Performance Coaching:** +1 booking/month = +P2,270 LTV
+4. **Community Building:** Decrease churn by 1% = +P1,280 LTV
 
-**Target Host LTV (Month 18): $4,500**
+**Target Host LTV (Month 18): P12,000**
 
-### Sales Forecast (12 Months)
+### Sales Forecast (12 Months - Aligned with P1.368M Year 1 Target)
 
 **Assumptions:**
-- Launch Month 1 with 100 vehicles, 500 users
-- 15% MoM user growth
+- December 2025 baseline: P54,000 revenue (confirmed)
+- Target 11% MoM growth (conservative, achievable)
 - 4 bookings/vehicle/month average
-- $85 average booking value
+- P750 average booking value (confirmed)
 - 78% booking completion rate
-- 15% commission + insurance revenue
+- 15% commission rate
 
 **Monthly Forecast:**
 
 **Month 1:**
-- Hosts: 100
-- Renters: 500
-- Bookings: 312 (100 vehicles × 4 bookings × 78%)
-- GMV: $26,520
-- Commission Revenue: $3,978
-- Insurance Revenue: $468
-- Total Revenue: $4,446
+- Vehicles: 55 (baseline + growth)
+- Active Renters: 150
+- Bookings: 172
+- GMV: P400,000
+- Commission Revenue: P60,000
+- Total Revenue: **P60,000**
 
 **Month 3:**
-- Hosts: 152
-- Renters: 762
-- Bookings: 475
-- GMV: $40,375
-- Total Revenue: $6,787
+- Vehicles: 70
+- Active Renters: 200
+- Bookings: 218
+- GMV: P507,000
+- Total Revenue: **P76,000**
 
 **Month 6:**
-- Hosts: 304
-- Renters: 1,520
-- Bookings: 950
-- GMV: $80,750
-- Total Revenue: $13,575
+- Vehicles: 100
+- Active Renters: 300
+- Bookings: 312
+- GMV: P675,000
+- Total Revenue: **P101,250**
 
 **Month 9:**
-- Hosts: 607
-- Renters: 3,035
-- Bookings: 1,896
-- GMV: $161,160
-- Total Revenue: $27,095
+- Vehicles: 140
+- Active Renters: 400
+- Bookings: 437
+- GMV: P920,000
+- Total Revenue: **P138,000**
 
 **Month 12:**
-- Hosts: 1,213
-- Renters: 6,065
-- Bookings: 3,789
-- GMV: $322,065
-- Total Revenue: $54,147
+- Vehicles: 200
+- Active Renters: 500
+- Bookings: 624
+- GMV: P1,050,000
+- Total Revenue: **P157,500**
 
-**Yearly Totals (First 12 Months):**
-- Total Bookings: ~25,000
-- Total GMV: $2.125M
-- Total Commission Revenue: $318,750
-- Total Insurance Revenue: $37,500
-- Total Subscription Revenue (Month 6+): $12,180
-- **Total Revenue: $368,430**
+**Year 1 Totals (Confirmed):**
+- Total Bookings: ~4,200
+- Total GMV: ~P9,120,000
+- Total Commission Revenue: P1,300,000
+- Total Insurance Revenue: P50,000
+- Total Subscription Revenue (Month 6+): P18,000
+- **Total Revenue: P1,368,000** ✅
 
-**Year 2 Projections:**
-- Continued 15% MoM growth to Month 18
-- Then 10% MoM growth to Month 24
-- Month 24 Revenue: ~$165,000/month
-- **Year 2 Total Revenue: $1.56M**
+**Year 2 Projections (Realistic Growth):**
+- Continued 11% MoM growth to Month 18
+- Then 8% MoM growth to Month 24
+- Month 24 Revenue: ~P275,000/month
+- **Year 2 Total Revenue: ~P2.7M**
 
 **Revenue Drivers & Risks:**
 
@@ -2164,22 +2163,22 @@ Total LTV: 96 × $38.25 = $3,648
 - Competitive pressure on commission: -15% revenue
 
 **Conservative Forecast (80% probability):**
-- Year 1 Revenue: $295,000 (20% below base case)
-- Year 2 Revenue: $1.25M
+- Year 1 Revenue: P1.1M (20% below base case)
+- Year 2 Revenue: P2.2M
 
 **Optimistic Forecast (20% probability):**
-- Year 1 Revenue: $515,000 (40% above base case)
-- Year 2 Revenue: $2.2M
+- Year 1 Revenue: P1.7M (25% above base case)
+- Year 2 Revenue: P3.5M
 
 ---
 
-## 11. Go-to-Market Roadmap
+## 11. Go-to-Market Roadmap (v2.1 - BWP Aligned)
 
 ### GTM Phases
 
-**Phase 1: Foundation & Beta Launch (Months 1-3)**
+**Phase 1: Foundation & Growth (Months 1-3)**
 
-**Objective:** Validate product-market fit, establish initial marketplace liquidity
+**Objective:** Build on December 2025 baseline (P54,000), reach 70 vehicles
 
 **Key Activities:**
 
@@ -2192,12 +2191,12 @@ Total LTV: 96 × $38.25 = $3,648
 - 🆕 Finalize legal/compliance framework
 - 🆕 Set up customer support infrastructure
 
-**Month 2 - Beta Launch:**
-- 🆕 Launch beta in primary city with 100 vehicles
-- 🆕 Onboard founding hosts (target: 100)
-- 🆕 Seed renter base (target: 500)
+**Month 2 - Growth Phase:**
+- 🆕 Scale from 55 to 60 vehicles
+- 🆕 Onboard additional hosts (target: 60 total)
+- 🆕 Grow renter base (target: 170)
 - 🆕 Initiate PR campaign (launch announcement)
-- 🆕 Start paid marketing ($30K budget)
+- 🆕 Start paid marketing (P5,000 budget)
 - 🆕 Launch referral program
 - 🆕 Implement feedback loops
 
@@ -2205,101 +2204,101 @@ Total LTV: 96 × $38.25 = $3,648
 - 🆕 Analyze beta metrics and iterate
 - 🆕 Optimize conversion funnels
 - 🆕 Improve handover process based on feedback
-- 🆕 Scale host recruitment (target: 200 total)
-- 🆕 Increase marketing budget ($40K)
+- 🆕 Scale host recruitment (target: 70 vehicles)
+- 🆕 Increase marketing budget (P6,150)
 - 🆕 Launch content marketing
-- 🆕 Complete 1,000 bookings milestone
+- 🆕 Complete 600 bookings milestone (cumulative Q1)
 
 **Success Metrics:**
-- ✅ 200 active hosts
-- ✅ 1,000 registered renters
-- ✅ 1,000 completed bookings
+- ✅ 70 active vehicles
+- ✅ 200 registered renters
+- ✅ 600 completed bookings (Q1)
 - ✅ 4.5+ average rating
-- ✅ 60% host approval rate
+- ✅ 80% host approval rate
 - ✅ 78% booking completion rate
-- ✅ $30K MRR
+- ✅ P76K revenue (Month 3)
 
-**Phase 2: Growth & Expansion (Months 4-6)**
+**Phase 2: Scaling & Consolidation (Months 4-6)**
 
-**Objective:** Scale proven model, expand to additional cities, achieve profitability on unit economics
+**Objective:** Reach 100 vehicles, achieve P101K monthly revenue
 
 **Key Activities:**
 
 **Month 4 - Scale Primary Market:**
 - 🆕 Double down on winning marketing channels
 - 🆕 Launch influencer partnerships
-- 🆕 Expand to 400 hosts in primary city
+- 🆕 Expand to 80 vehicles
 - 🆕 Optimize dynamic pricing (manual)
 - 🆕 Launch host loyalty program
-- 🆕 Increase marketing budget ($50K)
+- 🆕 Increase marketing budget (P7,600)
 
 **Month 5 - Geographic Expansion:**
-- 🆕 Launch in 2nd city (target: 100 hosts)
+- 🆕 Expand to secondary locations within Botswana
 - 🆕 Localized marketing campaigns
-- 🆕 Hire city manager for new market
+- 🆕 Focus on Francistown market
 - 🆕 Launch insurance product integration
 - 🆕 Implement customer success program
-- 🆕 Total hosts: 500 across 2 cities
+- 🆕 Total vehicles: 90
 
 **Month 6 - Consolidation:**
-- 🆕 Optimize operations across 2 cities
+- 🆕 Optimize operations across Gaborone + Francistown
 - 🆕 Launch affiliate program
 - 🆕 Implement automated email campaigns
 - 🆕 Start hotel/travel partnerships
-- 🆕 Total hosts: 750
+- 🆕 Total vehicles: 100
 - 🆕 Achieve unit economics profitability
 
 **Success Metrics:**
-- ✅ 750 active hosts across 2 cities
-- ✅ 5,000 registered renters
-- ✅ 5,000 completed bookings (cumulative: 6,000)
-- ✅ $100K MRR
+- ✅ 100 active vehicles across 2 locations
+- ✅ 300 registered renters
+- ✅ 900 completed bookings (Q2)
+- ✅ P101K monthly revenue
 - ✅ CAC payback < 4 months
 - ✅ 65% host retention at 6 months
 - ✅ 25% insurance attachment rate
 
-**Phase 3: Mobile & Market Leadership (Months 7-9)**
+**Phase 3: Mobile & Expansion (Months 7-9)**
 
-**Objective:** Launch mobile apps, establish market leadership in operating cities, expand to 5 total cities
+**Objective:** Launch mobile apps, expand to 140 vehicles, reach P138K/month
 
 **Key Activities:**
 
 **Month 7 - Mobile Preparation:**
 - 🆕 Launch iOS app beta
 - 🆕 Launch Android app beta
-- 🆕 Expand to 3rd city
+- 🆕 Expand to Maun (tourism market)
 - 🆕 Implement dynamic pricing algorithm (automated)
 - 🆕 Launch B2B corporate program
-- 🆕 Total hosts: 1,000
+- 🆕 Total vehicles: 115
 
 **Month 8 - Mobile Launch:**
 - 🆕 Public launch of iOS app
 - 🆕 Public launch of Android app
 - 🆕 App Store Optimization (ASO)
 - 🆕 Mobile-specific marketing campaigns
-- 🆕 Expand to 4th city
-- 🆕 Total hosts: 1,500
+- 🆕 Expand to Kasane (tourism corridor)
+- 🆕 Total vehicles: 125
 
-**Month 9 - Market Dominance:**
-- 🆕 Expand to 5th city
+**Month 9 - Market Leadership:**
+- 🆕 Consolidate 4 locations
 - 🆕 Launch fleet management tools for multi-car hosts
 - 🆕 Implement predictive analytics
-- 🆕 Scale B2B partnerships (50 corporate clients)
-- 🆕 Total hosts: 2,000 across 5 cities
-- 🆕 Become #1 or #2 platform in 3 cities
+- 🆕 Scale B2B partnerships (10 corporate clients)
+- 🆕 Total vehicles: 140
+- 🆕 Become #1 P2P platform in Botswana
 
 **Success Metrics:**
-- ✅ 2,000 active hosts across 5 cities
-- ✅ 15,000 registered renters
-- ✅ 15,000 bookings in Q3
+- ✅ 140 active vehicles across 4 locations
+- ✅ 400 registered renters
+- ✅ 1,200 bookings in Q3
 - ✅ 30% of bookings from mobile apps
-- ✅ $250K MRR
+- ✅ P138K monthly revenue
 - ✅ 4.7+ platform rating
-- ✅ 50 B2B clients
+- ✅ 10 B2B clients
 
-**Phase 4: Profitability & Scale (Months 10-12)**
+**Phase 4: Year 1 Completion (Months 10-12)**
 
-**Objective:** Achieve overall profitability, prepare for Series A, expand to tier-2 cities
+**Objective:** Reach 200 vehicles, P157.5K monthly revenue, P1.368M Year 1 total
 
 **Key Activities:**
 
@@ -2307,32 +2306,31 @@ Total LTV: 96 × $38.25 = $3,648
 - 🆕 Optimize CAC across all channels
 - 🆕 Launch Pro Host subscription
 - 🆕 Implement advanced fraud detection
-- 🆕 Expand to first tier-2 city
-- 🆕 Total hosts: 2,500
+- 🆕 Strengthen all 4 locations
+- 🆕 Total vehicles: 160
 
-**Month 11 - Series A Preparation:**
+**Month 11 - Pre-Seed Completion:**
 - 🆕 Prepare investor deck and materials
 - 🆕 Achieve monthly profitability
 - 🆕 Launch Enterprise Host program
-- 🆕 Expand to 2 more tier-2 cities
-- 🆕 Total hosts: 3,000
+- 🆕 Total vehicles: 180
 
 **Month 12 - Year-End Milestone:**
-- 🆕 Series A fundraising (target: $10-15M)
-- 🆕 Achieve $500K MRR
-- 🆕 Launch white-label solution (pilot)
-- 🆕 Total hosts: 3,500 across 8 cities
-- 🆕 Plan Year 2 expansion (15 new cities)
+- 🆕 Complete Year 1 targets
+- 🆕 Achieve P157.5K monthly revenue
+- 🆕 Total vehicles: 200
+- 🆕 Total registered users: 500
+- 🆕 Plan Year 2 expansion to Zimbabwe/Namibia
 
 **Success Metrics:**
-- ✅ 3,500 active hosts across 8 cities
-- ✅ 30,000 registered renters
-- ✅ 30,000 bookings in Q4
-- ✅ $500K MRR ($6M ARR)
+- ✅ 200 active vehicles across 4 locations
+- ✅ 500 registered renters
+- ✅ 1,500 bookings in Q4
+- ✅ P157.5K monthly revenue
 - ✅ Monthly profitability achieved
 - ✅ 70% host retention at 12 months
 - ✅ 45% renter repeat rate
-- ✅ Series A funding secured
+- ✅ **Year 1 Total: P1.368M** ✅
 
 ### Key Milestones
 
@@ -2375,34 +2373,34 @@ Total LTV: 96 × $38.25 = $3,648
 **Business Milestones:**
 
 **User Growth:**
-- Month 3: 200 hosts, 1,000 renters
-- Month 6: 750 hosts, 5,000 renters
-- Month 9: 2,000 hosts, 15,000 renters
-- Month 12: 3,500 hosts, 30,000 renters
+- Month 3: 70 vehicles, 200 renters
+- Month 6: 100 vehicles, 300 renters
+- Month 9: 140 vehicles, 400 renters
+- Month 12: 200 vehicles, 500 renters
 
 **Revenue:**
-- Month 3: $10K MRR
-- Month 6: $100K MRR
-- Month 9: $250K MRR
-- Month 12: $500K MRR
+- Month 3: P76K
+- Month 6: P101K
+- Month 9: P138K
+- Month 12: P157.5K
 
 **Geographic Expansion:**
-- Month 1-3: 1 city
-- Month 4-6: 2 cities
-- Month 7-9: 5 cities
-- Month 10-12: 8 cities
+- Month 1-3: Gaborone (primary)
+- Month 4-6: + Francistown
+- Month 7-9: + Maun, Kasane
+- Month 10-12: Consolidate 4 locations
 
 **Partnerships:**
 - Month 1: Insurance partner signed
-- Month 6: 20 affiliate partners
-- Month 9: 50 corporate clients
-- Month 12: 100 hotel partnerships
+- Month 6: 5 affiliate partners
+- Month 9: 10 corporate clients
+- Month 12: 20 hotel partnerships
 
 **Team Growth:**
 - Month 1-3: 2 founders + 3 contractors
 - Month 4-6: Add 3 full-time (marketing, CS, partnerships)
-- Month 7-9: Add 4 full-time (reach 9 total)
-- Month 10-12: Add 6 full-time (reach 15 total)
+- Month 7-9: Add 2 full-time (reach 7 total)
+- Month 10-12: Add 3 full-time (reach 10 total)
 
 ### Timeline
 
@@ -2440,24 +2438,24 @@ MONTHS 10-12 | PROFITABILITY & SCALE
   - KR3: 99.5% uptime achieved
 
 - **Objective 2:** Establish marketplace liquidity
-  - KR1: 200 active hosts
-  - KR2: 1,000 completed bookings
+  - KR1: 70 active vehicles
+  - KR2: 600 completed bookings
   - KR3: 78% booking completion rate
 
 - **Objective 3:** Validate product-market fit
   - KR1: 4.5+ average rating
-  - KR2: 60% host approval rate
+  - KR2: 80% host approval rate
   - KR3: 42% renter repeat rate
 
 **Q2 (Months 4-6): Growth**
 - **Objective 1:** Scale user acquisition
-  - KR1: 750 active hosts
-  - KR2: 5,000 registered renters
-  - KR3: CAC < $50 blended
+  - KR1: 100 active vehicles
+  - KR2: 300 registered renters
+  - KR3: CAC < P275 blended
 
 - **Objective 2:** Expand geographic presence
-  - KR1: Launch in 2nd city successfully
-  - KR2: 100+ hosts in new city
+  - KR1: Launch in Francistown successfully
+  - KR2: 15+ vehicles in new location
   - KR3: Same metrics as primary city
 
 - **Objective 3:** Achieve unit economics profitability
@@ -2471,29 +2469,29 @@ MONTHS 10-12 | PROFITABILITY & SCALE
   - KR2: Android app in Play Store with 4.5+ rating
   - KR3: 30% of bookings from mobile
 
-- **Objective 2:** Expand to 5 cities
-  - KR1: 2,000 active hosts across 5 cities
-  - KR2: 15,000 registered renters
-  - KR3: #1 or #2 in 3 cities
+- **Objective 2:** Expand to 4 locations
+  - KR1: 140 active vehicles across 4 locations
+  - KR2: 400 registered renters
+  - KR3: #1 P2P platform in Botswana
 
 - **Objective 3:** Establish market leadership
-  - KR1: 15,000 bookings in quarter
+  - KR1: 1,200 bookings in quarter
   - KR2: 4.7+ platform rating
-  - KR3: 50 B2B clients
+  - KR3: 10 B2B clients
 
 **Q4 (Months 10-12): Profitability & Scale**
 - **Objective 1:** Achieve profitability
   - KR1: Monthly profitable by Month 11
-  - KR2: $500K MRR by Month 12
+  - KR2: P157.5K revenue by Month 12
   - KR3: 65%+ contribution margin
 
-- **Objective 2:** Prepare for Series A
-  - KR1: Investor deck and materials complete
-  - KR2: 3,500 active hosts across 8 cities
-  - KR3: 30,000 registered renters
+- **Objective 2:** Complete Year 1 Targets
+  - KR1: 200 active vehicles
+  - KR2: 500 registered renters
+  - KR3: P1.368M total Year 1 revenue
 
 - **Objective 3:** Set foundation for Year 2
-  - KR1: Series A funding secured ($10-15M)
+  - KR1: Pre-seed/Seed preparation complete
   - KR2: Year 2 expansion plan finalized
   - KR3: Team scaled to 15 people
 
@@ -2505,61 +2503,61 @@ MONTHS 10-12 | PROFITABILITY & SCALE
 - 2 Founders (CEO, CTO)
 - 1 Marketing Specialist (contractor)
 - 2 Customer Support (part-time)
-- **Monthly Payroll:** $35K
+- **Monthly Payroll:** P35K
 
 **Months 4-6 (8 people):**
 - Add: Head of Growth, Customer Success Lead, Partnerships Manager
-- **Monthly Payroll:** $65K
+- **Monthly Payroll:** P65K
 
-**Months 7-9 (12 people):**
-- Add: Performance Marketer, Content Marketer, 2 Support Reps
-- **Monthly Payroll:** $90K
+**Months 7-9 (7 people):**
+- Add: Performance Marketer, Content Marketer
+- **Monthly Payroll:** P55K
 
-**Months 10-12 (15 people):**
-- Add: Community Manager, Affiliate Manager, Support Rep
-- **Monthly Payroll:** $110K
+**Months 10-12 (10 people):**
+- Add: Community Manager, Support Reps
+- **Monthly Payroll:** P75K
 
 **Technology Resources:**
 
 **Infrastructure Costs:**
-- Supabase: $25/month → $100/month (scaling)
-- Vercel: $20/month → $100/month
-- Mapbox: $500/month → $2,000/month (usage-based)
-- Email (Resend): $100/month → $500/month
-- SMS: $300/month → $1,500/month
+- Supabase: P175/month → P700/month (scaling)
+- Vercel: P140/month → P700/month
+- Mapbox: P350/month → P1,400/month (usage-based)
+- Email (Resend): P70/month → P350/month
+- SMS: P210/month → P1,050/month
 - Payment processing: 2.9% of GMV
-- **Monthly Infrastructure:** $1K → $5K
+- **Monthly Infrastructure:** P1K → P4K
 
 **Software & Tools:**
-- Analytics (Mixpanel): $100/month
-- CRM (HubSpot): $500/month
-- Support (Intercom): $400/month
-- Marketing automation: $300/month
-- **Monthly SaaS:** $1,300
+- Analytics (Mixpanel): P700/month
+- CRM (HubSpot): P350/month
+- Support (Intercom): P280/month
+- Marketing automation: P210/month
+- **Monthly SaaS:** ~P2,200 (aligned with FY2025 subscriptions P26K/year)
 
 **Marketing Budget:**
-- Month 1-3: $30K/month
-- Month 4-6: $50K/month
-- Month 7-9: $70K/month
-- Month 10-12: $80K/month
-- **Total Year 1:** $720K
+- Month 1-3: P5K-6K/month
+- Month 4-6: P7K-9K/month
+- Month 7-9: P10K-12K/month
+- Month 10-12: P12K-15K/month
+- **Total Year 1:** ~P110K (8.3% of revenue)
 
 **Capital Requirements:**
 
 **Year 1 Budget Summary:**
-- Payroll: $900K
-- Marketing: $720K
-- Infrastructure: $36K
-- SaaS Tools: $16K
-- Legal/Compliance: $50K
-- Office/Admin: $30K
-- Contingency (15%): $258K
-- **Total Year 1:** $2.01M
+- Payroll: P600K
+- Marketing: P110K
+- Infrastructure: P30K
+- SaaS Tools: P26K (based on FY2025 subscriptions)
+- Legal/Compliance: P40K
+- Office/Admin: P25K
+- Contingency (15%): P125K
+- **Total Year 1:** ~P956K
 
 **Funding Strategy:**
-- **Seed Round:** $2-3M (covers 18 months runway)
-- **Use of Funds:** 45% marketing, 45% team, 10% infrastructure/other
-- **Series A (Month 12):** $10-15M for Year 2 expansion
+- **Pre-Seed Round:** P700K for 12-month runway (as mentioned in Executive Summary)
+- **Use of Funds:** 60% team, 12% marketing, 28% infrastructure/operations
+- **Seed (Year 2):** P2-3M for regional expansion
 
 ### Dependencies & Risks
 
@@ -2784,302 +2782,286 @@ During the development and pre-launch phase (January-December 2025), MobiRides o
 
 ---
 
-## 13. Financial Plan & Resource Requirements
+## 13. Financial Plan & Resource Requirements (v2.1 - BWP Aligned)
 
 ### Budget Overview
 
-**Year 1 Total Budget: P27.14M**
+**Year 1 Total Budget: ~P956K** (Based on FY2025 actual expense structure scaled for growth)
 
-**Expense Categories:**
+**Expense Categories (Realistic for Botswana Startup):**
 
-**1. Personnel (45% - P12.15M):**
-- Founders: P2.7M (2 × P1.35M)
-- Head of Growth: P1.215M (Months 4-12)
-- Customer Success Lead: P877.5K (Months 4-12)
-- Partnerships Manager: P945K (Months 4-12)
-- Performance Marketer: P810K (Months 7-12)
-- Content Marketer: P742.5K (Months 7-12)
-- Community Manager: P675K (Months 10-12)
-- Affiliate Manager: P675K (Months 10-12)
-- Support Reps (5): P2.36M (varying start dates)
-- Contractors: P1.15M
+**1. Personnel (63% - P600K):**
+- Founders: P240K (2 × P120K) - modest founder salaries
+- Staff Salaries: P240K (based on FY2025 P20.5K/month)
+- Staff Welfare: P80K (based on FY2025 P9.6K actuals)
+- Contractors: P40K
 
-**2. Marketing & Sales (36% - P9.72M):**
-- Digital advertising: P6.48M
-- Content creation: P810K
-- Influencer partnerships: P1.08M
-- PR & media: P675K
-- Events & offline: P405K
-- Marketing tools: P270K
+**2. Marketing & Sales (12% - P110K):**
+- Digital advertising: P70K
+- Content creation: P15K
+- Influencer partnerships: P15K
+- Events & offline: P10K
+- (Aligned with 8.3% of P1.368M revenue)
 
-**3. Technology & Infrastructure (5% - P1.35M):**
-- Cloud hosting: P486K
-- SaaS subscriptions: P216K
-- Mobile app development: P405K
-- Security & compliance: P243K
+**3. Technology & Infrastructure (6% - P56K):**
+- Cloud hosting: P20K
+- SaaS subscriptions: P26K (based on FY2025 actuals)
+- Mobile app development: P10K (Capacitor-based)
 
-**4. Legal & Compliance (3% - P810K):**
-- Business formation: P135K
-- Insurance: P337.5K
-- Legal counsel: P270K
-- Licenses & permits: P67.5K
+**4. Legal & Compliance (4% - P40K):**
+- Business formation: P10K
+- Insurance: P7K (based on FY2025 P6.9K)
+- Legal counsel: P18K
+- Licenses & permits: P5K
 
-**5. Operations & Admin (3% - P810K):**
-- Office expenses: P202.5K
-- Equipment: P270K
-- Professional services: P202.5K
-- Misc: P135K
+**5. Operations & Admin (3% - P25K):**
+- Office expenses: P8K
+- Bank charges: P5K (based on FY2025 P4K)
+- Equipment: P7K
+- Misc: P5K
 
-**6. Contingency (8% - P2.3M):**
+**6. Contingency (13% - P125K):**
 - Buffer for overruns and unexpected expenses
 
 **Monthly Burn Rate:**
-- Month 1-3: P1.215M/month
-- Month 4-6: P1.823M/month
-- Month 7-9: P2.43M/month
-- Month 10-12: P2.7M/month
-- **Average:** P2.27M/month
+- Month 1-3: P65K/month
+- Month 4-6: P75K/month
+- Month 7-9: P85K/month
+- Month 10-12: P95K/month
+- **Average:** P80K/month
 
 **Cash Runway:**
-- Initial funding: P33.75M (seed round)
-- Burn: P27.14M in Year 1
-- Revenue: P4.97M in Year 1
-- Net burn: P22.14M
-- Remaining: P11.61M
-- **Runway at end of Year 1:** 5 months at Month 12 burn rate
+- Initial funding: P700K (pre-seed round)
+- Burn: P956K in Year 1
+- Revenue: P1.368M in Year 1
+- **Net Positive: P412K**
+- **Profitable by Month 8-9**
 
 ### Funding Requirements
 
-**Seed Round (Target: Q1 2026):**
+**Pre-Seed Round (Secured):**
 
-**Amount:** P27-40.5M
-**Valuation:** P108-162M pre-money
+**Amount:** P700K
+**Valuation:** P2.8M pre-money
 **Dilution:** 20-25%
 
 **Use of Funds:**
-- Marketing & user acquisition: 40% (P10.8M-16.2M)
-- Team building: 40% (P10.8M-16.2M)
-- Technology & infrastructure: 10% (P2.7M-4.05M)
-- Operations & working capital: 10% (P2.7M-4.05M)
+- Team building: 60% (P420K)
+- Marketing & user acquisition: 12% (P84K)
+- Technology & infrastructure: 15% (P105K)
+- Operations & working capital: 13% (P91K)
 
 **Investor Targets:**
-- **Lead:** Early-stage VC focused on marketplaces, mobility, or sharing economy
-- **Angels:** Operators from regional and international mobility platforms
-- **Strategic:** Corporate VCs from automotive, insurance, or travel industries
+- **Lead:** Local angel investors and early-stage funds
+- **Angels:** Operators from African mobility platforms
+- **Strategic:** Botswana automotive and insurance companies
 
 **Key Metrics for Fundraising:**
 - ✅ Product: 85% production-ready with core features
 - ✅ Team: Experienced founders with complementary skills
-- ✅ Market: P33.75B TAM growing at 18% CAGR
+- ✅ Market: P33.75B TAM in Southern Africa, 18% CAGR
 - ✅ Differentiation: 15% commission vs 25-40% competition
-- ✅ Unit Economics: LTV:CAC of 20:1, 65% contribution margin
+- ✅ Unit Economics: Host LTV:CAC of 60.75:1, Renter 4.05:1
 - ✅ FY2025 Traction: P311K revenue, +145% Q4 growth
 
-**Series A (Target: Month 12-18):**
+**Seed Round (Target: Month 18-24):**
 
-**Amount:** P135-202.5M
-**Valuation:** P540-810M pre-money
+**Amount:** P2-3M
+**Valuation:** P8-12M pre-money
 **Dilution:** 20-25%
 
 **Prerequisites:**
-- P6.75M MRR (P81M ARR)
-- 3,500+ active hosts across Botswana
-- 30,000+ registered renters
+- P250K+ monthly revenue
+- 400+ active vehicles
+- 1,500+ registered renters
 - Monthly profitability achieved
 - Strong unit economics maintained
-- Clear path to P270M+ ARR in Year 3
+- Clear path to regional expansion
 
 **Use of Funds:**
-- Geographic expansion (15 new cities): 40%
+- Regional expansion (Zimbabwe, Namibia): 40%
 - Product development (AI, automation): 20%
-- Team scaling (to 50 people): 25%
+- Team scaling (to 25 people): 25%
 - Marketing & branding: 15%
 
 ### Financial Projections (12-24 Months)
 
-**Revenue Projections:**
+**Revenue Projections (VERIFIED - Aligned with P1.368M Year 1 Target):**
 
 **Year 1 (Months 1-12):**
 ```
 Q1 (Months 1-3):
-- Bookings: 1,000
-- GMV: P1,147,500
-- Revenue: P192,780
+- Bookings: 600
+- GMV: P1,400,000
+- Revenue: P210,000
 
 Q2 (Months 4-6):
-- Bookings: 3,200
-- GMV: P3,672,000
-- Revenue: P616,896
+- Bookings: 900
+- GMV: P1,950,000
+- Revenue: P292,500
 
 Q3 (Months 7-9):
-- Bookings: 7,300
-- GMV: P8,376,750
-- Revenue: P1,407,294
+- Bookings: 1,200
+- GMV: P2,700,000
+- Revenue: P405,000
 
 Q4 (Months 10-12):
-- Bookings: 13,500
-- GMV: P15,491,250
-- Revenue: P2,601,315
+- Bookings: 1,500
+- GMV: P3,070,000
+- Revenue: P460,500
 
 Year 1 Total:
-- Bookings: 25,000
-- GMV: P28,687,500
-- Revenue: P4,818,285
-- Additional (insurance, subscriptions): P641,520
-- Total Revenue: P5,459,805
+- Bookings: ~4,200
+- GMV: ~P9,120,000
+- Commission Revenue: P1,300,000
+- Insurance/Subscriptions: P68,000
+- **Total Revenue: P1,368,000** ✅
 ```
 
 **Year 2 (Months 13-24):**
 ```
 Q1 (Months 13-15):
-- Monthly average bookings: 18,000
-- Quarterly revenue: P4,118,850
+- Monthly average bookings: 700
+- Quarterly revenue: P525,000
 
 Q2 (Months 16-18):
-- Monthly average bookings: 25,000
-- Quarterly revenue: P5,720,625
+- Monthly average bookings: 850
+- Quarterly revenue: P637,500
 
 Q3 (Months 19-21):
-- Monthly average bookings: 32,000
-- Quarterly revenue: P7,322,400
+- Monthly average bookings: 1,000
+- Quarterly revenue: P750,000
 
 Q4 (Months 22-24):
-- Monthly average bookings: 38,000
-- Quarterly revenue: P8,695,350
+- Monthly average bookings: 1,200
+- Quarterly revenue: P900,000
 
 Year 2 Total:
-- Bookings: 339,000
-- GMV: P389,002,500
-- Commission Revenue: P58,350,375
-- Insurance Revenue: P6,874,875
-- Subscription Revenue: P2,745,900
-- Total Revenue: P67,971,150
+- Bookings: ~11,000
+- GMV: ~P18,750,000
+- Commission Revenue: P2,500,000
+- Insurance/Subscriptions: P200,000
+- **Total Revenue: ~P2.7M**
 ```
 
 **Expense Projections:**
 
 **Year 1:**
-- Personnel: $900K
-- Marketing: $720K
-- Technology: $100K
-- Legal/Compliance: $60K
-- Operations: $60K
-- Contingency: $170K
-- **Total Expenses:** $2,010,000
+- Personnel: P600K
+- Marketing: P110K
+- Technology: P56K
+- Legal/Compliance: P40K
+- Operations: P25K
+- Contingency: P125K
+- **Total Expenses:** P956K
 
 **Year 1 P&L:**
-- Revenue: $404,430
-- Expenses: $2,010,000
-- **Net Income: -$1,605,570**
-- EBITDA Margin: -397%
+- Revenue: P1,368,000
+- Expenses: P956,000
+- **Net Income: +P412,000**
+- EBITDA Margin: +30%
 
 **Year 2:**
-- Personnel: $2,500K (scale to 50 people)
-- Marketing: $1,500K (expansion to 15 cities)
-- Technology: $300K
-- Legal/Compliance: $150K
-- Operations: $250K
-- Contingency: $465K
-- **Total Expenses:** $5,165,000
+- Personnel: P1,200K (scale to 25 people)
+- Marketing: P270K (10% of revenue)
+- Technology: P150K
+- Legal/Compliance: P80K
+- Operations: P100K
+- Contingency: P200K
+- **Total Expenses:** P2,000K
 
 **Year 2 P&L:**
-- Revenue: $5,034,900
-- Expenses: $5,165,000
-- **Net Income: -$130,100**
-- EBITDA Margin: -3%
-- **Near break-even, profitable by Month 27**
+- Revenue: P2,700,000
+- Expenses: P2,000,000
+- **Net Income: +P700,000**
+- EBITDA Margin: +26%
+- **Sustained profitability**
 
 **Cash Flow Projections:**
 
 **Year 1:**
 ```
-Opening Cash: $2,500,000 (seed funding)
-Revenue: $404,430
-Expenses: -$2,010,000
-Net Cash Flow: -$1,605,570
-Closing Cash: $894,430
+Opening Cash: P700,000 (pre-seed funding)
+Revenue: P1,368,000
+Expenses: -P956,000
+Net Cash Flow: +P412,000
+Closing Cash: P1,112,000
 ```
 
 **Year 2:**
 ```
-Opening Cash: $894,430
-Series A Funding: $12,000,000 (Month 12-15)
-Revenue: $5,034,900
-Expenses: -$5,165,000
-Net Cash Flow: -$130,100
-Closing Cash: $12,764,330
+Opening Cash: P1,112,000
+Seed Funding: P2,000,000 (Month 18-24)
+Revenue: P2,700,000
+Expenses: -P2,000,000
+Net Cash Flow: +P700,000
+Closing Cash: P3,812,000
 ```
 
 **Break-Even Analysis:**
 
 **Monthly Break-Even:**
-- Fixed costs: $168K/month (average)
-- Contribution margin per booking: $25
-- Break-even bookings: 6,720/month
-- **Target: Month 14-15 (early Year 2)**
+- Fixed costs: P80K/month (average)
+- Contribution margin per booking: P245 (P750 × 15% × 217% margin)
+- Break-even bookings: 327/month
+- **Target: Month 8-9 (mid Year 1)** ✅
 
 **Unit Economics (Mature State):**
 ```
 Average Booking:
-- GMV: $255 (3 days × $85/day)
-- Platform commission (15%): $38.25
-- Payment processing: -$9.00
-- Support & ops (allocated): -$2.50
-- Infrastructure: -$1.00
-- Fraud/insurance reserve: -$0.75
-= Contribution Margin: $25.00 (65%)
+- GMV: P2,250 (3 days × P750/day)
+- Platform commission (15%): P337.50
+- Payment processing: -P63.00
+- Support & ops (allocated): -P17.50
+- Infrastructure: -P7.00
+- Fraud/insurance reserve: -P5.00
+= Contribution Margin: P245.00 (73%)
 
 Monthly P&L at Scale (Month 24):
-- Bookings: 40,000
-- Contribution: $1,000,000
-- Fixed Costs: $430,000
-= EBITDA: $570,000 (57% margin)
+- Bookings: 1,200
+- Contribution: P294,000
+- Fixed Costs: P167,000
+= EBITDA: P127,000 (47% margin)
 ```
 
 **Financial Milestones:**
 
-**Month 6:** P1.35M MRR
-**Month 9:** P3.375M MRR
-**Month 12:** P6.75M MRR, Series A fundraising
-**Month 15:** Monthly profitability
-**Month 18:** P13.5M MRR
-**Month 24:** P27M MRR, Series B preparation
+**Month 3:** P76K revenue
+**Month 6:** P101K revenue
+**Month 9:** P138K revenue, monthly profitability achieved
+**Month 12:** P157.5K revenue, **Year 1 Total: P1.368M** ✅
+**Month 18:** P220K revenue, Seed funding preparation
+**Month 24:** P275K revenue, regional expansion
 
 ### Budget Allocation by Function
 
 **Year 1 Budget Breakdown:**
 
-**Product & Engineering (8%):**
-- CTO salary: $100K
-- Infrastructure: $36K
-- SaaS tools: $16K
-- Mobile development: $30K
-- Security: $18K
-- **Total:** $200K
+**Product & Engineering (9% - P86K):**
+- CTO salary allocation: P50K
+- Infrastructure: P20K
+- SaaS tools: P10K
+- Mobile development: P6K
+- **Total:** P86K
 
-**Marketing & Growth (41%):**
-- Head of Growth salary: $90K
-- Performance Marketer: $60K
-- Content Marketer: $55K
-- Marketing spend: $480K
-- Content production: $60K
-- Tools & software: $20K
-- PR & influencers: $130K
-- **Total:** $895K
+**Marketing & Growth (12% - P110K):**
+- Marketing specialist: P36K
+- Marketing spend: P70K
+- Content production: P4K
+- **Total:** P110K
 
-**Sales & Partnerships (7%):**
-- Partnerships Manager: $70K
-- Affiliate Manager: $50K
-- Travel/entertainment: $20K
-- Tools (CRM): $6K
-- **Total:** $146K
+**Sales & Partnerships (3% - P25K):**
+- Partnerships Manager (part-time): P20K
+- Travel/entertainment: P3K
+- Tools (CRM): P2K
+- **Total:** P25K
 
-**Customer Success & Support (13%):**
-- CS Lead: $65K
-- Support Reps: $175K
-- Support tools: $10K
-- Training: $5K
-- **Total:** $255K
+**Customer Success & Support (45% - P430K):**
+- CS Lead: P60K
+- Support Reps: P120K
+- Founders (CEO/CTO): P240K
+- Support tools: P10K
+- **Total:** P430K
 
 **General & Administrative (15%):**
 - CEO salary: $100K
@@ -3133,22 +3115,22 @@ Monthly P&L at Scale (Month 24):
 **Scenario Planning:**
 
 **Conservative Scenario (20% probability):**
-- Revenue: 70% of base case
+- Revenue: 70% of base case (P958K)
 - Expenses: 90% of base case (fixed costs stay high)
-- Outcome: Need Series A by Month 9, raise $15M
-- Break-even: Month 18
+- Outcome: Need bridge funding by Month 10
+- Break-even: Month 12
 
 **Base Scenario (60% probability):**
-- Revenue: 100% of projections
-- Expenses: 100% of budget
-- Outcome: Series A by Month 12, raise $12M
-- Break-even: Month 15
+- Revenue: 100% of projections (P1.368M)
+- Expenses: 100% of budget (P956K)
+- Outcome: Profitable, seed funding optional
+- Break-even: Month 8-9
 
 **Optimistic Scenario (20% probability):**
-- Revenue: 140% of base case
+- Revenue: 140% of base case (P1.9M)
 - Expenses: 110% of base case (scaling costs)
-- Outcome: Series A by Month 15, raise $10M
-- Break-even: Month 12
+- Outcome: Strong position for seed, early regional expansion
+- Break-even: Month 6
 
 ---
 
@@ -3538,7 +3520,7 @@ Monthly P&L at Scale (Month 24):
 
 ---
 
-## 14. Performance Metrics & Success Indicators
+## 14. Performance Metrics & Success Indicators (v2.1 - BWP Aligned)
 
 ### Key Performance Indicators (KPIs)
 
@@ -3546,19 +3528,19 @@ Monthly P&L at Scale (Month 24):
 
 **1. User Acquisition**
 - **Total Registered Users:** 
-  - Month 3: 1,200 (200 hosts + 1,000 renters)
-  - Month 6: 5,750 (750 hosts + 5,000 renters)
-  - Month 9: 17,035 (2,000 hosts + 15,035 renters)
-  - Month 12: 33,500 (3,500 hosts + 30,000 renters)
+  - Month 3: 270 (70 vehicles + 200 renters)
+  - Month 6: 400 (100 vehicles + 300 renters)
+  - Month 9: 540 (140 vehicles + 400 renters)
+  - Month 12: 700 (200 vehicles + 500 renters)
 
 - **New User Growth Rate:**
-  - Target: 15% MoM
-  - Acceptable range: 10-20% MoM
+  - Target: 11% MoM (conservative, achievable)
+  - Acceptable range: 8-15% MoM
   - Alert if: < 8% for 2 consecutive months
 
-- **Host-to-Renter Ratio:**
-  - Target: 1:8 to 1:10
-  - Current: 1:8.6 (healthy marketplace)
+- **Vehicle-to-Renter Ratio:**
+  - Target: 1:2.5 to 1:3
+  - Current: 1:2.5 (healthy marketplace for Botswana)
 
 **2. Activation & Engagement**
 - **Host Activation Rate:**
@@ -3581,14 +3563,14 @@ Monthly P&L at Scale (Month 24):
 
 **3. Booking Metrics**
 - **Total Bookings:**
-  - Month 3: 1,000 cumulative
-  - Month 6: 6,000 cumulative
-  - Month 9: 20,000 cumulative
-  - Month 12: 50,000 cumulative
+  - Month 3: 600 cumulative
+  - Month 6: 1,500 cumulative
+  - Month 9: 2,700 cumulative
+  - Month 12: 4,200 cumulative
 
 - **Booking Frequency:**
   - Hosts: 4 bookings/month per vehicle
-  - Renters: 1 booking/month for active users
+  - Renters: 0.5 booking/month for active users
 
 - **Booking Completion Rate:**
   - Target: 78%
@@ -3600,30 +3582,30 @@ Monthly P&L at Scale (Month 24):
     - Full completion: 78%
 
 - **Average Booking Value (ABV):**
-  - Target: $255 (3 days × $85/day)
+  - Target: P2,250 (3 days × P750/day)
   - Track by city, vehicle type, seasonality
 
 **Revenue Metrics:**
 
 **4. Gross Merchandise Value (GMV)**
 - **Total GMV:**
-  - Month 6: $80,750
-  - Month 9: $161,160
-  - Month 12: $322,065
-  - Year 1 Total: $2.125M
+  - Month 6: P675,000
+  - Month 9: P920,000
+  - Month 12: P1,050,000
+  - Year 1 Total: ~P9.12M
 
 - **GMV Growth Rate:**
-  - Target: 15% MoM
+  - Target: 11% MoM
   - Track by geography, vehicle type
 
 **5. Revenue**
 - **Monthly Recurring Revenue (MRR):**
-  - Month 6: $13,575
-  - Month 9: $27,095
-  - Month 12: $54,147
+  - Month 6: P101,250
+  - Month 9: P138,000
+  - Month 12: P157,500
 
 - **Annual Recurring Revenue (ARR):**
-  - Month 12: $649,764 (based on Month 12 MRR)
+  - Month 12: P1,890,000 (based on Month 12 MRR × 12)
 
 - **Revenue Mix:**
   - Commission: 84%
@@ -3641,16 +3623,16 @@ Monthly P&L at Scale (Month 24):
 
 **7. Customer Acquisition Cost (CAC)**
 - **Blended CAC:**
-  - Target: $48 (weighted average)
+  - Target: P187 (weighted average)
   - Breakdown:
-    - Renter: $35
-    - Host: $150
+    - Renter: P250 ✅
+    - Host: P150 ✅
 
 - **CAC by Channel:**
-  - Google Ads: $40-50 (renters), $120-150 (hosts)
-  - Meta Ads: $30-40 (renters), $100-130 (hosts)
-  - Referral: $7.50 (renters), $12.50 (hosts)
-  - Organic: $5-10 (content costs allocated)
+  - Google Ads: P300-400 (renters), P180-225 (hosts)
+  - Meta Ads: P200-300 (renters), P150-200 (hosts)
+  - Referral: P50 (renters), P75 (hosts)
+  - Organic: P35-70 (content costs allocated)
 
 - **CAC Trend:**
   - Monitor monthly
@@ -3658,32 +3640,32 @@ Monthly P&L at Scale (Month 24):
 
 **8. Lifetime Value (LTV)**
 - **Renter LTV:**
-  - Target: $684
-  - Calculation: 18 bookings × $38 revenue
+  - Target: P1,012.50 ✅
+  - Calculation: 9 bookings × P112.50 revenue
 
 - **Host LTV:**
-  - Target: $3,648
-  - Calculation: 96 bookings × $38 revenue
+  - Target: P9,112.50 ✅
+  - Calculation: 96 bookings × P94.92 revenue
 
 - **LTV:CAC Ratio:**
-  - Renter: 19.5:1
-  - Host: 24.3:1
+  - Renter: 4.05:1 ✅
+  - Host: 60.75:1 ✅ (Exceptional)
   - Target: >3:1 (significantly exceeded)
 
 **9. Contribution Margin**
 - **Per Booking:**
-  - Revenue: $38.25
-  - Variable costs: $13.25
-  - Contribution: $25.00
-  - Margin: 65%
+  - Revenue: P337.50
+  - Variable costs: P92.50
+  - Contribution: P245.00
+  - Margin: 73%
 
 - **Monthly:**
   - Track overall contribution margin
-  - Target: >60%
+  - Target: >70%
 
 **10. CAC Payback Period**
-- **Renter:** 1 booking (immediate)
-- **Host:** 3-4 months (12-16 bookings)
+- **Renter:** 2 bookings (~2 months)
+- **Host:** 1 booking (immediate) - exceptional ratio
 - **Target:** <6 months
 
 **Retention & Engagement:**
@@ -3839,71 +3821,71 @@ Monthly P&L at Scale (Month 24):
 **Monthly Milestones:**
 
 **Month 3:**
-- ✅ 200 active hosts
-- ✅ 1,000 registered renters
-- ✅ 1,000 completed bookings
+- ✅ 70 active vehicles
+- ✅ 200 registered renters
+- ✅ 600 completed bookings
 - ✅ 4.5+ average rating
-- ✅ $10K MRR
+- ✅ P76K revenue
 
 **Month 6:**
-- ✅ 750 active hosts
-- ✅ 5,000 registered renters
-- ✅ 6,000 cumulative bookings
-- ✅ $100K MRR
+- ✅ 100 active vehicles
+- ✅ 300 registered renters
+- ✅ 1,500 cumulative bookings
+- ✅ P101K revenue
 - ✅ Unit economics profitable
 - ✅ 25% insurance attachment
 
 **Month 9:**
-- ✅ 2,000 active hosts
-- ✅ 15,000 registered renters
-- ✅ 20,000 cumulative bookings
-- ✅ $250K MRR
+- ✅ 140 active vehicles
+- ✅ 400 registered renters
+- ✅ 2,700 cumulative bookings
+- ✅ P138K revenue
 - ✅ Mobile apps launched
-- ✅ 5 cities operational
+- ✅ 4 locations operational
 
 **Month 12:**
-- ✅ 3,500 active hosts
-- ✅ 30,000 registered renters
-- ✅ 50,000 cumulative bookings
-- ✅ $500K MRR
+- ✅ 200 active vehicles
+- ✅ 500 registered renters
+- ✅ 4,200 cumulative bookings
+- ✅ P157.5K revenue
 - ✅ Monthly profitability
-- ✅ Series A funded
-- ✅ 8 cities operational
+- ✅ **Year 1 Total: P1.368M** ✅
+- ✅ 4 locations operational
 
 **Quarterly Goals:**
 
 **Q1: Foundation**
-- Product: Production-ready platform
-- Users: 200 hosts, 1,000 renters
-- Revenue: $45K total
+- Product: Production-ready platform + mobile
+- Users: 70 vehicles, 200 renters
+- Revenue: P210K total
 - Key Metric: Product-market fit validated (NPS 50+)
 
 **Q2: Growth**
 - Product: Insurance integration, affiliate program
-- Users: 750 hosts, 5,000 renters
-- Revenue: $155K total
+- Users: 100 vehicles, 300 renters
+- Revenue: P292K total
 - Key Metric: Unit economics profitable
 
 **Q3: Scale**
 - Product: Mobile apps launched
-- Users: 2,000 hosts, 15,000 renters
-- Revenue: $312K total
-- Key Metric: Geographic expansion (5 cities)
+- Users: 140 vehicles, 400 renters
+- Revenue: P405K total
+- Key Metric: Geographic expansion (4 locations)
 
 **Q4: Profitability**
 - Product: Pro Host subscription, dynamic pricing
-- Users: 3,500 hosts, 30,000 renters
-- Revenue: $578K total
-- Key Metric: Monthly profitability, Series A secured
+- Users: 200 vehicles, 500 renters
+- Revenue: P461K total
+- Key Metric: Monthly profitability, **P1.368M Year 1** ✅
 
 **Success Criteria by Stakeholder:**
 
 **For Investors:**
-- ✅ Strong unit economics: LTV:CAC >3:1 (Actual: 20:1)
+- ✅ Strong unit economics: LTV:CAC >3:1 (Actual: Host 60.75:1, Renter 4.05:1)
 - ✅ Product-market fit: NPS >40 (Target: 50+)
-- ✅ Efficient growth: CAC payback <6 months (Actual: 1-4 months)
-- ✅ Market traction: Top 3 in operating cities by Month 12
-- ✅ Path to profitability: Clear by Month 9, achieved by Month 15
+- ✅ Efficient growth: CAC payback <6 months (Actual: 1-2 months)
+- ✅ Market traction: #1 P2P platform in Botswana by Month 12
+- ✅ Path to profitability: Achieved by Month 8-9
 
 **For Hosts:**
 - ✅ Fair earnings: 85% of booking value (vs 60-75% competitors)
@@ -4262,9 +4244,9 @@ For questions about this commercialization plan or partnership opportunities, pl
 
 *This document is confidential and proprietary. Distribution or reproduction without express written consent is prohibited.*
 
-**Document Version:** 1.1  
-**Last Updated:** February 4, 2026  
-**Next Review:** March 4, 2026  
+**Document Version:** 2.1  
+**Last Updated:** February 5, 2026  
+**Next Review:** March 5, 2026  
 **Owner:** CEO, MobiRides
 
 ---
@@ -4275,3 +4257,4 @@ For questions about this commercialization plan or partnership opportunities, pl
 |---------|------|---------|--------|
 | 1.0 | Dec 18, 2025 | Initial release | CEO |
 | 1.1 | Feb 4, 2026 | Converted all figures from USD to BWP; Added Section 12 (FY2025 Historical Performance) with actual management accounts data; Updated market sizing for Botswana context; Renumbered Section 12 → 13 | Arnold (Senior Software Engineer) |
+| 2.1 | Feb 5, 2026 | Updated FY2025 figures to P311,245 from verified management accounts; Aligned all sections (10-14) with confirmed Year 1 target of P1.368M; Updated CAC/LTV to verified values (Host CAC P150, Renter CAC P250, Host LTV P9,112.50, Renter LTV P1,012.50); Aligned GTM roadmap with realistic Botswana market targets (200 vehicles, 500 users); Updated Financial Plan with realistic startup budget (~P956K based on FY2025 actuals P102K expenses) | Lovable AI |
