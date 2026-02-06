@@ -1139,13 +1139,13 @@ Platform net revenue: P486
 - Platform revenue per booking: P516.38
 - Target: 10,000 bookings in Month 12 = P5,163,800/month = P61.97M annual run rate
 
-**2. Insurance Product (15% of revenue)**
-- Partner with insurance providers
+**2. Damage Protection Product (15% of revenue)**
+- Partner: Pay-U (confirmed)
 - Attach rate target: 25% of bookings
-- Commission: 20% of insurance premium
+- Commission: 10% of Damage Protection premium
 - Average premium: P405/booking
-- Revenue per insured booking: P81
-- Target: 2,500 insurance sales in Month 12 = P202,500/month = P2.43M annual
+- Revenue per protected booking: P40.50
+- Target: 1,050 Damage Protection attachments in Month 12 = P42,525/month
 
 **3. Premium Subscriptions (5% of revenue)**
 - Pro Host: P391.50/month (target: 200 hosts by Month 18)
@@ -1153,11 +1153,11 @@ Platform net revenue: P486
 - Target: P78,300/month = P940K annual (Month 18)
 
 **Future Revenue Opportunities (Roadmap):**
-- Featured listings: $50/month for priority placement
-- Verified badge: $15/month for enhanced trust signal
-- Photography service: $100 one-time for professional car photos
-- Damage protection upsell: $10/day for zero-deductible coverage
-- API access: $500/month for third-party integrations
+- Featured listings: P700/month for priority placement
+- Verified badge: P200/month for enhanced trust signal
+- Photography service: P1,400 one-time for professional car photos
+- Damage protection upsell: P135/day for zero-deductible coverage
+- API access: P7,000/month for third-party integrations
 
 **Revenue Projections (Year 1 - Confirmed):**
 
@@ -1237,15 +1237,15 @@ Based on confirmed December 2025 baseline of P54,000 and ~11% MoM growth traject
 
 **1. Performance Marketing (35% of budget)**
 
-**Google Ads - Search ($15K/month by Month 6)**
-- **Intent keywords:** "rent car near me," "p2p car rental," "cheap car rental [city]"
+**Google Ads - Search (P16,500/month by Month 6)**
+- **Intent keywords:** "rent car near me," "p2p car rental," "cheap car rental Gaborone"
 - **Brand keywords:** "MobiRides," "MobiRides booking"
-- **Competitor keywords:** "Turo alternative," "better than Getaround"
-- **Target CPA:** $35 for renters, $150 for hosts
-- **Expected CAC:** $40-50 (search intent strong)
-- **Monthly acquisitions:** 300 renters, 100 hosts
+- **Competitor keywords:** "car rental alternative," "better than Facebook Rentals"
+- **Target CPA:** P250 for renters, P150 for hosts
+- **Expected CAC:** P275-350 (search intent strong)
+- **Monthly acquisitions:** 30 renters, 15 hosts
 
-**Meta Ads - Facebook & Instagram ($20K/month by Month 6)**
+**Meta Ads - Facebook & Instagram (P22,000/month by Month 6)**
 - **Audience segments:**
   - Hosts: Car owners 25-45, interested in side income, gig economy
   - Renters: Urban millennials, travelers, budget-conscious
@@ -1253,38 +1253,38 @@ Based on confirmed December 2025 baseline of P54,000 and ~11% MoM growth traject
   - Video testimonials from beta hosts showing earnings
   - Carousel ads showcasing vehicle variety
   - UGC content from actual rentals
-- **Target CPA:** $30 for renters, $120 for hosts
-- **Monthly acquisitions:** 400 renters, 150 hosts
+- **Target CPA:** P200 for renters, P150 for hosts
+- **Monthly acquisitions:** 40 renters, 20 hosts
 
 **2. Content Marketing (10% of budget)**
 
-**SEO & Organic Content ($5K/month)**
+**SEO & Organic Content (P5,500/month)**
 - **Blog topics:**
-  - "How to Earn $500/Month Renting Your Car"
-  - "P2P Car Rental Guide: Save 40% on Your Next Trip"
-  - "MobiRides vs Turo: Commission Comparison"
+  - "How to Earn P10,000+/Month Renting Your Car in Botswana"
+  - "P2P Car Rental Guide: 10x Faster Than Traditional Rentals"
+  - "MobiRides vs Facebook Rentals: Commission & Protection Comparison"
   - "Is Renting Your Car Safe? Everything You Need to Know"
-- **Landing pages:** City-specific pages for local SEO
-- **Target:** 10,000 organic visits/month by Month 12
-- **Expected conversions:** 150/month (1.5% conversion rate)
+- **Landing pages:** City-specific pages for local SEO (Gaborone, Francistown, Maun)
+- **Target:** 5,000 organic visits/month by Month 12
+- **Expected conversions:** 75/month (1.5% conversion rate)
 
-**YouTube Content ($3K/month)**
-- **Series 1:** "Host Success Stories" (earnings reveals)
+**YouTube Content (P4,000/month)**
+- **Series 1:** "Host Success Stories" (earnings reveals in BWP)
 - **Series 2:** "How It Works" (explainer videos)
-- **Series 3:** "Safety First" (trust & verification process)
-- **Influencer partnerships:** Micro-influencers (10-50K followers) in personal finance
-- **Target:** 50K views/month, 100 sign-ups/month
+- **Series 3:** "Safety First" (trust & Damage Protection process)
+- **Influencer partnerships:** Micro-influencers (5-20K followers) in Botswana personal finance
+- **Target:** 10K views/month, 25 sign-ups/month
 
 **3. Social Media Organic (5% of budget)**
 
-**Instagram ($2K/month for tools + content)**
+**Instagram (P2,700/month for tools + content)**
 - **Content pillars:**
-  - Host earnings screenshots (with permission)
-  - Renter adventures and testimonials
+  - Host earnings screenshots (with permission, in BWP)
+  - Renter adventures and testimonials (Botswana locations)
   - Behind-the-scenes platform features
-  - Safety and verification education
-- **Hashtags:** #SideHustle #PassiveIncome #CarSharing #TravelBudget
-- **Target:** 10K followers by Month 12
+  - Safety and Damage Protection education
+- **Hashtags:** #BotswanaSideHustle #PassiveIncome #CarSharing #TravelBotswana
+- **Target:** 5K followers by Month 12
 
 **TikTok (Organic focus initially)**
 - **Content types:**
@@ -1315,11 +1315,11 @@ Based on confirmed December 2025 baseline of P54,000 and ~11% MoM growth traject
 **5. Referral & Word-of-Mouth (5% of budget)**
 
 **Referral Program:**
-- Referrer reward: $15 credit
-- Referee reward: $15 off first booking
-- Host referral: $25 bonus after 3 completed bookings
+- Referrer reward: P200 credit
+- Referee reward: P200 off first booking
+- Host referral: P340 bonus after 3 completed bookings
 - Target: 20% of new users from referrals by Month 12
-- Cost: $7.50 CAC (vs $35-150 paid channels)
+- Cost: P100 CAC (vs P150-300 paid channels)
 
 **Community Building:**
 - Private Facebook group for hosts
@@ -1328,17 +1328,17 @@ Based on confirmed December 2025 baseline of P54,000 and ~11% MoM growth traject
 
 **Offline Marketing (15% of budget):**
 
-**Guerrilla Marketing ($5K/month)**
-- Flyers in apartment buildings (targeting hosts)
-- University campus activations (targeting renters)
+**Guerrilla Marketing (P6,750/month)**
+- Flyers in apartment buildings (targeting hosts in Gaborone, Francistown)
+- University campus activations (UB, BIUST - targeting renters)
 - Car wash partnerships (flyers on windshields)
-- Coffee shop posters
+- Coffee shop posters (Nando's, Primi, Caffe Aroma)
 
-**Local Events ($3K/month)**
-- Car shows and meetups
+**Local Events (P4,000/month)**
+- Car shows and meetups (Gaborone Motor Show)
 - University orientation fairs
-- Travel expos
-- Small business events
+- Travel expos (Botswana Tourism)
+- Small business events (LEA events)
 
 **Partnerships (10% of budget):**
 
@@ -1350,22 +1350,22 @@ Based on confirmed December 2025 baseline of P54,000 and ~11% MoM growth traject
 - **Insurance companies:** Integrated coverage
 
 **Affiliate Program:**
-- Commission: $10 per booking
-- Partners: Travel bloggers, personal finance websites
-- Target: 50 active affiliates by Month 12
+- Commission: P135 per booking
+- Partners: Travel bloggers, Botswana personal finance websites
+- Target: 25 active affiliates by Month 12
 
 **PR & Media (15% of budget):**
 
-**Press Relations ($7K/month)**
+**Press Relations (P6,500/month)**
 - Press releases for milestones (launch, funding, expansion)
-- Pitch to TechCrunch, Product Hunt, local media
+- Pitch to Mmegi, The Voice, Weekend Post, Botswana Guardian
 - Founder interviews and thought leadership
-- Podcast appearances (entrepreneurship, side hustles)
+- Podcast appearances (Botswana entrepreneurship, side hustles)
 
-**Influencer Partnerships ($8K/month)**
-- Micro-influencers (10-50K): $500/post
-- Mid-tier (50-250K): $2,000/post
-- Focus: Personal finance, travel, lifestyle
+**Influencer Partnerships (P10,000/month)**
+- Micro-influencers (5-20K): P700/post
+- Mid-tier (20-100K): P2,700/post
+- Focus: Botswana personal finance, travel, lifestyle
 
 **Content Strategy:**
 
@@ -1373,14 +1373,14 @@ Based on confirmed December 2025 baseline of P54,000 and ~11% MoM growth traject
 
 **For Hosts (Lead Generation):**
 1. **Earnings & Economics:**
-   - "How Much Can You Really Earn Renting Your Car?"
-   - "MobiRides Commission vs Turo: A Real Comparison"
-   - "I Earned $2,400 in 4 Months - Here's How"
+   - "How Much Can You Really Earn Renting Your Car in Botswana?"
+   - "MobiRides 15% Commission vs Facebook Rentals: A Real Comparison"
+   - "I Earned P25,400 in 4 Months - Here's How"
 
-2. **Safety & Protection:**
-   - "How MobiRides Protects Your Vehicle"
+2. **Safety & Damage Protection:**
+   - "How MobiRides Protects Your Vehicle with Pay-U Damage Protection"
    - "What Happens If a Renter Damages My Car?"
-   - "Understanding Insurance Coverage for Hosts"
+   - "Understanding Damage Protection Coverage for Hosts"
 
 3. **Getting Started:**
    - "5 Steps to List Your First Car"
@@ -1428,8 +1428,8 @@ Based on confirmed December 2025 baseline of P54,000 and ~11% MoM growth traject
 **Color Palette:**
 ```
 Primary Colors:
-- MobiRides Blue: #2563EB (Trust, Technology)
-- Success Green: #10B981 (Earnings, Safety)
+- MobiRides Purple: #7C3AED (Trust, Premium)
+- MobiRides Orange: #F97316 (Energy, Action)
 - Neutral Dark: #1F2937 (Text, UI)
 
 Secondary Colors:
@@ -1438,8 +1438,8 @@ Secondary Colors:
 - Neutral Light: #F3F4F6 (Backgrounds)
 
 Accent Colors:
-- Sky Blue: #0EA5E9 (Links, Actions)
-- Emerald: #059669 (Success states)
+- Purple Light: #A78BFA (Links, Actions)
+- Orange Light: #FDBA74 (Success states)
 ```
 
 **Typography:**
@@ -1659,11 +1659,11 @@ Awareness → Interest → Evaluation → Booking → Retention
 **Tertiary Channels - Affiliate Network (5% of bookings)**
 
 **Affiliate Program:**
-- Commission: $10 per completed booking
+- Commission: P135 per completed booking
 - Custom tracking links
 - Real-time dashboard
 - Monthly payouts
-- Target: 100 active affiliates by Month 12
+- Target: 25 active affiliates by Month 12
 
 **Affiliate Categories:**
 - Travel bloggers and vloggers
@@ -1676,28 +1676,26 @@ Awareness → Interest → Evaluation → Booking → Retention
 
 **Strategic Partnerships:**
 
-**1. Insurance Providers (Critical - Month 1)**
+**1. Damage Protection Provider (Critical - Month 1)**
 
 **Partnership Objective:**
 - Provide comprehensive coverage for hosts and renters
 - Reduce liability and increase trust
-- Generate additional revenue through insurance attachment
+- Generate additional revenue through Damage Protection attachment
 
-**Target Partners:**
-- National insurance carriers
-- P2P-specialized insurers (e.g., Intact, USAA)
-- Emerging insurtech companies
+**Confirmed Partner:**
+- **Pay-U** (Botswana) - Confirmed partnership
 
 **Partnership Model:**
-- White-label insurance products
-- Revenue share: 20% of premium to MobiRides
+- White-label Damage Protection products
+- Revenue share: 10% of premium to MobiRides
 - Integrated checkout experience
 - Claims management support
 
 **Target Metrics:**
 - 25% attachment rate
-- Average premium: $30/booking
-- Revenue: $15K/month by Month 12
+- Average premium: P405/booking
+- Revenue: P10K/month by Month 12
 
 **2. Payment Processors (Critical - Month 1)**
 
@@ -1707,11 +1705,12 @@ Awareness → Interest → Evaluation → Booking → Retention
 - Instant payouts for hosts
 
 **Confirmed Partners:**
-- Stripe (primary - configured)
-- Local payment gateways (TBD based on geography)
+- DPO/Paygate (primary - in progress via DVLP)
+- Ooze Mobile Money (Orange Money, MyZaka, Smega)
+- Click n Pay (backup)
 
 **Partnership Model:**
-- Standard processing fees: 2.9% + $0.30
+- Standard processing fees: 2.9% + P4.05
 - Instant payout premium: 1% additional
 - Fraud protection included
 
@@ -1782,7 +1781,7 @@ Awareness → Interest → Evaluation → Booking → Retention
 3. **Referral Program:** Early adopter incentives
 4. **Community Building:** Facebook groups, forums
 
-**Objective:** Achieve initial liquidity (100 hosts, 500 renters)
+**Objective:** Achieve initial liquidity (70 vehicles, 200 renters)
 
 **Phase 2 - Growth (Months 4-9):**
 **Focus:** Scale digital + add partnerships
@@ -1790,11 +1789,11 @@ Awareness → Interest → Evaluation → Booking → Retention
 **Channels:**
 1. **Performance Marketing:** Scale Google/Meta ads
 2. **Content Marketing:** SEO traffic growth
-3. **Influencer Partnerships:** Micro-influencers in personal finance
+3. **Influencer Partnerships:** Micro-influencers in Botswana personal finance
 4. **Strategic Partnerships:** Hotel, travel agencies (initial)
-5. **Mobile Apps:** Launch iOS/Android (Month 9)
+5. **Mobile Apps:** Launch iOS/Android (Month 7-8)
 
-**Objective:** Achieve market presence (1,000 hosts, 10,000 renters)
+**Objective:** Achieve market presence (140 vehicles, 400 renters)
 
 **Phase 3 - Expansion (Months 10-12):**
 **Focus:** Multi-channel distribution + B2B
@@ -1802,34 +1801,34 @@ Awareness → Interest → Evaluation → Booking → Retention
 **Channels:**
 1. **All Digital Channels:** Optimized and scaled
 2. **Mobile Apps:** Primary booking channel
-3. **B2B Partnerships:** Corporate program, 20+ agencies
-4. **Affiliate Network:** 100+ active affiliates
+3. **B2B Partnerships:** Corporate program, 10+ clients
+4. **Affiliate Network:** 25+ active affiliates
 5. **Offline:** Local events, guerrilla marketing
 
-**Objective:** Achieve scale and profitability (2,000+ hosts, 25,000+ renters)
+**Objective:** Achieve scale and profitability (200 vehicles, 500 renters)
 
 **Channel Economics by Type:**
 
 **Direct Digital:**
-- CAC: $35-150 (depending on audience)
-- LTV: $684-3,648
-- Payback: 1-4 months
+- CAC: P150-300 (depending on audience)
+- LTV: P1,012.50-P9,112.50
+- Payback: 1-2 months
 - Margin: 65%
 
 **Partnership/Affiliate:**
-- CAC: $10-15 (commission only)
+- CAC: P70-135 (commission only)
 - LTV: Same as direct
 - Payback: Immediate (performance-based)
 - Margin: 50% (after commission)
 
 **B2B Corporate:**
-- CAC: $200-500 per corporate account
-- Account LTV: $10,000+ over 24 months
+- CAC: P2,700-6,750 per corporate account
+- Account LTV: P135,000+ over 24 months
 - Payback: 2-3 months
 - Margin: 60%
 
 **Organic (SEO, Referral, WOM):**
-- CAC: $0-10
+- CAC: P0-70
 - LTV: Same as direct
 - Payback: Immediate
 - Margin: 75%
@@ -1842,33 +1841,33 @@ Awareness → Interest → Evaluation → Booking → Retention
 
 **Bronze Partner (Free)**
 - Access to affiliate dashboard
-- Standard commission: $10/booking
+- Standard commission: P135/booking
 - Marketing materials
 - Monthly payouts
 - Support: Email
 
 **Requirements:**
-- Minimum 5 referrals/month
+- Minimum 3 referrals/month
 
-**Silver Partner ($99/month)**
-- Commission: $15/booking
+**Silver Partner (P1,350/month)**
+- Commission: P200/booking
 - Custom landing pages
 - Co-marketing opportunities
 - Bi-weekly payouts
 - Support: Priority email + chat
 
 **Requirements:**
-- Minimum 25 referrals/month or $1,500 in bookings
+- Minimum 10 referrals/month or P20,000 in bookings
 
-**Gold Partner ($299/month)**
-- Commission: $20/booking
+**Gold Partner (P4,000/month)**
+- Commission: P270/booking
 - API access for integration
 - Dedicated account manager
 - Weekly payouts
-- Support: 24/7 phone + dedicated Slack
+- Support: 24/7 phone + dedicated WhatsApp
 
 **Requirements:**
-- Minimum 100 referrals/month or $5,000 in bookings
+- Minimum 25 referrals/month or P67,500 in bookings
 
 **Partner Benefits:**
 - Real-time dashboard with analytics
@@ -1935,9 +1934,9 @@ Awareness → Interest → Evaluation → Booking → Retention
 - Handover session management
 - Dispute documentation
 
-**Insurance & Damage:**
-- Partner insurance coverage during rental
-- Security deposit hold ($200-500)
+**Damage Protection & Claims:**
+- Pay-U Damage Protection coverage during rental
+- Security deposit hold (P2,700-6,750)
 - Damage claim process (photos, estimates, resolution)
 - Arbitration for disputes
 
@@ -1980,7 +1979,7 @@ Awareness → Interest → Evaluation → Booking → Retention
 
 **1. Awareness (Top of Funnel)**
 - Channels: Facebook ads, Google search, YouTube, PR
-- Message: "Earn $500/month with your idle car"
+- Message: "Earn P10,000+/month with your idle car"
 - Content: Earnings calculator, success stories, commission comparison
 - Traffic: 10,000 visits/month by Month 6
 
@@ -2018,7 +2017,7 @@ Awareness → Interest → Evaluation → Booking → Retention
 
 **1. Awareness**
 - Channels: Instagram, Google search, referrals, SEO
-- Message: "Quality cars 40% cheaper than rentals"
+- Message: "Quality cars 10x faster than traditional rentals"
 - Content: Car browsing, city pages, savings calculator
 - Traffic: 50,000 visits/month by Month 6
 
@@ -2054,7 +2053,7 @@ Awareness → Interest → Evaluation → Booking → Retention
 - Conversion: 78% complete booking
 
 **7. Retention**
-- Email: "Book again" with $10 credit
+- Email: "Book again" with P135 credit
 - Saved hosts: Easy rebooking
 - Loyalty: 5th booking gets 10% off
 - Conversion: 42% rebook within 90 days
@@ -2521,9 +2520,9 @@ Total LTV: 96 × P94.92 = P9,112.50
 - ✅ 20,000 cumulative bookings
 
 **Month 12:**
-- ✅ $500K MRR achieved
-- ✅ 50,000 cumulative bookings
-- ✅ Series A funding closed
+- ✅ P157.5K MRR achieved
+- ✅ 4,200 cumulative bookings
+- ✅ Pre-Seed funding closed
 - ✅ Platform profitability
 
 **Business Milestones:**
@@ -2727,7 +2726,7 @@ MONTHS 10-12 | PROFITABILITY & SCALE
 - ⚠️ Tax reporting and documentation
 
 **Technology:**
-- ✅ Payment integration (Stripe + local) - Month 1
+- ✅ Payment integration (DPO/Paygate + Ooze) - Month 1
 - ✅ Email notification system - Month 1
 - ⚠️ SMS provider integration - Month 2
 - ⚠️ Push notification infrastructure - Month 3
@@ -2840,7 +2839,7 @@ MONTHS 10-12 | PROFITABILITY & SCALE
 - Weekly risk review in team meetings
 - Monthly board/investor risk update
 - Quarterly risk assessment and mitigation plan update
-- Contingency budget: 15% of total budget ($300K)
+- Contingency budget: 15% of total budget (P125K)
 
 ---
 
@@ -3219,17 +3218,18 @@ Monthly P&L at Scale (Month 24):
 - Support tools: P10K
 - **Total:** P430K
 
-**General & Administrative (15%):**
-- CEO salary: $100K
-- Community Manager: $50K
-- Legal/compliance: $60K
-- Office/admin: $60K
-- Insurance: $25K
-- Misc: $10K
-- **Total:** $305K
+**General & Administrative (18% - P170K):**
+- Legal/compliance: P40K
+- Office/admin: P25K
+- Business Insurance: P10K
+- Misc: P10K
+- Contingency reserve: P85K
+- **Total:** P170K
 
-**Contingency & Reserve (8%):**
-- **Total:** $170K
+*Note: CEO/CTO salaries included in Customer Success & Support section (P240K combined)*
+
+**Contingency & Reserve (13% - P125K):**
+- **Total:** P125K (included above)
 
 **Investment Priorities:**
 
@@ -3297,28 +3297,28 @@ Monthly P&L at Scale (Month 24):
 **Strategic Risks:**
 
 **1. Market Competition (High Impact, High Probability)**
-- **Description:** Established players (Turo, Getaround) or new entrants aggressively compete on pricing or features
+- **Description:** Established players (Facebook Rentals, Indrive, Yango) or new entrants aggressively compete on pricing or features
 - **Impact:** Lost market share, reduced revenue, higher CAC
 - **Likelihood:** 70%
 - **Current Mitigation:**
   - Differentiated value proposition (15% commission)
-  - Superior trust and safety features
+  - Superior trust and Damage Protection features
   - Fast execution and iteration
   - Community-focused approach
 - **Additional Actions:**
   - Monitor competitor moves weekly
   - Build switching costs (loyalty programs, host tools)
-  - Focus on underserved markets (tier-2/3 cities)
+  - Focus on underserved markets (Francistown, Maun, Kasane)
   - Maintain unit economics advantage
 
 **2. Regulatory Changes (High Impact, Medium Probability)**
-- **Description:** Governments impose restrictions, licensing requirements, or bans on P2P car sharing
+- **Description:** Botswana government imposes restrictions, licensing requirements, or bans on P2P car sharing
 - **Impact:** Market exclusion, compliance costs, business model changes
 - **Likelihood:** 40%
 - **Current Mitigation:**
-  - Legal counsel in each market
-  - Proactive engagement with regulators
-  - Insurance partnerships for credibility
+  - Legal counsel in Botswana
+  - Proactive engagement with regulators (BURS, CIPA)
+  - Damage Protection partnerships for credibility
   - Flexible business model
 - **Additional Actions:**
   - Industry association participation
@@ -3326,16 +3326,16 @@ Monthly P&L at Scale (Month 24):
   - Lobby for reasonable regulations
   - Geographic diversification
 
-**3. Insurance Availability/Pricing (Critical Impact, Medium Probability)**
-- **Description:** Unable to secure affordable insurance partnerships or sudden price increases
-- **Impact:** Cannot launch, reduced margins, higher costs to users
-- **Likelihood:** 35%
+**3. Damage Protection Availability/Pricing (Critical Impact, Low Probability)**
+- **Description:** Pay-U partnership issues or sudden price increases
+- **Impact:** Reduced margins, higher costs to users
+- **Likelihood:** 20% (mitigated by confirmed Pay-U partnership)
 - **Current Mitigation:**
-  - Multiple provider negotiations
+  - ✅ Pay-U partnership confirmed
   - Self-insurance reserve option
   - Alternative coverage models
 - **Additional Actions:**
-  - Long-term contracts with partners
+  - Long-term contract with Pay-U
   - Captive insurance exploration (long-term)
   - Risk pool with other platforms
   - Data-driven risk assessment to prove low claims
@@ -3355,7 +3355,7 @@ Monthly P&L at Scale (Month 24):
   - Penetration testing (quarterly)
   - Bug bounty program
   - Incident response plan
-  - Cyber insurance coverage ($2M)
+  - Cyber insurance coverage (P2.7M / USD equivalent - international coverage)
   - SOC 2 compliance (Year 2)
 
 **5. Fraud & Trust Violations (Medium Impact, Medium Probability)**
@@ -3380,11 +3380,12 @@ Monthly P&L at Scale (Month 24):
 - **Impact:** Lost revenue, user frustration, booking failures
 - **Likelihood:** 20%
 - **Current Mitigation:**
-  - Stripe as primary processor (99.99% uptime)
+  - DPO/Paygate as primary processor
+  - Ooze Mobile Money as backup
   - Robust error handling
   - Transaction retry logic
 - **Additional Actions:**
-  - Backup payment processor (redundancy)
+  - Click n Pay as tertiary backup (redundancy)
   - Real-time monitoring and alerts
   - Clear user communication
   - Manual payment option for failures
@@ -3396,7 +3397,7 @@ Monthly P&L at Scale (Month 24):
 - **Impact:** Faster burn, missed growth targets, need additional funding
 - **Likelihood:** 55%
 - **Current Mitigation:**
-  - Conservative CAC assumptions ($48 blended)
+  - Conservative CAC assumptions (P187 blended)
   - Diversified marketing channels
   - Focus on organic and referrals
   - Performance-based partnerships
@@ -3421,20 +3422,20 @@ Monthly P&L at Scale (Month 24):
   - B2B partnerships for consistent demand
   - Cost reduction contingency plan
 
-**9. Funding Challenges (High Impact, Low Probability)**
-- **Description:** Difficulty raising Series A or unfavorable terms
+**9. Funding Challenges (High Impact, Medium Probability)**
+- **Description:** Difficulty raising Pre-Seed/Seed or unfavorable terms
 - **Impact:** Growth constraints, team cuts, runway pressure
-- **Likelihood:** 25%
+- **Likelihood:** 35%
 - **Current Mitigation:**
-  - Strong unit economics (LTV:CAC 20:1)
-  - Clear path to profitability (Month 15)
+  - Strong unit economics (LTV:CAC 60.75:1 Host, 4.05:1 Renter)
+  - Clear path to profitability (Month 8-9)
   - Experienced team
-  - Large TAM with growth
+  - P250M+ TAM in Botswana
 - **Additional Actions:**
-  - Build investor relationships early
+  - Build investor relationships early (Cerberus Capital engaged)
   - Achieve key milestones before fundraising
-  - Alternative funding (revenue-based financing)
-  - Path to profitability without Series A
+  - Alternative funding (revenue-based financing, Motshelo groups)
+  - Path to profitability without external funding
 
 **Product & Technology Risks:**
 
@@ -3478,13 +3479,13 @@ Monthly P&L at Scale (Month 24):
 - Quarterly board-level risk assessment
 
 **2. Diversification Strategy**
-- Geographic: 8 cities by Month 12
+- Geographic: 4 locations by Month 12 (Gaborone, Francistown, Maun, Kasane)
 - Channel: 10+ marketing channels
-- Revenue: Commission + insurance + subscriptions
+- Revenue: Commission + Damage Protection + subscriptions
 - Partnerships: Multiple providers for critical services
 
 **3. Financial Buffers**
-- 15% contingency reserve ($300K in Year 1)
+- 15% contingency reserve (P125K in Year 1)
 - Fraud/chargeback reserve (2% of GMV)
 - 18-month runway from seed funding
 - Conservative revenue projections
@@ -3497,12 +3498,12 @@ Monthly P&L at Scale (Month 24):
 
 **Risk Transfer:**
 
-**Insurance Coverage:**
-- General liability: $2M
-- Cyber liability: $2M
-- Directors & officers: $1M
-- Errors & omissions: $1M
-- **Total Premium:** ~$25K/year
+**Insurance Coverage (USD - international coverage):**
+- General liability: $2M (international coverage)
+- Cyber liability: $2M (international coverage)
+- Directors & officers: $1M (international coverage)
+- Errors & omissions: $1M (international coverage)
+- **Total Premium:** ~P340K/year (~$25K USD)
 
 **Contractual Risk Transfer:**
 - Indemnification clauses with partners
@@ -3531,10 +3532,10 @@ Monthly P&L at Scale (Month 24):
 **Financial Compliance:**
 
 **Payment Processing:**
-- ✅ PCI DSS compliance (via Stripe)
+- ✅ PCI DSS compliance (via DPO/Paygate)
 - ✅ Anti-money laundering (AML) monitoring
 - ⏳ Know Your Customer (KYC) procedures
-- ⏳ Transaction reporting (>$10K)
+- ⏳ Transaction reporting (>P135K / $10K equivalent)
 
 **Tax Compliance:**
 - Sales tax collection and remittance
@@ -3570,15 +3571,15 @@ Monthly P&L at Scale (Month 24):
 ### Legal Considerations
 
 **Corporate Structure:**
-- Delaware C-Corp (standard for VC-backed startups)
+- Botswana Private Limited Company (Pty) Ltd
 - Proper capitalization table
 - Founder vesting (4-year with 1-year cliff)
 - Employee stock option pool (15-20%)
 
 **Intellectual Property:**
-- Trademark registration: "MobiRides" (name, logo)
+- ✅ Trademark approved by CIPA: "MobiRides" (name, logo)
+- International trademark registration: In progress
 - Copyright: Platform code, content, designs
-- Patents: Consider for unique technology (handover process, algorithms)
 - Trade secrets: Proprietary algorithms, data
 
 **User Agreements:**
@@ -3610,10 +3611,10 @@ Monthly P&L at Scale (Month 24):
 
 ### Contingency Plans
 
-**Scenario 1: Insurance Partner Withdrawal**
-- **Trigger:** Partner terminates agreement
+**Scenario 1: Damage Protection Partner Issues**
+- **Trigger:** Pay-U terminates agreement or raises prices significantly
 - **Response:**
-  - Activate backup insurance provider (pre-negotiated)
+  - Activate backup Damage Protection provider (pre-negotiated)
   - Temporarily increase security deposits
   - Self-insure with higher reserves
   - Communicate transparently with users
@@ -4278,64 +4279,64 @@ Monthly P&L at Scale (Month 24):
 
 ### Executive Summary Recap
 
-MobiRides is positioned to disrupt the $2.5B P2P car rental market with a **15% commission model** (vs 25-40% industry average), **comprehensive trust and safety features**, and **superior technology infrastructure**. 
+MobiRides is positioned to capture an 8% share of the P250M+ Botswana P2P car rental market with a **15% commission model** (vs 25-40% industry average), **comprehensive Damage Protection features** (via Pay-U), and **superior technology infrastructure**. 
 
 **Key Differentiators:**
-1. **Fair Economics:** Hosts keep 85% of earnings - up to 70% more than Turo
+1. **Fair Economics:** Hosts keep 85% of earnings - up to 70% more than Indrive/Yango
 2. **Verified Community:** Multi-layer KYC, license verification, and industry-leading handover process
 3. **Seamless Technology:** Real-time messaging, GPS tracking, integrated wallet, mobile-first design
-4. **Emerging Market Focus:** Tier-1 and tier-2 cities underserved by global competitors
+4. **Two-Product Strategy:** P2P Car Sharing (live) + Rent2Buy Marketplace (Q2 2026 pilot)
 
 **Strong Unit Economics:**
-- LTV:CAC of 20:1 (significantly above 3:1 benchmark)
-- 65% contribution margin per booking
-- CAC payback in 1-4 months
-- Clear path to profitability by Month 15
+- LTV:CAC of 60.75:1 (Host) and 4.05:1 (Renter) - significantly above 3:1 benchmark
+- 73% contribution margin per booking
+- CAC payback in 1-2 months
+- Clear path to profitability by Month 8-9
 
 **Traction Roadmap:**
-- Month 3: 200 hosts, 1,000 renters, $10K MRR
-- Month 6: 750 hosts, 5,000 renters, $100K MRR
-- Month 12: 3,500 hosts, 30,000 renters, $500K MRR, Series A secured
+- Month 3: 70 vehicles, 200 renters, P76K revenue
+- Month 6: 100 vehicles, 300 renters, P101K revenue
+- Month 12: 200 vehicles, 500 renters, P157.5K revenue, **P1.368M Year 1 Total**
 
 **Funding Requirement:**
-- **Seed:** $2-3M for 18-month runway
-- **Series A:** $10-15M at Month 12-15 for geographic expansion and scale
+- **Pre-Seed:** P700K for 12-month runway (target close: Mar 15, 2025)
+- **Seed:** P2-3M at Month 18-24 for regional expansion (Zimbabwe, Namibia)
 
 **Risks & Mitigation:**
-- Insurance partnerships (multiple providers, self-insurance backup)
+- Damage Protection (✅ Pay-U partnership confirmed)
 - Regulatory challenges (legal counsel, proactive engagement)
-- Competition (differentiation, superior unit economics, fast execution)
+- Competition (differentiation vs Facebook Rentals, superior unit economics, fast execution)
 - CAC increases (diversified channels, organic focus, performance-based)
 
 **Path Forward:**
-MobiRides is 85% production-ready with a clear 12-month roadmap to market leadership in operating cities, monthly profitability, and Series A funding. The team's focus on fair economics, verified community, and technology excellence positions the platform for sustainable growth and long-term success.
+MobiRides is 85% production-ready (Payment 45% BLOCKING) with a clear 12-month roadmap to market leadership in Botswana, monthly profitability by Month 8-9, and Pre-Seed funding. The team's focus on fair economics, verified community, and technology excellence positions the platform for sustainable growth and regional expansion.
 
 ### Immediate Next Steps (Next 30 Days)
 
 **Week 1-2: Infrastructure Completion**
-1. ✅ Finalize payment integration (Stripe + local provider)
+1. 🔴 **CRITICAL:** Complete payment integration (DPO/Paygate + Ooze) - 45% → 95%
 2. ✅ Complete email notification system (templates, delivery)
-3. ✅ Implement SMS notifications (Twilio setup)
+3. ⏳ Implement SMS notifications (Twilio setup)
 4. ✅ Deploy production monitoring dashboard
-5. 🔴 **CRITICAL:** Secure insurance partnership (3 parallel negotiations)
-6. ✅ Set up customer support infrastructure (Intercom/Zendesk)
+5. ✅ Damage Protection partnership secured (Pay-U)
+6. ⏳ Set up customer support infrastructure (WhatsApp Business, Help Desk)
 7. ✅ Complete legal compliance review (terms, privacy, contracts)
 
 **Week 3-4: Beta Launch Preparation**
-1. 🆕 Recruit founding hosts (target: 100)
-   - Host recruitment ads ($5K)
-   - Direct outreach to car owner communities
+1. 🆕 Recruit founding hosts (target: 70 vehicles)
+   - Host recruitment ads (P5K)
+   - Direct outreach to car owner communities (WhatsApp groups)
    - Referral incentives
-2. 🆕 Build initial renter base (target: 500)
-   - PR campaign (press release, media outreach)
-   - Social media pre-launch buzz
+2. 🆕 Build initial renter base (target: 200)
+   - PR campaign (Mmegi, The Voice, press release)
+   - Social media pre-launch buzz (Facebook, WhatsApp)
    - Landing page with waitlist
 3. 🆕 Beta testing protocol
    - Define success metrics
    - Feedback collection process
    - Rapid iteration plan
-4. 🆕 Launch beta in primary city
-   - Soft launch to first 50 hosts
+4. 🆕 Launch beta in Gaborone
+   - Soft launch with Trillo fleet
    - Monitor closely for issues
    - Daily stand-ups for first week
 
@@ -4349,34 +4350,34 @@ MobiRides is 85% production-ready with a clear 12-month roadmap to market leader
 ### 90-Day Priorities
 
 **Month 1 (Immediate):**
-- ✅ Complete infrastructure
-- ✅ Launch beta (100 hosts, 500 renters)
-- ✅ Begin fundraising outreach
-- Target: 312 bookings, $4.5K revenue
+- 🔴 Complete payment infrastructure (45% → 95%)
+- ✅ Launch beta (55 vehicles from Trillo, 150 renters)
+- ✅ Begin Pre-Seed fundraising outreach
+- Target: 200 bookings, P60K revenue
 
 **Month 2 (Scale Beta):**
 - 🆕 Analyze beta metrics, iterate on feedback
 - 🆕 Optimize conversion funnels
-- 🆕 Scale host recruitment (target: 150 total)
+- 🆕 Scale host recruitment (target: 60 vehicles)
 - 🆕 Launch referral program
-- 🆕 Continue fundraising (investor meetings)
-- Target: 450 bookings, $6.7K revenue
+- 🆕 Continue Pre-Seed fundraising (investor meetings)
+- Target: 250 bookings, P67K revenue
 
 **Month 3 (Optimize & Fundraise):**
 - 🆕 Improve handover process based on learnings
-- 🆕 Reach 200 hosts milestone
-- 🆕 Complete 1,000 bookings milestone
-- 🆕 Close seed round ($2-3M)
+- 🆕 Reach 70 vehicles milestone
+- 🆕 200 registered renters
+- 🆕 Close Pre-Seed round (P700K target by Mar 15)
 - 🆕 Plan Month 4-6 growth phase
-- Target: 600 bookings, $10K MRR
+- Target: 600 cumulative bookings, P76K revenue
 
 **Success Criteria (90 Days):**
-- ✅ 200 active hosts
-- ✅ 1,000 registered renters
-- ✅ 1,000+ completed bookings
+- ✅ 70 active vehicles
+- ✅ 200 registered renters
+- ✅ 600 completed bookings (cumulative Q1)
 - ✅ 4.5+ average rating
-- ✅ Seed funding secured
-- ✅ Clear roadmap to Month 12
+- ✅ Pre-Seed funding secured (P700K)
+- ✅ Clear roadmap to P1.368M Year 1
 
 ### Contact & Questions
 
@@ -4400,7 +4401,7 @@ For questions about this commercialization plan or partnership opportunities, pl
 
 *This document is confidential and proprietary. Distribution or reproduction without express written consent is prohibited.*
 
-**Document Version:** 2.2  
+**Document Version:** 2.3  
 **Last Updated:** February 6, 2026  
 **Next Review:** March 6, 2026  
 **Owner:** CEO, MobiRides
@@ -4415,3 +4416,4 @@ For questions about this commercialization plan or partnership opportunities, pl
 | 1.1 | Feb 4, 2026 | Converted all figures from USD to BWP; Added Section 12 (FY2025 Historical Performance) with actual management accounts data; Updated market sizing for Botswana context; Renumbered Section 12 → 13 | Arnold (Senior Software Engineer) |
 | 2.1 | Feb 5, 2026 | Updated FY2025 figures to P311,245 from verified management accounts; Aligned all sections (10-14) with confirmed Year 1 target of P1.368M; Updated CAC/LTV to verified values (Host CAC P150, Renter CAC P250, Host LTV P9,112.50, Renter LTV P1,012.50); Aligned GTM roadmap with realistic Botswana market targets (200 vehicles, 500 users); Updated Financial Plan with realistic startup budget (~P956K based on FY2025 actuals P102K expenses) | Lovable AI |
 | 2.2 | Feb 6, 2026 | **Human-Reviewed Descriptive Edits:** Localized personas (Mabedi/Thabo); Updated terminology "Insurance" → "Damage Protection" throughout; Added Rent2Buy strategy to Executive Summary; Updated competitive landscape to local (Indrive/Yango/Facebook Rentals vs Turo/Getaround); Added Section 5 (Partnership Priorities) with Trillo, Pay-U, Motshelo details; Added Section 6 (Risk Management Framework) with critical blockers (Payment 45%, Fleet concentration); Reordered Strategic Goals (Market Leadership 8% as #1, Pre-Seed P700K as #2); Merged Q1 objectives (payment + mobile apps + 100 vehicles + 500 users); Updated SWOT with honest weaknesses (95% verification abandonment, 80% Trillo dependency); Integrated active campaigns (P100 OFF, Why Pawn?) into Marketing section; Updated brand colors (purple/orange vs blue/green); Updated host earnings target to P10,000+/month; All financial figures preserved from v2.1 | Human + Lovable AI |
+| 2.3 | Feb 6, 2026 | **Sections 9-14 Alignment:** Converted all remaining USD figures to BWP throughout Sections 9-14 and Conclusion; Updated color palette to purple/orange (matching Section 8); Updated all Stripe references to DPO/Paygate + Ooze; Updated competitive references from Turo/Getaround to Facebook Rentals/Indrive/Yango; Updated corporate structure to "Botswana Private Limited Company (Pty) Ltd"; Updated insurance coverage with "(international coverage)" note; Aligned 90-day priorities to Q1 targets (70 vehicles, 200 renters, P76K revenue); Updated all user growth targets to realistic Botswana figures; Updated funding stage references from Series A to Pre-Seed/Seed; Added IP status (CIPA trademark approved) | Lovable AI |
