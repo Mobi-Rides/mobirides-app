@@ -316,7 +316,7 @@ At **P6.0M pre-money**, MobiRides offers investors:
 | **Pre-Money Valuation** | P6,000,000 |
 | **Post-Money Valuation** | P6,700,000 |
 | **Equity Offered** | 10.4% |
-| **Use of Funds** | Payment integration (40%), Android launch (25%), SADC expansion prep (20%), Operations (15%) |
+| **Use of Funds** | Team building (60% / P420K), Technology & infrastructure (15% / P105K), Marketing & user acquisition (12% / P84K), Operations & working capital (13% / P91K) |
 
 ### 8.2 Why P6M is Conservative
 
