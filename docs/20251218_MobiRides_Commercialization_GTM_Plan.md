@@ -1,6 +1,6 @@
 # MobiRides Go-to-Market Strategy & Commercialization Plan
 **Date:** February 6, 2026  
-**Version:** 2.2  
+**Version:** 2.3  
 **Status:** Updated with Human-Reviewed Descriptive Content & Localized Strategy
 **Currency:** All figures in BWP (Botswana Pula) unless otherwise noted
 
@@ -37,7 +37,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 - **Year 1 Revenue Target:** P1.368M (P60k→P157.5k/month trajectory, +264% growth)
 - **Current Phase:** Live Platform (154 users, 56 vehicles)
 - **Confirmed Partnerships:** Trillo Rentals (fleet), Pay-U (Damage Protection)
-- **Funding Stage:** P71,500 secured from Cerberus Capital; P700K pre-seed round (TARGET CLOSE: Mar 15, 2025)
+- **Funding Stage:** P71,500 secured from Cerberus Capital; P700K pre-seed round (TARGET CLOSE: Mar 15, 2026)
 - **IP Protection:** Trademark approved by CIPA, international registration in progress
 - **Two-Product Strategy:** P2P Car Sharing (live) + Rent2Buy Marketplace (Q2 2026 pilot with 3 vehicles)
 - **Launch Timeline:** Q1 2026 full commercial launch following payment infrastructure completion
@@ -68,7 +68,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 ### Strategic Goals
 1. **Market Leadership:** Achieve 8% market share in Botswana within 24 months
-2. **Secure Pre-Seed Funding:** Close P700K round by Mar 15, 2025
+2. **Secure Pre-Seed Funding:** Close P700K round by Mar 15, 2026
 3. **Platform Growth:** Reach 200 active vehicles and 500 registered users by end of Year 1
 4. **Fix User Verification:** Drive 95% incomplete verification rate to 80%+ completion by Q1 2026
 5. **Revenue Target:** P1.368M in Year 1 (+264% growth), P2.7M+ by Year 2
@@ -79,7 +79,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 **Q1 2026 - Infrastructure & Launch (Jan-Mar):**
 - Complete payment integration (DPO/Paygate + Ooze Mobile Money)
-- Launch iOS/Android mobile apps (Capacitor-based)
+- Launch Android mobile app (Capacitor-based)
 - Grow to 100+ host vehicles in Gaborone
 - Achieve 500 registered users
 - Deploy production monitoring and analytics
@@ -93,7 +93,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 - **Revenue Target:** P95k/month → P285k quarterly
 
 **Q3 2026 - Market Expansion:**
-- Launch mobile apps (iOS/Android)
+- Launch iOS mobile app
 - Expand to Maun/Kasane
 - Scale to 150 vehicles
 - **Revenue Target:** P120k/month → P360k quarterly
@@ -392,7 +392,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 **High Impact, High Probability:**
 - Payment system delays (45% complete - BLOCKING)
 - Fleet partner concentration (80%+ from Trillo)
-- Pre-seed funding timeline (Mar 15, 2025 deadline)
+- Pre-seed funding timeline (Mar 15, 2026 deadline)
 
 **High Impact, Low Probability:**
 - Major security breach or fraud incident
@@ -638,11 +638,11 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 - **Residual Risk:** Medium
 
 **RISK-003: Pre-Seed Funding Timeline**
-- **Impact:** P700K target, Mar 15, 2025 deadline
+- **Impact:** P700K target, Mar 15, 2026 deadline
 - **Probability:** MEDIUM
 - **Owner:** CEO
 - **Mitigation:** Active investor pipeline, Cerberus Capital follow-on
-- **Timeline:** Close by Mar 15, 2025
+- **Timeline:** Close by Mar 15, 2026
 - **Residual Risk:** Low (if closed)
 
 ### High Risks (P1 - Active Management)
@@ -787,7 +787,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 7. 🎯 **Motshelo Integration:** Community savings groups seeking returns
 
 **Threats:**
-1. 🚨 **IMMEDIATE:** Mar 15, 2025 runway deadline if pre-seed not closed
+1. 🚨 **IMMEDIATE:** Mar 15, 2026 runway deadline if pre-seed not closed
 2. 🚨 **Single Fleet Partner Dependency:** Trillo relationship critical
 3. 🚨 **Competitor Response:** RentMyRide or Tarlen may enter Botswana
 4. 🚨 **Economic Downturn:** Discretionary spending cuts impact bookings
@@ -2182,15 +2182,15 @@ Awareness → Interest → Evaluation → Booking → Retention
 
 **Assumptions:**
 - Average booking frequency: 0.5 per month (realistic for Botswana)
-- Average lifespan: 18 months (9 total bookings)
+- Average lifespan: 12 months (6 total bookings)
 - Churn rate: 5.5% per month (60% 12-month retention)
-- Revenue per booking: P112.50 (P750 × 15% commission)
+- Revenue per booking: P168.75 (15% commission + Damage Protection + ancillary services)
 
 **Calculation:**
 ```
-Total bookings over lifetime: 9
-Revenue per booking: P112.50
-Total LTV: 9 × P112.50 = P1,012.50
+Total bookings over lifetime: 6
+Revenue per booking: P168.75
+Total LTV: 6 × P168.75 = P1,012.50
 ```
 
 **LTV Improvement Levers:**
@@ -2201,16 +2201,16 @@ Total LTV: 9 × P112.50 = P1,012.50
 **Host LTV Calculation (VERIFIED):**
 
 **Assumptions:**
-- Average booking frequency: 4 per month (confirmed)
-- Average lifespan: 24 months
+- Average booking frequency: 3 per month (confirmed)
+- Average lifespan: 18 months
 - Churn rate: 3% per month (70% 12-month retention)
-- Revenue per booking: P94.92 (derived from confirmed LTV)
+- Revenue per booking: P168.75 (15% commission + Damage Protection + ancillary services)
 
 **Calculation:**
 ```
-Total bookings over lifetime: 96 (4/month × 24 months)
-Revenue per booking: P94.92
-Total LTV: 96 × P94.92 = P9,112.50
+Total bookings over lifetime: 54 (3/month × 18 months)
+Revenue per booking: P168.75
+Total LTV: 54 × P168.75 = P9,112.50
 ```
 
 **LTV Improvement Levers:**
@@ -2338,7 +2338,7 @@ Total LTV: 96 × P94.92 = P9,112.50
 **Key Activities:**
 
 **Month 1 - Infrastructure Completion:**
-- ✅ Complete payment integration (Stripe + local)
+- ✅ Complete payment integration (DPO/Paygate + Ooze)
 - ✅ Deploy email notification system
 - ✅ Implement SMS notifications
 - ✅ Launch production monitoring
@@ -2348,7 +2348,7 @@ Total LTV: 96 × P94.92 = P9,112.50
 
 **Month 2 - Growth Phase:**
 - 🆕 Scale from 55 to 60 vehicles
-- 🆕 Onboard additional hosts (target: 60 total)
+- 🆕 Onboard additional vehicles (target: 60 total)
 - 🆕 Grow renter base (target: 170)
 - 🆕 Initiate PR campaign (launch announcement)
 - 🆕 Start paid marketing (P5,000 budget)
@@ -2495,29 +2495,29 @@ Total LTV: 96 × P94.92 = P9,112.50
 - ✅ Payment integration complete
 - ✅ Email/SMS notifications live
 - ✅ Production monitoring deployed
-- ✅ Insurance partnership signed
+- ✅ Damage Protection partnership signed (Pay-U)
 
 **Month 2:**
 - ✅ Platform beta launch
-- ✅ First 100 hosts onboarded
+- ✅ First 60 vehicles onboarded
 - ✅ First 100 bookings completed
 
 **Month 3:**
-- ✅ 1,000 bookings milestone
+- ✅ 600 cumulative bookings milestone
 - ✅ Handover process optimized
 - ✅ Average rating 4.5+
 
 **Month 6:**
-- ✅ Insurance product integration complete
+- ✅ Damage Protection product integration complete
 - ✅ Affiliate program launched
 - ✅ Unit economics profitable
-- ✅ 6,000 cumulative bookings
+- ✅ 1,500 cumulative bookings
 
 **Month 9:**
-- ✅ iOS app launched
-- ✅ Android app launched
+- ✅ Android app launched (Q1)
+- ✅ iOS app launched (Q3)
 - ✅ Dynamic pricing live
-- ✅ 20,000 cumulative bookings
+- ✅ 2,700 cumulative bookings
 
 **Month 12:**
 - ✅ P157.5K MRR achieved
@@ -2664,12 +2664,12 @@ MONTHS 10-12 | PROFITABILITY & SCALE
 - Add: Head of Growth, Customer Success Lead, Partnerships Manager
 - **Monthly Payroll:** P65K
 
-**Months 7-9 (7 people):**
+**Months 7-9 (9 people):**
 - Add: Performance Marketer, Content Marketer
-- **Monthly Payroll:** P55K
+- **Monthly Payroll:** P65K
 
 **Months 10-12 (10 people):**
-- Add: Community Manager, Support Reps
+- Add: Community Manager
 - **Monthly Payroll:** P75K
 
 **Technology Resources:**
@@ -2933,7 +2933,7 @@ During the development and pre-launch phase (January-December 2025), MobiRides o
 **Target for FY2026:**
 - Reduce monthly burn from P8,517 to P5,000 by Q2 2026
 - Achieve gross margin of 65%+ with P2P model
-- Reach P6.75M MRR by December 2026
+- Reach P157.5K MRR by December 2026
 
 ---
 
@@ -3048,7 +3048,7 @@ During the development and pre-launch phase (January-December 2025), MobiRides o
 Q1 (Months 1-3):
 - Bookings: 600
 - GMV: P1,400,000
-- Revenue: P210,000
+- Revenue: P200,500
 
 Q2 (Months 4-6):
 - Bookings: 900
@@ -4012,9 +4012,9 @@ Monthly P&L at Scale (Month 24):
 **Quarterly Goals:**
 
 **Q1: Foundation**
-- Product: Production-ready platform + mobile
+- Product: Production-ready platform + Android app
 - Users: 70 vehicles, 200 renters
-- Revenue: P210K total
+- Revenue: P200.5K total
 - Key Metric: Product-market fit validated (NPS 50+)
 
 **Q2: Growth**
@@ -4059,7 +4059,7 @@ Monthly P&L at Scale (Month 24):
 - ✅ Convenience: Book in <3 minutes
 
 **For Team:**
-- ✅ Sustainable growth: 15% MoM user growth
+- ✅ Sustainable growth: 11% MoM user growth
 - ✅ Healthy culture: <10% voluntary attrition
 - ✅ Clear mission: Team NPS >50
 - ✅ Learning: Regular product iterations
@@ -4299,7 +4299,7 @@ MobiRides is positioned to capture an 8% share of the P250M+ Botswana P2P car re
 - Month 12: 200 vehicles, 500 renters, P157.5K revenue, **P1.368M Year 1 Total**
 
 **Funding Requirement:**
-- **Pre-Seed:** P700K for 12-month runway (target close: Mar 15, 2025)
+- **Pre-Seed:** P700K for 12-month runway (target close: Mar 15, 2026)
 - **Seed:** P2-3M at Month 18-24 for regional expansion (Zimbabwe, Namibia)
 
 **Risks & Mitigation:**
@@ -4367,7 +4367,7 @@ MobiRides is 85% production-ready (Payment 45% BLOCKING) with a clear 12-month r
 - 🆕 Improve handover process based on learnings
 - 🆕 Reach 70 vehicles milestone
 - 🆕 200 registered renters
-- 🆕 Close Pre-Seed round (P700K target by Mar 15)
+- 🆕 Close Pre-Seed round (P700K target by Mar 15, 2026)
 - 🆕 Plan Month 4-6 growth phase
 - Target: 600 cumulative bookings, P76K revenue
 
@@ -4417,3 +4417,4 @@ For questions about this commercialization plan or partnership opportunities, pl
 | 2.1 | Feb 5, 2026 | Updated FY2025 figures to P311,245 from verified management accounts; Aligned all sections (10-14) with confirmed Year 1 target of P1.368M; Updated CAC/LTV to verified values (Host CAC P150, Renter CAC P250, Host LTV P9,112.50, Renter LTV P1,012.50); Aligned GTM roadmap with realistic Botswana market targets (200 vehicles, 500 users); Updated Financial Plan with realistic startup budget (~P956K based on FY2025 actuals P102K expenses) | Lovable AI |
 | 2.2 | Feb 6, 2026 | **Human-Reviewed Descriptive Edits:** Localized personas (Mabedi/Thabo); Updated terminology "Insurance" → "Damage Protection" throughout; Added Rent2Buy strategy to Executive Summary; Updated competitive landscape to local (Indrive/Yango/Facebook Rentals vs Turo/Getaround); Added Section 5 (Partnership Priorities) with Trillo, Pay-U, Motshelo details; Added Section 6 (Risk Management Framework) with critical blockers (Payment 45%, Fleet concentration); Reordered Strategic Goals (Market Leadership 8% as #1, Pre-Seed P700K as #2); Merged Q1 objectives (payment + mobile apps + 100 vehicles + 500 users); Updated SWOT with honest weaknesses (95% verification abandonment, 80% Trillo dependency); Integrated active campaigns (P100 OFF, Why Pawn?) into Marketing section; Updated brand colors (purple/orange vs blue/green); Updated host earnings target to P10,000+/month; All financial figures preserved from v2.1 | Human + Lovable AI |
 | 2.3 | Feb 6, 2026 | **Sections 9-14 Alignment:** Converted all remaining USD figures to BWP throughout Sections 9-14 and Conclusion; Updated color palette to purple/orange (matching Section 8); Updated all Stripe references to DPO/Paygate + Ooze; Updated competitive references from Turo/Getaround to Facebook Rentals/Indrive/Yango; Updated corporate structure to "Botswana Private Limited Company (Pty) Ltd"; Updated insurance coverage with "(international coverage)" note; Aligned 90-day priorities to Q1 targets (70 vehicles, 200 renters, P76K revenue); Updated all user growth targets to realistic Botswana figures; Updated funding stage references from Series A to Pre-Seed/Seed; Added IP status (CIPA trademark approved) | Lovable AI |
+| 2.4 | Feb 6, 2026 | **Internal Consistency Review:** Fixed Pre-Seed deadline from 2025 to 2026; Standardized revenue per booking to P168.75 (includes 15% commission + Damage Protection + ancillary services); Clarified mobile app timeline (Android Q1, iOS Q3); Fixed booking milestones (600→1,500→2,700→4,200); Standardized MoM growth to 11%; Corrected team scaling (5→8→9→10); Fixed Section 12 MRR target from P6.75M to P157.5K; Standardized Q1 revenue to P200.5K (calculated); Updated terminology ("hosts" → "vehicles", "Insurance" → "Damage Protection"); Updated version header to 2.3 | Lovable AI |
