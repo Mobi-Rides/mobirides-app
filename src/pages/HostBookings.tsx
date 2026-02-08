@@ -166,11 +166,19 @@ export const HostBookings = () => {
     if (selectedBookings.length === 0) return;
 
     try {
-      const newStatus = action === "approve" ? "confirmed" : "cancelled";
+      // FIX: Set to awaiting_payment instead of confirmed for bulk approval
+      const newStatus = action === "approve" ? "awaiting_payment" : "cancelled";
       
       const { error } = await supabase
         .from("bookings")
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          // Add payment deadline for approved bookings
+          ...(action === "approve" ? {
+            payment_status: "unpaid",
+            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          } : {})
+        })
         .in("id", selectedBookings);
 
       if (error) throw error;
@@ -189,7 +197,7 @@ export const HostBookings = () => {
         variant: "destructive",
       });
     }
-  }, [selectedBookings, queryClient, toast]);
+  }, [queryClient, toast]);
 
   const exportData = useCallback((format: "csv" | "pdf") => {
     // Export functionality implementation

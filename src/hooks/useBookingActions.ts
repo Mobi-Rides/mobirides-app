@@ -9,19 +9,26 @@ export const useBookingActions = () => {
   const { user } = useAuth();
 
   const mutation = useMutation({
-    mutationFn: async ({ bookingId, status }: { bookingId: string; status: 'confirmed' | 'cancelled' }) => {
+    mutationFn: async ({ bookingId, status }: { bookingId: string; status: 'awaiting_payment' | 'cancelled'; }) => {
       // Update booking status - this will trigger the notification via database trigger
       const { error } = await supabase
         .from('bookings')
-        .update({ status })
+        .update({ 
+          status,
+          // Add payment deadline for approved bookings
+          ...(status === 'awaiting_payment' ? {
+            payment_status: 'unpaid',
+            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          } : {})
+        })
         .eq('id', bookingId);
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      const action = variables.status === 'confirmed' ? 'approved' : 'cancelled';
+      const action = variables.status === 'awaiting_payment' ? 'approved' : 'cancelled';
       toast.success(`Booking ${action}`);
       
-      // Send post-confirmation guidance
+      // Send post-confirmation guidance only after payment
       if (variables.status === 'confirmed' && user) {
         EnhancedBookingService.sendPostConfirmationGuidance(variables.bookingId, 'host');
       }
@@ -36,7 +43,7 @@ export const useBookingActions = () => {
   });
 
   const acceptBooking = (bookingId: string) => {
-    mutation.mutate({ bookingId, status: 'confirmed' });
+    mutation.mutate({ bookingId, status: 'awaiting_payment' });
   };
 
   const declineBooking = (bookingId: string) => {
