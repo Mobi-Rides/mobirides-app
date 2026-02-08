@@ -44,7 +44,7 @@ export const ExcessPaymentModal: React.FC<ExcessPaymentModalProps> = ({
       await supabase
         .from('insurance_claims')
         .update({
-           excess_paid: true,
+           excess_paid: amount,
            excess_payment_date: new Date().toISOString(),
            excess_amount_paid: amount
         })

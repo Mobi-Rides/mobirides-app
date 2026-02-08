@@ -15,9 +15,9 @@ import { HostBookingCard } from "@/components/host-bookings/HostBookingCard";
 import { HostBookingFilters } from "@/components/host-bookings/HostBookingFilters";
 import { HostBookingStats } from "@/components/host-bookings/HostBookingStats";
 import { useToast } from "@/hooks/use-toast";
-import { BookingWithRelations } from "@/types/booking";
+import { BookingWithRelations, BookingStatus } from "@/types/booking";
 
-type BookingStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired";
+type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired";
 type SortOption = "date_asc" | "date_desc" | "earnings_asc" | "earnings_desc" | "status" | "renter";
 
 export const HostBookings = () => {
@@ -26,7 +26,7 @@ export const HostBookings = () => {
   const queryClient = useQueryClient();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<BookingFilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortOption>("date_desc");
   const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("active");
@@ -138,7 +138,7 @@ export const HostBookings = () => {
 
   const handleBookingAction = useCallback(async (bookingId: string, action: "approve" | "decline" | "cancel") => {
     try {
-      const newStatus = action === "approve" ? "awaiting_payment" : action === "decline" ? "cancelled" : "cancelled";
+      const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : action === "decline" ? BookingStatus.CANCELLED : BookingStatus.CANCELLED;
       
       const { error } = await supabase
         .from("bookings")
@@ -167,7 +167,7 @@ export const HostBookings = () => {
 
     try {
       // FIX: Set to awaiting_payment instead of confirmed for bulk approval
-      const newStatus = action === "approve" ? "awaiting_payment" : "cancelled";
+      const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED;
       
       const { error } = await supabase
         .from("bookings")

@@ -123,8 +123,7 @@ export const AdminRemittanceDashboard = () => {
       }
 
       // 2. Create Batch Record
-      // Use the typed client which knows about the extended schema
-      const insertData: ExtendedDatabase['public']['Tables']['premium_remittance_batches']['Insert'] = {
+      const insertData = {
           batch_date: new Date().toISOString().split('T')[0],
           total_policies: count,
           total_premium_collected: totalPremium,
@@ -134,7 +133,7 @@ export const AdminRemittanceDashboard = () => {
           remitted_by: (await supabase.auth.getUser()).data.user?.id
       };
 
-      const { data: batch, error: batchError } = await supabaseClient
+      const { data: batch, error: batchError } = await supabase
         .from('premium_remittance_batches')
         .insert(insertData)
         .select()

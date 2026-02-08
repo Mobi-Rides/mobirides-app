@@ -272,7 +272,7 @@ interface ExtendedInsuranceClaim extends InsuranceClaim {
 
       const { error } = await supabase
         .from('insurance_claims')
-        .update(updateData as any) // Use as any for the update call since Supabase types are generated
+        .update(updateData) // Type-safe update with proper typing
         .eq('id', claimId);
 
       if (error) throw error;
@@ -306,16 +306,17 @@ interface NotificationPayload {
 
         // 1. Send Email Notification
         if (renterEmail) {
-          const notificationData: NotificationPayload = {
-            claim_number: claim.claim_number,
-            status: newStatus,
+          // Update the claim status for the notification
+          const updatedClaim = {
+            ...claim,
+            status: newStatus as InsuranceClaim['status'],
             admin_notes: notes
           };
 
           await insuranceNotificationService.sendClaimStatusUpdate(
             renterEmail,
             renterName,
-            notificationData
+            updatedClaim
           );
           console.log(`📧 Claim status email sent to ${renterEmail}`);
         }

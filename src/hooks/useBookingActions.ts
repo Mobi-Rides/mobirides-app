@@ -3,18 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EnhancedBookingService } from "@/services/enhancedBookingService";
 import { useAuth } from "./useAuth";
+import { Database } from "@/integrations/supabase/types";
 
 export const useBookingActions = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const mutation = useMutation({
-    mutationFn: async ({ bookingId, status }: { bookingId: string; status: 'awaiting_payment' | 'cancelled'; }) => {
+    mutationFn: async ({ bookingId, status }: { bookingId: string; status: Database["public"]["Enums"]["booking_status"] | 'awaiting_payment'; }) => {
       // Update booking status - this will trigger the notification via database trigger
       const { error } = await supabase
         .from('bookings')
         .update({ 
-          status,
+          status: status as Database["public"]["Enums"]["booking_status"], // Type assertion for Supabase compatibility
           // Add payment deadline for approved bookings
           ...(status === 'awaiting_payment' ? {
             payment_status: 'unpaid',
@@ -28,7 +29,8 @@ export const useBookingActions = () => {
       const action = variables.status === 'awaiting_payment' ? 'approved' : 'cancelled';
       toast.success(`Booking ${action}`);
       
-      // Send post-confirmation guidance only after payment
+      // Send post-confirmation guidance only after payment (this won't be triggered by this mutation)
+      // This is handled elsewhere when status actually becomes CONFIRMED
       if (variables.status === 'confirmed' && user) {
         EnhancedBookingService.sendPostConfirmationGuidance(variables.bookingId, 'host');
       }
@@ -43,11 +45,11 @@ export const useBookingActions = () => {
   });
 
   const acceptBooking = (bookingId: string) => {
-    mutation.mutate({ bookingId, status: 'awaiting_payment' });
+    mutation.mutate({ bookingId, status: 'awaiting_payment' as Database["public"]["Enums"]["booking_status"] });
   };
 
   const declineBooking = (bookingId: string) => {
-    mutation.mutate({ bookingId, status: 'cancelled' });
+    mutation.mutate({ bookingId, status: 'cancelled' as Database["public"]["Enums"]["booking_status"] });
   };
 
   return {

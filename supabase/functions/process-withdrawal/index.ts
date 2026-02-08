@@ -62,7 +62,7 @@ serve(async (req: Request) => {
       await supabase
         .from('host_wallets')
         .update({
-          // @ts-ignore: trust db
+          // @ts-expect-error: trust db - balance field may not exist in type but exists in DB
           balance: request.host_wallets.balance + request.amount, // Optimistic locking handled in DB ideally, simplified here
           updated_at: new Date().toISOString()
         })
@@ -74,7 +74,7 @@ serve(async (req: Request) => {
         amount: request.amount,
         transaction_type: 'withdrawal_reversal',
         description: `Withdrawal rejected: ${notes || 'No reason provided'}`,
-        // @ts-ignore: trust db
+        // @ts-expect-error: trust db - balance_after field may not exist in type but exists in DB
         balance_after: request.host_wallets.balance + request.amount,
         metadata: { withdrawal_request_id: withdrawal_id }
       })
@@ -125,9 +125,10 @@ serve(async (req: Request) => {
 
     throw new Error('Invalid action')
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
