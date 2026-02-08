@@ -32,7 +32,7 @@ serve(async (req: Request) => {
     // 2. Validate Amount (Prevent tampering)
     // In a real scenario, re-calculate price from car price + days + insurance
     // For now, trust DB total_price as it was calculated on creation
-    // @ts-ignore: trust db
+    // @ts-expect-error - trust database value
     const amount = booking.total_price
 
     if (amount <= 0) {
@@ -44,7 +44,7 @@ serve(async (req: Request) => {
       .from('payment_transactions')
       .insert({
         booking_id,
-        // @ts-ignore: trust db
+        // @ts-expect-error - trust database value
         user_id: booking.renter_id,
         amount,
         currency: 'BWP',
@@ -83,9 +83,9 @@ serve(async (req: Request) => {
       }
     )
 
-  } catch (error: any) {
+  } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

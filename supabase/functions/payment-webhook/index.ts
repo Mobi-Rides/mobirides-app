@@ -41,7 +41,7 @@ serve(async (req: Request) => {
 
     // Calculate Splits
     // Correctly separate insurance from commissionable amount
-    // @ts-ignore: trust db
+    // @ts-expect-error - trust database value
     const booking = transaction.bookings
     const insurance_premium = booking.insurance_premium || 0
     const rental_portion = Math.max(0, transaction.amount - insurance_premium)
@@ -101,9 +101,9 @@ serve(async (req: Request) => {
       }
     )
 
-  } catch (error: any) {
+  } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

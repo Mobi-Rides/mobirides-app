@@ -17,7 +17,7 @@ import { HostBookingStats } from "@/components/host-bookings/HostBookingStats";
 import { useToast } from "@/hooks/use-toast";
 import { BookingWithRelations, BookingStatus } from "@/types/booking";
 
-type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired";
+type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired" | "awaiting_payment";
 type SortOption = "date_asc" | "date_desc" | "earnings_asc" | "earnings_desc" | "status" | "renter";
 
 export const HostBookings = () => {
@@ -160,7 +160,7 @@ export const HostBookings = () => {
         variant: "destructive",
       });
     }
-  }, [queryClient, toast]);
+  }, [queryClient, toast, selectedBookings]);
 
   const handleBulkAction = useCallback(async (action: "approve" | "decline") => {
     if (selectedBookings.length === 0) return;
@@ -255,6 +255,7 @@ export const HostBookings = () => {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="awaiting_payment">Awaiting Payment</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>

@@ -138,10 +138,10 @@ const RentalDetailsRefactored = () => {
             pricePerDay={booking.cars.price_per_day}
             durationDays={rentalDurationDays}
             totalPrice={booking.total_price}
-            baseRentalPrice={booking.base_rental_price}
-            insurancePremium={booking.insurance_premium}
-            discountAmount={booking.discount_amount}
-            dynamicMultiplier={booking.dynamic_pricing_multiplier}
+            baseRentalPrice={booking.base_rental_price || booking.total_price}
+            insurancePremium={booking.insurance_premium || 0}
+            discountAmount={booking.discount_amount || 0}
+            dynamicMultiplier={booking.dynamic_pricing_multiplier || 1}
             isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
           />
         )}
