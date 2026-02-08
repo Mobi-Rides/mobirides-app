@@ -111,7 +111,13 @@ const BookingRequestDetails = () => {
 
       const { error } = await supabase
         .from('bookings')
-        .update({ status })
+        .update({ 
+          status,
+          ...(status === 'confirmed' ? {
+            payment_status: 'awaiting_payment',
+            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          } : {})
+        })
         .eq('id', id);
 
       if (error) throw error;

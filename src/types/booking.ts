@@ -66,6 +66,7 @@ export enum BookingNotificationType {
 // Add this enum for booking statuses
 export enum BookingStatus {
   PENDING = "pending",
+  AWAITING_PAYMENT = "awaiting_payment",
   CONFIRMED = "confirmed",
   CANCELLED = "cancelled",
   COMPLETED = "completed",

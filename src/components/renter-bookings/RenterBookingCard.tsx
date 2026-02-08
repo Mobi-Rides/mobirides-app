@@ -4,7 +4,7 @@ import { Booking } from "@/types/booking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Check, X, MapPin, CalendarDays, RotateCcw, Star } from "lucide-react";
+import { Clock, Check, X, MapPin, CalendarDays, RotateCcw, Star, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -57,6 +57,8 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
     switch (booking.status) {
       case "pending":
         return <Badge variant="outline" className="flex items-center gap-1 text-xs"><Clock className="h-3 w-3" /> Pending</Badge>;
+      case "awaiting_payment":
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100 flex items-center gap-1 text-xs"><CreditCard className="h-3 w-3" /> Awaiting Payment</Badge>;
       case "confirmed":
         return <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 flex items-center gap-1 text-xs"><Check className="h-3 w-3" /> Confirmed</Badge>;
       case "cancelled":
@@ -122,6 +124,19 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
                   >
                     <Star className="h-3 w-3 mr-1" />
                     Review
+                  </Button>
+                )}
+                {booking.status === "awaiting_payment" && (
+                  <Button 
+                    size="sm" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/rental-details/${booking.id}`);
+                    }}
+                    className="bg-primary text-primary-foreground"
+                  >
+                    <CreditCard className="h-3 w-3 mr-1" />
+                    Pay Now
                   </Button>
                 )}
                 {booking.status === "pending" && (

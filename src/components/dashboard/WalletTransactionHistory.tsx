@@ -41,14 +41,17 @@ export const WalletTransactionHistory = () => {
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case "top_up":
+      case "rental_earnings_pending":
+      case "earnings_released":
         return <TrendingUp className="h-4 w-4 text-green-500" />;
       case "fee_deduction":
       case "commission_deduction":
+      case "commission":
+      case "withdrawal":
         return <TrendingDown className="h-4 w-4 text-red-500" />;
       case "refund":
+      case "withdrawal_reversal":
         return <RefreshCw className="h-4 w-4 text-blue-500" />;
-      case "withdrawal":
-        return <Minus className="h-4 w-4 text-orange-500" />;
       default:
         return <ArrowUpDown className="h-4 w-4 text-gray-500" />;
     }
@@ -59,13 +62,20 @@ export const WalletTransactionHistory = () => {
       case "top_up":
         return "Wallet Top Up";
       case "fee_deduction":
+      case "commission":
         return "Platform Fee";
       case "commission_deduction":
         return "Commission Charge";
-      case "refund":
-        return "Refund";
+      case "rental_earnings_pending":
+        return "Pending Earnings";
+      case "earnings_released":
+        return "Earnings Released";
       case "withdrawal":
         return "Withdrawal";
+      case "withdrawal_reversal":
+        return "Withdrawal Reversal";
+      case "refund":
+        return "Refund";
       default:
         return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }

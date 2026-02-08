@@ -123,6 +123,10 @@ export const HostBookings = () => {
         new Date(b.start_date) <= today && 
         new Date(b.end_date) >= today
       ),
+      upcoming: filteredAndSortedBookings.filter(b => 
+        (b.status === 'confirmed' && new Date(b.start_date) > today) ||
+        b.status === 'awaiting_payment'
+      ),
       pending: filteredAndSortedBookings.filter(b => b.status === 'pending'),
       expired: filteredAndSortedBookings.filter(b => b.status === 'expired'),
       completed: filteredAndSortedBookings.filter(b => 
@@ -134,7 +138,7 @@ export const HostBookings = () => {
 
   const handleBookingAction = useCallback(async (bookingId: string, action: "approve" | "decline" | "cancel") => {
     try {
-      const newStatus = action === "approve" ? "confirmed" : action === "decline" ? "cancelled" : "cancelled";
+      const newStatus = action === "approve" ? "awaiting_payment" : action === "decline" ? "cancelled" : "cancelled";
       
       const { error } = await supabase
         .from("bookings")
@@ -283,12 +287,20 @@ export const HostBookings = () => {
 
         {/* Booking Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="active" className="relative">
-              Active Rentals
+              Active
               {categorizedBookings.active?.length > 0 && (
                 <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                   {categorizedBookings.active.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="upcoming" className="relative">
+              Upcoming
+              {categorizedBookings.upcoming?.length > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
+                  {categorizedBookings.upcoming.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -337,6 +349,29 @@ export const HostBookings = () => {
             {categorizedBookings.active?.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 No active rentals
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="upcoming" className="space-y-4">
+            {categorizedBookings.upcoming?.map((booking) => (
+              <HostBookingCard
+                key={booking.id}
+                booking={booking}
+                isSelected={selectedBookings.includes(booking.id)}
+                onSelect={(selected) => {
+                  if (selected) {
+                    setSelectedBookings(prev => [...prev, booking.id]);
+                  } else {
+                    setSelectedBookings(prev => prev.filter(id => id !== booking.id));
+                  }
+                }}
+                onAction={handleBookingAction}
+              />
+            ))}
+            {categorizedBookings.upcoming?.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No upcoming bookings
               </div>
             )}
           </TabsContent>

@@ -1,3 +1,14 @@
+/**
+ * Mock Payment Service - HOST WALLET TOP-UPS ONLY
+ * 
+ * This service handles mock payment processing for host wallet top-ups.
+ * Used by: TopUpModal.tsx
+ * 
+ * FOR RENTER BOOKING PAYMENTS, use: mockBookingPaymentService.ts
+ * 
+ * @see docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md Section 16
+ */
+
 // Mock payment service for development
 export interface PaymentRequest {
   amount: number;

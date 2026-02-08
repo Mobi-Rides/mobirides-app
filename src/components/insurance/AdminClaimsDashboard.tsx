@@ -58,24 +58,25 @@ export default function AdminClaimsDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchClaims = async () => {
     try {
       // Fetch all claims (without join - FK relationship not defined)
       const { data: claimsData, error: claimsError } = await supabase
-        .from('insurance_claims' as any)
+        .from('insurance_claims')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (claimsError) throw claimsError;
 
       // Get unique renter IDs from claims
-      const renterIds = [...new Set((claimsData || []).map((c: any) => c.renter_id).filter(Boolean))];
+      const renterIds = [...new Set((claimsData || []).map((c) => c.renter_id).filter(Boolean))];
       console.log('🔍 DEBUG: Renter IDs from claims:', renterIds);
 
       // Fetch profiles for those renters (note: email is NOT in profiles table, it's in auth.users)
-      let profilesMap: Record<string, any> = {};
+      const profilesMap: Record<string, { id: string; full_name: string | null; phone_number: string | null }> = {};
       if (renterIds.length > 0) {
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
@@ -86,14 +87,14 @@ export default function AdminClaimsDashboard() {
         console.log('🔍 DEBUG: Profiles returned:', profilesData);
 
         // Create a map for quick lookup
-        (profilesData || []).forEach((p: any) => {
+        (profilesData || []).forEach((p) => {
           profilesMap[p.id] = p;
         });
       }
       console.log('🔍 DEBUG: Profiles map:', profilesMap);
 
       // Map DB fields and enrich with user data
-      const mappedClaims = (claimsData || []).map((c: any) => ({
+      const mappedClaims = (claimsData || []).map((c) => ({
         ...c,
         estimated_repair_cost: c.estimated_damage_cost,
         supporting_documents: c.evidence_urls || [],
@@ -105,7 +106,7 @@ export default function AdminClaimsDashboard() {
       setClaims(mappedClaims as InsuranceClaim[]);
 
       // Calculate stats
-      const stats = calculateStats(mappedClaims || []);
+      const stats = calculateStats(mappedClaims as InsuranceClaim[] || []);
       setStats(stats);
     } catch (error) {
       console.error('Error fetching claims:', error);
@@ -121,7 +122,7 @@ export default function AdminClaimsDashboard() {
 
       // Fetch all policies
       const { data: policiesData, error: policiesError } = await supabase
-        .from('insurance_policies' as any)
+        .from('insurance_policies')
         .select('*');
 
       if (policiesError) throw policiesError;
@@ -133,7 +134,7 @@ export default function AdminClaimsDashboard() {
 
       if (bookingsError) throw bookingsError;
 
-      // Fetch all user profiles (REPLACE auth.admin.listUsers)
+      // Fetch all user profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
@@ -141,16 +142,16 @@ export default function AdminClaimsDashboard() {
       if (profilesError) throw profilesError;
 
       // Map profiles to User interface
-      const mappedUsers = (profilesData || []).map((p: any) => ({
+      const mappedUsers = (profilesData || []).map((p) => ({
         id: p.id,
-        email: p.email || 'N/A', // profiles might not have email depending on setup, but usually do
+        email: 'N/A', // profiles might not have email depending on setup
         user_metadata: {
           full_name: p.full_name,
-          phone: p.phone_number || '', // Adjust based on actual profile schema
+          phone: p.phone_number || '',
         }
       }));
 
-      setPolicies(policiesData as unknown as InsurancePolicy[]);
+      setPolicies(policiesData as InsurancePolicy[]);
       setBookings(bookingsData as unknown as Booking[]);
       setUsers(mappedUsers as User[]);
 
@@ -234,11 +235,11 @@ export default function AdminClaimsDashboard() {
     }
   };
 
-  const updateClaimStatus = async (claimId: string, newStatus: string, notes?: string, approvedAmount?: number) => {
+  const updateClaimStatus = async (claimId: string, newStatus: string, notes?: string, approvedAmount?: number, requestExcess?: boolean) => {
     try {
       // First get the claim to send notifications
       const { data: rawClaim, error: claimFetchError } = await supabase
-        .from('insurance_claims' as any)
+        .from('insurance_claims')
         .select('claim_number, renter_id, status')
         .eq('id', claimId)
         .single();
@@ -246,18 +247,32 @@ export default function AdminClaimsDashboard() {
       if (claimFetchError) throw claimFetchError;
 
       // Cast to any to avoid strict type checks on partial data
-      const claim = rawClaim as any;
+      const claim = rawClaim as unknown as InsuranceClaim;
 
-      const { error } = await supabase
-        .from('insurance_claims' as any)
-        .update({
-          status: newStatus,
+interface ExtendedInsuranceClaim extends InsuranceClaim {
+  excess_requested?: boolean;
+  excess_amount_due?: number;
+}
+
+// ... existing code ...
+
+      const updateData: Partial<ExtendedInsuranceClaim> = {
+          status: newStatus as InsuranceClaim['status'],
           admin_notes: notes,
           approved_amount: approvedAmount,
           reviewed_by: (await supabase.auth.getUser()).data.user?.id,
           updated_at: new Date().toISOString(),
           resolved_at: newStatus === 'approved' || newStatus === 'rejected' ? new Date().toISOString() : null
-        })
+      };
+
+      if (requestExcess) {
+        updateData.excess_requested = true;
+        updateData.excess_amount_due = 1500; // Example fixed excess or calc from policy
+      }
+
+      const { error } = await supabase
+        .from('insurance_claims')
+        .update(updateData as any) // Use as any for the update call since Supabase types are generated
         .eq('id', claimId);
 
       if (error) throw error;
@@ -269,7 +284,7 @@ export default function AdminClaimsDashboard() {
           .from('profiles')
           .select('full_name')
           .eq('id', claim.renter_id)
-          .single();
+          .maybeSingle();
 
         const renterName = profile?.full_name || 'Valued Customer';
 
@@ -281,23 +296,32 @@ export default function AdminClaimsDashboard() {
         // Dynamic import to avoid circular dependencies
         const { insuranceNotificationService } = await import('@/services/wallet/insuranceNotificationService');
 
+interface NotificationPayload {
+  claim_number: string;
+  status: string;
+  admin_notes?: string;
+}
+
+// ... existing code ...
+
         // 1. Send Email Notification
         if (renterEmail) {
+          const notificationData: NotificationPayload = {
+            claim_number: claim.claim_number,
+            status: newStatus,
+            admin_notes: notes
+          };
+
           await insuranceNotificationService.sendClaimStatusUpdate(
             renterEmail,
             renterName,
-            {
-              claim_number: claim.claim_number,
-              status: newStatus,
-              admin_notes: notes
-            } as any
+            notificationData
           );
           console.log(`📧 Claim status email sent to ${renterEmail}`);
         }
 
         // 2. Create In-App Notification
-        // 2. Create In-App Notification
-        await supabase.rpc('create_claim_notification' as any, {
+        await supabase.rpc('create_claim_notification', {
           p_user_id: claim.renter_id,
           p_claim_number: claim.claim_number,
           p_status: newStatus,
@@ -819,7 +843,7 @@ export default function AdminClaimsDashboard() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           {getStatusIcon(claim.status)}
-                          <span className={`ml - 2 px - 2 inline - flex text - xs leading - 5 font - semibold rounded - full ${getStatusColor(claim.status)} `}>
+                          <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
                             {getStatusText(claim.status)}
                           </span>
                         </div>
