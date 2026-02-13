@@ -4417,6 +4417,7 @@ export type Database = {
       }
       encrypt_message_content: { Args: { p_text: string }; Returns: string }
       expire_insurance_policies: { Args: never; Returns: undefined }
+      expire_unpaid_bookings: { Args: never; Returns: undefined }
       generate_audit_hash: {
         Args: {
           action_details: Json
@@ -4797,6 +4798,7 @@ export type Database = {
         Args: { p_notification_ids: number[] }
         Returns: number
       }
+      process_due_earnings_releases: { Args: never; Returns: undefined }
       process_withdrawal_request: {
         Args: {
           p_amount: number
