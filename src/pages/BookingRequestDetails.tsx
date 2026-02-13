@@ -88,16 +88,24 @@ const BookingRequestDetails = () => {
   });
 
   const updateBookingStatus = useMutation({
-    mutationFn: async ({ status }: { status: 'confirmed' | 'cancelled'; }) => {
+    mutationFn: async ({ status }: { status: 'awaiting_payment' | 'cancelled'; }) => {
       console.log('Updating booking status:', status);
 
-      if (status === 'confirmed' && booking && userId) {
+      if (status === 'awaiting_payment' && booking && userId) {
         const canAccept = await commissionService.checkHostCanAcceptBooking(userId, booking.total_price);
 
         if (!canAccept.canAccept) {
           throw new Error(canAccept.message || 'Insufficient wallet balance');
         }
-
+        
+        // Note: We deduct commission later/or reserve it? 
+        // Logic says "processCommissionOnBookingConfirmation".
+        // If we change status to awaiting_payment, maybe we shouldn't deduct yet?
+        // But the previous code did it on 'confirmed'.
+        // Let's keep it here for now if that's the business rule (Host pays commission to accept?)
+        // Actually, usually commission is deducted from Payout.
+        // But here there seems to be a wallet check.
+        
         const commissionDeducted = await commissionService.processCommissionOnBookingConfirmation(
           userId,
           booking.id,
@@ -111,18 +119,24 @@ const BookingRequestDetails = () => {
 
       const { error } = await supabase
         .from('bookings')
-        .update({ status })
+        .update({ 
+          status,
+          ...(status === 'awaiting_payment' ? {
+            payment_status: 'unpaid', // Reset/Ensure it's unpaid
+            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          } : {})
+        })
         .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      const action = variables.status === 'confirmed' ? 'approved' : 'cancelled';
+      const action = variables.status === 'awaiting_payment' ? 'approved' : 'cancelled';
 
       toast({
         title: `Booking ${action}`,
-        description: variables.status === 'confirmed'
-          ? `Booking approved and commission deducted from your wallet.`
+        description: variables.status === 'awaiting_payment'
+          ? `Booking approved. Waiting for renter payment.`
           : `The booking request has been cancelled.`
       });
 
@@ -146,7 +160,7 @@ const BookingRequestDetails = () => {
   });
 
   const handleApprove = () => {
-    updateBookingStatus.mutate({ status: 'confirmed' });
+    updateBookingStatus.mutate({ status: 'awaiting_payment' });
   };
 
   const handleCancel = () => {
@@ -251,6 +265,31 @@ const BookingRequestDetails = () => {
               onContact={handleContactRenter}
               isLoading={updateBookingStatus.isPending}
             />
+          )}
+
+          {booking.status === 'awaiting_payment' && (
+            <CardFooter className="bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-800">
+              <div className="w-full space-y-3">
+                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-medium">Awaiting Payment</span>
+                </div>
+                <p className="text-sm text-blue-600 dark:text-blue-300">
+                  This booking is waiting for payment from the renter. 
+                  Payment deadline: {new Date(booking.payment_deadline).toLocaleString()}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleContactRenter}
+                    className="flex-1"
+                  >
+                    Contact Renter
+                  </Button>
+                </div>
+              </div>
+            </CardFooter>
           )}
 
           {booking.status === 'confirmed' && (

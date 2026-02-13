@@ -29,7 +29,7 @@ import { BookingBreadcrumbs } from "./BookingBreadcrumbs";
 import { BookingSuccessModal } from "./BookingSuccessModal";
 import { useDynamicPricing } from "@/hooks/useDynamicPricing";
 import { isFeatureEnabled } from "@/lib/featureFlags";
-import { PriceBreakdown } from "./PriceBreakdown";
+import { UnifiedPriceSummary } from "./UnifiedPriceSummary";
 import { InsurancePackageSelector } from "@/components/insurance/InsurancePackageSelector";
 import { InsuranceService } from "@/services/insuranceService";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
@@ -102,12 +102,16 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   );
 
   const [selectedInsurancePackageId, setSelectedInsurancePackageId] = useState<string | null>(null);
-  const [insurancePremium, setInsurancePremium] = useState<number | null>(null);
+  const [selectedInsurancePackageName, setSelectedInsurancePackageName] = useState<string | undefined>(undefined);
+  const [insurancePremium, setInsurancePremium] = useState<number>(0);
 
   // Calculate prices for display and booking
   const priceBeforeDiscount = isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : basePrice || 0;
   const discountAmount = appliedPromo ? calculateDiscount(appliedPromo, priceBeforeDiscount) : 0;
-  const totalDisplayPrice = Math.max(0, priceBeforeDiscount - discountAmount);
+  
+  // Grand total calculation handled by UnifiedPriceSummary component logic
+  // but we need it here for the DB insert
+  const grandTotal = Math.max(0, priceBeforeDiscount + insurancePremium - discountAmount);
 
   const handlePromoApplied = (promo: PromoCode) => {
     setAppliedPromo(promo);
@@ -319,12 +323,14 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (!session.session?.user) throw new Error("No authenticated user");
 
       // Use the pre-calculated prices from component scope
-      let totalPrice = priceBeforeDiscount;
+      // totalPrice includes base + dynamic + insurance - discounts
+      let totalPrice = grandTotal;
       let discountValue = 0;
 
       if (appliedPromo) {
         discountValue = calculateDiscount(appliedPromo, priceBeforeDiscount);
-        totalPrice = priceBeforeDiscount - discountValue;
+        // Recalculate just to be safe, though grandTotal should be correct
+        totalPrice = Math.max(0, priceBeforeDiscount + insurancePremium - discountValue);
       }
 
       console.log("[BookingDialog] Creating booking in database...");
@@ -340,6 +346,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           start_time: startTime,
           end_time: endTime,
           total_price: totalPrice,
+          base_rental_price: basePrice,
+          dynamic_pricing_multiplier: calculation?.multiplier || 1.0,
+          insurance_premium: insurancePremium,
+          // insurance_policy_id set below after policy creation
+          discount_amount: discountValue,
+          promo_code_id: appliedPromo?.id,
           latitude: pickupLocation.latitude,
           longitude: pickupLocation.longitude,
           status: "pending", // Explicitly set status to a valid enum value
@@ -369,7 +381,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             const policyEndDate = new Date(endDate);
             policyEndDate.setHours(endHour, endMinute, 0, 0);
 
-            await InsuranceService.createPolicy(
+            const policy = await InsuranceService.createPolicy(
               booking.id,
               selectedInsurancePackageId,
               session.session.user.id,
@@ -378,6 +390,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               policyEndDate,
               car.price_per_day
             );
+            
+            // Update booking with policy ID
+            if (policy && policy.id) {
+               await supabase.from('bookings').update({ insurance_policy_id: policy.id }).eq('id', booking.id);
+            }
+            
             console.log("[BookingDialog] Insurance policy created successfully");
           }
         } catch (insuranceError) {
@@ -739,11 +757,19 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                       />
                     </div>
 
-                    <div className="border-t border-border pt-2 mt-2">
-                      <p className="font-medium text-primary">
-                        Total: BWP {totalDisplayPrice.toFixed(2)}
-                      </p>
-                    </div>
+                    <UnifiedPriceSummary
+                      basePrice={basePrice || 0}
+                      pricePerDay={car.price_per_day}
+                      numberOfDays={Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                      dynamicPricing={calculation || undefined}
+                      insurancePremium={insurancePremium}
+                      insurancePackageName={selectedInsurancePackageName}
+                      discountAmount={discountAmount}
+                      promoCode={appliedPromo?.code}
+                      variant="compact"
+                      showBreakdown={false}
+                    />
+                    
                     <Button
                       variant="outline"
                       size="sm"
@@ -753,12 +779,18 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     </Button>
                   </div>
                   {isFeatureEnabled("DYNAMIC_PRICING") && basePrice !== undefined && (
-                    <PriceBreakdown
-                      calculation={calculation}
-                      basePrice={basePrice}
-                      discountAmount={discountAmount}
-                      promoCode={appliedPromo?.code}
-                    />
+                    <div className="mt-4">
+                      <UnifiedPriceSummary
+                        basePrice={basePrice}
+                        pricePerDay={car.price_per_day}
+                        numberOfDays={Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                        dynamicPricing={calculation || undefined}
+                        insurancePremium={insurancePremium}
+                        insurancePackageName={selectedInsurancePackageName}
+                        discountAmount={discountAmount}
+                        promoCode={appliedPromo?.code}
+                      />
+                    </div>
                   )}
                   {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined && (
                     <>
@@ -767,25 +799,14 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                         startDate={startDate}
                         endDate={endDate}
                         selectedPackageId={selectedInsurancePackageId || undefined}
-                        onPackageSelect={(pkgId, premium) => {
+                        onPackageSelect={(pkgId, premium, pkgName) => {
                           setSelectedInsurancePackageId(pkgId);
                           setInsurancePremium(premium);
+                          if (pkgName) setSelectedInsurancePackageName(pkgName);
                         }}
                         userId={userId || undefined}
                         carId={car.id}
                       />
-                      {insurancePremium !== null && insurancePremium > 0 && (
-                        <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="font-medium text-blue-900">Insurance Premium:</span>
-                            <span className="font-bold text-blue-700">BWP {insurancePremium.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm mt-1 pt-1 border-t border-blue-200">
-                            <span className="font-medium text-blue-900">Total with Insurance:</span>
-                            <span className="font-bold text-blue-700">BWP {(totalDisplayPrice + insurancePremium).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      )}
                     </>
                   )}
                 </div>

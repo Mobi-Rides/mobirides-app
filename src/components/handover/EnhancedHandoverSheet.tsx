@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { X, CheckCircle, Clock, AlertCircle, GripHorizontal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -395,6 +396,25 @@ export const EnhancedHandoverSheet = ({
       if (handoverId) {
         console.log("Completing handover session:", handoverId);
         await completeHandover(handoverId);
+        
+        // If this is a return handover, mark the booking as completed
+        if (isReturnHandover() && bookingDetails) {
+          console.log("🔄 Return handover detected - updating booking status to completed");
+          const { error: bookingUpdateError } = await supabase
+            .from('bookings')
+            .update({ 
+              status: 'completed',
+              actual_end_date: new Date().toISOString()
+            })
+            .eq('id', (bookingDetails as unknown as HandoverBookingDetails).id);
+            
+          if (bookingUpdateError) {
+            console.error("❌ Failed to update booking status:", bookingUpdateError);
+            toast.error("Handover recorded but failed to complete booking. Please contact support.");
+          } else {
+            console.log("✅ Booking marked as completed");
+          }
+        }
       }
 
       // Create final vehicle condition report only if we have meaningful data

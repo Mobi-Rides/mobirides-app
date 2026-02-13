@@ -17,12 +17,14 @@ import { RentalActions } from "@/components/rental-details/RentalActions";
 import { RentalUserCard } from "@/components/rental-details/RentalUserCard";
 import { RentalDetailsSkeleton } from "@/components/rental-details/RentalDetailsSkeleton";
 import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetailsNotFound";
+import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
 // Extension status removed for simplification
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     booking,
@@ -136,6 +138,11 @@ const RentalDetailsRefactored = () => {
             pricePerDay={booking.cars.price_per_day}
             durationDays={rentalDurationDays}
             totalPrice={booking.total_price}
+            baseRentalPrice={booking.base_rental_price || booking.total_price}
+            insurancePremium={booking.insurance_premium || 0}
+            discountAmount={booking.discount_amount || 0}
+            dynamicMultiplier={booking.dynamic_pricing_multiplier || 1}
+            isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
           />
         )}
 
@@ -154,9 +161,22 @@ const RentalDetailsRefactored = () => {
             isRenter={isRenter}
             onHandoverInitiate={onInitiateHandover}
             onExtensionRequested={handleExtensionUpdate}
+            onPayNow={() => setIsPaymentModalOpen(true)}
           />
         )}
       </div>
+
+      {booking && (
+        <RenterPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          booking={booking}
+          onPaymentSuccess={() => {
+            // Trigger refresh
+            handleExtensionUpdate(); // Reuse refresh logic
+          }}
+        />
+      )}
 
       <Navigation />
     </div>
