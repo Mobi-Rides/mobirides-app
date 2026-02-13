@@ -384,19 +384,28 @@ export type Database = {
       bookings: {
         Row: {
           actual_end_date: string | null
+          base_rental_price: number | null
           car_id: string
           commission_amount: number | null
           commission_status: string | null
           created_at: string
+          discount_amount: number | null
+          dynamic_pricing_multiplier: number | null
           early_return: boolean | null
           end_date: string
           end_time: string | null
           host_preparation_completed: boolean | null
           id: string
+          insurance_policy_id: string | null
+          insurance_premium: number | null
           is_test_booking: boolean | null
           latitude: number | null
           longitude: number | null
+          payment_deadline: string | null
+          payment_status: string | null
+          payment_transaction_id: string | null
           preparation_reminder_sent: boolean | null
+          promo_code_id: string | null
           renter_id: string
           renter_preparation_completed: boolean | null
           start_date: string
@@ -407,19 +416,28 @@ export type Database = {
         }
         Insert: {
           actual_end_date?: string | null
+          base_rental_price?: number | null
           car_id: string
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          discount_amount?: number | null
+          dynamic_pricing_multiplier?: number | null
           early_return?: boolean | null
           end_date: string
           end_time?: string | null
           host_preparation_completed?: boolean | null
           id?: string
+          insurance_policy_id?: string | null
+          insurance_premium?: number | null
           is_test_booking?: boolean | null
           latitude?: number | null
           longitude?: number | null
+          payment_deadline?: string | null
+          payment_status?: string | null
+          payment_transaction_id?: string | null
           preparation_reminder_sent?: boolean | null
+          promo_code_id?: string | null
           renter_id: string
           renter_preparation_completed?: boolean | null
           start_date: string
@@ -430,19 +448,28 @@ export type Database = {
         }
         Update: {
           actual_end_date?: string | null
+          base_rental_price?: number | null
           car_id?: string
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          discount_amount?: number | null
+          dynamic_pricing_multiplier?: number | null
           early_return?: boolean | null
           end_date?: string
           end_time?: string | null
           host_preparation_completed?: boolean | null
           id?: string
+          insurance_policy_id?: string | null
+          insurance_premium?: number | null
           is_test_booking?: boolean | null
           latitude?: number | null
           longitude?: number | null
+          payment_deadline?: string | null
+          payment_status?: string | null
+          payment_transaction_id?: string | null
           preparation_reminder_sent?: boolean | null
+          promo_code_id?: string | null
           renter_id?: string
           renter_preparation_completed?: boolean | null
           start_date?: string
@@ -457,6 +484,13 @@ export type Database = {
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
             referencedColumns: ["id"]
           },
           {
@@ -1476,6 +1510,7 @@ export type Database = {
           currency: string
           host_id: string
           id: string
+          pending_balance: number | null
           updated_at: string
         }
         Insert: {
@@ -1484,6 +1519,7 @@ export type Database = {
           currency?: string
           host_id: string
           id?: string
+          pending_balance?: number | null
           updated_at?: string
         }
         Update: {
@@ -1492,6 +1528,7 @@ export type Database = {
           currency?: string
           host_id?: string
           id?: string
+          pending_balance?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1648,7 +1685,11 @@ export type Database = {
           damage_description: string
           estimated_damage_cost: number | null
           evidence_urls: string[] | null
+          excess_amount_due: number | null
           excess_paid: number | null
+          excess_payment_date: string | null
+          excess_requested: boolean | null
+          external_status: string | null
           id: string
           incident_date: string
           incident_description: string
@@ -1657,12 +1698,15 @@ export type Database = {
           more_info_requested_at: string | null
           paid_at: string | null
           payout_amount: number | null
+          payu_claim_reference: string | null
           police_report_filed: boolean | null
           police_report_number: string | null
           police_station: string | null
           policy_id: string
           rejection_reason: string | null
           renter_id: string
+          renter_liability_amount: number | null
+          renter_liability_paid: boolean | null
           repair_invoices_urls: string[] | null
           repair_quotes_urls: string[] | null
           resolved_at: string | null
@@ -1684,7 +1728,11 @@ export type Database = {
           damage_description: string
           estimated_damage_cost?: number | null
           evidence_urls?: string[] | null
+          excess_amount_due?: number | null
           excess_paid?: number | null
+          excess_payment_date?: string | null
+          excess_requested?: boolean | null
+          external_status?: string | null
           id?: string
           incident_date: string
           incident_description: string
@@ -1693,12 +1741,15 @@ export type Database = {
           more_info_requested_at?: string | null
           paid_at?: string | null
           payout_amount?: number | null
+          payu_claim_reference?: string | null
           police_report_filed?: boolean | null
           police_report_number?: string | null
           police_station?: string | null
           policy_id: string
           rejection_reason?: string | null
           renter_id: string
+          renter_liability_amount?: number | null
+          renter_liability_paid?: boolean | null
           repair_invoices_urls?: string[] | null
           repair_quotes_urls?: string[] | null
           resolved_at?: string | null
@@ -1720,7 +1771,11 @@ export type Database = {
           damage_description?: string
           estimated_damage_cost?: number | null
           evidence_urls?: string[] | null
+          excess_amount_due?: number | null
           excess_paid?: number | null
+          excess_payment_date?: string | null
+          excess_requested?: boolean | null
+          external_status?: string | null
           id?: string
           incident_date?: string
           incident_description?: string
@@ -1729,12 +1784,15 @@ export type Database = {
           more_info_requested_at?: string | null
           paid_at?: string | null
           payout_amount?: number | null
+          payu_claim_reference?: string | null
           police_report_filed?: boolean | null
           police_report_number?: string | null
           police_station?: string | null
           policy_id?: string
           rejection_reason?: string | null
           renter_id?: string
+          renter_liability_amount?: number | null
+          renter_liability_paid?: boolean | null
           repair_invoices_urls?: string[] | null
           repair_quotes_urls?: string[] | null
           resolved_at?: string | null
@@ -1761,6 +1819,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      insurance_commission_rates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          mobirides_percentage: number
+          package_id: string | null
+          payu_percentage: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          effective_from: string
+          effective_to?: string | null
+          id?: string
+          mobirides_percentage?: number
+          package_id?: string | null
+          payu_percentage?: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          mobirides_percentage?: number
+          package_id?: string | null
+          payu_percentage?: number
+        }
+        Relationships: []
       }
       insurance_packages: {
         Row: {
@@ -1858,8 +1949,13 @@ export type Database = {
           end_date: string
           excess_amount: number | null
           id: string
+          mobirides_commission: number | null
           number_of_days: number
           package_id: string
+          payu_amount: number | null
+          payu_remittance_date: string | null
+          payu_remittance_reference: string | null
+          payu_remittance_status: string | null
           policy_document_url: string | null
           policy_number: string
           premium_per_day: number
@@ -1880,8 +1976,13 @@ export type Database = {
           end_date: string
           excess_amount?: number | null
           id?: string
+          mobirides_commission?: number | null
           number_of_days: number
           package_id: string
+          payu_amount?: number | null
+          payu_remittance_date?: string | null
+          payu_remittance_reference?: string | null
+          payu_remittance_status?: string | null
           policy_document_url?: string | null
           policy_number: string
           premium_per_day: number
@@ -1902,8 +2003,13 @@ export type Database = {
           end_date?: string
           excess_amount?: number | null
           id?: string
+          mobirides_commission?: number | null
           number_of_days?: number
           package_id?: string
+          payu_amount?: number | null
+          payu_remittance_date?: string | null
+          payu_remittance_reference?: string | null
+          payu_remittance_status?: string | null
           policy_document_url?: string | null
           policy_number?: string
           premium_per_day?: number
@@ -2303,6 +2409,113 @@ export type Database = {
           },
         ]
       }
+      payment_config: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          commission_rate: number | null
+          completed_at: string | null
+          created_at: string | null
+          currency: string | null
+          error_message: string | null
+          host_earnings: number | null
+          id: string
+          ip_address: unknown
+          payment_method: string
+          payment_provider: string
+          platform_commission: number | null
+          provider_pay_request_id: string | null
+          provider_reference: string | null
+          provider_response: Json | null
+          provider_transaction_id: string | null
+          status: string
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          commission_rate?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
+          host_earnings?: number | null
+          id?: string
+          ip_address?: unknown
+          payment_method: string
+          payment_provider: string
+          platform_commission?: number | null
+          provider_pay_request_id?: string | null
+          provider_reference?: string | null
+          provider_response?: Json | null
+          provider_transaction_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          commission_rate?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
+          host_earnings?: number | null
+          id?: string
+          ip_address?: unknown
+          payment_method?: string
+          payment_provider?: string
+          platform_commission?: number | null
+          provider_pay_request_id?: string | null
+          provider_reference?: string | null
+          provider_response?: Json | null
+          provider_transaction_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -2359,6 +2572,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payout_details: {
+        Row: {
+          created_at: string | null
+          details_encrypted: Json
+          display_name: string | null
+          host_id: string
+          id: string
+          is_default: boolean | null
+          is_verified: boolean | null
+          payout_method: string
+          updated_at: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details_encrypted: Json
+          display_name?: string | null
+          host_id: string
+          id?: string
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          payout_method: string
+          updated_at?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details_encrypted?: Json
+          display_name?: string | null
+          host_id?: string
+          id?: string
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          payout_method?: string
+          updated_at?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
       }
       pending_confirmations: {
         Row: {
@@ -2515,6 +2767,54 @@ export type Database = {
           public_key?: string
           signature?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      premium_remittance_batches: {
+        Row: {
+          batch_date: string
+          created_at: string | null
+          id: string
+          mobirides_commission_total: number
+          notes: string | null
+          payu_amount_total: number
+          payu_confirmation_reference: string | null
+          remitted_at: string | null
+          remitted_by: string | null
+          status: string | null
+          total_policies: number
+          total_premium_collected: number
+          updated_at: string | null
+        }
+        Insert: {
+          batch_date: string
+          created_at?: string | null
+          id?: string
+          mobirides_commission_total: number
+          notes?: string | null
+          payu_amount_total: number
+          payu_confirmation_reference?: string | null
+          remitted_at?: string | null
+          remitted_by?: string | null
+          status?: string | null
+          total_policies: number
+          total_premium_collected: number
+          updated_at?: string | null
+        }
+        Update: {
+          batch_date?: string
+          created_at?: string | null
+          id?: string
+          mobirides_commission_total?: number
+          notes?: string | null
+          payu_amount_total?: number
+          payu_confirmation_reference?: string | null
+          remitted_at?: string | null
+          remitted_by?: string | null
+          status?: string | null
+          total_policies?: number
+          total_premium_collected?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3659,6 +3959,71 @@ export type Database = {
           },
         ]
       }
+      withdrawal_requests: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          failure_reason: string | null
+          host_id: string
+          id: string
+          payout_details: Json
+          payout_method: string
+          processed_at: string | null
+          processed_by: string | null
+          provider_reference: string | null
+          provider_response: Json | null
+          retry_count: number | null
+          status: string | null
+          updated_at: string | null
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          failure_reason?: string | null
+          host_id: string
+          id?: string
+          payout_details: Json
+          payout_method: string
+          processed_at?: string | null
+          processed_by?: string | null
+          provider_reference?: string | null
+          provider_response?: Json | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          failure_reason?: string | null
+          host_id?: string
+          id?: string
+          payout_details?: Json
+          payout_method?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          provider_reference?: string | null
+          provider_response?: Json | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "host_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       audit_analytics: {
@@ -4037,6 +4402,14 @@ export type Database = {
             }
             Returns: undefined
           }
+      credit_pending_earnings: {
+        Args: {
+          p_booking_id: string
+          p_host_earnings: number
+          p_platform_commission: number
+        }
+        Returns: boolean
+      }
       decrypt_message_content: { Args: { p_cipher: string }; Returns: string }
       delete_old_notifications: {
         Args: { p_days_old?: number }
@@ -4424,6 +4797,19 @@ export type Database = {
         Args: { p_notification_ids: number[] }
         Returns: number
       }
+      process_withdrawal_request: {
+        Args: {
+          p_amount: number
+          p_host_id: string
+          p_payout_details: Json
+          p_payout_method: string
+        }
+        Returns: string
+      }
+      release_pending_earnings: {
+        Args: { p_booking_id: string }
+        Returns: boolean
+      }
       save_push_subscription: {
         Args: {
           p_auth_key: string
@@ -4582,6 +4968,7 @@ export type Database = {
         | "completed"
         | "expired"
         | "in_progress"
+        | "awaiting_payment"
       document_status: "pending" | "verified" | "rejected"
       document_type:
         | "national_id_front"
@@ -4847,6 +5234,7 @@ export const Constants = {
         "completed",
         "expired",
         "in_progress",
+        "awaiting_payment",
       ],
       document_status: ["pending", "verified", "rejected"],
       document_type: [
