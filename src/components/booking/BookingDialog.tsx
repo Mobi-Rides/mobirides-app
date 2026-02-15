@@ -25,7 +25,7 @@ import { BookingStatus } from "@/types/booking";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import { VerificationRequiredDialog } from "@/components/verification/VerificationRequiredDialog";
 import { BookingLocationPicker } from "./BookingLocationPicker";
-import { BookingBreadcrumbs } from "./BookingBreadcrumbs";
+import { BookingWizardProgress } from "./BookingWizardProgress";
 import { BookingSuccessModal } from "./BookingSuccessModal";
 import { useDynamicPricing } from "@/hooks/useDynamicPricing";
 import { isFeatureEnabled } from "@/lib/featureFlags";
@@ -47,6 +47,7 @@ interface BookingDialogProps {
 }
 
 export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
+  const [wizardStep, setWizardStep] = useState(1);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [startTime, setStartTime] = useState("09:00");
@@ -658,18 +659,66 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     return isDateUnavailable(date, bookedDates);
   };
 
+  const WIZARD_STEPS = ["Dates", "Location", "Protection", "Review"];
+  const numberOfDays = startDate && endDate 
+    ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1 
+    : 0;
+
+  const dynamicPricingForSummary = calculation ? {
+    final_price: calculation.final_price,
+    original_price: calculation.base_price,
+    is_dynamic: calculation.total_multiplier !== 1,
+    multiplier: calculation.total_multiplier,
+  } : undefined;
+
+  const canGoNext = () => {
+    switch (wizardStep) {
+      case 1: return !!startDate && !!endDate && isAvailable;
+      case 2: return !!pickupLocation;
+      case 3: return true; // insurance is optional
+      case 4: return true;
+      default: return false;
+    }
+  };
+
+  const handleNext = () => {
+    if (wizardStep < 4) setWizardStep(wizardStep + 1);
+  };
+
+  const handleBack = () => {
+    if (wizardStep > 1) setWizardStep(wizardStep - 1);
+  };
+
+  const handleDialogClose = () => {
+    setWizardStep(1);
+    onClose();
+  };
+
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[425px] md:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-          <BookingBreadcrumbs currentStep="confirmation" />
-          <div className="p-6">
-            <DialogHeader>
-              <DialogTitle>
-                Book {car.brand} {car.model}
+      <Dialog open={isOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-[425px] md:max-w-lg max-h-[90vh] overflow-hidden p-0 flex flex-col">
+          {/* Progress indicator */}
+          <BookingWizardProgress
+            currentStep={wizardStep}
+            totalSteps={4}
+            stepLabels={WIZARD_STEPS}
+          />
+
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto px-5 pb-2">
+            <DialogHeader className="pb-3">
+              <DialogTitle className="text-lg">
+                {wizardStep === 1 && "Select Dates"}
+                {wizardStep === 2 && "Pickup Location"}
+                {wizardStep === 3 && "Damage Protection"}
+                {wizardStep === 4 && "Review & Confirm"}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground">
-                Select your rental dates and pickup location
+              <DialogDescription className="text-sm text-muted-foreground">
+                {wizardStep === 1 && `Choose your rental dates for ${car.brand} ${car.model}`}
+                {wizardStep === 2 && "Confirm or change the pickup location"}
+                {wizardStep === 3 && "Choose your protection level (optional)"}
+                {wizardStep === 4 && "Review your booking details and confirm"}
               </DialogDescription>
             </DialogHeader>
 
@@ -678,157 +727,196 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Not allowed</AlertTitle>
                 <AlertDescription>
-                  You cannot book your own car. This is for other renters only.
+                  You cannot book your own car.
                 </AlertDescription>
               </Alert>
             )}
 
-            {!isAvailable && startDate && endDate && (
-              <Alert variant="destructive" className="mb-4">
-                <CalendarX className="h-4 w-4" />
-                <AlertTitle>Not available</AlertTitle>
-                <AlertDescription>
-                  This car is not available for the selected dates. Please choose
-                  different dates.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Select dates</h4>
+            {/* Step 1: Date Selection */}
+            {wizardStep === 1 && (
+              <div className="space-y-4">
                 <Calendar
                   mode="range"
-                  selected={{
-                    from: startDate,
-                    to: endDate,
-                  }}
+                  selected={{ from: startDate, to: endDate }}
                   onSelect={(range) => {
                     setStartDate(range?.from);
                     setEndDate(range?.to);
                   }}
                   numberOfMonths={1}
                   disabled={isDateDisabled}
-                  modifiers={{
-                    booked: bookedDates,
-                  }}
+                  modifiers={{ booked: bookedDates }}
                   modifiersStyles={{
                     booked: {
-                      backgroundColor: "rgba(239, 68, 68, 0.1)",
-                      color: "rgb(239, 68, 68)",
+                      backgroundColor: "hsl(var(--destructive) / 0.1)",
+                      color: "hsl(var(--destructive))",
                       textDecoration: "line-through",
                     },
                   }}
+                  className="mx-auto"
                 />
+
+                {!isAvailable && startDate && endDate && (
+                  <Alert variant="destructive">
+                    <CalendarX className="h-4 w-4" />
+                    <AlertDescription>
+                      Not available for selected dates. Please choose different dates.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {startDate && endDate && (
+                  <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Start</span>
+                      <span className="font-medium">{format(startDate, "MMM dd, yyyy")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">End</span>
+                      <span className="font-medium">{format(endDate, "MMM dd, yyyy")}</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-border/50">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span className="font-medium">{numberOfDays} {numberOfDays === 1 ? 'day' : 'days'}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">Pickup Location</h4>
-                <div className="flex items-center justify-between p-3 border rounded-md">
-                  <div className="flex items-start gap-2">
+            )}
+
+            {/* Step 2: Location */}
+            {wizardStep === 2 && (
+              <div className="space-y-4">
+                <div className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <div className="text-sm">
-                      <p>{formatLocationDescription()}</p>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Pickup Location</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {formatLocationDescription()}
+                      </p>
                     </div>
                   </div>
                   <Button
                     variant="outline"
-                    size="sm"
+                    className="w-full"
                     onClick={() => setIsLocationPickerOpen(true)}
                   >
-                    Change
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Change Location
                   </Button>
                 </div>
-              </div>
-              {startDate && endDate && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Summary</h4>
-                  <div className="text-sm space-y-1 p-4 bg-primary/5 rounded-md">
-                    <p>Start date: {format(startDate, "PPP")}</p>
-                    <p>End date: {format(endDate, "PPP")}</p>
 
-                    {/* Promo Code Input */}
-                    <div className="py-2 border-y border-border/50 my-2">
-                      <PromoCodeInput
-                        userId={userId}
-                        bookingAmount={isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : basePrice || 0}
-                        onApply={handlePromoApplied}
-                        onRemove={handlePromoRemoved}
-                        appliedPromo={appliedPromo}
-                      />
-                    </div>
-
-                    <UnifiedPriceSummary
-                      basePrice={basePrice || 0}
-                      pricePerDay={car.price_per_day}
-                      numberOfDays={Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                      dynamicPricing={calculation ? {
-                        final_price: calculation.final_price,
-                        original_price: calculation.base_price,
-                        is_dynamic: calculation.total_multiplier !== 1,
-                        multiplier: calculation.total_multiplier,
-                      } : undefined}
-                      insurancePremium={insurancePremium}
-                      insurancePackageName={selectedInsurancePackageName}
-                      discountAmount={discountAmount}
-                      promoCode={appliedPromo?.code}
-                      variant="compact"
-                      showBreakdown={false}
-                    />
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsLocationPickerOpen(true)}
-                    >
-                      Change
-                    </Button>
-                  </div>
-                  {isFeatureEnabled("DYNAMIC_PRICING") && basePrice !== undefined && (
-                    <div className="mt-4">
-                      <UnifiedPriceSummary
-                        basePrice={basePrice}
-                        pricePerDay={car.price_per_day}
-                        numberOfDays={Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                        dynamicPricing={calculation ? {
-                          final_price: calculation.final_price,
-                          original_price: calculation.base_price,
-                          is_dynamic: calculation.total_multiplier !== 1,
-                          multiplier: calculation.total_multiplier,
-                        } : undefined}
-                        insurancePremium={insurancePremium}
-                        insurancePackageName={selectedInsurancePackageName}
-                        discountAmount={discountAmount}
-                        promoCode={appliedPromo?.code}
-                      />
-                    </div>
-                  )}
-                  {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined && (
-                    <>
-                      <InsurancePackageSelector
-                        dailyRentalAmount={car.price_per_day}
-                        startDate={startDate}
-                        endDate={endDate}
-                        selectedPackageId={selectedInsurancePackageId || undefined}
-                        onPackageSelect={(pkgId, premium) => {
-                          setSelectedInsurancePackageId(pkgId);
-                          setInsurancePremium(premium);
-                        }}
-                        userId={userId || undefined}
-                        carId={car.id}
-                      />
-                    </>
-                  )}
+                {/* Date summary reminder */}
+                <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                  <p className="text-muted-foreground">
+                    {format(startDate!, "MMM dd")} – {format(endDate!, "MMM dd, yyyy")} · {numberOfDays} {numberOfDays === 1 ? 'day' : 'days'}
+                  </p>
                 </div>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="w-full sm:w-auto"
-              >
+              </div>
+            )}
+
+            {/* Step 3: Insurance / Protection */}
+            {wizardStep === 3 && (
+              <div className="space-y-4">
+                {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined ? (
+                  <InsurancePackageSelector
+                    dailyRentalAmount={car.price_per_day}
+                    startDate={startDate!}
+                    endDate={endDate!}
+                    selectedPackageId={selectedInsurancePackageId || undefined}
+                    onPackageSelect={(pkgId, premium) => {
+                      setSelectedInsurancePackageId(pkgId);
+                      setInsurancePremium(premium);
+                    }}
+                    userId={userId || undefined}
+                    carId={car.id}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Damage protection packages coming soon.</p>
+                    <p className="text-sm mt-2">You can skip this step.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 4: Review & Confirm */}
+            {wizardStep === 4 && (
+              <div className="space-y-4">
+                {/* Car info */}
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  {car.image_url && (
+                    <img
+                      src={car.image_url}
+                      alt={`${car.brand} ${car.model}`}
+                      className="w-16 h-12 object-cover rounded"
+                    />
+                  )}
+                  <div>
+                    <p className="font-medium">{car.brand} {car.model}</p>
+                    <p className="text-sm text-muted-foreground">{car.year} · {car.location}</p>
+                  </div>
+                </div>
+
+                {/* Dates & Location summary */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Dates</span>
+                    <span>{format(startDate!, "MMM dd")} – {format(endDate!, "MMM dd, yyyy")}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Pickup</span>
+                    <span className="text-right max-w-[200px] truncate">{formatLocationDescription()}</span>
+                  </div>
+                </div>
+
+                {/* Promo Code */}
+                <div className="border-y border-border/50 py-3">
+                  <PromoCodeInput
+                    userId={userId}
+                    bookingAmount={isFeatureEnabled("DYNAMIC_PRICING") && finalPrice ? finalPrice : basePrice || 0}
+                    onApply={handlePromoApplied}
+                    onRemove={handlePromoRemoved}
+                    appliedPromo={appliedPromo}
+                  />
+                </div>
+
+                {/* Price breakdown */}
+                <UnifiedPriceSummary
+                  basePrice={basePrice || 0}
+                  pricePerDay={car.price_per_day}
+                  numberOfDays={numberOfDays}
+                  dynamicPricing={dynamicPricingForSummary}
+                  insurancePremium={insurancePremium}
+                  insurancePackageName={selectedInsurancePackageName}
+                  discountAmount={discountAmount}
+                  promoCode={appliedPromo?.code}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Fixed bottom action bar */}
+          <div className="border-t bg-background px-5 py-3 flex gap-2">
+            {wizardStep > 1 ? (
+              <Button variant="outline" onClick={handleBack} className="flex-1">
+                Back
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={handleDialogClose} className="flex-1">
                 Cancel
               </Button>
+            )}
+
+            {wizardStep < 4 ? (
+              <Button
+                onClick={handleNext}
+                disabled={!canGoNext() || isOwner || isCheckingAvailability}
+                className="flex-1"
+              >
+                {isCheckingAvailability ? "Checking..." : "Next"}
+              </Button>
+            ) : (
               <Button
                 onClick={
                   !isVerified && !isVerificationLoading
@@ -836,38 +924,21 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     : handleBooking
                 }
                 disabled={
-                  !startDate ||
-                  !endDate ||
-                  isLoading ||
-                  isOwner ||
-                  isCheckingAvailability ||
-                  !isAvailable ||
-                  !pickupLocation ||
-                  isVerificationLoading
+                  !startDate || !endDate || isLoading || isOwner ||
+                  !isAvailable || !pickupLocation || isVerificationLoading
                 }
-                className="w-full sm:w-auto"
-                variant={
-                  !isVerified && !isVerificationLoading ? "outline" : "default"
-                }
+                className="flex-1"
+                variant={!isVerified && !isVerificationLoading ? "outline" : "default"}
               >
                 {isLoading || dpLoading
                   ? "Booking..."
-                  : isCheckingAvailability
-                    ? "Checking..."
-                    : isVerificationLoading
-                      ? "Checking verification..."
-                      : !isVerified
-                        ? "Start Verification"
-                        : "Confirm"}
+                  : isVerificationLoading
+                    ? "Verifying..."
+                    : !isVerified
+                      ? "Start Verification"
+                      : "Confirm Booking"}
               </Button>
-              {(!startDate || !endDate || !pickupLocation || !isAvailable) && (
-                <div className="text-xs text-destructive mt-1 text-center">
-                  {(!startDate || !endDate) && 'Please select dates'}
-                  {!pickupLocation && 'Please select pickup location'}
-                  {!isAvailable && 'Car not available for selected dates'}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
