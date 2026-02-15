@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Star, StarHalf, MessageSquare, User } from "lucide-react";
+import { Star, StarHalf, MessageSquare, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Car } from "@/types/car";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
+import { CategoryRatingDisplay } from "@/components/reviews/CategoryRatingDisplay";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface CarReviewsProps {
   car: Car;
@@ -49,6 +51,20 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
       }
 
       return data;
+    },
+  });
+
+  const { data: categoryAverages } = useQuery({
+    queryKey: ["car-category-ratings", car.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("calculate_category_ratings", {
+        p_car_id: car.id,
+      });
+      if (error) {
+        console.error("Error fetching category ratings:", error);
+        return {};
+      }
+      return (data as Record<string, number>) || {};
     },
   });
 
@@ -132,6 +148,11 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
             {reviews?.length || 0} {reviews?.length === 1 ? 'review' : 'reviews'}
           </span>
         </CardTitle>
+        {categoryAverages && Object.keys(categoryAverages).length > 0 && (
+          <div className="mt-2">
+            <CategoryRatingDisplay categoryAverages={categoryAverages} />
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -173,6 +194,17 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
               </div>
               {review.comment && (
                 <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
+              )}
+              {review.category_ratings && typeof review.category_ratings === 'object' && Object.keys(review.category_ratings as Record<string, number>).length > 0 && (
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground mt-2 hover:text-foreground transition-colors">
+                    <ChevronDown className="h-3 w-3" />
+                    Category breakdown
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <CategoryRatingDisplay categoryAverages={review.category_ratings as Record<string, number>} />
+                  </CollapsibleContent>
+                </Collapsible>
               )}
             </div>
           ))}

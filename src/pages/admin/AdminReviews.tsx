@@ -23,6 +23,7 @@ export type ReviewWithDetails = {
   status: string;
   created_at: string;
   updated_at: string;
+  category_ratings: Record<string, number> | null;
   reviewer: { full_name: string | null; avatar_url: string | null } | null;
   reviewee: { full_name: string | null } | null;
   car: { brand: string; model: string } | null;

@@ -12,12 +12,21 @@ import { FaStar } from "react-icons/fa";
 import { RxDividerHorizontal } from "react-icons/rx";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
+import { CategoryRatingInput } from "@/components/reviews/CategoryRatingInput";
+
+const RENTER_CATEGORIES = [
+  { key: "cleanliness", label: "Cleanliness" },
+  { key: "accuracy", label: "Accuracy" },
+  { key: "communication", label: "Communication" },
+  { key: "value", label: "Value" },
+];
 
 export const RentalReview = () => {
   const { bookingId } = useParams();
   const navigate = useNavigate();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [isRenter, setIsRenter] = useState(false);
@@ -158,8 +167,7 @@ export const RentalReview = () => {
 
       const imageUrls = await Promise.all(uploadPromises);
 
-      // Create the review with image URLs
-      // Car reviews are about the rental experience and should be displayed on car detail pages
+      // Create the review with image URLs and category ratings
       const reviewType = "car";
       const { error: reviewError } = await supabase.from("reviews").insert({
         booking_id: bookingId,
@@ -170,6 +178,7 @@ export const RentalReview = () => {
         comment,
         review_images: imageUrls,
         review_type: reviewType,
+        category_ratings: categoryRatings,
         updated_at: new Date().toISOString(),
       });
 
@@ -353,6 +362,26 @@ export const RentalReview = () => {
             <Separator />
           </div>
 
+          <div className="space-y-3 text-left">
+            <h6 className="font-normal text-gray-400 text-sm md:text-base text-center">
+              Rate Each Category
+            </h6>
+            <CategoryRatingInput
+              categories={RENTER_CATEGORIES}
+              ratings={categoryRatings}
+              onChange={(newRatings) => {
+                setCategoryRatings(newRatings);
+                // Auto-calculate overall rating from category averages
+                const values = Object.values(newRatings);
+                if (values.length > 0) {
+                  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                  setRating(Math.round(avg * 2) / 2); // Round to nearest 0.5
+                }
+              }}
+            />
+            <Separator />
+          </div>
+
           <div className="space-y-2 text-left">
             <h6 className="font-normal text-gray-400 text-sm md:text-base text-center">
               Your Overall Rating
@@ -400,7 +429,7 @@ export const RentalReview = () => {
 
           <Button
             onClick={handleSubmitReview}
-            disabled={rating === 0 || isSubmitting}
+            disabled={rating === 0 || Object.keys(categoryRatings).length < RENTER_CATEGORIES.length || isSubmitting}
             className="w-full"
           >
             {isSubmitting ? "Submitting..." : "Submit Review"}
