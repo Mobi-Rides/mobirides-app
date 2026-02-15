@@ -1397,6 +1397,7 @@ export type Database = {
           host_location: Json | null
           host_ready: boolean | null
           id: string
+          is_interactive: boolean | null
           renter_id: string
           renter_location: Json | null
           renter_ready: boolean | null
@@ -1417,6 +1418,7 @@ export type Database = {
           host_location?: Json | null
           host_ready?: boolean | null
           id?: string
+          is_interactive?: boolean | null
           renter_id: string
           renter_location?: Json | null
           renter_ready?: boolean | null
@@ -1437,6 +1439,7 @@ export type Database = {
           host_location?: Json | null
           host_ready?: boolean | null
           id?: string
+          is_interactive?: boolean | null
           renter_id?: string
           renter_location?: Json | null
           renter_ready?: boolean | null
