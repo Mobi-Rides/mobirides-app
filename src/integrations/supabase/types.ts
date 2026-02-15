@@ -4223,13 +4223,17 @@ export type Database = {
       }
       bytea_to_text: { Args: { data: string }; Returns: string }
       calculate_car_rating: { Args: { car_uuid: string }; Returns: number }
-      calculate_category_ratings: { Args: { car_uuid: string }; Returns: Json }
+      calculate_category_ratings: { Args: { p_car_id: string }; Returns: Json }
       calculate_commission: {
         Args: { booking_total: number; rate?: number }
         Returns: number
       }
       calculate_handover_progress: {
         Args: { handover_session_id_param: string }
+        Returns: Json
+      }
+      calculate_renter_category_ratings: {
+        Args: { p_renter_id: string }
         Returns: Json
       }
       calculate_user_rating: { Args: { user_uuid: string }; Returns: number }

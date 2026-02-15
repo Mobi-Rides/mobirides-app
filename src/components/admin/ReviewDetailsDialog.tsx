@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Star, User, Car, Calendar, Check, Flag, EyeOff } from "lucide-react";
 import type { ReviewWithDetails } from "@/pages/admin/AdminReviews";
+import { CategoryRatingDisplay } from "@/components/reviews/CategoryRatingDisplay";
 
 interface ReviewDetailsDialogProps {
   review: ReviewWithDetails | null;
@@ -102,6 +103,16 @@ export const ReviewDetailsDialog = ({
             </div>
             <span className="text-sm text-muted-foreground">({review.rating}/5)</span>
           </div>
+
+          {/* Category Ratings */}
+          {review.category_ratings && typeof review.category_ratings === 'object' && Object.keys(review.category_ratings as Record<string, number>).length > 0 && (
+            <div>
+              <p className="text-sm font-medium mb-2">Category Ratings:</p>
+              <div className="bg-muted p-3 rounded-lg">
+                <CategoryRatingDisplay categoryAverages={review.category_ratings as Record<string, number>} />
+              </div>
+            </div>
+          )}
 
           {/* Comment */}
           <div>
