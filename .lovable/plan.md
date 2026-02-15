@@ -1,139 +1,121 @@
-# Destination Selector for Dynamic Pricing -- Step 2 of Booking Wizard
-
-## Context
-
-Step 2 of the booking wizard currently shows only the pickup location with a "Change" button and a date summary. The approved plan calls for a **destination type selector** on this same step, tied to dynamic pricing multipliers. This scoping document details the UX/UI design and technical integration.
-
-## Current State (Step 2)
-
-```text
-+------------------------------------+
-|  Step 2: Pickup Location           |
-|                                    |
-|  [Pin icon] Pickup Location        |
-|  Default: Gaborone, Botswana       |
-|                                    |
-|  [ Change Location ]  (full width) |
-|                                    |
-|  Feb 15 - Feb 18, 2026 . 4 days   |
-+------------------------------------+
-|       [ Back ]    [ Next ]         |
-+------------------------------------+
-```
-
-No destination selector exists. The `useDynamicPricing` hook feeds location coordinates to `DynamicPricingService`, which currently only has rules for weekend, seasonal, early bird, demand, and loyalty -- no destination/distance rule.
-
-## Proposed UX/UI (Mobile-First)
-
-Step 2 becomes two sections stacked vertically -- pickup location (existing) followed by the new destination selector. One screen, one scroll, two clear sections.
-
-```text
-+------------------------------------+
-| [1] [2*] [3] [4]  progress bar    |
-+------------------------------------+
-|  Pickup & Destination              |
-|  Confirm pickup and trip type      |
-+------------------------------------+
-|                                    |
-|  PICKUP LOCATION                   |
-|  [Pin] Default: Gaborone          |
-|  [ Change Location ]              |
-|                                    |
-|  --------------------------------  |
-|                                    |
-|  WHERE ARE YOU HEADING?            |
-|                                    |
-|  [  Local Trip                  ]  |
-|  Within 90km of pickup             |
-|  No distance surcharge             |
-|                                    |
-|  [  Out of Zone                 ]  |
-|  Beyond 90km from pickup           |
-|  +50% distance premium             |
-|                                    |
-|  [  Cross-Border                ]  |
-|  Traveling to another country      |
-|  +100% cross-border premium         |
-|                                    |
-|  Feb 15 - Feb 18 . 4 days         |
-+------------------------------------+
-|       [ Back ]    [ Next ]         |
-+------------------------------------+
-```
-
-### Design Principles Applied
-
-1. **One action per screen** -- The user makes one decision: trip type. Pickup location is pre-filled and only changes if they tap "Change."
-2. **Radio-card pattern** -- Each option is a tappable card with a radio indicator, title, subtitle, and pricing impact. Selected card gets a primary border + subtle background. This is a standard mobile pattern (similar to Uber's ride type selector).
-3. **Immediate price feedback** -- Each card shows the surcharge percentage. No hidden costs.
-4. **Default selection** -- "Local Trip" is pre-selected (no surcharge), so the user can tap "Next" without interaction if they are staying local.
-5. **No extra screens** -- Three options fit comfortably on one mobile screen without scrolling past the fold on 390x844 viewports (iPhone 14 / similar).
-
-### Visual Specs
-
-- **Section label**: "WHERE ARE YOU HEADING?" -- uppercase muted text, 10px, matches existing section header patterns
-- **Cards**: `border rounded-lg p-4` with `space-y-3` between them
-- **Selected state**: `border-primary bg-primary/5` with a filled radio circle
-- **Unselected state**: `border-border` with an empty radio circle
-- **Title**: `text-sm font-medium`
-- **Subtitle**: `text-xs text-muted-foreground`
-- **Badge**: Inline text showing surcharge (e.g., "+15%") in `text-orange-500` for premiums, `text-green-600` for "No surcharge"
-
-## Technical Integration
-
-### New State in BookingDialog
-
-A single state variable:
-
-```typescript
-type DestinationType = 'local' | 'out_of_zone' | 'cross_border';
-const [destinationType, setDestinationType] = useState<DestinationType>('local');
-```
-
-### New Pricing Rule in DynamicPricingService
-
-Add a `DESTINATION` rule type to `PricingRuleType` enum and two new rules in `getDefaultPricingRules()`:
 
 
-| Destination    | Multiplier | Priority |
-| -------------- | ---------- | -------- |
-| Local (< 90km) | 1.0        | N/A      |
-| Out of Zone    | 1.50       | 105      |
-| Cross-Border   | 2          | 105      |
+# Phase 4: Detailed Reviews -- Revised Implementation Plan
 
+## Pre-Implementation Findings (Documentation Check)
 
-The rule evaluation will check a new `destination_type` field on `PricingRequest` rather than calculating distance from coordinates.
+A thorough audit revealed several misalignments between the existing backend and our planned categories:
 
-### Data Flow
+| Area | Current State | Required Action |
+|------|--------------|-----------------|
+| DB function `calculate_category_ratings` | Uses keys: `cleanliness`, `punctuality`, `responsiveness`, `car_condition`, `rental_experience` | Must be updated to new keys |
+| Existing `category_ratings` data | All 8 reviews have empty `{}` | No migration needed -- safe to change keys |
+| `calculate_category_ratings` RPC | Never called from frontend | Will be wired up for car detail page |
+| `calculate_car_rating` RPC | Used by `CarListing.tsx` and `RenterView.tsx`, defaults to 4.0 | No changes needed -- continues to work |
+| `RentalReview.tsx` | Never writes `category_ratings` | Must be updated to save category data |
+| Admin `ReviewDetailsDialog` | Only shows overall rating | Should display category breakdown |
+| Recency weighting | Not implemented | Simple average for now (all reviews equal weight) |
 
-1. User selects destination type on Step 2
-2. `destinationType` state updates
-3. `useDynamicPricing` hook is extended to accept an optional `destinationType` parameter
-4. `DynamicPricingService.calculatePrice` evaluates the destination rule alongside existing rules
-5. `UnifiedPriceSummary` on Step 4 displays it as an applied rule line item (e.g., "Cross-border premium (+30%)")
+---
 
-### New Component
+## Finalized Category Keys
 
-`**DestinationTypeSelector.tsx**` -- a self-contained component:
+**Renter reviewing Car/Host** (`review_type: "car"`):
+- `cleanliness` -- How clean was the car at pickup
+- `accuracy` -- Did the car match the listing
+- `communication` -- Host responsiveness
+- `value` -- Worth the price
 
-- Props: `selectedType: DestinationType`, `onSelect: (type: DestinationType) => void`
-- Renders three radio-cards
-- No external dependencies beyond shadcn primitives
+**Host reviewing Renter** (`review_type: "host_to_renter"`):
+- `punctuality` -- On-time pickup and return
+- `car_care` -- Condition of car on return
+- `communication` -- Renter responsiveness
 
-## File Changes
+---
 
+## Implementation Steps
 
-| File                                                 | Change                                                                                                          |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `src/components/booking/DestinationTypeSelector.tsx` | New component -- three radio-cards                                                                              |
-| `src/components/booking/BookingDialog.tsx`           | Add `destinationType` state, render selector in Step 2, pass to pricing hook                                    |
-| `src/types/pricing.ts`                               | Add `DESTINATION` to `PricingRuleType` enum, add `destination_type` to `PricingRequest` and `PricingConditions` |
-| `src/services/dynamicPricingService.ts`              | Add two destination rules, add `evaluateDestinationRule` method                                                 |
-| `src/hooks/useDynamicPricing.ts`                     | Accept optional `destinationType` param, pass to service                                                        |
+### Step 1: Reusable Components (New Files)
 
+**`src/components/reviews/CategoryRatingInput.tsx`**
+- Props: `categories: { key: string; label: string }[]`, `ratings: Record<string, number>`, `onChange`
+- Renders a compact list of category labels each with 5 tappable stars
+- Mobile-first: labels left-aligned, stars right-aligned, each row 44px touch target
+- Used by both `RentalReview.tsx` and the new host review page
+
+**`src/components/reviews/CategoryRatingDisplay.tsx`**
+- Props: `categoryAverages: Record<string, number>`, `reviewCount: number`
+- Renders compact star rows: category label on the left, filled stars + numeric score on the right
+- Gracefully hides categories with 0 reviews (legacy backfill handling)
+- Used by `CarReviews.tsx` header area
+
+### Step 2: Update RentalReview.tsx (Renter Review Form)
+
+- Import `CategoryRatingInput` with renter categories (cleanliness, accuracy, communication, value)
+- Add `categoryRatings` state: `Record<string, number>`
+- Insert category rating section between the car image and the overall rating
+- Overall rating auto-calculated as average of category ratings (rounded to nearest 0.5)
+- Save `category_ratings` jsonb alongside `rating` on submit
+- Validation: require all 4 categories rated before submit
+
+### Step 3: Host Review Page (New Route)
+
+- New file: `src/pages/HostRentalReview.tsx`
+- Route: `/review/host/:bookingId`
+- Same layout pattern as `RentalReview.tsx` but with host categories (punctuality, car_care, communication)
+- `review_type` set to `"host_to_renter"`
+- Accessible from host booking management when booking status is completed
+- Overall rating auto-calculated from category averages
+
+### Step 4: Update CarReviews.tsx (Car Detail Page Display)
+
+- Call `calculate_category_ratings` RPC to fetch category averages
+- Render `CategoryRatingDisplay` in the card header area, below the review count
+- Each individual review card: show category breakdown inline (collapsible) if `category_ratings` is non-empty
+- Legacy reviews (empty categories): show only overall star rating (current behavior preserved)
+
+### Step 5: Update DB Function
+
+- ALTER the `calculate_category_ratings` function to use new keys: `cleanliness`, `accuracy`, `communication`, `value` for car reviews
+- Add a second branch or separate function for host-to-renter category keys: `punctuality`, `car_care`, `communication`
+- Keep simple averaging (no recency weighting for now -- all published reviews weighted equally)
+
+### Step 6: Admin ReviewDetailsDialog Update
+
+- Show category breakdown when `category_ratings` is non-empty
+- Reuse `CategoryRatingDisplay` component
+- No new admin routes needed
+
+---
+
+## Averaging Logic (Addressing the "Over Time" Concern)
+
+- **Simple average**: All published reviews contribute equally regardless of age
+- **Backfill safe**: Legacy reviews with empty `category_ratings` are excluded from category averages (the DB function already handles this with the `category_ratings ? category_key` check)
+- **Overall rating**: Continues to use the `rating` column (via `calculate_car_rating`), which averages ALL reviews. Category averages are supplementary detail only.
+- **Future consideration**: Recency-weighted or rolling-window averages can be added later by modifying the DB function without frontend changes
+
+---
+
+## File Changes Summary
+
+| File | Action |
+|------|--------|
+| `src/components/reviews/CategoryRatingInput.tsx` | New -- reusable star input per category |
+| `src/components/reviews/CategoryRatingDisplay.tsx` | New -- compact star row display |
+| `src/pages/RentalReview.tsx` | Edit -- add category ratings to form and submission |
+| `src/pages/HostRentalReview.tsx` | New -- host review page with host-specific categories |
+| `src/components/car-details/CarReviews.tsx` | Edit -- fetch and display category averages |
+| `src/components/admin/ReviewDetailsDialog.tsx` | Edit -- show category breakdown |
+| `src/App.tsx` | Edit -- add `/review/host/:bookingId` route |
+| DB: `calculate_category_ratings` function | Edit -- update category keys |
+
+---
 
 ## Edge Cases
 
-- **Default**: "Local Trip" pre-selected so the wizard "Next" button works immediately without forcing a tap
-- **Changing pickup location**: Does NOT auto-detect destination type (we cannot know where they are driving). The user must explicitly select.
-- **Price recalculation**: Changing destination type triggers a debounced recalc via `useDynamicPricing` (existing 250ms debounce)
+- **Legacy reviews**: Display overall rating only; excluded from category averages
+- **Partial category ratings**: If a user somehow submits with some categories missing, DB function skips nulls via the `?` operator
+- **Duplicate review prevention**: Already handled by existing check in `RentalReview.tsx` (queries for existing review by booking + reviewer)
+- **Host review access**: Only the host of the booking can access `/review/host/:bookingId`; validated by checking `booking.cars.owner_id === user.id`
+
