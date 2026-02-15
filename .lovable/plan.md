@@ -1,121 +1,86 @@
 
 
-# Phase 4: Detailed Reviews -- Revised Implementation Plan
+## Phase 3 Fixes: Real-Time Payment Deadline + Admin Transaction Atomicity
 
-## Pre-Implementation Findings (Documentation Check)
+### Validation Summary
 
-A thorough audit revealed several misalignments between the existing backend and our planned categories:
+**S16 -- 24-hour payment deadline not used in UI: CONFIRMED -- NOT COMPLETE**
 
-| Area | Current State | Required Action |
-|------|--------------|-----------------|
-| DB function `calculate_category_ratings` | Uses keys: `cleanliness`, `punctuality`, `responsiveness`, `car_condition`, `rental_experience` | Must be updated to new keys |
-| Existing `category_ratings` data | All 8 reviews have empty `{}` | No migration needed -- safe to change keys |
-| `calculate_category_ratings` RPC | Never called from frontend | Will be wired up for car detail page |
-| `calculate_car_rating` RPC | Used by `CarListing.tsx` and `RenterView.tsx`, defaults to 4.0 | No changes needed -- continues to work |
-| `RentalReview.tsx` | Never writes `category_ratings` | Must be updated to save category data |
-| Admin `ReviewDetailsDialog` | Only shows overall rating | Should display category breakdown |
-| Recency weighting | Not implemented | Simple average for now (all reviews equal weight) |
+| Area | Current State | Gap |
+|------|--------------|-----|
+| `BookingWithRelations` type | Missing `payment_deadline` field | Must add `payment_deadline?: string` |
+| `RenterPaymentModal` (line 112) | Hardcoded `Date.now() + 24h` | Must use `booking.payment_deadline` from DB |
+| `PaymentDeadlineTimer` | Updates every 60 seconds | Must update every 1 second for real-time feel |
+| `RentalDetailsRefactored` | Timer only inside modal | Must show timer on the page when status is `awaiting_payment` |
+| `RenterBookingCard` | No timer shown | Must show compact timer for `awaiting_payment` bookings |
+| DB column | `payment_deadline` exists as `timestamptz` | Column exists; data is written on host approval -- no DB change needed |
 
----
+**S17 -- Payment deadline enforcement: CONFIRMED -- NOT COMPLETE**
 
-## Finalized Category Keys
+| Area | Current State | Gap |
+|------|--------------|-----|
+| `handleExpiredBookings` (bookingService.ts) | Only expires `pending` bookings past `start_date` | Must also expire `awaiting_payment` bookings past `payment_deadline` |
+| `expire-bookings` edge function | Correctly queries `awaiting_payment` + `payment_deadline` | Edge function is fine; client-side function is missing this logic |
+| Caller integration | `handleExpiredBookings` is not called from RentalDetails or booking list pages | Must call on page load in RenterBookings and RentalDetailsRefactored |
 
-**Renter reviewing Car/Host** (`review_type: "car"`):
-- `cleanliness` -- How clean was the car at pickup
-- `accuracy` -- Did the car match the listing
-- `communication` -- Host responsiveness
-- `value` -- Worth the price
+**Admin Transaction Atomicity View: NOT IMPLEMENTED**
 
-**Host reviewing Renter** (`review_type: "host_to_renter"`):
-- `punctuality` -- On-time pickup and return
-- `car_care` -- Condition of car on return
-- `communication` -- Renter responsiveness
+The admin Financial Dashboard has 4 siloed tabs (Ledger, Payments, Withdrawals, Insurance) with no way to trace a single booking's full financial lifecycle.
 
 ---
 
-## Implementation Steps
+### Implementation Plan
 
-### Step 1: Reusable Components (New Files)
+#### Task 1: Add `payment_deadline` to BookingWithRelations type
+- File: `src/types/booking.ts`
+- Add `payment_deadline?: string` to the interface (no DB migration needed -- column already exists)
 
-**`src/components/reviews/CategoryRatingInput.tsx`**
-- Props: `categories: { key: string; label: string }[]`, `ratings: Record<string, number>`, `onChange`
-- Renders a compact list of category labels each with 5 tappable stars
-- Mobile-first: labels left-aligned, stars right-aligned, each row 44px touch target
-- Used by both `RentalReview.tsx` and the new host review page
+#### Task 2: Upgrade PaymentDeadlineTimer to real-time (1-second updates)
+- File: `src/components/booking/PaymentDeadlineTimer.tsx`
+- Change interval from 60000ms to 1000ms
+- Add seconds display: `Xh Xm Xs remaining`
+- Add `variant` prop: `"full"` (default, with label) and `"compact"` (just the countdown, for cards)
 
-**`src/components/reviews/CategoryRatingDisplay.tsx`**
-- Props: `categoryAverages: Record<string, number>`, `reviewCount: number`
-- Renders compact star rows: category label on the left, filled stars + numeric score on the right
-- Gracefully hides categories with 0 reviews (legacy backfill handling)
-- Used by `CarReviews.tsx` header area
+#### Task 3: Fix RenterPaymentModal to use actual deadline
+- File: `src/components/booking/RenterPaymentModal.tsx`
+- Replace line 112's hardcoded `Date.now() + 24h` with `booking.payment_deadline`
+- Add fallback: if `payment_deadline` is null, use `booking.created_at + 24h`
 
-### Step 2: Update RentalReview.tsx (Renter Review Form)
+#### Task 4: Show PaymentDeadlineTimer on RentalDetailsRefactored page
+- File: `src/pages/RentalDetailsRefactored.tsx`
+- When `booking.status === 'awaiting_payment'`, render `PaymentDeadlineTimer` above the action buttons using the real `booking.payment_deadline`
 
-- Import `CategoryRatingInput` with renter categories (cleanliness, accuracy, communication, value)
-- Add `categoryRatings` state: `Record<string, number>`
-- Insert category rating section between the car image and the overall rating
-- Overall rating auto-calculated as average of category ratings (rounded to nearest 0.5)
-- Save `category_ratings` jsonb alongside `rating` on submit
-- Validation: require all 4 categories rated before submit
+#### Task 5: Show compact timer on RenterBookingCard
+- File: `src/components/renter-bookings/RenterBookingCard.tsx`
+- When `booking.status === 'awaiting_payment'`, show a compact `PaymentDeadlineTimer` below the price line
 
-### Step 3: Host Review Page (New Route)
+#### Task 6: Extend handleExpiredBookings for awaiting_payment
+- File: `src/services/bookingService.ts`
+- Add a second query: fetch bookings with `status = 'awaiting_payment'` and `payment_deadline < now()`
+- Update those to `status: 'expired'`, `payment_status: 'expired'`
+- Send notification to renter about expired payment window
 
-- New file: `src/pages/HostRentalReview.tsx`
-- Route: `/review/host/:bookingId`
-- Same layout pattern as `RentalReview.tsx` but with host categories (punctuality, car_care, communication)
-- `review_type` set to `"host_to_renter"`
-- Accessible from host booking management when booking status is completed
-- Overall rating auto-calculated from category averages
+#### Task 7: Call handleExpiredBookings on page load
+- Files: `src/pages/RenterBookings.tsx`, `src/pages/RentalDetailsRefactored.tsx`
+- Call `handleExpiredBookings()` in a `useEffect` on mount so stale bookings get cleaned up when users visit these pages
 
-### Step 4: Update CarReviews.tsx (Car Detail Page Display)
+#### Task 8: Admin Transaction Atomicity View
+- Create `src/components/admin/finance/TransactionJourneyDialog.tsx`
+  - A dialog/sheet that opens when an admin clicks a payment row
+  - Shows a vertical stepper/timeline with these stages:
+    1. Booking Created (date, renter, car, amount)
+    2. Host Approved (date, status changed to awaiting_payment)
+    3. Payment Initiated (method, provider reference)
+    4. Payment Confirmed (provider response, amount received)
+    5. Commission Deducted (15% amount, commission transaction ID)
+    6. Host Wallet Credited (85% amount, wallet transaction ID)
+    7. Earnings Released (date released or "Pending -- releases on [date]")
+  - Each step shows green check if complete, grey circle if pending, red X if failed
+  - Data sourced by joining `bookings`, `wallet_transactions`, `payment_transactions` (if table exists), and `commission_rates`
+- Update `src/components/admin/finance/PaymentTransactionsTable.tsx` to add a "View Journey" button per row that opens the dialog
 
-- Call `calculate_category_ratings` RPC to fetch category averages
-- Render `CategoryRatingDisplay` in the card header area, below the review count
-- Each individual review card: show category breakdown inline (collapsible) if `category_ratings` is non-empty
-- Legacy reviews (empty categories): show only overall star rating (current behavior preserved)
-
-### Step 5: Update DB Function
-
-- ALTER the `calculate_category_ratings` function to use new keys: `cleanliness`, `accuracy`, `communication`, `value` for car reviews
-- Add a second branch or separate function for host-to-renter category keys: `punctuality`, `car_care`, `communication`
-- Keep simple averaging (no recency weighting for now -- all published reviews weighted equally)
-
-### Step 6: Admin ReviewDetailsDialog Update
-
-- Show category breakdown when `category_ratings` is non-empty
-- Reuse `CategoryRatingDisplay` component
-- No new admin routes needed
-
----
-
-## Averaging Logic (Addressing the "Over Time" Concern)
-
-- **Simple average**: All published reviews contribute equally regardless of age
-- **Backfill safe**: Legacy reviews with empty `category_ratings` are excluded from category averages (the DB function already handles this with the `category_ratings ? category_key` check)
-- **Overall rating**: Continues to use the `rating` column (via `calculate_car_rating`), which averages ALL reviews. Category averages are supplementary detail only.
-- **Future consideration**: Recency-weighted or rolling-window averages can be added later by modifying the DB function without frontend changes
-
----
-
-## File Changes Summary
-
-| File | Action |
-|------|--------|
-| `src/components/reviews/CategoryRatingInput.tsx` | New -- reusable star input per category |
-| `src/components/reviews/CategoryRatingDisplay.tsx` | New -- compact star row display |
-| `src/pages/RentalReview.tsx` | Edit -- add category ratings to form and submission |
-| `src/pages/HostRentalReview.tsx` | New -- host review page with host-specific categories |
-| `src/components/car-details/CarReviews.tsx` | Edit -- fetch and display category averages |
-| `src/components/admin/ReviewDetailsDialog.tsx` | Edit -- show category breakdown |
-| `src/App.tsx` | Edit -- add `/review/host/:bookingId` route |
-| DB: `calculate_category_ratings` function | Edit -- update category keys |
-
----
-
-## Edge Cases
-
-- **Legacy reviews**: Display overall rating only; excluded from category averages
-- **Partial category ratings**: If a user somehow submits with some categories missing, DB function skips nulls via the `?` operator
-- **Duplicate review prevention**: Already handled by existing check in `RentalReview.tsx` (queries for existing review by booking + reviewer)
-- **Host review access**: Only the host of the booking can access `/review/host/:bookingId`; validated by checking `booking.cars.owner_id === user.id`
+### Technical Notes
+- No database migrations required -- all columns already exist
+- No new edge functions needed -- the existing `expire-bookings` function already handles the server-side expiry correctly
+- The client-side `handleExpiredBookings` serves as a best-effort catch for users who visit the app between cron runs
 
