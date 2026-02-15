@@ -1,193 +1,139 @@
-# Comprehensive Booking Flow, Reviews, Insurance, and Payment Fix
+# Destination Selector for Dynamic Pricing -- Step 2 of Booking Wizard
 
-## Problems Identified
+## Context
 
-### 1. Booking Dialog -- Mobile UX Disaster
+Step 2 of the booking wizard currently shows only the pickup location with a "Change" button and a date summary. The approved plan calls for a **destination type selector** on this same step, tied to dynamic pricing multipliers. This scoping document details the UX/UI design and technical integration.
 
-The entire booking flow is crammed into a single scrollable `DialogContent`:
+## Current State (Step 2)
 
-- Calendar, location picker, promo code input, price summary (displayed TWICE), and insurance package selector all on one screen
-- On mobile (390px wide), this creates an extremely long scroll with no sense of progress
-- The `UnifiedPriceSummary` component is rendered twice (compact at line 760 AND full at line 783)
-- A stray "Change" button (line 773-779) sits inside the summary section with no context
-- Insurance packages render as a 2-column grid (`md:grid-cols-2`) that stacks to a single massive vertical list on mobile
-
-### 2. Insurance Pricing -- Build Error and Signature Mismatch
-
-- `InsurancePackageSelector` interface defines `onPackageSelect: (packageId: string, totalPremium: number) => void` (2 args)
-- `BookingDialog` passes a 3-argument callback `(pkgId, premium, pkgName)` at line 802 -- TypeScript error TS2322
-- The insurance calculation logic itself is correct (percentage of daily rental rate x days), but the wiring is broken
-
-### 3. Reviews -- Simple Rating Only, No Detailed Categories
-
-- `RentalReview.tsx` only captures a single overall star rating (1-5) and a text comment
-- No multi-category ratings (cleanliness, punctuality, communication, car condition, etc.) despite the memory stating this is implemented
-- The review is a generic "car" type for all submissions -- no differentiation between renter reviewing host vs host reviewing renter
-- No detailed category breakdown is ever collected or stored
-
-### 4. Payment Not Triggering
-
-- Booking is created with `status: "pending"` (line 357 in BookingDialog)
-- The "Pay Now" button in `RentalActions.tsx` only shows when `booking.status === 'awaiting_payment'`
-- But `payment_status` is not in the `BookingWithRelations` type (build error TS2339 at line 63)
-- There is no flow that transitions a booking from `pending` to `awaiting_payment` after host approval
-- The `useBookingPayment` hook and `mockBookingPaymentService` exist but are never invoked from the booking flow
-
-### 5. Dynamic Pricing Type Mismatch
-
-- `types/pricing.ts` defines `PricingCalculation` with: `base_price`, `applied_rules`, `total_multiplier`, `final_price`
-- `UnifiedPriceSummary.tsx` defines its own `PricingCalculation` with: `final_price`, `original_price`, `is_dynamic`, `multiplier`
-- These are incompatible -- BookingDialog tries to pass one as the other (errors TS2739 at lines 764, 787)
-- Line 350 references `calculation?.multiplier` which does not exist on the pricing type (`total_multiplier` is the correct field)
-
-### 6. ReceiptModal -- Missing All Imports
-
-- `ReceiptModal.tsx` uses `Dialog`, `Card`, `Button`, `Calendar`, `MapPin`, `User`, `Car`, `Download`, `Receipt`, `format`, and `BookingWithRelations` but imports NONE of them except `UnifiedPriceSummary`
-
-### 7. Admin Finance Tables -- Supabase Relation Errors
-
-- `PaymentTransactionsTable` joins `profiles:user_id(...)` but Supabase cannot find a foreign key relationship between `payment_transactions.user_id` and `profiles`
-- `WithdrawalRequestsTable` has the same issue with `profiles:host_id(...)`
-- Fix: Use separate queries instead of joins, or use `.from('profiles').select().eq('id', ...)`
-
-### 8. Push Notifications -- TypeScript Error
-
-- `pushManager` property on `ServiceWorkerRegistration` is not recognized
-- Needs a type assertion or the `@types/web-push` / lib reference
-
----
-
-## Implementation Plan
-
-### Phase 1: Fix All Build Errors (Priority -- unblocks everything)
-
-**1a. Fix `BookingWithRelations` type** -- Add missing fields:
-
-- `payment_status?: string`
-- `base_rental_price?: number`
-- `dynamic_pricing_multiplier?: number`
-- `insurance_premium?: number`
-- `insurance_policy_id?: string`
-- `discount_amount?: number`
-- `promo_code_id?: string`
-
-**1b. Fix `UnifiedPriceSummary` PricingCalculation** -- Remove the duplicate local interface and import from `@/types/pricing`, adding an adapter/mapping if needed. The component will accept `dynamicPricing` as optional props with `final_price` and `total_multiplier`.
-
-**1c. Fix BookingDialog line 350** -- Change `calculation?.multiplier` to `calculation?.total_multiplier`
-
-**1d. Fix InsurancePackageSelector signature** -- Add `packageName?: string` as a third optional parameter to `onPackageSelect` in the interface
-
-**1e. Fix ReceiptModal** -- Add all missing imports (`Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `Card`, `CardHeader`, `CardTitle`, `CardContent`, `Button`, `Calendar`, `MapPin`, `User`, `Car as CarIcon`, `Download`, `Receipt` from lucide, `format` from date-fns, `BookingWithRelations` from types)
-
-**1f. Fix admin finance tables** -- Replace foreign key joins with manual profile lookups (two-step query pattern)
-
-**1g. Fix push notifications** -- Add `as any` type assertions for `pushManager` or add proper Web Push API type references
-
-### Phase 2: Mobile-First Step-by-Step Booking Flow
-
-Replace the single monolithic dialog with a multi-step wizard:
-
-**Step 1 -- Select Dates** (one screen)
-
-- Calendar component
-- Selected date summary
-- "Next" button
-
-**Step 2 -- Pickup Location** & Destination (one screen)
-
-- Location display with "Change" button
-- Map picker (opens as overlay)
-- Destination: (Option 1 - Within 90km of pickup; Option 2 - Out of Zone, +90km; Option 3 - Cross-border) * this is tied to the dynamic pricing multipliers
-- "Next" / "Back" buttons
-
-**Step 3 -- Protection Plan** (one screen)
-
-- Insurance package selector (carousel options on both mobile and desktop, cards scroll vertically)
-- "Next" / "Back" buttons
-
-**Step 4 -- Review and Confirm** (one screen)
-
-- `UnifiedPriceSummary` with full breakdown including destination multiplier
-- Promo code input
-- "Confirm Booking" / "Back" buttons
-
-Implementation: Add a `currentStep` state variable (1-4) and conditionally render each step. Use a progress indicator at the top. Wrap in a `Sheet` (bottom drawer) on mobile instead of a centered `Dialog`.
-
-### Phase 3: Payment Flow Integration
-
-**3a. Host approval triggers `awaiting_payment`:**
-
-- When host approves a booking (changes status from `pending` to `confirmed`), intercept and set status to `awaiting_payment` instead
-- Add a 24-hour payment deadline (per the payment architecture memory)
-
-**3b. Wire up payment in RentalDetails:**
-
-- The "Pay Now" button in `RentalActions` should invoke `useBookingPayment` hook
-- Open `RenterPaymentModal` when clicked
-- On successful payment, transition from `awaiting_payment` to `confirmed`
-
-**3c. Payment deadline enforcement:**
-
-- Use the existing `PaymentDeadlineTimer` component
-- Auto-expire bookings past 24 hours via `handleExpiredBookings`
-
-### Phase 4: Detailed Multi-Category Review System
-
-Replace the simple single-rating `RentalReview` with role-specific category ratings:
-
-**Renter reviewing Host/Car:**
-
-- Overall rating (1-5 stars)
-- Car cleanliness (1-5)
-- Car condition  (1-5)
-- Host communication (1-5)
-- Value for money (1-5)
-- Text comment + photo upload
-
-**Host reviewing Renter:**
-
-- Overall rating (1-5 stars)
-- Car care (1-5)
-- Punctuality (1-5)
-- Communication (1-5)
-- Rule adherence (1-5)
-- Text comment
-
-Implementation:
-
-- Create a `DetailedRatingInput` component with category sliders/stars
-- Store category ratings as a JSONB field `category_ratings` on the `reviews` table (or individual columns)
-- Calculate aggregate from category averages
-- Keep the step-by-step mobile-first UX (one category per screen or grouped 2-3 per screen)
-
-### Phase 5: Insurance Display Fix (if calculation is wrong)
-
-The insurance calculation logic in `InsuranceService.calculatePremium` is actually correct:
-
-```
-premiumPerDay = dailyRentalAmount x premium_percentage x riskMultiplier
-totalPremium = premiumPerDay x numberOfDays
+```text
++------------------------------------+
+|  Step 2: Pickup Location           |
+|                                    |
+|  [Pin icon] Pickup Location        |
+|  Default: Gaborone, Botswana       |
+|                                    |
+|  [ Change Location ]  (full width) |
+|                                    |
+|  Feb 15 - Feb 18, 2026 . 4 days   |
++------------------------------------+
+|       [ Back ]    [ Next ]         |
++------------------------------------+
 ```
 
-The issue may be in the database `insurance_packages` table where `premium_percentage` might be stored as a whole number (e.g., 25 instead of 0.25). This needs to be verified by querying the actual package data. If the percentage is stored correctly (0.25 for 25%), the formula is correct.
+No destination selector exists. The `useDynamicPricing` hook feeds location coordinates to `DynamicPricingService`, which currently only has rules for weekend, seasonal, early bird, demand, and loyalty -- no destination/distance rule.
 
----
+## Proposed UX/UI (Mobile-First)
 
-## File Changes Summary
+Step 2 becomes two sections stacked vertically -- pickup location (existing) followed by the new destination selector. One screen, one scroll, two clear sections.
+
+```text
++------------------------------------+
+| [1] [2*] [3] [4]  progress bar    |
++------------------------------------+
+|  Pickup & Destination              |
+|  Confirm pickup and trip type      |
++------------------------------------+
+|                                    |
+|  PICKUP LOCATION                   |
+|  [Pin] Default: Gaborone          |
+|  [ Change Location ]              |
+|                                    |
+|  --------------------------------  |
+|                                    |
+|  WHERE ARE YOU HEADING?            |
+|                                    |
+|  [  Local Trip                  ]  |
+|  Within 90km of pickup             |
+|  No distance surcharge             |
+|                                    |
+|  [  Out of Zone                 ]  |
+|  Beyond 90km from pickup           |
+|  +50% distance premium             |
+|                                    |
+|  [  Cross-Border                ]  |
+|  Traveling to another country      |
+|  +100% cross-border premium         |
+|                                    |
+|  Feb 15 - Feb 18 . 4 days         |
++------------------------------------+
+|       [ Back ]    [ Next ]         |
++------------------------------------+
+```
+
+### Design Principles Applied
+
+1. **One action per screen** -- The user makes one decision: trip type. Pickup location is pre-filled and only changes if they tap "Change."
+2. **Radio-card pattern** -- Each option is a tappable card with a radio indicator, title, subtitle, and pricing impact. Selected card gets a primary border + subtle background. This is a standard mobile pattern (similar to Uber's ride type selector).
+3. **Immediate price feedback** -- Each card shows the surcharge percentage. No hidden costs.
+4. **Default selection** -- "Local Trip" is pre-selected (no surcharge), so the user can tap "Next" without interaction if they are staying local.
+5. **No extra screens** -- Three options fit comfortably on one mobile screen without scrolling past the fold on 390x844 viewports (iPhone 14 / similar).
+
+### Visual Specs
+
+- **Section label**: "WHERE ARE YOU HEADING?" -- uppercase muted text, 10px, matches existing section header patterns
+- **Cards**: `border rounded-lg p-4` with `space-y-3` between them
+- **Selected state**: `border-primary bg-primary/5` with a filled radio circle
+- **Unselected state**: `border-border` with an empty radio circle
+- **Title**: `text-sm font-medium`
+- **Subtitle**: `text-xs text-muted-foreground`
+- **Badge**: Inline text showing surcharge (e.g., "+15%") in `text-orange-500` for premiums, `text-green-600` for "No surcharge"
+
+## Technical Integration
+
+### New State in BookingDialog
+
+A single state variable:
+
+```typescript
+type DestinationType = 'local' | 'out_of_zone' | 'cross_border';
+const [destinationType, setDestinationType] = useState<DestinationType>('local');
+```
+
+### New Pricing Rule in DynamicPricingService
+
+Add a `DESTINATION` rule type to `PricingRuleType` enum and two new rules in `getDefaultPricingRules()`:
 
 
-| File                                                        | Action                                                 |
-| ----------------------------------------------------------- | ------------------------------------------------------ |
-| `src/types/booking.ts`                                      | Add payment/pricing fields to BookingWithRelations     |
-| `src/components/booking/UnifiedPriceSummary.tsx`            | Remove duplicate PricingCalculation, import from types |
-| `src/components/booking/BookingDialog.tsx`                  | Rewrite as multi-step wizard, fix type references      |
-| `src/components/insurance/InsurancePackageSelector.tsx`     | Fix onPackageSelect signature (add packageName param)  |
-| `src/components/shared/ReceiptModal.tsx`                    | Add all missing imports                                |
-| `src/components/admin/finance/PaymentTransactionsTable.tsx` | Replace join with manual lookup                        |
-| `src/components/admin/finance/WithdrawalRequestsTable.tsx`  | Replace join with manual lookup                        |
-| `src/hooks/usePushNotifications.ts`                         | Fix pushManager type                                   |
-| `src/utils/pushNotifications.ts`                            | Fix pushManager type                                   |
-| `src/components/rental-details/RentalActions.tsx`           | Wire payment_status check properly                     |
-| `src/pages/RentalReview.tsx`                                | Add detailed multi-category rating UI                  |
-| `src/components/reviews/DetailedRatingInput.tsx`            | New -- category rating component                       |
-| `src/components/booking/BookingWizardStep.tsx`              | New -- step wrapper component                          |
+| Destination    | Multiplier | Priority |
+| -------------- | ---------- | -------- |
+| Local (< 90km) | 1.0        | N/A      |
+| Out of Zone    | 1.50       | 105      |
+| Cross-Border   | 2          | 105      |
+
+
+The rule evaluation will check a new `destination_type` field on `PricingRequest` rather than calculating distance from coordinates.
+
+### Data Flow
+
+1. User selects destination type on Step 2
+2. `destinationType` state updates
+3. `useDynamicPricing` hook is extended to accept an optional `destinationType` parameter
+4. `DynamicPricingService.calculatePrice` evaluates the destination rule alongside existing rules
+5. `UnifiedPriceSummary` on Step 4 displays it as an applied rule line item (e.g., "Cross-border premium (+30%)")
+
+### New Component
+
+`**DestinationTypeSelector.tsx**` -- a self-contained component:
+
+- Props: `selectedType: DestinationType`, `onSelect: (type: DestinationType) => void`
+- Renders three radio-cards
+- No external dependencies beyond shadcn primitives
+
+## File Changes
+
+
+| File                                                 | Change                                                                                                          |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `src/components/booking/DestinationTypeSelector.tsx` | New component -- three radio-cards                                                                              |
+| `src/components/booking/BookingDialog.tsx`           | Add `destinationType` state, render selector in Step 2, pass to pricing hook                                    |
+| `src/types/pricing.ts`                               | Add `DESTINATION` to `PricingRuleType` enum, add `destination_type` to `PricingRequest` and `PricingConditions` |
+| `src/services/dynamicPricingService.ts`              | Add two destination rules, add `evaluateDestinationRule` method                                                 |
+| `src/hooks/useDynamicPricing.ts`                     | Accept optional `destinationType` param, pass to service                                                        |
+
+
+## Edge Cases
+
+- **Default**: "Local Trip" pre-selected so the wizard "Next" button works immediately without forcing a tap
+- **Changing pickup location**: Does NOT auto-detect destination type (we cannot know where they are driving). The user must explicitly select.
+- **Price recalculation**: Changing destination type triggers a debounced recalc via `useDynamicPricing` (existing 250ms debounce)
