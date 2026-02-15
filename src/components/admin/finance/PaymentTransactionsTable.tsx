@@ -31,7 +31,6 @@ interface PaymentTransaction {
   host_earnings: number | null;
   profiles: {
     full_name: string | null;
-    email: string | null;
   } | null;
 }
 
@@ -41,17 +40,26 @@ const usePaymentTransactions = () => {
     queryFn: async (): Promise<PaymentTransaction[]> => {
       const { data, error } = await supabase
         .from("payment_transactions")
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Fetch profiles separately
+      const userIds = [...new Set((data || []).map(t => t.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      return (data || []).map(txn => ({
+        ...txn,
+        profiles: profileMap.get(txn.user_id) ? {
+          full_name: profileMap.get(txn.user_id)!.full_name,
+        } : null,
+      })) as PaymentTransaction[];
     },
   });
 };
@@ -62,7 +70,6 @@ export const PaymentTransactionsTable = () => {
 
   const filteredTransactions = transactions?.filter(txn =>
     txn.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    txn.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     txn.provider_reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     txn.status.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -140,7 +147,6 @@ export const PaymentTransactionsTable = () => {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">{txn.profiles?.full_name || "Unknown"}</span>
-                        <span className="text-xs text-muted-foreground">{txn.profiles?.email}</span>
                       </div>
                     </TableCell>
                     <TableCell className="font-bold">

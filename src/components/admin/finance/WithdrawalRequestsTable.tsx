@@ -26,7 +26,6 @@ interface WithdrawalRequest {
   created_at: string;
   profiles: {
     full_name: string | null;
-    email: string | null;
   } | null;
 }
 
@@ -36,17 +35,26 @@ const useWithdrawalRequests = () => {
     queryFn: async (): Promise<WithdrawalRequest[]> => {
       const { data, error } = await supabase
         .from("withdrawal_requests")
-        .select(`
-          *,
-          profiles:host_id (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Fetch profiles separately
+      const hostIds = [...new Set((data || []).map(r => r.host_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", hostIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      return (data || []).map(req => ({
+        ...req,
+        profiles: profileMap.get(req.host_id) ? {
+          full_name: profileMap.get(req.host_id)!.full_name,
+        } : null,
+      })) as WithdrawalRequest[];
     },
   });
 };
@@ -131,7 +139,6 @@ export const WithdrawalRequestsTable = () => {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">{req.profiles?.full_name || "Unknown"}</span>
-                        <span className="text-xs text-muted-foreground">{req.profiles?.email}</span>
                       </div>
                     </TableCell>
                     <TableCell className="font-bold">

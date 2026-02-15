@@ -60,7 +60,7 @@ export const RentalActions = ({
     <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
       <TooltipProvider>
         {/* Pay Now Button */}
-        {booking.status === 'awaiting_payment' && booking.payment_status !== 'paid' && isRenter && (
+        {booking.status === 'awaiting_payment' && (booking as any).payment_status !== 'paid' && isRenter && (
            <Button
              className="w-full sm:w-auto flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
              onClick={onPayNow}

@@ -1386,7 +1386,12 @@ export type Database = {
         Row: {
           booking_id: string
           created_at: string | null
+          current_step_order: number | null
           handover_completed: boolean | null
+          handover_location_lat: number | null
+          handover_location_lng: number | null
+          handover_location_name: string | null
+          handover_location_type: string | null
           handover_type: Database["public"]["Enums"]["handover_type"]
           host_id: string
           host_location: Json | null
@@ -1396,11 +1401,17 @@ export type Database = {
           renter_location: Json | null
           renter_ready: boolean | null
           updated_at: string | null
+          waiting_for: string | null
         }
         Insert: {
           booking_id: string
           created_at?: string | null
+          current_step_order?: number | null
           handover_completed?: boolean | null
+          handover_location_lat?: number | null
+          handover_location_lng?: number | null
+          handover_location_name?: string | null
+          handover_location_type?: string | null
           handover_type?: Database["public"]["Enums"]["handover_type"]
           host_id: string
           host_location?: Json | null
@@ -1410,11 +1421,17 @@ export type Database = {
           renter_location?: Json | null
           renter_ready?: boolean | null
           updated_at?: string | null
+          waiting_for?: string | null
         }
         Update: {
           booking_id?: string
           created_at?: string | null
+          current_step_order?: number | null
           handover_completed?: boolean | null
+          handover_location_lat?: number | null
+          handover_location_lng?: number | null
+          handover_location_name?: string | null
+          handover_location_type?: string | null
           handover_type?: Database["public"]["Enums"]["handover_type"]
           host_id?: string
           host_location?: Json | null
@@ -1424,6 +1441,7 @@ export type Database = {
           renter_location?: Json | null
           renter_ready?: boolean | null
           updated_at?: string | null
+          waiting_for?: string | null
         }
         Relationships: [
           {
@@ -1456,10 +1474,15 @@ export type Database = {
           completion_data: Json | null
           created_at: string
           handover_session_id: string | null
+          host_completed: boolean | null
+          host_completed_at: string | null
           id: string
           is_completed: boolean | null
+          renter_completed: boolean | null
+          renter_completed_at: string | null
           step_name: string
           step_order: number
+          step_owner: string | null
           updated_at: string
         }
         Insert: {
@@ -1468,10 +1491,15 @@ export type Database = {
           completion_data?: Json | null
           created_at?: string
           handover_session_id?: string | null
+          host_completed?: boolean | null
+          host_completed_at?: string | null
           id?: string
           is_completed?: boolean | null
+          renter_completed?: boolean | null
+          renter_completed_at?: string | null
           step_name: string
           step_order: number
+          step_owner?: string | null
           updated_at?: string
         }
         Update: {
@@ -1480,10 +1508,15 @@ export type Database = {
           completion_data?: Json | null
           created_at?: string
           handover_session_id?: string | null
+          host_completed?: boolean | null
+          host_completed_at?: string | null
           id?: string
           is_completed?: boolean | null
+          renter_completed?: boolean | null
+          renter_completed_at?: string | null
           step_name?: string
           step_order?: number
+          step_owner?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -4157,6 +4190,16 @@ export type Database = {
       }
     }
     Functions: {
+      advance_handover_step: {
+        Args: {
+          p_completed_step_name: string
+          p_completion_data?: Json
+          p_session_id: string
+          p_user_id: string
+          p_user_role: string
+        }
+        Returns: Json
+      }
       analyze_conversation_query_performance: {
         Args: never
         Returns: {
