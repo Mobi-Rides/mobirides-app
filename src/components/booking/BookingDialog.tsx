@@ -39,6 +39,7 @@ import {
   calculateDiscount,
   PromoCode
 } from "@/services/promoCodeService";
+import { DestinationTypeSelector, DestinationType } from "./DestinationTypeSelector";
 
 interface BookingDialogProps {
   car: Car;
@@ -82,6 +83,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   // Promo Code State
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+  const [destinationType, setDestinationType] = useState<DestinationType>('local');
 
   const basePrice = useMemo(() => {
     if (!startDate || !endDate) return undefined;
@@ -100,6 +102,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     pickupLocation?.latitude,
     pickupLocation?.longitude,
     userId ?? undefined,
+    destinationType,
   );
 
   const [selectedInsurancePackageId, setSelectedInsurancePackageId] = useState<string | null>(null);
@@ -710,13 +713,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             <DialogHeader className="pb-3">
               <DialogTitle className="text-lg">
                 {wizardStep === 1 && "Select Dates"}
-                {wizardStep === 2 && "Pickup Location"}
+                {wizardStep === 2 && "Pickup & Destination"}
                 {wizardStep === 3 && "Damage Protection"}
                 {wizardStep === 4 && "Review & Confirm"}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
                 {wizardStep === 1 && `Choose your rental dates for ${car.brand} ${car.model}`}
-                {wizardStep === 2 && "Confirm or change the pickup location"}
+                {wizardStep === 2 && "Confirm pickup and trip type"}
                 {wizardStep === 3 && "Choose your protection level (optional)"}
                 {wizardStep === 4 && "Review your booking details and confirm"}
               </DialogDescription>
@@ -805,6 +808,14 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     Change Location
                   </Button>
                 </div>
+
+                <div className="border-t border-border/50" />
+
+                {/* Destination type selector */}
+                <DestinationTypeSelector
+                  selectedType={destinationType}
+                  onSelect={setDestinationType}
+                />
 
                 {/* Date summary reminder */}
                 <div className="bg-muted/50 rounded-lg p-3 text-sm">
