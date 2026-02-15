@@ -1,3 +1,9 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, User, Car, Download, Receipt } from "lucide-react";
+import { format } from "date-fns";
+import { BookingWithRelations } from "@/types/booking";
 import { UnifiedPriceSummary } from "../booking/UnifiedPriceSummary";
 
 interface ReceiptModalProps {

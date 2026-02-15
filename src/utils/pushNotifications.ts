@@ -28,7 +28,7 @@ export async function subscribeToPush() {
         return;
       }
       
-      const subscription = await reg.pushManager.subscribe({
+      const subscription = await (reg as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(response.vapidKey),
       });

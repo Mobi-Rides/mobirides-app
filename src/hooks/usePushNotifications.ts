@@ -14,7 +14,7 @@ export function usePushNotifications() {
       
       // Check if already subscribed
       navigator.serviceWorker.ready.then(registration => {
-        return registration.pushManager.getSubscription();
+        return (registration as any).pushManager?.getSubscription();
       }).then(subscription => {
         setIsSubscribed(!!subscription);
       });
@@ -48,7 +48,7 @@ export function usePushNotifications() {
     try {
       const registration = await navigator.serviceWorker.getRegistration();
       if (registration) {
-        const subscription = await registration.pushManager.getSubscription();
+        const subscription = await (registration as any).pushManager?.getSubscription();
         if (subscription) {
           await subscription.unsubscribe();
           setIsSubscribed(false);

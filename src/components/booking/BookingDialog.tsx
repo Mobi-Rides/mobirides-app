@@ -347,7 +347,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           end_time: endTime,
           total_price: totalPrice,
           base_rental_price: basePrice,
-          dynamic_pricing_multiplier: calculation?.multiplier || 1.0,
+          dynamic_pricing_multiplier: calculation?.total_multiplier || 1.0,
           insurance_premium: insurancePremium,
           // insurance_policy_id set below after policy creation
           discount_amount: discountValue,
@@ -761,7 +761,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                       basePrice={basePrice || 0}
                       pricePerDay={car.price_per_day}
                       numberOfDays={Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                      dynamicPricing={calculation || undefined}
+                      dynamicPricing={calculation ? {
+                        final_price: calculation.final_price,
+                        original_price: calculation.base_price,
+                        is_dynamic: calculation.total_multiplier !== 1,
+                        multiplier: calculation.total_multiplier,
+                      } : undefined}
                       insurancePremium={insurancePremium}
                       insurancePackageName={selectedInsurancePackageName}
                       discountAmount={discountAmount}
@@ -784,7 +789,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                         basePrice={basePrice}
                         pricePerDay={car.price_per_day}
                         numberOfDays={Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                        dynamicPricing={calculation || undefined}
+                        dynamicPricing={calculation ? {
+                          final_price: calculation.final_price,
+                          original_price: calculation.base_price,
+                          is_dynamic: calculation.total_multiplier !== 1,
+                          multiplier: calculation.total_multiplier,
+                        } : undefined}
                         insurancePremium={insurancePremium}
                         insurancePackageName={selectedInsurancePackageName}
                         discountAmount={discountAmount}
@@ -799,10 +809,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                         startDate={startDate}
                         endDate={endDate}
                         selectedPackageId={selectedInsurancePackageId || undefined}
-                        onPackageSelect={(pkgId, premium, pkgName) => {
+                        onPackageSelect={(pkgId, premium) => {
                           setSelectedInsurancePackageId(pkgId);
                           setInsurancePremium(premium);
-                          if (pkgName) setSelectedInsurancePackageName(pkgName);
                         }}
                         userId={userId || undefined}
                         carId={car.id}
