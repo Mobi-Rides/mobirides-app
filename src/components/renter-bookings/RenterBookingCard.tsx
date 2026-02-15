@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Check, X, MapPin, CalendarDays, RotateCcw, Star, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer";
 
 interface RenterBookingCardProps {
   booking: Booking;
@@ -146,6 +147,13 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
                 )}
               </div>
             </div>
+            {booking.status === 'awaiting_payment' && (
+              <PaymentDeadlineTimer
+                deadline={booking.payment_deadline || new Date(new Date(booking.created_at).getTime() + 24 * 60 * 60 * 1000).toISOString()}
+                variant="compact"
+                className="text-xs"
+              />
+            )}
           </div>
         </div>
       </CardContent>

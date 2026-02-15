@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { differenceInHours, differenceInMinutes } from "date-fns";
+import { differenceInHours, differenceInMinutes, differenceInSeconds } from "date-fns";
 
 interface PaymentDeadlineTimerProps {
   deadline: string | Date;
   className?: string;
+  variant?: 'full' | 'compact';
 }
 
 export const PaymentDeadlineTimer: React.FC<PaymentDeadlineTimerProps> = ({
   deadline,
-  className
+  className,
+  variant = 'full'
 }) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [urgency, setUrgency] = useState<'normal' | 'warning' | 'critical'>('normal');
@@ -20,31 +22,38 @@ export const PaymentDeadlineTimer: React.FC<PaymentDeadlineTimerProps> = ({
       const now = new Date();
       const deadlineDate = new Date(deadline);
       
-      const hoursLeft = differenceInHours(deadlineDate, now);
-      const minutesLeft = differenceInMinutes(deadlineDate, now) % 60;
+      const totalSeconds = differenceInSeconds(deadlineDate, now);
 
-      if (hoursLeft < 0) {
+      if (totalSeconds <= 0) {
         setTimeLeft("Expired");
         setUrgency('critical');
         return;
       }
 
-      if (hoursLeft < 2) {
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      if (hours < 2) {
         setUrgency('critical');
-      } else if (hoursLeft < 6) {
+      } else if (hours < 6) {
         setUrgency('warning');
       } else {
         setUrgency('normal');
       }
 
-      setTimeLeft(`${hoursLeft}h ${minutesLeft}m remaining`);
+      if (variant === 'compact') {
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s remaining`);
+      }
     };
 
     calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 60000); // Update every minute
+    const interval = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(interval);
-  }, [deadline]);
+  }, [deadline, variant]);
 
   return (
     <div className={cn(
@@ -55,7 +64,11 @@ export const PaymentDeadlineTimer: React.FC<PaymentDeadlineTimerProps> = ({
       className
     )}>
       <Clock className="h-4 w-4" />
-      <span>Payment deadline: {timeLeft}</span>
+      {variant === 'full' ? (
+        <span>Payment deadline: {timeLeft}</span>
+      ) : (
+        <span>{timeLeft}</span>
+      )}
     </div>
   );
 };

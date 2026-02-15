@@ -13,8 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, CreditCard, Calendar } from "lucide-react";
+import { Search, CreditCard, Eye } from "lucide-react";
+import { TransactionJourneyDialog } from "./TransactionJourneyDialog";
 
 interface PaymentTransaction {
   id: string;
@@ -66,6 +68,7 @@ const usePaymentTransactions = () => {
 
 export const PaymentTransactionsTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [journeyBookingId, setJourneyBookingId] = useState<string | null>(null);
   const { data: transactions, isLoading, error } = usePaymentTransactions();
 
   const filteredTransactions = transactions?.filter(txn =>
@@ -139,6 +142,7 @@ export const PaymentTransactionsTable = () => {
                   <TableHead>Provider Ref</TableHead>
                   <TableHead>Split (Host/Plat)</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -174,6 +178,18 @@ export const PaymentTransactionsTable = () => {
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(txn.created_at).toLocaleString()}
                     </TableCell>
+                    <TableCell>
+                      {txn.booking_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setJourneyBookingId(txn.booking_id)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Journey
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -181,6 +197,11 @@ export const PaymentTransactionsTable = () => {
           )}
         </CardContent>
       </Card>
+      <TransactionJourneyDialog
+        isOpen={!!journeyBookingId}
+        onClose={() => setJourneyBookingId(null)}
+        bookingId={journeyBookingId}
+      />
     </div>
   );
 };
