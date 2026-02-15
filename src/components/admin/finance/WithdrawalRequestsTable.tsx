@@ -46,7 +46,12 @@ const useWithdrawalRequests = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Handle the case where profiles might be returned as an array or object
+      return (data as any[]).map(req => ({
+        ...req,
+        profiles: Array.isArray(req.profiles) ? req.profiles[0] : req.profiles
+      })) || [];
     },
   });
 };

@@ -34,7 +34,9 @@ export const RentalPaymentDetails = ({
     is_dynamic: true,
     final_price: basePrice * dynamicMultiplier,
     original_price: basePrice,
-    multiplier: dynamicMultiplier
+    multiplier: dynamicMultiplier,
+    base_price: basePrice,
+    total_multiplier: dynamicMultiplier
   } : undefined;
 
   return (

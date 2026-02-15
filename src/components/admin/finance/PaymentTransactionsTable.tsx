@@ -51,7 +51,12 @@ const usePaymentTransactions = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Handle the case where profiles might be returned as an array or object
+      return (data as any[]).map(txn => ({
+        ...txn,
+        profiles: Array.isArray(txn.profiles) ? txn.profiles[0] : txn.profiles
+      })) || [];
     },
   });
 };

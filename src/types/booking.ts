@@ -14,6 +14,14 @@ export interface BookingWithRelations {
   early_return?: boolean;
   actual_end_date?: string;
   created_at: string;
+  payment_status?: string;
+  payment_deadline?: string;
+  payment_transaction_id?: string;
+  base_rental_price?: number;
+  dynamic_pricing_multiplier?: number;
+  insurance_premium?: number;
+  discount_amount?: number;
+  promo_code_id?: string;
   cars: {
     brand: string;
     model: string;

@@ -14,7 +14,7 @@ interface InsurancePackageSelectorProps {
   startDate: Date;
   endDate: Date;
   selectedPackageId?: string;
-  onPackageSelect: (packageId: string, totalPremium: number) => void;
+  onPackageSelect: (packageId: string, totalPremium: number, displayName?: string) => void;
   className?: string;
   userId?: string;
   carId?: string;
@@ -131,7 +131,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
               getPackageGradient(calc.packageName),
               selectedPackageId === calc.packageId && 'ring-2 ring-primary shadow-xl'
             )}
-            onClick={() => onPackageSelect(calc.packageId, calc.totalPremium)}
+            onClick={() => onPackageSelect(calc.packageId, calc.totalPremium, calc.displayName)}
           >
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
@@ -271,7 +271,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                 className="w-full"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onPackageSelect(calc.packageId, calc.totalPremium);
+                  onPackageSelect(calc.packageId, calc.totalPremium, calc.displayName);
                 }}
               >
                 {selectedPackageId === calc.packageId ? (

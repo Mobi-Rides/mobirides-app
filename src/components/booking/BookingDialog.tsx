@@ -799,10 +799,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                         startDate={startDate}
                         endDate={endDate}
                         selectedPackageId={selectedInsurancePackageId || undefined}
-                        onPackageSelect={(pkgId, premium, pkgName) => {
+                        onPackageSelect={(pkgId, premium, displayName) => {
                           setSelectedInsurancePackageId(pkgId);
                           setInsurancePremium(premium);
-                          if (pkgName) setSelectedInsurancePackageName(pkgName);
+                          if (displayName) setSelectedInsurancePackageName(displayName);
                         }}
                         userId={userId || undefined}
                         carId={car.id}
