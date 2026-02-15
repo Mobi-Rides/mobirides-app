@@ -18,7 +18,8 @@ import { RentalUserCard } from "@/components/rental-details/RentalUserCard";
 import { RentalDetailsSkeleton } from "@/components/rental-details/RentalDetailsSkeleton";
 import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetailsNotFound";
 import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
-// Extension status removed for simplification
+import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer";
+import { handleExpiredBookings } from "@/services/bookingService";
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
@@ -43,6 +44,10 @@ const RentalDetailsRefactored = () => {
   } = useRentalDetails();
 
 
+  // Expire stale bookings on mount
+  useEffect(() => {
+    handleExpiredBookings();
+  }, []);
 
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);
@@ -147,6 +152,14 @@ const RentalDetailsRefactored = () => {
         )}
 
         {/* Extension Status removed for simplification */}
+
+        {/* Payment Deadline Timer for awaiting_payment */}
+        {booking?.status === 'awaiting_payment' && (
+          <PaymentDeadlineTimer
+            deadline={booking.payment_deadline || new Date(new Date(booking.created_at).getTime() + 24 * 60 * 60 * 1000).toISOString()}
+            className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800"
+          />
+        )}
 
         {/* Actions with null check */}
         {booking?.id && (

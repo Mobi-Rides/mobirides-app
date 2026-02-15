@@ -108,8 +108,9 @@ export const RenterPaymentModal: React.FC<RenterPaymentModalProps> = ({
             </div>
           )}
 
-          {/* Fallback deadline if not present in DB yet */}
-          <PaymentDeadlineTimer deadline={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()} /> 
+          <PaymentDeadlineTimer 
+            deadline={booking.payment_deadline || new Date(new Date(booking.created_at).getTime() + 24 * 60 * 60 * 1000).toISOString()} 
+          />
 
           <div className="flex gap-3 pt-4">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={isProcessing}>

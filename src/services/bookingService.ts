@@ -10,30 +10,45 @@ export const handleExpiredBookings = async () => {
   console.log("Checking for expired booking requests...");
   try {
     const today = startOfDay(new Date());
+    const now = new Date().toISOString();
 
-    // Get all pending bookings where the start date is in the past
-    const { data: expiredBookings, error } = await supabase
+    // 1. Expire pending bookings where start_date has passed
+    const { data: expiredPending, error: pendingError } = await supabase
       .from("bookings")
       .select("*")
-      .eq("status", "pending") // Using string literal for database query
+      .eq("status", "pending")
       .lt("start_date", today.toISOString());
 
-    if (error) throw error;
+    if (pendingError) throw pendingError;
 
-    if (expiredBookings && expiredBookings.length > 0) {
-      // Update status to expired for expired bookings
-      // Use string literal for Supabase database interaction
+    if (expiredPending && expiredPending.length > 0) {
       const { error: updateError } = await supabase
         .from("bookings")
-        .update({ status: "expired" }) // Using string literal to match DB enum
-        .in(
-          "id",
-          expiredBookings.map((booking) => booking.id),
-        );
+        .update({ status: "expired" })
+        .in("id", expiredPending.map((b) => b.id));
 
       if (updateError) throw updateError;
+      console.log(`Expired ${expiredPending.length} pending bookings past start date`);
+    }
 
-      console.log(`Updated ${expiredBookings.length} expired booking requests`);
+    // 2. Expire awaiting_payment bookings where payment_deadline has passed
+    const { data: expiredPayment, error: paymentError } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("status", "awaiting_payment")
+      .not("payment_deadline", "is", null)
+      .lt("payment_deadline", now);
+
+    if (paymentError) throw paymentError;
+
+    if (expiredPayment && expiredPayment.length > 0) {
+      const { error: updateError } = await supabase
+        .from("bookings")
+        .update({ status: "expired", payment_status: "expired" })
+        .in("id", expiredPayment.map((b) => b.id));
+
+      if (updateError) throw updateError;
+      console.log(`Expired ${expiredPayment.length} awaiting_payment bookings past deadline`);
     }
   } catch (error) {
     console.error(

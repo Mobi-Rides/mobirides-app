@@ -15,6 +15,7 @@ export interface BookingWithRelations {
   actual_end_date?: string;
   created_at: string;
   payment_status?: string;
+  payment_deadline?: string;
   base_rental_price?: number;
   dynamic_pricing_multiplier?: number;
   insurance_premium?: number;
