@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -22,6 +24,8 @@ const EditCar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme } = useTheme();
+  const { user } = useAuth();
+  const { isAdmin, isLoading: adminLoading } = useIsAdmin();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
@@ -60,6 +64,21 @@ const EditCar = () => {
       setSelectedFeatures(car.features || []);
     }
   }, [car]);
+
+  // Restrict access to car owner or admin (so admins can replace images)
+  useEffect(() => {
+    if (car && user !== undefined && !adminLoading) {
+      const isOwner = user?.id === car.owner_id;
+      if (!isOwner && !isAdmin) {
+        toast({
+          title: "Access denied",
+          description: "You can only edit your own car listings.",
+          variant: "destructive",
+        });
+        navigate("/profile", { replace: true });
+      }
+    }
+  }, [car, user, isAdmin, adminLoading, navigate, toast]);
 
   const handleSubmit = async (formData: CarFormData, imageFiles: File[]) => {
     setIsSubmitting(true);
@@ -104,7 +123,7 @@ const EditCar = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || adminLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-2xl mx-auto p-4">
@@ -116,6 +135,15 @@ const EditCar = () => {
         <Navigation />
       </div>
     );
+  }
+
+  if (!car) {
+    return null;
+  }
+
+  const isOwner = user?.id === car.owner_id;
+  if (!isOwner && !isAdmin) {
+    return null;
   }
 
   const formData = car ? {

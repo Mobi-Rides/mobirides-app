@@ -6,6 +6,8 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useVerification } from "@/hooks/useVerification";
+import { useAuth } from "@/hooks/useAuth";
+import { VerificationService } from "@/services/verificationService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -433,6 +435,7 @@ export const SelfieVerificationStep: React.FC<SelfieVerificationStepProps> = ({
 }) => {
   const { verificationData, completeDocumentUpload, isLoading } =
     useVerification();
+  const { user } = useAuth();
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -475,6 +478,7 @@ export const SelfieVerificationStep: React.FC<SelfieVerificationStepProps> = ({
 
   /**
    * Submit selfie verification
+   * Uploads selfie to Supabase Storage then marks document upload complete.
    */
   const handleSubmit = async () => {
     if (!photoBlob) {
@@ -482,12 +486,25 @@ export const SelfieVerificationStep: React.FC<SelfieVerificationStepProps> = ({
       return;
     }
 
+    const userId = verificationData?.user_id || user?.id;
+    if (!userId) {
+      toast.error("User not authenticated");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
-      // In 3-step flow, selfie is no longer required
-      // Just mark document upload as complete
-      await completeDocumentUpload(verificationData?.user_id || '');
+      // Upload selfie to real storage (verification-selfies bucket)
+      const file = new File(
+        [photoBlob],
+        `selfie-${Date.now()}.${photoBlob.type?.includes("png") ? "png" : "jpg"}`,
+        { type: photoBlob.type || "image/jpeg" }
+      );
+      await VerificationService.uploadSelfie(userId, file);
+
+      // Mark document upload as complete (backend state)
+      await completeDocumentUpload(userId);
 
       toast.success("Selfie verification completed!");
 

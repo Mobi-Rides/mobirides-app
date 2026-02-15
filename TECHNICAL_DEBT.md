@@ -1,8 +1,22 @@
 # 🔧 **TECHNICAL DEBT TRACKER**
 
-**Last Updated:** December 4, 2025  
-**Total Debt Items:** 45 (2 resolved)  
-**Critical:** 14 | **High:** 17 | **Medium:** 14
+**Last Updated:** February 15, 2026  
+**Total Debt Items:** 47 (4 resolved)  
+**Critical:** 10 | **High:** 19 | **Medium:** 14
+
+---
+
+## 📌 **RECENT PROGRESS (Payment Flow)**
+
+**RentalDetails payment wiring (3b) — DONE**
+- **Pay Now** in `RentalActions` calls `onPayNow` (passed from `RentalDetailsRefactored`).
+- **RenterPaymentModal** opens when Pay Now is clicked; modal uses **useBookingPayment** hook.
+- On successful payment, booking transitions **awaiting_payment → confirmed** (and `payment_status: 'paid'`) via `useBookingPayment` / mock flow.
+- **24h deadline** is set when moving to `awaiting_payment` in `BookingRequestDetails`, `useBookingActions`, and `HostBookings` (`payment_deadline: now + 24h`).
+
+**Still to do (per payment architecture):**
+- **3a.** Use real **booking.payment_deadline** in UI (add to `BookingWithRelations`, use in `PaymentDeadlineTimer` in modal and on rental details page).
+- **3c.** **Payment deadline enforcement:** extend `handleExpiredBookings` to auto-expire `awaiting_payment` bookings past `payment_deadline`; ensure it is called from RentalDetails and/or booking flows.
 
 ---
 
@@ -15,12 +29,13 @@
 - **Effort:** 4 days
 - **Owner:** Backend Team
 
-### **2. File Upload Simulation**
-- **Files:** Multiple upload components
-- **Issue:** `setTimeout()` simulations instead of real file storage
-- **Impact:** 🔥 No actual file persistence
-- **Effort:** 3 days
+### **2. File Upload Simulation** ✅ RESOLVED (February 2026)
+- **Files:** `src/components/verification/steps/SelfieVerificationStep.tsx` (and other upload flows)
+- **Issue:** Selfie step showed "uploaded" but did not persist to storage; other flows already used Supabase Storage.
+- **Impact:** 🟢 RESOLVED - Selfie now uploaded to `verification-selfies` via `VerificationService.uploadSelfie()` before completing step.
+- **Resolution:** On submit, selfie blob is converted to `File`, uploaded via `VerificationService.uploadSelfie(userId, file)`, then `completeDocumentUpload(userId)` is called. DocumentUploadStep, handover photos, claims, car images, avatars already used real storage.
 - **Owner:** Full-stack Team
+- **Resolved Date:** February 2026
 
 ### **3. Dual Message Systems** ✅ RESOLVED (December 2025)
 - **Files:** `messages` table vs `conversation_messages`
@@ -44,11 +59,12 @@
 - **Effort:** 3 days
 - **Owner:** Backend Team
 
-### **6. Missing Admin Review UI**
-- **Issue:** Verification system has no admin interface
-- **Impact:** 🔥 Cannot approve user verifications
-- **Effort:** 5 days
+### **6. Missing Admin Review UI** ✅ RESOLVED (February 2026)
+- **Issue:** Verification system admin interface was previously missing.
+- **Impact:** 🟢 RESOLVED — Admin has Verifications tab (`/admin/verifications`), VerificationManagementTable, KYCVerificationTable, and VerificationReviewDialog for document review and approve/reject.
+- **Resolution:** User/KYC verification review and approval flow is implemented; car listing approval exists on dashboard as "Car Verification Queue" (CarVerificationTable).
 - **Owner:** Frontend Team
+- **Resolved Date:** February 2026
 
 ### **7. Earnings vs Balance Confusion**
 - **Files:** Wallet-related services
@@ -118,6 +134,20 @@
 - **Owner:** Backend Team
 - **Resolved Date:** December 4, 2025
 
+### **16. 24-hour payment deadline not used in UI (per payment architecture)**
+- **Files:** `src/types/booking.ts`, `src/components/booking/RenterPaymentModal.tsx`, rental details page
+- **Issue:** `payment_deadline` is set when booking goes to `awaiting_payment` but is missing from `BookingWithRelations`; `PaymentDeadlineTimer` in RenterPaymentModal uses hardcoded `Date.now() + 24h` instead of `booking.payment_deadline`; rental details page does not show countdown for awaiting_payment.
+- **Impact:** Users may see wrong deadline; no single source of truth from DB.
+- **Effort:** 0.5 day
+- **Owner:** Frontend Team
+
+### **17. Payment deadline enforcement (awaiting_payment auto-expire)**
+- **Files:** `src/services/bookingService.ts` (`handleExpiredBookings`), `RentalDetailsRefactored.tsx` (or equivalent entry points)
+- **Issue:** `handleExpiredBookings` only expires `pending` bookings with `start_date` in the past. It does not expire `awaiting_payment` bookings whose `payment_deadline` has passed. RentalDetails does not call expiry check when viewing an awaiting_payment booking.
+- **Impact:** Bookings can stay in awaiting_payment indefinitely after 24h; inventory not released.
+- **Effort:** 0.5 day
+- **Owner:** Backend / Full-stack Team
+
 ---
 
 ## 📊 **DETAILED DEBT INVENTORY**
@@ -133,12 +163,14 @@
 - [ ] Duplicate route components (Critical)
 - [ ] Missing image validation (Critical)
 - [ ] Location validation gaps (High)
-- [ ] No car approval workflow (Medium)
+- [ ] Car approval only on dashboard; add Pending approval tab to /admin/cars (Medium)
 
-#### **Booking System (5 items)**
+#### **Booking System (7 items)**
 - [ ] Mock payment integration (Critical)
 - [ ] No transaction atomicity (Critical)
 - [ ] Booking expiry logic incomplete (High)
+- [ ] **Payment deadline not in UI / PaymentDeadlineTimer hardcoded (High)** — see §16
+- [ ] **awaiting_payment auto-expire past payment_deadline (High)** — see §17
 - [ ] Location data inconsistency (High)
 - [ ] Missing booking analytics (Medium)
 
@@ -155,6 +187,7 @@
 - [ ] Float precision issues (High)
 - [ ] No audit trail (High)
 - [ ] Missing transaction reconciliation (Medium)
+- **Note:** RentalDetails Pay Now → RenterPaymentModal → useBookingPayment → confirmed is wired (§ Recent progress).
 
 #### **Notifications (5 items)**
 - [ ] Broken push notifications (Critical)
@@ -164,13 +197,13 @@
 - [ ] Notification preferences incomplete (Medium)
 
 #### **File Storage (4 items)**
-- [ ] Mock file uploads (Critical)
+- [x] ~~Mock file uploads~~ (Critical) ✅ RESOLVED — Selfie and other flows use real Supabase Storage
 - [ ] No file validation (Critical)
 - [ ] Missing CDN integration (High)
 - [ ] No image optimization (Medium)
 
 #### **Admin System (3 items)**
-- [ ] No verification review UI (Critical)
+- [x] ~~No verification review UI~~ (Critical) ✅ RESOLVED — Verifications tab + KYC review/approve flow implemented
 - [ ] Missing audit logging (High)
 - [ ] No analytics dashboard (Medium)
 
@@ -206,9 +239,10 @@
 ## 📈 **DEBT METRICS**
 
 ### **Technical Debt Ratio**
-- **Critical Issues:** 15/47 (32%)
-- **High Priority:** 18/47 (38%)
+- **Critical Issues:** 10/47 (21%)
+- **High Priority:** 19/47 (40%)
 - **Medium Priority:** 14/47 (30%)
+- **Resolved:** 4
 
 ### **By Effort Estimation**
 - **1-2 days:** 8 items

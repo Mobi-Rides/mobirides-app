@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -54,6 +55,7 @@ const useAdminCars = () => {
 };
 
 export const CarManagementTable = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -173,8 +175,17 @@ export const CarManagementTable = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditCar(car)}
+                          title="Quick edit (details & availability)"
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/edit-car/${car.id}`)}
+                          title="Edit listing & images"
+                        >
+                          Edit listing
                         </Button>
                         <Button
                           variant="ghost"

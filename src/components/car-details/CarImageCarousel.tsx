@@ -56,11 +56,13 @@ export const CarImageCarousel = ({ carId, mainImageUrl }: CarImageCarouselProps)
       <CarouselContent>
         {images.map((image) => (
           <CarouselItem key={image.id}>
-            <img
-              src={image.image_url}
-              alt="Car"
-              className="w-full h-64 object-cover rounded-lg"
-            />
+            <div className="w-full h-64 flex items-center justify-center bg-muted rounded-lg">
+              <img
+                src={image.image_url}
+                alt="Car"
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            </div>
           </CarouselItem>
         ))}
       </CarouselContent>

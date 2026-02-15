@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Search, CheckCircle, XCircle, Eye, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { PaginatedTable } from "./PaginatedTable";
 
@@ -63,6 +64,7 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
   isPreview = false, 
   maxItems = 5 
 }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const { data: cars, isLoading, error, refetch } = usePendingCars();
 
@@ -119,6 +121,14 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/edit-car/${car.id}`)}
+            title="Edit listing"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="sm">
             <Eye className="h-4 w-4" />
           </Button>
