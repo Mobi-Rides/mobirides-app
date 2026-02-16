@@ -1,114 +1,108 @@
 
 
-## Revised Migration History Recovery Plan (Branch-Safe)
+# Fix: Payment Flow and Pickup Guard
 
-### Root Cause Analysis
+## What's Wrong
 
-Lovable's migration tool applied local `.sql` files to the remote DB but recorded them with **deployment timestamps** instead of file timestamps. This created a two-way mismatch:
+Two linked bugs are preventing the payment flow from working:
 
-| Remote Timestamp (phantom) | Actual Local File | Local Timestamp |
-|---|---|---|
-| `20260115101900` | `20260115000002_create_message_reactions.sql` | `20260115000002` |
-| `20260205073041` | `20260204000000_create_payment_tables.sql` | `20260204000000` |
-| `20260205153215` | `20260205000003_add_awaiting_payment_enum.sql` | `20260205` prefix |
-| `20260207114919` | `20260207000003_fix_wallet_transactions_length.sql` | `20260207` prefix |
-| `20260207155058` | `20260207000004_fix_withdrawal_function.sql` | `20260207` prefix |
-| `20260207155420` | `20260207000005_setup_cron_jobs.sql` | `20260207` prefix |
+### Bug 1: "Pay Now" button never appears
+When a host clicks "Approve" on a booking card, the code sets the status to `awaiting_payment` but **does not set** `payment_status` or `payment_deadline`. The single-booking approval handler (line 143-146 in `HostBookings.tsx`) is missing these fields, unlike the bulk approval handler which correctly includes them.
 
-These 6 have matching local files -- just wrong remote timestamps.
+Additionally, the `HostBookingCard` status badge config doesn't include `awaiting_payment` as a status, so approved bookings waiting for payment may display incorrectly on the host side.
 
-The remaining 6 have **NO local file** -- the SQL only exists in remote:
-
-| Remote Timestamp | Migration Name | Content |
-|---|---|---|
-| `20260124122840` | `enforce_message_edit_limit` | UPDATE policy with 10-min edit window |
-| `20260125215428` | `fix_chat_policies_properly` | Security definer function for chat RLS |
-| `20260215111101` | `interactive_handover_overhaul` | Major handover schema changes |
-| `20260215112918` | `add_handover_progress_rpc` | Handover progress RPC function |
-| `20260215113344` | `interactive_handover_refinement` | Handover refinements |
-| `20260215121650` | (empty name) | Unknown -- needs investigation |
-
-### Why Placeholders Would Break Branching
-
-1. **Branch seeding** runs all local files on a fresh DB. Empty placeholders = missing tables, functions, and policies on branches.
-2. **Branch merging** compares migration histories. Mismatched timestamps cause merge failures.
-3. **Future `db push`** could try to re-apply or skip migrations incorrectly.
+### Bug 2: Renter can initiate pickup without paying
+The `isPendingPickup` logic in `useRentalDetails.ts` only checks if `booking.status === 'confirmed'` -- it does **not** verify that `payment_status === 'paid'`. This means a renter can initiate a vehicle pickup even when they haven't paid.
 
 ---
 
-### Phase 1: Extract Missing SQL from Remote
+## Fix Plan
 
-For the 6 remote-only migrations with no local file, we must create local files containing the **actual SQL** from the remote `schema_migrations.statements` column.
+### Step 1: Fix single-booking approval handler
+**File:** `src/pages/HostBookings.tsx` (lines 139-146)
 
-**Files to create (with real SQL content, not placeholders):**
-1. `supabase/migrations/20260124122840_enforce_message_edit_limit.sql` -- 10-minute message edit policy
-2. `supabase/migrations/20260125215428_fix_chat_policies_properly.sql` -- Chat RLS security definer fix
-3. `supabase/migrations/20260215111101_interactive_handover_overhaul.sql` -- Handover schema overhaul
-4. `supabase/migrations/20260215112918_add_handover_progress_rpc.sql` -- Handover progress RPC
-5. `supabase/migrations/20260215113344_interactive_handover_refinement.sql` -- Handover refinements
-6. `supabase/migrations/20260215121650_dashboard_applied_migration.sql` -- Investigate content; if truly empty, use a comment-only file
+Update `handleBookingAction` to include `payment_status` and `payment_deadline` when approving, matching the bulk handler:
 
-Using the remote timestamps as filenames ensures perfect alignment with what production already tracks.
-
-### Phase 2: Fix Duplicate Local Timestamps
-
-Three local files share the `20260207` prefix (no full timestamp). Rename to unique timestamps:
-
-- `20260205_add_awaiting_payment_enum.sql` -> `20260205000003_add_awaiting_payment_enum.sql` (already has this name)
-- `20260207000003_fix_wallet_transactions_length.sql` (already unique)
-- `20260207000004_fix_withdrawal_function.sql` (already unique)
-- `20260207000005_setup_cron_jobs.sql` (already unique)
-
-Check: the user's original `migration list` showed three rows with just `20260207` as local. Need to verify the actual filenames match -- if they are literally `20260207_*.sql` without the 6-digit suffix, rename them to include the suffix.
-
-### Phase 3: Delete Phantom Remote Entries
-
-Remove the 6 phantom remote entries (where the local file exists with a different timestamp) so they don't conflict:
-
-```text
-npx supabase migration repair 20260115101900 --status reverted --linked
-npx supabase migration repair 20260205073041 --status reverted --linked
-npx supabase migration repair 20260205153215 --status reverted --linked
-npx supabase migration repair 20260207114919 --status reverted --linked
-npx supabase migration repair 20260207155058 --status reverted --linked
-npx supabase migration repair 20260207155420 --status reverted --linked
+```typescript
+const handleBookingAction = useCallback(async (bookingId, action) => {
+  const newStatus = action === "approve" 
+    ? BookingStatus.AWAITING_PAYMENT 
+    : BookingStatus.CANCELLED;
+  
+  const { error } = await supabase
+    .from("bookings")
+    .update({ 
+      status: newStatus,
+      ...(action === "approve" ? {
+        payment_status: "unpaid",
+        payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      } : {})
+    })
+    .eq("id", bookingId);
+  // ...
 ```
 
-### Phase 4: Mark All Local Files as Applied in Remote
+### Step 2: Add payment guard to pickup initiation
+**File:** `src/hooks/useRentalDetails.ts` (line 123)
 
-After Phase 3, mark every local-only timestamp as applied so remote tracking matches:
+Add `payment_status === 'paid'` check to `isPendingPickup`:
 
-```text
-npx supabase migration repair 20260113224929 --status applied --linked
-npx supabase migration repair 20260115000001 --status applied --linked
-npx supabase migration repair 20260115000002 --status applied --linked
-npx supabase migration repair 20260126000000 --status applied --linked
-npx supabase migration repair 20260204000000 --status applied --linked
-npx supabase migration repair 20260205000003 --status applied --linked
-npx supabase migration repair 20260207000003 --status applied --linked
-npx supabase migration repair 20260207000004 --status applied --linked
-npx supabase migration repair 20260207000005 --status applied --linked
-npx supabase migration repair 20260215021631 --status applied --linked
-npx supabase migration repair 20260215121651 --status applied --linked
-npx supabase migration repair 20260216120000 --status applied --linked
+```typescript
+const isPendingPickup = booking && 
+  booking.status === 'confirmed' && 
+  booking.payment_status === 'paid' &&
+  !pickupSession && 
+  startDate && today >= startDate;
 ```
 
-(Adjust timestamps if Phase 2 renames change them.)
+### Step 3: Add "awaiting_payment" to HostBookingCard status badges
+**File:** `src/components/host-bookings/HostBookingCard.tsx` (line 57-63)
 
-### Phase 5: Verify
+Add the missing status entry so hosts can see "Awaiting Payment" on approved bookings:
 
-1. Run `npx supabase migration list --linked` -- every row should show matching Local and Remote columns
-2. Test branch creation: `npx supabase branches create test-branch` -- seeding should complete without errors
-3. Run `npx supabase db reset` locally -- all migrations should apply cleanly on fresh DB
+```typescript
+awaiting_payment: { 
+  label: "Awaiting Payment", 
+  variant: "secondary" as const, 
+  color: "bg-amber-100 text-amber-800" 
+},
+```
 
-### Execution Order
+### Step 4: Auto-open payment modal from navigation state
+**File:** `src/pages/RentalDetailsRefactored.tsx`
 
-Phase 1 and 2 can run in parallel (file creation/renaming). Phase 3 must run before Phase 4 (delete phantoms before marking locals). Phase 5 is verification after everything else.
+Read navigation state to auto-open the payment modal when arriving from a "Pay Now" click:
 
-### Risk Assessment
+```typescript
+useEffect(() => {
+  if (location.state?.openPayment && booking?.status === 'awaiting_payment') {
+    setIsPaymentModalOpen(true);
+  }
+}, [booking, location.state]);
+```
 
-- **Schema is intact** -- all SQL has already been executed on production. This plan only fixes tracking metadata.
-- **Branch-safe** -- real SQL in every local file means branch seeding produces a complete schema.
-- **Merge-safe** -- 1:1 timestamp alignment between local and remote eliminates merge conflicts.
-- **Rollback** -- if anything goes wrong, `migration repair --status applied` and `--status reverted` are reversible operations.
+### Step 5: Pass openPayment state from RenterBookingCard
+**File:** `src/components/renter-bookings/RenterBookingCard.tsx` (line 129-136)
+
+Update the "Pay Now" button to navigate with state:
+
+```typescript
+navigate(`/rental-details/${booking.id}`, { 
+  state: { openPayment: true } 
+});
+```
+
+---
+
+## Summary of Changes
+
+| File | Change |
+|------|--------|
+| `HostBookings.tsx` | Add `payment_status` and `payment_deadline` to single approval |
+| `useRentalDetails.ts` | Guard pickup behind `payment_status === 'paid'` |
+| `HostBookingCard.tsx` | Add `awaiting_payment` status badge |
+| `RentalDetailsRefactored.tsx` | Auto-open payment modal from nav state |
+| `RenterBookingCard.tsx` | Pass `openPayment` state on "Pay Now" click |
+
+No database migrations needed -- the columns (`payment_status`, `payment_deadline`) already exist on the `bookings` table.
 
