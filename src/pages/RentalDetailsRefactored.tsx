@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { useRentalDetails } from "@/hooks/useRentalDetails";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { CarDescription } from "@/components/car-details/CarDescription";
 import { CarOwner } from "@/components/car-details/CarOwner";
 import { RentalDetailsHeader } from "@/components/rental-details/RentalDetailsHeader";
@@ -43,6 +45,20 @@ const RentalDetailsRefactored = () => {
     id
   } = useRentalDetails();
 
+
+  // Query insurance package name
+  const { data: insurancePackageName } = useQuery({
+    queryKey: ['insurance-package-name', booking?.insurance_policy_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('insurance_policies' as any)
+        .select('insurance_packages(display_name)')
+        .eq('id', booking!.insurance_policy_id)
+        .single();
+      return (data as any)?.insurance_packages?.display_name || null;
+    },
+    enabled: !!booking?.insurance_policy_id,
+  });
 
   // Expire stale bookings on mount
   useEffect(() => {
@@ -155,6 +171,7 @@ const RentalDetailsRefactored = () => {
             discountAmount={booking.discount_amount || 0}
             dynamicMultiplier={booking.dynamic_pricing_multiplier || 1}
             isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
+            insurancePackageName={insurancePackageName || undefined}
           />
         )}
 

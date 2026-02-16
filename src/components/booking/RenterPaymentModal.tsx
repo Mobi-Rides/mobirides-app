@@ -39,14 +39,20 @@ export const RenterPaymentModal: React.FC<RenterPaymentModalProps> = ({
     }
   });
 
+  const days = Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const basePrice = booking.base_rental_price || (booking.cars.price_per_day * days);
+  const insurance = booking.insurance_premium || 0;
+  const discount = booking.discount_amount || 0;
+  const multiplier = booking.dynamic_pricing_multiplier || 1;
+
+  const dynamicPricing = (multiplier && multiplier !== 1) ? {
+    is_dynamic: true,
+    final_price: basePrice * multiplier,
+    original_price: basePrice,
+    multiplier
+  } : undefined;
+
   const handlePay = () => {
-    // Calculate derived values if missing from DB
-    const days = Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const basePrice = booking.cars.price_per_day * days;
-    
-    // Fallback logic if new fields are empty (migration support)
-    const insurance = 0; // Default to 0 if column not yet populated
-    const discount = 0;
     const dynamicAdj = booking.total_price - basePrice - insurance + discount;
 
     initiatePayment({
@@ -83,12 +89,13 @@ export const RenterPaymentModal: React.FC<RenterPaymentModalProps> = ({
 
         <div className="space-y-6 py-4">
           <UnifiedPriceSummary
-            basePrice={booking.cars.price_per_day * (Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1)}
+            basePrice={basePrice}
             pricePerDay={booking.cars.price_per_day}
-            numberOfDays={Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1}
-            insurancePremium={0} // TODO: Add insurance from booking
-            discountAmount={0} // TODO: Add discount from booking
-            variant="compact"
+            numberOfDays={days}
+            dynamicPricing={dynamicPricing}
+            insurancePremium={insurance}
+            discountAmount={discount}
+            variant="full"
             className="bg-muted/30 p-4 rounded-lg"
           />
 
