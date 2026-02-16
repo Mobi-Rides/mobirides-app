@@ -67,6 +67,7 @@ const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const NotificationsRefactored = lazy(() => import("@/pages/NotificationsRefactored"));
 const Messages = lazy(() => import("@/pages/Messages"));
 const RentalReview = lazy(() => import("./pages/RentalReview"));
+const HostRentalReview = lazy(() => import("./pages/HostRentalReview"));
 const RentalDetailsRefactored = lazy(
   () => import("./pages/RentalDetailsRefactored"),
 );
@@ -102,6 +103,7 @@ const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
 const SuperAdminAnalytics = lazy(() => import("@/pages/SuperAdminAnalytics"));
 const AdminPromoCodes = lazy(() => import("@/pages/admin/AdminPromoCodes"));
 const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"));
+const AdminRemittanceDashboard = lazy(() => import("@/components/insurance/AdminRemittanceDashboard").then(module => ({ default: module.AdminRemittanceDashboard })));
 
 // Insurance claims pages
 const UserClaimsList = lazy(() => import("@/components/insurance/UserClaimsList"));
@@ -233,6 +235,13 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <RentalReview />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/review/host/:bookingId" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HostRentalReview />
                             </ProtectedRoute>
                           </Suspense>
                         } />
@@ -474,6 +483,11 @@ function App() {
                         <Route path="/admin/claims" element={
                           <Suspense fallback={<LoadingView />}>
                             <AdminClaimsDashboard />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/remittances" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminRemittanceDashboard />
                           </Suspense>
                         } />
 

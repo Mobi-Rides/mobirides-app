@@ -17,12 +17,15 @@ import { RentalActions } from "@/components/rental-details/RentalActions";
 import { RentalUserCard } from "@/components/rental-details/RentalUserCard";
 import { RentalDetailsSkeleton } from "@/components/rental-details/RentalDetailsSkeleton";
 import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetailsNotFound";
-// Extension status removed for simplification
+import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
+import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer";
+import { handleExpiredBookings } from "@/services/bookingService";
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     booking,
@@ -41,6 +44,10 @@ const RentalDetailsRefactored = () => {
   } = useRentalDetails();
 
 
+  // Expire stale bookings on mount
+  useEffect(() => {
+    handleExpiredBookings();
+  }, []);
 
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);
@@ -136,10 +143,23 @@ const RentalDetailsRefactored = () => {
             pricePerDay={booking.cars.price_per_day}
             durationDays={rentalDurationDays}
             totalPrice={booking.total_price}
+            baseRentalPrice={booking.base_rental_price || booking.total_price}
+            insurancePremium={booking.insurance_premium || 0}
+            discountAmount={booking.discount_amount || 0}
+            dynamicMultiplier={booking.dynamic_pricing_multiplier || 1}
+            isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
           />
         )}
 
         {/* Extension Status removed for simplification */}
+
+        {/* Payment Deadline Timer for awaiting_payment */}
+        {booking?.status === 'awaiting_payment' && (
+          <PaymentDeadlineTimer
+            deadline={booking.payment_deadline || new Date(new Date(booking.created_at).getTime() + 24 * 60 * 60 * 1000).toISOString()}
+            className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800"
+          />
+        )}
 
         {/* Actions with null check */}
         {booking?.id && (
@@ -154,9 +174,22 @@ const RentalDetailsRefactored = () => {
             isRenter={isRenter}
             onHandoverInitiate={onInitiateHandover}
             onExtensionRequested={handleExtensionUpdate}
+            onPayNow={() => setIsPaymentModalOpen(true)}
           />
         )}
       </div>
+
+      {booking && (
+        <RenterPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          booking={booking}
+          onPaymentSuccess={() => {
+            // Trigger refresh
+            handleExtensionUpdate(); // Reuse refresh logic
+          }}
+        />
+      )}
 
       <Navigation />
     </div>

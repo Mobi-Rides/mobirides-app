@@ -15,9 +15,9 @@ import { HostBookingCard } from "@/components/host-bookings/HostBookingCard";
 import { HostBookingFilters } from "@/components/host-bookings/HostBookingFilters";
 import { HostBookingStats } from "@/components/host-bookings/HostBookingStats";
 import { useToast } from "@/hooks/use-toast";
-import { BookingWithRelations } from "@/types/booking";
+import { BookingWithRelations, BookingStatus } from "@/types/booking";
 
-type BookingStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired";
+type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired" | "awaiting_payment";
 type SortOption = "date_asc" | "date_desc" | "earnings_asc" | "earnings_desc" | "status" | "renter";
 
 export const HostBookings = () => {
@@ -26,7 +26,7 @@ export const HostBookings = () => {
   const queryClient = useQueryClient();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<BookingStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<BookingFilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortOption>("date_desc");
   const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("active");
@@ -123,6 +123,10 @@ export const HostBookings = () => {
         new Date(b.start_date) <= today && 
         new Date(b.end_date) >= today
       ),
+      upcoming: filteredAndSortedBookings.filter(b => 
+        (b.status === 'confirmed' && new Date(b.start_date) > today) ||
+        b.status === 'awaiting_payment'
+      ),
       pending: filteredAndSortedBookings.filter(b => b.status === 'pending'),
       expired: filteredAndSortedBookings.filter(b => b.status === 'expired'),
       completed: filteredAndSortedBookings.filter(b => 
@@ -134,7 +138,7 @@ export const HostBookings = () => {
 
   const handleBookingAction = useCallback(async (bookingId: string, action: "approve" | "decline" | "cancel") => {
     try {
-      const newStatus = action === "approve" ? "confirmed" : action === "decline" ? "cancelled" : "cancelled";
+      const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : action === "decline" ? BookingStatus.CANCELLED : BookingStatus.CANCELLED;
       
       const { error } = await supabase
         .from("bookings")
@@ -156,17 +160,25 @@ export const HostBookings = () => {
         variant: "destructive",
       });
     }
-  }, [queryClient, toast]);
+  }, [queryClient, toast, selectedBookings]);
 
   const handleBulkAction = useCallback(async (action: "approve" | "decline") => {
     if (selectedBookings.length === 0) return;
 
     try {
-      const newStatus = action === "approve" ? "confirmed" : "cancelled";
+      // FIX: Set to awaiting_payment instead of confirmed for bulk approval
+      const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED;
       
       const { error } = await supabase
         .from("bookings")
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          // Add payment deadline for approved bookings
+          ...(action === "approve" ? {
+            payment_status: "unpaid",
+            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          } : {})
+        })
         .in("id", selectedBookings);
 
       if (error) throw error;
@@ -185,7 +197,7 @@ export const HostBookings = () => {
         variant: "destructive",
       });
     }
-  }, [selectedBookings, queryClient, toast]);
+  }, [queryClient, toast]);
 
   const exportData = useCallback((format: "csv" | "pdf") => {
     // Export functionality implementation
@@ -243,6 +255,7 @@ export const HostBookings = () => {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="awaiting_payment">Awaiting Payment</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -283,12 +296,20 @@ export const HostBookings = () => {
 
         {/* Booking Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="active" className="relative">
-              Active Rentals
+              Active
               {categorizedBookings.active?.length > 0 && (
                 <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                   {categorizedBookings.active.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="upcoming" className="relative">
+              Upcoming
+              {categorizedBookings.upcoming?.length > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
+                  {categorizedBookings.upcoming.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -337,6 +358,29 @@ export const HostBookings = () => {
             {categorizedBookings.active?.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 No active rentals
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="upcoming" className="space-y-4">
+            {categorizedBookings.upcoming?.map((booking) => (
+              <HostBookingCard
+                key={booking.id}
+                booking={booking}
+                isSelected={selectedBookings.includes(booking.id)}
+                onSelect={(selected) => {
+                  if (selected) {
+                    setSelectedBookings(prev => [...prev, booking.id]);
+                  } else {
+                    setSelectedBookings(prev => prev.filter(id => id !== booking.id));
+                  }
+                }}
+                onAction={handleBookingAction}
+              />
+            ))}
+            {categorizedBookings.upcoming?.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No upcoming bookings
               </div>
             )}
           </TabsContent>

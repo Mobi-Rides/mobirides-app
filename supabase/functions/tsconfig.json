@@ -26,6 +26,7 @@
     "module": "esnext",
     "moduleDetection": "force",
     "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
     "newLine": "lf",
     "noEmit": true,
     "noEmitHelpers": false,

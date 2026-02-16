@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { KeyRound, MapPin, Star, Clock, Edit3 } from "lucide-react";
+import { KeyRound, MapPin, Star, Clock, Edit3, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +18,7 @@ interface RentalActionsProps {
   isRenter: boolean;
   onHandoverInitiate: () => void;
   onExtensionRequested?: () => void;
+  onPayNow?: () => void;
 }
 
 export const RentalActions = ({
@@ -31,6 +32,7 @@ export const RentalActions = ({
   isRenter,
   onHandoverInitiate,
   onExtensionRequested,
+  onPayNow
 }: RentalActionsProps) => {
   const navigate = useNavigate();
   const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false);
@@ -57,6 +59,17 @@ export const RentalActions = ({
   return (
     <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
       <TooltipProvider>
+        {/* Pay Now Button */}
+        {booking.status === 'awaiting_payment' && (booking as any).payment_status !== 'paid' && isRenter && (
+           <Button
+             className="w-full sm:w-auto flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+             onClick={onPayNow}
+           >
+             <CreditCard className="h-4 w-4" />
+             Pay Now
+           </Button>
+        )}
+
         {/* Only show review button for completed rentals */}
         {isCompletedRental && (
           <Tooltip>

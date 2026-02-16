@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Booking } from "@/types/booking";
 import { useEffect, useState } from "react";
+import { handleExpiredBookings } from "@/services/bookingService";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -119,6 +120,11 @@ const RenterBookings = () => {
     
     return matchesSearch && matchesStatus;
   });
+
+  // Expire stale bookings on mount
+  useEffect(() => {
+    handleExpiredBookings();
+  }, []);
 
   useEffect(() => {
     if (error) {

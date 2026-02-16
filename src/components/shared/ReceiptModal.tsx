@@ -1,16 +1,10 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Download, Receipt, Calendar, MapPin, User, Car } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, User, Car, Download, Receipt } from "lucide-react";
 import { format } from "date-fns";
 import { BookingWithRelations } from "@/types/booking";
+import { UnifiedPriceSummary } from "../booking/UnifiedPriceSummary";
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -28,9 +22,18 @@ export const ReceiptModal = ({ isOpen, onClose, booking }: ReceiptModalProps) =>
     console.log('Download receipt for booking:', booking.id);
   };
 
-  const totalAmount = booking.total_price || 0;
-  const serviceFee = totalAmount * 0.1; // 10% service fee
-  const subtotal = totalAmount - serviceFee;
+  // Derive calculations if fields missing (migration fallback)
+  const days = Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const pricePerDay = booking.cars.price_per_day;
+  const basePrice = booking.base_rental_price ?? (pricePerDay * days);
+  
+  // Dynamic pricing
+  const dynamicPricing = booking.dynamic_pricing_multiplier && booking.dynamic_pricing_multiplier !== 1 ? {
+    is_dynamic: true,
+    final_price: basePrice * booking.dynamic_pricing_multiplier,
+    original_price: basePrice,
+    multiplier: booking.dynamic_pricing_multiplier
+  } : undefined;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -109,20 +112,16 @@ export const ReceiptModal = ({ isOpen, onClose, booking }: ReceiptModalProps) =>
               <CardTitle className="text-lg">Payment Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span>Rental Subtotal</span>
-                <span>BWP {subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Service Fee</span>
-                <span>BWP {serviceFee.toFixed(2)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-semibold text-lg">
-                <span>Total Amount</span>
-                <span>BWP {totalAmount.toFixed(2)}</span>
-              </div>
-              <div className="text-sm text-muted-foreground">
+              <UnifiedPriceSummary
+                basePrice={basePrice}
+                pricePerDay={pricePerDay}
+                numberOfDays={days}
+                dynamicPricing={dynamicPricing}
+                insurancePremium={booking.insurance_premium || 0}
+                discountAmount={booking.discount_amount || 0}
+                variant="receipt"
+              />
+              <div className="text-sm text-muted-foreground text-center mt-4">
                 Payment completed on {format(new Date(booking.created_at), 'MMM dd, yyyy')}
               </div>
             </CardContent>

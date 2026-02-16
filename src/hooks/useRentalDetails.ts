@@ -119,19 +119,20 @@ export const useRentalDetails = () => {
   // 3. Pending return: in progress, on/after end date, no return completed
   // 4. Completed: return handover completed OR booking status is completed
   
+  // FIX: Pickup is ONLY allowed if payment is confirmed. Removed 'awaiting_payment'.
   const isPendingPickup = booking && 
     booking.status === 'confirmed' && 
     !pickupSession && 
     startDate && today >= startDate;
     
   const isInProgress = booking && 
-    booking.status === 'confirmed' && 
+    (booking.status === 'confirmed' || booking.status === 'in_progress') && 
     pickupSession && 
     !returnCompleted &&
     isWithinRentalPeriod;
     
   const isPendingReturn = booking && 
-    booking.status === 'confirmed' && 
+    (booking.status === 'confirmed' || booking.status === 'in_progress') && 
     pickupSession && 
     !returnCompleted &&
     endDate && today >= endDate;
