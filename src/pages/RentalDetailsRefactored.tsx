@@ -49,6 +49,13 @@ const RentalDetailsRefactored = () => {
     handleExpiredBookings();
   }, []);
 
+  // Auto-open payment modal when navigating with openPayment state
+  useEffect(() => {
+    if (location.state?.openPayment && booking?.status === 'awaiting_payment') {
+      setIsPaymentModalOpen(true);
+    }
+  }, [booking, location.state]);
+
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);
   };
