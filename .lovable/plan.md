@@ -1,34 +1,72 @@
 
 
-# Fix: Insurance Package Pricing
+# Fix: Consistent Pricing Breakdown Across All Screens
 
-## What's Wrong
+## Problem
 
-The `insurance_packages` table has `premium_percentage` values that are far too high:
-- Basic: 0.25 (25% of daily rental)
-- Standard: 0.50 (50% of daily rental)
-- Premium: 1.00 (100% of daily rental)
+Multiple screens display pricing inconsistently:
 
-For a car at P500/day for 5 days (P2,500 rental), the "Premium" package would cost P2,500 -- equal to the entire rental. These should be calibrated to the Botswana market at 5%, 8%, and 12%.
+1. **RenterPaymentModal** uses `variant="compact"` (shows only the total, no line items) and hardcodes `insurancePremium={0}` and `discountAmount={0}` with TODO comments, even though the booking object has these fields.
+
+2. **Rental Details page** (RentalPaymentDetails) shows the breakdown but is missing the insurance package name -- it just says "Insurance Premium" generically.
+
+3. **Booking flow (Step 4)** shows the full breakdown correctly via `UnifiedPriceSummary` with `variant="full"`, but the same data is lost when viewing the booking later because the payment modal and details page don't pull the stored values.
 
 ## Fix
 
-### Database migration to update premium percentages
+### 1. RenterPaymentModal -- Show full breakdown with stored data
 
-Run a SQL migration to update the three insurance packages:
+**File:** `src/components/booking/RenterPaymentModal.tsx`
 
-```sql
-UPDATE insurance_packages SET premium_percentage = 0.05 WHERE slug = 'basic';
-UPDATE insurance_packages SET premium_percentage = 0.08 WHERE slug = 'standard';
-UPDATE insurance_packages SET premium_percentage = 0.12 WHERE slug = 'premium';
+- Change `variant="compact"` to `variant="full"` so the payment modal shows the same line-item breakdown as the booking wizard
+- Replace hardcoded `insurancePremium={0}` and `discountAmount={0}` with actual values from `booking.insurance_premium` and `booking.discount_amount`
+- Construct `dynamicPricing` object from `booking.dynamic_pricing_multiplier` (same pattern used in ReceiptModal and RentalPaymentDetails)
+- Also fix the `handlePay` function to use stored booking values instead of re-deriving them incorrectly
+
+### 2. RentalPaymentDetails -- Show insurance package name
+
+**File:** `src/components/rental-details/RentalPaymentDetails.tsx`
+
+- Add `insurancePackageName` prop and pass it through to `UnifiedPriceSummary`
+
+**File:** `src/pages/RentalDetailsRefactored.tsx`
+
+- Look up the insurance package name from the booking's `insurance_policy_id` and pass it to `RentalPaymentDetails`
+- If no policy is linked, fall back to the generic label
+
+### 3. Remove dead PriceBreakdown component
+
+**File:** `src/components/booking/PriceBreakdown.tsx`
+
+- This component is not imported or used anywhere. Remove it to reduce confusion about which price display component to use (the answer is always `UnifiedPriceSummary`).
+
+## Technical Details
+
+### RenterPaymentModal changes
+
+```
+// Before (broken):
+insurancePremium={0}  // TODO
+discountAmount={0}    // TODO
+variant="compact"
+
+// After (correct):
+insurancePremium={booking.insurance_premium || 0}
+discountAmount={booking.discount_amount || 0}
+dynamicPricing={dynamicPricing}  // constructed from booking.dynamic_pricing_multiplier
+variant="full"
 ```
 
-This aligns with the platform's documented insurance model (5% Basic, 8% Standard, 12% Premium) and requires no frontend code changes since the UI already reads `premium_percentage` from the database.
+### RentalDetailsRefactored changes
+
+Query the insurance policy's package name via the booking's `insurance_policy_id` to display "Basic Protection" / "Standard Protection" / "Premium Protection" instead of the generic "Insurance Premium" label.
 
 ### Summary
 
-| Change | Detail |
-|--------|--------|
-| Database migration | Update 3 rows in `insurance_packages` to correct percentages |
-| Frontend changes | None needed |
+| File | Change |
+|------|--------|
+| RenterPaymentModal.tsx | Use `variant="full"`, read real insurance/discount/dynamic values from booking |
+| RentalPaymentDetails.tsx | Accept and forward `insurancePackageName` prop |
+| RentalDetailsRefactored.tsx | Look up insurance package name and pass it down |
+| PriceBreakdown.tsx | Delete unused component |
 
