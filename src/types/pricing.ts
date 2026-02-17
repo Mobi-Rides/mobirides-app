@@ -19,7 +19,8 @@ export enum PricingRuleType {
   LOYALTY = "loyalty",
   WEEKEND = "weekend",
   HOLIDAY = "holiday",
-  LOCATION = "location"
+  LOCATION = "location",
+  DESTINATION = "destination"
 }
 
 export interface PricingConditions {
@@ -46,6 +47,9 @@ export interface PricingConditions {
   regions?: string[];
   cities?: string[];
   coordinates?: GeographicBounds;
+
+  // Destination conditions
+  destination_type?: 'local' | 'out_of_zone' | 'cross_border';
 }
 
 export enum Season {
@@ -116,6 +120,7 @@ export interface PricingRequest {
   pickup_longitude?: number;
   user_id?: string;
   booking_date?: string; // When the booking is being made (for early bird)
+  destination_type?: 'local' | 'out_of_zone' | 'cross_border';
 }
 
 export interface SeasonalRate {

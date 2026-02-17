@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { useRentalDetails } from "@/hooks/useRentalDetails";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { CarDescription } from "@/components/car-details/CarDescription";
 import { CarOwner } from "@/components/car-details/CarOwner";
 import { RentalDetailsHeader } from "@/components/rental-details/RentalDetailsHeader";
@@ -18,7 +20,8 @@ import { RentalUserCard } from "@/components/rental-details/RentalUserCard";
 import { RentalDetailsSkeleton } from "@/components/rental-details/RentalDetailsSkeleton";
 import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetailsNotFound";
 import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
-// Extension status removed for simplification
+import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer";
+import { handleExpiredBookings } from "@/services/bookingService";
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
@@ -43,6 +46,31 @@ const RentalDetailsRefactored = () => {
   } = useRentalDetails();
 
 
+  // Query insurance package name
+  const { data: insurancePackageName } = useQuery({
+    queryKey: ['insurance-package-name', booking?.insurance_policy_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('insurance_policies' as any)
+        .select('insurance_packages(display_name)')
+        .eq('id', booking!.insurance_policy_id)
+        .single();
+      return (data as any)?.insurance_packages?.display_name || null;
+    },
+    enabled: !!booking?.insurance_policy_id,
+  });
+
+  // Expire stale bookings on mount
+  useEffect(() => {
+    handleExpiredBookings();
+  }, []);
+
+  // Auto-open payment modal when navigating with openPayment state
+  useEffect(() => {
+    if (location.state?.openPayment && booking?.status === 'awaiting_payment') {
+      setIsPaymentModalOpen(true);
+    }
+  }, [booking, location.state]);
 
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);
@@ -143,10 +171,19 @@ const RentalDetailsRefactored = () => {
             discountAmount={booking.discount_amount || 0}
             dynamicMultiplier={booking.dynamic_pricing_multiplier || 1}
             isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
+            insurancePackageName={insurancePackageName || undefined}
           />
         )}
 
         {/* Extension Status removed for simplification */}
+
+        {/* Payment Deadline Timer for awaiting_payment */}
+        {booking?.status === 'awaiting_payment' && (
+          <PaymentDeadlineTimer
+            deadline={booking.payment_deadline || new Date(new Date(booking.created_at).getTime() + 24 * 60 * 60 * 1000).toISOString()}
+            className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800"
+          />
+        )}
 
         {/* Actions with null check */}
         {booking?.id && (

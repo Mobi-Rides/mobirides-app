@@ -1,80 +1,72 @@
 
 
-# Week 2 February 2026 Status Report
+# Fix: Consistent Pricing Breakdown Across All Screens
 
-## Objective
-Create `docs/Product Status/WEEK_2_FEBRUARY_2026_STATUS_REPORT.md` covering the period February 3-13, 2026.
+## Problem
 
-## What This Report Will Cover
+Multiple screens display pricing inconsistently:
 
-The report will be a comprehensive status update comparing the current actual codebase state against what was planned in the JIRA Production Readiness Plan and Sprint 1/2 schedules from the Week 1 February report.
+1. **RenterPaymentModal** uses `variant="compact"` (shows only the total, no line items) and hardcodes `insurancePremium={0}` and `discountAmount={0}` with TODO comments, even though the booking object has these fields.
 
-## Key Findings from Codebase Analysis
+2. **Rental Details page** (RentalPaymentDetails) shows the breakdown but is missing the insurance package name -- it just says "Insurance Premium" generically.
 
-### 1. Build Health -- REGRESSION
-- The Week 1 Feb report claimed **0 build errors**
-- Current state: **50+ TypeScript build errors** across multiple files
-- Major error clusters:
-  - `ReceiptModal.tsx`: ~45 errors (missing imports for Dialog, Card, Button, format, icons, BookingWithRelations)
-  - `BookingDialog.tsx`: 6 errors (PricingCalculation type mismatch between `types/pricing.ts` and `UnifiedPriceSummary.tsx` -- duplicate interface)
-  - `PaymentTransactionsTable.tsx` and `WithdrawalRequestsTable.tsx`: Supabase relation errors (profiles join failing)
-  - `RentalActions.tsx`: `payment_status` missing from `BookingWithRelations` type
-  - `usePushNotifications.ts` / `pushNotifications.ts`: `pushManager` not in ServiceWorkerRegistration type
+3. **Booking flow (Step 4)** shows the full breakdown correctly via `UnifiedPriceSummary` with `variant="full"`, but the same data is lost when viewing the booking later because the payment modal and details page don't pull the stored values.
 
-### 2. Sprint 1 (Feb 3-9) -- Payment Infrastructure
-**Planned (55 SP):** MPAY-001 through MPAY-021
+## Fix
 
-What was actually delivered:
-- Payment database schema (`payment_transactions`, `withdrawal_requests` tables exist in Supabase types)
-- Edge functions created: `initiate-payment`, `payment-webhook`, `process-withdrawal`, `release-earnings`, `query-payment`
-- UI components: `RenterPaymentModal`, `PaymentMethodSelector`, `PaymentDeadlineTimer`, `BookingPayment` page-level integration
-- `BookingStatus.AWAITING_PAYMENT` enum added
-- `payment_status` field added to bookings table (in DB but NOT in `BookingWithRelations` type -- causing build error)
-- Admin finance tables: `PaymentTransactionsTable`, `WithdrawalRequestsTable`, `InsuranceRemittanceTable` (with build errors)
+### 1. RenterPaymentModal -- Show full breakdown with stored data
 
-**Assessment:** Sprint 1 scope ~70% delivered structurally, but with build-breaking type errors that indicate incomplete integration.
+**File:** `src/components/booking/RenterPaymentModal.tsx`
 
-### 3. Sprint 2 (Feb 10-16) -- Payment UI + Notifications
-**Planned (50 SP):** MPAY-030 through MPAY-052, NOTIF-001 to NOTIF-002
+- Change `variant="compact"` to `variant="full"` so the payment modal shows the same line-item breakdown as the booking wizard
+- Replace hardcoded `insurancePremium={0}` and `discountAmount={0}` with actual values from `booking.insurance_premium` and `booking.discount_amount`
+- Construct `dynamicPricing` object from `booking.dynamic_pricing_multiplier` (same pattern used in ReceiptModal and RentalPaymentDetails)
+- Also fix the `handlePay` function to use stored booking values instead of re-deriving them incorrectly
 
-Partial delivery observed:
-- Payment UI components exist but have type errors
-- Push notifications: service worker registration exists, edge functions exist (`send-push-notification`, `get-vapid-key`), but `pushManager` TypeScript errors unresolved
-- No evidence of email template completion (NOTIF-002)
+### 2. RentalPaymentDetails -- Show insurance package name
 
-### 4. Interactive Handover System (Sprint 3 planned)
-**Planned:** HAND-010 to HAND-021 (58 SP)
-**Status:** NOT STARTED
-- No `useInteractiveHandover`, `WaitingForPartyCard`, `DualPartyStepCard`, or `HandoverLocationSelector` components found
-- Existing handover system remains the old single-party checklist model
-- This is expected -- Sprint 3 starts Feb 17
+**File:** `src/components/rental-details/RentalPaymentDetails.tsx`
 
-### 5. Database / Migrations
-- Migration count: ~221 files (up from 216 reported in Week 1)
-- ~5 new migrations added during Sprint 1-2 period
+- Add `insurancePackageName` prop and pass it through to `UnifiedPriceSummary`
 
-### 6. Epic Progress Assessment (Actual vs Reported)
-Based on codebase evidence, updated epic percentages will be estimated against Week 1 Feb baselines.
+**File:** `src/pages/RentalDetailsRefactored.tsx`
 
-## Report Structure
+- Look up the insurance package name from the booking's `insurance_policy_id` and pass it to `RentalPaymentDetails`
+- If no policy is linked, fall back to the generic label
 
-1. Executive Summary
-2. Sprint 1 Retrospective (Feb 3-9) -- what was delivered vs planned
-3. Sprint 2 Progress (Feb 10-13) -- partial week status
-4. Build Health Regression Analysis (0 -> 50+ errors)
-5. Epic Status Update (all 15 epics)
-6. Production Readiness Metrics (updated dashboard)
-7. Critical Issues and Blockers
-8. Database and Infrastructure
-9. Pre-Launch Testing Update
-10. Risk Assessment
-11. Action Items for Week 3 (Feb 14-16 Sprint 2 completion + Sprint 3 start)
-12. Document References
+### 3. Remove dead PriceBreakdown component
+
+**File:** `src/components/booking/PriceBreakdown.tsx`
+
+- This component is not imported or used anywhere. Remove it to reduce confusion about which price display component to use (the answer is always `UnifiedPriceSummary`).
 
 ## Technical Details
 
-- **File to create:** `docs/Product Status/WEEK_2_FEBRUARY_2026_STATUS_REPORT.md`
-- Content will reference actual file paths and error details from the codebase
-- Will include the health dashboard ASCII art format consistent with prior reports
-- Will flag the build error regression as a P0 blocker requiring immediate attention before Sprint 3
+### RenterPaymentModal changes
+
+```
+// Before (broken):
+insurancePremium={0}  // TODO
+discountAmount={0}    // TODO
+variant="compact"
+
+// After (correct):
+insurancePremium={booking.insurance_premium || 0}
+discountAmount={booking.discount_amount || 0}
+dynamicPricing={dynamicPricing}  // constructed from booking.dynamic_pricing_multiplier
+variant="full"
+```
+
+### RentalDetailsRefactored changes
+
+Query the insurance policy's package name via the booking's `insurance_policy_id` to display "Basic Protection" / "Standard Protection" / "Premium Protection" instead of the generic "Insurance Premium" label.
+
+### Summary
+
+| File | Change |
+|------|--------|
+| RenterPaymentModal.tsx | Use `variant="full"`, read real insurance/discount/dynamic values from booking |
+| RentalPaymentDetails.tsx | Accept and forward `insurancePackageName` prop |
+| RentalDetailsRefactored.tsx | Look up insurance package name and pass it down |
+| PriceBreakdown.tsx | Delete unused component |
 

@@ -189,7 +189,7 @@ const AddCar = () => {
           fuel: formData.fuel,
           description: formData.description,
           features: features || [],
-          is_available: true,
+          is_available: false,
         })
         .select()
         .single();

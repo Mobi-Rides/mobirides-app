@@ -13,8 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, CreditCard, Calendar } from "lucide-react";
+import { Search, CreditCard, Eye } from "lucide-react";
+import { TransactionJourneyDialog } from "./TransactionJourneyDialog";
 
 interface PaymentTransaction {
   id: string;
@@ -31,7 +33,6 @@ interface PaymentTransaction {
   host_earnings: number | null;
   profiles: {
     full_name: string | null;
-    email: string | null;
   } | null;
 }
 
@@ -41,33 +42,37 @@ const usePaymentTransactions = () => {
     queryFn: async (): Promise<PaymentTransaction[]> => {
       const { data, error } = await supabase
         .from("payment_transactions")
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      // Handle the case where profiles might be returned as an array or object
-      return (data as any[]).map(txn => ({
+      // Fetch profiles separately
+      const userIds = [...new Set((data || []).map(t => t.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      return (data || []).map(txn => ({
         ...txn,
-        profiles: Array.isArray(txn.profiles) ? txn.profiles[0] : txn.profiles
-      })) || [];
+        profiles: profileMap.get(txn.user_id) ? {
+          full_name: profileMap.get(txn.user_id)!.full_name,
+        } : null,
+      })) as PaymentTransaction[];
     },
   });
 };
 
 export const PaymentTransactionsTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [journeyBookingId, setJourneyBookingId] = useState<string | null>(null);
   const { data: transactions, isLoading, error } = usePaymentTransactions();
 
   const filteredTransactions = transactions?.filter(txn =>
     txn.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    txn.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     txn.provider_reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     txn.status.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -137,6 +142,7 @@ export const PaymentTransactionsTable = () => {
                   <TableHead>Provider Ref</TableHead>
                   <TableHead>Split (Host/Plat)</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -145,7 +151,6 @@ export const PaymentTransactionsTable = () => {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium">{txn.profiles?.full_name || "Unknown"}</span>
-                        <span className="text-xs text-muted-foreground">{txn.profiles?.email}</span>
                       </div>
                     </TableCell>
                     <TableCell className="font-bold">
@@ -173,6 +178,18 @@ export const PaymentTransactionsTable = () => {
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(txn.created_at).toLocaleString()}
                     </TableCell>
+                    <TableCell>
+                      {txn.booking_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setJourneyBookingId(txn.booking_id)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Journey
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -180,6 +197,11 @@ export const PaymentTransactionsTable = () => {
           )}
         </CardContent>
       </Card>
+      <TransactionJourneyDialog
+        isOpen={!!journeyBookingId}
+        onClose={() => setJourneyBookingId(null)}
+        bookingId={journeyBookingId}
+      />
     </div>
   );
 };

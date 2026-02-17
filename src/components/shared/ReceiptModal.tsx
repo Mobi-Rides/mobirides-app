@@ -1,25 +1,8 @@
-import { format } from "date-fns";
-import { 
-  Receipt, 
-  Calendar, 
-  MapPin, 
-  User, 
-  Car, 
-  Download 
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, User, Car, Download, Receipt } from "lucide-react";
+import { format } from "date-fns";
 import { BookingWithRelations } from "@/types/booking";
 import { UnifiedPriceSummary } from "../booking/UnifiedPriceSummary";
 

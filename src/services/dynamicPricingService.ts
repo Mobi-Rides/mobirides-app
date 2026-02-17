@@ -167,6 +167,32 @@ export class DynamicPricingService {
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
+      },
+      {
+        id: "destination-out-of-zone",
+        name: "Out of Zone Premium",
+        type: PricingRuleType.DESTINATION,
+        is_active: true,
+        multiplier: 1.5,
+        priority: 105,
+        conditions: {
+          destination_type: "out_of_zone"
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: "destination-cross-border",
+        name: "Cross-Border Premium",
+        type: PricingRuleType.DESTINATION,
+        is_active: true,
+        multiplier: 2.0,
+        priority: 105,
+        conditions: {
+          destination_type: "cross_border"
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     ];
   }
@@ -204,6 +230,9 @@ export class DynamicPricingService {
       
       case PricingRuleType.LOCATION:
         return this.evaluateLocationRule(rule, request.pickup_latitude, request.pickup_longitude);
+
+      case PricingRuleType.DESTINATION:
+        return this.evaluateDestinationRule(rule, request.destination_type);
       
       default:
         return false;
@@ -305,6 +334,14 @@ export class DynamicPricingService {
   }
 
   /**
+   * Evaluate destination-based pricing rule
+   */
+  static evaluateDestinationRule(rule: PricingRule, destinationType?: string): boolean {
+    if (!destinationType || !rule.conditions.destination_type) return false;
+    return destinationType === rule.conditions.destination_type;
+  }
+
+  /**
    * Get season from month number (Southern Hemisphere - Botswana)
    */
   static getSeasonFromMonth(month: number): Season {
@@ -390,6 +427,8 @@ export class DynamicPricingService {
         return `Holiday premium (${multiplierText})`;
       case PricingRuleType.LOCATION:
         return `Location premium (${multiplierText})`;
+      case PricingRuleType.DESTINATION:
+        return `Destination premium (${multiplierText})`;
       default:
         return `${rule.name} (${multiplierText})`;
     }
@@ -405,7 +444,8 @@ export class DynamicPricingService {
     endDate: Date,
     pickupLatitude?: number,
     pickupLongitude?: number,
-    userId?: string
+    userId?: string,
+    destinationType?: 'local' | 'out_of_zone' | 'cross_border'
   ): Promise<PricingCalculation> {
     const request: PricingRequest = {
       car_id: carId,
@@ -415,7 +455,8 @@ export class DynamicPricingService {
       pickup_latitude: pickupLatitude,
       pickup_longitude: pickupLongitude,
       user_id: userId,
-      booking_date: format(new Date(), "yyyy-MM-dd")
+      booking_date: format(new Date(), "yyyy-MM-dd"),
+      destination_type: destinationType
     };
 
     return this.calculatePrice(request);

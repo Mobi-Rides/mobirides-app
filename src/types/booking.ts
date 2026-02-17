@@ -20,6 +20,7 @@ export interface BookingWithRelations {
   base_rental_price?: number;
   dynamic_pricing_multiplier?: number;
   insurance_premium?: number;
+  insurance_policy_id?: string;
   discount_amount?: number;
   promo_code_id?: string;
   cars: {

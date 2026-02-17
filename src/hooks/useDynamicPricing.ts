@@ -10,6 +10,7 @@ export const useDynamicPricing = (
   pickupLatitude?: number,
   pickupLongitude?: number,
   userId?: string,
+  destinationType?: 'local' | 'out_of_zone' | 'cross_border',
 ) => {
   const [calculation, setCalculation] = useState<PricingCalculation | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,6 +32,7 @@ export const useDynamicPricing = (
         pickupLatitude,
         pickupLongitude,
         userId,
+        destinationType,
       );
       if (active) setCalculation(result);
       setLoading(false);
@@ -40,7 +42,7 @@ export const useDynamicPricing = (
       active = false;
       clearTimeout(timeout);
     };
-  }, [canCalculate, carId, basePrice, startDate, endDate, pickupLatitude, pickupLongitude, userId]);
+  }, [canCalculate, carId, basePrice, startDate, endDate, pickupLatitude, pickupLongitude, userId, destinationType]);
 
   const finalPrice = useMemo(() => {
     return calculation?.final_price ?? basePrice ?? 0;

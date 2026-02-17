@@ -122,6 +122,7 @@ export const useRentalDetails = () => {
   // FIX: Pickup is ONLY allowed if payment is confirmed. Removed 'awaiting_payment'.
   const isPendingPickup = booking && 
     booking.status === 'confirmed' && 
+    booking.payment_status === 'paid' &&
     !pickupSession && 
     startDate && today >= startDate;
     

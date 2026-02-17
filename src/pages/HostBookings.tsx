@@ -140,9 +140,15 @@ export const HostBookings = () => {
     try {
       const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : action === "decline" ? BookingStatus.CANCELLED : BookingStatus.CANCELLED;
       
+      const updateData: Record<string, unknown> = { status: newStatus };
+      if (action === "approve") {
+        updateData.payment_status = "unpaid";
+        updateData.payment_deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      }
+
       const { error } = await supabase
         .from("bookings")
-        .update({ status: newStatus })
+        .update(updateData)
         .eq("id", bookingId);
 
       if (error) throw error;

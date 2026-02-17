@@ -31,10 +31,14 @@ export const BookingSuccessModal = ({
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(5);
 
-  const handleViewBookings = useCallback(() => {
+  const handleViewBooking = useCallback(() => {
     onClose();
-    navigate("/bookings");
-  }, [onClose, navigate]);
+    if (bookingData?.id) {
+      navigate(`/rental-details/${bookingData.id}`);
+    } else {
+      navigate("/bookings");
+    }
+  }, [onClose, navigate, bookingData?.id]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -45,7 +49,7 @@ export const BookingSuccessModal = ({
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          handleViewBookings();
+          handleViewBooking();
           return 0;
         }
         return prev - 1;
@@ -53,7 +57,7 @@ export const BookingSuccessModal = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, handleViewBookings]);
+  }, [isOpen, handleViewBooking]);
 
   const handleCloseModal = () => {
     onClose();
@@ -132,10 +136,10 @@ export const BookingSuccessModal = ({
                 Close
               </Button>
               <Button 
-                onClick={handleViewBookings}
+                onClick={handleViewBooking}
                 className="flex-1"
               >
-                View My Bookings {countdown > 0 && `(${countdown}s)`}
+                View Booking Details {countdown > 0 && `(${countdown}s)`}
               </Button>
             </div>
           </div>
