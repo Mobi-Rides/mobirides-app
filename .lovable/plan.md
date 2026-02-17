@@ -1,114 +1,127 @@
 
+# Week 3 February 2026 Status Report Generation
 
-## Revised Migration History Recovery Plan (Branch-Safe)
+## Overview
 
-### Root Cause Analysis
+Generate the comprehensive Week 3 February 2026 Status Report covering the period February 14-17, 2026. This report bridges the gap between the Sprint 2 completion and Sprint 3 kickoff, documenting the critical build recovery, pricing consistency fixes, booking UX improvements, insurance calibration, Capacitor mobile readiness, and updated metrics.
 
-Lovable's migration tool applied local `.sql` files to the remote DB but recorded them with **deployment timestamps** instead of file timestamps. This created a two-way mismatch:
+## Report Structure
 
-| Remote Timestamp (phantom) | Actual Local File | Local Timestamp |
-|---|---|---|
-| `20260115101900` | `20260115000002_create_message_reactions.sql` | `20260115000002` |
-| `20260205073041` | `20260204000000_create_payment_tables.sql` | `20260204000000` |
-| `20260205153215` | `20260205000003_add_awaiting_payment_enum.sql` | `20260205` prefix |
-| `20260207114919` | `20260207000003_fix_wallet_transactions_length.sql` | `20260207` prefix |
-| `20260207155058` | `20260207000004_fix_withdrawal_function.sql` | `20260207` prefix |
-| `20260207155420` | `20260207000005_setup_cron_jobs.sql` | `20260207` prefix |
+The report will follow the established format from previous weeks and be saved to `docs/Product Status/WEEK_3_FEBRUARY_2026_STATUS_REPORT.md`.
 
-These 6 have matching local files -- just wrong remote timestamps.
+### Key Content Sections
 
-The remaining 6 have **NO local file** -- the SQL only exists in remote:
+**1. Executive Summary**
+- Build health fully recovered (50+ errors in Week 2 down to 0)
+- Sprint 2 completed with pricing consistency fixes across all booking screens
+- Insurance premium recalibration (Basic 10%, Standard 15%, Premium 20%)
+- Post-booking redirect fixed (now routes to booking details page)
+- Booking sort order fixed (newest first)
+- Capacitor mobile infrastructure present in codebase (first mention in status reports)
+- Dead code cleanup (PriceBreakdown.tsx removed)
 
-| Remote Timestamp | Migration Name | Content |
-|---|---|---|
-| `20260124122840` | `enforce_message_edit_limit` | UPDATE policy with 10-min edit window |
-| `20260125215428` | `fix_chat_policies_properly` | Security definer function for chat RLS |
-| `20260215111101` | `interactive_handover_overhaul` | Major handover schema changes |
-| `20260215112918` | `add_handover_progress_rpc` | Handover progress RPC function |
-| `20260215113344` | `interactive_handover_refinement` | Handover refinements |
-| `20260215121650` | (empty name) | Unknown -- needs investigation |
+**2. Production Readiness Metrics Table**
+Updated metrics compared to Week 2:
+- Build Errors: 50+ down to 0 (RECOVERED)
+- System Health: 78% up to ~82%
+- Production Readiness: 76% up to ~79%
+- Migrations: 221 up to 225 (4 new: insurance update, car revert, detailed ratings, search function fix)
+- Edge Functions: 27 (unchanged)
+- Capacitor packages: NEW - 3 packages installed (@capacitor/core, @capacitor/cli, @capacitor/android)
 
-### Why Placeholders Would Break Branching
+**3. Sprint 2 Retrospective (February 10-16) -- COMPLETED**
+- Build error regression fully resolved (P0 action item from Week 2 -- DONE)
+- RenterPaymentModal switched from compact to full variant with real booking data
+- UnifiedPriceSummary now the single source of truth for price display
+- RentalPaymentDetails enhanced with insurance package name lookup
+- BookingSuccessModal now redirects to /rental-details/:id
+- RenterDashboard sort order fixed (descending by created_at)
+- PriceBreakdown.tsx deleted (dead code)
 
-1. **Branch seeding** runs all local files on a fresh DB. Empty placeholders = missing tables, functions, and policies on branches.
-2. **Branch merging** compares migration histories. Mismatched timestamps cause merge failures.
-3. **Future `db push`** could try to re-apply or skip migrations incorrectly.
+**4. Sprint 3 Preparation (February 17-23)**
+- Theme: Interactive Handover System + UI/Display Fixes
+- Planned: 102 SP (recommended scope reduction to ~80 SP)
+- Key deliverables: HAND-010 through HAND-021, DISP items
 
----
+**5. Epic Status Update (15 Epics)**
+Updated percentages reflecting Week 3 work:
+- Epic 3 (Booking): 80% up to 83% (redirect fix, sort fix, pricing consistency)
+- Epic 7 (Payments): 58% up to 62% (pricing display consistency, insurance integration in UI)
+- Epic 11 (Insurance): 52% up to 56% (premium recalibration, package name display)
+- Epic 15 (UI/Display): 0% up to 5% (pricing consistency counts as display fix)
+- All others: unchanged
 
-### Phase 1: Extract Missing SQL from Remote
+**6. NEW: Mobile App Readiness (Capacitor)**
+- First mention in status reports
+- Capacitor v8.x installed: @capacitor/core, @capacitor/cli, @capacitor/android
+- capacitor.config.ts configured (appId: com.mobirides.app, appName: MobiRides, webDir: dist)
+- Android platform targeted (aligns with Q1 2026 Android launch in commercialization plan)
+- iOS not yet added (aligns with Q3 2026 iOS timeline)
+- Server hot-reload not yet configured
+- Status: Infrastructure present, build pipeline not yet tested
 
-For the 6 remote-only migrations with no local file, we must create local files containing the **actual SQL** from the remote `schema_migrations.statements` column.
+**7. Database and Infrastructure**
+- Migration count: ~225 (up from 221)
+- New migrations this period:
+  - `20260215121651_update_detailed_ratings_tables.sql` -- Review category rating functions
+  - `20260216120000_revert_2026_cars_to_pending.sql` -- Car verification queue revert
+  - `20260216135332_update_insurance_packages.sql` -- Premium percentage recalibration
+  - `20260216165401_fix_optimized_search_function.sql` -- Search function fix
+- Edge functions: 27 (unchanged)
 
-**Files to create (with real SQL content, not placeholders):**
-1. `supabase/migrations/20260124122840_enforce_message_edit_limit.sql` -- 10-minute message edit policy
-2. `supabase/migrations/20260125215428_fix_chat_policies_properly.sql` -- Chat RLS security definer fix
-3. `supabase/migrations/20260215111101_interactive_handover_overhaul.sql` -- Handover schema overhaul
-4. `supabase/migrations/20260215112918_add_handover_progress_rpc.sql` -- Handover progress RPC
-5. `supabase/migrations/20260215113344_interactive_handover_refinement.sql` -- Handover refinements
-6. `supabase/migrations/20260215121650_dashboard_applied_migration.sql` -- Investigate content; if truly empty, use a comment-only file
+**8. Insurance System Update**
+- Premium percentages recalibrated: Basic 10%, Standard 15%, Premium 20%
+- Insurance package names now displayed in booking details (via insurance_policy_id lookup)
+- UnifiedPriceSummary shows full breakdown including insurance line item
 
-Using the remote timestamps as filenames ensures perfect alignment with what production already tracks.
+**9. Commercialization Alignment**
+- Reference to GTM Plan v2.4: P311,245 FY2025 revenue, 186 users, 62 vehicles
+- Current platform stats: 186 users, 62 vehicles, 341 bookings
+- Q1 2026 targets: 100 vehicles, Android app launch, payment integration
+- Pre-seed funding target: P700K by March 15, 2026
+- Gap: 62/100 vehicles (38 vehicles short of Q1 target)
 
-### Phase 2: Fix Duplicate Local Timestamps
+**10. Risk Assessment**
+- Sprint 3 overload (102 SP) -- still active
+- Payment provider sandbox still not tested -- active
+- Vehicle fleet gap (62 vs 100 target) -- new risk for Q1 milestone
+- Capacitor build pipeline untested -- new risk for Android Q1 launch
 
-Three local files share the `20260207` prefix (no full timestamp). Rename to unique timestamps:
+**11. Security Posture**
+- Unchanged from Week 2 (4 vulnerabilities, deferred to Sprint 4/5)
 
-- `20260205_add_awaiting_payment_enum.sql` -> `20260205000003_add_awaiting_payment_enum.sql` (already has this name)
-- `20260207000003_fix_wallet_transactions_length.sql` (already unique)
-- `20260207000004_fix_withdrawal_function.sql` (already unique)
-- `20260207000005_setup_cron_jobs.sql` (already unique)
+**12. Action Items for Week 4**
+- P0: Begin Sprint 3 handover system work
+- P1: Test Capacitor Android build end-to-end
+- P1: Configure payment provider sandbox credentials
+- P2: Continue vehicle onboarding push toward 100-vehicle milestone
 
-Check: the user's original `migration list` showed three rows with just `20260207` as local. Need to verify the actual filenames match -- if they are literally `20260207_*.sql` without the 6-digit suffix, rename them to include the suffix.
+**13. Metrics Dashboard (ASCII)**
+Updated dashboard showing recovered build health and improved readiness scores.
 
-### Phase 3: Delete Phantom Remote Entries
+**14. Document References**
+Links to all referenced documents including new additions.
 
-Remove the 6 phantom remote entries (where the local file exists with a different timestamp) so they don't conflict:
+## Technical Details
 
-```text
-npx supabase migration repair 20260115101900 --status reverted --linked
-npx supabase migration repair 20260205073041 --status reverted --linked
-npx supabase migration repair 20260205153215 --status reverted --linked
-npx supabase migration repair 20260207114919 --status reverted --linked
-npx supabase migration repair 20260207155058 --status reverted --linked
-npx supabase migration repair 20260207155420 --status reverted --linked
-```
+### File to Create
+- `docs/Product Status/WEEK_3_FEBRUARY_2026_STATUS_REPORT.md`
 
-### Phase 4: Mark All Local Files as Applied in Remote
+### Data Sources Referenced
+- Previous reports: Week 1 and Week 2 February 2026
+- JIRA Production Readiness Plan v1.3
+- Current vs Ideal State Analysis (Feb 15)
+- Commercialization GTM Plan v2.4
+- ROADMAP-NOV-DEC-2025.md
+- capacitor.config.ts and package.json (Capacitor packages)
+- Live database queries (186 users, 62 cars, 341 bookings)
+- Recent migrations (4 new since Week 2)
+- Console logs (minor location errors only, no build errors)
+- Recent code changes: RenterPaymentModal, BookingSuccessModal, RenterDashboard, RentalDetailsRefactored, RentalPaymentDetails, PriceBreakdown (deleted)
 
-After Phase 3, mark every local-only timestamp as applied so remote tracking matches:
-
-```text
-npx supabase migration repair 20260113224929 --status applied --linked
-npx supabase migration repair 20260115000001 --status applied --linked
-npx supabase migration repair 20260115000002 --status applied --linked
-npx supabase migration repair 20260126000000 --status applied --linked
-npx supabase migration repair 20260204000000 --status applied --linked
-npx supabase migration repair 20260205000003 --status applied --linked
-npx supabase migration repair 20260207000003 --status applied --linked
-npx supabase migration repair 20260207000004 --status applied --linked
-npx supabase migration repair 20260207000005 --status applied --linked
-npx supabase migration repair 20260215021631 --status applied --linked
-npx supabase migration repair 20260215121651 --status applied --linked
-npx supabase migration repair 20260216120000 --status applied --linked
-```
-
-(Adjust timestamps if Phase 2 renames change them.)
-
-### Phase 5: Verify
-
-1. Run `npx supabase migration list --linked` -- every row should show matching Local and Remote columns
-2. Test branch creation: `npx supabase branches create test-branch` -- seeding should complete without errors
-3. Run `npx supabase db reset` locally -- all migrations should apply cleanly on fresh DB
-
-### Execution Order
-
-Phase 1 and 2 can run in parallel (file creation/renaming). Phase 3 must run before Phase 4 (delete phantoms before marking locals). Phase 5 is verification after everything else.
-
-### Risk Assessment
-
-- **Schema is intact** -- all SQL has already been executed on production. This plan only fixes tracking metadata.
-- **Branch-safe** -- real SQL in every local file means branch seeding produces a complete schema.
-- **Merge-safe** -- 1:1 timestamp alignment between local and remote eliminates merge conflicts.
-- **Rollback** -- if anything goes wrong, `migration repair --status applied` and `--status reverted` are reversible operations.
-
+### Key Differences from Previous Reports
+1. First report to include Capacitor/mobile app readiness section
+2. Documents the build recovery (50+ errors to 0)
+3. Documents the pricing consistency fix across all screens
+4. Insurance premium recalibration
+5. Aligns with commercialization plan milestones and platform stats

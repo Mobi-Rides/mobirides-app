@@ -50,7 +50,7 @@ export const RenterDashboard = () => {
           )
         `)
         .eq("renter_id", user.id)
-        .order("start_date", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       console.log("Renter bookings:", data);

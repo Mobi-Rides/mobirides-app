@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,12 +64,14 @@ export const CarManagementTable = () => {
   
   const { data: cars, isLoading, error, refetch } = useAdminCars();
 
-  const filteredCars = cars?.filter(car =>
+  const filteredCars = useMemo(() => cars?.filter(car =>
     car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
     car.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
     car.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     car.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) || [], [cars, searchTerm]);
+
+  const { sortedData: sortedCars, sortKey, sortDirection, handleSort } = useTableSort(filteredCars);
 
   const handleToggleAvailability = async (carId: string, currentStatus: boolean) => {
     try {
@@ -143,17 +147,17 @@ export const CarManagementTable = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Owner</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Price/Day</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Added</TableHead>
+                  <SortableTableHead sortKey="brand" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Vehicle</SortableTableHead>
+                  <SortableTableHead sortKey="profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Owner</SortableTableHead>
+                  <SortableTableHead sortKey="location" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Location</SortableTableHead>
+                  <SortableTableHead sortKey="price_per_day" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Price/Day</SortableTableHead>
+                  <SortableTableHead sortKey="is_available" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
+                  <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Added</SortableTableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCars.map((car) => (
+                {sortedCars.map((car) => (
                   <TableRow key={car.id}>
                     <TableCell className="font-medium">
                       {car.brand} {car.model} ({car.year})

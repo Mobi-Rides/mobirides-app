@@ -56,6 +56,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
 
     const statusConfig = {
       pending: { label: "Pending", variant: "secondary" as const, color: "bg-orange-100 text-orange-800" },
+      awaiting_payment: { label: "Awaiting Payment", variant: "secondary" as const, color: "bg-amber-100 text-amber-800" },
       confirmed: { label: "Confirmed", variant: "default" as const, color: "bg-green-100 text-green-800" },
       completed: { label: "Completed", variant: "default" as const, color: "bg-blue-100 text-blue-800" },
       cancelled: { label: "Cancelled", variant: "destructive" as const, color: "bg-red-100 text-red-800" },
