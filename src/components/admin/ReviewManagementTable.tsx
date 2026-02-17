@@ -10,6 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -120,22 +122,24 @@ export const ReviewManagementTable = ({
     );
   }
 
+  const { sortedData: sortedReviews, sortKey, sortDirection, handleSort } = useTableSort(reviews);
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Reviewer</TableHead>
+          <SortableTableHead sortKey="reviewer.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Reviewer</SortableTableHead>
           <TableHead>Reviewee / Car</TableHead>
-          <TableHead>Rating</TableHead>
+          <SortableTableHead sortKey="rating" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Rating</SortableTableHead>
           <TableHead>Comment</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Date</TableHead>
+          <SortableTableHead sortKey="review_type" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Type</SortableTableHead>
+          <SortableTableHead sortKey="status" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
+          <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Date</SortableTableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {reviews.map((review) => (
+        {sortedReviews.map((review) => (
           <TableRow key={review.id}>
             <TableCell>
               <div className="flex items-center gap-2">

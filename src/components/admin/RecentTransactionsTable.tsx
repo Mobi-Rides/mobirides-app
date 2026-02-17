@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,6 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,13 +67,15 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
   const [searchTerm, setSearchTerm] = useState("");
   const { data: transactions, isLoading, error } = useRecentTransactions();
 
-  const filteredTransactions = transactions?.filter(transaction =>
+  const filteredTransactions = useMemo(() => transactions?.filter(transaction =>
     transaction.host_wallets?.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.transaction_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) || [], [transactions, searchTerm]);
 
-  const displayTransactions = isPreview ? filteredTransactions.slice(0, maxItems) : filteredTransactions;
+  const { sortedData: sortedTransactions, sortKey, sortDirection, handleSort } = useTableSort(filteredTransactions);
+
+  const displayTransactions = isPreview ? sortedTransactions.slice(0, maxItems) : sortedTransactions;
 
   const getTransactionIcon = (type: string) => {
     return type === "credit" || type === "top_up" ? (
@@ -163,11 +167,11 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Amount</TableHead>
+                    <SortableTableHead sortKey="host_wallets.profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>User</SortableTableHead>
+                    <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Date</SortableTableHead>
+                    <SortableTableHead sortKey="description" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Description</SortableTableHead>
+                    <SortableTableHead sortKey="transaction_type" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Type</SortableTableHead>
+                    <SortableTableHead sortKey="amount" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Amount</SortableTableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -211,11 +215,11 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Amount</TableHead>
+            <SortableTableHead sortKey="host_wallets.profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>User</SortableTableHead>
+            <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Date</SortableTableHead>
+            <SortableTableHead sortKey="description" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Description</SortableTableHead>
+            <SortableTableHead sortKey="transaction_type" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Type</SortableTableHead>
+            <SortableTableHead sortKey="amount" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Amount</SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
