@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,6 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,19 +90,21 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
   
   const { data: users, isLoading, error, refetch } = useAdminUsers();
 
-  const filteredUsers = users?.filter(user =>
+  const filteredUsers = useMemo(() => users?.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone_number?.includes(searchTerm)
-  ) || [];
+  ) || [], [users, searchTerm]);
+
+  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort(filteredUsers);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
   const displayUsers = isPreview 
-    ? filteredUsers.slice(0, maxItems) 
-    : filteredUsers;
+    ? sortedUsers.slice(0, maxItems) 
+    : sortedUsers;
     
   const paginatedUsers = isPreview 
     ? displayUsers 
@@ -292,12 +296,12 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
                           />
                         </TableHead>
                       )}
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
+                      <SortableTableHead sortKey="full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Name</SortableTableHead>
+                      <SortableTableHead sortKey="role" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Role</SortableTableHead>
                       <TableHead>Account Status</TableHead>
-                      <TableHead>KYC Status</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Joined</TableHead>
+                      <SortableTableHead sortKey="verification_status" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>KYC Status</SortableTableHead>
+                      <SortableTableHead sortKey="phone_number" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Phone</SortableTableHead>
+                      <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Joined</SortableTableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -402,12 +406,12 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
+              <SortableTableHead sortKey="full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Name</SortableTableHead>
+              <SortableTableHead sortKey="role" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Role</SortableTableHead>
               <TableHead>Account Status</TableHead>
-              <TableHead>KYC Status</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Joined</TableHead>
+              <SortableTableHead sortKey="verification_status" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>KYC Status</SortableTableHead>
+              <SortableTableHead sortKey="phone_number" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Phone</SortableTableHead>
+              <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Joined</SortableTableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>

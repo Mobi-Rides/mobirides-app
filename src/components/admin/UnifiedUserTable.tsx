@@ -7,6 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -21,6 +23,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Search, AlertTriangle } from "lucide-react";
+
 import { useAdminUsersComplete, type AdminUserComplete } from "@/hooks/useAdminUsersComplete";
 import { UserActionsDropdown } from "./UserActionsDropdown";
 import { UserEditDialog } from "./UserEditDialog";
@@ -60,12 +63,14 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     );
   }, [users, searchTerm]);
 
+  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort(filteredUsers);
+
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return filteredUsers.slice(start, start + itemsPerPage);
-  }, [filteredUsers, currentPage]);
+    return sortedUsers.slice(start, start + itemsPerPage);
+  }, [sortedUsers, currentPage]);
 
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
 
   const allSelected = useMemo(() => {
     const ids = filteredUsers.map((u) => u.id);
@@ -180,13 +185,13 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
                         aria-label="Select all"
                       />
                     </TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Profile Role</TableHead>
+                    <SortableTableHead sortKey="full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>User</SortableTableHead>
+                    <SortableTableHead sortKey="role" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Profile Role</SortableTableHead>
                     <TableHead>User Roles</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>KYC</TableHead>
-                    <TableHead>Stats</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <SortableTableHead sortKey="is_restricted" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
+                    <SortableTableHead sortKey="verification_status" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>KYC</SortableTableHead>
+                    <SortableTableHead sortKey="vehicles_count" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Stats</SortableTableHead>
+                    <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Joined</SortableTableHead>
                     <TableHead className="w-12">Actions</TableHead>
                   </TableRow>
                 </TableHeader>

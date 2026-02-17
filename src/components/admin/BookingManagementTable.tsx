@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,6 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,12 +62,14 @@ export const BookingManagementTable = () => {
   
   const { data: bookings, isLoading, error, refetch } = useAdminBookings();
 
-  const filteredBookings = bookings?.filter(booking =>
+  const filteredBookings = useMemo(() => bookings?.filter(booking =>
     booking.cars?.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     booking.cars?.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     booking.renter?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     booking.status.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) || [], [bookings, searchTerm]);
+
+  const { sortedData: sortedBookings, sortKey, sortDirection, handleSort } = useTableSort(filteredBookings);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -139,17 +143,17 @@ export const BookingManagementTable = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Renter</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                  <SortableTableHead sortKey="cars.brand" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Vehicle</SortableTableHead>
+                  <SortableTableHead sortKey="renter.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Renter</SortableTableHead>
+                  <SortableTableHead sortKey="start_date" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Dates</SortableTableHead>
+                  <SortableTableHead sortKey="total_price" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Total</SortableTableHead>
+                  <SortableTableHead sortKey="status" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
+                  <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Created</SortableTableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBookings.map((booking) => (
+                {sortedBookings.map((booking) => (
                   <TableRow key={booking.id}>
                     <TableCell className="font-medium">
                       {booking.cars ? 
