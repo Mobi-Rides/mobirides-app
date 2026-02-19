@@ -25,7 +25,7 @@ const useAdminStats = () => {
           supabase.from("profiles").select("id", { count: "exact", head: true }),
           supabase.from("cars").select("id", { count: "exact", head: true }),
           supabase.from("bookings").select("id", { count: "exact", head: true }),
-          supabase.from("user_verifications").select("id", { count: "exact", head: true }).neq("overall_status", "completed"),
+          supabase.from("user_verifications").select("id", { count: "exact", head: true }).in("overall_status", ["pending_review", "in_progress"]),
           supabase.from("bookings").select("total_price").in("status", ["completed", "confirmed"])
         ]);
 

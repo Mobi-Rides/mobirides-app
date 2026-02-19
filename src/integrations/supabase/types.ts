@@ -646,6 +646,7 @@ export type Database = {
           transmission: string
           updated_at: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          verification_status: string
           view_count: number | null
           year: number
         }
@@ -671,6 +672,7 @@ export type Database = {
           transmission: string
           updated_at?: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          verification_status?: string
           view_count?: number | null
           year: number
         }
@@ -696,6 +698,7 @@ export type Database = {
           transmission?: string
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+          verification_status?: string
           view_count?: number | null
           year?: number
         }
@@ -4497,19 +4500,16 @@ export type Database = {
       get_admin_users_complete: {
         Args: never
         Returns: {
-          active_restrictions: Json
-          avatar_url: string
-          bookings_count: number
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          is_restricted: boolean
-          phone_number: string
-          role: string
-          user_roles: string[]
-          vehicles_count: number
-          verification_status: string
+          p_avatar_url: string
+          p_created_at: string
+          p_email: string
+          p_full_name: string
+          p_id: string
+          p_is_active: boolean
+          p_phone: string
+          p_role: string
+          p_updated_at: string
+          p_verification_status: string
         }[]
       }
       get_bypass_statistics: {

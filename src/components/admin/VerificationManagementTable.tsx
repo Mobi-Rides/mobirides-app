@@ -105,6 +105,9 @@ export const VerificationManagementTable = () => {
     newStatus: Database["public"]["Enums"]["verification_status"]
   ) => {
     try {
+      // Get the user_id for this verification so we can sync profiles
+      const verification = verifications?.find(v => v.id === verificationId);
+
       const { error } = await supabase
         .from("user_verifications")
         .update({ 
@@ -114,6 +117,14 @@ export const VerificationManagementTable = () => {
         .eq("id", verificationId);
 
       if (error) throw error;
+
+      // Belt-and-suspenders: also update profiles.verification_status directly
+      if (verification?.user_id) {
+        await supabase
+          .from("profiles")
+          .update({ verification_status: newStatus })
+          .eq("id", verification.user_id);
+      }
       
       refetch();
       toast.success(`Verification ${newStatus} successfully`);
@@ -215,7 +226,7 @@ export const VerificationManagementTable = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        {verification.overall_status === "pending" && (
+                        {verification.overall_status === "pending_review" && (
                           <>
                             <Button
                               variant="outline"
