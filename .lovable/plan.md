@@ -1,127 +1,155 @@
 
-# Week 3 February 2026 Status Report Generation
+# Admin Portal: Backend-Frontend Data Linkage Fixes
 
-## Overview
+## Diagnosis Summary
 
-Generate the comprehensive Week 3 February 2026 Status Report covering the period February 14-17, 2026. This report bridges the gap between the Sprint 2 completion and Sprint 3 kickoff, documenting the critical build recovery, pricing consistency fixes, booking UX improvements, insurance calibration, Capacitor mobile readiness, and updated metrics.
+A full audit of the database and all admin table components reveals 5 distinct root causes explaining why the admin portal shows stale or empty data:
 
-## Report Structure
+---
 
-The report will follow the established format from previous weeks and be saved to `docs/Product Status/WEEK_3_FEBRUARY_2026_STATUS_REPORT.md`.
+### Issue 1 — Car Verification Queue is Broken by Design
 
-### Key Content Sections
+**Root cause:** The `cars` table has `is_available DEFAULT true`, meaning every new car listing goes live immediately without admin review. The `CarVerificationTable` queries for `is_available = false`, which only catches cars that were manually disabled — not a true "pending" queue. The 14 cars currently in the queue are all from August/September 2025 (old seed data). Zero new cars from 2026 are pending.
 
-**1. Executive Summary**
-- Build health fully recovered (50+ errors in Week 2 down to 0)
-- Sprint 2 completed with pricing consistency fixes across all booking screens
-- Insurance premium recalibration (Basic 10%, Standard 15%, Premium 20%)
-- Post-booking redirect fixed (now routes to booking details page)
-- Booking sort order fixed (newest first)
-- Capacitor mobile infrastructure present in codebase (first mention in status reports)
-- Dead code cleanup (PriceBreakdown.tsx removed)
+**Fix:** Add a dedicated `verification_status` column to the `cars` table (`pending | approved | rejected`) with a default of `pending`. New car submissions will default to `pending` and only become available after admin approval sets `is_available = true`. The `CarVerificationTable` query is updated to filter by `verification_status = 'pending'` instead of `is_available = false`.
 
-**2. Production Readiness Metrics Table**
-Updated metrics compared to Week 2:
-- Build Errors: 50+ down to 0 (RECOVERED)
-- System Health: 78% up to ~82%
-- Production Readiness: 76% up to ~79%
-- Migrations: 221 up to 225 (4 new: insurance update, car revert, detailed ratings, search function fix)
-- Edge Functions: 27 (unchanged)
-- Capacitor packages: NEW - 3 packages installed (@capacitor/core, @capacitor/cli, @capacitor/android)
+---
 
-**3. Sprint 2 Retrospective (February 10-16) -- COMPLETED**
-- Build error regression fully resolved (P0 action item from Week 2 -- DONE)
-- RenterPaymentModal switched from compact to full variant with real booking data
-- UnifiedPriceSummary now the single source of truth for price display
-- RentalPaymentDetails enhanced with insurance package name lookup
-- BookingSuccessModal now redirects to /rental-details/:id
-- RenterDashboard sort order fixed (descending by created_at)
-- PriceBreakdown.tsx deleted (dead code)
+### Issue 2 — Verification Management Shows 0 Records
 
-**4. Sprint 3 Preparation (February 17-23)**
-- Theme: Interactive Handover System + UI/Display Fixes
-- Planned: 102 SP (recommended scope reduction to ~80 SP)
-- Key deliverables: HAND-010 through HAND-021, DISP items
+**Root cause:** The `VerificationManagementTable` displays all verifications but Approve/Reject action buttons only appear when `overall_status === "pending"`. However, the actual database enum has no `"pending"` value — the values are `not_started`, `in_progress`, `pending_review`, `completed`, `failed`, `rejected`. None of the 31 records in the DB have status `"pending"`, so the action buttons never render.
 
-**5. Epic Status Update (15 Epics)**
-Updated percentages reflecting Week 3 work:
-- Epic 3 (Booking): 80% up to 83% (redirect fix, sort fix, pricing consistency)
-- Epic 7 (Payments): 58% up to 62% (pricing display consistency, insurance integration in UI)
-- Epic 11 (Insurance): 52% up to 56% (premium recalibration, package name display)
-- Epic 15 (UI/Display): 0% up to 5% (pricing consistency counts as display fix)
-- All others: unchanged
+Additionally, the `KYCVerificationTable` (dashboard preview widget) filters for `pending_review` or `in_progress` — but zero records in the database have these statuses. All records are `not_started`, `completed`, or `rejected`.
 
-**6. NEW: Mobile App Readiness (Capacitor)**
-- First mention in status reports
-- Capacitor v8.x installed: @capacitor/core, @capacitor/cli, @capacitor/android
-- capacitor.config.ts configured (appId: com.mobirides.app, appName: MobiRides, webDir: dist)
-- Android platform targeted (aligns with Q1 2026 Android launch in commercialization plan)
-- iOS not yet added (aligns with Q3 2026 iOS timeline)
-- Server hot-reload not yet configured
-- Status: Infrastructure present, build pipeline not yet tested
+**Fix:** In `VerificationManagementTable`, change the action button condition from `=== "pending"` to `=== "pending_review"`. In `KYCVerificationTable`, broaden the filter to also include `not_started` and `in_progress` so the dashboard widget shows relevant queued items.
 
-**7. Database and Infrastructure**
-- Migration count: ~225 (up from 221)
-- New migrations this period:
-  - `20260215121651_update_detailed_ratings_tables.sql` -- Review category rating functions
-  - `20260216120000_revert_2026_cars_to_pending.sql` -- Car verification queue revert
-  - `20260216135332_update_insurance_packages.sql` -- Premium percentage recalibration
-  - `20260216165401_fix_optimized_search_function.sql` -- Search function fix
-- Edge functions: 27 (unchanged)
+---
 
-**8. Insurance System Update**
-- Premium percentages recalibrated: Basic 10%, Standard 15%, Premium 20%
-- Insurance package names now displayed in booking details (via insurance_policy_id lookup)
-- UnifiedPriceSummary shows full breakdown including insurance line item
+### Issue 3 — `profiles.verification_status` is Never Updated
 
-**9. Commercialization Alignment**
-- Reference to GTM Plan v2.4: P311,245 FY2025 revenue, 186 users, 62 vehicles
-- Current platform stats: 186 users, 62 vehicles, 341 bookings
-- Q1 2026 targets: 100 vehicles, Android app launch, payment integration
-- Pre-seed funding target: P700K by March 15, 2026
-- Gap: 62/100 vehicles (38 vehicles short of Q1 target)
+**Root cause:** All 187 user profile rows have `verification_status = 'not_started'`, even for the 19 users who have `completed` verifications in `user_verifications`. The profile column is never synced when verification status changes. This causes the Users table KYC column and AdminStats to show incorrect data.
 
-**10. Risk Assessment**
-- Sprint 3 overload (102 SP) -- still active
-- Payment provider sandbox still not tested -- active
-- Vehicle fleet gap (62 vs 100 target) -- new risk for Q1 milestone
-- Capacitor build pipeline untested -- new risk for Android Q1 launch
+**Fix:** Add a database trigger on `user_verifications` that updates `profiles.verification_status` whenever `overall_status` changes. Also update the `updateVerificationStatus` mutation in `VerificationManagementTable` to simultaneously update the corresponding `profiles` row (belt-and-suspenders approach).
 
-**11. Security Posture**
-- Unchanged from Week 2 (4 vulnerabilities, deferred to Sprint 4/5)
+---
 
-**12. Action Items for Week 4**
-- P0: Begin Sprint 3 handover system work
-- P1: Test Capacitor Android build end-to-end
-- P1: Configure payment provider sandbox credentials
-- P2: Continue vehicle onboarding push toward 100-vehicle milestone
+### Issue 4 — AdminStats "Pending Verifications" Counter is Inflated
 
-**13. Metrics Dashboard (ASCII)**
-Updated dashboard showing recovered build health and improved readiness scores.
+**Root cause:** `AdminStats` counts verifications with `overall_status != 'completed'`, which includes all `not_started` users (156 records). This makes the stat misleading. The intent is to show only verifications actively requiring admin attention.
 
-**14. Document References**
-Links to all referenced documents including new additions.
+**Fix:** Change the AdminStats query to count only `overall_status IN ('pending_review', 'in_progress')` — records that genuinely need admin review.
+
+---
+
+### Issue 5 — DB Error: `column profiles.last_sign_in_at does not exist`
+
+**Root cause:** The Postgres logs show a recurring ERROR: `column profiles.last_sign_in_at does not exist`. This column was removed from the `profiles` table (or never existed) but something still references it — likely a trigger, view, or the `get_admin_users_complete` RPC function.
+
+**Fix:** Locate and fix the reference. Since the `routine_definition` is not directly readable via `information_schema` (PL/pgSQL body), add a migration that drops and recreates any trigger or function referencing `profiles.last_sign_in_at`.
+
+---
+
+## Files to Change
+
+| File | Change |
+|------|--------|
+| `supabase/migrations/[new].sql` | Add `verification_status` column to `cars`; add trigger to sync `profiles.verification_status`; fix `last_sign_in_at` reference |
+| `src/components/admin/CarVerificationTable.tsx` | Query `verification_status = 'pending'` instead of `is_available = false`; approval sets both `verification_status = 'approved'` and `is_available = true` |
+| `src/components/admin/KYCVerificationTable.tsx` | Broaden status filter to include `not_started`, `in_progress`, `pending_review` |
+| `src/components/admin/VerificationManagementTable.tsx` | Fix action button condition from `=== "pending"` to `=== "pending_review"`; sync `profiles.verification_status` on approve/reject |
+| `src/components/admin/AdminStats.tsx` | Fix "Pending Verifications" query to count only `pending_review` and `in_progress` |
+
+---
 
 ## Technical Details
 
-### File to Create
-- `docs/Product Status/WEEK_3_FEBRUARY_2026_STATUS_REPORT.md`
+### Migration: Cars Verification Status Column
 
-### Data Sources Referenced
-- Previous reports: Week 1 and Week 2 February 2026
-- JIRA Production Readiness Plan v1.3
-- Current vs Ideal State Analysis (Feb 15)
-- Commercialization GTM Plan v2.4
-- ROADMAP-NOV-DEC-2025.md
-- capacitor.config.ts and package.json (Capacitor packages)
-- Live database queries (186 users, 62 cars, 341 bookings)
-- Recent migrations (4 new since Week 2)
-- Console logs (minor location errors only, no build errors)
-- Recent code changes: RenterPaymentModal, BookingSuccessModal, RenterDashboard, RentalDetailsRefactored, RentalPaymentDetails, PriceBreakdown (deleted)
+```sql
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS 
+  verification_status TEXT NOT NULL DEFAULT 'pending' 
+  CHECK (verification_status IN ('pending', 'approved', 'rejected'));
 
-### Key Differences from Previous Reports
-1. First report to include Capacitor/mobile app readiness section
-2. Documents the build recovery (50+ errors to 0)
-3. Documents the pricing consistency fix across all screens
-4. Insurance premium recalibration
-5. Aligns with commercialization plan milestones and platform stats
+-- All existing is_available=true cars are already approved
+UPDATE cars SET verification_status = 'approved' WHERE is_available = true;
+-- All existing is_available=false cars remain as pending (admin queue)
+```
+
+### Migration: Trigger to Sync profiles.verification_status
+
+```sql
+CREATE OR REPLACE FUNCTION sync_profile_verification_status()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE profiles 
+  SET verification_status = NEW.overall_status
+  WHERE id = NEW.user_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_verification_status_change
+  AFTER INSERT OR UPDATE OF overall_status ON user_verifications
+  FOR EACH ROW EXECUTE FUNCTION sync_profile_verification_status();
+
+-- Backfill existing completed/rejected verifications into profiles
+UPDATE profiles p
+SET verification_status = uv.overall_status
+FROM user_verifications uv
+WHERE uv.user_id = p.id
+  AND uv.overall_status IN ('completed', 'rejected', 'pending_review', 'in_progress');
+```
+
+### CarVerificationTable Query Change
+
+```typescript
+// Before (broken):
+.eq("is_available", false)
+
+// After (correct):
+.eq("verification_status", "pending")
+```
+
+### Approval Action Change
+
+```typescript
+// Before:
+.update({ is_available: true })
+
+// After (approve = verified + make live):
+.update({ verification_status: 'approved', is_available: true })
+
+// Reject = mark rejected but keep hidden:
+.update({ verification_status: 'rejected', is_available: false })
+```
+
+### VerificationManagementTable Button Condition
+
+```typescript
+// Before (never matches real data):
+{verification.overall_status === "pending" && ( ... )}
+
+// After (matches real DB enum value):
+{verification.overall_status === "pending_review" && ( ... )}
+```
+
+### AdminStats Query Fix
+
+```typescript
+// Before (counts 156+ not_started records as "pending"):
+.neq("overall_status", "completed")
+
+// After (only genuinely actionable items):
+.in("overall_status", ["pending_review", "in_progress"])
+```
+
+### KYCVerificationTable Query Fix
+
+```typescript
+// Before (returns 0 rows - no records have these statuses):
+.in("overall_status", ["pending_review", "in_progress"])
+
+// After (shows all items needing attention):
+.in("overall_status", ["pending_review", "in_progress", "not_started"])
+.gt("current_step", "personal_info") // Only show those who have progressed past start
+```
