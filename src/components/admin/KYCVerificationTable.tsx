@@ -36,7 +36,8 @@ const usePendingVerifications = () => {
         .select(`
           id, user_id, overall_status, current_step, started_at, personal_info
         `)
-        .in("overall_status", ["pending_review", "in_progress"])
+        .in("overall_status", ["pending_review", "in_progress", "not_started"])
+        .neq("current_step", "personal_info")
         .order("started_at", { ascending: false });
 
       if (error) throw error;

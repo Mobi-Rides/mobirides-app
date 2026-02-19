@@ -45,7 +45,7 @@ const usePendingCars = () => {
           is_available, created_at, owner_id,
           profiles:owner_id (full_name)
         `)
-        .eq("is_available", false)
+        .eq("verification_status", "pending")
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -80,7 +80,7 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
     try {
       const { error } = await supabase
         .from("cars")
-        .update({ is_available: true })
+        .update({ verification_status: "approved", is_available: true })
         .eq("id", carId);
 
       if (error) throw error;
@@ -97,13 +97,13 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
     try {
       const { error } = await supabase
         .from("cars")
-        .delete()
+        .update({ verification_status: "rejected", is_available: false })
         .eq("id", carId);
 
       if (error) throw error;
       
       refetch();
-      toast.success("Car rejected and removed");
+      toast.success("Car listing rejected");
     } catch (error) {
       console.error("Error rejecting car:", error);
       toast.error("Failed to reject car");
