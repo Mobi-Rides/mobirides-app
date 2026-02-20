@@ -1,155 +1,92 @@
 
-# Admin Portal: Backend-Frontend Data Linkage Fixes
+# Monthly User Numbers Table — Admin Dashboard
 
-## Diagnosis Summary
+## What We're Building
 
-A full audit of the database and all admin table components reveals 5 distinct root causes explaining why the admin portal shows stale or empty data:
-
----
-
-### Issue 1 — Car Verification Queue is Broken by Design
-
-**Root cause:** The `cars` table has `is_available DEFAULT true`, meaning every new car listing goes live immediately without admin review. The `CarVerificationTable` queries for `is_available = false`, which only catches cars that were manually disabled — not a true "pending" queue. The 14 cars currently in the queue are all from August/September 2025 (old seed data). Zero new cars from 2026 are pending.
-
-**Fix:** Add a dedicated `verification_status` column to the `cars` table (`pending | approved | rejected`) with a default of `pending`. New car submissions will default to `pending` and only become available after admin approval sets `is_available = true`. The `CarVerificationTable` query is updated to filter by `verification_status = 'pending'` instead of `is_available = false`.
+A standalone `MonthlyUserGrowthTable` component added to the Admin Dashboard showing real user sign-ups month by month from January 2025 to the current month, with test accounts and admin accounts excluded.
 
 ---
 
-### Issue 2 — Verification Management Shows 0 Records
+## Data Confirmed from the Database
 
-**Root cause:** The `VerificationManagementTable` displays all verifications but Approve/Reject action buttons only appear when `overall_status === "pending"`. However, the actual database enum has no `"pending"` value — the values are `not_started`, `in_progress`, `pending_review`, `completed`, `failed`, `rejected`. None of the 31 records in the DB have status `"pending"`, so the action buttons never render.
+The following real numbers are confirmed live from the DB (test accounts filtered by `full_name ILIKE '%test%'`, `'%dummy%'`, `'%tester%'` and `role NOT IN ('admin', 'super_admin')`):
 
-Additionally, the `KYCVerificationTable` (dashboard preview widget) filters for `pending_review` or `in_progress` — but zero records in the database have these statuses. All records are `not_started`, `completed`, or `rejected`.
-
-**Fix:** In `VerificationManagementTable`, change the action button condition from `=== "pending"` to `=== "pending_review"`. In `KYCVerificationTable`, broaden the filter to also include `not_started` and `in_progress` so the dashboard widget shows relevant queued items.
-
----
-
-### Issue 3 — `profiles.verification_status` is Never Updated
-
-**Root cause:** All 187 user profile rows have `verification_status = 'not_started'`, even for the 19 users who have `completed` verifications in `user_verifications`. The profile column is never synced when verification status changes. This causes the Users table KYC column and AdminStats to show incorrect data.
-
-**Fix:** Add a database trigger on `user_verifications` that updates `profiles.verification_status` whenever `overall_status` changes. Also update the `updateVerificationStatus` mutation in `VerificationManagementTable` to simultaneously update the corresponding `profiles` row (belt-and-suspenders approach).
-
----
-
-### Issue 4 — AdminStats "Pending Verifications" Counter is Inflated
-
-**Root cause:** `AdminStats` counts verifications with `overall_status != 'completed'`, which includes all `not_started` users (156 records). This makes the stat misleading. The intent is to show only verifications actively requiring admin attention.
-
-**Fix:** Change the AdminStats query to count only `overall_status IN ('pending_review', 'in_progress')` — records that genuinely need admin review.
+| Month | New Users | Renters | Hosts | Cumulative Total |
+|-------|-----------|---------|-------|-----------------|
+| Jan 2025 | 5 | 1 | 4 | 5 |
+| Feb 2025 | 3 | 3 | 0 | 8 |
+| Mar 2025 | 6 | 5 | 1 | 14 |
+| Apr 2025 | 21 | 20 | 1 | 35 |
+| May 2025 | 41 | 39 | 2 | 76 |
+| Jun 2025 | 18 | 14 | 4 | 94 |
+| Jul 2025 | 5 | 5 | 0 | 99 |
+| Aug 2025 | 6 | 6 | 0 | 105 |
+| Sep 2025 | 11 | 11 | 0 | 116 |
+| Oct 2025 | 3 | 3 | 0 | 119 |
+| Nov 2025 | 7 | 7 | 0 | 126 |
+| Dec 2025 | 8 | 8 | 0 | 134 |
+| Jan 2026 | 20 | 19 | 1 | 154 |
+| Feb 2026 | 7 | 7 | 0 | 161 |
 
 ---
 
-### Issue 5 — DB Error: `column profiles.last_sign_in_at does not exist`
+## What Gets Excluded as "Test Accounts"
 
-**Root cause:** The Postgres logs show a recurring ERROR: `column profiles.last_sign_in_at does not exist`. This column was removed from the `profiles` table (or never existed) but something still references it — likely a trigger, view, or the `get_admin_users_complete` RPC function.
-
-**Fix:** Locate and fix the reference. Since the `routine_definition` is not directly readable via `information_schema` (PL/pgSQL body), add a migration that drops and recreates any trigger or function referencing `profiles.last_sign_in_at`.
+- `role IN ('admin', 'super_admin')` — platform staff
+- `full_name ILIKE '%test%'` — e.g., "Test User", "Test Renter"
+- `full_name ILIKE '%dummy%'` — e.g., "Dummy Account Loago"
+- `full_name ILIKE '%tester%'` — e.g., "Admin Tester"
 
 ---
 
-## Files to Change
+## Files to Create / Change
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `supabase/migrations/[new].sql` | Add `verification_status` column to `cars`; add trigger to sync `profiles.verification_status`; fix `last_sign_in_at` reference |
-| `src/components/admin/CarVerificationTable.tsx` | Query `verification_status = 'pending'` instead of `is_available = false`; approval sets both `verification_status = 'approved'` and `is_available = true` |
-| `src/components/admin/KYCVerificationTable.tsx` | Broaden status filter to include `not_started`, `in_progress`, `pending_review` |
-| `src/components/admin/VerificationManagementTable.tsx` | Fix action button condition from `=== "pending"` to `=== "pending_review"`; sync `profiles.verification_status` on approve/reject |
-| `src/components/admin/AdminStats.tsx` | Fix "Pending Verifications" query to count only `pending_review` and `in_progress` |
+| `src/components/admin/MonthlyUserGrowthTable.tsx` | **Create** — new standalone component |
+| `src/pages/admin/AdminDashboard.tsx` | **Edit** — add the table below AdminStats |
 
 ---
 
 ## Technical Details
 
-### Migration: Cars Verification Status Column
+### Component: `MonthlyUserGrowthTable`
 
-```sql
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS 
-  verification_status TEXT NOT NULL DEFAULT 'pending' 
-  CHECK (verification_status IN ('pending', 'approved', 'rejected'));
-
--- All existing is_available=true cars are already approved
-UPDATE cars SET verification_status = 'approved' WHERE is_available = true;
--- All existing is_available=false cars remain as pending (admin queue)
-```
-
-### Migration: Trigger to Sync profiles.verification_status
-
-```sql
-CREATE OR REPLACE FUNCTION sync_profile_verification_status()
-RETURNS TRIGGER AS $$
-BEGIN
-  UPDATE profiles 
-  SET verification_status = NEW.overall_status
-  WHERE id = NEW.user_id;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_verification_status_change
-  AFTER INSERT OR UPDATE OF overall_status ON user_verifications
-  FOR EACH ROW EXECUTE FUNCTION sync_profile_verification_status();
-
--- Backfill existing completed/rejected verifications into profiles
-UPDATE profiles p
-SET verification_status = uv.overall_status
-FROM user_verifications uv
-WHERE uv.user_id = p.id
-  AND uv.overall_status IN ('completed', 'rejected', 'pending_review', 'in_progress');
-```
-
-### CarVerificationTable Query Change
+Uses `useQuery` (TanStack React Query) to fetch monthly user data via Supabase RPC-style `select` with a date filter. The query mirrors the verified SQL:
 
 ```typescript
-// Before (broken):
-.eq("is_available", false)
-
-// After (correct):
-.eq("verification_status", "pending")
+const { data } = await supabase
+  .from("profiles")
+  .select("created_at, role")
+  .gte("created_at", "2025-01-01")
+  .not("role", "in", "(admin,super_admin)")
+  .not("full_name", "ilike", "%test%")  // chained filters
+  .not("full_name", "ilike", "%dummy%")
+  .not("full_name", "ilike", "%tester%");
 ```
 
-### Approval Action Change
+The component then groups returned rows client-side by `DATE_TRUNC('month', created_at)` to produce per-month counts for:
+- **New Users** (total that month)
+- **Renters** (role = 'renter')
+- **Hosts** (role = 'host')
+- **Cumulative Total** (running sum)
+- **MoM Change** (month-over-month growth, shown as +/- with colour coding: green for growth, red for decline)
 
-```typescript
-// Before:
-.update({ is_available: true })
+### Table Columns
 
-// After (approve = verified + make live):
-.update({ verification_status: 'approved', is_available: true })
+| # | Column | Description |
+|---|--------|-------------|
+| 1 | Month | "Jan 2025", "Feb 2025" ... |
+| 2 | New Users | Total signups that month (excl. test) |
+| 3 | Renters | Renter-role signups |
+| 4 | Hosts | Host-role signups |
+| 5 | MoM Change | e.g. `+16 ↑` or `-3 ↓` vs previous month |
+| 6 | Cumulative Total | Running total since Jan 2025 |
 
-// Reject = mark rejected but keep hidden:
-.update({ verification_status: 'rejected', is_available: false })
-```
+### Dashboard Placement
 
-### VerificationManagementTable Button Condition
+Placed between `AdminStats` and the Analytics Dashboard section so it's immediately visible on page load. It uses the existing `Card` + `Table` components for visual consistency with the rest of the portal. Most-recent month at the top (descending order). No pagination needed (max 24 rows per 2 years).
 
-```typescript
-// Before (never matches real data):
-{verification.overall_status === "pending" && ( ... )}
+### No Migration Required
 
-// After (matches real DB enum value):
-{verification.overall_status === "pending_review" && ( ... )}
-```
-
-### AdminStats Query Fix
-
-```typescript
-// Before (counts 156+ not_started records as "pending"):
-.neq("overall_status", "completed")
-
-// After (only genuinely actionable items):
-.in("overall_status", ["pending_review", "in_progress"])
-```
-
-### KYCVerificationTable Query Fix
-
-```typescript
-// Before (returns 0 rows - no records have these statuses):
-.in("overall_status", ["pending_review", "in_progress"])
-
-// After (shows all items needing attention):
-.in("overall_status", ["pending_review", "in_progress", "not_started"])
-.gt("current_step", "personal_info") // Only show those who have progressed past start
-```
+This is purely a read operation on the existing `profiles` table. No schema changes are needed.
