@@ -159,7 +159,8 @@ export const ResizableHandoverTray = ({
     }
 
     console.log(`🔄 Attempting to complete step: ${stepName}`, { completionData });
-    const success = await completeHandoverStep(handoverId, stepName, completionData);
+    const userRole: 'host' | 'renter' = isHost ? 'host' : 'renter';
+    const success = await completeHandoverStep(handoverId, stepName, userRole, completionData);
     
     console.log(`📋 Step completion result for ${stepName}:`, success);
     

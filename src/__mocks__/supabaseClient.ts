@@ -1,24 +1,27 @@
 
-// Mock Supabase client
+// Mock Supabase client (plain stubs — no Jest dependency)
+const noop = () => {};
+const resolveData = (data: unknown) => Promise.resolve({ data, error: null });
+
 export const supabase = {
-  from: jest.fn(() => ({
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({ data: {}, error: null })),
-        order: jest.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-    })),
-    update: jest.fn(() => ({
-      eq: jest.fn(() => Promise.resolve({ data: {}, error: null })),
-    })),
-  })),
-  rpc: jest.fn(() => Promise.resolve({ data: { success: true }, error: null })),
-  channel: jest.fn(() => ({
-    on: jest.fn().mockReturnThis(),
-    subscribe: jest.fn().mockReturnThis(),
-    unsubscribe: jest.fn(),
-  })),
+  from: (_table: string) => ({
+    select: (_columns?: string) => ({
+      eq: (_col: string, _val: unknown) => ({
+        single: () => resolveData({}),
+        order: (_col2: string) => resolveData([]),
+      }),
+    }),
+    update: (_values: unknown) => ({
+      eq: (_col: string, _val: unknown) => resolveData({}),
+    }),
+  }),
+  rpc: (_fn: string, _params?: unknown) => resolveData({ success: true }),
+  channel: (_name: string) => ({
+    on: function () { return this; },
+    subscribe: function () { return this; },
+    unsubscribe: noop,
+  }),
   auth: {
-    getUser: jest.fn(() => Promise.resolve({ data: { user: { id: 'test-user' } }, error: null })),
+    getUser: () => resolveData({ user: { id: 'test-user' } }),
   },
 };

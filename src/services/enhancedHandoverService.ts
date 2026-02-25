@@ -154,7 +154,7 @@ export const completeHandoverStep = async (
       p_completed_step_name: stepName,
       p_user_id: userData.user.id,
       p_user_role: userRole,
-      p_completion_data: completionData || {}
+      p_completion_data: (completionData || {}) as any
     });
 
     if (error) {

@@ -407,32 +407,154 @@ The root cause of this entire hotfix sprint is the absence of a dependency analy
 
 ---
 
+### Section D: Build & Handover Regression Fixes (Commit Review 2026-02-25)
+
+> **Context:** Full commit review on 2026-02-25 identified 3 build-blocking errors and a handover system regression. The mock file issue is a pre-existing problem from Jest scaffolding. The handover errors stem from the interactive handover system upgrade (`docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md`) where legacy consumers were not updated to match the new `completeHandoverStep` signature.
+
+---
+
+#### MOB-114 — Mock File Uses `jest.fn()` Without `@types/jest` ⛔ P0
+
+**Type:** Bug / Build Error  
+**Component:** `src/__mocks__/supabaseClient.ts`  
+**Status:** Build-blocking — 14 × TS2304 errors  
+
+**Description:**  
+The mock file uses `jest.fn()` throughout, but the project uses Vite — not Jest. `@types/jest` is not installed, so `jest` is an unknown global. This causes 14 `TS2304: Cannot find name 'jest'` errors that block the entire build.
+
+**Root Cause:** Pre-existing tech debt from when test infrastructure was scaffolded without matching dependencies. Unrelated to the promo code or handover work.
+
+**User Story:**  
+> As a developer, I want mock files to compile under the project's actual toolchain so that the build is not blocked by test scaffolding.
+
+**Acceptance Criteria:**
+- [ ] All `jest.fn()` calls replaced with plain function stubs returning identical shapes
+- [ ] No new dependencies added (`@types/jest` is NOT the fix)
+- [ ] Build passes with zero TS2304 errors from this file
+- [ ] Mock still provides correct chained API shape (`.from().select().eq()`, etc.)
+
+**Estimated Effort:** XS (< 30 min)
+
+---
+
+#### MOB-115 — `completeHandoverStep` Type Error: `Record<string, unknown>` vs `Json` ⛔ P0
+
+**Type:** Bug / Build Error  
+**Component:** `src/services/enhancedHandoverService.ts` (line 157)  
+**Status:** Build-blocking — TS2322  
+
+**Description:**  
+The `completionData` parameter is typed as `Record<string, unknown>`, but the Supabase RPC parameter `p_completion_data` expects `Json` (which is `string | number | boolean | null | { [key: string]: Json | undefined } | Json[]`). `unknown` is not assignable to `Json | undefined`.
+
+**Root Cause:** The service was updated for the interactive handover system but the type was left as `Record<string, unknown>` instead of being aligned with the Supabase-generated `Json` type.
+
+**User Story:**  
+> As a developer, I want the handover service to compile cleanly so that the build is not blocked by type mismatches on RPC calls.
+
+**Acceptance Criteria:**
+- [ ] `completionData` cast to `Json`-compatible type at the RPC call site (line 157)
+- [ ] No change to external function signature (callers still pass `Record<string, unknown>`)
+- [ ] Build passes with zero TS2322 errors from this file
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
+#### MOB-116 — `EnhancedHandoverSheet` Missing `userRole` Argument ⛔ P0 / Runtime
+
+**Type:** Bug / Build Error + Runtime Failure  
+**Components:** `src/components/handover/EnhancedHandoverSheet.tsx` (line 360), `src/components/handover/ResizableHandoverTray.tsx` (line 162)  
+**Status:** Build-blocking (TS2345) + silent runtime failure  
+
+**Description:**  
+`completeHandoverStep` was updated to a 4-argument signature for the interactive handover system:
+```typescript
+completeHandoverStep(sessionId, stepName, userRole, completionData?)
+```
+But both legacy components still call it with 3 arguments:
+```typescript
+completeHandoverStep(handoverId, stepName, completionData)
+```
+This passes `completionData` (a `Record<string, unknown>`) in the `userRole` position (expected `'host' | 'renter'`), causing TS2345 at build time and — if bypassed — the `advance_handover_step` RPC would receive a JSON object where it expects a role string, causing silent step completion failures.
+
+**Root Cause:** The interactive handover system (`InteractiveHandoverSheet` + `useInteractiveHandover`) correctly passes `userRole`, but the legacy handover UIs were never updated to match. Per `docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md`, these legacy components should have been deprecated or migrated.
+
+**Impact Assessment:**
+- **Consumers:** `EnhancedHandoverSheet` is used in the legacy booking detail handover flow; `ResizableHandoverTray` is used in the bottom-sheet handover UI
+- **Risk:** Medium — fix is mechanical (derive role from booking context), but highlights a larger architectural gap (dual handover systems)
+
+**User Story:**  
+> As a renter or host using the legacy handover UI, I want step completions to work correctly so that the handover process isn't silently broken.
+
+**Acceptance Criteria:**
+- [ ] Both components derive `userRole` from booking context (`booking.host_id === currentUserId ? 'host' : 'renter'`)
+- [ ] `completeHandoverStep` called with correct 4-argument signature
+- [ ] Build passes with zero TS2345 errors from these files
+- [ ] Legacy handover step completion works end-to-end (host completes host-owned step, renter completes renter-owned step)
+
+**Follow-up (Deferred):**
+- Evaluate deprecating `EnhancedHandoverSheet` and `ResizableHandoverTray` in favor of `InteractiveHandoverSheet` per the implementation plan
+
+**Estimated Effort:** S (< 1 hour)
+
+---
+
+#### MOB-117 — Handover Photo Storage RLS Audit 🔶 P1
+
+**Type:** Security / Audit  
+**Component:** Supabase Storage bucket `handover-photos`  
+**Status:** Functional but unverified RLS  
+
+**Description:**  
+`uploadHandoverPhoto` in `enhancedHandoverService.ts` uploads to the `handover-photos` bucket with compression, retry logic, and progress callbacks. The upload logic is correct, but RLS policies on the storage bucket have not been verified post-migration. If policies are misconfigured, uploads fail silently (the function catches errors and returns `null`).
+
+**User Story:**  
+> As a host or renter during handover, I want photo uploads to succeed reliably so that vehicle condition is properly documented.
+
+**Acceptance Criteria:**
+- [ ] Verify `handover-photos` bucket exists and has correct public/private setting
+- [ ] Verify RLS policy: authenticated users can INSERT to their own path (`{user_id}/...`)
+- [ ] Verify RLS policy: authenticated users can SELECT photos for sessions they participate in
+- [ ] Test upload during vehicle inspection step in the interactive handover flow
+- [ ] `uploadHandoverPhoto` returns a valid public URL (not `null`) for a test upload
+
+**Estimated Effort:** S (< 1 hour)
+
+---
+
 ## Implementation Priority Order
 
-| Order | Ticket  | Description                              | Type       | Effort |
-|-------|---------|------------------------------------------|------------|--------|
-| 1     | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     |
-| 2     | MOB-102 | Fix KYC table names & badges             | Frontend   | S      |
-| 3     | MOB-103 | Fix Car verification table structure     | Frontend   | S      |
-| 4     | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     |
-| 5     | MOB-107 | Deploy `bulk-delete-users`               | Deployment | XS     |
-| 6     | MOB-105 | Add auth to role assignment functions    | Frontend   | M      |
-| 7     | MOB-106 | Fix role INSERT → UPSERT                 | Frontend   | XS     |
-| 8     | MOB-104 | Fix UserEditDialog role sync             | Frontend   | S      |
-| 9     | MOB-110 | Fix delete user FK coverage              | Migration  | L      |
-| 10    | MOB-113 | Create migration protocol doc            | Process    | S      |
-| 11    | MOB-108 | Extract shared admin auth module         | Frontend   | M      |
-| 12    | MOB-112 | Deduplicate admin DB functions           | Migration  | S      |
-| 13    | MOB-109 | Clean up `as any` casts                  | Frontend   | S      |
+| Order | Ticket  | Description                              | Type       | Effort | Status |
+|-------|---------|------------------------------------------|------------|--------|--------|
+| 1     | MOB-114 | Fix mock file `jest.fn()` build errors   | Frontend   | XS     | ✅ Done |
+| 2     | MOB-115 | Fix `completionData` vs `Json` type      | Frontend   | XS     | ✅ Done |
+| 3     | MOB-116 | Fix missing `userRole` in legacy handover| Frontend   | S      | ✅ Done |
+| 4     | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     |        |
+| 5     | MOB-102 | Fix KYC table names & badges             | Frontend   | S      |        |
+| 6     | MOB-103 | Fix Car verification table structure     | Frontend   | S      |        |
+| 7     | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     |        |
+| 8     | MOB-107 | Deploy `bulk-delete-users`               | Deployment | XS     |        |
+| 9     | MOB-105 | Add auth to role assignment functions    | Frontend   | M      |        |
+| 10    | MOB-106 | Fix role INSERT → UPSERT                 | Frontend   | XS     |        |
+| 11    | MOB-104 | Fix UserEditDialog role sync             | Frontend   | S      |        |
+| 12    | MOB-110 | Fix delete user FK coverage              | Migration  | L      |        |
+| 13    | MOB-117 | Audit handover-photos storage RLS        | Security   | S      |        |
+| 14    | MOB-113 | Create migration protocol doc            | Process    | S      |        |
+| 15    | MOB-108 | Extract shared admin auth module         | Frontend   | M      |        |
+| 16    | MOB-112 | Deduplicate admin DB functions           | Migration  | S      |        |
+| 17    | MOB-109 | Clean up `as any` casts                  | Frontend   | S      |        |
 
 ---
 
 ## Definition of Done
 
-- [ ] All P0 tickets resolved and verified
+- [x] MOB-114, MOB-115, MOB-116 build errors resolved (2026-02-25)
+- [ ] All remaining P0 tickets resolved and verified
 - [ ] All P1 tickets resolved or have approved deferral
 - [ ] Admin portal pages load without console errors: `/admin/users`, `/admin/reviews`, `/admin/verifications`, `/admin/cars`, `/admin/promo-codes`
 - [ ] Delete user flow tested end-to-end (single + bulk)
 - [ ] Role assignment tested with auth verification
+- [ ] Legacy handover step completion tested end-to-end
+- [ ] Handover photo storage RLS verified (MOB-117)
 - [ ] Migration protocol documented and referenced in project conventions
 - [ ] No `as any` casts in admin components (P2, can defer)
