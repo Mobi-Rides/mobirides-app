@@ -107,6 +107,7 @@ const convertDatabaseHandoverToHandoverStatus = (
     renter_location: convertDatabaseLocationToHandoverLocation(data.renter_location),
     handover_completed: !!data.handover_completed,
     handover_type: (data.handover_type as HandoverType) || 'pickup',
+    is_interactive: !!data.is_interactive,
     created_at: data.created_at as string,
     updated_at: data.updated_at as string,
   };

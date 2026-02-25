@@ -73,11 +73,15 @@ export interface GeographicBounds {
 
 export interface PricingCalculation {
   base_price: number;
-  applied_rules: AppliedRule[];
-  total_multiplier: number;
   final_price: number;
-  savings?: number; // If final price is lower than base
-  premium?: number; // If final price is higher than base
+  total_multiplier: number;
+  is_dynamic: boolean;
+  applied_rules?: AppliedRule[];
+  factors?: Record<string, number>;
+  savings?: number;
+  premium?: number;
+  original_price?: number; // For backward compatibility
+  multiplier?: number;     // For backward compatibility
 }
 
 export interface AppliedRule {

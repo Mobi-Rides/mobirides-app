@@ -1,14 +1,7 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-
-export interface PricingCalculation {
-  final_price: number;
-  original_price: number;
-  is_dynamic: boolean;
-  multiplier: number;
-  factors?: Record<string, number>;
-}
+import { PricingCalculation } from "@/types/pricing";
 
 interface UnifiedPriceSummaryProps {
   // Base calculation

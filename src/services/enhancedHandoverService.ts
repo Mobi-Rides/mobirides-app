@@ -2,17 +2,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
 import { compressImage, isImageFile, formatFileSize } from "@/utils/imageCompression";
 
-// Enhanced handover step definitions
+// Enhanced handover step definitions with owners
 export const HANDOVER_STEPS = [
-  { name: "navigation", order: 1, title: "Navigate to Location", description: "Get directions to the handover location" },
-  { name: "identity_verification", order: 2, title: "Identity Verification", description: "Verify each other's identity" },
-  { name: "vehicle_inspection_exterior", order: 3, title: "Exterior Inspection", description: "Document vehicle exterior condition" },
-  { name: "vehicle_inspection_interior", order: 4, title: "Interior Inspection", description: "Document vehicle interior condition" },
-  { name: "damage_documentation", order: 5, title: "Damage Documentation", description: "Record any existing damage" },
-  { name: "fuel_mileage_check", order: 6, title: "Fuel & Mileage", description: "Record current fuel level and mileage" },
-  { name: "key_transfer", order: 7, title: "Key Transfer", description: "Physical transfer of vehicle keys" },
-  { name: "digital_signature", order: 8, title: "Digital Acknowledgment", description: "Sign handover agreement" },
-  { name: "completion", order: 9, title: "Handover Complete", description: "Finalize the handover process" }
+  { name: "location_selection", order: 1, owner: "host", title: "Select Location", description: "Host selects handover location" },
+  { name: "location_confirmation", order: 2, owner: "renter", title: "Confirm Location", description: "Renter confirms location is acceptable" },
+  { name: "en_route_confirmation", order: 3, owner: "renter", title: "En Route", description: "Renter confirms heading to location" },
+  { name: "host_en_route", order: 4, owner: "host", title: "Host En Route", description: "Host confirms heading to location" },
+  { name: "arrival_confirmation", order: 5, owner: "both", title: "Confirm Arrival", description: "Both confirm arrival at location" },
+  { name: "identity_verification", order: 6, owner: "host", title: "Identity Verification", description: "Host verifies renter's ID" },
+  { name: "vehicle_inspection_exterior", order: 7, owner: "renter", title: "Exterior Inspection", description: "Renter inspects vehicle exterior" },
+  { name: "vehicle_inspection_interior", order: 8, owner: "renter", title: "Interior Inspection", description: "Renter inspects vehicle interior" },
+  { name: "damage_documentation", order: 9, owner: "both", title: "Damage Acknowledgment", description: "Both acknowledge damage state" },
+  { name: "fuel_mileage_check", order: 10, owner: "renter", title: "Fuel & Mileage", description: "Renter records fuel and mileage" },
+  { name: "key_transfer", order: 11, owner: "host", title: "Key Transfer", description: "Host confirms key handover" },
+  { name: "key_receipt", order: 12, owner: "renter", title: "Key Receipt", description: "Renter confirms key receipt" },
+  { name: "digital_signature", order: 13, owner: "both", title: "Digital Signature", description: "Both sign acknowledgment" },
+  { name: "completion", order: 14, owner: "both", title: "Complete Handover", description: "Both confirm handover complete" }
 ];
 
 export interface VehiclePhoto {
@@ -88,6 +93,7 @@ export const initializeHandoverSteps = async (handoverSessionId: string) => {
       handover_session_id: handoverSessionId,
       step_name: step.name,
       step_order: step.order,
+      step_owner: step.owner,
       is_completed: false
     }));
 
@@ -125,33 +131,13 @@ export const getHandoverSteps = async (handoverSessionId: string) => {
 export const completeHandoverStep = async (
   handoverSessionId: string,
   stepName: string,
+  userRole: 'host' | 'renter',
   completionData?: Record<string, unknown>
 ) => {
   try {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) {
       throw new Error("User not authenticated");
-    }
-
-    // Get current step info to validate order
-    const { data: stepInfo, error: stepError } = await supabase
-      .from("handover_step_completion")
-      .select("step_order, is_completed")
-      .eq("handover_session_id", handoverSessionId)
-      .eq("step_name", stepName)
-      .single();
-
-    if (stepError) {
-      throw new Error(`Step lookup failed: ${stepError.message}`);
-    }
-
-    if (!stepInfo) {
-      throw new Error("Step not found");
-    }
-    
-    if (stepInfo.is_completed) {
-      toast.info(`${stepName.replace('_', ' ')} is already completed`);
-      return true;
     }
 
     // Validate step completion based on step type
@@ -162,40 +148,32 @@ export const completeHandoverStep = async (
       return false;
     }
 
-    // The database trigger will enforce dependency validation
-    const updateData = {
-      is_completed: true,
-      completed_by: userData.user.id,
-      completion_data: completionData as any,
-      completed_at: new Date().toISOString()
-    };
-    
-    const { error } = await supabase
-      .from("handover_step_completion")
-      .update(updateData)
-      .eq("handover_session_id", handoverSessionId)
-      .eq("step_name", stepName);
+    // Use the RPC function to advance the step
+    const { data, error } = await supabase.rpc('advance_handover_step', {
+      p_session_id: handoverSessionId,
+      p_completed_step_name: stepName,
+      p_user_id: userData.user.id,
+      p_user_role: userRole,
+      p_completion_data: completionData || {}
+    });
 
     if (error) {
-      // Handle dependency validation errors
-      if (error.message.includes("Previous steps must be completed")) {
-        toast.error("Please complete previous steps first");
-      } else {
-        console.error("Database update error:", error);
-        throw error;
-      }
+      console.error("RPC error completing step:", error);
+      toast.error(`Failed to complete step: ${error.message}`);
       return false;
     }
     
-    toast.success(`${stepName.replace('_', ' ')} completed`);
+    const result = data as any;
+    if (!result.success) {
+      toast.error(result.error || "Failed to complete step");
+      return false;
+    }
+    
+    toast.success(`${stepName.replace(/_/g, ' ')} completed`);
     return true;
   } catch (error) {
     console.error(`Error completing handover step ${stepName}:`, error);
-    if (error.message.includes("Previous steps must be completed")) {
-      toast.error("Please complete previous steps in order");
-    } else {
-      toast.error(`Failed to complete handover step: ${error.message}`);
-    }
+    toast.error(`Failed to complete handover step: ${error.message}`);
     return false;
   }
 };
@@ -207,18 +185,40 @@ const validateStepCompletion = async (
   completionData?: Record<string, unknown>
 ): Promise<{ isValid: boolean; message: string }> => {
   switch (stepName) {
+    case "location_selection":
+      if (!completionData?.latitude || !completionData?.longitude || !completionData?.address) {
+        return { isValid: false, message: "Location coordinates and address are required" };
+      }
+      break;
+
+    case "identity_verification":
+      if (completionData?.verified === undefined) {
+        return { isValid: false, message: "Verification status is required" };
+      }
+      if (completionData?.verified && !completionData?.photoUrl) {
+        return { isValid: false, message: "Identity verification photo is required" };
+      }
+      break;
+
+    case "vehicle_inspection_exterior":
+    case "vehicle_inspection_interior":
+      if (!completionData?.photos || !Array.isArray(completionData.photos) || completionData.photos.length === 0) {
+        return { isValid: false, message: "At least one inspection photo is required" };
+      }
+      break;
+
     case "fuel_mileage_check":
-      if (!completionData?.fuel_level || !completionData?.mileage) {
+      if (completionData?.fuel_level === undefined || completionData?.mileage === undefined) {
         return { isValid: false, message: "Fuel level and mileage are required" };
       }
       // Validate fuel level is between 0-100
       const fuelLevel = Number(completionData.fuel_level);
-      if (fuelLevel < 0 || fuelLevel > 100) {
+      if (isNaN(fuelLevel) || fuelLevel < 0 || fuelLevel > 100) {
         return { isValid: false, message: "Fuel level must be between 0 and 100%" };
       }
       // Validate mileage is positive
       const mileage = Number(completionData.mileage);
-      if (mileage < 0) {
+      if (isNaN(mileage) || mileage < 0) {
         return { isValid: false, message: "Mileage must be a positive number" };
       }
       break;

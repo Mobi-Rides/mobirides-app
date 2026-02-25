@@ -32,7 +32,9 @@ export const ReceiptModal = ({ isOpen, onClose, booking }: ReceiptModalProps) =>
     is_dynamic: true,
     final_price: basePrice * booking.dynamic_pricing_multiplier,
     original_price: basePrice,
-    multiplier: booking.dynamic_pricing_multiplier
+    multiplier: booking.dynamic_pricing_multiplier,
+    base_price: basePrice,
+    total_multiplier: booking.dynamic_pricing_multiplier
   } : undefined;
 
   return (

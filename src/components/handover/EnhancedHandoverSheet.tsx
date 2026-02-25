@@ -30,6 +30,7 @@ import { HandoverNavigationStep } from "./steps/HandoverNavigationStep";
 import { HandoverSuccessPopup } from "./HandoverSuccessPopup";
 import { HandoverProgressIndicator } from "./HandoverProgressIndicator";
 import { useRealtimeHandover } from "@/hooks/useRealtimeHandover";
+import { InteractiveHandoverSheet } from "./interactive/InteractiveHandoverSheet";
 import { toast } from "@/utils/toast-utils";
 import { BookingWithRelations } from "@/types/booking";
 
@@ -738,6 +739,17 @@ export const EnhancedHandoverSheet = ({
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  // Use the new interactive sheet if the session is marked as interactive
+  if (handoverStatus?.is_interactive && handoverId) {
+    return (
+      <InteractiveHandoverSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        sessionId={handoverId}
+      />
     );
   }
 
