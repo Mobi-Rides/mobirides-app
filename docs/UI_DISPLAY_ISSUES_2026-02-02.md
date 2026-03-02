@@ -1,5 +1,17 @@
 # UI/Display Issues - February 2, 2026
 
+**Last Updated:** March 2, 2026  
+**Version:** 1.1
+
+## Related Documents
+
+| Document | Relationship |
+|----------|-------------|
+| [HOTFIX_ADMIN_PORTAL_2026_02_24.md](hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md) | Issues 1, 5, 6, 7 promoted to MOB-118 through MOB-122 (avatars); Issue 3 color contrast partially covered by MOB-121 audit |
+| [TESTING_COVERAGE_STATUS_2026_03_02.md](testing/TESTING_COVERAGE_STATUS_2026_03_02.md) | Round 1 testing identified additional display bugs (MOB-207, MOB-208, MOB-209) |
+
+---
+
 ## Overview
 
 This document catalogs all identified UI/display issues across the MobiRides application requiring resolution before production release.
@@ -35,15 +47,15 @@ export const getAvatarPublicUrl = (avatarPath: string | null | undefined): strin
 
 ### Tasks
 
-| ID | Task | Points |
-|----|------|--------|
-| UI-001 | Create `avatarUtils.ts` utility | 1 |
-| UI-002 | Fix CarOwner.tsx avatar display | 1 |
-| UI-003 | Fix HostBookingCard.tsx avatar | 1 |
-| UI-004 | Fix RenterBookingCard.tsx - add host avatar | 1 |
-| UI-005 | Fix ConversationRow.tsx avatar | 1 |
-| UI-006 | Fix ChatHeader.tsx avatar | 1 |
-| UI-007 | Fix Maps host sidebar avatars | 1 |
+| ID | Task | Points | Hotfix Ticket | Status |
+|----|------|--------|---------------|--------|
+| UI-001 | Create `avatarUtils.ts` utility | 1 | MOB-118 | 🟡 Pending |
+| UI-002 | Fix CarOwner.tsx avatar display | 1 | MOB-120 | 🟡 Pending |
+| UI-003 | Fix HostBookingCard.tsx avatar | 1 | MOB-119 | 🟡 Pending |
+| UI-004 | Fix RenterBookingCard.tsx - add host avatar | 1 | MOB-121 | 🟡 Pending |
+| UI-005 | Fix ConversationRow.tsx avatar | 1 | MOB-121 | 🟡 Pending |
+| UI-006 | Fix ChatHeader.tsx avatar | 1 | MOB-121 | 🟡 Pending |
+| UI-007 | Fix Maps host sidebar avatars | 1 | MOB-121 | 🟡 Pending |
 
 ---
 
@@ -94,13 +106,13 @@ Create `ResponsiveTabTrigger` component with behavior:
 
 ### Tasks
 
-| ID | Task | Points |
-|----|------|--------|
-| UI-008 | Create `ResponsiveTabTrigger` component | 3 |
-| UI-009 | Update HostBookings.tsx tabs | 2 |
-| UI-010 | Update RenterDashboard.tsx tabs | 2 |
-| UI-011 | Update NotificationsRefactored.tsx tabs | 2 |
-| UI-012 | Test responsive behavior on mobile viewports | 1 |
+| ID | Task | Points | Hotfix Ticket | Status |
+|----|------|--------|---------------|--------|
+| UI-008 | Create `ResponsiveTabTrigger` component | 3 | — | 🔴 Not started |
+| UI-009 | Update HostBookings.tsx tabs | 2 | — | 🔴 Not started |
+| UI-010 | Update RenterDashboard.tsx tabs | 2 | — | 🔴 Not started |
+| UI-011 | Update NotificationsRefactored.tsx tabs | 2 | — | 🔴 Not started |
+| UI-012 | Test responsive behavior on mobile viewports | 1 | — | 🔴 Not started |
 
 ---
 
@@ -109,7 +121,7 @@ Create `ResponsiveTabTrigger` component with behavior:
 ### Description
 Hardcoded gray colors (`text-gray-600`, `text-gray-700`, `bg-gray-50`) don't adapt to dark mode, causing text to become invisible or low-contrast.
 
-### Affected Files (54+ identified)
+### Affected Files (55+ identified)
 
 **High Priority:**
 | File | Issue |
@@ -117,6 +129,7 @@ Hardcoded gray colors (`text-gray-600`, `text-gray-700`, `bg-gray-50`) don't ada
 | `Login.tsx` | `text-gray-900`, `bg-gray-50` invisible in dark mode |
 | `signup.tsx` | Hardcoded gray colors throughout |
 | `UnauthenticatedView.tsx` | `text-gray-600` invisible in dark mode |
+| `VerificationRequiredDialog.tsx` | `bg-gray-50` on 3 verification step cards (lines 145, 152, 159) — invisible in dark mode |
 
 **Medium Priority:**
 | File | Issue |
@@ -143,13 +156,13 @@ Some buttons use `text-primary` on `bg-primary` backgrounds. Ensure buttons use 
 
 ### Tasks
 
-| ID | Task | Points |
-|----|------|--------|
-| UI-013 | Fix Login.tsx color tokens | 2 |
-| UI-014 | Fix signup.tsx color tokens | 2 |
-| UI-015 | Fix UnauthenticatedView.tsx colors | 1 |
-| UI-016 | Audit and fix remaining files (batch) | 5 |
-| UI-017 | Fix button contrast issues | 2 |
+| ID | Task | Points | Hotfix Ticket | Status |
+|----|------|--------|---------------|--------|
+| UI-013 | Fix Login.tsx color tokens | 2 | — | 🔴 Not started |
+| UI-014 | Fix signup.tsx color tokens | 2 | — | 🔴 Not started |
+| UI-015 | Fix UnauthenticatedView.tsx colors | 1 | — | 🔴 Not started |
+| UI-016 | Audit and fix remaining files (batch) | 5 | MOB-121 (partial) | 🔴 Not started |
+| UI-017 | Fix button contrast issues | 2 | — | 🔴 Not started |
 
 ---
 
@@ -178,11 +191,11 @@ useEffect(() => {
 
 ### Tasks
 
-| ID | Task | Points |
-|----|------|--------|
-| UI-018 | Auto-open AuthModal in UnauthenticatedView | 2 |
-| UI-019 | Review/update AuthModal close behavior | 1 |
-| UI-020 | Consider deprecating /login and /signup routes | 1 |
+| ID | Task | Points | Hotfix Ticket | Status |
+|----|------|--------|---------------|--------|
+| UI-018 | Auto-open AuthModal in UnauthenticatedView | 2 | — | 🔴 Not started |
+| UI-019 | Review/update AuthModal close behavior | 1 | — | 🔴 Not started |
+| UI-020 | Consider deprecating /login and /signup routes | 1 | — | 🔴 Not started |
 
 ---
 
@@ -195,7 +208,7 @@ On the vehicle details page, the car owner's avatar doesn't display correctly in
 `src/components/car-details/CarOwner.tsx` - lines 100-104
 
 ### Solution
-Use `getAvatarPublicUrl()` utility (covered in Issue 1, Task UI-002).
+Use `getAvatarPublicUrl()` utility (covered in Issue 1, Task UI-002 / MOB-120).
 
 ---
 
@@ -209,7 +222,7 @@ In the messenger module, user avatars in conversation list and chat headers don'
 - `ChatHeader.tsx` - avatar prop handling
 
 ### Solution
-Apply `getAvatarPublicUrl()` utility (covered in Issue 1, Tasks UI-005 & UI-006).
+Apply `getAvatarPublicUrl()` utility (covered in Issue 1, Tasks UI-005 & UI-006 / MOB-121).
 
 ---
 
@@ -219,7 +232,7 @@ Apply `getAvatarPublicUrl()` utility (covered in Issue 1, Tasks UI-005 & UI-006)
 When viewing hosts on the map, the sidebar showing host information doesn't display their avatar correctly.
 
 ### Solution
-Identify the sidebar component and apply `getAvatarPublicUrl()` utility (covered in Issue 1, Task UI-007).
+Identify the sidebar component and apply `getAvatarPublicUrl()` utility (covered in Issue 1, Task UI-007 / MOB-121).
 
 ---
 
@@ -227,15 +240,23 @@ Identify the sidebar component and apply `getAvatarPublicUrl()` utility (covered
 
 ### Total Story Points: 34
 
-| Category | Points |
-|----------|--------|
-| Avatar Fixes (Issue 1) | 7 |
-| Responsive Tabs (Issue 2) | 10 |
-| Color Contrast (Issue 3) | 12 |
-| Auth Flow (Issue 4) | 4 |
-| Vehicle Details (Issue 5) | (included in Issue 1) |
-| Messenger (Issue 6) | (included in Issue 1) |
-| Maps Sidebar (Issue 7) | (included in Issue 1) |
+| Category | Points | Hotfix Coverage |
+|----------|--------|-----------------|
+| Avatar Fixes (Issue 1) | 7 | ✅ MOB-118 to MOB-122 |
+| Responsive Tabs (Issue 2) | 10 | ❌ Not in hotfix |
+| Color Contrast (Issue 3) | 12 | 🟡 Partial (MOB-121 audit covers some) |
+| Auth Flow (Issue 4) | 4 | ❌ Not in hotfix |
+| Vehicle Details (Issue 5) | (included in Issue 1) | ✅ MOB-120 |
+| Messenger (Issue 6) | (included in Issue 1) | ✅ MOB-121 |
+| Maps Sidebar (Issue 7) | (included in Issue 1) | ✅ MOB-121 |
+
+### Implementation Status
+
+| Status | Count | Notes |
+|--------|-------|-------|
+| ✅ Promoted to Hotfix | 7 tasks | Issues 1, 5, 6, 7 → MOB-118 to MOB-122 |
+| 🟡 Partially Covered | 1 task | UI-016 partially in MOB-121 audit |
+| 🔴 Not Started | 12 tasks | Issues 2, 3 (most), 4 remain unscheduled |
 
 ### Priority Order
 
@@ -276,4 +297,5 @@ Identify the sidebar component and apply `getAvatarPublicUrl()` utility (covered
 | `src/components/home/UnauthenticatedView.tsx` | Auto-open AuthModal, fix colors |
 | `src/pages/Login.tsx` | Color token fixes |
 | `src/pages/signup.tsx` | Color token fixes |
+| `src/components/verification/VerificationRequiredDialog.tsx` | `bg-gray-50` → `bg-muted` (3 instances) |
 | 50+ additional files | Hardcoded color replacements |
