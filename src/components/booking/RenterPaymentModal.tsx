@@ -49,7 +49,9 @@ export const RenterPaymentModal: React.FC<RenterPaymentModalProps> = ({
     is_dynamic: true,
     final_price: basePrice * multiplier,
     original_price: basePrice,
-    multiplier
+    base_price: basePrice,
+    multiplier,
+    total_multiplier: multiplier,
   } : undefined;
 
   const handlePay = () => {

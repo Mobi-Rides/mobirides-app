@@ -670,8 +670,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const dynamicPricingForSummary = calculation ? {
     final_price: calculation.final_price,
     original_price: calculation.base_price,
+    base_price: calculation.base_price,
     is_dynamic: calculation.total_multiplier !== 1,
     multiplier: calculation.total_multiplier,
+    total_multiplier: calculation.total_multiplier,
   } : undefined;
 
   const canGoNext = () => {
