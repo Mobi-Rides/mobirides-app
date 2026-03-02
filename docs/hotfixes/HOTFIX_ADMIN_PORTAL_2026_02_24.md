@@ -789,3 +789,14 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 - [ ] All user avatars display correctly across all modules (MOB-118 through MOB-122)
 - [ ] All car cover images display correctly with proper fallbacks (MOB-123 through MOB-126)
 - [ ] No broken image icons visible on any listing, booking, or detail page
+- [ ] Anonymize-on-delete implemented per [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)
+
+---
+
+### Section G: Anonymize-on-Delete (Analytics Preservation)
+
+> **Full Implementation Plan:** [docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)
+
+**Context:** The current hard-delete approach in both `delete-user-with-transfer` and `bulk-delete-users` destroys historical booking, revenue, commission, and review data needed for business analytics. The linked plan details a soft-delete + anonymization strategy that preserves all analytics while removing PII.
+
+**Tickets:** MOB-130 through MOB-138 (9 tickets across 5 phases, targeting 2026-03-03 – 2026-03-07)
