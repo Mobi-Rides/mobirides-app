@@ -1,43 +1,50 @@
 # MobiRides Pre-Launch Testing Protocol
 **Document Date:** January 5, 2026 (Week 1 Q1 2026)  
-**Version:** v1.0.0  
+**Last Updated:** March 2, 2026  
+**Version:** v2.0.0  
 **Prepared By:** MobiRides Technical Team  
 **Testing Lead:** Arnold (Technical Lead)  
 **Support:** Duma, Tebogo  
 **First Round Testers:** Oratile (Community & PR), Pearl (Customer Success), Loago (Chief of Staff)  
 **Extended Team:** Natasha & Kelvin (Creative), Ella (Finance), Jessica (Marketing)
 
+> **📊 Latest Testing Coverage Report:** [TESTING_COVERAGE_STATUS_2026_03_02.md](./TESTING_COVERAGE_STATUS_2026_03_02.md)  
+> **🔧 Active Hotfix Tracker:** [HOTFIX_ADMIN_PORTAL_2026_02_24.md](../hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md)  
+> **🗑️ Anonymize-on-Delete Plan:** [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)
+
 ---
 
 ## 📋 TABLE OF CONTENTS
 
 1. [Executive Summary](#-executive-summary)
-2. [Testing Objectives](#-testing-objectives)
-3. [Testing Phases & Timeline](#-testing-phases--timeline)
-4. [Team Roles & Responsibilities](#-team-roles--responsibilities)
-5. [Slack Bug Reporting Protocol](#-slack-bug-reporting-protocol)
-6. [Test Environment Setup](#-test-environment-setup)
-7. [User Role Definitions](#-user-role-definitions)
-8. [Module Testing Specifications](#-module-testing-specifications)
-9. [User Journey Tests](#-user-journey-tests)
-10. [Route & Navigation Testing](#-route--navigation-testing)
-11. [Edge Case Testing](#-edge-case-testing)
-12. [Known Issues & Previous Bugs](#-known-issues--previous-bugs)
-13. [Security Testing](#-security-testing)
-14. [Performance Testing](#-performance-testing)
-15. [Mobile Responsiveness Testing](#-mobile-responsiveness-testing)
-16. [Accessibility Testing](#-accessibility-testing)
-17. [Test Sign-Off Checklist](#-test-sign-off-checklist)
-18. [Appendix: Test Case Templates](#-appendix-test-case-templates)
+2. [Current Testing Status (March 2026)](#-current-testing-status-march-2026)
+3. [Testing Objectives](#-testing-objectives)
+4. [Testing Phases & Timeline](#-testing-phases--timeline)
+5. [Team Roles & Responsibilities](#-team-roles--responsibilities)
+6. [Slack Bug Reporting Protocol](#-slack-bug-reporting-protocol)
+7. [Test Environment Setup](#-test-environment-setup)
+8. [User Role Definitions](#-user-role-definitions)
+9. [Module Testing Specifications](#-module-testing-specifications)
+10. [User Journey Tests](#-user-journey-tests)
+11. [Route & Navigation Testing](#-route--navigation-testing)
+12. [Edge Case Testing](#-edge-case-testing)
+13. [Known Issues & Previous Bugs](#-known-issues--previous-bugs)
+14. [Security Testing](#-security-testing)
+15. [Performance Testing](#-performance-testing)
+16. [Mobile Responsiveness Testing](#-mobile-responsiveness-testing)
+17. [Accessibility Testing](#-accessibility-testing)
+18. [Test Sign-Off Checklist](#-test-sign-off-checklist)
+19. [Appendix: Test Case Templates](#-appendix-test-case-templates)
 
 ---
 
 ## 🎯 EXECUTIVE SUMMARY
 
-This document establishes the comprehensive pre-launch testing protocol for MobiRides v2.5.0. Testing will be conducted in two phases:
+This document establishes the comprehensive pre-launch testing protocol for MobiRides v2.5.0. Testing is conducted across multiple phases with cross-functional team involvement.
 
 1. **Internal Testing (Phase 1):** Technical team + first-round business testers
-2. **Beta Group Testing (Phase 2):** Extended team + external beta users
+2. **Extended Team Testing (Phase 2):** Creative, Finance, Marketing testers
+3. **Beta Group Testing (Phase 3):** External beta users
 
 ### Testing Scope
 
@@ -58,6 +65,56 @@ This document establishes the comprehensive pre-launch testing protocol for Mobi
 - **100%** core user journey completion rate
 - **100%** route accessibility (no 404 errors)
 - **All** security vulnerabilities resolved
+
+### Current Status (as of March 2, 2026)
+
+| Metric | Target | Actual | Status |
+|--------|--------|--------|--------|
+| Critical bugs | 0 | 1 (HAND-011 return handover) | ❌ Not met |
+| High-priority bugs | <5 | 5 (MSG-005, AUTH-009, HAND-012/013, REV-001) | ❌ Not met |
+| Medium-priority bugs | — | 15 | ⚠️ Under review |
+| Test execution rate | 100% | ~62% (271/438 test executions) | ⚠️ In progress |
+| Unique test cases covered | 197 | 197 executed of 197 defined | ✅ All attempted |
+
+> ⚠️ **Action Required:** See [Testing Coverage Status Report](./TESTING_COVERAGE_STATUS_2026_03_02.md) for the full bug registry (MOB-201 through MOB-225) and Round 2 test assignments.
+
+---
+
+## 📊 CURRENT TESTING STATUS (March 2026)
+
+### Tester Execution Summary
+
+| Tester | Passed | Failed | Blocked | Execution % | Primary Focus |
+|--------|--------|--------|---------|-------------|---------------|
+| Arnold | 13 | 0 | 2 | 89.8% | Admin/Host (partial results) |
+| Kelvin | 69 | 0 | 0 | 71.1% | Renter/Host (all pass) |
+| Loago | 106 | 11 | 4 | 87.8% | Renter/Host/Admin (most bugs found) |
+| Pearl | 52 | 1 | 0 | 36% | Renter (partial) |
+| Teboho | 31 | 0 | 0 | 20.8% | SuperAdmin (limited) |
+
+**Combined:** ~271 pass, 12 fail, 6 blocked across 197 test cases.
+
+### Critical & High-Priority Open Bugs
+
+| Ticket | Test ID | Description | Severity | Confirmed By |
+|--------|---------|-------------|----------|--------------|
+| MOB-202 | HAND-011 | Return handover flow broken | 🔴 Critical | Loago |
+| MOB-201 | MSG-005 | Mark-as-read badge persists | 🔴 High | Kelvin, Loago, Pearl |
+| MOB-210 | AUTH-009 | Signup broken for some users | 🔴 High | Loago |
+| MOB-203 | HAND-012/013 | GPS + real-time sync broken | 🔴 High | Arnold, Loago |
+| MOB-204 | REV-001 | Review submission fails | 🔴 High | Arnold |
+
+### Coverage Gaps Requiring Round 2 Testing
+
+| Module | Gap | Assigned To (Round 2) |
+|--------|-----|-----------------------|
+| Wallet (host ops) | 0% coverage on WALL-005–010 | Kelvin |
+| Reviews | 62% untested, 2 fails | Arnold (renter perspective) |
+| Handover (host-side) | No host-side testing | Loago (as host) |
+| Admin | Single tester, 4 blocked/failed | Teboho |
+| Promo Codes | Single tester validation only | Kelvin |
+
+> 📋 **Full details:** [TESTING_COVERAGE_STATUS_2026_03_02.md](./TESTING_COVERAGE_STATUS_2026_03_02.md)
 
 ---
 
@@ -84,27 +141,36 @@ This document establishes the comprehensive pre-launch testing protocol for Mobi
 
 ## 📅 TESTING PHASES & TIMELINE
 
-### Phase 1: Internal Testing (January 6-17, 2026)
+### Phase 1: Internal Testing (January 6-17, 2026) — ✅ Complete
 
-| Week | Focus | Testers | Deliverables |
-|------|-------|---------|--------------|
-| Week 1 (Jan 6-10) | Core flows + Admin | Arnold, Duma, Tebogo | Bug reports, route audit |
-| Week 2 (Jan 13-17) | User journeys + Edge cases | Oratile, Pearl, Loago | UX feedback, journey maps |
+| Week | Focus | Testers | Status | Deliverables |
+|------|-------|---------|--------|--------------|
+| Week 1 (Jan 6-10) | Core flows + Admin | Arnold, Duma, Tebogo | ✅ Done | Bug reports, route audit |
+| Week 2 (Jan 13-17) | User journeys + Edge cases | Oratile, Pearl, Loago | ✅ Done | UX feedback, journey maps |
 
-### Phase 2: Extended Team Testing (January 20-24, 2026)
+### Phase 2: Extended Team Testing (January 20 – February 28, 2026) — ✅ Complete
 
-| Date | Focus | Testers | Deliverables |
-|------|-------|---------|--------------|
-| Jan 20-22 | Full platform walkthrough | Creative Team (Natasha, Kelvin) | Visual/UI bugs |
-| Jan 22-23 | Financial flows | Ella (Finance) | Payment/wallet bugs |
-| Jan 23-24 | Marketing features | Jessica (Marketing) | Promo code, sharing bugs |
+| Period | Focus | Testers | Status | Deliverables |
+|--------|-------|---------|--------|--------------|
+| Jan 20-22 | Full platform walkthrough | Natasha, Kelvin | ✅ Done | Visual/UI bugs |
+| Jan 22-23 | Financial flows | Ella (Finance) | ✅ Done | Payment/wallet bugs |
+| Jan 23-24 | Marketing features | Jessica (Marketing) | ✅ Done | Promo code, sharing bugs |
+| Feb 10-28 | Comprehensive UAT | Arnold, Kelvin, Loago, Pearl, Teboho | ✅ Done | [Coverage Report](./TESTING_COVERAGE_STATUS_2026_03_02.md) |
 
-### Phase 3: Beta Group Testing (January 27 - February 7, 2026)
+### Phase 3: Bug Fix & Re-Test (March 2026) — 🔄 In Progress
 
-| Week | Focus | Testers | Deliverables |
-|------|-------|---------|--------------|
-| Week 4 | Real-world usage | 50 beta users | Live bug reports |
-| Week 5 | Stress testing | 100 beta users | Performance data |
+| Week | Focus | Testers | Status | Deliverables |
+|------|-------|---------|--------|--------------|
+| Mar 3-7 | Fix critical/high bugs (MOB-201–225) | Technical team | 🔄 Active | Hotfix patches |
+| Mar 3-7 | Round 2: Coverage gap filling | Kelvin, Pearl, Teboho, Loago | 📋 Planned | Re-test results |
+| Mar 10-14 | Regression testing | All testers | 📋 Planned | Sign-off |
+
+### Phase 4: Beta Group Testing — 📋 Planned (Post Phase 3)
+
+| Week | Focus | Testers | Status | Deliverables |
+|------|-------|---------|--------|--------------|
+| TBD | Real-world usage | 50 beta users | 📋 Pending | Live bug reports |
+| TBD | Stress testing | 100 beta users | 📋 Pending | Performance data |
 
 ---
 
@@ -1179,53 +1245,56 @@ Test on the following browsers:
 
 | Category | Tester | Status | Date | Notes |
 |----------|--------|--------|------|-------|
-| Authentication | Arnold | ⬜ | | |
-| Verification | Arnold | ⬜ | | |
-| Vehicle Management | Duma | ⬜ | | |
-| Booking System | Duma | ⬜ | | |
-| Wallet | Tebogo | ⬜ | | |
-| Messaging | Tebogo | ⬜ | | |
-| Handover | Arnold | ⬜ | | |
-| Reviews | Duma | ⬜ | | |
-| Navigation | All | ⬜ | | |
-| Notifications | Tebogo | ⬜ | | |
-| Admin Dashboard | Tebogo | ⬜ | | |
-| Insurance | Arnold | ⬜ | | |
-| Promo Codes | Duma | ⬜ | | |
-| Route Audit | All | ⬜ | | |
-| Edge Cases | All | ⬜ | | |
+| Authentication | Kelvin, Loago, Pearl | ✅ Pass (9/10) | Feb 2026 | AUTH-009 fail (MOB-210) |
+| Verification | Kelvin, Loago | ✅ Pass (8/10) | Feb 2026 | VER-006/007 blocked (OTP mock) |
+| Vehicle Management | Kelvin, Loago, Pearl | ✅ Pass (11/12) | Feb 2026 | CAR-003 fail (MOB-225) |
+| Booking System | Kelvin, Loago, Pearl | ⚠️ Partial (15/19) | Feb 2026 | BOOK-003 blocked, BOOK-009/019 fail |
+| Wallet | Kelvin, Loago | ⚠️ Partial (4/10) | Feb 2026 | Host wallet untested (WALL-005–010) |
+| Messaging | Kelvin, Loago, Pearl | ⚠️ Partial (4/8) | Feb 2026 | MSG-005 fail (MOB-201), MSG-006/008 blocked |
+| Handover | Loago, Arnold | ❌ Fails (5 fails) | Feb 2026 | HAND-011–015 fail, no host-side testing |
+| Reviews | Arnold | ❌ Fails (2/3) | Feb 2026 | REV-001/004 fail (MOB-204/205) |
+| Navigation | All | ✅ Pass | Feb 2026 | Core navigation verified |
+| Notifications | Loago, Arnold | ⚠️ Partial (7/10) | Feb 2026 | NOTIF-003/008/009 fail |
+| Admin Dashboard | Arnold, Teboho | ⚠️ Partial (10/18) | Feb 2026 | ADM-002/014/017/018 blocked/fail |
+| Insurance | Arnold, Loago | ⚠️ Partial (8/15) | Feb 2026 | INS-001/009/011/013/015 fail |
+| Promo Codes | Arnold | ✅ Pass (5/5) | Feb 2026 | Single tester — needs validation |
+| Route Audit | All | ✅ Pass | Feb 2026 | No 404 errors found |
+| Edge Cases | All | ⚠️ Partial | Feb 2026 | Ongoing |
 
-### Phase 2 Sign-Off (First Round Business)
+### Phase 2 Sign-Off (UAT — Business Testers)
 
 | Journey | Tester | Status | Date | Notes |
 |---------|--------|--------|------|-------|
-| New Renter Flow | Oratile | ⬜ | | |
-| Host Listing Flow | Pearl | ⬜ | | |
-| Booking & Handover | Loago | ⬜ | | |
-| Complete Rental | Oratile | ⬜ | | |
-| Admin Verification | Pearl | ⬜ | | |
-| SuperAdmin Flow | Loago | ⬜ | | |
-| Insurance Claim | Oratile | ⬜ | | |
+| New Renter Flow | Kelvin, Pearl | ✅ Pass | Feb 2026 | Core renter journey verified |
+| Host Listing Flow | Kelvin, Loago | ✅ Pass | Feb 2026 | Car creation/editing working |
+| Booking & Handover | Loago | ⚠️ Partial | Feb 2026 | Booking OK, handover has critical failures |
+| Complete Rental | Loago | ❌ Blocked | Feb 2026 | Return handover broken (MOB-202) |
+| Admin Verification | Arnold | ⚠️ Partial | Feb 2026 | Stats/capabilities broken |
+| SuperAdmin Flow | Teboho | ✅ Pass | Feb 2026 | Basic admin ops verified |
+| Insurance Claim | Arnold, Loago | ⚠️ Partial | Feb 2026 | Visibility issues (MOB-207/208) |
 
-### Phase 3 Sign-Off (Extended Team)
+### Phase 3 Sign-Off (Round 2 Re-Test) — 📋 Planned
 
 | Area | Tester | Status | Date | Notes |
 |------|--------|--------|------|-------|
-| Visual/UI | Natasha | ⬜ | | |
-| Image Handling | Kelvin | ⬜ | | |
-| Financial Flows | Ella | ⬜ | | |
-| Marketing Features | Jessica | ⬜ | | |
+| MSG-005 re-test | Kelvin, Pearl | 📋 Pending | Mar 2026 | After fix deployed |
+| Host wallet flows | Kelvin | 📋 Pending | Mar 2026 | WALL-005–010 |
+| Handover (host-side) | Loago | 📋 Pending | Mar 2026 | Full dual-party test |
+| Admin re-test | Teboho | 📋 Pending | Mar 2026 | ADM blocked items |
+| Reviews (renter) | Arnold | 📋 Pending | Mar 2026 | REV-001–008 |
+| Remaining renter tests | Pearl | 📋 Pending | Mar 2026 | Increase from 36% |
+| Promo codes validation | Kelvin | 📋 Pending | Mar 2026 | Second tester confirmation |
 
 ### Final Sign-Off
 
-| Requirement | Owner | Status | Date |
-|-------------|-------|--------|------|
-| Zero Critical Bugs | Arnold | ⬜ | |
-| <5 High Priority Bugs | Arnold | ⬜ | |
-| All Routes Accessible | Duma | ⬜ | |
-| Security Tests Passed | Arnold | ⬜ | |
-| Performance Targets Met | Tebogo | ⬜ | |
-| UX Approved | Oratile | ⬜ | |
+| Requirement | Owner | Status | Date | Notes |
+|-------------|-------|--------|------|-------|
+| Zero Critical Bugs | Arnold | ❌ 1 critical (MOB-202) | — | HAND-011 return handover |
+| <5 High Priority Bugs | Arnold | ❌ 5 high-priority | — | MOB-201/203/204/210 |
+| All Routes Accessible | Duma | ✅ Pass | Feb 2026 | No 404 errors |
+| Security Tests Passed | Arnold | ⬜ Pending | — | Awaiting Phase 3 |
+| Performance Targets Met | Tebogo | ⬜ Pending | — | Awaiting Phase 4 |
+| UX Approved | Oratile | ⬜ Pending | — | Awaiting Round 2 |
 
 ---
 
@@ -1365,9 +1434,18 @@ Test on the following browsers:
 
 **Document Prepared By:** Arnold (Technical Lead)  
 **Document Date:** January 5, 2026  
-**Next Review:** January 19, 2026 (End of Phase 1)  
+**Last Updated:** March 2, 2026 (v2.0.0 — added execution results, coverage status, Round 2 plan)  
+**Next Review:** March 7, 2026 (End of Phase 3 bug fixes)  
 **Distribution:** Technical Team, Business Stakeholders, Beta Coordinators
+
+### Related Documents
+
+| Document | Purpose |
+|----------|---------|
+| [TESTING_COVERAGE_STATUS_2026_03_02.md](./TESTING_COVERAGE_STATUS_2026_03_02.md) | Consolidated test results, bug registry (MOB-201–225), Round 2 assignments |
+| [HOTFIX_ADMIN_PORTAL_2026_02_24.md](../hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md) | Active hotfix tracker (MOB-101–138) |
+| [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md) | User deletion anonymization plan (MOB-130–138) |
 
 ---
 
-*This document serves as the comprehensive testing protocol for MobiRides v2.5.0 pre-launch validation. All team members should reference this document for test execution and bug reporting procedures.*
+*This document serves as the comprehensive testing protocol for MobiRides v2.5.0 pre-launch validation. All team members should reference this document and the linked coverage report for test execution, bug tracking, and reporting procedures.*
