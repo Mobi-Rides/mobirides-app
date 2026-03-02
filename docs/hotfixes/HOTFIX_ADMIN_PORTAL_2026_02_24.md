@@ -522,6 +522,225 @@ This passes `completionData` (a `Record<string, unknown>`) in the `userRole` pos
 
 ---
 
+### Section E: User Avatar Display Fixes
+
+> **Context:** Identified in `docs/UI_DISPLAY_ISSUES_2026-02-02.md` (Issue 1) but never implemented. User avatars fail to render across multiple modules because raw Supabase storage paths (e.g., `avatars/uuid.jpg`) are stored in `profiles.avatar_url` but components pass them directly to `<img src>` without converting to public URLs via `supabase.storage.from('avatars').getPublicUrl()`. Components that manually call `getPublicUrl` work; those that don't show broken images.
+
+---
+
+#### MOB-118 — Create Centralized `avatarUtils.ts` Utility ⛔ P0
+
+**Type:** Feature / Prevention  
+**Component:** `src/utils/avatarUtils.ts` (new file)  
+**Status:** Missing — proposed in UI Display Issues doc but never created  
+
+**Description:**  
+No centralized utility exists to convert raw avatar storage paths to public URLs. Each component independently decides whether to convert, leading to inconsistent behavior. Components like `RentalUserCard.tsx`, `BookingDetails.tsx`, and `ProfileAvatar.tsx` manually call `getPublicUrl` and work; others like `HostBookingCard.tsx` and `CarOwner.tsx` pass raw paths and break.
+
+**Implementation:**
+```typescript
+import { supabase } from "@/integrations/supabase/client";
+
+export const getAvatarPublicUrl = (avatarPath: string | null | undefined): string | undefined => {
+  if (!avatarPath) return undefined;
+  if (avatarPath.startsWith("http")) return avatarPath;
+  return supabase.storage.from("avatars").getPublicUrl(avatarPath).data.publicUrl;
+};
+```
+
+**Acceptance Criteria:**
+- [ ] Utility created at `src/utils/avatarUtils.ts`
+- [ ] Handles 3 cases: `null/undefined` → `undefined`, full URL → passthrough, raw path → public URL
+- [ ] Exported and importable from `@/utils/avatarUtils`
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
+#### MOB-119 — Fix `HostBookingCard` Renter Avatar Display ⛔ P0
+
+**Type:** Bug  
+**Component:** `src/components/host-bookings/HostBookingCard.tsx` (line 125)  
+**Status:** Broken — renter avatar shows broken image  
+
+**Description:**  
+`<AvatarImage src={booking.renter?.avatar_url} />` passes the raw storage path directly. The renter's avatar never displays on the host's booking cards.
+
+**Acceptance Criteria:**
+- [ ] Import and use `getAvatarPublicUrl(booking.renter?.avatar_url)` for the `src` prop
+- [ ] Renter avatar displays correctly on host booking cards
+- [ ] Fallback to `AvatarFallback` initials when avatar is null
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
+#### MOB-120 — Fix `CarOwner` Host Avatar Display ⛔ P0
+
+**Type:** Bug  
+**Component:** `src/components/car-details/CarOwner.tsx` (lines 100-104)  
+**Status:** Broken — host avatar shows broken image on car details page  
+
+**Description:**  
+`src={avatarUrl}` receives raw `avatar_url` from `CarDetails.tsx` (line 162) and `RentalDetailsRefactored.tsx` (line 138) without conversion. The host's avatar never displays on the car details page.
+
+**Acceptance Criteria:**
+- [ ] Import and use `getAvatarPublicUrl(avatarUrl)` for the `src` prop
+- [ ] Host avatar displays correctly on car details and rental details pages
+- [ ] Fallback to `/placeholder.svg` when avatar is null
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
+#### MOB-121 — Audit & Fix All Remaining Avatar Consumers 🔶 P1
+
+**Type:** Bug / Audit  
+**Components:** Multiple (see table below)  
+**Status:** At risk — working today only because they manually call `getPublicUrl`  
+
+**Description:**  
+Components that currently work do so via ad-hoc inline `getPublicUrl` calls. These should be migrated to use `getAvatarPublicUrl` for consistency and maintainability. If any component is refactored and the inline conversion is accidentally removed, it will break.
+
+**Components to migrate:**
+| Component | Current Approach | Action |
+|-----------|-----------------|--------|
+| `RentalUserCard.tsx` | Inline `getPublicUrl` | Replace with `getAvatarPublicUrl` |
+| `BookingDetails.tsx` | Inline `getPublicUrl` | Replace with `getAvatarPublicUrl` |
+| `HostCarsSideTray.tsx` | Inline `getPublicUrl` | Replace with `getAvatarPublicUrl` |
+| `HostPopup.tsx` | Inline `getPublicUrl` | Replace with `getAvatarPublicUrl` |
+| `MessagingInterface.tsx` | Inline `getPublicUrl` | Replace with `getAvatarPublicUrl` |
+| `NewConversationModal.tsx` | Inline `getPublicUrl` | Replace with `getAvatarPublicUrl` |
+| `ConversationRow.tsx` | Raw path (may break) | Replace with `getAvatarPublicUrl` |
+| `ChatHeader.tsx` | Raw path (may break) | Replace with `getAvatarPublicUrl` |
+
+**Acceptance Criteria:**
+- [ ] All listed components use `getAvatarPublicUrl` instead of inline `getPublicUrl`
+- [ ] No inline `supabase.storage.from('avatars').getPublicUrl()` calls remain outside the utility
+- [ ] All avatars render correctly across messenger, bookings, maps, and car details
+
+**Estimated Effort:** M (1-2 hours)
+
+---
+
+#### MOB-122 — Verify `avatars` Storage Bucket is Public 🔶 P1
+
+**Type:** Infrastructure / Verification  
+**Component:** Supabase Storage bucket `avatars`  
+**Status:** Assumed public but unverified  
+
+**Description:**  
+`getPublicUrl()` generates a URL regardless of bucket visibility, but the URL only resolves if the bucket is set to `public = true`. If the bucket is private, all avatar URLs will return 400/403 even with correct paths.
+
+**Acceptance Criteria:**
+- [ ] Confirm `avatars` bucket has `public = true` in `storage.buckets`
+- [ ] If not public, run migration: `UPDATE storage.buckets SET public = true WHERE id = 'avatars'`
+- [ ] Verify a known avatar URL resolves with HTTP 200
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
+### Section F: Car Cover Image Display Fixes
+
+> **Context:** Car listing cards and detail pages show broken cover images. Two root causes: (1) fallback image path `/placeholder-car.jpg` does not exist in `/public/` (only `/placeholder.svg` exists), causing a double-failure when `image_url` is null or broken; (2) some cars may have raw storage paths instead of full public URLs in `image_url`, same class of bug as the avatar issue.
+
+---
+
+#### MOB-123 — Fix Broken Fallback Image Path (`/placeholder-car.jpg`) ⛔ P0
+
+**Type:** Bug  
+**Components:** `src/types/car.ts` (line 45), `src/components/CarCard.tsx` (line 94)  
+**Status:** Broken — fallback image 404s  
+
+**Description:**  
+`toSafeCar()` defaults null `image_url` to `"/placeholder-car.jpg"`. `CarCard.tsx` `onError` handler also falls back to `"/placeholder-car.jpg"`. **This file does not exist** in `/public/`. Only `/placeholder.svg` is available. Any car with a null or broken `image_url` shows a broken image (double failure).
+
+**Affected references:**
+| File | Line | Current | Fix |
+|------|------|---------|-----|
+| `src/types/car.ts` | 45 | `"/placeholder-car.jpg"` | `"/placeholder.svg"` |
+| `src/components/CarCard.tsx` | 94 | `"/placeholder-car.jpg"` | `"/placeholder.svg"` |
+
+**Acceptance Criteria:**
+- [ ] All references to `/placeholder-car.jpg` replaced with `/placeholder.svg`
+- [ ] Cars with `image_url = null` display the placeholder correctly
+- [ ] `onError` fallback displays the placeholder when image URL fails to load
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
+#### MOB-124 — Add `onError` Fallback to `CarImage.tsx` Component ⛔ P0
+
+**Type:** Bug  
+**Component:** `src/components/car-card/CarImage.tsx`  
+**Status:** No fallback — broken images show browser default broken icon  
+
+**Description:**  
+The `CarImage` component (used in car detail image carousel) has no `onError` handler on its `<img>` tag. If the image URL fails, the browser shows a broken image icon with no fallback.
+
+**Acceptance Criteria:**
+- [ ] Add `onError` handler that sets `src` to `/placeholder.svg`
+- [ ] Broken car images in detail view show placeholder instead of broken icon
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
+#### MOB-125 — Create Centralized `carImageUtils.ts` Utility 🔶 P1
+
+**Type:** Feature / Prevention  
+**Component:** `src/utils/carImageUtils.ts` (new file)  
+**Status:** Missing — same pattern as avatar issue  
+
+**Description:**  
+Mirrors the `avatarUtils.ts` pattern for car images. Some cars may have raw storage paths (`car-images/uuid.jpg`) stored in `image_url` instead of full public URLs. This utility handles all cases consistently.
+
+**Implementation:**
+```typescript
+import { supabase } from "@/integrations/supabase/client";
+
+export const getCarImagePublicUrl = (imagePath: string | null | undefined): string => {
+  if (!imagePath) return "/placeholder.svg";
+  if (imagePath.startsWith("http")) return imagePath;
+  return supabase.storage.from("car-images").getPublicUrl(imagePath).data.publicUrl;
+};
+```
+
+**Acceptance Criteria:**
+- [ ] Utility created at `src/utils/carImageUtils.ts`
+- [ ] Handles 3 cases: `null/undefined` → placeholder, full URL → passthrough, raw path → public URL
+- [ ] Applied in `toSafeCar()`, `CarCard.tsx`, `CarImage.tsx`, and any other car image consumers
+
+**Estimated Effort:** S (< 30 min)
+
+---
+
+#### MOB-126 — Fix `BookingDialog` and `RenterPaymentModal` Build Errors ⛔ P0
+
+**Type:** Bug / Build Error  
+**Components:** `src/components/booking/BookingDialog.tsx` (line 900), `src/components/booking/RenterPaymentModal.tsx` (line 95)  
+**Status:** Build-blocking — TS2739  
+
+**Description:**  
+Both components construct inline `PricingCalculation` objects that are missing required `base_price` and `total_multiplier` properties. This was likely caused by the `PricingCalculation` interface being extended without updating all consumers.
+
+**Error:**
+```
+TS2739: Type '{ final_price: number; original_price: number; is_dynamic: boolean; multiplier: number; }'
+is missing the following properties from type 'PricingCalculation': base_price, total_multiplier
+```
+
+**Acceptance Criteria:**
+- [ ] Add `base_price` and `total_multiplier` to the inline object in `BookingDialog.tsx`
+- [ ] Add `base_price` and `total_multiplier` to the inline object in `RenterPaymentModal.tsx`
+- [ ] Build passes with zero TS2739 errors
+
+**Estimated Effort:** XS (< 15 min)
+
+---
+
 ## Implementation Priority Order
 
 | Order | Ticket  | Description                              | Type       | Effort | Status |
@@ -529,20 +748,29 @@ This passes `completionData` (a `Record<string, unknown>`) in the `userRole` pos
 | 1     | MOB-114 | Fix mock file `jest.fn()` build errors   | Frontend   | XS     | ✅ Done |
 | 2     | MOB-115 | Fix `completionData` vs `Json` type      | Frontend   | XS     | ✅ Done |
 | 3     | MOB-116 | Fix missing `userRole` in legacy handover| Frontend   | S      | ✅ Done |
-| 4     | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     |        |
-| 5     | MOB-102 | Fix KYC table names & badges             | Frontend   | S      |        |
-| 6     | MOB-103 | Fix Car verification table structure     | Frontend   | S      |        |
-| 7     | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     |        |
-| 8     | MOB-107 | Deploy `bulk-delete-users`               | Deployment | XS     |        |
-| 9     | MOB-105 | Add auth to role assignment functions    | Frontend   | M      |        |
-| 10    | MOB-106 | Fix role INSERT → UPSERT                 | Frontend   | XS     |        |
-| 11    | MOB-104 | Fix UserEditDialog role sync             | Frontend   | S      |        |
-| 12    | MOB-110 | Fix delete user FK coverage              | Migration  | L      |        |
-| 13    | MOB-117 | Audit handover-photos storage RLS        | Security   | S      |        |
-| 14    | MOB-113 | Create migration protocol doc            | Process    | S      |        |
-| 15    | MOB-108 | Extract shared admin auth module         | Frontend   | M      |        |
-| 16    | MOB-112 | Deduplicate admin DB functions           | Migration  | S      |        |
-| 17    | MOB-109 | Clean up `as any` casts                  | Frontend   | S      |        |
+| 4     | MOB-118 | Create `avatarUtils.ts` utility          | Frontend   | XS     |        |
+| 5     | MOB-119 | Fix HostBookingCard renter avatar        | Frontend   | XS     |        |
+| 6     | MOB-120 | Fix CarOwner host avatar                 | Frontend   | XS     |        |
+| 7     | MOB-123 | Fix broken `/placeholder-car.jpg` path   | Frontend   | XS     |        |
+| 8     | MOB-124 | Add `onError` fallback to `CarImage.tsx` | Frontend   | XS     |        |
+| 9     | MOB-126 | Fix BookingDialog/RenterPaymentModal TS  | Frontend   | XS     |        |
+| 10    | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     |        |
+| 11    | MOB-102 | Fix KYC table names & badges             | Frontend   | S      |        |
+| 12    | MOB-103 | Fix Car verification table structure     | Frontend   | S      |        |
+| 13    | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     |        |
+| 14    | MOB-107 | Deploy `bulk-delete-users`               | Deployment | XS     |        |
+| 15    | MOB-105 | Add auth to role assignment functions    | Frontend   | M      |        |
+| 16    | MOB-106 | Fix role INSERT → UPSERT                 | Frontend   | XS     |        |
+| 17    | MOB-104 | Fix UserEditDialog role sync             | Frontend   | S      |        |
+| 18    | MOB-110 | Fix delete user FK coverage              | Migration  | L      |        |
+| 19    | MOB-125 | Create `carImageUtils.ts` utility        | Frontend   | S      |        |
+| 20    | MOB-121 | Migrate all avatar consumers to utility  | Frontend   | M      |        |
+| 21    | MOB-122 | Verify `avatars` bucket is public        | Infra      | XS     |        |
+| 22    | MOB-117 | Audit handover-photos storage RLS        | Security   | S      |        |
+| 23    | MOB-113 | Create migration protocol doc            | Process    | S      |        |
+| 24    | MOB-108 | Extract shared admin auth module         | Frontend   | M      |        |
+| 25    | MOB-112 | Deduplicate admin DB functions           | Migration  | S      |        |
+| 26    | MOB-109 | Clean up `as any` casts                  | Frontend   | S      |        |
 
 ---
 
@@ -558,3 +786,6 @@ This passes `completionData` (a `Record<string, unknown>`) in the `userRole` pos
 - [ ] Handover photo storage RLS verified (MOB-117)
 - [ ] Migration protocol documented and referenced in project conventions
 - [ ] No `as any` casts in admin components (P2, can defer)
+- [ ] All user avatars display correctly across all modules (MOB-118 through MOB-122)
+- [ ] All car cover images display correctly with proper fallbacks (MOB-123 through MOB-126)
+- [ ] No broken image icons visible on any listing, booking, or detail page
