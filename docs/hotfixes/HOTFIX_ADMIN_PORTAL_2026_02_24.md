@@ -613,6 +613,7 @@ Components that currently work do so via ad-hoc inline `getPublicUrl` calls. The
 | `NewConversationModal.tsx` | Inline `getPublicUrl` | Replace with `getAvatarPublicUrl` |
 | `ConversationRow.tsx` | Raw path (may break) | Replace with `getAvatarPublicUrl` |
 | `ChatHeader.tsx` | Raw path (may break) | Replace with `getAvatarPublicUrl` |
+| `VerificationRequiredDialog.tsx` | Hardcoded `bg-gray-50` (3 instances, lines 145/152/159) | Replace with `bg-muted` — color contrast issue (see [UI Display Issues](../UI_DISPLAY_ISSUES_2026-02-02.md) Issue 3) |
 
 **Acceptance Criteria:**
 - [ ] All listed components use `getAvatarPublicUrl` instead of inline `getPublicUrl`
@@ -800,3 +801,14 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 **Context:** The current hard-delete approach in both `delete-user-with-transfer` and `bulk-delete-users` destroys historical booking, revenue, commission, and review data needed for business analytics. The linked plan details a soft-delete + anonymization strategy that preserves all analytics while removing PII.
 
 **Tickets:** MOB-130 through MOB-138 (9 tickets across 5 phases, targeting 2026-03-03 – 2026-03-07)
+
+---
+
+## Related Documents
+
+| Document | Relationship |
+|----------|-------------|
+| [UI_DISPLAY_ISSUES_2026-02-02.md](../UI_DISPLAY_ISSUES_2026-02-02.md) | Source audit — Issues 1, 5, 6, 7 (avatar display) promoted to MOB-118 through MOB-122; Issue 3 (color contrast) partially covered by MOB-121 audit |
+| [TESTING_COVERAGE_STATUS_2026_03_02.md](../testing/TESTING_COVERAGE_STATUS_2026_03_02.md) | Testing coverage and Round 1 results |
+| [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md) | Full implementation plan for Section G (MOB-130 to MOB-138) |
+| [WEEK_4_FEBRUARY_2026_STATUS_REPORT.md](../Product%20Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md) | Status tracking for MOB-100 epic progress |

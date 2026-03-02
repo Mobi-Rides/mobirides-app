@@ -500,10 +500,14 @@ Week 4 of February 2026 was a **quality consolidation week** — the team priori
 | Pre-Launch Testing Protocol v2.0 | `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md` | Mar 2, 2026 |
 | Anonymize-on-Delete Plan | `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md` | Mar 2, 2026 |
 | Current vs Ideal State Analysis | `docs/CURRENT_VS_IDEAL_STATE_ANALYSIS_2026-02-15.md` | Feb 15, 2026 |
-| Commercialization GTM Plan v2.4 | `docs/COMMERCIALIZATION_GTM_PLAN_V2.4.md` | Feb 2026 |
+| Commercialization GTM Plan v2.4 | `docs/20260206_MobiRides_Commercialization_GTM_Plan.md` | Feb 6, 2026 |
 | Interactive Handover Spec | `docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md` | Feb 2, 2026 |
 | Payment Integration Plan | `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` | Jan 2026 |
-| UI Display Issues | `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Feb 2, 2026 |
+| UI Display Issues | `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Mar 2, 2026 (v1.1 — added hotfix cross-refs, VerificationRequiredDialog) |
+| Host-Linked Promo Codes | `docs/20260225_HOST_LINKED_PROMO_CODES.md` | Feb 25, 2026 |
+| Navigation UX Improvement Plan | `docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md` | Feb 2, 2026 |
+| Advisory Meeting Agenda | `docs/Advisory_Meeting_Agenda_06-02-2026.md` | Feb 6, 2026 |
+| Valuation Framework | `docs/MobiRides_Valuation_Framework_06-02-2026.md` | Feb 6, 2026 |
 | Week 3 Feb Status Report | `docs/Product Status/WEEK_3_FEBRUARY_2026_STATUS_REPORT.md` | Feb 17, 2026 |
 | Capacitor Config | `capacitor.config.ts` | Feb 2026 |
 
