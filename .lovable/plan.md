@@ -1,54 +1,136 @@
 
 
-# Plan: Update UI Display Issues Doc, Cross-Reference Hotfix, Fix Week 4 Report Gaps
+# Plan: Create Damage Protection Module Documentation
 
-## Findings
+## File to Create
+`docs/DAMAGE_PROTECTION_MODULE.md`
 
-1. **`VerificationRequiredDialog.tsx` missing from both documents** — 3 instances of `bg-gray-50` (lines 145, 152, 159) not tracked anywhere.
+## Target Audiences
+Insurance partners (Pay-U, prospective underwriters), support agents, investors/financiers, engineers, marketing team.
 
-2. **`UI_DISPLAY_ISSUES_2026-02-02.md` has no cross-references** — No link to the hotfix tracker where its tasks were promoted to MOB tickets (MOB-118 through MOB-126). No status updates since original creation.
+## Proposed Document Structure (~600-700 lines)
 
-3. **Hotfix doc references UI Display Issues in Section E context (line 527) but only in prose** — No formal "Related Documents" section exists in the hotfix doc.
+### 1. Document Header & Classification
+- Version, date, confidentiality level (mark sections as "Partner-Facing", "Internal Only", "Public")
+- Audience matrix: which sections are relevant to which audience
 
-4. **Week 4 report gaps:**
-   - References UI Display Issues on line 506 but only as a link — no discussion of its relationship to hotfix MOB tickets
-   - `docs/20260225_HOST_LINKED_PROMO_CODES.md` (Host-Linked Promo Codes feature spec, created Feb 25) is **not referenced** in the Week 4 report
-   - GTM Plan path is wrong: listed as `docs/COMMERCIALIZATION_GTM_PLAN_V2.4.md` but the actual file is `docs/20260206_MobiRides_Commercialization_GTM_Plan.md`
-   - `docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md` is not referenced in Week 4
-   - `docs/Advisory_Meeting_Agenda_06-02-2026.md` and `docs/MobiRides_Valuation_Framework_06-02-2026.md` are not referenced
+### 2. Executive Summary
+- Product name: "Damage Protection" (branded term for insurance)
+- Partnership model: MobiRides + Pay-U (underwriter)
+- Revenue split: 90% Pay-U / 10% MobiRides commission
+- Coverage scope: Botswana P2P car rentals
+- Key stats: 4 tiers, $2M international coverage cap (USD), BWP-denominated premiums
 
-## Changes
+### 3. Product Overview (Marketing / Partners / Investors)
+- What it is: rental-period protection for hosts against damage/loss caused by renters
+- Why it exists: trust layer for P2P car sharing
+- Competitive positioning vs traditional rental insurance
+- Attach rate targets (30%+), average premium targets (P300-600/booking)
 
-### 1. Update `docs/UI_DISPLAY_ISSUES_2026-02-02.md`
+### 4. Coverage Tiers & Pricing
+- No Coverage (0%), Basic (10%), Standard (15%), Premium (20%)
+- Coverage caps, excess amounts, what's covered vs excluded per tier
+- Premium formula: `Daily Rental × Premium % × Risk Multiplier × Days`
+- Worked examples at P500/day and P1,000/day
 
-- Add `VerificationRequiredDialog.tsx` to Issue 3 (Color Contrast) affected files table
-- Add implementation status column to all task tables showing which are now tracked as MOB tickets
-- Add a "Related Documents" section at the top linking to:
-  - `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md` (MOB-118 to MOB-126)
-  - `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md`
-- Update the Summary section with current status (e.g., "Issues 1, 5, 6, 7 promoted to hotfix MOB-118 to MOB-122")
-- Bump document version / last-updated date
+### 5. Business & Financial Model (Investors / Partners)
+- Revenue flow diagram (from PAYMENT_INTEGRATION_IMPLEMENTATION.md Section 14)
+- Premium collection → 90/10 split → manual remittance to Pay-U
+- Commission rate configuration (insurance_commission_rates table)
+- Revenue projections: P15,000-25,000/month from insurance premiums
+- Revenue per booking contribution: part of the P168.75 target
 
-### 2. Update `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md`
+### 6. Claims Process (Partners / Support / Marketing)
+- End-to-end claim lifecycle: incident → submission → review → approval/rejection → payout/liability
+- Claim types: collision, theft, vandalism, fire, weather, windscreen, tyre
+- Evidence requirements: photos, repair quotes, police reports
+- SLAs: 24hr reporting window, <48hr processing target
+- Auto-approval threshold: claims < P500
+- Excess collection: renter pays excess via platform
+- Repair management: MobiRides arranges repairs (not hosts)
+- Pay-U external status tracking
 
-- Add a "Related Documents" section (after the Definition of Done) linking back to `UI_DISPLAY_ISSUES_2026-02-02.md` as the source audit
-- Add `VerificationRequiredDialog.tsx` to Section E (MOB-121 audit table) as an additional component needing `bg-gray-50 → bg-muted` fix
-- Optionally note the color contrast issue class from Issue 3 as a separate concern from avatar fixes
+### 7. Risk Assessment & Underwriting (Partners / Engineers)
+- UnderwriterService: risk scoring model
+- Risk factors: verification status, car value, claims history
+- Risk tiers: low/medium/high/prohibited with premium load multipliers
+- Default risk assessment fallbacks
 
-### 3. Update `docs/Product Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md`
+### 8. Technical Architecture (Engineers)
+- System diagram (from INSURANCE_README.md)
+- Database schema: insurance_packages, insurance_policies, insurance_claims, insurance_claim_activities, insurance_commission_rates, premium_remittance_batches
+- Key services: InsuranceService, UnderwriterService, automationService, insuranceNotificationService
+- Edge Function: calculate-insurance
+- PDF generation (jsPDF)
+- Storage buckets: insurance-policies, insurance-claims
 
-- Fix the GTM Plan path in Document References (line 503)
-- Add missing document references:
-  - `docs/20260225_HOST_LINKED_PROMO_CODES.md`
-  - `docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md`
-  - `docs/Advisory_Meeting_Agenda_06-02-2026.md`
-  - `docs/MobiRides_Valuation_Framework_06-02-2026.md`
+### 9. User Experience Flows (Marketing / Support / Engineers)
+- Booking flow: package selection → premium calculation → payment
+- Policy documents: auto-generated PDF certificates
+- Claims submission: multi-step form with evidence upload
+- User claims list: status tracking
+- Claim response dialog: "more info needed" workflow
+- Host notification flow
 
-### Files to Modify
+### 10. Admin Operations (Support / Engineers)
+- AdminClaimsDashboard: review, approve, reject, request info
+- AdminRemittanceDashboard: pending remittance, batch creation, Pay-U transfer
+- InsuranceRemittanceTable: pending policy tracking
+- Policy expiration automation (pg_cron)
+- Small claims auto-approval
 
-| File | Changes |
-|------|---------|
-| `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Add VerificationRequiredDialog, status tracking, cross-references |
-| `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md` | Add Related Documents section, add VerificationRequiredDialog to MOB-121 |
-| `docs/Product Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md` | Fix GTM path, add 4 missing doc references |
+### 11. Notification & Communication (Support / Engineers)
+- Policy confirmation emails
+- Claim received/status update emails
+- Host claim notifications
+- In-app notifications for claim status changes
+
+### 12. Compliance & Terms (Partners / Legal)
+- Terms version tracking (policy.terms_version)
+- Terms acceptance timestamp
+- Key T&C points (from PDF generator)
+- Botswana regulatory considerations
+- Data retention and privacy (link to PRIVACY_POLICY.md)
+
+### 13. Current Status & Known Gaps
+- Implementation: 56% complete (UI gaps per Week 4 report)
+- Premium percentages: calibrated to 10/15/20% (memory context) vs original 25/50/100% (INSURANCE_README)
+- Remittance service: designed but not fully implemented
+- Pay-U API integration: manual process, no automated API
+- Excess payment modal: built but untested in production
+
+### 14. Roadmap
+- Q1 2026: Complete UI gaps, production testing
+- Q2 2026: Automated Pay-U API remittance
+- Q2 2026: Claims analytics dashboard
+- Q3 2026: Additional underwriter partnerships
+
+### 15. Document References
+All linked docs with brief descriptions:
+
+| Document | Relevance |
+|----------|-----------|
+| `docs/INSURANCE_README.md` | Technical implementation guide |
+| `docs/insurance-integration-plan-2025-11-12.md` | Original implementation plan (v2.0, 1984 lines) |
+| `docs/insurance-integration-plan-2025-10-28.md` | Original planning document (v1.0) |
+| `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` (Section 14) | Pay-U partnership model, remittance, premium split |
+| `docs/20260206_MobiRides_Commercialization_GTM_Plan.md` | Revenue model, Pay-U partnership context |
+| `docs/MobiRides_Valuation_Framework_06-02-2026.md` | Insurance revenue in valuation |
+| `docs/PRIVACY_POLICY.md` | Data handling for claims/policies |
+| `docs/ROADMAP.md` | Phase 3 insurance roadmap |
+| `docs/ROADMAP-NOV-DEC-2025.md` | Original insurance epic scope (Epics 1.4/1.6) |
+| `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md` | Active UI fixes affecting insurance components |
+| `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Display issues in insurance UI |
+| `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md` | Insurance test coverage status |
+| `docs/Product Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md` | Latest status metrics |
+
+### 16. Appendix
+- Premium calculation examples (table)
+- Glossary of terms (excess, coverage cap, premium load, remittance batch)
+- Support agent quick-reference card (extractable)
+
+## Sensitivity Notes
+- Sections 5, 8, 10 marked "Internal Only" or "Partner NDA Required"
+- Section 4 (tiers/pricing) and Section 6 (claims process) are extractable for marketing/support
+- Section 3 is public-facing
 
