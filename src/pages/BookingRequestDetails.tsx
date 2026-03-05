@@ -2,8 +2,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, Calendar, MapPin, Car, Clock, CreditCard, CheckCircle, XCircle, AlertCircle, Wallet } from "lucide-react";
+import { Star, Calendar, MapPin, Car, Clock, CreditCard, CheckCircle, XCircle, AlertCircle, Wallet } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
+import { MobileHeader } from "@/components/ui/MobileHeader";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
@@ -22,6 +23,7 @@ import { BookingPrice } from "@/components/booking-request/BookingPrice";
 import { WalletCommissionSection } from "@/components/booking-request/WalletCommissionSection";
 import { BookingActions } from "@/components/booking-request/BookingActions";
 import { PostConfirmationGuidance } from "@/components/booking/PostConfirmationGuidance";
+import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
@@ -30,6 +32,9 @@ const BookingRequestDetails = () => {
   const queryClient = useQueryClient();
   const { userId } = useAuthStatus();
   const isMobile = useIsMobile();
+
+  // Handle Android hardware back button
+  useHardwareBackButton();
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ['booking-request', id],
@@ -97,7 +102,7 @@ const BookingRequestDetails = () => {
         if (!canAccept.canAccept) {
           throw new Error(canAccept.message || 'Insufficient wallet balance');
         }
-        
+
         // Note: We deduct commission later/or reserve it? 
         // Logic says "processCommissionOnBookingConfirmation".
         // If we change status to awaiting_payment, maybe we shouldn't deduct yet?
@@ -105,7 +110,7 @@ const BookingRequestDetails = () => {
         // Let's keep it here for now if that's the business rule (Host pays commission to accept?)
         // Actually, usually commission is deducted from Payout.
         // But here there seems to be a wallet check.
-        
+
         const commissionDeducted = await commissionService.processCommissionOnBookingConfirmation(
           userId,
           booking.id,
@@ -119,7 +124,7 @@ const BookingRequestDetails = () => {
 
       const { error } = await supabase
         .from('bookings')
-        .update({ 
+        .update({
           status,
           ...(status === 'awaiting_payment' ? {
             payment_status: 'unpaid', // Reset/Ensure it's unpaid
@@ -199,10 +204,13 @@ const BookingRequestDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="min-h-screen bg-background">
+        <MobileHeader title="Booking Request" showBackButton backTo="/host-bookings" />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
         </div>
       </div>
     );
@@ -210,8 +218,11 @@ const BookingRequestDetails = () => {
 
   if (!booking) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <p className="text-gray-600 dark:text-gray-300">Booking request not found</p>
+      <div className="min-h-screen bg-background">
+        <MobileHeader title="Booking Request" showBackButton backTo="/host-bookings" />
+        <div className="container mx-auto px-4 py-8">
+          <p className="text-gray-600 dark:text-gray-300">Booking request not found</p>
+        </div>
       </div>
     );
   }
@@ -219,17 +230,13 @@ const BookingRequestDetails = () => {
   const canApproveBooking = walletCheck?.canAccept ?? true;
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-20">
-      <Button
-        variant="ghost"
-        className="mb-6 flex items-center"
-        onClick={() => navigate('/host-bookings')}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
-
-      <div className="space-y-6">
+    <div className="min-h-screen bg-background pb-20">
+      <MobileHeader
+        title="Booking Request"
+        showBackButton
+        backTo="/host-bookings"
+      />
+      <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="overflow-hidden">
           <BookingRequestHeader status={booking.status} />
 
@@ -275,7 +282,7 @@ const BookingRequestDetails = () => {
                   <span className="font-medium">Awaiting Payment</span>
                 </div>
                 <p className="text-sm text-blue-600 dark:text-blue-300">
-                  This booking is waiting for payment from the renter. 
+                  This booking is waiting for payment from the renter.
                   Payment deadline: {new Date(booking.payment_deadline).toLocaleString()}
                 </p>
                 <div className="flex gap-2">

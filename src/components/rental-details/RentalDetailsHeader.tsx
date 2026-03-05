@@ -1,7 +1,5 @@
 
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/BackButton";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, AlertCircle, HelpCircle } from "lucide-react";
 
@@ -15,8 +13,8 @@ export const RentalDetailsHeader = ({ status, onBack }: RentalDetailsHeaderProps
   const getStatusBadge = () => {
     let variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "danger" | "info" = "outline";
     let icon = <HelpCircle className="h-3 w-3 mr-1" />;
-    
-    switch(status) {
+
+    switch (status) {
       case "confirmed":
         variant = "success";
         icon = <CheckCircle2 className="h-3 w-3 mr-1" />;
@@ -34,7 +32,7 @@ export const RentalDetailsHeader = ({ status, onBack }: RentalDetailsHeaderProps
         icon = <AlertCircle className="h-3 w-3 mr-1" />;
         break;
     }
-    
+
     return (
       <Badge variant={variant} className="flex items-center">
         {icon}
@@ -45,10 +43,7 @@ export const RentalDetailsHeader = ({ status, onBack }: RentalDetailsHeaderProps
 
   return (
     <div className="flex items-center justify-between mb-6">
-      <Button variant="ghost" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
+      <BackButton onClick={onBack} showLabel label="Back" />
       {getStatusBadge()}
     </div>
   );
