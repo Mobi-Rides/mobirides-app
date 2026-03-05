@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { saveCar, unsaveCar } from "@/services/savedCarService";
 import type { SafeCar } from "@/types/car";
 import { Separator } from "./ui/separator";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface CarCardProps {
   car: SafeCar;
@@ -59,7 +60,7 @@ export const CarCard = ({ car }: CarCardProps) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
-    
+
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
         stars.push(
@@ -87,11 +88,11 @@ export const CarCard = ({ car }: CarCardProps) => {
     >
       <div className="relative h-40 sm:h-48">
         <img
-          src={car.image_url}
+          src={car.image_url || '/placeholder.svg'}
           alt={`${car.brand} ${car.model}`}
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/placeholder-car.jpg';
+            (e.target as HTMLImageElement).src = '/placeholder.svg';
           }}
         />
         <button
@@ -100,13 +101,12 @@ export const CarCard = ({ car }: CarCardProps) => {
           disabled={isSaving}
         >
           <Heart
-            className={`w-5 h-5 ${
-              isSaving
-                ? "text-gray-400"
-                : isSaved
-                  ? "fill-red-500 text-red-500"
-                  : "text-gray-600"
-            }`}
+            className={`w-5 h-5 ${isSaving
+              ? "text-gray-400"
+              : isSaved
+                ? "fill-red-500 text-red-500"
+                : "text-gray-600"
+              }`}
           />
         </button>
       </div>

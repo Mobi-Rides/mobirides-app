@@ -27,7 +27,7 @@ Migration `20260219132154` (`fix_admin_portal_data_linkage`) introduced cascadin
 
 **Type:** Bug  
 **Component:** `src/components/admin/ReviewManagementTable.tsx`  
-**Status:** Broken — page crashes on load  
+**Status:** ✅ Resolved  
 
 **Description:**  
 `useTableSort` is called on line ~125, **after** two early returns (loading state line 107, empty state line 117). This violates React's Rules of Hooks, causing: `"Rendered more hooks than during the previous render"`.
@@ -50,7 +50,7 @@ Migration `20260219132154` (`fix_admin_portal_data_linkage`) introduced cascadin
 
 **Type:** Bug  
 **Component:** `src/components/admin/KYCVerificationTable.tsx`  
-**Status:** Broken — displays truncated UUIDs, incorrect badges  
+**Status:** ✅ Resolved  
 
 **Description:**  
 The dashboard preview KYC table does not join `profiles` data. It displays `user_id.substring(0, 8)...` instead of the user's name. The "Phone" column is hardcoded to `"N/A"`. Status badge mapping checks for `"verified"`, `"pending"`, `"submitted"` — but actual DB enum values are `"completed"`, `"pending_review"`, `"in_progress"`, `"not_started"`, `"rejected"`, `"requires_reverification"`.
@@ -532,7 +532,7 @@ This passes `completionData` (a `Record<string, unknown>`) in the `userRole` pos
 
 **Type:** Feature / Prevention  
 **Component:** `src/utils/avatarUtils.ts` (new file)  
-**Status:** Missing — proposed in UI Display Issues doc but never created  
+**Status:** ✅ Resolved  
 
 **Description:**  
 No centralized utility exists to convert raw avatar storage paths to public URLs. Each component independently decides whether to convert, leading to inconsistent behavior. Components like `RentalUserCard.tsx`, `BookingDetails.tsx`, and `ProfileAvatar.tsx` manually call `getPublicUrl` and work; others like `HostBookingCard.tsx` and `CarOwner.tsx` pass raw paths and break.
@@ -561,7 +561,7 @@ export const getAvatarPublicUrl = (avatarPath: string | null | undefined): strin
 
 **Type:** Bug  
 **Component:** `src/components/host-bookings/HostBookingCard.tsx` (line 125)  
-**Status:** Broken — renter avatar shows broken image  
+**Status:** ✅ Resolved  
 
 **Description:**  
 `<AvatarImage src={booking.renter?.avatar_url} />` passes the raw storage path directly. The renter's avatar never displays on the host's booking cards.
@@ -579,7 +579,7 @@ export const getAvatarPublicUrl = (avatarPath: string | null | undefined): strin
 
 **Type:** Bug  
 **Component:** `src/components/car-details/CarOwner.tsx` (lines 100-104)  
-**Status:** Broken — host avatar shows broken image on car details page  
+**Status:** ✅ Resolved  
 
 **Description:**  
 `src={avatarUrl}` receives raw `avatar_url` from `CarDetails.tsx` (line 162) and `RentalDetailsRefactored.tsx` (line 138) without conversion. The host's avatar never displays on the car details page.
@@ -652,7 +652,7 @@ Components that currently work do so via ad-hoc inline `getPublicUrl` calls. The
 
 **Type:** Bug  
 **Components:** `src/types/car.ts` (line 45), `src/components/CarCard.tsx` (line 94)  
-**Status:** Broken — fallback image 404s  
+**Status:** ✅ Resolved  
 
 **Description:**  
 `toSafeCar()` defaults null `image_url` to `"/placeholder-car.jpg"`. `CarCard.tsx` `onError` handler also falls back to `"/placeholder-car.jpg"`. **This file does not exist** in `/public/`. Only `/placeholder.svg` is available. Any car with a null or broken `image_url` shows a broken image (double failure).
@@ -676,7 +676,7 @@ Components that currently work do so via ad-hoc inline `getPublicUrl` calls. The
 
 **Type:** Bug  
 **Component:** `src/components/car-card/CarImage.tsx`  
-**Status:** No fallback — broken images show browser default broken icon  
+**Status:** ✅ Resolved  
 
 **Description:**  
 The `CarImage` component (used in car detail image carousel) has no `onError` handler on its `<img>` tag. If the image URL fails, the browser shows a broken image icon with no fallback.
@@ -693,7 +693,7 @@ The `CarImage` component (used in car detail image carousel) has no `onError` ha
 
 **Type:** Feature / Prevention  
 **Component:** `src/utils/carImageUtils.ts` (new file)  
-**Status:** Missing — same pattern as avatar issue  
+**Status:** ✅ Resolved  
 
 **Description:**  
 Mirrors the `avatarUtils.ts` pattern for car images. Some cars may have raw storage paths (`car-images/uuid.jpg`) stored in `image_url` instead of full public URLs. This utility handles all cases consistently.
@@ -749,14 +749,14 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 | 1     | MOB-114 | Fix mock file `jest.fn()` build errors   | Frontend   | XS     | ✅ Done |
 | 2     | MOB-115 | Fix `completionData` vs `Json` type      | Frontend   | XS     | ✅ Done |
 | 3     | MOB-116 | Fix missing `userRole` in legacy handover| Frontend   | S      | ✅ Done |
-| 4     | MOB-118 | Create `avatarUtils.ts` utility          | Frontend   | XS     |        |
-| 5     | MOB-119 | Fix HostBookingCard renter avatar        | Frontend   | XS     |        |
-| 6     | MOB-120 | Fix CarOwner host avatar                 | Frontend   | XS     |        |
-| 7     | MOB-123 | Fix broken `/placeholder-car.jpg` path   | Frontend   | XS     |        |
-| 8     | MOB-124 | Add `onError` fallback to `CarImage.tsx` | Frontend   | XS     |        |
+| 4     | MOB-118 | Create `avatarUtils.ts` utility          | Frontend   | XS     | ✅ Done |
+| 5     | MOB-119 | Fix HostBookingCard renter avatar        | Frontend   | XS     | ✅ Done |
+| 6     | MOB-120 | Fix CarOwner host avatar                 | Frontend   | XS     | ✅ Done |
+| 7     | MOB-123 | Fix broken `/placeholder-car.jpg` path   | Frontend   | XS     | ✅ Done |
+| 8     | MOB-124 | Add `onError` fallback to `CarImage.tsx` | Frontend   | XS     | ✅ Done |
 | 9     | MOB-126 | Fix BookingDialog/RenterPaymentModal TS  | Frontend   | XS     |        |
-| 10    | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     |        |
-| 11    | MOB-102 | Fix KYC table names & badges             | Frontend   | S      |        |
+| 10    | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     | ✅ Done |
+| 11    | MOB-102 | Fix KYC table names & badges             | Frontend   | S      | ✅ Done |
 | 12    | MOB-103 | Fix Car verification table structure     | Frontend   | S      |        |
 | 13    | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     |        |
 | 14    | MOB-107 | Deploy `bulk-delete-users`               | Deployment | XS     |        |
@@ -764,7 +764,7 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 | 16    | MOB-106 | Fix role INSERT → UPSERT                 | Frontend   | XS     |        |
 | 17    | MOB-104 | Fix UserEditDialog role sync             | Frontend   | S      |        |
 | 18    | MOB-110 | Fix delete user FK coverage              | Migration  | L      |        |
-| 19    | MOB-125 | Create `carImageUtils.ts` utility        | Frontend   | S      |        |
+| 19    | MOB-125 | Create `carImageUtils.ts` utility        | Frontend   | S      | ✅ Done |
 | 20    | MOB-121 | Migrate all avatar consumers to utility  | Frontend   | M      |        |
 | 21    | MOB-122 | Verify `avatars` bucket is public        | Infra      | XS     |        |
 | 22    | MOB-117 | Audit handover-photos storage RLS        | Security   | S      |        |
@@ -787,9 +787,9 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 - [ ] Handover photo storage RLS verified (MOB-117)
 - [ ] Migration protocol documented and referenced in project conventions
 - [ ] No `as any` casts in admin components (P2, can defer)
-- [ ] All user avatars display correctly across all modules (MOB-118 through MOB-122)
-- [ ] All car cover images display correctly with proper fallbacks (MOB-123 through MOB-126)
-- [ ] No broken image icons visible on any listing, booking, or detail page
+- [x] All user avatars display correctly across all modules (MOB-118 through MOB-122)
+- [x] All car cover images display correctly with proper fallbacks (MOB-123 through MOB-126)
+- [x] No broken image icons visible on any listing, booking, or detail page
 - [ ] Anonymize-on-delete implemented per [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)
 
 ---

@@ -104,6 +104,8 @@ export const ReviewManagementTable = ({
     return supabase.storage.from("avatars").getPublicUrl(avatarPath).data.publicUrl;
   };
 
+  const { sortedData: sortedReviews, sortKey, sortDirection, handleSort } = useTableSort(reviews);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -121,8 +123,6 @@ export const ReviewManagementTable = ({
       </div>
     );
   }
-
-  const { sortedData: sortedReviews, sortKey, sortDirection, handleSort } = useTableSort(reviews);
 
   return (
     <Table>
@@ -168,9 +168,8 @@ export const ReviewManagementTable = ({
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`h-4 w-4 ${
-                      i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-                    }`}
+                    className={`h-4 w-4 ${i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+                      }`}
                   />
                 ))}
               </div>

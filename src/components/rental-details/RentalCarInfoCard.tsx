@@ -30,7 +30,7 @@ export const RentalCarInfoCard = ({ car }: RentalCarInfoCardProps) => {
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <img
-            src={car.image_url || "/placeholder.svg"}
+            src={getCarImagePublicUrl(car.image_url) || "/placeholder.svg"}
             alt={`${car.brand} ${car.model}`}
             className="w-full sm:w-32 h-32 sm:h-24 object-cover rounded-lg"
           />

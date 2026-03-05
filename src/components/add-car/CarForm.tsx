@@ -60,6 +60,7 @@ export const CarForm = ({
   onSubmit,
   isSubmitting
 }: CarFormProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState<CarFormData>(initialData);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [documents, setDocuments] = useState<{
@@ -72,7 +73,7 @@ export const CarForm = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    
+
     // Convert numeric inputs to the right type
     if (name === 'year' || name === 'seats' || name === 'doors') {
       setFormData((prev) => ({ ...prev, [name]: parseInt(value) || 0 }));
@@ -109,30 +110,39 @@ export const CarForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate seats range
     if (formData.seats < 2 || formData.seats > 15) {
       return;
     }
-    
+
+    if (!isEdit && imageFiles.length === 0) {
+      toast({
+        title: "Missing Images",
+        description: "Please upload at least one image of your car.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     await onSubmit(formData, imageFiles, documents, selectedFeatures);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
-      <FormSection 
-        title="Basic Information" 
+      <FormSection
+        title="Basic Information"
         description="Enter the fundamental details about your car"
       >
-        <CarBasicInfo 
+        <CarBasicInfo
           formData={formData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
         />
       </FormSection>
 
-      <FormSection 
-        title="Vehicle Specifications" 
+      <FormSection
+        title="Vehicle Specifications"
         description="Provide technical details and pricing information"
       >
         <EnhancedCarDetails
@@ -141,9 +151,9 @@ export const CarForm = ({
           onSelectChange={handleSelectChange}
         />
       </FormSection>
-      
-      <FormSection 
-        title="Features & Amenities" 
+
+      <FormSection
+        title="Features & Amenities"
         description="Select the features available in your vehicle"
       >
         <CarFeatures
@@ -152,8 +162,8 @@ export const CarForm = ({
         />
       </FormSection>
 
-      <FormSection 
-        title="Vehicle Description" 
+      <FormSection
+        title="Vehicle Description"
         description="Add a detailed description to highlight your vehicle's unique aspects"
       >
         <CarDescription
@@ -162,32 +172,32 @@ export const CarForm = ({
         />
       </FormSection>
 
-      <FormSection 
-        title="Vehicle Images" 
+      <FormSection
+        title="Vehicle Images"
         description={isEdit ? "Manage your vehicle photos - add, delete, or change the main photo" : "Upload multiple photos to showcase your vehicle (up to 10)"}
       >
         {isEdit && carId ? (
-          <CarImageManager 
-            carId={carId} 
-            mainImageUrl={mainImageUrl || null} 
+          <CarImageManager
+            carId={carId}
+            mainImageUrl={mainImageUrl || null}
           />
         ) : (
           <MultiImageUpload onImagesChange={handleImagesChange} />
         )}
       </FormSection>
-      
+
       {!isEdit && (
-        <FormSection 
-          title="Documentation" 
+        <FormSection
+          title="Documentation"
           description="Upload required vehicle documentation for verification"
         >
           <DocumentUpload onDocumentChange={handleDocumentChange} />
         </FormSection>
       )}
 
-      <Button 
-        type="submit" 
-        className="w-full hover-scale" 
+      <Button
+        type="submit"
+        className="w-full hover-scale"
         disabled={isSubmitting}
       >
         {isSubmitting ? (isEdit ? "Updating Car..." : "Adding Car...") : (isEdit ? "Update Car" : "Add Car")}

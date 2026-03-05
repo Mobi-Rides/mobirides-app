@@ -40,6 +40,7 @@ import {
   PromoCode
 } from "@/services/promoCodeService";
 import { DestinationTypeSelector, DestinationType } from "./DestinationTypeSelector";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface BookingDialogProps {
   car: Car;
@@ -860,7 +861,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   {car.image_url && (
                     <img
-                      src={car.image_url}
+                      src={getCarImagePublicUrl(car.image_url) || "/placeholder.svg"}
                       alt={`${car.brand} ${car.model}`}
                       className="w-16 h-12 object-cover rounded"
                     />

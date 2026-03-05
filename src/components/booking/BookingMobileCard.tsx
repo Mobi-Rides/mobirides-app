@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Check, X, MapPin, CalendarDays, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface BookingMobileCardProps {
   booking: Booking;
@@ -53,7 +54,7 @@ export const BookingMobileCard = ({ booking, onCancelBooking }: BookingMobileCar
         <div className="flex flex-col gap-3">
           <div className="flex gap-3">
             <img
-              src={booking.cars.image_url || "/placeholder.svg"}
+              src={getCarImagePublicUrl(booking.cars.image_url) || "/placeholder.svg"}
               alt={`${booking.cars.brand} ${booking.cars.model}`}
               className="w-16 h-16 object-cover rounded-md flex-shrink-0"
             />

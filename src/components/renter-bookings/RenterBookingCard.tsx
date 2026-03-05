@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Check, X, MapPin, CalendarDays, RotateCcw, Star, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer";
 
 interface RenterBookingCardProps {
@@ -80,7 +81,7 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
         <div className="flex flex-col gap-3">
           <div className="flex gap-3">
             <img
-              src={booking.cars.image_url || "/placeholder.svg"}
+              src={getCarImagePublicUrl(booking.cars.image_url) || "/placeholder.svg"}
               alt={`${booking.cars.brand} ${booking.cars.model}`}
               className="w-20 h-20 object-cover rounded-md flex-shrink-0"
             />

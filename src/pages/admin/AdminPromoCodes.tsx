@@ -148,17 +148,17 @@ export default function AdminPromoCodes() {
 
         // Directly assume success for in-app notification creation
         // if (result.success) { 
-          sentCount++;
-          
-          // Prepare in-app notification
-          notificationsToInsert.push({
-            user_id: user.id,
-            type: 'system_notification',
-            title: `Promo Code: ${promo.code}`,
-            description: `${promo.description || "Special Offer!"} Use code ${promo.code} for ${promo.discount_type === 'percentage' ? `${promo.discount_amount}%` : `P${promo.discount_amount}`} OFF.`,
-            is_read: false,
-            role_target: 'system_wide'
-          });
+        sentCount++;
+
+        // Prepare in-app notification
+        notificationsToInsert.push({
+          user_id: user.id,
+          type: 'system_notification',
+          title: `Promo Code: ${promo.code}`,
+          description: `${promo.description || "Special Offer!"} Use code ${promo.code} for ${promo.discount_type === 'percentage' ? `${promo.discount_amount}%` : `P${promo.discount_amount}`} OFF.`,
+          is_read: false,
+          role_target: 'system_wide'
+        });
         // } else {
         //   failCount++;
         // }
@@ -169,7 +169,7 @@ export default function AdminPromoCodes() {
         const { error: notifError } = await supabase
           .from('notifications')
           .insert(notificationsToInsert);
-        
+
         if (notifError) {
           console.error("Failed to create in-app notifications:", notifError);
           toast.error("Failed to create in-app notifications.");
@@ -306,17 +306,17 @@ export default function AdminPromoCodes() {
               This will send an email notification to all users who have opted in to marketing messages.
             </DialogDescription>
           </DialogHeader>
-          
+
           {promoToSend && (
             <div className="py-4 space-y-4">
               <div className="bg-muted p-4 rounded-lg">
                 <p className="font-semibold">Subject: Special Offer: {promoToSend.discount_type === 'percentage' ? `${promoToSend.discount_amount}% OFF` : `P${promoToSend.discount_amount} OFF`} with code {promoToSend.code}</p>
                 <p className="text-sm text-muted-foreground mt-2">To: All users with marketing notifications enabled</p>
               </div>
-              
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setPromoToSend(null)}>Cancel</Button>
-                <Button 
+                <Button
                   onClick={() => sendNotificationMutation.mutate(promoToSend)}
                   disabled={sendNotificationMutation.isPending}
                 >

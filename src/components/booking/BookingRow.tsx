@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Check, X, ArrowRight, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface BookingRowProps {
   booking: Booking;
@@ -54,7 +55,7 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
       <TableCell>
         <div className="flex items-center gap-2">
           <img
-            src={booking.cars.image_url || "/placeholder.svg"}
+            src={getCarImagePublicUrl(booking.cars.image_url) || "/placeholder.svg"}
             alt={`${booking.cars.brand} ${booking.cars.model}`}
             className="w-10 h-10 object-cover rounded"
           />

@@ -25,6 +25,10 @@ interface PendingVerification {
   current_step: string;
   started_at: string;
   personal_info: unknown;
+  profiles?: {
+    full_name: string | null;
+    phone_number: string | null;
+  } | null;
 }
 
 const usePendingVerifications = () => {
@@ -34,7 +38,8 @@ const usePendingVerifications = () => {
       const { data, error } = await supabase
         .from("user_verifications")
         .select(`
-          id, user_id, overall_status, current_step, started_at, personal_info
+          id, user_id, overall_status, current_step, started_at, personal_info,
+          profiles:user_id(full_name, phone_number)
         `)
         .in("overall_status", ["pending_review", "in_progress", "not_started"])
         .neq("current_step", "personal_info")
@@ -51,9 +56,9 @@ interface KYCVerificationTableProps {
   maxItems?: number;
 }
 
-export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({ 
-  isPreview = false, 
-  maxItems = 5 
+export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
+  isPreview = false,
+  maxItems = 5
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { data: verifications, isLoading, error, refetch } = usePendingVerifications();
@@ -69,14 +74,14 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
     try {
       const { error } = await supabase
         .from("user_verifications")
-        .update({ 
+        .update({
           overall_status: "completed",
           completed_at: new Date().toISOString()
         })
         .eq("id", verificationId);
 
       if (error) throw error;
-      
+
       refetch();
       toast.success("Verification approved successfully");
     } catch (error) {
@@ -89,14 +94,14 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
     try {
       const { error } = await supabase
         .from("user_verifications")
-        .update({ 
+        .update({
           overall_status: "rejected",
           rejection_reasons: ["Manual review rejection"]
         })
         .eq("id", verificationId);
 
       if (error) throw error;
-      
+
       refetch();
       toast.success("Verification rejected");
     } catch (error) {
@@ -105,12 +110,14 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
-      case "verified": return "default";
-      case "pending": return "secondary";
-      case "rejected": return "destructive";
-      case "submitted": return "outline";
+      case "completed": return "default";
+      case "pending_review": return "secondary";
+      case "in_progress": return "secondary";
+      case "rejected":
+      case "requires_reverification": return "destructive";
+      case "not_started":
       default: return "outline";
     }
   };
@@ -118,12 +125,12 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
   const renderVerificationRow = (verification: PendingVerification) => (
     <TableRow key={verification.id}>
       <TableCell className="font-medium">
-        {verification.user_id.substring(0, 8)}...
+        {verification.profiles?.full_name || "Unknown"}
       </TableCell>
-      <TableCell>N/A</TableCell>
+      <TableCell>{verification.profiles?.phone_number || "N/A"}</TableCell>
       <TableCell>
         <Badge variant={getStatusBadgeVariant(verification.overall_status)}>
-          {verification.overall_status}
+          {verification.overall_status.replace("_", " ")}
         </Badge>
       </TableCell>
       <TableCell>{verification.current_step}</TableCell>
@@ -213,7 +220,7 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
               </Table>
             </div>
           )}
-          
+
           {!isLoading && filteredVerifications.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No pending KYC verifications
