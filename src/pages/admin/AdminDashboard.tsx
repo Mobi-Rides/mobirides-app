@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
 import { AdminStats } from "@/components/admin/AdminStats";
+import { MonthlyUserGrowthTable } from "@/components/admin/MonthlyUserGrowthTable";
 import { CarVerificationTable } from "@/components/admin/CarVerificationTable";
 import { UserManagementTable } from "@/components/admin/UserManagementTable";
 import { KYCVerificationTable } from "@/components/admin/KYCVerificationTable";
@@ -64,6 +65,9 @@ const AdminDashboard = () => {
           {/* Stats Overview */}
           <AdminStats />
           
+          {/* Monthly User Growth Table */}
+          <MonthlyUserGrowthTable />
+
           {/* Analytics Dashboard Section */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">

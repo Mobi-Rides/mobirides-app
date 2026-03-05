@@ -65,6 +65,7 @@ export class DynamicPricingService {
         applied_rules: appliedRules,
         total_multiplier: totalMultiplier,
         final_price: finalPrice,
+        is_dynamic: appliedRules.length > 0,
         savings: difference < 0 ? Math.abs(difference) : undefined,
         premium: difference > 0 ? difference : undefined
       };
@@ -78,7 +79,8 @@ export class DynamicPricingService {
         base_price: request.base_price,
         applied_rules: [],
         total_multiplier: 1.0,
-        final_price: request.base_price
+        final_price: request.base_price,
+        is_dynamic: false
       };
     }
   }

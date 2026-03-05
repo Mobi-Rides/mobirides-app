@@ -1,127 +1,136 @@
 
-# Week 3 February 2026 Status Report Generation
 
-## Overview
+# Plan: Create Damage Protection Module Documentation
 
-Generate the comprehensive Week 3 February 2026 Status Report covering the period February 14-17, 2026. This report bridges the gap between the Sprint 2 completion and Sprint 3 kickoff, documenting the critical build recovery, pricing consistency fixes, booking UX improvements, insurance calibration, Capacitor mobile readiness, and updated metrics.
+## File to Create
+`docs/DAMAGE_PROTECTION_MODULE.md`
 
-## Report Structure
+## Target Audiences
+Insurance partners (Pay-U, prospective underwriters), support agents, investors/financiers, engineers, marketing team.
 
-The report will follow the established format from previous weeks and be saved to `docs/Product Status/WEEK_3_FEBRUARY_2026_STATUS_REPORT.md`.
+## Proposed Document Structure (~600-700 lines)
 
-### Key Content Sections
+### 1. Document Header & Classification
+- Version, date, confidentiality level (mark sections as "Partner-Facing", "Internal Only", "Public")
+- Audience matrix: which sections are relevant to which audience
 
-**1. Executive Summary**
-- Build health fully recovered (50+ errors in Week 2 down to 0)
-- Sprint 2 completed with pricing consistency fixes across all booking screens
-- Insurance premium recalibration (Basic 10%, Standard 15%, Premium 20%)
-- Post-booking redirect fixed (now routes to booking details page)
-- Booking sort order fixed (newest first)
-- Capacitor mobile infrastructure present in codebase (first mention in status reports)
-- Dead code cleanup (PriceBreakdown.tsx removed)
+### 2. Executive Summary
+- Product name: "Damage Protection" (branded term for insurance)
+- Partnership model: MobiRides + Pay-U (underwriter)
+- Revenue split: 90% Pay-U / 10% MobiRides commission
+- Coverage scope: Botswana P2P car rentals
+- Key stats: 4 tiers, $2M international coverage cap (USD), BWP-denominated premiums
 
-**2. Production Readiness Metrics Table**
-Updated metrics compared to Week 2:
-- Build Errors: 50+ down to 0 (RECOVERED)
-- System Health: 78% up to ~82%
-- Production Readiness: 76% up to ~79%
-- Migrations: 221 up to 225 (4 new: insurance update, car revert, detailed ratings, search function fix)
-- Edge Functions: 27 (unchanged)
-- Capacitor packages: NEW - 3 packages installed (@capacitor/core, @capacitor/cli, @capacitor/android)
+### 3. Product Overview (Marketing / Partners / Investors)
+- What it is: rental-period protection for hosts against damage/loss caused by renters
+- Why it exists: trust layer for P2P car sharing
+- Competitive positioning vs traditional rental insurance
+- Attach rate targets (30%+), average premium targets (P300-600/booking)
 
-**3. Sprint 2 Retrospective (February 10-16) -- COMPLETED**
-- Build error regression fully resolved (P0 action item from Week 2 -- DONE)
-- RenterPaymentModal switched from compact to full variant with real booking data
-- UnifiedPriceSummary now the single source of truth for price display
-- RentalPaymentDetails enhanced with insurance package name lookup
-- BookingSuccessModal now redirects to /rental-details/:id
-- RenterDashboard sort order fixed (descending by created_at)
-- PriceBreakdown.tsx deleted (dead code)
+### 4. Coverage Tiers & Pricing
+- No Coverage (0%), Basic (10%), Standard (15%), Premium (20%)
+- Coverage caps, excess amounts, what's covered vs excluded per tier
+- Premium formula: `Daily Rental × Premium % × Risk Multiplier × Days`
+- Worked examples at P500/day and P1,000/day
 
-**4. Sprint 3 Preparation (February 17-23)**
-- Theme: Interactive Handover System + UI/Display Fixes
-- Planned: 102 SP (recommended scope reduction to ~80 SP)
-- Key deliverables: HAND-010 through HAND-021, DISP items
+### 5. Business & Financial Model (Investors / Partners)
+- Revenue flow diagram (from PAYMENT_INTEGRATION_IMPLEMENTATION.md Section 14)
+- Premium collection → 90/10 split → manual remittance to Pay-U
+- Commission rate configuration (insurance_commission_rates table)
+- Revenue projections: P15,000-25,000/month from insurance premiums
+- Revenue per booking contribution: part of the P168.75 target
 
-**5. Epic Status Update (15 Epics)**
-Updated percentages reflecting Week 3 work:
-- Epic 3 (Booking): 80% up to 83% (redirect fix, sort fix, pricing consistency)
-- Epic 7 (Payments): 58% up to 62% (pricing display consistency, insurance integration in UI)
-- Epic 11 (Insurance): 52% up to 56% (premium recalibration, package name display)
-- Epic 15 (UI/Display): 0% up to 5% (pricing consistency counts as display fix)
-- All others: unchanged
+### 6. Claims Process (Partners / Support / Marketing)
+- End-to-end claim lifecycle: incident → submission → review → approval/rejection → payout/liability
+- Claim types: collision, theft, vandalism, fire, weather, windscreen, tyre
+- Evidence requirements: photos, repair quotes, police reports
+- SLAs: 24hr reporting window, <48hr processing target
+- Auto-approval threshold: claims < P500
+- Excess collection: renter pays excess via platform
+- Repair management: MobiRides arranges repairs (not hosts)
+- Pay-U external status tracking
 
-**6. NEW: Mobile App Readiness (Capacitor)**
-- First mention in status reports
-- Capacitor v8.x installed: @capacitor/core, @capacitor/cli, @capacitor/android
-- capacitor.config.ts configured (appId: com.mobirides.app, appName: MobiRides, webDir: dist)
-- Android platform targeted (aligns with Q1 2026 Android launch in commercialization plan)
-- iOS not yet added (aligns with Q3 2026 iOS timeline)
-- Server hot-reload not yet configured
-- Status: Infrastructure present, build pipeline not yet tested
+### 7. Risk Assessment & Underwriting (Partners / Engineers)
+- UnderwriterService: risk scoring model
+- Risk factors: verification status, car value, claims history
+- Risk tiers: low/medium/high/prohibited with premium load multipliers
+- Default risk assessment fallbacks
 
-**7. Database and Infrastructure**
-- Migration count: ~225 (up from 221)
-- New migrations this period:
-  - `20260215121651_update_detailed_ratings_tables.sql` -- Review category rating functions
-  - `20260216120000_revert_2026_cars_to_pending.sql` -- Car verification queue revert
-  - `20260216135332_update_insurance_packages.sql` -- Premium percentage recalibration
-  - `20260216165401_fix_optimized_search_function.sql` -- Search function fix
-- Edge functions: 27 (unchanged)
+### 8. Technical Architecture (Engineers)
+- System diagram (from INSURANCE_README.md)
+- Database schema: insurance_packages, insurance_policies, insurance_claims, insurance_claim_activities, insurance_commission_rates, premium_remittance_batches
+- Key services: InsuranceService, UnderwriterService, automationService, insuranceNotificationService
+- Edge Function: calculate-insurance
+- PDF generation (jsPDF)
+- Storage buckets: insurance-policies, insurance-claims
 
-**8. Insurance System Update**
-- Premium percentages recalibrated: Basic 10%, Standard 15%, Premium 20%
-- Insurance package names now displayed in booking details (via insurance_policy_id lookup)
-- UnifiedPriceSummary shows full breakdown including insurance line item
+### 9. User Experience Flows (Marketing / Support / Engineers)
+- Booking flow: package selection → premium calculation → payment
+- Policy documents: auto-generated PDF certificates
+- Claims submission: multi-step form with evidence upload
+- User claims list: status tracking
+- Claim response dialog: "more info needed" workflow
+- Host notification flow
 
-**9. Commercialization Alignment**
-- Reference to GTM Plan v2.4: P311,245 FY2025 revenue, 186 users, 62 vehicles
-- Current platform stats: 186 users, 62 vehicles, 341 bookings
-- Q1 2026 targets: 100 vehicles, Android app launch, payment integration
-- Pre-seed funding target: P700K by March 15, 2026
-- Gap: 62/100 vehicles (38 vehicles short of Q1 target)
+### 10. Admin Operations (Support / Engineers)
+- AdminClaimsDashboard: review, approve, reject, request info
+- AdminRemittanceDashboard: pending remittance, batch creation, Pay-U transfer
+- InsuranceRemittanceTable: pending policy tracking
+- Policy expiration automation (pg_cron)
+- Small claims auto-approval
 
-**10. Risk Assessment**
-- Sprint 3 overload (102 SP) -- still active
-- Payment provider sandbox still not tested -- active
-- Vehicle fleet gap (62 vs 100 target) -- new risk for Q1 milestone
-- Capacitor build pipeline untested -- new risk for Android Q1 launch
+### 11. Notification & Communication (Support / Engineers)
+- Policy confirmation emails
+- Claim received/status update emails
+- Host claim notifications
+- In-app notifications for claim status changes
 
-**11. Security Posture**
-- Unchanged from Week 2 (4 vulnerabilities, deferred to Sprint 4/5)
+### 12. Compliance & Terms (Partners / Legal)
+- Terms version tracking (policy.terms_version)
+- Terms acceptance timestamp
+- Key T&C points (from PDF generator)
+- Botswana regulatory considerations
+- Data retention and privacy (link to PRIVACY_POLICY.md)
 
-**12. Action Items for Week 4**
-- P0: Begin Sprint 3 handover system work
-- P1: Test Capacitor Android build end-to-end
-- P1: Configure payment provider sandbox credentials
-- P2: Continue vehicle onboarding push toward 100-vehicle milestone
+### 13. Current Status & Known Gaps
+- Implementation: 56% complete (UI gaps per Week 4 report)
+- Premium percentages: calibrated to 10/15/20% (memory context) vs original 25/50/100% (INSURANCE_README)
+- Remittance service: designed but not fully implemented
+- Pay-U API integration: manual process, no automated API
+- Excess payment modal: built but untested in production
 
-**13. Metrics Dashboard (ASCII)**
-Updated dashboard showing recovered build health and improved readiness scores.
+### 14. Roadmap
+- Q1 2026: Complete UI gaps, production testing
+- Q2 2026: Automated Pay-U API remittance
+- Q2 2026: Claims analytics dashboard
+- Q3 2026: Additional underwriter partnerships
 
-**14. Document References**
-Links to all referenced documents including new additions.
+### 15. Document References
+All linked docs with brief descriptions:
 
-## Technical Details
+| Document | Relevance |
+|----------|-----------|
+| `docs/INSURANCE_README.md` | Technical implementation guide |
+| `docs/insurance-integration-plan-2025-11-12.md` | Original implementation plan (v2.0, 1984 lines) |
+| `docs/insurance-integration-plan-2025-10-28.md` | Original planning document (v1.0) |
+| `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` (Section 14) | Pay-U partnership model, remittance, premium split |
+| `docs/20260206_MobiRides_Commercialization_GTM_Plan.md` | Revenue model, Pay-U partnership context |
+| `docs/MobiRides_Valuation_Framework_06-02-2026.md` | Insurance revenue in valuation |
+| `docs/PRIVACY_POLICY.md` | Data handling for claims/policies |
+| `docs/ROADMAP.md` | Phase 3 insurance roadmap |
+| `docs/ROADMAP-NOV-DEC-2025.md` | Original insurance epic scope (Epics 1.4/1.6) |
+| `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md` | Active UI fixes affecting insurance components |
+| `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Display issues in insurance UI |
+| `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md` | Insurance test coverage status |
+| `docs/Product Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md` | Latest status metrics |
 
-### File to Create
-- `docs/Product Status/WEEK_3_FEBRUARY_2026_STATUS_REPORT.md`
+### 16. Appendix
+- Premium calculation examples (table)
+- Glossary of terms (excess, coverage cap, premium load, remittance batch)
+- Support agent quick-reference card (extractable)
 
-### Data Sources Referenced
-- Previous reports: Week 1 and Week 2 February 2026
-- JIRA Production Readiness Plan v1.3
-- Current vs Ideal State Analysis (Feb 15)
-- Commercialization GTM Plan v2.4
-- ROADMAP-NOV-DEC-2025.md
-- capacitor.config.ts and package.json (Capacitor packages)
-- Live database queries (186 users, 62 cars, 341 bookings)
-- Recent migrations (4 new since Week 2)
-- Console logs (minor location errors only, no build errors)
-- Recent code changes: RenterPaymentModal, BookingSuccessModal, RenterDashboard, RentalDetailsRefactored, RentalPaymentDetails, PriceBreakdown (deleted)
+## Sensitivity Notes
+- Sections 5, 8, 10 marked "Internal Only" or "Partner NDA Required"
+- Section 4 (tiers/pricing) and Section 6 (claims process) are extractable for marketing/support
+- Section 3 is public-facing
 
-### Key Differences from Previous Reports
-1. First report to include Capacitor/mobile app readiness section
-2. Documents the build recovery (50+ errors to 0)
-3. Documents the pricing consistency fix across all screens
-4. Insurance premium recalibration
-5. Aligns with commercialization plan milestones and platform stats

@@ -15,9 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, CheckCircle, XCircle, Eye, Pencil } from "lucide-react";
+import { Search, CheckCircle, XCircle, Eye, Pencil, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { PaginatedTable } from "./PaginatedTable";
 
 interface PendingCar {
   id: string;
@@ -45,9 +44,8 @@ const usePendingCars = () => {
           is_available, created_at, owner_id,
           profiles:owner_id (full_name)
         `)
-        .eq("is_available", false)
-        .order("created_at", { ascending: false })
-        .limit(10);
+        .eq("verification_status", "pending")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -80,7 +78,7 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
     try {
       const { error } = await supabase
         .from("cars")
-        .update({ is_available: true })
+        .update({ verification_status: "approved", is_available: true })
         .eq("id", carId);
 
       if (error) throw error;
@@ -97,27 +95,38 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
     try {
       const { error } = await supabase
         .from("cars")
-        .delete()
+        .update({ verification_status: "rejected", is_available: false })
         .eq("id", carId);
 
       if (error) throw error;
       
       refetch();
-      toast.success("Car rejected and removed");
+      toast.success("Car listing rejected");
     } catch (error) {
       console.error("Error rejecting car:", error);
       toast.error("Failed to reject car");
     }
   };
 
-  const renderCarRow = (car: PendingCar) => (
+  const renderCarRow = (car: PendingCar) => {
+    const daysPending = Math.floor((Date.now() - new Date(car.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    const isStale = daysPending > 30;
+    
+    return (
     <TableRow key={car.id}>
       <TableCell className="font-medium">{car.brand}</TableCell>
       <TableCell>{car.model}</TableCell>
       <TableCell>{car.year}</TableCell>
       <TableCell>{car.profiles?.full_name || "Unknown"}</TableCell>
       <TableCell>
-        {new Date(car.created_at).toLocaleDateString()}
+        <div className="flex items-center gap-1.5">
+          {new Date(car.created_at).toLocaleDateString()}
+          {isStale && (
+            <span title={`Pending for ${daysPending} days`}>
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            </span>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-2">
@@ -149,7 +158,8 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
         </div>
       </TableCell>
     </TableRow>
-  );
+    );
+  };
 
   if (error) {
     return (
@@ -192,27 +202,23 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
               ))}
             </div>
           ) : (
-            <PaginatedTable
-              data={displayCars}
-              itemsPerPage={10}
-              renderItem={(car) => renderCarRow(car)}
-              renderHeader={() => (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Make</TableHead>
-                      <TableHead>Model</TableHead>
-                      <TableHead>Year</TableHead>
-                      <TableHead>Seller</TableHead>
-                      <TableHead>Submitted At</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody />
-                </Table>
-              )}
-              className="overflow-x-auto"
-            />
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Make</TableHead>
+                    <TableHead>Model</TableHead>
+                    <TableHead>Year</TableHead>
+                    <TableHead>Seller</TableHead>
+                    <TableHead>Submitted At</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayCars.map((car) => renderCarRow(car))}
+                </TableBody>
+              </Table>
+            </div>
           )}
           
           {!isLoading && filteredCars.length === 0 && (

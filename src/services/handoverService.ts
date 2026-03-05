@@ -39,6 +39,7 @@ export interface HandoverStatus {
   renter_location?: HandoverLocation | null;
   handover_completed: boolean;
   handover_type: HandoverType;
+  is_interactive?: boolean;
   status?: string;
   created_at: string;
   updated_at: string;
@@ -91,6 +92,7 @@ export const createPickupHandoverSession = async (
       renter_ready: false,
       handover_completed: false,
       handover_type: 'pickup' as HandoverType,
+      is_interactive: true,
     };
     
     const { data: sessionResult, error } = await supabase
@@ -231,6 +233,7 @@ export const createReturnHandoverSession = async (
       renter_ready: false,
       handover_completed: false,
       handover_type: 'return' as HandoverType,
+      is_interactive: true,
     };
     
     const { data: sessionResult, error } = await supabase

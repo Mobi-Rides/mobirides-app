@@ -646,6 +646,7 @@ export type Database = {
           transmission: string
           updated_at: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          verification_status: string
           view_count: number | null
           year: number
         }
@@ -671,6 +672,7 @@ export type Database = {
           transmission: string
           updated_at?: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          verification_status?: string
           view_count?: number | null
           year: number
         }
@@ -696,6 +698,7 @@ export type Database = {
           transmission?: string
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+          verification_status?: string
           view_count?: number | null
           year?: number
         }
@@ -4504,9 +4507,11 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_active: boolean
           is_restricted: boolean
           phone_number: string
           role: string
+          updated_at: string
           user_roles: string[]
           vehicles_count: number
           verification_status: string
@@ -4516,7 +4521,7 @@ export type Database = {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
           active_sessions: number
-          avg_session_duration: unknown
+          avg_session_duration: string
           expired_sessions: number
           most_common_reason: string
           total_sessions: number

@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useBookingPayment } from "@/hooks/useBookingPayment";
-import { UnifiedPriceSummary } from "../booking/UnifiedPriceSummary";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
 import { PaymentMethodSelector, PaymentMethodType } from "../booking/PaymentMethodSelector";
 import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../integrations/supabase/client";
 
 interface ExcessPaymentModalProps {
   isOpen: boolean;
@@ -31,8 +30,7 @@ export const ExcessPaymentModal: React.FC<ExcessPaymentModalProps> = ({
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType>('card');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Reusing the hook for UI state, but custom implementation for excess
-  const { initiatePayment, processingStep } = useBookingPayment();
+  // Custom implementation for excess payment
 
   const handlePay = async () => {
     setIsProcessing(true);
