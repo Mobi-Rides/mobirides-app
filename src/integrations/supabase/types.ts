@@ -4521,7 +4521,7 @@ export type Database = {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
           active_sessions: number
-          avg_session_duration: unknown
+          avg_session_duration: string
           expired_sessions: number
           most_common_reason: string
           total_sessions: number
