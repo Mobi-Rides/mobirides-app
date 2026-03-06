@@ -4500,21 +4500,16 @@ export type Database = {
       get_admin_users_complete: {
         Args: never
         Returns: {
-          active_restrictions: Json
-          avatar_url: string
-          bookings_count: number
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          is_active: boolean
-          is_restricted: boolean
-          phone_number: string
-          role: string
-          updated_at: string
-          user_roles: string[]
-          vehicles_count: number
-          verification_status: string
+          p_avatar_url: string
+          p_created_at: string
+          p_email: string
+          p_full_name: string
+          p_id: string
+          p_is_active: boolean
+          p_phone: string
+          p_role: string
+          p_updated_at: string
+          p_verification_status: string
         }[]
       }
       get_bypass_statistics: {
