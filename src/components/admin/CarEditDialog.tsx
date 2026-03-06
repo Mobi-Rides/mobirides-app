@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { CarImageManager } from "@/components/add-car/CarImageManager";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Car {
   id: string;
@@ -22,6 +24,7 @@ interface Car {
   location: string;
   is_available: boolean;
   description?: string | null;
+  image_url: string | null;
 }
 
 interface CarEditDialogProps {
@@ -72,100 +75,114 @@ export const CarEditDialog = ({ car, isOpen, onClose, onSuccess }: CarEditDialog
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit Car</DialogTitle>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle>Edit Listing: {car.brand} {car.model}</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="brand">Brand</Label>
-              <Input
-                id="brand"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                required
+
+        <ScrollArea className="p-6 pt-2 max-h-[calc(90vh-120px)]">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brand">Brand</Label>
+                  <Input
+                    id="brand"
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="model">Model</Label>
+                  <Input
+                    id="model"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="year">Year</Label>
+                  <Input
+                    id="year"
+                    type="number"
+                    value={year}
+                    onChange={(e) => setYear(parseInt(e.target.value))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price/Day (P)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    value={pricePerDay}
+                    onChange={(e) => setPricePerDay(parseFloat(e.target.value))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2 bg-muted/40 p-3 rounded-lg border">
+                <Switch
+                  id="available"
+                  checked={isAvailable}
+                  onCheckedChange={setIsAvailable}
+                />
+                <Label htmlFor="available" className="cursor-pointer">Maintain availability for booking</Label>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-2 border-t">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Vehicle Images</h3>
+              <CarImageManager
+                carId={car.id}
+                mainImageUrl={car.image_url}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Input
-                id="model"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                required
-              />
+
+            <div className="flex justify-end space-x-2 pt-4 sticky bottom-0 bg-background py-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading} className="min-w-[120px]">
+                {isLoading ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="year">Year</Label>
-              <Input
-                id="year"
-                type="number"
-                value={year}
-                onChange={(e) => setYear(parseInt(e.target.value))}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="price">Price/Day (P)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={pricePerDay}
-                onChange={(e) => setPricePerDay(parseFloat(e.target.value))}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="available"
-              checked={isAvailable}
-              onCheckedChange={setIsAvailable}
-            />
-            <Label htmlFor="available">Available for booking</Label>
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Updating..." : "Update Car"}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

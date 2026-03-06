@@ -139,7 +139,7 @@ const AddCar = () => {
       // Upload images
       if (imageFiles.length > 0) {
         console.log("Uploading car images...");
-        
+
         for (let i = 0; i < imageFiles.length; i++) {
           const imageFile = imageFiles[i];
           const fileExt = imageFile.name.split(".").pop();
@@ -152,6 +152,11 @@ const AddCar = () => {
 
           if (uploadError) {
             console.error("Error uploading car image:", uploadError);
+            toast({
+              title: "Upload Failed",
+              description: `Failed to upload image ${i + 1}.`,
+              variant: "destructive",
+            });
             continue;
           }
 
@@ -159,14 +164,18 @@ const AddCar = () => {
             data: { publicUrl },
           } = supabase.storage.from("car-images").getPublicUrl(filePath);
 
-          if (i === 0) {
-            // First image becomes the main image
+          if (!image_url) {
+            // First successful image becomes the main image
             image_url = publicUrl;
             console.log("Main car image uploaded:", image_url);
           } else {
             // Additional images will be stored in car_images table
             additionalImageUrls.push(publicUrl);
           }
+        }
+
+        if (!image_url) {
+          throw new Error("Failed to upload the primary cover photo for your car.");
         }
       }
 
@@ -202,7 +211,7 @@ const AddCar = () => {
       // Insert additional images into car_images table
       if (insertedCar && additionalImageUrls.length > 0) {
         console.log("Inserting additional images into car_images table...");
-        
+
         const imageInserts = additionalImageUrls.map((url) => ({
           car_id: insertedCar.id,
           image_url: url,

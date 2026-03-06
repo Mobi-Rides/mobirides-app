@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 
 interface UserStats {
   host_rating: number;
@@ -31,35 +32,35 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId, carTitle }: Car
   const handleContactClick = () => {
     console.log("Contact button clicked! Owner ID:", ownerId, "Owner Name:", ownerName);
     console.log("Current user authenticated:", isAuthenticated, "User ID:", user?.id);
-    
+
     // Check if user is authenticated
     if (!isAuthenticated) {
       console.log("User not authenticated, showing toast");
       toast.error("Please sign in to message the car owner");
       return;
     }
-    
+
     // Check if trying to message themselves
     if (user?.id === ownerId) {
       console.log("User trying to message themselves");
       toast.error("You cannot message yourself");
       return;
     }
-    
+
     if (!ownerId) {
       console.error("No owner ID provided");
       toast.error("Unable to contact car owner");
       return;
     }
-    
+
     console.log("Navigating to messages with recipient data");
-    navigate("/messages", { 
-      state: { 
-        recipientId: ownerId, 
+    navigate("/messages", {
+      state: {
+        recipientId: ownerId,
         recipientName: ownerName,
         carId,
         carTitle
-      } 
+      }
     });
   };
 
@@ -98,9 +99,7 @@ export const CarOwner = ({ ownerName, avatarUrl, ownerId, carId, carTitle }: Car
             <div className="flex items-center gap-3">
               <img
                 src={
-                  avatarUrl
-                    ? avatarUrl
-                    : "/placeholder.svg"
+                  getAvatarPublicUrl(avatarUrl) || "/placeholder.svg"
                 }
                 alt={ownerName || "Car Owner"}
                 className="w-8 h-8 rounded-full object-cover bg-muted"

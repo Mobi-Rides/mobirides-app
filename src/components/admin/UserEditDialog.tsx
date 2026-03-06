@@ -84,7 +84,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>

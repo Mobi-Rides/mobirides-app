@@ -8,6 +8,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface CarImageCarouselProps {
   carId: string;
@@ -30,7 +31,7 @@ export const CarImageCarousel = ({ carId, mainImageUrl }: CarImageCarouselProps)
       }
 
       // Combine main image with additional images
-      const allImages = mainImageUrl 
+      const allImages = mainImageUrl
         ? [{ id: "main", image_url: mainImageUrl }, ...(data || [])]
         : data || [];
 
@@ -58,7 +59,7 @@ export const CarImageCarousel = ({ carId, mainImageUrl }: CarImageCarouselProps)
           <CarouselItem key={image.id}>
             <div className="w-full h-64 flex items-center justify-center bg-muted rounded-lg">
               <img
-                src={image.image_url}
+                src={getCarImagePublicUrl(image.image_url) || "/placeholder.svg"}
                 alt="Car"
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
