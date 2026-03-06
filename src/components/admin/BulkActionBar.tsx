@@ -13,6 +13,15 @@ import { cn } from '@/lib/utils';
 type BulkAction = 'assign_role' | 'delete' | 'suspend';
 type UserRole = 'renter' | 'host' | 'admin' | 'super_admin';
 
+interface ErrorWithContext {
+  context: {
+    json: () => Promise<{
+      error?: string;
+      details?: unknown;
+    }>;
+  };
+}
+
 interface BulkActionBarProps {
   selectedUsers: string[];
   onClearSelection: () => void;
@@ -62,7 +71,28 @@ export function BulkActionBar({ selectedUsers, onClearSelection, className }: Bu
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       });
       
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("Bulk delete failed:", error);
+        // Try to parse more detailed error from the response if available
+        let errorMessage = error.message;
+        try {
+          if (error && typeof error === 'object' && 'context' in error) {
+             const context = (error as unknown as ErrorWithContext).context;
+             if (context && typeof context.json === 'function') {
+                 const body = await context.json();
+                 if (body && body.error) {
+                     errorMessage = body.error;
+                     if (body.details) {
+                         errorMessage += ` (${JSON.stringify(body.details)})`;
+                     }
+                 }
+             }
+          }
+        } catch (e) {
+            console.error("Error parsing error response:", e);
+        }
+        throw new Error(errorMessage);
+      }
       return data;
     },
     onSuccess: (data) => {
@@ -82,6 +112,7 @@ export function BulkActionBar({ selectedUsers, onClearSelection, className }: Bu
       }
     },
     onError: (error: Error) => {
+      console.error("Delete mutation error:", error);
       toast.error(`Failed to delete users: ${error.message}`);
       setShowConfirmDialog(false);
     },
