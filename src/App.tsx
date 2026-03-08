@@ -465,8 +465,12 @@ function App() {
                             <AdminReviews />
                           </Suspense>
                         } />
+                        <Route path="/admin/guides" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminGuides />
+                          </Suspense>
+                        } />
 
-                        {/* Insurance Claims Routes */}
                         <Route path="/claims" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
