@@ -1,9 +1,8 @@
-
 import { Car, KeyRound, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 interface RentalCarInfoCardProps {
   car: {
     id: string;
