@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
 import { useGuides, usePopularGuides, useSearchGuides } from "@/hooks/useGuides";
+import { toast } from "sonner";
 
 const HelpCenter = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const HelpCenter = () => {
   
   // Fetch guides from database
   const { data: guides, isLoading: guidesLoading, error: guidesError } = useGuides(role as 'renter' | 'host');
-  const { data: popularGuides, isLoading: popularLoading } = usePopularGuides();
+  const { data: popularGuides, isLoading: popularLoading } = usePopularGuides(role as 'renter' | 'host');
   const { data: searchResults, isLoading: searchLoading } = useSearchGuides(searchQuery, role as 'renter' | 'host');
 
   // Icon mapping for sections
@@ -111,7 +112,10 @@ const HelpCenter = () => {
           <Button 
             variant="outline" 
             className="h-auto p-4 flex flex-col items-center gap-2"
-            onClick={() => navigate('/profile')}
+            onClick={() => {
+              navigate('/messages');
+              toast.info("Our support team typically responds within 24 hours.");
+            }}
           >
             <Users className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium">Contact Support</span>
