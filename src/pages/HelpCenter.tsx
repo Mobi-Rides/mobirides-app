@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, Search, Star, Clock, Users, Car, Loader2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Search, Star, Clock, Users, Car, Loader2, Shield, FileText, Heart, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,12 @@ const HelpCenter = () => {
       'car-listing': Car,
       'bookings': BookOpen,
       'earnings': Users,
+      'safety-guidelines': Shield,
+      'handover-process': Car,
+      'terms-of-service': FileText,
+      'cancellation-policy': Clock,
+      'community-guidelines': Heart,
+      'data-privacy': Lock,
     };
     return iconMap[section] || BookOpen;
   };
