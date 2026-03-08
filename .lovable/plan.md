@@ -1,89 +1,53 @@
 
+# Epic MOB-300: Help Center Hotfix — Status
 
-## Fix Car Location Map: Use Location Text + Host Coordinates as Fallback
+**Owner:** Modisa Maphanyane  
+**Started:** 2026-03-08  
+**Status:** Phase 4 In Progress
 
-### Problem
-~40 of 63 cars have `NULL` lat/lng in the database. The `toSafeCarWithProfiles` function defaults these to `(0, 0)` — the Gulf of Guinea — making the map appear broken. Meanwhile, each car already has a `location` text field (e.g. "Gaborone") and a host (`owner_id`) whose `profiles` row may have valid coordinates from location sharing.
+## Completed Phases
 
-### Solution: Two-tier coordinate resolution
+### Phase 1: Database-Driven Guides ✅
+- Migrated hardcoded guide content to `guides` table in Supabase
+- Created `useGuides`, `usePopularGuides`, `useSearchGuides` hooks
+- Created `useGuideContent` hook for individual guide rendering
+- Updated `HelpCenter.tsx` and `HelpSection.tsx` to fetch from DB
 
-When a car's own coordinates are missing/zero, resolve them in order:
+### Phase 2: Persist Progress ✅
+- Created `user_guide_progress` table with RLS policies
+- Created `useGuideProgress` hook (fetch/upsert via TanStack Query)
+- Added progress bar and completion badge to guide UI
+- Checkboxes persist step completion across sessions
 
-1. **Host's profile coordinates** — query `profiles` for `owner_id` to get `latitude`/`longitude` (the host's last shared location, since car locations are tied to host locations)
-2. **Forward geocode the `location` text** — use Mapbox Geocoding API to convert e.g. "Gaborone" → `(-24.65, 25.92)`
-3. **Hide map** — if both fail, show just the location text with a "Map unavailable" message instead of rendering an empty/broken map
+### Phase 3: Content Expansion ✅
+- **MOB-307:** Seeded Renter Safety Guidelines (6 steps)
+- **MOB-308:** Seeded Host Handover Process (6 steps)
+- **MOB-309:** Seeded 4 shared platform guides with `role='shared'`
+- Updated hooks to use `.in('role', [role, 'shared'])`
+- Added icon mappings (Shield, FileText, Heart, Lock)
 
-### Changes
+### Phase 4: Component Library & Admin Management ✅
+- **MOB-310:** Extracted `GuideLayout` component (`src/components/help/GuideLayout.tsx`)
+- **MOB-311:** Extracted `GuideProgressTracker` component (`src/components/help/GuideProgressTracker.tsx`)
+- **MOB-314:** Built Admin FAQ & Guide Management page (`src/pages/admin/AdminGuides.tsx`)
+  - Full CRUD: create, edit, delete guides
+  - Inline step editor with action labels
+  - Role selector (renter/host/shared), popularity toggle, sort order
+  - Search/filter, delete confirmation dialog
+  - Route: `/admin/guides`, added to AdminSidebar
+- Refactored `HelpSection.tsx` to use extracted components
 
+## Architecture Decisions
+- **Shared guides use `role='shared'`** (Option B — single source of truth) rather than duplicating rows per role. Hooks query `.in('role', [role, 'shared'])`.
+- **Progress stored server-side** in `user_guide_progress` table with `completed_steps` JSONB column.
+- **Guide content stored as JSONB** in `guides.content` with `steps[]` array structure.
+
+## Files Changed (All Phases)
 | File | Change |
 |------|--------|
-| `src/utils/mapbox/geocoding.ts` | Add `forwardGeocode(locationText)` function — calls Mapbox `geocoding/v5/mapbox.places/{text}.json` and returns `{lat, lng}` or `null` |
-| `src/pages/CarDetails.tsx` | After fetching car, if `latitude/longitude` are null or 0: (a) fetch host profile coords via `owner_id`, (b) if still missing, call `forwardGeocode(car.location)`, (c) pass resolved coords to `CarLocation` or skip rendering |
-| `src/components/car-details/CarLocation.tsx` | Add early-return fallback UI when coords are `(0,0)` or invalid — show location text + "Exact location unavailable" instead of an empty map div |
-
-### Technical Detail
-
-**New `forwardGeocode` function:**
-```typescript
-export const forwardGeocode = async (query: string): Promise<{lat: number; lng: number} | null> => {
-  const token = await getMapboxToken();
-  const res = await fetch(
-    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?limit=1&access_token=${token}`
-  );
-  const data = await res.json();
-  if (data.features?.[0]?.center) {
-    const [lng, lat] = data.features[0].center;
-    return { lat, lng };
-  }
-  return null;
-};
-```
-
-**Coordinate resolution in CarDetails.tsx:**
-```typescript
-// After car query resolves:
-let resolvedLat = car.latitude;
-let resolvedLng = car.longitude;
-
-if (!resolvedLat || !resolvedLng) {
-  // Try host's profile location
-  const { data: hostProfile } = await supabase
-    .from('profiles')
-    .select('latitude, longitude')
-    .eq('id', car.owner_id)
-    .maybeSingle();
-  
-  if (hostProfile?.latitude && hostProfile?.longitude) {
-    resolvedLat = hostProfile.latitude;
-    resolvedLng = hostProfile.longitude;
-  } else {
-    // Forward geocode the location text
-    const coords = await forwardGeocode(car.location);
-    if (coords) { resolvedLat = coords.lat; resolvedLng = coords.lng; }
-  }
-}
-```
-
-**CarLocation fallback UI** (when coords still invalid):
-```tsx
-if (!latitude || !longitude || (latitude === 0 && longitude === 0)) {
-  return (
-    <Card>
-      <CardHeader><CardTitle>Location</CardTitle></CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">
-          <MapPin size={16} className="text-red-500" />
-          <p>{location}</p>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">Exact location unavailable</p>
-      </CardContent>
-    </Card>
-  );
-}
-```
-
-### Outcome
-- Cars with host location sharing get the host's live coordinates on their map
-- Cars with only a text location get geocoded coordinates (cached per render)
-- Cars with neither get a clean fallback instead of a broken map
-
+| `src/hooks/useGuides.ts` | DB queries with shared role support |
+| `src/hooks/useGuideContent.ts` | Single guide fetch with shared role support |
+| `src/hooks/useGuideProgress.ts` | New — progress persistence hook |
+| `src/pages/HelpCenter.tsx` | DB-driven listing with icon mappings |
+| `src/pages/HelpSection.tsx` | Progress tracking UI integration |
+| `supabase/migrations/` | 4 migrations (guides table, content seed, progress table, shared guides seed) |

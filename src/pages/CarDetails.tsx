@@ -18,6 +18,7 @@ import { AlertTriangle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { incrementCarViewCount } from "@/services/carViewsService";
 import type { User } from "@supabase/supabase-js";
+import { forwardGeocode } from "@/utils/mapbox/geocoding";
 
 interface CarWithProfiles extends Car {
   profiles?: {
@@ -96,7 +97,31 @@ const CarDetails = () => {
       if (error) throw error;
       if (!data) throw new Error("Car not found");
 
-      return toSafeCarWithProfiles(data as CarWithProfiles);
+      const safeCar = toSafeCarWithProfiles(data as CarWithProfiles);
+
+      // Resolve coordinates if missing (0,0 = default from null)
+      if (safeCar.latitude === 0 && safeCar.longitude === 0) {
+        // Tier 1: Try host's profile coordinates
+        const { data: hostProfile } = await supabase
+          .from("profiles")
+          .select("latitude, longitude")
+          .eq("id", safeCar.owner_id)
+          .maybeSingle();
+
+        if (hostProfile?.latitude && hostProfile?.longitude) {
+          safeCar.latitude = hostProfile.latitude;
+          safeCar.longitude = hostProfile.longitude;
+        } else {
+          // Tier 2: Forward geocode the location text
+          const coords = await forwardGeocode(safeCar.location);
+          if (coords) {
+            safeCar.latitude = coords.lat;
+            safeCar.longitude = coords.lng;
+          }
+        }
+      }
+
+      return safeCar;
     },
   });
 
