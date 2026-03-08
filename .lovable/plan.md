@@ -1,36 +1,53 @@
 
+# Epic MOB-300: Help Center Hotfix — Status
 
-## Next Critical Fix Assessment
+**Owner:** Modisa Maphanyane  
+**Started:** 2026-03-08  
+**Status:** Phase 4 In Progress
 
-Based on the Admin Portal Hotfix plan (`HOTFIX_ADMIN_PORTAL_2026_02_24.md`), here is the current state:
+## Completed Phases
 
-### Completed (12 of 26 tickets done)
-MOB-101, 102, 114, 115, 116, 118, 119, 120, 123, 124, 125 -- all resolved.
+### Phase 1: Database-Driven Guides ✅
+- Migrated hardcoded guide content to `guides` table in Supabase
+- Created `useGuides`, `usePopularGuides`, `useSearchGuides` hooks
+- Created `useGuideContent` hook for individual guide rendering
+- Updated `HelpCenter.tsx` and `HelpSection.tsx` to fetch from DB
 
-### Remaining P0 (Build-Blocking) -- Do These First
+### Phase 2: Persist Progress ✅
+- Created `user_guide_progress` table with RLS policies
+- Created `useGuideProgress` hook (fetch/upsert via TanStack Query)
+- Added progress bar and completion badge to guide UI
+- Checkboxes persist step completion across sessions
 
-| Order | Ticket | Description | Effort |
-|-------|--------|-------------|--------|
-| 1 | **MOB-126** | Fix `BookingDialog` + `RenterPaymentModal` TS2739 -- missing `base_price` and `total_multiplier` in `PricingCalculation` objects | XS (15 min) |
-| 2 | **MOB-103** | Fix `CarVerificationTable` -- rows render outside `<Table>` DOM structure in full mode; hardcoded `.limit(10)` blocks pagination | S (1 hr) |
+### Phase 3: Content Expansion ✅
+- **MOB-307:** Seeded Renter Safety Guidelines (6 steps)
+- **MOB-308:** Seeded Host Handover Process (6 steps)
+- **MOB-309:** Seeded 4 shared platform guides with `role='shared'`
+- Updated hooks to use `.in('role', [role, 'shared'])`
+- Added icon mappings (Shield, FileText, Heart, Lock)
 
-### Remaining P1 (High Priority) -- Next After P0
+### Phase 4: Component Library & Admin Management ✅
+- **MOB-310:** Extracted `GuideLayout` component (`src/components/help/GuideLayout.tsx`)
+- **MOB-311:** Extracted `GuideProgressTracker` component (`src/components/help/GuideProgressTracker.tsx`)
+- **MOB-314:** Built Admin FAQ & Guide Management page (`src/pages/admin/AdminGuides.tsx`)
+  - Full CRUD: create, edit, delete guides
+  - Inline step editor with action labels
+  - Role selector (renter/host/shared), popularity toggle, sort order
+  - Search/filter, delete confirmation dialog
+  - Route: `/admin/guides`, added to AdminSidebar
+- Refactored `HelpSection.tsx` to use extracted components
 
-| Order | Ticket | Description | Effort |
-|-------|--------|-------------|--------|
-| 3 | **MOB-111** | Fix `get_admin_users_complete` RPC -- `is_restricted` ignores `active = true` check (migration) | XS |
-| 4 | **MOB-107** | Deploy `bulk-delete-users` edge function (currently 404) | XS |
-| 5 | **MOB-105** | Add auth verification to `assign-role` / `bulk-assign-role` (security vulnerability) | M |
-| 6 | **MOB-106** | Fix role INSERT → UPSERT for duplicate handling | XS |
-| 7 | **MOB-104** | Fix `UserEditDialog` to sync `user_roles` table alongside `profiles.role` | S |
-| 8 | **MOB-121** | Migrate remaining avatar consumers to `getAvatarPublicUrl` utility | M |
-| 9 | **MOB-110** | Fix `delete-user-with-transfer` FK coverage (20+ missing tables) | L (3-4 hrs) |
+## Architecture Decisions
+- **Shared guides use `role='shared'`** (Option B — single source of truth) rather than duplicating rows per role. Hooks query `.in('role', [role, 'shared'])`.
+- **Progress stored server-side** in `user_guide_progress` table with `completed_steps` JSONB column.
+- **Guide content stored as JSONB** in `guides.content` with `steps[]` array structure.
 
-### Recommendation
-
-**Start with MOB-126** -- it is a P0 build-blocking error that takes ~15 minutes. It just requires adding two missing properties (`base_price`, `total_multiplier`) to inline `PricingCalculation` objects in `BookingDialog.tsx` and `RenterPaymentModal.tsx`.
-
-Then move to **MOB-103** (car verification table structure fix).
-
-After the two P0s are clear, tackle the P1 security cluster (MOB-105, 106, 104) since those represent privilege escalation risks.
-
+## Files Changed (All Phases)
+| File | Change |
+|------|--------|
+| `src/hooks/useGuides.ts` | DB queries with shared role support |
+| `src/hooks/useGuideContent.ts` | Single guide fetch with shared role support |
+| `src/hooks/useGuideProgress.ts` | New — progress persistence hook |
+| `src/pages/HelpCenter.tsx` | DB-driven listing with icon mappings |
+| `src/pages/HelpSection.tsx` | Progress tracking UI integration |
+| `supabase/migrations/` | 4 migrations (guides table, content seed, progress table, shared guides seed) |
