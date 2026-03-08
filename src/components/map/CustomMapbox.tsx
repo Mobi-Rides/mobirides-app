@@ -84,7 +84,7 @@ const CustomMapbox = ({
   }, []);
 
   // Always call hooks - move conditional logic to usage
-  const handoverData = useHandover();
+  const handoverData = useHandoverSafe();
   const handover = isHandoverMode ? handoverData : null;
 
   // Memoize returnLocation callback to prevent unnecessary re-renders
