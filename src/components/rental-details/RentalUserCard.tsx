@@ -1,6 +1,6 @@
 import { User as UserIcon, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 
 interface RentalUserCardProps {
   user: {
@@ -23,7 +23,7 @@ export const RentalUserCard = ({ user, role }: RentalUserCardProps) => {
         <div className="flex items-center gap-3">
           {user.avatar_url ? (
             <img
-              src={supabase.storage.from("avatars").getPublicUrl(user.avatar_url).data.publicUrl}
+              src={getAvatarPublicUrl(user.avatar_url)}
               alt={user.full_name || role}
               className="w-12 h-12 rounded-full object-cover bg-muted"
             />

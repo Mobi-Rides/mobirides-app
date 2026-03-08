@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { Conversation, User, Message } from "@/types/message";
 import { toast } from "sonner";
 
@@ -381,9 +382,7 @@ export const useOptimizedConversations = (userId?: string) => {
             const participantUsers: User[] = (conversationParticipants || []).map((p: any) => ({
               id: p.user_id,
               name: p.profiles?.full_name || 'Unknown User',
-              avatar: p.profiles?.avatar_url ?
-                supabase.storage.from('avatars').getPublicUrl(p.profiles.avatar_url).data.publicUrl :
-                undefined,
+              avatar: getAvatarPublicUrl(p.profiles?.avatar_url),
               status: 'offline' as const
             }));
 

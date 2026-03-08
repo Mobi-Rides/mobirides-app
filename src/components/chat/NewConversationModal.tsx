@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search } from "lucide-react";
 import { User } from "@/types/message";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 
 interface NewConversationModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export function NewConversationModal({
       const formattedResults: User[] = data.map((profile) => ({
         id: profile.id,
         name: profile.full_name || "Unknown User",
-        avatar: profile.avatar_url ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_url).data.publicUrl : undefined,
+        avatar: getAvatarPublicUrl(profile.avatar_url),
         status: "offline", // Status is not available from profiles table, default to offline
       }));
       setSearchResults(formattedResults);

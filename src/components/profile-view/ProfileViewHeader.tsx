@@ -2,6 +2,7 @@ import { Upload, Shield, CheckCircle2, Camera, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { FullProfileData } from "@/hooks/useFullProfile";
@@ -57,9 +58,7 @@ export const ProfileViewHeader = ({ profile }: ProfileViewHeaderProps) => {
     }
   };
 
-  const avatarUrl = profile.avatar_url 
-    ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl
-    : null;
+  const avatarUrl = getAvatarPublicUrl(profile.avatar_url) || null;
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 shadow-sm">

@@ -758,17 +758,17 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 | 10    | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     | ✅ Done |
 | 11    | MOB-102 | Fix KYC table names & badges             | Frontend   | S      | ✅ Done |
 | 12    | MOB-103 | Fix Car verification table structure     | Frontend   | S      | ✅ Done |
-| 13    | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     |        |
+| 13    | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     | ✅ Done |
 | 14    | MOB-107 | Deploy `bulk-delete-users`               | Deployment | XS     |        |
-| 15    | MOB-105 | Add auth to role assignment functions    | Frontend   | M      |        |
-| 16    | MOB-106 | Fix role INSERT → UPSERT                 | Frontend   | XS     |        |
-| 17    | MOB-104 | Fix UserEditDialog role sync             | Frontend   | S      |        |
+| 15    | MOB-105 | Add auth to role assignment functions    | Edge Func  | M      | ✅ Done |
+| 16    | MOB-106 | Fix role INSERT → UPSERT                 | Edge Func  | XS     | ✅ Done |
+| 17    | MOB-104 | Fix UserEditDialog role sync             | Frontend   | S      | ✅ Done |
 | 18    | MOB-110 | Fix delete user FK coverage              | Migration  | L      |        |
 | 19    | MOB-125 | Create `carImageUtils.ts` utility        | Frontend   | S      | ✅ Done |
-| 20    | MOB-121 | Migrate all avatar consumers to utility  | Frontend   | M      |        |
+| 20    | MOB-121 | Migrate all avatar consumers to utility  | Frontend   | M      | ✅ Done |
 | 21    | MOB-122 | Verify `avatars` bucket is public        | Infra      | XS     |        |
 | 22    | MOB-117 | Audit handover-photos storage RLS        | Security   | S      |        |
-| 23    | MOB-113 | Create migration protocol doc            | Process    | S      |        |
+| 23    | MOB-113 | Create migration protocol doc            | Process    | S      | ✅ Done |
 | 24    | MOB-108 | Extract shared admin auth module         | Frontend   | M      |        |
 | 25    | MOB-112 | Deduplicate admin DB functions           | Migration  | S      |        |
 | 26    | MOB-109 | Clean up `as any` casts                  | Frontend   | S      |        |

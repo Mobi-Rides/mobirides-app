@@ -46,7 +46,6 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
     setIsLoading(true);
 
     try {
-      // Capture old data for audit logging
       const oldData = {
         full_name: user.full_name,
         role: user.role,
@@ -59,6 +58,7 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
         phone_number: phoneNumber.trim() || null,
       };
 
+      // Update profile
       const { error } = await supabase
         .from("profiles")
         .update(newData)
@@ -66,7 +66,22 @@ export const UserEditDialog = ({ user, isOpen, onClose, onSuccess }: UserEditDia
 
       if (error) throw error;
 
-      // Log the audit event
+      // MOB-104: Sync user_roles table when role changes
+      if (role !== user.role) {
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .upsert(
+            { user_id: user.id, role },
+            { onConflict: "user_id" }
+          );
+
+        if (roleError) {
+          console.error("Failed to sync user_roles:", roleError);
+          // Non-blocking: profile was updated, warn about role sync
+          toast.warning("Profile updated but role sync to user_roles failed");
+        }
+      }
+
       await logUserProfileUpdated(user.id, oldData, newData);
 
       onSuccess();

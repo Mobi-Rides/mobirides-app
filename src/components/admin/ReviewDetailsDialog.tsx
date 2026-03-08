@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -46,9 +47,7 @@ export const ReviewDetailsDialog = ({
   };
 
   const getAvatarUrl = (avatarPath: string | null | undefined) => {
-    if (!avatarPath) return null;
-    if (avatarPath.startsWith("http")) return avatarPath;
-    return supabase.storage.from("avatars").getPublicUrl(avatarPath).data.publicUrl;
+    return getAvatarPublicUrl(avatarPath) || null;
   };
 
   const getStatusColor = (status: string) => {
