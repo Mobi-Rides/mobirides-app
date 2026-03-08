@@ -754,7 +754,7 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 | 6     | MOB-120 | Fix CarOwner host avatar                 | Frontend   | XS     | ✅ Done |
 | 7     | MOB-123 | Fix broken `/placeholder-car.jpg` path   | Frontend   | XS     | ✅ Done |
 | 8     | MOB-124 | Add `onError` fallback to `CarImage.tsx` | Frontend   | XS     | ✅ Done |
-| 9     | MOB-126 | Fix BookingDialog/RenterPaymentModal TS  | Frontend   | XS     |        |
+| 9     | MOB-126 | Fix BookingDialog/RenterPaymentModal TS  | Frontend   | XS     | ✅ Done |
 | 10    | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     | ✅ Done |
 | 11    | MOB-102 | Fix KYC table names & badges             | Frontend   | S      | ✅ Done |
 | 12    | MOB-103 | Fix Car verification table structure     | Frontend   | S      | ✅ Done |
