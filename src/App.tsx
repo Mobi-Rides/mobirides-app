@@ -103,6 +103,7 @@ const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
 const SuperAdminAnalytics = lazy(() => import("@/pages/SuperAdminAnalytics"));
 const AdminPromoCodes = lazy(() => import("@/pages/admin/AdminPromoCodes"));
 const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"));
+const AdminGuides = lazy(() => import("@/pages/admin/AdminGuides"));
 const AdminRemittanceDashboard = lazy(() => import("@/components/insurance/AdminRemittanceDashboard").then(module => ({ default: module.AdminRemittanceDashboard })));
 
 // Insurance claims pages
@@ -464,8 +465,12 @@ function App() {
                             <AdminReviews />
                           </Suspense>
                         } />
+                        <Route path="/admin/guides" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminGuides />
+                          </Suspense>
+                        } />
 
-                        {/* Insurance Claims Routes */}
                         <Route path="/claims" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
