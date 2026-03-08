@@ -11,6 +11,7 @@ interface GuideStep {
 }
 
 interface GuideContent {
+  id: string;
   title: string;
   description: string;
   read_time: string;
@@ -23,7 +24,7 @@ export const useGuideContent = (role: 'renter' | 'host', section: string) => {
     queryFn: async (): Promise<GuideContent | null> => {
       const { data, error } = await supabase
         .from('guides')
-        .select('title, description, read_time, content')
+        .select('id, title, description, read_time, content')
         .eq('role', role)
         .eq('section', section)
         .single();
@@ -42,6 +43,7 @@ export const useGuideContent = (role: 'renter' | 'host', section: string) => {
       const steps = content.steps || [];
 
       return {
+        id: data.id,
         title: data.title,
         description: data.description || '',
         read_time: data.read_time || '5 min',
