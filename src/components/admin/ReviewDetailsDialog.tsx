@@ -46,9 +46,7 @@ export const ReviewDetailsDialog = ({
   };
 
   const getAvatarUrl = (avatarPath: string | null | undefined) => {
-    if (!avatarPath) return null;
-    if (avatarPath.startsWith("http")) return avatarPath;
-    return supabase.storage.from("avatars").getPublicUrl(avatarPath).data.publicUrl;
+    return getAvatarPublicUrl(avatarPath) || null;
   };
 
   const getStatusColor = (status: string) => {

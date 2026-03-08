@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { useToast } from "@/hooks/use-toast";
 import type { Car } from "@/types/car";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -170,7 +171,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
                 <div className="flex items-center gap-2">
                   {review.reviewer.avatar_url ? (
                     <img 
-                      src={supabase.storage.from('avatars').getPublicUrl(review.reviewer.avatar_url).data.publicUrl} 
+                      src={getAvatarPublicUrl(review.reviewer.avatar_url)} 
                       alt={review.reviewer.full_name}
                       className="w-8 h-8 rounded-full object-cover"
                     />

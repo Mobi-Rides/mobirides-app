@@ -99,9 +99,7 @@ export const ReviewManagementTable = ({
   };
 
   const getAvatarUrl = (avatarPath: string | null | undefined) => {
-    if (!avatarPath) return null;
-    if (avatarPath.startsWith("http")) return avatarPath;
-    return supabase.storage.from("avatars").getPublicUrl(avatarPath).data.publicUrl;
+    return getAvatarPublicUrl(avatarPath) || null;
   };
 
   const { sortedData: sortedReviews, sortKey, sortDirection, handleSort } = useTableSort(reviews);

@@ -3,6 +3,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getAvatarPublicUrl } from '@/utils/avatarUtils';
 import { LoadingView } from '@/components/home/LoadingView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -197,7 +198,7 @@ export const BookingDetails: React.FC = () => {
               <div className="flex items-center gap-4">
                 {booking.renter.avatar_url ? (
                   <img
-                    src={supabase.storage.from('avatars').getPublicUrl(booking.renter.avatar_url).data.publicUrl}
+                    src={getAvatarPublicUrl(booking.renter.avatar_url)}
                     alt={booking.renter.full_name || 'Renter'}
                     className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
                   />
@@ -222,7 +223,7 @@ export const BookingDetails: React.FC = () => {
               <div className="flex items-center gap-4">
                 {booking.cars.owner.avatar_url ? (
                   <img
-                    src={supabase.storage.from('avatars').getPublicUrl(booking.cars.owner.avatar_url).data.publicUrl}
+                    src={getAvatarPublicUrl(booking.cars.owner.avatar_url)}
                     alt={booking.cars.owner.full_name || 'Host'}
                     className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
                   />

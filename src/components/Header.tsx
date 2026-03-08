@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { useAuth } from "@/hooks/useAuth";
 import type { SearchFilters as Filters } from "@/components/SearchFilters";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -193,10 +194,7 @@ export const Header = ({
     enabled: !!user,
   });
 
-  const avatarUrl = profile?.avatar_url
-    ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_url).data
-        .publicUrl
-    : null;
+  const avatarUrl = getAvatarPublicUrl(profile?.avatar_url) || null;
 
   const handleFiltersChange = (filters: Filters) => {
     console.log("Filters changed:", filters);

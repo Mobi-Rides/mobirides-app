@@ -68,7 +68,7 @@ export function MessagingInterface({ className, recipientId, recipientName, init
             id: user.id,
             name: profileData?.full_name || user.email?.split('@')[0] || 'You',
             avatar: profileData?.avatar_url ?
-              supabase.storage.from('avatars').getPublicUrl(profileData.avatar_url).data.publicUrl :
+              getAvatarPublicUrl(profileData.avatar_url) || 'https://i.pravatar.cc/150?img=32' :
               'https://i.pravatar.cc/150?img=32',
             status: 'online' as const,
             role: (profileData?.role as 'host' | 'renter' | 'admin' | 'super_admin') || 'renter'
