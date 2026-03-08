@@ -4500,16 +4500,21 @@ export type Database = {
       get_admin_users_complete: {
         Args: never
         Returns: {
-          p_avatar_url: string
-          p_created_at: string
-          p_email: string
-          p_full_name: string
-          p_id: string
-          p_is_active: boolean
-          p_phone: string
-          p_role: string
-          p_updated_at: string
-          p_verification_status: string
+          active_restrictions: Json
+          avatar_url: string
+          bookings_count: number
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          is_restricted: boolean
+          phone_number: string
+          role: string
+          updated_at: string
+          user_roles: string[]
+          vehicles_count: number
+          verification_status: string
         }[]
       }
       get_bypass_statistics: {
@@ -4862,6 +4867,10 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: boolean
       }
+      remove_admin_complete: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       save_push_subscription: {
         Args: {
           p_auth_key: string
@@ -4886,6 +4895,10 @@ export type Database = {
       toggle_message_reaction: {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
+      }
+      update_admin_role: {
+        Args: { new_is_super_admin: boolean; target_user_id: string }
+        Returns: undefined
       }
       update_notification_expiration_policy: {
         Args: {
