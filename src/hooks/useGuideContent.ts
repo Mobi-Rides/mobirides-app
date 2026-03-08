@@ -25,7 +25,7 @@ export const useGuideContent = (role: 'renter' | 'host', section: string) => {
       const { data, error } = await supabase
         .from('guides')
         .select('id, title, description, read_time, content')
-        .eq('role', role)
+        .in('role', [role, 'shared'])
         .eq('section', section)
         .single();
 
