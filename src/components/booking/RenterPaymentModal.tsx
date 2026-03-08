@@ -45,7 +45,7 @@ export const RenterPaymentModal: React.FC<RenterPaymentModalProps> = ({
   const discount = booking.discount_amount || 0;
   const multiplier = booking.dynamic_pricing_multiplier || 1;
 
-  const dynamicPricing = (multiplier && multiplier !== 1) ? {
+  const dynamicPricing: PricingCalculation | undefined = (multiplier && multiplier !== 1) ? {
     is_dynamic: true,
     final_price: basePrice * multiplier,
     original_price: basePrice,
