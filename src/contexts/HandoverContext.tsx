@@ -52,6 +52,10 @@ export const useHandover = () => {
   return context;
 };
 
+export const useHandoverSafe = () => {
+  return useContext(HandoverContext) ?? null;
+};
+
 interface HandoverProviderProps {
   children: ReactNode;
 }

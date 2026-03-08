@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import Dpad from "./Dpad";
 import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 import { ExtendedProfile } from "@/utils/profileTypes";
-import { useHandover } from "@/contexts/HandoverContext";
+import { useHandoverSafe } from "@/contexts/HandoverContext";
 import { HandoverLocation } from "@/services/handoverService";
 import { HostPopup } from "./HostPopup";
 import { HostCarsSideTray } from "./HostCarsSideTray";
@@ -84,7 +84,7 @@ const CustomMapbox = ({
   }, []);
 
   // Always call hooks - move conditional logic to usage
-  const handoverData = useHandover();
+  const handoverData = useHandoverSafe();
   const handover = isHandoverMode ? handoverData : null;
 
   // Memoize returnLocation callback to prevent unnecessary re-renders
