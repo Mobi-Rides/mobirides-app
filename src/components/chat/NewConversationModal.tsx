@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search } from "lucide-react";
 import { User } from "@/types/message";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 
 interface NewConversationModalProps {
   isOpen: boolean;

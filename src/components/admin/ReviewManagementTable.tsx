@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { toast } from "sonner";
 import {
   Table,

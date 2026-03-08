@@ -7,6 +7,7 @@ import { VideoCallInterface } from './VideoCallInterface';
 import { Conversation, Message, User } from '@/types/message';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { getAvatarPublicUrl } from '@/utils/avatarUtils';
 import { useOptimizedConversations, useConversationMessages } from '@/hooks/useOptimizedConversations';
 import { useVoiceCall } from '@/hooks/useVoiceCall';
 import { useVideoCall } from '@/hooks/useVideoCall';
