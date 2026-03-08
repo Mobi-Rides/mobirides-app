@@ -44,6 +44,7 @@ const adminMenuItems = [
   { title: "Remittances", url: "/admin/remittances", icon: DollarSign },
   { title: "Messages", url: "/admin/messages", icon: MessageSquare },
   { title: "Admin Management", url: "/admin/management", icon: UserCog },
+  { title: "FAQ & Guides", url: "/admin/guides", icon: FileText },
   { title: "Audit Logs", url: "/admin/audit", icon: Shield },
 ];
 
