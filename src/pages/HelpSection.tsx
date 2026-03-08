@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useGuideContent } from "@/hooks/useGuideContent";
+import { getRouteForAction } from "@/utils/guideActionRoutes";
+import { toast } from "sonner";
 
 const HelpSection = () => {
   const navigate = useNavigate();
@@ -112,11 +114,21 @@ const HelpSection = () => {
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {step.content}
                     </p>
-                    {step.action && (
-                      <Button size="sm" variant="outline" className="mt-3">
-                        {typeof step.action === 'object' ? step.action.label : step.action}
-                      </Button>
-                    )}
+                    {step.action && (() => {
+                      const label = typeof step.action === 'object' ? step.action.label : step.action;
+                      const route = getRouteForAction(label);
+                      return (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-3"
+                          onClick={() => route && navigate(route)}
+                          disabled={!route}
+                        >
+                          {label}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>
@@ -131,7 +143,14 @@ const HelpSection = () => {
               <p className="text-sm text-muted-foreground mb-3">
                 Can't find what you're looking for? Our support team is here to help.
               </p>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigate('/messages');
+                  toast.info("Our support team typically responds within 24 hours.");
+                }}
+              >
                 Contact Support
               </Button>
             </CardContent>
