@@ -1509,8 +1509,8 @@ Reference: `.trae/documents/user-deletion-implementation-plan.md`
 - [x] Category organization (guides organized by `section` with `sort_order`)
 
 #### Remaining (Deferred — P3)
-- [ ] **MOB-312:** Create `ContextualHelp` tooltip component
-- [ ] **MOB-313:** Integrate contextual help into booking/handover flows
+- [x] **MOB-312:** Create `ContextualHelp` tooltip component ✅ (Completed 2026-03-08)
+- [x] **MOB-313:** Integrate contextual help into booking/handover flows ✅ (Completed 2026-03-08)
 
 ---
 

@@ -23,6 +23,7 @@ import {
   FileImage,
   FileText,
 } from 'lucide-react';
+import { ContextualHelp } from '@/components/guides/ContextualHelp';
 
 interface DocumentUploadStepProps {
   onNext: () => void;
@@ -417,10 +418,11 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
           Document Upload
+          <ContextualHelp helpText="Upload clear photos of your national ID (front & back) and a selfie. Files must be under 5MB. Accepted: images or PDF." guideSection="verification" role="renter" />
         </h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Please upload the following documents to verify your identity
         </p>
       </div>
