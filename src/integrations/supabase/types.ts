@@ -3388,6 +3388,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_guide_progress: {
+        Row: {
+          completed_at: string | null
+          completed_steps: Json
+          created_at: string | null
+          guide_id: string
+          id: string
+          progress: number
+          started_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_steps?: Json
+          created_at?: string | null
+          guide_id: string
+          id?: string
+          progress?: number
+          started_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_steps?: Json
+          created_at?: string | null
+          guide_id?: string
+          id?: string
+          progress?: number
+          started_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_guide_progress_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_public_keys: {
         Row: {
           created_at: string | null
