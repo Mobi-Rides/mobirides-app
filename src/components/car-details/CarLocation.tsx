@@ -15,12 +15,35 @@ interface CarLocationProps {
   mapStyle?: string;
 }
 
+const isValidCoordinates = (lat: number, lng: number): boolean => {
+  return lat !== 0 || lng !== 0; // Both being 0 is almost certainly invalid default
+};
+
 export const CarLocation = ({
   latitude,
   longitude,
   location,
   mapStyle = "mapbox://styles/mapbox/streets-v12",
 }: CarLocationProps) => {
+  // Early return with fallback UI when coordinates are invalid
+  if (!isValidCoordinates(latitude, longitude)) {
+    return (
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base text-left text-muted-foreground dark:text-white font-medium">
+            Location
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin size={16} className="text-red-500" />
+            <p className="text-xs md:text-sm text-left text-muted-foreground dark:text-gray-300">{location}</p>
+          </div>
+          <p className="text-xs text-muted-foreground dark:text-gray-400">Exact location unavailable</p>
+        </CardContent>
+      </Card>
+    );
+  }
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
