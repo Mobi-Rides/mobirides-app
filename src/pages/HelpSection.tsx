@@ -1,30 +1,32 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Circle, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { Progress } from "@/components/ui/progress";
 import { useGuideContent } from "@/hooks/useGuideContent";
+import { useGuideProgress } from "@/hooks/useGuideProgress";
 import { getRouteForAction } from "@/utils/guideActionRoutes";
 import { toast } from "sonner";
 
 const HelpSection = () => {
   const navigate = useNavigate();
   const { role, section } = useParams<{ role: string; section: string }>();
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const { data: guideContent, isLoading, error } = useGuideContent(
     role as 'renter' | 'host', 
     section || ''
   );
 
-  const toggleStep = (stepIndex: number) => {
-    setCompletedSteps(prev => 
-      prev.includes(stepIndex) 
-        ? prev.filter(i => i !== stepIndex)
-        : [...prev, stepIndex]
-    );
-  };
+  const {
+    completedSteps,
+    progress,
+    isCompleted,
+    toggleStep,
+    isSaving,
+  } = useGuideProgress(guideContent?.id);
+
+  const totalSteps = guideContent?.steps?.length || 0;
 
   if (isLoading) {
     return (
@@ -81,13 +83,17 @@ const HelpSection = () => {
       </header>
 
       <main className="p-4 space-y-6">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-muted-foreground">{guideContent.description}</p>
-          {guideContent.steps && (
-            <div className="flex items-center gap-2 text-sm">
-              <Badge variant="secondary">
-                {completedSteps.length} of {guideContent.steps.length} completed
-              </Badge>
+          {totalSteps > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <Badge variant={isCompleted ? "default" : "secondary"}>
+                  {isCompleted ? '✓ Completed' : `${completedSteps.length} of ${totalSteps} completed`}
+                </Badge>
+                <span className="text-muted-foreground">{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
             </div>
           )}
         </div>
@@ -98,8 +104,9 @@ const HelpSection = () => {
               <CardContent className="p-0">
                 <div className="flex items-start gap-3 p-4">
                   <button
-                    onClick={() => toggleStep(index)}
-                    className="mt-1 text-primary hover:text-primary/80 transition-colors"
+                    onClick={() => toggleStep(index, totalSteps)}
+                    disabled={isSaving}
+                    className="mt-1 text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
                   >
                     <CheckCircle2 
                       className={`h-5 w-5 ${
