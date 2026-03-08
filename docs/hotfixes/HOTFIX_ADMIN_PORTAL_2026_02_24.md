@@ -757,7 +757,7 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 | 9     | MOB-126 | Fix BookingDialog/RenterPaymentModal TS  | Frontend   | XS     |        |
 | 10    | MOB-101 | Fix Reviews tab hooks crash              | Frontend   | XS     | ✅ Done |
 | 11    | MOB-102 | Fix KYC table names & badges             | Frontend   | S      | ✅ Done |
-| 12    | MOB-103 | Fix Car verification table structure     | Frontend   | S      |        |
+| 12    | MOB-103 | Fix Car verification table structure     | Frontend   | S      | ✅ Done |
 | 13    | MOB-111 | Fix RPC `is_restricted` active check     | Migration  | XS     |        |
 | 14    | MOB-107 | Deploy `bulk-delete-users`               | Deployment | XS     |        |
 | 15    | MOB-105 | Add auth to role assignment functions    | Frontend   | M      |        |
