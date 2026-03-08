@@ -19,25 +19,6 @@ import { useEffect, useRef, useState } from "react";
 import { incrementCarViewCount } from "@/services/carViewsService";
 import type { User } from "@supabase/supabase-js";
 import { forwardGeocode } from "@/utils/mapbox/geocoding";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Navigation } from "@/components/Navigation";
-import { CarActions } from "@/components/car-details/CarActions";
-import { CarHeader } from "@/components/car-details/CarHeader";
-import { CarSpecs } from "@/components/car-details/CarSpecs";
-import { CarOwner } from "@/components/car-details/CarOwner";
-import { CarDescription } from "@/components/car-details/CarDescription";
-import { CarImageCarousel } from "@/components/car-details/CarImageCarousel";
-import { CarReviews } from "@/components/car-details/CarReviews";
-import { CarLocation } from "@/components/car-details/CarLocation";
-import { BarLoader } from "react-spinners";
-import type { Car } from "@/types/car";
-import { useTheme } from "@/contexts/ThemeContext";
-import { AlertTriangle } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { incrementCarViewCount } from "@/services/carViewsService";
-import type { User } from "@supabase/supabase-js";
 
 interface CarWithProfiles extends Car {
   profiles?: {
