@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import Dpad from "./Dpad";
 import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 import { ExtendedProfile } from "@/utils/profileTypes";
-import { useHandover } from "@/contexts/HandoverContext";
+import { useHandoverSafe } from "@/contexts/HandoverContext";
 import { HandoverLocation } from "@/services/handoverService";
 import { HostPopup } from "./HostPopup";
 import { HostCarsSideTray } from "./HostCarsSideTray";
