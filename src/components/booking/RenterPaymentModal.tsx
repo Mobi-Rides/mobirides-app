@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Booking } from "@/types/booking";
+import { PricingCalculation } from "@/types/pricing";
 import { UnifiedPriceSummary } from "./UnifiedPriceSummary";
 import { PaymentMethodSelector, PaymentMethodType } from "./PaymentMethodSelector";
 import { PaymentDeadlineTimer } from "./PaymentDeadlineTimer";
