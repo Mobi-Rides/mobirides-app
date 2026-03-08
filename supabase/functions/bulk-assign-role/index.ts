@@ -4,11 +4,10 @@ console.log("Bulk assign role function invoked")
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -16,52 +15,83 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 405,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
     )
   }
 
   try {
-    const supabaseClient = createClient(
+    // --- MOB-105: Auth verification ---
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: missing token' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    const anonClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token)
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: invalid token' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    const callerId = claimsData.claims.sub
+
+    // Check caller is admin
+    const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    const { data: adminRecord } = await serviceClient
+      .from('admins')
+      .select('id')
+      .eq('id', callerId)
+      .maybeSingle()
+
+    if (!adminRecord) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: admin access required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      )
+    }
+
+    // --- Parse and validate ---
     const { userIds, role } = await req.json()
 
     if (!userIds || !Array.isArray(userIds) || !role) {
       return new Response(
         JSON.stringify({ error: 'userIds (array) and role are required' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    // Validate role
     const validRoles = ['renter', 'host', 'admin', 'super_admin']
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ error: 'Invalid role' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    // Bulk assign role to users
-    const roleInserts = userIds.map((userId: string) => ({
+    // --- MOB-106: UPSERT instead of INSERT ---
+    const roleUpserts = userIds.map((userId: string) => ({
       user_id: userId,
       role
     }))
 
-    const { error } = await supabaseClient
+    const { error } = await serviceClient
       .from('user_roles')
-      .insert(roleInserts)
+      .upsert(roleUpserts, { onConflict: 'user_id' })
 
     if (error) throw error
 
@@ -70,24 +100,15 @@ Deno.serve(async (req) => {
         success: true,
         message: `Role '${role}' assigned to ${userIds.length} users successfully`
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error) {
     console.error('Error bulk assigning roles:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
-      JSON.stringify({
-        error: 'Failed to bulk assign roles',
-        details: errorMessage
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      },
+      JSON.stringify({ error: 'Failed to bulk assign roles', details: errorMessage }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })

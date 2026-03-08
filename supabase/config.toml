@@ -346,8 +346,11 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.add-admin]
 verify_jwt = true
 
+[functions.assign-role]
+verify_jwt = false
+
 [functions.bulk-assign-role]
-verify_jwt = true
+verify_jwt = false
 
 [functions.bulk-delete-users]
 verify_jwt = true
