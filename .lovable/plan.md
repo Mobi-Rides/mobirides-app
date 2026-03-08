@@ -3,7 +3,7 @@
 
 **Owner:** Modisa Maphanyane  
 **Started:** 2026-03-08  
-**Status:** Phase 3 Complete — Ready for Phase 4
+**Status:** Phase 4 In Progress
 
 ## Completed Phases
 
@@ -22,20 +22,20 @@
 ### Phase 3: Content Expansion ✅
 - **MOB-307:** Seeded Renter Safety Guidelines (6 steps)
 - **MOB-308:** Seeded Host Handover Process (6 steps)
-- **MOB-309:** Seeded 4 shared platform guides with `role='shared'`:
-  - Terms of Service (5 steps)
-  - Cancellation & Refund Policy (5 steps)
-  - Community Guidelines (5 steps)
-  - Data Privacy & Security (5 steps)
-- Updated `useGuides.ts` — all 3 query functions use `.in('role', [role, 'shared'])`
-- Updated `useGuideContent.ts` — resolves shared guides from either role route
-- Updated `HelpCenter.tsx` — added icon mappings (Shield, FileText, Heart, Lock)
+- **MOB-309:** Seeded 4 shared platform guides with `role='shared'`
+- Updated hooks to use `.in('role', [role, 'shared'])`
+- Added icon mappings (Shield, FileText, Heart, Lock)
 
-## Phase 4: Component Library & Contextual Help (Planned)
-- **MOB-310:** Extract `GuideLayout` component
-- **MOB-311:** Extract `GuideProgressTracker` component
-- **MOB-312:** Create `ContextualHelp` tooltip component
-- **MOB-313:** Integrate contextual help into booking/handover flows
+### Phase 4: Component Library & Admin Management ✅
+- **MOB-310:** Extracted `GuideLayout` component (`src/components/help/GuideLayout.tsx`)
+- **MOB-311:** Extracted `GuideProgressTracker` component (`src/components/help/GuideProgressTracker.tsx`)
+- **MOB-314:** Built Admin FAQ & Guide Management page (`src/pages/admin/AdminGuides.tsx`)
+  - Full CRUD: create, edit, delete guides
+  - Inline step editor with action labels
+  - Role selector (renter/host/shared), popularity toggle, sort order
+  - Search/filter, delete confirmation dialog
+  - Route: `/admin/guides`, added to AdminSidebar
+- Refactored `HelpSection.tsx` to use extracted components
 
 ## Architecture Decisions
 - **Shared guides use `role='shared'`** (Option B — single source of truth) rather than duplicating rows per role. Hooks query `.in('role', [role, 'shared'])`.
