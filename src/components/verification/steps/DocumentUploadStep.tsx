@@ -23,6 +23,7 @@ import {
   FileImage,
   FileText,
 } from 'lucide-react';
+import { ContextualHelp } from '@/components/guides/ContextualHelp';
 
 interface DocumentUploadStepProps {
   onNext: () => void;

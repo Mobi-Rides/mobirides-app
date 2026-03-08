@@ -41,6 +41,7 @@ import {
 } from "@/services/promoCodeService";
 import { DestinationTypeSelector, DestinationType } from "./DestinationTypeSelector";
 import { getCarImagePublicUrl } from "@/utils/carImageUtils";
+import { ContextualHelp } from "@/components/guides/ContextualHelp";
 
 interface BookingDialogProps {
   car: Car;
