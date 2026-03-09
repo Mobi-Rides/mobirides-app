@@ -133,7 +133,7 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
                     size="sm" 
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/rental-details/${booking.id}`, { state: { openPayment: true } });
+                      navigate(`/rental-details/${booking.id}?pay=true`);
                     }}
                     className="bg-primary text-primary-foreground"
                   >
