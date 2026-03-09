@@ -21,6 +21,7 @@ import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 
 // Create query client
 const queryClient = new QueryClient({
@@ -45,6 +46,9 @@ const HandoverRoute = ({ children }: { children: React.ReactNode }) => {
 const Index = lazy(() => import("@/pages/Index"));
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/signup"));
+const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const CommunityGuidelines = lazy(() => import("@/pages/CommunityGuidelines"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const ProfileView = lazy(() => import("@/pages/ProfileView"));
 const Map = lazy(() => import("@/pages/Map"));
@@ -141,6 +145,21 @@ function App() {
                         <Route path="/signup" element={
                           <Suspense fallback={<LoadingView />}>
                             <Signup />
+                          </Suspense>
+                        } />
+                        <Route path="/terms-of-service" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <TermsOfService />
+                          </Suspense>
+                        } />
+                        <Route path="/privacy-policy" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <PrivacyPolicy />
+                          </Suspense>
+                        } />
+                        <Route path="/community-guidelines" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <CommunityGuidelines />
                           </Suspense>
                         } />
                         <Route path="/reset-password" element={
@@ -512,6 +531,7 @@ function App() {
                       <ChatManager />
 
                       <Toaster position="top-center" />
+                      <CookieConsentBanner />
                       <Analytics />
                       <SpeedInsights />
                     </BrowserRouter>
