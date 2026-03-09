@@ -6,7 +6,7 @@ import { HANDOVER_STEPS, completeHandoverStep } from "@/services/enhancedHandove
 export interface HandoverStep {
   name: string;
   order: number;
-  owner: "host" | "renter" | "both";
+  owner: "host" | "renter" | "both" | "dynamic";
   title: string;
   description: string;
   is_completed: boolean;
@@ -21,6 +21,7 @@ export interface HandoverSessionData {
   current_step_order: number;
   waiting_for: "host" | "renter" | "both" | "none";
   handover_completed: boolean;
+  handover_type: "pickup" | "return";
   host_id: string;
   renter_id: string;
   handover_location_lat?: number;
@@ -137,15 +138,20 @@ export const useInteractiveHandover = (sessionId: string | null) => {
 
     const userRole = currentUserId === session.host_id ? 'host' : 'renter';
     
+    // Resolve dynamic ownership based on handover type
+    const resolvedOwner = currentStep.owner === "dynamic"
+      ? (session.handover_type === "pickup" ? "renter" : "host")
+      : currentStep.owner;
+
     // Check if it's user's turn
-    const isMyTurn = currentStep.owner === "both" || currentStep.owner === userRole;
+    const isMyTurn = resolvedOwner === "both" || resolvedOwner === userRole;
     if (!isMyTurn) {
       toast.error("Waiting for the other party to complete their step");
       return false;
     }
 
     // Check if user already completed their part in a "both" step
-    if (currentStep.owner === "both") {
+    if (resolvedOwner === "both") {
       if (userRole === 'host' && currentStep.host_completed) {
         toast.info("Waiting for renter to complete their part");
         return false;
@@ -172,11 +178,17 @@ export const useInteractiveHandover = (sessionId: string | null) => {
 
   const currentStep = steps.find(s => s.order === session?.current_step_order) || null;
   const userRole = session && currentUserId ? (currentUserId === session.host_id ? 'host' : 'renter') : null;
-  const isMyTurn = currentStep && userRole ? (currentStep.owner === "both" || currentStep.owner === userRole) : false;
+  
+  // Resolve dynamic ownership
+  const resolvedCurrentOwner = currentStep?.owner === "dynamic" && session
+    ? (session.handover_type === "pickup" ? "renter" : "host")
+    : currentStep?.owner;
+  
+  const isMyTurn = currentStep && userRole ? (resolvedCurrentOwner === "both" || resolvedCurrentOwner === userRole) : false;
   
   // Specific turn check for "both" steps
-  const needsMyInput = isMyTurn && currentStep?.owner === "both" 
-    ? (userRole === 'host' ? !currentStep.host_completed : !currentStep.renter_completed)
+  const needsMyInput = isMyTurn && resolvedCurrentOwner === "both" 
+    ? (userRole === 'host' ? !currentStep!.host_completed : !currentStep!.renter_completed)
     : isMyTurn;
 
   return {
