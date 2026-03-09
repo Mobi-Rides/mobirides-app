@@ -1,65 +1,128 @@
 
+# Epic MOB-400: Map Module Hotfix — Full Diagnostic Recovery
 
-# Plan: Rewrite March Week 1 & 2 Status Reports
+**Owner:** Modisa Maphanyane  
+**Created:** 2026-03-09  
+**Priority:** P0 — Blocker  
+**Status:** Phase 1 In Progress  
+**Affected Route:** `/map`
 
-## Problem
-The March Week 1 report is 98 lines covering only MOB-300. The March Week 2 report is 538 lines and mostly comprehensive but missing a few sections present in the Feb Week 1 gold standard. Both need to match the structure and comprehensiveness of `WEEK_1_FEBRUARY_2026_STATUS_REPORT.md` (434 lines, 16 sections).
+---
 
-## Feb Week 1 Template Structure (16 Sections)
-1. Header (date, period, version, prepared by, reference)
-2. Executive Summary + Key Achievements
-3. Production Readiness Metrics (table with week-over-week + gap analysis)
-4. Sprint Overview (table with dates/focus/SP)
-5. New Planning Documents Created
-6. Epic Status Update (15 epics table + epic-specific narrative)
-7. Major Features Planned (detailed feature descriptions)
-8. Pre-Launch Testing Protocol Status
-9. Security Posture Update (vulnerability table + linter trend)
-10. Database & Infrastructure (migration stats, planned schema changes)
-11. Risk Assessment (table)
-12. Action Items for Next Week (P0/P1/P2 tables)
-13. Success Criteria
-14. Document References (table)
-15. Key Metrics Dashboard (ASCII art)
-16. Conclusion + Next Report
+## Summary
 
-## Week 1 March Rewrite (Currently 98 lines → ~400 lines)
+The Map page crashes on load due to a runtime error in the Mapbox destination marker effect. Additional instability exists in handover session queries and provider architecture. This hotfix addresses the crash, stabilizes handover integration, and hardens the module against regressions.
 
-**Missing sections to add:**
-- Production Readiness Metrics table (carry forward from Week 4 Feb: build 0, linter 15, health 83%, readiness 80%, test 62%, security 4, migrations 231)
-- Gap Analysis to Target
-- March Sprint Overview (Sprint 5: Mar 3-9 Help Center, Sprint 6: Mar 10-16 Map/Lifecycle)
-- Epic Status Update (15 epics — no changes from Week 4 Feb except Help +7%)
-- Pre-Launch Testing Protocol Status (Phase 3 starting)
-- Security Posture Update (unchanged from Feb)
-- Database & Infrastructure (migrations 227→231)
-- Risk Assessment table
-- Action Items for Week 2 (MOB-400, MOB-200, MOB-210)
-- Commercialization Alignment (carry from Week 4 Feb)
-- Success Criteria
-- Document References
-- Key Metrics Dashboard ASCII
-- Conclusion
+---
 
-**Keep existing content:** MOB-300 epic detail, ADR-009, files changed — these are good, just need the surrounding framework.
+## Phase 1: Stop the Crash (Hotfix) ✅ DONE
 
-## Week 2 March Rewrite (Currently 538 lines → ~530 lines)
+| Ticket | Title | Status | File(s) |
+|--------|-------|--------|---------|
+| MOB-401 | Fix destination state init to nullable | Done ✅ | `src/pages/Map.tsx` |
+| MOB-402 | Add `Number.isFinite` coordinate guards in marker effects | Done ✅ | `src/components/map/CustomMapbox.tsx` |
+| MOB-403 | Add dependency array to destination marker effect | Done ✅ | `src/components/map/CustomMapbox.tsx` |
 
-The Week 2 report is already quite comprehensive. Adjustments needed:
-- Add **Sprint Overview** section (Sprint 5 retrospective + Sprint 6 current)
-- Add **Major Features Planned** section (MOB-500 Handover Consolidation, MOB-200 Lifecycle)
-- Add **Success Criteria** section (matching Feb Week 1 format)
-- Add **Linter Warning Trend** sub-table under Security
-- Add **Planned Schema Changes** sub-table under Database
-- Ensure **Commercialization** section includes the full GTM metrics table (currently abbreviated)
-- Add **Mobile App Readiness** section (present in Week 4 Feb but missing in Week 2 Mar)
-- Add reference to new `HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md` in Document References
-- Update MOB-200 status to reflect the 5 tickets (MOB-202, 203, 205, 206, 207) implemented this session
+### Root Cause
+`Map.tsx` initializes `destination` as `{ latitude: null, longitude: null }` (truthy object). `CustomMapbox.tsx` checks `!destination` (always false), then calls `marker.setLngLat([null, null])` → Mapbox throws → ErrorBoundary catches → blank page.
 
-## Implementation
-Two file overwrites. Content is documentation only — no code changes. Both reports will preserve all existing factual content while adding the missing structural sections to match the Feb Week 1 template.
+### Fix
+- Change `destination` default to `null`.
+- Guard all `setLngLat` calls with `Number.isFinite(lat) && Number.isFinite(lng)`.
+- Ensure marker effect has correct dependency array `[destination]`.
 
-## Files Modified
-- `docs/Product Status/WEEK_1_MARCH_2026_STATUS_REPORT.md` — full rewrite
-- `docs/Product Status/WEEK_2_MARCH_2026_STATUS_REPORT.md` — structural enhancement
+---
 
+## Phase 2: Stabilize Handover Integration ✅ DONE
+
+| Ticket | Title | Status | File(s) |
+|--------|-------|--------|---------|
+| MOB-404 | Replace `.single()` with list + pick-latest in active handover query | Done ✅ | `src/pages/Map.tsx` |
+| MOB-405 | Remove redundant HandoverProvider wrapping | Deferred | `src/pages/Map.tsx`, `src/App.tsx` |
+| MOB-406 | Export and use `useHandoverSafe` consistently | Done ✅ | `src/contexts/HandoverContext.tsx`, `src/components/map/CustomMapbox.tsx` |
+
+### Root Cause
+`fetchActiveHandoverHost()` uses `.single()` but DB contains duplicate active sessions → 406 PGRST116. Dual `HandoverProvider` in `App.tsx` + `Map.tsx` risks double-init.
+
+### Fix
+- Use `.order('updated_at', { ascending: false }).limit(1)` instead of `.single()`.
+- Audit provider tree; keep single canonical provider location.
+
+---
+
+## Phase 3: Data Integrity (Backend) ✅ DONE
+
+| Ticket | Title | Status | File(s) |
+|--------|-------|--------|---------|
+| MOB-407 | Deduplicate active handover sessions | Done ✅ | `supabase/migrations/` |
+| MOB-408 | Add partial unique index on active sessions | Done ✅ | `supabase/migrations/` |
+| MOB-409 | Make session creation idempotent (conflict-safe) | Done ✅ | `src/services/handoverService.ts` |
+
+### Root Cause
+No unique constraint prevents multiple active `handover_sessions` for the same booking + type + renter. Concurrent calls create duplicates.
+
+### Fix Applied
+- Migration: Deleted duplicates keeping newest, created `idx_unique_active_handover_session` partial unique index on `(booking_id, handover_type, renter_id) WHERE handover_completed = false`.
+- Service: Updated `createPickupHandoverSession` and `createReturnHandoverSession` to use `upsert` with `onConflict` and `ignoreDuplicates: true`.
+
+
+## Phase 4: Module Hardening 🟡 TODO
+
+| Ticket | Title | Status | File(s) |
+|--------|-------|--------|---------|
+| MOB-410 | Normalize all coordinate validation to `Number.isFinite` | Todo | `src/components/map/*` |
+| MOB-411 | Add error telemetry for map init + handover query failures | Todo | `src/components/map/CustomMapbox.tsx`, `src/pages/Map.tsx` |
+
+---
+
+## Validation Checklist
+
+- [ ] `/map` renders without ErrorBoundary in preview and published
+- [ ] Non-handover mode: host markers load, no crash without destination
+- [ ] Handover mode: no 406 for active session query, single session used
+- [ ] Car details map and booking map still function (regression check)
+- [ ] No infinite remounting/flicker of map container
+
+---
+
+## Architecture Decisions
+
+- **`useHandoverSafe`** (Option A — safe hook) chosen over try/catch wrapper. Returns `null` outside provider.
+- **Destination state** changed from `{ latitude: null, longitude: null }` to `null` to leverage JS falsy checks.
+- **Session dedup** uses partial unique index (PostgreSQL) rather than application-level locks.
+
+## Files Changed (All Phases)
+
+| File | Change |
+|------|--------|
+| `src/pages/Map.tsx` | Nullable destination, safe handover query, single provider |
+| `src/components/map/CustomMapbox.tsx` | Coordinate guards, safe hook, effect deps |
+| `src/contexts/HandoverContext.tsx` | Added `useHandoverSafe` export |
+| `src/services/handoverService.ts` | Idempotent session creation |
+| `supabase/migrations/` | Dedup + partial unique index migration |
+
+---
+
+## Previous Epic (Completed)
+
+<details>
+<summary>MOB-300: Help Center Hotfix (Completed)</summary>
+
+### Phase 1: Database-Driven Guides ✅
+- Migrated hardcoded guide content to `guides` table in Supabase
+- Created `useGuides`, `usePopularGuides`, `useSearchGuides` hooks
+- Created `useGuideContent` hook for individual guide rendering
+- Updated `HelpCenter.tsx` and `HelpSection.tsx` to fetch from DB
+
+### Phase 2: Persist Progress ✅
+- Created `user_guide_progress` table with RLS policies
+- Created `useGuideProgress` hook (fetch/upsert via TanStack Query)
+- Added progress bar and completion badge to guide UI
+
+### Phase 3: Content Expansion ✅
+- Seeded Renter Safety Guidelines, Host Handover Process, 4 shared platform guides
+
+### Phase 4: Component Library & Admin Management ✅
+- Extracted `GuideLayout`, `GuideProgressTracker` components
+- Built Admin FAQ & Guide Management page with full CRUD
+</details>
