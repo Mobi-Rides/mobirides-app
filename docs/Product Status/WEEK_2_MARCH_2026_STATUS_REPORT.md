@@ -15,7 +15,14 @@
 > - [HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md](../hotfixes/HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md) (MOB-500)  
 > **🗑️ Anonymize-on-Delete Plan:** [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)  
 > **🛡️ Damage Protection Spec:** [20260305_DAMAGE_PROTECTION_OVERVIEW.md](../20260305_DAMAGE_PROTECTION_OVERVIEW.md)  
-> **📋 Pre-Launch Testing Protocol:** [PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md](../testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md)
+> **📋 Pre-Launch Testing Protocol:** [PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md](../testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md)  
+> **💳 Payment Integration Tasks:** [Payment Integration Implementation Tasks.md](../../.trae/documents/Payment%20Integration%20Implementation%20Tasks.md)  
+> **🗺️ Navigation Enhancement Plan:** [Navigation UX Improvement Plan](../NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md) | [EPIC 2.0B Plan](../../.trae/documents/EPIC%202.0B_%20Navigation%20Enhancement%20Implementation%20Plan.md)  
+> **🛡️ Insurance Integration Plan (v2.0):** [Insurance Plan v2.0](../../.trae/documents/Implement%20Insurance%20Integration%20Plan%20(v2.0).md)  
+> **💬 Messaging System Action Plan:** [Messaging Action Plan](../../.trae/documents/MESSAGING_SYSTEM_ACTION_PLAN.md)  
+> **🔐 Security Hardening (MOB-502):** [Security Hardening Plan](../../.trae/documents/security-hardening-mobi-502.md)  
+> **👤 Verification Flow Revision:** [Verification PRD](../../.trae/documents/user_verification_flow_revision_prd.md)  
+> **🗑️ User Deletion Plan:** [User Deletion Implementation](../../.trae/documents/user-deletion-implementation-plan.md)
 
 ---
 
@@ -624,6 +631,8 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 
 ## 📎 Document References
 
+### Core Plans & Hotfixes
+
 | Document | Location | Last Updated |
 |----------|----------|--------------|
 | **ROADMAP Nov-Dec 2025 v5.0** | `docs/ROADMAP-NOV-DEC-2025.md` | Dec 2025 |
@@ -637,7 +646,7 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 | Testing Coverage Status | `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md` | Mar 2, 2026 |
 | Pre-Launch Testing Protocol v2.0 | `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md` | Mar 2, 2026 |
 | Anonymize-on-Delete Plan | `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md` | Mar 2, 2026 |
-| Current vs Ideal State Analysis | `docs/CURRENT_VS_IDEAL_STATE_ANALYSIS_2026-02-15.md` | Feb 15, 2026 |
+| Current vs Ideal State Analysis | `docs/CURRENT_VS_IDEAL_STATE_ANALYSIS_15-02-2026.md` | Feb 15, 2026 |
 | Commercialization GTM Plan v2.4 | `docs/20260206_MobiRides_Commercialization_GTM_Plan.md` | Feb 6, 2026 |
 | Interactive Handover Spec | `docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md` | Feb 2, 2026 |
 | Payment Integration Plan | `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` | Jan 2026 |
@@ -646,6 +655,42 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 | Migration Protocol | `docs/conventions/MIGRATION_PROTOCOL.md` | Feb 2026 |
 | Week 4 Feb Status Report | `docs/Product Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md` | Feb 23, 2026 |
 | Week 1 Mar Status Report | `docs/Product Status/WEEK_1_MARCH_2026_STATUS_REPORT.md` | Mar 8, 2026 |
+
+### Feature Implementation Plans (`.trae/documents/`)
+
+| Document | Location | Relevance |
+|----------|----------|-----------|
+| **Payment Integration Tasks** | `.trae/documents/Payment Integration Implementation Tasks.md` | 6-phase payment implementation breakdown (Phases 1-6) — Epic 7 |
+| **Insurance Integration Plan v2.0** | `.trae/documents/Implement Insurance Integration Plan (v2.0).md` | DB schema, service layer, UI for rental-based premiums — Epic 11 |
+| **EPIC 2.0B Navigation Enhancement** | `.trae/documents/EPIC 2.0B_ Navigation Enhancement Implementation Plan.md` | NAV-101/102/103 + Mapbox directions — Epic 12 |
+| **Messaging System Action Plan** | `.trae/documents/MESSAGING_SYSTEM_ACTION_PLAN.md` | Chat recovery & feature roadmap — Epic 5 |
+| **Profile Display Enhancement (EPIC 1)** | `.trae/documents/EPIC_1_PROFILE_DISPLAY_ENHANCEMENT.md` | Profile UI improvements — Epic 1 |
+| **Security Hardening (MOB-502)** | `.trae/documents/security-hardening-mobi-502.md` | Security hardening tasks — Security posture |
+| **Verification Flow Revision PRD** | `.trae/documents/user_verification_flow_revision_prd.md` | 3-step verification redesign — Epic 10 |
+| **Verification Technical Architecture** | `.trae/documents/user_verification_flow_revision_technical_architecture.md` | Technical implementation for verification — Epic 10 |
+| **User Deletion Implementation** | `.trae/documents/user-deletion-implementation-plan.md` | GDPR-compliant user deletion — MOB-130-138 |
+| **FK Standardization Plan** | `.trae/documents/foreign_key_standardization_action_plan.md` | Foreign key consistency across schema — DB health |
+| **Handover PRD** | `.trae/documents/car_rental_handover_prd.md` | Original handover product requirements — Epic 4 |
+| **Handover Technical Architecture** | `.trae/documents/handover_technical_architecture.md` | Handover system technical design — Epic 4 |
+| **Feedback Triage Board** | `.trae/documents/MOBIRIDES_FEEDBACK_TRIAGE_BOARD.md` | User feedback prioritization — QA/Testing |
+
+### Additional Reference Plans (`docs/`)
+
+| Document | Location | Relevance |
+|----------|----------|-----------|
+| Navigation UX Improvement Plan | `docs/NAVIGATION_UX_IMPROVEMENT_PLAN_2026-02-02.md` | Navigation redesign spec — Epic 12 |
+| Payment Testing Guide | `docs/PAYMENT_TESTING_GUIDE.md` | Payment sandbox testing procedures — Epic 7 |
+| Insurance README | `docs/INSURANCE_README.md` | Insurance system overview — Epic 11 |
+| Advisory Meeting Agenda | `docs/Advisory_Meeting_Agenda_06-02-2026.md` | Feb 6 advisory meeting — Stakeholder |
+| Valuation Framework | `docs/MobiRides_Valuation_Framework_06-02-2026.md` | Pre-seed valuation model — Commercialization |
+| Verification Simplification Plan | `docs/verification-simplification-implementation-plan-2025-10-24.md` | Original verification simplification — Epic 10 |
+| Verification 3-Step Reverification | `docs/verification-3step-forced-reverification-plan-2025-11-13.md` | Forced reverification flow — Epic 10 |
+| Dynamic Pricing Plan | `docs/dynamic-pricing-plan-2025-10-28.md` | Dynamic pricing algorithm spec — Epic 3/7 |
+| RLS Security Overhaul | `docs/rls-security-architecture-overhaul-2025-10-30.md` | RLS architecture redesign — Security |
+| Security Review (Oct 2025) | `docs/security-review-2025-10-27.md` | Initial security audit — Security |
+| Launch Communications Plan | `docs/mobirdes-launch-communications-plan-2025-11-05.md` | Launch comms strategy — GTM |
+| Brand Guide | `docs/mobirides-brand-guide-2025-10-27 (1).md` | Brand identity guidelines — Design |
+| Android Wrapper Plan | `docs/android-wrapper-implementation-2025-10-29.md` | Capacitor Android wrapper — Mobile |
 
 ---
 
