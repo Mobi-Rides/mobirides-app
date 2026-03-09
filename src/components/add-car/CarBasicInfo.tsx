@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ContextualHelp } from "@/components/guides/ContextualHelp";
 import type { Database } from "@/integrations/supabase/types";
 
 type VehicleType = Database['public']['Enums']['vehicle_type'];
@@ -61,7 +62,7 @@ export const CarBasicInfo = ({ formData, onInputChange, onSelectChange }: CarBas
       </div>
       
       <div className="space-y-2 text-left">
-        <Label htmlFor="vehicle_type">Vehicle Type</Label>
+        <Label htmlFor="vehicle_type" className="flex items-center gap-1.5">Vehicle Type <ContextualHelp helpText="Choose the category that best describes your vehicle. This helps renters find the right car." guideSection="listing" role="host" /></Label>
         <Select
           value={formData.vehicle_type}
           onValueChange={(value) => onSelectChange("vehicle_type", value)}

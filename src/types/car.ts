@@ -1,4 +1,5 @@
 import { Database } from "@/integrations/supabase/types";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 // Original type from Supabase
 export type Car = Database["public"]["Tables"]["cars"]["Row"] & {
@@ -37,12 +38,12 @@ export const toSafeCar = (car: Car): SafeCar => {
   if (!car || typeof car !== 'object') {
     throw new Error('Invalid car object provided to toSafeCar');
   }
-  
+
   return {
     ...car,
     description: car.description ?? "No description available",
     features: car.features ?? [],
-    image_url: car.image_url ?? "/placeholder-car.jpg",
+    image_url: getCarImagePublicUrl(car.image_url) ?? "/placeholder.svg",
     latitude: car.latitude ?? 0,
     longitude: car.longitude ?? 0,
     is_available: car.is_available ?? true,
@@ -51,14 +52,14 @@ export const toSafeCar = (car: Car): SafeCar => {
 
 // Type guard for Car
 export const isValidCar = (car: unknown): car is Car => {
-  return car && 
+  return car &&
     typeof car === 'object' &&
     'id' in car &&
     'brand' in car &&
     'model' in car &&
     'price_per_day' in car &&
-    typeof (car as any).id === 'string' && 
-    typeof (car as any).brand === 'string' && 
+    typeof (car as any).id === 'string' &&
+    typeof (car as any).brand === 'string' &&
     typeof (car as any).model === 'string' &&
     typeof (car as any).price_per_day === 'number';
 };

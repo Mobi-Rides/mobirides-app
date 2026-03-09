@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from "react";
 import { incrementCarViewCount } from "@/services/carViewsService";
 import type { User } from "@supabase/supabase-js";
 import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
+import { forwardGeocode } from "@/utils/mapbox/geocoding";
 
 interface CarWithProfiles extends Car {
   profiles?: {
@@ -53,11 +54,13 @@ interface SafeCarWithProfiles extends Car {
   };
 }
 
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
+
 const toSafeCarWithProfiles = (car: CarWithProfiles): SafeCarWithProfiles => ({
   ...car,
   description: car.description ?? "No description available",
   features: car.features ?? [],
-  image_url: car.image_url ?? "/placeholder-car.jpg",
+  image_url: getCarImagePublicUrl(car.image_url) ?? "/placeholder.svg",
   latitude: car.latitude ?? 0,
   longitude: car.longitude ?? 0,
   is_available: car.is_available ?? true,
@@ -97,7 +100,31 @@ const CarDetails = () => {
       if (error) throw error;
       if (!data) throw new Error("Car not found");
 
-      return toSafeCarWithProfiles(data as CarWithProfiles);
+      const safeCar = toSafeCarWithProfiles(data as CarWithProfiles);
+
+      // Resolve coordinates if missing (0,0 = default from null)
+      if (safeCar.latitude === 0 && safeCar.longitude === 0) {
+        // Tier 1: Try host's profile coordinates
+        const { data: hostProfile } = await supabase
+          .from("profiles")
+          .select("latitude, longitude")
+          .eq("id", safeCar.owner_id)
+          .maybeSingle();
+
+        if (hostProfile?.latitude && hostProfile?.longitude) {
+          safeCar.latitude = hostProfile.latitude;
+          safeCar.longitude = hostProfile.longitude;
+        } else {
+          // Tier 2: Forward geocode the location text
+          const coords = await forwardGeocode(safeCar.location);
+          if (coords) {
+            safeCar.latitude = coords.lat;
+            safeCar.longitude = coords.lng;
+          }
+        }
+      }
+
+      return safeCar;
     },
   });
 
@@ -116,6 +143,9 @@ const CarDetails = () => {
       <div className="min-h-screen bg-background dark:bg-gray-900">
         <MobileHeader title="Car Details" showBackButton backTo="/" />
         <div className="container mx-auto">
+          <div className="p-4">
+            <Skeleton className="h-6 w-32 mb-4" />
+          </div>
           <div className="flex flex-col items-center justify-center min-h-[200px] w-full p-4">
             <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3">
               Loading vehicle details...
@@ -171,9 +201,9 @@ const CarDetails = () => {
           <div className="grid grid-cols-1 gap-4">
             <CarHeader
               brand={car.brand}
-              model={car.model}
               year={car.year}
-              location={car.location}
+.model}
+              year              location={car.location}
               pricePerDay={car.price_per_day}
               ownerId={car.owner_id}
             />

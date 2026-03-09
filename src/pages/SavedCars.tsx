@@ -6,7 +6,7 @@ import { CarGrid } from "@/components/CarGrid";
 import { Navigation } from "@/components/Navigation";
 import { LoadingView } from "@/components/home/LoadingView";
 import { toast } from "sonner";
-import type { Car } from "@/types/car";
+import { toSafeCar, type Car, type SafeCar } from "@/types/car";
 
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,9 +56,9 @@ const SavedCars = () => {
       const validCars = savedCars
         .filter(saved => saved.cars)
         .map(saved => ({
-          ...saved.cars,
+          ...toSafeCar(saved.cars as unknown as Car),
           isSaved: true
-        })) as Car[];
+        })) as SafeCar[];
       
       console.log("Processed cars:", validCars);
       return validCars;

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { toast } from "sonner";
 import {
   Table,
@@ -99,10 +100,10 @@ export const ReviewManagementTable = ({
   };
 
   const getAvatarUrl = (avatarPath: string | null | undefined) => {
-    if (!avatarPath) return null;
-    if (avatarPath.startsWith("http")) return avatarPath;
-    return supabase.storage.from("avatars").getPublicUrl(avatarPath).data.publicUrl;
+    return getAvatarPublicUrl(avatarPath) || null;
   };
+
+  const { sortedData: sortedReviews, sortKey, sortDirection, handleSort } = useTableSort(reviews);
 
   if (isLoading) {
     return (
@@ -121,8 +122,6 @@ export const ReviewManagementTable = ({
       </div>
     );
   }
-
-  const { sortedData: sortedReviews, sortKey, sortDirection, handleSort } = useTableSort(reviews);
 
   return (
     <Table>
@@ -168,9 +167,8 @@ export const ReviewManagementTable = ({
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`h-4 w-4 ${
-                      i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-                    }`}
+                    className={`h-4 w-4 ${i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+                      }`}
                   />
                 ))}
               </div>

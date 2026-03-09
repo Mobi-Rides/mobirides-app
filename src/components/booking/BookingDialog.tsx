@@ -40,6 +40,8 @@ import {
   PromoCode
 } from "@/services/promoCodeService";
 import { DestinationTypeSelector, DestinationType } from "./DestinationTypeSelector";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
+import { ContextualHelp } from "@/components/guides/ContextualHelp";
 
 interface BookingDialogProps {
   car: Car;
@@ -713,10 +715,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto px-5 pb-2">
             <DialogHeader className="pb-3">
-              <DialogTitle className="text-lg">
-                {wizardStep === 1 && "Select Dates"}
-                {wizardStep === 2 && "Pickup & Destination"}
-                {wizardStep === 3 && "Damage Protection"}
+              <DialogTitle className="text-lg flex items-center gap-1.5">
+                {wizardStep === 1 && <>Select Dates <ContextualHelp helpText="Pick a start and end date for your rental. Greyed-out dates are unavailable." guideSection="booking" role="renter" /></>}
+                {wizardStep === 2 && <>Pickup & Destination <ContextualHelp helpText="Confirm where you'll pick up the car and select your trip type (in-town or out-of-town)." guideSection="booking" role="renter" /></>}
+                {wizardStep === 3 && <>Damage Protection <ContextualHelp helpText="Choose optional damage protection to cover you during the rental. You can skip this step." guideSection="insurance" role="renter" /></>}
                 {wizardStep === 4 && "Review & Confirm"}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
@@ -860,7 +862,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   {car.image_url && (
                     <img
-                      src={car.image_url}
+                      src={getCarImagePublicUrl(car.image_url) || "/placeholder.svg"}
                       alt={`${car.brand} ${car.model}`}
                       className="w-16 h-12 object-cover rounded"
                     />

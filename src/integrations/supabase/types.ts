@@ -2878,6 +2878,9 @@ export type Database = {
           marketing_notifications: boolean | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
+          tutorial_completed: boolean | null
+          tutorial_dismissed_at: string | null
+          tutorial_version: number | null
           updated_at: string
           verification_completed_at: string | null
           verification_rejected_reason: string | null
@@ -2905,6 +2908,9 @@ export type Database = {
           marketing_notifications?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tutorial_completed?: boolean | null
+          tutorial_dismissed_at?: string | null
+          tutorial_version?: number | null
           updated_at?: string
           verification_completed_at?: string | null
           verification_rejected_reason?: string | null
@@ -2932,6 +2938,9 @@ export type Database = {
           marketing_notifications?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tutorial_completed?: boolean | null
+          tutorial_dismissed_at?: string | null
+          tutorial_version?: number | null
           updated_at?: string
           verification_completed_at?: string | null
           verification_rejected_reason?: string | null
@@ -3388,6 +3397,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_guide_progress: {
+        Row: {
+          completed_at: string | null
+          completed_steps: Json
+          created_at: string | null
+          guide_id: string
+          id: string
+          progress: number
+          started_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_steps?: Json
+          created_at?: string | null
+          guide_id: string
+          id?: string
+          progress?: number
+          started_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_steps?: Json
+          created_at?: string | null
+          guide_id?: string
+          id?: string
+          progress?: number
+          started_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_guide_progress_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_public_keys: {
         Row: {
           created_at: string | null
@@ -3482,6 +3535,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_tutorial_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          step_key: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          step_key: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          step_key?: string
           user_id?: string
         }
         Relationships: []
@@ -4867,6 +4944,10 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: boolean
       }
+      remove_admin_complete: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       save_push_subscription: {
         Args: {
           p_auth_key: string
@@ -4891,6 +4972,10 @@ export type Database = {
       toggle_message_reaction: {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
+      }
+      update_admin_role: {
+        Args: { new_is_super_admin: boolean; target_user_id: string }
+        Returns: undefined
       }
       update_notification_expiration_policy: {
         Args: {

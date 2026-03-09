@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { Receipt, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Handle Android hardware back button
@@ -69,12 +70,18 @@ const RentalDetailsRefactored = () => {
     handleExpiredBookings();
   }, []);
 
-  // Auto-open payment modal when navigating with openPayment state
+  // Auto-open payment modal via URL param (?pay=true) or legacy location.state
   useEffect(() => {
-    if (location.state?.openPayment && booking?.status === 'awaiting_payment') {
+    const shouldOpen = searchParams.get('pay') === 'true' || location.state?.openPayment;
+    if (shouldOpen && booking?.status === 'awaiting_payment') {
       setIsPaymentModalOpen(true);
+      // Clean up the URL param so refreshing doesn't re-trigger
+      if (searchParams.get('pay')) {
+        searchParams.delete('pay');
+        setSearchParams(searchParams, { replace: true });
+      }
     }
-  }, [booking, location.state]);
+  }, [booking, searchParams, location.state]);
 
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);

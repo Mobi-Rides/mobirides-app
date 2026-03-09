@@ -68,7 +68,7 @@ This plan consolidates all remaining development work from 15+ documentation sou
 | 10 | Verification System | 70% | 90% | 20% | Medium |
 | 11 | Insurance System | 52%* | 90% | 38%* | Medium |
 | 12 | Map & Location | 65% | 90% | 25% | Medium |
-| 13 | Help & Support | 58% | 90% | 32% | Low |
+| 13 | Help & Support | **85%** | 90% | 5% | Low |
 | 14 | **Host Management** | **70%** | **90%** | **20%** | **Medium** |
 
 *Insurance backend is 100% complete; 52% reflects UI/UX integration and claim workflow testing.
@@ -1492,20 +1492,37 @@ Reference: `.trae/documents/user-deletion-implementation-plan.md`
 
 ### EPIC 13: HELP & SUPPORT
 
-**Current:** 58% | **Target:** 90% | **Gap:** 32%
+**Current:** 95% | **Target:** 90% | **Gap:** ✅ Exceeded by 5%
+
+**Updated:** March 8, 2026 — Epic MOB-300 (Help Center Hotfix) completed Phases 1-4.
+
+#### Completed (MOB-300: Help Center Hotfix)
+- [x] **MOB-301–303:** Database-driven guides — migrated from hardcoded to `guides` table
+- [x] **MOB-304–306:** User progress persistence — `user_guide_progress` table with RLS, progress bar UI
+- [x] **MOB-307:** Renter Safety Guidelines (6 steps)
+- [x] **MOB-308:** Host Handover Process (6 steps)
+- [x] **MOB-309:** Shared platform guides — Terms of Service, Cancellation Policy, Community Guidelines, Data Privacy (`role='shared'`, single source of truth)
+- [x] **MOB-310:** Extracted `GuideLayout` component (`src/components/help/GuideLayout.tsx`)
+- [x] **MOB-311:** Extracted `GuideProgressTracker` component (`src/components/help/GuideProgressTracker.tsx`)
+- [x] **MOB-314:** Admin FAQ & Guide Management page (`src/pages/admin/AdminGuides.tsx`) — full CRUD, inline step editor, role selector, search/filter
+- [x] Search functionality (existing `useSearchGuides` hook queries DB)
+- [x] Category organization (guides organized by `section` with `sort_order`)
+
+#### Remaining (Deferred — P3)
+- [x] **MOB-312:** Create `ContextualHelp` tooltip component ✅ (Completed 2026-03-08)
+- [x] **MOB-313:** Integrate contextual help into booking/handover flows ✅ (Completed 2026-03-08)
 
 ---
 
 #### HELP-001: FAQ System
 **Type:** Story | **Priority:** P2 | **Points:** 5 | **Sprint:** 4
-
-**Description:** Create searchable FAQ system.
+**Status:** ✅ DONE (March 8, 2026) — Implemented as database-driven guides with search via MOB-301–309. Admin management added via MOB-314.
 
 **Deliverables:**
-- [ ] FAQ data structure
-- [ ] Search functionality
-- [ ] Category organization
-- [ ] Admin FAQ management
+- [x] FAQ data structure — `guides` table with JSONB `content` column
+- [x] Search functionality — `useSearchGuides` hook with `ilike` queries
+- [x] Category organization — `section` field with `sort_order`, icon mappings
+- [x] Admin FAQ management — `AdminGuides.tsx` with full CRUD, route `/admin/guides`
 
 ---
 

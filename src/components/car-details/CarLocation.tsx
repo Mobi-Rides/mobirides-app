@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { getMapboxToken } from "@/utils/mapbox";
-import { Skeleton } from "../ui/skeleton";
 
 interface CarLocationProps {
   latitude: number;
@@ -14,6 +13,10 @@ interface CarLocationProps {
   location: string;
   mapStyle?: string;
 }
+
+const isValidCoordinates = (lat: number, lng: number): boolean => {
+  return lat !== 0 || lng !== 0;
+};
 
 export const CarLocation = ({
   latitude,
@@ -28,8 +31,10 @@ export const CarLocation = ({
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const fallbackStyle = "mapbox://styles/mapbox/light-v11";
+  const hasValidCoords = isValidCoordinates(latitude, longitude);
 
   useEffect(() => {
+    if (!hasValidCoords) return;
     const fetchMapboxToken = async () => {
       try {
         const token = await getMapboxToken();
@@ -45,68 +50,44 @@ export const CarLocation = ({
       }
     };
     fetchMapboxToken();
-  }, []);
+  }, [hasValidCoords]);
 
-  // Initialize map only once when component mounts
   useEffect(() => {
-    if (isLoading || !mapContainer.current) {
-      return;
-    }
+    if (!hasValidCoords || isLoading || !mapContainer.current) return;
 
-    // Verify container size
     const container = mapContainer.current;
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      console.error("Map container has zero width or height");
-      return;
-    }
-
-    console.log("Initializing map with coordinates:", { longitude, latitude });
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) return;
 
     if (mapboxToken) {
       mapboxgl.accessToken = mapboxToken;
     } else {
-      console.error("No Mapbox token available");
       return;
     }
 
     try {
-      // Use the correct coordinate order for mapbox [lng, lat]
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: mapStyle || fallbackStyle,
-        center: [longitude, latitude], // Correct order: [longitude, latitude]
+        center: [longitude, latitude],
         zoom: 13,
-        interactive: false, // Make the map non-interactive
+        interactive: false,
       });
 
       map.current.on("load", () => {
-        console.log("Map loaded successfully");
-        
-        // Add marker
         marker.current = new mapboxgl.Marker({ color: "#7C3AED" })
           .setLngLat([longitude, latitude])
           .addTo(map.current!);
-
         mapInitializedRef.current = true;
-      });
-
-      map.current.on("style.load", () => {
-        console.log("Map style loaded successfully");
       });
 
       map.current.on("error", (e) => {
         console.error("Map error:", e);
-        toast.error("Error loading location map");
-        
-        // Try to load fallback style if the error was style-related
         if (e.error && e.error.message.includes("style") && mapStyle !== fallbackStyle) {
-          console.log("Attempting to load fallback style");
           map.current?.setStyle(fallbackStyle);
         }
       });
     } catch (error) {
       console.error("Error initializing map:", error);
-      toast.error("Could not initialize location map");
     }
 
     return () => {
@@ -117,9 +98,8 @@ export const CarLocation = ({
         mapInitializedRef.current = false;
       }
     };
-  }, [latitude, longitude, mapboxToken, mapStyle, isLoading]);
+  }, [latitude, longitude, mapboxToken, mapStyle, isLoading, hasValidCoords]);
 
-  // Update map center when coordinates change
   useEffect(() => {
     if (map.current && mapInitializedRef.current && marker.current) {
       map.current.setCenter([longitude, latitude]);
@@ -127,12 +107,31 @@ export const CarLocation = ({
     }
   }, [latitude, longitude]);
 
-  // Update map style when mapStyle prop changes
   useEffect(() => {
     if (map.current && mapInitializedRef.current) {
       map.current.setStyle(mapStyle || fallbackStyle);
     }
   }, [mapStyle]);
+
+  // Fallback UI when coordinates are invalid
+  if (!hasValidCoords) {
+    return (
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base text-left text-muted-foreground dark:text-white font-medium">
+            Location
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin size={16} className="text-destructive" />
+            <p className="text-xs md:text-sm text-left text-muted-foreground">{location}</p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">Exact location unavailable</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -143,12 +142,12 @@ export const CarLocation = ({
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2 mb-3">
-          <MapPin size={16} className="text-red-500 " />
-          <p className="text-xs md:text-sm text-left text-muted-foreground dark:text-gray-300">{location}</p>
+          <MapPin size={16} className="text-destructive" />
+          <p className="text-xs md:text-sm text-left text-muted-foreground">{location}</p>
         </div>
         <div
           ref={mapContainer}
-          className="w-full h-40 rounded-md overflow-hidden border border-muted dark:border-gray-700"
+          className="w-full h-40 rounded-md overflow-hidden border border-muted"
         />
       </CardContent>
     </Card>

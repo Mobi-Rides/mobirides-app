@@ -1,5 +1,5 @@
 import { Star, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { Host } from "@/services/hostService";
 
 interface HostPopupProps {
@@ -9,10 +9,7 @@ interface HostPopupProps {
 
 export const HostPopup = ({ host, onViewCars }: HostPopupProps) => {
   const getAvatarUrl = () => {
-    if (!host.avatar_url) return "/placeholder.svg";
-    return supabase.storage
-      .from("avatars")
-      .getPublicUrl(host.avatar_url).data.publicUrl;
+    return getAvatarPublicUrl(host.avatar_url) || "/placeholder.svg";
   };
 
   return (

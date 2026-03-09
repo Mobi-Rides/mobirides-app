@@ -1,22 +1,28 @@
 
-import React, { useState, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Loader2, Info } from "lucide-react";
+import React, { useState } from "react";
+import { X, Loader2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useInteractiveHandover } from "@/hooks/useInteractiveHandover";
 import { WaitingCard } from "./WaitingCard";
-import { DualPartyStepCard } from "./DualPartyStepCard";
+import { LEGACY_STEP_NAMES } from "@/services/enhancedHandoverService";
 import { cn } from "@/lib/utils";
 import { toast } from "@/utils/toast-utils";
 
-// Import step components
+// Step components — new consolidated steps
 import { LocationSelectionStep } from "./steps/LocationSelectionStep";
-import { LocationConfirmationStep } from "./steps/LocationConfirmationStep";
-import { EnRouteStep } from "./steps/EnRouteStep";
+import { ConfirmAndEnRouteStep } from "./steps/ConfirmAndEnRouteStep";
 import { ArrivalConfirmationStep } from "./steps/ArrivalConfirmationStep";
 import { IdentityVerificationStep } from "./steps/IdentityVerificationStep";
-import { InspectionStep } from "./steps/InspectionStep";
+import { VehicleInspectionConsolidatedStep } from "./steps/VehicleInspectionConsolidatedStep";
 import { InteractiveDamageStep } from "./steps/DamageDocumentationStep";
+import { KeyExchangeStep } from "./steps/KeyExchangeStep";
+import { SignAndCompleteStep } from "./steps/SignAndCompleteStep";
+
+// Legacy step components (for in-flight sessions created before consolidation)
+import { LocationConfirmationStep } from "./steps/LocationConfirmationStep";
+import { EnRouteStep } from "./steps/EnRouteStep";
+import { InspectionStep } from "./steps/InspectionStep";
 import { FuelMileageStep } from "./steps/FuelMileageStep";
 import { KeyTransferStep } from "./steps/KeyTransferStep";
 import { InteractiveSignatureStep } from "./steps/InteractiveSignatureStep";
@@ -114,6 +120,7 @@ export const InteractiveHandoverSheet: React.FC<InteractiveHandoverSheetProps> =
     };
 
     switch (currentStep.name) {
+      // ── New consolidated steps (8-step flow) ──
       case "location_selection":
         return (
           <LocationSelectionStep
@@ -122,29 +129,16 @@ export const InteractiveHandoverSheet: React.FC<InteractiveHandoverSheetProps> =
           />
         );
 
-      case "location_confirmation":
+      case "confirm_and_head_out":
         return (
-          <LocationConfirmationStep
+          <ConfirmAndEnRouteStep
             locationData={{
               latitude: session.handover_location_lat || 0,
               longitude: session.handover_location_lng || 0,
-              address: session.handover_location_name || "Unknown Location"
+              address: session.handover_location_name || "Unknown Location",
             }}
-            onConfirm={() => handleAdvance({ confirmed: true })}
-            onReject={() => toast.info("Rejection flow not yet implemented - please confirm for now")}
+            onConfirm={() => handleAdvance({ confirmed: true, en_route: true, timestamp: new Date().toISOString() })}
             isSubmitting={isSubmitting}
-          />
-        );
-
-      case "en_route_confirmation":
-      case "host_en_route":
-        return (
-          <EnRouteStep
-            title={currentStep.title}
-            description={currentStep.description}
-            onConfirm={() => handleAdvance({ en_route: true, timestamp: new Date().toISOString() })}
-            isSubmitting={isSubmitting}
-            role={userRole as "host" | "renter"}
           />
         );
 
@@ -169,25 +163,12 @@ export const InteractiveHandoverSheet: React.FC<InteractiveHandoverSheetProps> =
           />
         );
 
-      case "vehicle_inspection_exterior":
+      case "vehicle_inspection":
         return (
-          <InspectionStep
-            title="Exterior Inspection"
-            description="Take photos of the vehicle exterior from all angles."
-            type="exterior"
+          <VehicleInspectionConsolidatedStep
             handoverSessionId={sessionId}
-            onComplete={(data) => handleAdvance(data)}
-            isSubmitting={isSubmitting}
-          />
-        );
-
-      case "vehicle_inspection_interior":
-        return (
-          <InspectionStep
-            title="Interior Inspection"
-            description="Take photos of the vehicle interior, including dashboard and seats."
-            type="interior"
-            handoverSessionId={sessionId}
+            handoverType={session.handover_type || "pickup"}
+            userRole={userRole as "host" | "renter"}
             onComplete={(data) => handleAdvance(data)}
             isSubmitting={isSubmitting}
           />
@@ -205,52 +186,93 @@ export const InteractiveHandoverSheet: React.FC<InteractiveHandoverSheetProps> =
           />
         );
 
-      case "fuel_mileage_check":
+      case "key_exchange":
         return (
-          <FuelMileageStep
-            handoverSessionId={sessionId}
+          <KeyExchangeStep
+            hostCompleted={currentStep.host_completed}
+            renterCompleted={currentStep.renter_completed}
+            onComplete={() => handleAdvance({ keys_exchanged: true })}
+            isSubmitting={isSubmitting}
+            userRole={userRole as "host" | "renter"}
+          />
+        );
+
+      case "sign_and_complete":
+        return (
+          <SignAndCompleteStep
+            hostCompleted={currentStep.host_completed}
+            renterCompleted={currentStep.renter_completed}
             onComplete={(data) => handleAdvance(data)}
             isSubmitting={isSubmitting}
+            userRole={userRole as "host" | "renter"}
           />
+        );
+
+      // ── Legacy step support (pre-consolidation sessions) ──
+      case "location_confirmation":
+        return (
+          <LocationConfirmationStep
+            locationData={{
+              latitude: session.handover_location_lat || 0,
+              longitude: session.handover_location_lng || 0,
+              address: session.handover_location_name || "Unknown Location",
+            }}
+            onConfirm={() => handleAdvance({ confirmed: true })}
+            onReject={() => toast.info("Please confirm to proceed")}
+            isSubmitting={isSubmitting}
+          />
+        );
+
+      case "en_route_confirmation":
+      case "host_en_route":
+        return (
+          <EnRouteStep
+            title={currentStep.title}
+            description={currentStep.description}
+            onConfirm={() => handleAdvance({ en_route: true, timestamp: new Date().toISOString() })}
+            isSubmitting={isSubmitting}
+            role={userRole as "host" | "renter"}
+          />
+        );
+
+      case "vehicle_inspection_exterior":
+        return (
+          <InspectionStep title="Exterior Inspection" description="Take photos of the vehicle exterior." type="exterior" handoverSessionId={sessionId} onComplete={(data) => handleAdvance(data)} isSubmitting={isSubmitting} />
+        );
+
+      case "vehicle_inspection_interior":
+        return (
+          <InspectionStep title="Interior Inspection" description="Take photos of the vehicle interior." type="interior" handoverSessionId={sessionId} onComplete={(data) => handleAdvance(data)} isSubmitting={isSubmitting} />
+        );
+
+      case "fuel_mileage_check":
+        return (
+          <FuelMileageStep handoverSessionId={sessionId} onComplete={(data) => handleAdvance(data)} isSubmitting={isSubmitting} />
         );
 
       case "key_transfer":
       case "key_receipt":
         return (
-          <KeyTransferStep
-            role={userRole as "host" | "renter"}
-            onComplete={() => handleAdvance({ keys_exchanged: true })}
-            isSubmitting={isSubmitting}
-          />
+          <KeyTransferStep role={userRole as "host" | "renter"} onComplete={() => handleAdvance({ keys_exchanged: true })} isSubmitting={isSubmitting} />
         );
 
       case "digital_signature":
         return (
-          <InteractiveSignatureStep
-            hostCompleted={currentStep.host_completed}
-            renterCompleted={currentStep.renter_completed}
-            onComplete={(data) => handleAdvance(data)}
-            isSubmitting={isSubmitting}
-            userRole={userRole as "host" | "renter"}
-          />
+          <InteractiveSignatureStep hostCompleted={currentStep.host_completed} renterCompleted={currentStep.renter_completed} onComplete={(data) => handleAdvance(data)} isSubmitting={isSubmitting} userRole={userRole as "host" | "renter"} />
         );
 
       case "completion":
         return (
-          <HandoverCompletionStep
-            hostCompleted={currentStep.host_completed}
-            renterCompleted={currentStep.renter_completed}
-            onComplete={() => handleAdvance({ completed: true })}
-            isSubmitting={isSubmitting}
-            userRole={userRole as "host" | "renter"}
-          />
+          <HandoverCompletionStep hostCompleted={currentStep.host_completed} renterCompleted={currentStep.renter_completed} onComplete={() => handleAdvance({ completed: true })} isSubmitting={isSubmitting} userRole={userRole as "host" | "renter"} />
         );
 
       default:
+        // Unknown step — log warning and allow skip (legacy guard MOB-507)
+        console.warn(`[Handover] Unrecognized step name: "${currentStep.name}" — rendering fallback`);
         return (
-          <div className="p-4 text-center">
-            <p className="text-muted-foreground">Unknown step type: {currentStep.name}</p>
-            <Button onClick={() => handleAdvance()} className="mt-4">Skip Step</Button>
+          <div className="p-6 text-center space-y-4">
+            <p className="text-muted-foreground">Step "{currentStep.name}" is from an older session format.</p>
+            <Button onClick={() => handleAdvance()} className="w-full">Continue to Next Step</Button>
           </div>
         );
     }

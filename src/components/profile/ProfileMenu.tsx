@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -55,9 +56,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     setActiveView('role');
   };
 
-  const avatarPublicUrl = avatarUrl 
-    ? supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl 
-    : null;
+  const avatarPublicUrl = getAvatarPublicUrl(avatarUrl) || null;
 
   const baseMenuItems: MenuItem[] = [
     {

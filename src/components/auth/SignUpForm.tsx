@@ -10,12 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
 import countryCodes from "@/constants/Countries";
 import { TouchTarget } from "@/components/ui/TouchTarget";
 import { cn } from "@/lib/utils";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import { SignUpConsents, ConsentState, allRequiredConsentsChecked } from "@/components/auth/SignUpConsents";
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -39,6 +40,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     password: false,
     confirmPassword: false,
   });
+  const [consents, setConsents] = useState<ConsentState>({
+    ageConfirmed: false,
+    termsAccepted: false,
+    privacyAccepted: false,
+    communityAccepted: false,
+    marketingOptedIn: false,
+  });
 
   const formatPhoneNumber = (number: string) => {
     return number.replace(/[^\d+]/g, "");
@@ -55,6 +63,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   const showPhoneError = touched.phoneNumber && phoneNumber && !isValidPhone(phoneNumber);
   const showPasswordError = touched.password && password && !isValidPassword(password);
   const showConfirmPasswordError = touched.confirmPassword && confirmPassword && !passwordsMatch;
+
+  const canSubmit = allRequiredConsentsChecked(consents) && !isLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +88,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
       return;
     }
 
+    if (!allRequiredConsentsChecked(consents)) {
+      setError("Please accept all required agreements to continue");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setTouched(prev => ({ ...prev, confirmPassword: true }));
@@ -98,9 +113,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
 
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           password,
@@ -137,7 +150,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
         description: 'You can now sign in with your credentials. Welcome to MobiRides!'
       });
 
-      // Reset form
       setEmail("");
       setPassword("");
       setConfirmPassword("");
@@ -150,6 +162,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
         phoneNumber: false,
         password: false,
         confirmPassword: false,
+      });
+      setConsents({
+        ageConfirmed: false,
+        termsAccepted: false,
+        privacyAccepted: false,
+        communityAccepted: false,
+        marketingOptedIn: false,
       });
 
       onSuccess?.();
@@ -354,6 +373,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
             </span>
           </div>
         )}
+        <PasswordStrengthMeter password={password} />
       </div>
 
       {/* Confirm Password Field */}
@@ -413,11 +433,14 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
         )}
       </div>
 
+      {/* Consent Checkboxes */}
+      <SignUpConsents consents={consents} onChange={setConsents} />
+
       {/* Submit Button */}
       <Button
         type="submit"
         className="w-full h-12 text-base font-medium touch-manipulation"
-        disabled={isLoading}
+        disabled={!canSubmit}
         aria-busy={isLoading}
       >
         {isLoading ? (

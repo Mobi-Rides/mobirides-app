@@ -83,7 +83,7 @@ export const createPickupHandoverSession = async (
     } as unknown as HandoverStatus;
     }
 
-    // Create new pickup handover session
+    // Create new pickup handover session using upsert for idempotency (MOB-409)
     const sessionData = {
       booking_id: data.booking_id,
       host_id: data.host_id,
@@ -95,9 +95,14 @@ export const createPickupHandoverSession = async (
       is_interactive: true,
     };
     
+    // Use upsert with onConflict to handle race conditions
+    // The partial unique index idx_unique_active_handover_session prevents duplicates
     const { data: sessionResult, error } = await supabase
       .from("handover_sessions")
-      .insert(sessionData)
+      .upsert(sessionData, {
+        onConflict: 'booking_id,handover_type,renter_id',
+        ignoreDuplicates: true
+      })
       .select()
       .single();
 
@@ -224,7 +229,7 @@ export const createReturnHandoverSession = async (
     } as unknown as HandoverStatus;
     }
 
-    // Create new return handover session
+    // Create new return handover session using upsert for idempotency (MOB-409)
     const sessionData = {
       booking_id: data.booking_id,
       host_id: data.host_id,
@@ -236,9 +241,14 @@ export const createReturnHandoverSession = async (
       is_interactive: true,
     };
     
+    // Use upsert with onConflict to handle race conditions
+    // The partial unique index idx_unique_active_handover_session prevents duplicates
     const { data: sessionResult, error } = await supabase
       .from("handover_sessions")
-      .insert(sessionData)
+      .upsert(sessionData, {
+        onConflict: 'booking_id,handover_type,renter_id',
+        ignoreDuplicates: true
+      })
       .select()
       .single();
 

@@ -8,6 +8,7 @@ import type { SafeCar } from "@/types/car";
 import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
 import { TouchTarget } from "@/components/ui/TouchTarget";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface CarCardProps {
   car: SafeCar;
@@ -98,12 +99,12 @@ export const CarCard = ({ car }: CarCardProps) => {
     >
       <div className="relative h-40 sm:h-48">
         <img
-          src={car.image_url}
+          src={car.image_url || '/placeholder.svg'}
           alt={`${car.brand} ${car.model}`}
           className="w-full h-full object-cover"
           loading="lazy"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/placeholder-car.jpg';
+            (e.target as HTMLImageElement).src = '/placeholder.svg';
           }}
         />
         {/* Save button with proper touch target */}

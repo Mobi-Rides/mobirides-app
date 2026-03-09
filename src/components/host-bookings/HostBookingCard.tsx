@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  MessageCircle, 
-  Phone, 
-  CheckCircle, 
-  XCircle, 
+import {
+  MessageCircle,
+  Phone,
+  CheckCircle,
+  XCircle,
   Receipt,
   Calendar,
   MapPin,
@@ -20,6 +20,9 @@ import {
 import { BookingWithRelations } from "@/types/booking";
 import { useNavigate } from "react-router-dom";
 import { ReceiptModal } from "@/components/shared/ReceiptModal";
+import { useAuth } from "@/hooks/useAuth";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface HostBookingCardProps {
   booking: BookingWithRelations;
@@ -64,7 +67,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    
+
     return (
       <Badge variant={config.variant} className={`${config.color} animate-fade-in`}>
         {config.label}
@@ -78,7 +81,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
 
   return (
     <>
-      <Card 
+      <Card
         className="hover:shadow-lg transition-all duration-200 animate-fade-in cursor-pointer"
         onClick={handleCardClick}
       >
@@ -93,16 +96,16 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                 className="mt-1"
               />
             )}
-  
+
             {/* Car Image */}
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden flex-shrink-0">
               <img
-                src={booking.cars.image_url || "/placeholder.svg"}
+                src={getCarImagePublicUrl(booking.cars.image_url) || "/placeholder.svg"}
                 alt={`${booking.cars.brand} ${booking.cars.model}`}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
               />
             </div>
-  
+
             {/* Main Content */}
             <div className="flex-1 min-w-0 space-y-3">
               {/* Header Row */}
@@ -118,11 +121,11 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                 </div>
                 {getStatusBadge(booking.status)}
               </div>
-  
+
               {/* Renter Info */}
               <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={booking.renter?.avatar_url} />
+                  <AvatarImage src={getAvatarPublicUrl(booking.renter?.avatar_url)} />
                   <AvatarFallback>
                     {booking.renter?.full_name?.charAt(0) || "R"}
                   </AvatarFallback>
@@ -138,7 +141,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                   )}
                 </div>
               </div>
-  
+
               {/* Booking Details Grid */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="space-y-1">
@@ -151,7 +154,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                   </p>
                   <p className="text-xs text-muted-foreground">{duration} days</p>
                 </div>
-                
+
                 <div className="space-y-1">
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <DollarSign className="h-3 w-3" />
@@ -167,7 +170,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                   </div>
                 </div>
               </div>
-  
+
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-2 pt-2">
                 {booking.status === 'pending' && (
@@ -199,7 +202,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                     </Button>
                   </>
                 )}
-                
+
                 {booking.status === 'confirmed' && (
                   <Button
                     size="sm"
@@ -214,7 +217,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                     {isLoading === "cancel" ? "Cancelling..." : "Cancel"}
                   </Button>
                 )}
-  
+
                 {booking.status === 'completed' && (
                   <Button
                     size="sm"
@@ -229,7 +232,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
                     Receipt
                   </Button>
                 )}
-  
+
                 <Button
                   size="sm"
                   variant="ghost"

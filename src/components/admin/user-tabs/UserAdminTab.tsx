@@ -87,10 +87,9 @@ export const UserAdminTab = ({ user, onUpdate }: UserAdminTabProps) => {
 
   const removeAdminMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("admins")
-        .delete()
-        .eq("id", user.id);
+      const { error } = await supabase.rpc('remove_admin_complete', {
+        target_user_id: user.id
+      });
       
       if (error) throw error;
     },
@@ -109,10 +108,10 @@ export const UserAdminTab = ({ user, onUpdate }: UserAdminTabProps) => {
 
   const updateAdminMutation = useMutation({
     mutationFn: async ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
-      const { error } = await supabase
-        .from("admins")
-        .update({ is_super_admin: isSuperAdmin })
-        .eq("id", user.id);
+      const { error } = await supabase.rpc('update_admin_role', {
+        target_user_id: user.id,
+        new_is_super_admin: isSuperAdmin
+      });
       
       if (error) throw error;
     },

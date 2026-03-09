@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ContextualHelp } from "@/components/guides/ContextualHelp";
 
 interface EnhancedCarDetailsProps {
   formData: {
@@ -32,7 +33,7 @@ export const EnhancedCarDetails = ({ formData, onInputChange, onSelectChange }: 
     <>
       {/* Existing Fields */}
       <div className="space-y-2 text-left">
-        <Label htmlFor="price_per_day">Price per Day (BWP) *</Label>
+        <Label htmlFor="price_per_day" className="flex items-center gap-1.5">Price per Day (BWP) * <ContextualHelp helpText="Set a competitive daily rate in Botswana Pula. Check similar listings for guidance." guideSection="listing" role="host" /></Label>
         <Input
           id="price_per_day"
           name="price_per_day"

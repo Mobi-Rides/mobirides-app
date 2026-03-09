@@ -18,7 +18,7 @@ export const useGuides = (role: 'renter' | 'host') => {
       const { data, error } = await supabase
         .from('guides')
         .select('id, title, description, section, read_time, is_popular, sort_order')
-        .eq('role', role)
+        .in('role', [role, 'shared'])
         .order('sort_order', { ascending: true });
 
       if (error) {
@@ -33,14 +33,20 @@ export const useGuides = (role: 'renter' | 'host') => {
   });
 };
 
-export const usePopularGuides = () => {
+export const usePopularGuides = (role?: 'renter' | 'host') => {
   return useQuery({
-    queryKey: ['guides', 'popular'],
+    queryKey: ['guides', 'popular', role],
     queryFn: async (): Promise<GuideSection[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('guides')
         .select('id, title, description, section, read_time, is_popular, sort_order')
-        .eq('is_popular', true)
+        .eq('is_popular', true);
+
+      if (role) {
+        query = query.in('role', [role, 'shared']);
+      }
+
+      const { data, error } = await query
         .order('sort_order', { ascending: true })
         .limit(4);
 
@@ -52,7 +58,7 @@ export const usePopularGuides = () => {
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime)
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -65,7 +71,7 @@ export const useSearchGuides = (query: string, role?: 'renter' | 'host') => {
         .select('id, title, description, section, read_time, is_popular, sort_order');
 
       if (role) {
-        supabaseQuery = supabaseQuery.eq('role', role);
+        supabaseQuery = supabaseQuery.in('role', [role, 'shared']);
       }
 
       if (query.trim()) {

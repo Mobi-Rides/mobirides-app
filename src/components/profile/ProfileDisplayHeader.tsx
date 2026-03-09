@@ -5,6 +5,7 @@ import { CheckCircle, Upload, Shield } from "lucide-react";
 import { FullProfileData } from "@/hooks/useFullProfile";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,14 +39,10 @@ export const ProfileDisplayHeader = ({ profile, onEditClick }: ProfileDisplayHea
           if (isMounted) setAvatarDisplayUrl(data.signedUrl);
           return;
         }
-        const publicUrl = supabase.storage
-          .from('avatars')
-          .getPublicUrl(profile.avatar_url).data.publicUrl;
+        const publicUrl = getAvatarPublicUrl(profile.avatar_url);
         if (isMounted) setAvatarDisplayUrl(publicUrl || null);
       } catch (e) {
-        const publicUrl = supabase.storage
-          .from('avatars')
-          .getPublicUrl(profile.avatar_url).data.publicUrl;
+        const publicUrl = getAvatarPublicUrl(profile.avatar_url);
         if (isMounted) setAvatarDisplayUrl(publicUrl || null);
       }
     };

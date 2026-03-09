@@ -5,7 +5,7 @@ import { Clock, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface WaitingCardProps {
-  waitingFor: "host" | "renter" | "both";
+  waitingFor: "host" | "renter" | "both" | "dynamic";
   currentStepTitle: string;
 }
 
