@@ -6,7 +6,7 @@ import { HANDOVER_STEPS, completeHandoverStep } from "@/services/enhancedHandove
 export interface HandoverStep {
   name: string;
   order: number;
-  owner: "host" | "renter" | "both";
+  owner: "host" | "renter" | "both" | "dynamic";
   title: string;
   description: string;
   is_completed: boolean;
@@ -21,6 +21,7 @@ export interface HandoverSessionData {
   current_step_order: number;
   waiting_for: "host" | "renter" | "both" | "none";
   handover_completed: boolean;
+  handover_type: "pickup" | "return";
   host_id: string;
   renter_id: string;
   handover_location_lat?: number;
