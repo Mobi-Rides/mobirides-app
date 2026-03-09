@@ -65,33 +65,6 @@ No unique constraint prevents multiple active `handover_sessions` for the same b
 - Migration: Deleted duplicates keeping newest, created `idx_unique_active_handover_session` partial unique index on `(booking_id, handover_type, renter_id) WHERE handover_completed = false`.
 - Service: Updated `createPickupHandoverSession` and `createReturnHandoverSession` to use `upsert` with `onConflict` and `ignoreDuplicates: true`.
 
-### Migration Impact Checklist (MOB-113)
-
-Before deploying MOB-407/MOB-408 migration:
-
-- [ ] **1. Consumer Search** — Run: `grep -r "handover_sessions" src/ --include="*.ts" --include="*.tsx"`
-- [ ] **2. Return Schema Verification** — Confirm migration return schema matches all frontend TypeScript interfaces
-- [ ] **3. No Breaking Renames/Removals** — Use additive changes only; no column renames without UI updates
-- [ ] **4. Build Verification** — Run `npm run build` immediately after applying migration
-- [ ] **5. Dependency Documentation** — Add header comment listing consumers:
-  ```sql
-  -- Consumers: src/pages/Map.tsx, src/services/handoverService.ts, src/contexts/HandoverContext.tsx
-  -- Impact: Deduplicates active sessions, adds partial unique index, no breaking changes
-  ```
-
-#### RPC/Function Guidelines
-- Always `DROP FUNCTION IF EXISTS` before `CREATE`
-- Use `SECURITY DEFINER` with `SET search_path = public` for cross-schema joins
-- Grant execute: `GRANT EXECUTE ON FUNCTION ... TO authenticated;`
-
-#### RLS Policy Guidelines
-- Use `SECURITY DEFINER` helper functions to prevent infinite recursion
-- Never query the same table a policy protects without a security definer wrapper
-
-#### Rollback Strategy
-Document rollback SQL in migration comments for destructive changes.
-
----
 
 ## Phase 4: Module Hardening 🟡 TODO
 
