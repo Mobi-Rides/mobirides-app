@@ -138,15 +138,20 @@ export const useInteractiveHandover = (sessionId: string | null) => {
 
     const userRole = currentUserId === session.host_id ? 'host' : 'renter';
     
+    // Resolve dynamic ownership based on handover type
+    const resolvedOwner = currentStep.owner === "dynamic"
+      ? (session.handover_type === "pickup" ? "renter" : "host")
+      : currentStep.owner;
+
     // Check if it's user's turn
-    const isMyTurn = currentStep.owner === "both" || currentStep.owner === userRole;
+    const isMyTurn = resolvedOwner === "both" || resolvedOwner === userRole;
     if (!isMyTurn) {
       toast.error("Waiting for the other party to complete their step");
       return false;
     }
 
     // Check if user already completed their part in a "both" step
-    if (currentStep.owner === "both") {
+    if (resolvedOwner === "both") {
       if (userRole === 'host' && currentStep.host_completed) {
         toast.info("Waiting for renter to complete their part");
         return false;
