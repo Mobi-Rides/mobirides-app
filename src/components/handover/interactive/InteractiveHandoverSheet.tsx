@@ -1,22 +1,28 @@
 
-import React, { useState, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Loader2, Info } from "lucide-react";
+import React, { useState } from "react";
+import { X, Loader2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useInteractiveHandover } from "@/hooks/useInteractiveHandover";
 import { WaitingCard } from "./WaitingCard";
-import { DualPartyStepCard } from "./DualPartyStepCard";
+import { LEGACY_STEP_NAMES } from "@/services/enhancedHandoverService";
 import { cn } from "@/lib/utils";
 import { toast } from "@/utils/toast-utils";
 
-// Import step components
+// Step components — new consolidated steps
 import { LocationSelectionStep } from "./steps/LocationSelectionStep";
-import { LocationConfirmationStep } from "./steps/LocationConfirmationStep";
-import { EnRouteStep } from "./steps/EnRouteStep";
+import { ConfirmAndEnRouteStep } from "./steps/ConfirmAndEnRouteStep";
 import { ArrivalConfirmationStep } from "./steps/ArrivalConfirmationStep";
 import { IdentityVerificationStep } from "./steps/IdentityVerificationStep";
-import { InspectionStep } from "./steps/InspectionStep";
+import { VehicleInspectionConsolidatedStep } from "./steps/VehicleInspectionConsolidatedStep";
 import { InteractiveDamageStep } from "./steps/DamageDocumentationStep";
+import { KeyExchangeStep } from "./steps/KeyExchangeStep";
+import { SignAndCompleteStep } from "./steps/SignAndCompleteStep";
+
+// Legacy step components (for in-flight sessions created before consolidation)
+import { LocationConfirmationStep } from "./steps/LocationConfirmationStep";
+import { EnRouteStep } from "./steps/EnRouteStep";
+import { InspectionStep } from "./steps/InspectionStep";
 import { FuelMileageStep } from "./steps/FuelMileageStep";
 import { KeyTransferStep } from "./steps/KeyTransferStep";
 import { InteractiveSignatureStep } from "./steps/InteractiveSignatureStep";
