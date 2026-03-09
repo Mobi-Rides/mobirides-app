@@ -94,13 +94,13 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
             return false;
           }
           
-          // For pickup: show on start date if no handover session exists
+          // For pickup: show on start date if booking is confirmed and no handover session
           const isPickupDay = startDate.toDateString() === now.toDateString();
-          const needsPickup = isPickupDay && !handoverSession;
+          const needsPickup = isPickupDay && booking.status === 'confirmed' && !handoverSession;
           
-          // For return: show on end date if handover session exists but not completed
-          const isReturnDay = endDate.toDateString() === now.toDateString();
-          const needsReturn = isReturnDay && handoverSession && !handoverSession.handover_completed;
+          // For return: show on/after end date if booking is in_progress
+          const isReturnDayOrPast = endDate <= now || endDate.toDateString() === now.toDateString();
+          const needsReturn = isReturnDayOrPast && booking.status === 'in_progress';
           
           return needsPickup || needsReturn;
         });
