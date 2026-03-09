@@ -381,23 +381,17 @@ const Map = () => {
                 console.log("Current booking ID from URL:", bookingId);
                 console.log("Current handover sheet state:", isHandoverSheetOpen);
                 
-                if (handoverType === 'return') {
-                  // Navigate to rental details page for return handovers
-                  window.location.href = `/rental-details/${clickedBookingId}`;
-                  return;
-                }
-                
-                // For pickup handovers, open the handover sheet
-                // Update the current booking ID if different from URL
-                if (clickedBookingId !== bookingId) {
-                  console.log("Updating URL with new booking ID");
+                // MOB-207: Open handover sheet on map for both pickup and return
+                // Update the current booking ID and handover type in URL
+                if (clickedBookingId !== bookingId || handoverType === 'return') {
+                  console.log("Updating URL with booking ID and handover type:", handoverType);
                   window.history.replaceState(
                     {}, 
                     '', 
-                    `/map?mode=handover&bookingId=${clickedBookingId}`
+                    `/map?mode=handover&bookingId=${clickedBookingId}&handoverType=${handoverType}`
                   );
                 }
-                console.log("Opening handover sheet");
+                console.log("Opening handover sheet for", handoverType);
                 setIsHandoverSheetOpen(true);
               }}
             />
