@@ -399,22 +399,42 @@ export const EnhancedHandoverSheet = ({
         console.log("Completing handover session:", handoverId);
         await completeHandover(handoverId);
         
-        // If this is a return handover, mark the booking as completed
-        if (isReturnHandover() && bookingDetails) {
+        const bookingIdValue = (bookingDetails as unknown as HandoverBookingDetails)?.id;
+        
+        if (isReturnHandover() && bookingIdValue) {
+          // MOB-203: Return handover → mark booking completed
           console.log("🔄 Return handover detected - updating booking status to completed");
           const { error: bookingUpdateError } = await supabase
             .from('bookings')
             .update({ 
-              status: 'completed',
+              status: 'completed' as any,
               actual_end_date: new Date().toISOString()
             })
-            .eq('id', (bookingDetails as unknown as HandoverBookingDetails).id);
+            .eq('id', bookingIdValue);
             
           if (bookingUpdateError) {
             console.error("❌ Failed to update booking status:", bookingUpdateError);
             toast.error("Handover recorded but failed to complete booking. Please contact support.");
           } else {
             console.log("✅ Booking marked as completed");
+            toast.success("Return complete! Your rental has ended.");
+          }
+        } else if (!isReturnHandover() && bookingIdValue) {
+          // MOB-202: Pickup handover → transition booking to in_progress
+          console.log("🔄 Pickup handover detected - updating booking status to in_progress");
+          const { error: bookingUpdateError } = await supabase
+            .from('bookings')
+            .update({ 
+              status: 'in_progress' as any
+            })
+            .eq('id', bookingIdValue);
+            
+          if (bookingUpdateError) {
+            console.error("❌ Failed to update booking status to in_progress:", bookingUpdateError);
+            toast.error("Handover recorded but failed to start rental. Please contact support.");
+          } else {
+            console.log("✅ Booking marked as in_progress");
+            toast.success("Rental started! Your booking is now active.");
           }
         }
       }

@@ -62,7 +62,7 @@ const Map = () => {
           )
         `)
         .eq('id', bookingId)
-        .eq('status', 'confirmed')
+        .in('status', ['confirmed', 'in_progress'])
         .single();
 
       if (error || !booking) {
