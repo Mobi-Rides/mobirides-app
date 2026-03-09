@@ -50,20 +50,20 @@ The Map page crashes on load due to a runtime error in the Mapbox destination ma
 
 ---
 
-## Phase 3: Data Integrity (Backend) 🟡 TODO
+## Phase 3: Data Integrity (Backend) ✅ DONE
 
 | Ticket | Title | Status | File(s) |
 |--------|-------|--------|---------|
-| MOB-407 | Deduplicate active handover sessions | Todo | `supabase/migrations/` |
-| MOB-408 | Add partial unique index on active sessions | Todo | `supabase/migrations/` |
-| MOB-409 | Make session creation idempotent (conflict-safe) | Todo | `src/services/handoverService.ts` |
+| MOB-407 | Deduplicate active handover sessions | Done ✅ | `supabase/migrations/` |
+| MOB-408 | Add partial unique index on active sessions | Done ✅ | `supabase/migrations/` |
+| MOB-409 | Make session creation idempotent (conflict-safe) | Done ✅ | `src/services/handoverService.ts` |
 
 ### Root Cause
 No unique constraint prevents multiple active `handover_sessions` for the same booking + type + renter. Concurrent calls create duplicates.
 
-### Fix
-- Migration: DELETE duplicates keeping newest, then CREATE UNIQUE INDEX on `(booking_id, handover_type, renter_id) WHERE handover_completed = false`.
-- Service: Use `INSERT ... ON CONFLICT` or check-then-create with row lock.
+### Fix Applied
+- Migration: Deleted duplicates keeping newest, created `idx_unique_active_handover_session` partial unique index on `(booking_id, handover_type, renter_id) WHERE handover_completed = false`.
+- Service: Updated `createPickupHandoverSession` and `createReturnHandoverSession` to use `upsert` with `onConflict` and `ignoreDuplicates: true`.
 
 ### Migration Impact Checklist (MOB-113)
 
