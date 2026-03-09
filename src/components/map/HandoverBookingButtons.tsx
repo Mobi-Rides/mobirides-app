@@ -59,7 +59,7 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
               created_at
             )
           `)
-          .eq("status", "confirmed")
+          .in("status", ["confirmed", "in_progress"])
           .or(`start_date.eq.${today},start_date.eq.${tomorrow},end_date.eq.${today}`);
 
         // Filter based on user role
