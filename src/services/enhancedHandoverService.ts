@@ -2,27 +2,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/utils/toast-utils";
 import { compressImage, isImageFile, formatFileSize } from "@/utils/imageCompression";
 
-// Enhanced handover step definitions with owners
+// Consolidated 8-step handover flow (MOB-501)
 export const HANDOVER_STEPS = [
-  { name: "location_selection", order: 1, owner: "host", title: "Select Location", description: "Host selects handover location" },
-  { name: "location_confirmation", order: 2, owner: "renter", title: "Confirm Location", description: "Renter confirms location is acceptable" },
-  { name: "en_route_confirmation", order: 3, owner: "renter", title: "En Route", description: "Renter confirms heading to location" },
-  { name: "host_en_route", order: 4, owner: "host", title: "Host En Route", description: "Host confirms heading to location" },
-  { name: "arrival_confirmation", order: 5, owner: "both", title: "Confirm Arrival", description: "Both confirm arrival at location" },
-  { name: "identity_verification", order: 6, owner: "host", title: "Identity Verification", description: "Host verifies renter's ID" },
-  { name: "vehicle_inspection_exterior", order: 7, owner: "renter", title: "Exterior Inspection", description: "Renter inspects vehicle exterior" },
-  { name: "vehicle_inspection_interior", order: 8, owner: "renter", title: "Interior Inspection", description: "Renter inspects vehicle interior" },
-  { name: "damage_documentation", order: 9, owner: "both", title: "Damage Acknowledgment", description: "Both acknowledge damage state" },
-  { name: "fuel_mileage_check", order: 10, owner: "renter", title: "Fuel & Mileage", description: "Renter records fuel and mileage" },
-  { name: "key_transfer", order: 11, owner: "host", title: "Key Transfer", description: "Host confirms key handover" },
-  { name: "key_receipt", order: 12, owner: "renter", title: "Key Receipt", description: "Renter confirms key receipt" },
-  { name: "digital_signature", order: 13, owner: "both", title: "Digital Signature", description: "Both sign acknowledgment" },
-  { name: "completion", order: 14, owner: "both", title: "Complete Handover", description: "Both confirm handover complete" }
+  { name: "location_selection",    order: 1, owner: "host",    title: "Select Location",        description: "Host selects handover location" },
+  { name: "confirm_and_head_out",  order: 2, owner: "renter",  title: "Confirm & Head Out",      description: "Renter confirms location and marks en route" },
+  { name: "arrival_confirmation",  order: 3, owner: "both",    title: "Arrival Confirmation",    description: "Both confirm arrival at location" },
+  { name: "identity_verification", order: 4, owner: "host",    title: "Identity Verification",   description: "Host verifies renter's identity" },
+  { name: "vehicle_inspection",    order: 5, owner: "dynamic", title: "Vehicle Inspection",       description: "Pickup: renter inspects; Return: host inspects" },
+  { name: "damage_documentation",  order: 6, owner: "both",    title: "Damage Documentation",    description: "Both acknowledge damage state" },
+  { name: "key_exchange",          order: 7, owner: "both",    title: "Key Exchange",            description: "Both confirm key handover" },
+  { name: "sign_and_complete",     order: 8, owner: "both",    title: "Sign & Complete",         description: "Both sign and confirm handover complete" },
+];
+
+// Legacy step names for backward compatibility with active sessions
+export const LEGACY_STEP_NAMES = [
+  "location_confirmation", "en_route_confirmation", "host_en_route",
+  "vehicle_inspection_exterior", "vehicle_inspection_interior",
+  "fuel_mileage_check", "key_transfer", "key_receipt",
+  "digital_signature", "completion"
 ];
 
 export interface VehiclePhoto {
   id: string;
-  type: 'exterior_front' | 'exterior_back' | 'exterior_left' | 'exterior_right' | 'interior_dashboard' | 'interior_seats' | 'fuel_gauge' | 'odometer' | 'damage_specific';
+  type: 'exterior_front' | 'exterior_back' | 'exterior_left' | 'exterior_right' | 'dashboard' | 'interior_dashboard' | 'interior_seats' | 'fuel_gauge' | 'odometer' | 'damage_specific';
   url: string;
   description?: string;
   timestamp: string;
@@ -191,6 +193,10 @@ const validateStepCompletion = async (
       }
       break;
 
+    case "confirm_and_head_out":
+      // No special data needed — just a confirmation action
+      break;
+
     case "identity_verification":
       if (completionData?.verified === undefined) {
         return { isValid: false, message: "Verification status is required" };
@@ -200,6 +206,13 @@ const validateStepCompletion = async (
       }
       break;
 
+    case "vehicle_inspection":
+      if (!completionData?.photos || !Array.isArray(completionData.photos) || completionData.photos.length < 5) {
+        return { isValid: false, message: "At least 5 inspection photos are required (front, rear, left, right, dashboard)" };
+      }
+      break;
+
+    // Legacy step names — allow through for backward compat
     case "vehicle_inspection_exterior":
     case "vehicle_inspection_interior":
       if (!completionData?.photos || !Array.isArray(completionData.photos) || completionData.photos.length === 0) {
@@ -207,31 +220,35 @@ const validateStepCompletion = async (
       }
       break;
 
-    case "fuel_mileage_check":
+    case "fuel_mileage_check": {
+      // Legacy step — keep validation for active sessions
       if (completionData?.fuel_level === undefined || completionData?.mileage === undefined) {
         return { isValid: false, message: "Fuel level and mileage are required" };
       }
-      // Validate fuel level is between 0-100
       const fuelLevel = Number(completionData.fuel_level);
       if (isNaN(fuelLevel) || fuelLevel < 0 || fuelLevel > 100) {
         return { isValid: false, message: "Fuel level must be between 0 and 100%" };
       }
-      // Validate mileage is positive
       const mileage = Number(completionData.mileage);
       if (isNaN(mileage) || mileage < 0) {
         return { isValid: false, message: "Mileage must be a positive number" };
       }
       break;
-    
+    }
+
+    case "key_exchange":
+      // Dual-party confirmation — no special data needed per party
+      break;
+
+    case "sign_and_complete":
     case "digital_signature":
       if (!completionData?.signature) {
         return { isValid: false, message: "Digital signature is required" };
       }
       break;
     
-    // Add more validation cases as needed
     default:
-      // No specific validation needed for other steps
+      // No specific validation for other steps (arrival_confirmation, damage_documentation, legacy steps)
       break;
   }
   
