@@ -178,11 +178,17 @@ export const useInteractiveHandover = (sessionId: string | null) => {
 
   const currentStep = steps.find(s => s.order === session?.current_step_order) || null;
   const userRole = session && currentUserId ? (currentUserId === session.host_id ? 'host' : 'renter') : null;
-  const isMyTurn = currentStep && userRole ? (currentStep.owner === "both" || currentStep.owner === userRole) : false;
+  
+  // Resolve dynamic ownership
+  const resolvedCurrentOwner = currentStep?.owner === "dynamic" && session
+    ? (session.handover_type === "pickup" ? "renter" : "host")
+    : currentStep?.owner;
+  
+  const isMyTurn = currentStep && userRole ? (resolvedCurrentOwner === "both" || resolvedCurrentOwner === userRole) : false;
   
   // Specific turn check for "both" steps
-  const needsMyInput = isMyTurn && currentStep?.owner === "both" 
-    ? (userRole === 'host' ? !currentStep.host_completed : !currentStep.renter_completed)
+  const needsMyInput = isMyTurn && resolvedCurrentOwner === "both" 
+    ? (userRole === 'host' ? !currentStep!.host_completed : !currentStep!.renter_completed)
     : isMyTurn;
 
   return {
