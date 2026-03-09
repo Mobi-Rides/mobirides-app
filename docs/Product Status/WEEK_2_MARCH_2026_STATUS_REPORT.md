@@ -3,7 +3,8 @@
 **Report Date:** March 9, 2026  
 **Report Period:** Week 2 (March 9 - March 15, 2026) — In-Progress Snapshot  
 **Version:** v2.8.1  
-**Prepared by:** Development Team (Modisa Maphanyane)
+**Prepared by:** Development Team (Modisa Maphanyane)  
+**Reference:** JIRA Production Readiness Plan v1.3
 
 > **📋 Active Plan:** [Epic MOB-400 — Map Module Hotfix](../../.lovable/plan.md)  
 > **📊 Testing Coverage Report:** [TESTING_COVERAGE_STATUS_2026_03_02.md](../testing/TESTING_COVERAGE_STATUS_2026_03_02.md)  
@@ -11,6 +12,7 @@
 > - [HOTFIX_ADMIN_PORTAL_2026_02_24.md](../hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md) (MOB-100)  
 > - [HOTFIX_RENTAL_LIFECYCLE_2026_03_06.md](../hotfixes/HOTFIX_RENTAL_LIFECYCLE_2026_03_06.md) (MOB-200)  
 > - [HOTFIX_HELP_CENTER_2026_03_08.md](../hotfixes/HOTFIX_HELP_CENTER_2026_03_08.md) (MOB-300)  
+> - [HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md](../hotfixes/HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md) (MOB-500)  
 > **🗑️ Anonymize-on-Delete Plan:** [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)  
 > **🛡️ Damage Protection Spec:** [20260305_DAMAGE_PROTECTION_OVERVIEW.md](../20260305_DAMAGE_PROTECTION_OVERVIEW.md)  
 > **📋 Pre-Launch Testing Protocol:** [PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md](../testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md)
@@ -19,7 +21,7 @@
 
 ## 📋 Executive Summary
 
-Week 2 of March 2026 was dominated by the **Map Module Hotfix Epic (MOB-400)**, a P0 blocker that crashed the `/map` route on load. Phases 1-3 were completed in rapid succession: the crash was resolved (Phase 1), handover integration was stabilized (Phase 2), and database integrity was enforced with a partial unique index and idempotent session creation (Phase 3). Additionally, the **Help Center Epic (MOB-300) Phase 4** was completed with component extraction and admin CRUD, and **8 Admin Portal tickets (MOB-100)** were resolved.
+Week 2 of March 2026 was dominated by the **Map Module Hotfix Epic (MOB-400)**, a P0 blocker that crashed the `/map` route on load. Phases 1-3 were completed in rapid succession: the crash was resolved (Phase 1), handover integration was stabilized (Phase 2), and database integrity was enforced with a partial unique index and idempotent session creation (Phase 3). Additionally, the **Help Center Epic (MOB-300) Phase 4** was completed with component extraction and admin CRUD, **8 Admin Portal tickets (MOB-100)** were resolved, and the **Handover Consolidation Epic (MOB-500)** was planned (11 tickets).
 
 A critical infrastructure issue was identified: **migration drift** between local and remote Supabase state (6 mismatched entries) is currently **blocking branch seeding**. Repair commands have been generated and are pending execution.
 
@@ -28,6 +30,7 @@ A critical infrastructure issue was identified: **migration drift** between loca
 - ✅ **Epic MOB-300 Phase 4: Help Center Complete** — `GuideLayout` + `GuideProgressTracker` extraction, Admin FAQ & Guide CRUD
 - ✅ **MOB-100: 8 Admin Tickets Resolved** — MOB-101, MOB-102, MOB-118-120, MOB-123-125 (Reviews crash, KYC table, avatar/car image fixes)
 - ✅ **New Documentation: Damage Protection Module Spec** — Comprehensive coverage tiers, claims process, technical architecture (912 lines)
+- ✅ **MOB-500: Handover Consolidation Planned** — 11 tickets (MOB-501–511) to consolidate 14→8 steps
 - ✅ **3 Architecture Decisions Recorded** — ADR-010 (useHandoverSafe), ADR-011 (partial unique index), ADR-012 (destination nullability)
 
 ### Critical Issues
@@ -55,9 +58,148 @@ A critical infrastructure issue was identified: **migration drift** between loca
 | Known Bugs | 38 | 38 | **38** | — | 0 |
 | Capacitor Packages | 3 | 3 | **3** | — | — |
 
+### Gap Analysis to Target (95%)
+
+| Category | Current | Gap | Path to Close |
+|----------|---------|-----|---------------|
+| Production Readiness | 81% | 14% | MOB-200 lifecycle fixes, MOB-500 handover consolidation, Phase 3 testing |
+| Test Coverage | 62% | 23% | Phase 3 re-test sprint + automated test suite |
+| System Health | 84% | 11% | Resolve 38 known bugs, security fixes |
+
 ### System Health Improvement Explanation
 
 The +1% system health improvement (83% → 84%) reflects the resolution of the `/map` route crash (MOB-400 Phase 1) and stabilization of handover session queries (Phase 2). The +1% production readiness improvement (80% → 81%) reflects the completion of the Help Center module (MOB-300 all 4 phases) and the 8 admin portal ticket resolutions.
+
+---
+
+## 🗓️ Sprint Overview
+
+### Sprint 5 Retrospective (March 3-9) — COMPLETED
+
+**Theme:** Help Center Overhaul + Map Crash Hotfix  
+**Planned:** ~30 SP (MOB-300 Phases 1-3)  
+**Delivered:** ~55 SP (MOB-300 Phase 4 + MOB-400 Phases 1-3 + MOB-100 tickets)  
+**Velocity:** 183% — high-velocity hotfix sprint, significant unplanned work absorbed
+
+| Task Range | Description | SP | Status |
+|-----------|-------------|-----|--------|
+| MOB-300 Phase 4 | Component extraction + Admin CRUD | ~8 | ✅ Complete |
+| MOB-400 Phases 1-3 | Map crash fix, handover stability, data integrity | ~20 | ✅ Complete |
+| MOB-100 (8 tickets) | Admin portal fixes (reviews, KYC, avatar, car images) | ~15 | ✅ Complete |
+| MOB-500 planning | Handover consolidation epic planning (11 tickets) | ~4 | ✅ Complete |
+| Documentation | Damage Protection spec, ADR-010/011/012 | ~8 | ✅ Complete |
+
+### Sprint 6 Plan (March 10-16) — CURRENT
+
+**Theme:** Rental Lifecycle Hotfix + Module Hardening  
+**Planned:** ~45 SP
+
+| Item | SP | Priority | Description |
+|------|-----|----------|-------------|
+| MOB-200 (5 tickets) | 20 | P0 | Rental lifecycle critical flow fixes |
+| MOB-202 | 5 | P0 | Return handover flow fix |
+| MOB-210 | 5 | P0 | Signup flow fix |
+| MOB-400 Phase 4 | 5 | P1 | Map module hardening (MOB-410, MOB-411) |
+| MOB-500 (begin) | 10 | P1 | Start handover consolidation (MOB-501, MOB-502) |
+
+### March Sprint Cycle Summary
+
+| Sprint | Dates | Planned SP | Delivered SP | Velocity | Theme |
+|--------|-------|-----------|-------------|----------|-------|
+| Sprint 5 (Mar 3-9) | Mar 3-9 | 30 | ~55 | 183% | Help Center + Map Hotfix |
+| Sprint 6 (Mar 10-16) | Mar 10-16 | 45 | — | — | Lifecycle + Hardening |
+| Sprint 7 (Mar 17-23) | — | ~50 | — | — | Handover Consolidation |
+| Sprint 8 (Mar 24-31) | — | ~40 | — | — | Polish + Security |
+
+---
+
+## 📑 New Planning Documents Created This Period
+
+| Document | Purpose | Location |
+|----------|---------|----------|
+| Damage Protection Module Spec v1.0.0 | Comprehensive damage protection system: 4 coverage tiers, claims process, technical architecture | `docs/20260305_DAMAGE_PROTECTION_OVERVIEW.md` |
+| Handover Consolidation Plan (MOB-500) | 11 tickets to consolidate handover from 14→8 steps | `docs/hotfixes/HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md` |
+| Epic MOB-400 Plan | Full diagnostic recovery plan for Map module with 4 phases, 11 tickets | `.lovable/plan.md` |
+
+---
+
+## 📊 Epic Status Update (15 Epics)
+
+### Epic Completion Summary
+
+| Epic | Name | Week 4 Feb | Week 1 Mar | **Week 2 Mar** | Change | Status |
+|------|------|------------|------------|----------------|--------|--------|
+| 1 | User Auth & Onboarding | 88% | 88% | **88%** | — | 🟡 MOB-210 signup still open |
+| 2 | Car Listing & Discovery | 82% | 82% | **82%** | — | 🟡 MOB-225 location filter still open |
+| 3 | Booking System | 83% | 83% | **83%** | — | 🟡 MOB-206 extension not functional |
+| 4 | Handover Management | 77% | 77% | **80%** | ↑ +3% | 🔵 MOB-400 Phase 2 stabilization |
+| 5 | Messaging System | 72% | 72% | **72%** | — | 🔴 MOB-201, MOB-211 still open |
+| 6 | Review System | 70% | 70% | **70%** | — | 🔴 MOB-204 submission fails |
+| 7 | Wallet & Payments | 62% | 62% | **62%** | — | 🟡 MOB-213 transaction history |
+| 8 | Notification System | 78% | 78% | **78%** | — | 🟡 MOB-216/217/218 |
+| 9 | Admin Dashboard | 65% | 65% | **68%** | ↑ +3% | 🟡 MOB-101/102 + avatar/car fixes |
+| 10 | Verification System | 70% | 70% | **70%** | — | 🟡 OTP blocked |
+| 11 | Insurance System | 56% | 56% | **56%** | — | 🟡 MOB-207/208/209 |
+| 12 | Map & Location | 65% | 65% | **72%** | ↑ +7% | 🔵 MOB-400 Phase 1 crash fix |
+| 13 | Help & Support | 58% | 65% | **72%** | ↑ +7% | ✅ MOB-300 all 4 phases complete |
+| 14 | Host Management | 72% | 72% | **72%** | — | 🟡 No changes |
+| 15 | UI/Display Fixes | 8% | 8% | **8%** | — | 🟡 No changes |
+
+### Notable Epic Movements
+- **Epic 4 (Handover):** +3% — MOB-400 Phase 2 handover query stabilization + Phase 3 data integrity
+- **Epic 9 (Admin):** +3% — 8 tickets resolved (MOB-101, MOB-102, MOB-118-120, MOB-123-125)
+- **Epic 12 (Map & Location):** +7% — MOB-400 Phase 1 crash fix eliminated the `/map` blocker
+- **Epic 13 (Help & Support):** +7% — MOB-300 Phase 4 component extraction + admin CRUD complete
+
+### Epic-Specific Updates
+
+**Epic 4 (Handover Management) — Major Consolidation Planned:**
+- MOB-400 Phase 2 stabilized handover session queries (`.single()` → list + pick-latest)
+- MOB-500 Handover Consolidation planned: 14 steps → 8 steps with role-aware inspection
+- New components: `ConfirmAndEnRouteStep`, `KeyExchangeStep`, `SignAndCompleteStep`
+- Dashboard photo replaces manual fuel/mileage inputs
+
+**Epic 12 (Map & Location) — P0 Blocker Resolved:**
+- `/map` route crash eliminated via nullable destination state (ADR-012)
+- `Number.isFinite` coordinate guards added to all `setLngLat` calls
+- `useHandoverSafe` hook prevents crashes outside HandoverProvider context (ADR-010)
+- Partial unique index prevents duplicate active sessions (ADR-011)
+
+**Epic 13 (Help & Support) — First Complete Epic:**
+- MOB-300 all 4 phases complete (13/13 tickets resolved)
+- Database-driven content, progress persistence, component extraction, admin CRUD
+- First epic to reach 100% completion since Data Integrity (Epic 1.2)
+
+---
+
+## 🎯 Major Features Planned
+
+### 1. Handover Consolidation (MOB-500) — NEW
+
+**Problem:** Current 14-step handover flow is redundant; separate exterior/interior/fuel/mileage steps slow the process.
+
+**Solution:** Consolidate to 8 steps with role-aware inspection and dashboard photo.
+
+| Current Steps (14) | Consolidated Steps (8) |
+|--------------------|-----------------------|
+| location_selection | location_selection (unchanged) |
+| location_confirmation + en_route_confirmation | **confirm_and_en_route** (merged) |
+| host_en_route + arrival_confirmation | **arrival** (absorbs host en-route) |
+| identity_verification | identity_verification (unchanged) |
+| exterior + interior + fuel_mileage + damage_documentation | **vehicle_inspection** (consolidated, role-aware) |
+| key_transfer + key_receipt | **key_exchange** (both-party) |
+| digital_signature + completion | **sign_and_complete** (merged) |
+
+**Key Design Decisions:**
+- Pickup: **Renter** takes photos; Return: **Host** takes photos
+- Dashboard photo replaces manual fuel/mileage text inputs
+- Both parties confirm key exchange in a single step
+
+### 2. Rental Lifecycle Hotfix (MOB-200) — P0 Priority
+
+**Problem:** No booking status transition after pickup handover completion. Booking remains `confirmed` instead of transitioning to `active`.
+
+**Solution:** 12 tickets covering status transitions, return flow, review access, and lifecycle automation.
 
 ---
 
@@ -112,7 +254,7 @@ Additionally, `fetchActiveHandoverHost()` used `.single()` but the DB contained 
 
 ---
 
-## 🏗️ Epic MOB-300: Help Center Hotfix — Continued
+## 🏗️ Epic MOB-300: Help Center Hotfix — Complete ✅
 
 ### Phase 4: Component Library & Admin Management ✅ (Completed This Week)
 
@@ -130,7 +272,7 @@ Additionally, `fetchActiveHandoverHost()` used `.single()` but the DB contained 
 
 > **Full Document:** [HOTFIX_ADMIN_PORTAL_2026_02_24.md](../hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md)
 
-### Summary (Updated from Week 4 Feb)
+### Summary (Updated from Week 1 Mar)
 
 | Section | Tickets | P0 | P1 | P2 | Resolved | Pending |
 |---------|---------|----|----|-----|----------|---------|
@@ -167,12 +309,33 @@ Additionally, `fetchActiveHandoverHost()` used `.single()` but the DB contained 
 | Total Tickets | 12 (MOB-201 to MOB-212) |
 | Resolved | 0 |
 | Partially Addressed | 1 (MOB-204 — data integrity via MOB-408 cross-epic) |
-| Status | **Ready for implementation, not started** |
+| Status | **Ready for implementation — P0 priority for Sprint 6** |
 
 ### Root Cause (from documentation)
 No booking status transition occurs after pickup handover completion. The handover completes but the booking remains in `confirmed` status rather than transitioning to `active`.
 
 **Note:** MOB-200 implementation is the highest-priority P0 item for Week 3 March.
+
+---
+
+## 🧪 Pre-Launch Testing Protocol Status
+
+| Phase | Dates | Status | Participants | Notes |
+|-------|-------|--------|--------------|-------|
+| Phase 1: Internal Testing | Jan 6-17 | ✅ Complete | Arnold, Duma, Tebogo | 12 bugs found, 10 fixed |
+| Phase 2: Extended Team | Jan 20-24 | ✅ Complete | Business team (Oratile, Pearl, Loago) | UX feedback collected |
+| Phase 3: Bug Fix & Re-Test | Mar 3-14 | 🟡 **In Progress** | Dev + QA team | MOB-300/400 completed, MOB-200 not started |
+| Phase 4: Soft Launch | TBD | ⬜ Blocked | Limited public | Requires Phase 3 completion |
+
+### Bug Resolution Velocity
+
+| Source | Total | Resolved (Cumulative) | Resolved This Week | Remaining |
+|--------|-------|-----------------------|--------------------|-----------|
+| MOB-100 (Admin Portal) | 38 | **11** | **+8** | 27 |
+| MOB-200 (Rental Lifecycle) | 12 | 0 | 0 | 12 |
+| MOB-300 (Help Center) | 13 | **13** | +4 (Phase 4) | **0** ✅ |
+| MOB-400 (Map Module) | 11 | **9** | **+9** (new epic) | 2 |
+| **Total** | **74** | **33** | **+21** | **41** |
 
 ---
 
@@ -201,46 +364,44 @@ No booking status transition occurs after pickup handover completion. The handov
 
 ---
 
-## 📊 Epic Status Update (15 Epics)
+## 🔒 Security Posture Update
 
-| Epic | Name | Week 4 Feb | Week 1 Mar | **Week 2 Mar** | Change | Status |
-|------|------|------------|------------|----------------|--------|--------|
-| 1 | User Auth & Onboarding | 88% | 88% | **88%** | — | 🟡 MOB-210 signup still open |
-| 2 | Car Listing & Discovery | 82% | 82% | **82%** | — | 🟡 MOB-225 location filter still open |
-| 3 | Booking System | 83% | 83% | **83%** | — | 🟡 MOB-206 extension not functional |
-| 4 | Handover Management | 77% | 77% | **80%** | ↑ +3% | 🔵 MOB-400 Phase 2 stabilization |
-| 5 | Messaging System | 72% | 72% | **72%** | — | 🔴 MOB-201, MOB-211 still open |
-| 6 | Review System | 70% | 70% | **70%** | — | 🔴 MOB-204 submission fails |
-| 7 | Wallet & Payments | 62% | 62% | **62%** | — | 🟡 MOB-213 transaction history |
-| 8 | Notification System | 78% | 78% | **78%** | — | 🟡 MOB-216/217/218 |
-| 9 | Admin Dashboard | 65% | 65% | **68%** | ↑ +3% | 🟡 MOB-101/102 + avatar/car fixes |
-| 10 | Verification System | 70% | 70% | **70%** | — | 🟡 OTP blocked |
-| 11 | Insurance System | 56% | 56% | **56%** | — | 🟡 MOB-207/208/209 |
-| 12 | Map & Location | 65% | 65% | **72%** | ↑ +7% | 🔵 MOB-400 Phase 1 crash fix |
-| 13 | Help & Support | 58% | 58% | **65%** | ↑ +7% | ✅ MOB-300 Phase 4 complete |
-| 14 | Host Management | 72% | 72% | **72%** | — | 🟡 No changes |
-| 15 | UI/Display Fixes | 8% | 8% | **8%** | — | 🟡 No changes |
+**No changes from Week 1 March.** Security fixes remain deferred per stakeholder direction.
 
-### Notable Epic Movements
-- **Epic 4 (Handover):** +3% — MOB-400 Phase 2 handover query stabilization + Phase 3 data integrity
-- **Epic 9 (Admin):** +3% — 8 tickets resolved (MOB-101, MOB-102, MOB-118-120, MOB-123-125)
-- **Epic 12 (Map & Location):** +7% — MOB-400 Phase 1 crash fix eliminated the `/map` blocker
-- **Epic 13 (Help & Support):** +7% — MOB-300 Phase 4 component extraction + admin CRUD complete
+### Current Security Vulnerabilities
 
----
+| ID | Severity | Description | Status | ETA |
+|----|----------|-------------|--------|-----|
+| SEC-001 | 🔴 High | Payment service integration incomplete | Open | Sprint 4+ |
+| SEC-002 | 🟡 Medium | Function search_path not set (9 remaining) | Deferred | March |
+| SEC-003 | 🟢 Low | pg_trgm extension in public schema | Deferred | Post-launch |
+| SEC-004 | 🟡 Medium | Permissive RLS on some tables | Deferred | March |
 
-## 📄 New Documentation This Period
+**Ongoing concern:** MOB-105 (`assign-role` / `bulk-assign-role` edge functions have no auth check) — P1 security vulnerability, unresolved.
 
-| Document | Location | Description |
-|----------|----------|-------------|
-| Damage Protection Module Spec v1.0.0 | `docs/20260305_DAMAGE_PROTECTION_OVERVIEW.md` | Comprehensive damage protection system: 4 coverage tiers, claims process, technical architecture, admin operations, compliance requirements (~912 lines) |
-| Epic MOB-400 Plan | `.lovable/plan.md` | Full diagnostic recovery plan for Map module with 4 phases, 11 tickets |
+### Linter Warning Trend
+
+| Category | Week 1 Jan | Week 4 Jan | Week 1 Feb | Week 4 Feb | Week 2 Mar | Target |
+|----------|-----------|------------|------------|------------|------------|--------|
+| Function search_path | 45 | 9 | 9 | 9 | 9 | 0 |
+| Extension in public schema | 1 | 1 | 1 | 1 | 1 | 0 |
+| Permissive RLS policies | 5 | 5 | 5 | 5 | 5 | 0 |
+| **Total** | **85** | **15** | **15** | **15** | **15** | **0** |
 
 ---
 
 ## 🗄️ Database & Infrastructure
 
-### Migration Statistics
+### Database Statistics
+
+| Metric | Week 1 Mar | Week 2 Mar | Status |
+|--------|------------|------------|--------|
+| Migrations | 231 | **~233** | ↑ +2 |
+| Schema Health | Verified | ⚠️ Drift detected | 🔴 Needs repair |
+| Sync Status | Synchronized | **Misaligned** | 🔴 6 entries |
+| Backup Status | Automated | Automated | ✅ Active |
+
+### Migration Statistics (Historical)
 
 | Period | Migrations Added | Cumulative Total |
 |--------|-----------------|------------------|
@@ -270,6 +431,14 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 
 **Status:** Commands generated, **pending execution**.
 
+### Planned Schema Changes (Sprint 6-7)
+
+| Table | Change | Sprint | Purpose |
+|-------|--------|--------|---------|
+| `handover_step_completion` | Modify step definitions | Sprint 7 | MOB-501: Consolidate 14→8 steps |
+| `handover_sessions` | Add completion metadata | Sprint 7 | MOB-508: Data viewer support |
+| `bookings` | Add status transition triggers | Sprint 6 | MOB-200: Lifecycle automation |
+
 ### Edge Functions Inventory (27 total — unchanged)
 
 **Payment (5):** `initiate-payment`, `payment-webhook`, `process-withdrawal`, `release-earnings`, `query-payment`  
@@ -278,45 +447,6 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 **Notifications (5):** `send-push-notification`, `get-vapid-key`, `notify-reverification`, `send-whatsapp`, `resend-service`  
 **Insurance (1):** `calculate-insurance`  
 **Maps (2):** `get-mapbox-token`, `set-mapbox-token`
-
----
-
-## 🧪 Testing & QA Status
-
-### Phase 3 Progress
-
-| Phase | Dates | Status | Notes |
-|-------|-------|--------|-------|
-| Phase 1: Internal Testing | Jan 6-17 | ✅ Complete | 12 bugs found, 10 fixed |
-| Phase 2: Extended Team | Jan 20-24 | ✅ Complete | UX feedback collected |
-| Phase 3: Bug Fix & Re-Test | Mar 3-14 | 🟡 **In Progress** | MOB-400 completed, MOB-200 not started |
-| Phase 4: Soft Launch | TBD | ⬜ Blocked | Requires Phase 3 completion |
-
-### Bug Resolution Velocity
-
-| Source | Total | Resolved (Cumulative) | Resolved This Week | Remaining |
-|--------|-------|-----------------------|--------------------|-----------|
-| MOB-100 (Admin Portal) | 38 | **11** | **+8** | 27 |
-| MOB-200 (Rental Lifecycle) | 12 | 0 | 0 | 12 |
-| MOB-300 (Help Center) | 13 | **13** | +4 (Phase 4) | **0** ✅ |
-| MOB-400 (Map Module) | 11 | **9** | **+9** (new epic) | 2 |
-| **Total** | **74** | **33** | **+21** | **41** |
-
----
-
-## 📁 Files Changed This Period
-
-| File | Type | Description |
-|------|------|-------------|
-| `src/pages/Map.tsx` | Modified | Nullable destination, safe handover query, single provider |
-| `src/components/map/CustomMapbox.tsx` | Modified | `Number.isFinite` coordinate guards, `useHandoverSafe`, effect deps |
-| `src/contexts/HandoverContext.tsx` | Modified | Added `useHandoverSafe` export |
-| `src/services/handoverService.ts` | Modified | Idempotent session creation via upsert |
-| `supabase/migrations/` (×2) | Created | Handover session dedup + partial unique index |
-| `src/components/help/GuideLayout.tsx` | Created | Extracted guide layout component |
-| `src/components/help/GuideProgressTracker.tsx` | Created | Extracted progress tracking component |
-| `src/pages/admin/AdminGuidesManagement.tsx` | Created | Admin CRUD for FAQ & guides |
-| Admin avatar/car image components | Modified (×6) | Applied shared utility functions for display fixes |
 
 ---
 
@@ -333,63 +463,6 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 | Vehicle fleet gap (62/100) | High | 🟡 Medium | Accelerate host onboarding | ⚠️ Active (unchanged) |
 | Capacitor build pipeline untested | Medium | 🟡 Medium | Run `npx cap sync && npx cap run android` | ⚠️ Active (unchanged) |
 | Sprint velocity declining | Medium | 🟡 Medium | Scope reduction strategy | ⚠️ Active (unchanged) |
-
----
-
-## 🔒 Security Posture Update
-
-**No changes from Week 1 March.** Security fixes remain deferred per stakeholder direction.
-
-| ID | Severity | Description | Status | ETA |
-|----|----------|-------------|--------|-----|
-| SEC-001 | 🔴 High | Payment service integration incomplete | Open | Sprint 4+ |
-| SEC-002 | 🟡 Medium | Function search_path not set (9 remaining) | Deferred | March |
-| SEC-003 | 🟢 Low | pg_trgm extension in public schema | Deferred | Post-launch |
-| SEC-004 | 🟡 Medium | Permissive RLS on some tables | Deferred | March |
-
-**Ongoing concern:** MOB-105 (`assign-role` / `bulk-assign-role` edge functions have no auth check) — P1 security vulnerability, unresolved.
-
----
-
-## 💰 Commercialization Alignment
-
-### Q1 2026 Milestone Assessment
-
-| Milestone | Target Date | Status | Confidence |
-|-----------|-----------|--------|------------|
-| 100 vehicles | Mar 31 | 62/100 (62%) | 🔴 Low — no improvement |
-| Android app launch | Mar 31 | Infrastructure only | 🔴 Low — build pipeline untested |
-| Payment live | Mar 31 | Sandbox untested | 🔴 Low — no provider credentials |
-| Pre-seed funding | Mar 15 | In progress | 🟡 Active |
-| Bug-free core flows | Mar 31 | 38 known bugs | 🟡 Medium — MOB-300/400 completed |
-
----
-
-## 📊 Six-Week Trend Analysis
-
-### Metrics Trend (January 20 → March 9)
-
-| Metric | Week 4 Jan | Week 1 Feb | Week 2 Feb | Week 3 Feb | Week 4 Feb | Week 1 Mar | **Week 2 Mar** | Trend |
-|--------|-----------|------------|------------|------------|------------|------------|----------------|-------|
-| Build Errors | 0 | 0 | 50+ | 0 | 0 | 0 | **0** | ✅ Stable |
-| Linter Warnings | 15 | 15 | 15 | 15 | 15 | 15 | **15** | ➡️ Flat |
-| System Health | 85% | 86% | 78% | 82% | 83% | 83% | **84%** | 🟢 Climbing |
-| Prod Readiness | 72% | 74% | 76% | 79% | 80% | 80% | **81%** | 🟢 Climbing |
-| Test Coverage | 45% | 47% | 47% | 47% | 62% | 62% | **62%** | ➡️ Plateau |
-| Known Bugs | ~10 | ~12 | ~15 | ~15 | 38 | 38 | **38** | ➡️ Plateau (resolution starting) |
-| Migrations | 216 | 216 | 221 | 225 | 227 | 231 | **~233** | ↑ Active |
-| Edge Functions | 22 | 22 | 27 | 27 | 27 | 27 | **27** | ➡️ Stable |
-
-### Bug Resolution Trend (NEW)
-
-| Period | Bugs Discovered | Bugs Resolved | Net Change | Cumulative Open |
-|--------|----------------|---------------|------------|-----------------|
-| Pre-Feb 2026 | ~15 | ~5 | +10 | ~10 |
-| February 2026 | +25 (MOB-201-225) | +3 (MOB-114-116) | +22 | ~38 |
-| Week 1 March | +13 (MOB-300) | +9 (MOB-300 P1-3) | +4 | ~38 |
-| **Week 2 March** | **+11 (MOB-400)** | **+21 (MOB-100/300/400)** | **-10** | **~41*** |
-
-*\*Total open count includes all active epics (MOB-100: 27, MOB-200: 12, MOB-400: 2 = 41 remaining tracked items)*
 
 ---
 
@@ -412,6 +485,7 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 | Validate MOB-400 via checklist (5 items) | Dev Team | Mar 12 | Confirm map module stable |
 | Fix MOB-201: Mark-as-read badge persistence | Dev Team | Mar 14 | Affects all messaging users |
 | Fix MOB-105/106: Role assignment auth | Dev Team | Mar 14 | Security vulnerability |
+| Begin MOB-500 implementation (MOB-501, MOB-502) | Dev Team | Mar 14 | Start handover consolidation |
 
 ### P2 — Nice to Have
 
@@ -420,6 +494,103 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 | Begin Anonymize-on-Delete (MOB-130-138) | Dev Team | Mar 14 | Data integrity for analytics |
 | Round 2 testing assignments | QA Team | Mar 14 | Coverage gap filling |
 | Validate Capacitor Android build | Dev Team | Mar 14 | Q1 Android launch |
+
+---
+
+## 💰 Commercialization Alignment
+
+### Q1 2026 Milestone Assessment
+
+| Milestone | Target Date | Status | Confidence |
+|-----------|-----------|--------|------------|
+| 100 vehicles | Mar 31 | 62/100 (62%) | 🔴 Low — no improvement |
+| Android app launch | Mar 31 | Infrastructure only | 🔴 Low — build pipeline untested |
+| Payment live | Mar 31 | Sandbox untested | 🔴 Low — no provider credentials |
+| Pre-seed funding | Mar 15 | In progress | 🟡 Active |
+| Bug-free core flows | Mar 31 | 38 known bugs | 🟡 Medium — MOB-300/400 completed |
+
+### GTM Readiness Assessment
+
+| GTM Component | Status | Blocker |
+|---------------|--------|---------|
+| Core rental flow (book→pickup→return→review) | 🔴 Broken | MOB-200, MOB-202 |
+| Payment acceptance | 🔴 Not functional | DPO/PayGate credentials |
+| User registration | 🔴 Intermittent failures | MOB-210 |
+| Map/navigation | 🟢 Fixed (MOB-400) | — |
+| Help Center | 🟢 Complete (MOB-300) | — |
+| Admin operations | 🟡 Partial | 24 remaining MOB-100 tickets |
+| Insurance/damage protection | 🟡 Backend only | UI integration pending |
+| Mobile app (Android) | 🔴 Build untested | Capacitor pipeline |
+
+---
+
+## 📱 Mobile App Readiness
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Capacitor Core | ✅ Installed (v8.0.2) | `@capacitor/core`, `@capacitor/cli`, `@capacitor/android` |
+| Android Platform | ✅ Scaffolded | Project structure exists |
+| iOS Platform | ❌ Not added | Deferred to post-launch |
+| Build Pipeline | 🔴 Untested | `npx cap sync && npx cap run android` never executed |
+| Native Plugins | ❌ None | Camera, geolocation, push notifications needed |
+| App Store Assets | ❌ Not created | Icons, splash screens, screenshots |
+
+---
+
+## 📊 Six-Week Trend Analysis
+
+### Metrics Trend (January 20 → March 9)
+
+| Metric | Week 4 Jan | Week 1 Feb | Week 2 Feb | Week 3 Feb | Week 4 Feb | Week 1 Mar | **Week 2 Mar** | Trend |
+|--------|-----------|------------|------------|------------|------------|------------|----------------|-------|
+| Build Errors | 0 | 0 | 50+ | 0 | 0 | 0 | **0** | ✅ Stable |
+| Linter Warnings | 15 | 15 | 15 | 15 | 15 | 15 | **15** | ➡️ Flat |
+| System Health | 85% | 86% | 78% | 82% | 83% | 83% | **84%** | 🟢 Climbing |
+| Prod Readiness | 72% | 74% | 76% | 79% | 80% | 80% | **81%** | 🟢 Climbing |
+| Test Coverage | 45% | 47% | 47% | 47% | 62% | 62% | **62%** | ➡️ Plateau |
+| Known Bugs | ~10 | ~12 | ~15 | ~15 | 38 | 38 | **38** | ➡️ Plateau (resolution starting) |
+| Migrations | 216 | 216 | 221 | 225 | 227 | 231 | **~233** | ↑ Active |
+| Edge Functions | 22 | 22 | 27 | 27 | 27 | 27 | **27** | ➡️ Stable |
+
+### Bug Resolution Trend
+
+| Period | Bugs Discovered | Bugs Resolved | Net Change | Cumulative Open |
+|--------|----------------|---------------|------------|-----------------|
+| Pre-Feb 2026 | ~15 | ~5 | +10 | ~10 |
+| February 2026 | +25 (MOB-201-225) | +3 (MOB-114-116) | +22 | ~38 |
+| Week 1 March | +13 (MOB-300) | +9 (MOB-300 P1-3) | +4 | ~38 |
+| **Week 2 March** | **+11 (MOB-400)** | **+21 (MOB-100/300/400)** | **-10** | **~41*** |
+
+*\*Total open count includes all active epics (MOB-100: 27, MOB-200: 12, MOB-400: 2 = 41 remaining tracked items)*
+
+---
+
+## 🎯 Success Criteria (March 31, 2026)
+
+### Updated from JIRA Production Readiness Plan
+
+- [ ] All P0 stories completed (100%)
+- [ ] 90%+ P1 stories completed
+- [ ] Payment integration tested in sandbox
+- [ ] Zero critical bugs (MOB-202, MOB-210 resolved)
+- [ ] Known bug count < 10
+- [ ] Core rental flow end-to-end functional
+- [x] Help Center fully operational (✅ MOB-300 complete)
+- [x] Map module crash-free (✅ MOB-400 Phases 1-3)
+- [ ] Interactive handover flow operational
+- [ ] Return handover functional end-to-end
+- [ ] Signup flow 100% reliable
+
+### Production Readiness Checklist
+
+| Area | Target | Current | Gap |
+|------|--------|---------|-----|
+| Overall Readiness | 95% | 81% | 14% |
+| Test Coverage | 85% | 62% | 23% |
+| Security Score | 100% | 80%* | 20% |
+| Epic Completion Average | 90% | 72% | 18% |
+
+*Security fixes intentionally deferred per stakeholder direction
 
 ---
 
@@ -432,6 +603,49 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 | 3 | Handover mode: no 406 for active session query, single session used | ⬜ Pending |
 | 4 | Car details map and booking map still function (regression check) | ⬜ Pending |
 | 5 | No infinite remounting/flicker of map container | ⬜ Pending |
+
+---
+
+## 📁 Files Changed This Period
+
+| File | Type | Description |
+|------|------|-------------|
+| `src/pages/Map.tsx` | Modified | Nullable destination, safe handover query, single provider |
+| `src/components/map/CustomMapbox.tsx` | Modified | `Number.isFinite` coordinate guards, `useHandoverSafe`, effect deps |
+| `src/contexts/HandoverContext.tsx` | Modified | Added `useHandoverSafe` export |
+| `src/services/handoverService.ts` | Modified | Idempotent session creation via upsert |
+| `supabase/migrations/` (×2) | Created | Handover session dedup + partial unique index |
+| `src/components/help/GuideLayout.tsx` | Created | Extracted guide layout component |
+| `src/components/help/GuideProgressTracker.tsx` | Created | Extracted progress tracking component |
+| `src/pages/admin/AdminGuidesManagement.tsx` | Created | Admin CRUD for FAQ & guides |
+| Admin avatar/car image components | Modified (×6) | Applied shared utility functions for display fixes |
+
+---
+
+## 📎 Document References
+
+| Document | Location | Last Updated |
+|----------|----------|--------------|
+| **ROADMAP Nov-Dec 2025 v5.0** | `docs/ROADMAP-NOV-DEC-2025.md` | Dec 2025 |
+| **Master ROADMAP** | `ROADMAP.md` | Dec 2025 |
+| JIRA Production Readiness Plan | `docs/JIRA_PRODUCTION_READINESS_PLAN_2026-02-02.md` | Feb 2, 2026 |
+| Admin Portal Hotfix | `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md` | Feb 24, 2026 |
+| Rental Lifecycle Hotfix | `docs/hotfixes/HOTFIX_RENTAL_LIFECYCLE_2026_03_06.md` | Mar 6, 2026 |
+| Help Center Hotfix | `docs/hotfixes/HOTFIX_HELP_CENTER_2026_03_08.md` | Mar 8, 2026 |
+| **Handover Consolidation Plan** | `docs/hotfixes/HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md` | **Mar 9, 2026** |
+| Damage Protection Overview | `docs/20260305_DAMAGE_PROTECTION_OVERVIEW.md` | Mar 5, 2026 |
+| Testing Coverage Status | `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md` | Mar 2, 2026 |
+| Pre-Launch Testing Protocol v2.0 | `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md` | Mar 2, 2026 |
+| Anonymize-on-Delete Plan | `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md` | Mar 2, 2026 |
+| Current vs Ideal State Analysis | `docs/CURRENT_VS_IDEAL_STATE_ANALYSIS_2026-02-15.md` | Feb 15, 2026 |
+| Commercialization GTM Plan v2.4 | `docs/20260206_MobiRides_Commercialization_GTM_Plan.md` | Feb 6, 2026 |
+| Interactive Handover Spec | `docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md` | Feb 2, 2026 |
+| Payment Integration Plan | `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` | Jan 2026 |
+| UI Display Issues | `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Mar 2, 2026 |
+| Host-Linked Promo Codes | `docs/20260225_HOST_LINKED_PROMO_CODES.md` | Feb 25, 2026 |
+| Migration Protocol | `docs/conventions/MIGRATION_PROTOCOL.md` | Feb 2026 |
+| Week 4 Feb Status Report | `docs/Product Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md` | Feb 23, 2026 |
+| Week 1 Mar Status Report | `docs/Product Status/WEEK_1_MARCH_2026_STATUS_REPORT.md` | Mar 8, 2026 |
 
 ---
 
@@ -471,6 +685,7 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 │  MOB-200 (Lifecycle):░░░░░░░░░░░░░░░░░░░░░   0/12  [ 0%]   │
 │  MOB-300 (Help):     ████████████████████░  13/13  [100%]  │
 │  MOB-400 (Map):      ████████████████░░░░░   9/11  [ 82%]  │
+│  MOB-500 (Handover): ░░░░░░░░░░░░░░░░░░░░░   0/11  [ 0%]   │
 │                                                             │
 │  📱 CAPACITOR: Android scaffolded | Build untested          │
 │  💰 FLEET: 62/100 vehicles (62% of Q1 target)              │
@@ -482,50 +697,25 @@ A critical infrastructure issue was identified this week: **local and remote Sup
 
 ---
 
-## 🎯 Conclusion
+## 🏁 Conclusion
 
-Week 2 of March 2026 was a **high-velocity hotfix week**, resolving 21 tickets across three epics (MOB-100, MOB-300, MOB-400). The Map Module crash — a P0 blocker — was diagnosed, fixed, and hardened at the database level within a single sprint. The Help Center epic (MOB-300) reached 100% completion, and the Admin Portal hotfix backlog was reduced from 35 to 27 pending tickets.
+Week 2 of March 2026 was a **high-velocity hotfix week**, resolving 21 tickets across three epics (MOB-100, MOB-300, MOB-400). The Map Module crash — a P0 blocker — was diagnosed, fixed, and hardened at the database level within a single sprint. The Help Center epic (MOB-300) reached 100% completion, and the Admin Portal hotfix backlog was reduced from 35 to 27 pending tickets. The Handover Consolidation epic (MOB-500) was planned with 11 tickets to reduce the handover flow from 14 to 8 steps.
 
 **Key Takeaways:**
 1. **Map crash resolved (MOB-400 Phases 1-3)** — `/map` route is functional again with coordinate guards and session dedup
 2. **Help Center complete (MOB-300 all 4 phases)** — First epic to reach 100% completion since Data Integrity (Epic 1.2)
 3. **Admin portal progress** — 8 tickets resolved; avatar and car image display fixed across admin views
-4. **Migration drift identified** — 6 misaligned entries blocking branch seeding; repair commands ready
-5. **MOB-200 (Rental Lifecycle) is the next P0** — 12 tickets documented and ready, root cause identified, implementation must begin Week 3
-6. **Bug resolution velocity turning positive** — First week with net bug reduction (-10 net change)
+4. **Handover consolidation planned (MOB-500)** — 11 tickets ready for Sprint 7 implementation
+5. **Migration drift identified** — 6 misaligned entries blocking branch seeding; repair commands ready
+6. **MOB-200 (Rental Lifecycle) is the next P0** — 12 tickets documented and ready, root cause identified, implementation must begin Week 3
+7. **Bug resolution velocity turning positive** — First week with net bug reduction (-10 net change)
 
 **Immediate Priorities for Week 3:**
 1. 🔴 Execute migration repair commands (6 commands) — unblock infrastructure
 2. 🔴 Begin MOB-200 implementation — rental lifecycle is the most critical remaining blocker
 3. 🔴 Fix MOB-202 (return handover) + MOB-210 (signup) — carried-forward critical bugs
 4. 🟡 MOB-400 Phase 4 — harden map module against regressions
-5. 🟡 Validate MOB-400 checklist — confirm map stability across all modes
-
----
-
-## 📎 Document References
-
-| Document | Location | Last Updated |
-|----------|----------|--------------|
-| **ROADMAP Nov-Dec 2025 v5.0** | `docs/ROADMAP-NOV-DEC-2025.md` | Dec 2025 |
-| **Master ROADMAP** | `ROADMAP.md` | Dec 2025 |
-| JIRA Production Readiness Plan | `docs/JIRA_PRODUCTION_READINESS_PLAN_2026-02-02.md` | Feb 2, 2026 |
-| Admin Portal Hotfix | `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md` | Feb 24, 2026 |
-| Rental Lifecycle Hotfix | `docs/hotfixes/HOTFIX_RENTAL_LIFECYCLE_2026_03_06.md` | Mar 6, 2026 |
-| Help Center Hotfix | `docs/hotfixes/HOTFIX_HELP_CENTER_2026_03_08.md` | Mar 8, 2026 |
-| Damage Protection Overview | `docs/20260305_DAMAGE_PROTECTION_OVERVIEW.md` | Mar 5, 2026 |
-| Testing Coverage Status | `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md` | Mar 2, 2026 |
-| Pre-Launch Testing Protocol v2.0 | `docs/testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md` | Mar 2, 2026 |
-| Anonymize-on-Delete Plan | `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md` | Mar 2, 2026 |
-| Current vs Ideal State Analysis | `docs/CURRENT_VS_IDEAL_STATE_ANALYSIS_2026-02-15.md` | Feb 15, 2026 |
-| Commercialization GTM Plan v2.4 | `docs/20260206_MobiRides_Commercialization_GTM_Plan.md` | Feb 6, 2026 |
-| Interactive Handover Spec | `docs/INTERACTIVE_HANDOVER_SYSTEM_2026-02-02.md` | Feb 2, 2026 |
-| Payment Integration Plan | `docs/PAYMENT_INTEGRATION_IMPLEMENTATION.md` | Jan 2026 |
-| UI Display Issues | `docs/UI_DISPLAY_ISSUES_2026-02-02.md` | Mar 2, 2026 |
-| Host-Linked Promo Codes | `docs/20260225_HOST_LINKED_PROMO_CODES.md` | Feb 25, 2026 |
-| Migration Protocol | `docs/conventions/MIGRATION_PROTOCOL.md` | Feb 2026 |
-| Week 4 Feb Status Report | `docs/Product Status/WEEK_4_FEBRUARY_2026_STATUS_REPORT.md` | Feb 23, 2026 |
-| Week 1 Mar Status Report | `docs/Product Status/WEEK_1_MARCH_2026_STATUS_REPORT.md` | Mar 8, 2026 |
+5. 🟡 Begin MOB-500 implementation (MOB-501, MOB-502) — start handover consolidation
 
 ---
 
@@ -534,5 +724,5 @@ Week 2 of March 2026 was a **high-velocity hotfix week**, resolving 21 tickets a
 ---
 
 *Report generated: March 9, 2026*  
-*Document version: 1.0*  
+*Document version: 2.0*  
 *Classification: Internal*
