@@ -45,6 +45,9 @@ const HandoverRoute = ({ children }: { children: React.ReactNode }) => {
 const Index = lazy(() => import("@/pages/Index"));
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/signup"));
+const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const CommunityGuidelines = lazy(() => import("@/pages/CommunityGuidelines"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const ProfileView = lazy(() => import("@/pages/ProfileView"));
 const Map = lazy(() => import("@/pages/Map"));
