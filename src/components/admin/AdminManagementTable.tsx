@@ -11,8 +11,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, Trash2, Shield, ShieldCheck } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Plus, Trash2, Shield, ShieldCheck, MoreHorizontal, UserCog } from "lucide-react";
 import { toast } from "sonner";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface Admin {
   id: string;
@@ -82,6 +89,7 @@ export const AdminManagementTable = () => {
   const queryClient = useQueryClient();
   const { data: admins, isLoading, error } = useAdmins();
   const { data: nonAdminUsers } = useNonAdminUsers();
+  const { isSuperAdmin: currentUserIsSuperAdmin } = useIsAdmin();
 
   const addAdminMutation = useMutation({
     mutationFn: async ({ userId, isSuperAdmin, userName }: { 
@@ -109,12 +117,30 @@ export const AdminManagementTable = () => {
     },
   });
 
+  const updateAdminRoleMutation = useMutation({
+    mutationFn: async ({ adminId, isSuperAdmin }: { adminId: string; isSuperAdmin: boolean }) => {
+      const { error } = await supabase.rpc('update_admin_role', {
+        target_user_id: adminId,
+        new_is_super_admin: isSuperAdmin
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
+      queryClient.invalidateQueries({ queryKey: ["non-admin-users"] });
+      toast.success("Admin role updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update admin role: ${error.message}`);
+    },
+  });
+
   const removeAdminMutation = useMutation({
     mutationFn: async (adminId: string) => {
-      const { error } = await supabase
-        .from("admins")
-        .delete()
-        .eq("id", adminId);
+      const { error } = await supabase.rpc('remove_admin_complete', {
+        target_user_id: adminId
+      });
 
       if (error) throw error;
     },
@@ -220,7 +246,7 @@ export const AdminManagementTable = () => {
                   <TableHead>Admin Type</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead>Last Sign In</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -254,15 +280,35 @@ export const AdminManagementTable = () => {
                         : "Never"
                       }
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveAdmin(admin)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {currentUserIsSuperAdmin && (
+                            <DropdownMenuItem 
+                              onClick={() => updateAdminRoleMutation.mutate({ 
+                                adminId: admin.id, 
+                                isSuperAdmin: !admin.is_super_admin 
+                              })}
+                            >
+                              <UserCog className="mr-2 h-4 w-4" />
+                              {admin.is_super_admin ? "Demote to Admin" : "Promote to Super Admin"}
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem 
+                            onClick={() => handleRemoveAdmin(admin)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove Admin
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

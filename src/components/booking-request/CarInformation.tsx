@@ -1,5 +1,6 @@
 
 import { Car, MapPin, CreditCard } from "lucide-react";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface CarInformationProps {
   car: {
@@ -22,7 +23,7 @@ export const CarInformation = ({ car }: CarInformationProps) => {
       </h2>
       <div className="flex flex-col md:flex-row gap-4">
         <img 
-          src={car.image_url || "/placeholder.svg"} 
+          src={getCarImagePublicUrl(car.image_url) || "/placeholder.svg"} 
           alt={`${car.brand} ${car.model}`} 
           className="w-full md:w-48 h-32 object-cover rounded-lg"
         />

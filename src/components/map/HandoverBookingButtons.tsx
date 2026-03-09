@@ -59,7 +59,7 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
               created_at
             )
           `)
-          .eq("status", "confirmed")
+          .in("status", ["confirmed", "in_progress"])
           .or(`start_date.eq.${today},start_date.eq.${tomorrow},end_date.eq.${today}`);
 
         // Filter based on user role
@@ -94,13 +94,13 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
             return false;
           }
           
-          // For pickup: show on start date if no handover session exists
+          // For pickup: show on start date if booking is confirmed and no handover session
           const isPickupDay = startDate.toDateString() === now.toDateString();
-          const needsPickup = isPickupDay && !handoverSession;
+          const needsPickup = isPickupDay && booking.status === 'confirmed' && !handoverSession;
           
-          // For return: show on end date if handover session exists but not completed
-          const isReturnDay = endDate.toDateString() === now.toDateString();
-          const needsReturn = isReturnDay && handoverSession && !handoverSession.handover_completed;
+          // For return: show on/after end date if booking is in_progress
+          const isReturnDayOrPast = endDate <= now || endDate.toDateString() === now.toDateString();
+          const needsReturn = isReturnDayOrPast && booking.status === 'in_progress';
           
           return needsPickup || needsReturn;
         });
@@ -125,22 +125,11 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
   const BookingButton = ({ booking, index }: { booking: BookingWithRelations; index: number }) => {
     const carImage = booking.cars?.image_url || "/placeholder.svg";
     
-    // Determine handover type based on date and handover session
-    const today = new Date();
-    const startDate = new Date(booking.start_date);
-    const endDate = new Date(booking.end_date);
-    const handoverSession = booking.handover_sessions?.[0];
-    
-    // Determine handover type more accurately
-    const isPickupDay = startDate.toDateString() === today.toDateString();
-    const isReturnDay = endDate.toDateString() === today.toDateString();
-    
+    // Determine handover type based on booking status (MOB-205 improved)
     let handoverType: 'pickup' | 'return' = 'pickup';
     
-    if (isReturnDay && handoverSession && !handoverSession.handover_completed) {
+    if (booking.status === 'in_progress') {
       handoverType = 'return';
-    } else if (isPickupDay && !handoverSession) {
-      handoverType = 'pickup';
     }
     
     return (

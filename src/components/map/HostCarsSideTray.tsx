@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { useNavigate } from "react-router-dom";
 import { Host } from "@/services/hostService";
 
@@ -91,10 +92,7 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
   };
 
   const getHostAvatarUrl = () => {
-    if (!host?.avatar_url) return "/placeholder.svg";
-    return supabase.storage
-      .from("avatars")
-      .getPublicUrl(host.avatar_url).data.publicUrl;
+    return getAvatarPublicUrl(host?.avatar_url) || "/placeholder.svg";
   };
 
   const handleCarClick = (carId: string) => {

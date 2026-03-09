@@ -26,10 +26,7 @@ const Map = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [onlineHosts, setOnlineHosts] = useState([]);
   const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(false);
-  const [destination, setDestination] = useState<{ latitude: number | null; longitude: number | null }>({
-    latitude: null,
-    longitude: null,
-  });
+  const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(null);
   const [routeSteps, setRouteSteps] = useState<any[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
@@ -65,11 +62,11 @@ const Map = () => {
           )
         `)
         .eq('id', bookingId)
-        .eq('status', 'confirmed')
+        .in('status', ['confirmed', 'in_progress'])
         .single();
 
       if (error || !booking) {
-        console.log('Booking not found or not confirmed:', bookingId);
+        console.log('Booking not found or not in valid handover state (confirmed/in_progress):', bookingId);
         return false;
       }
 
@@ -83,7 +80,7 @@ const Map = () => {
       // If we are the renter, fetch the car/host location to set as destination
       if (user.id === booking.renter_id) {
         // Priority 1: Booking pickup location
-        if (booking.latitude && booking.longitude) {
+        if (Number.isFinite(booking.latitude) && Number.isFinite(booking.longitude)) {
           console.log("Setting destination to booking pickup location:", { lat: booking.latitude, lng: booking.longitude });
           setDestination({
             latitude: booking.latitude,
@@ -91,11 +88,11 @@ const Map = () => {
           });
         } 
         // Priority 2: Car location
-        else if (booking.cars?.latitude && booking.cars?.longitude) {
+        else if (Number.isFinite(booking.cars?.latitude) && Number.isFinite(booking.cars?.longitude)) {
           console.log("Setting destination to car location:", { lat: booking.cars.latitude, lng: booking.cars.longitude });
           setDestination({
-            latitude: booking.cars.latitude,
-            longitude: booking.cars.longitude
+            latitude: booking.cars.latitude!,
+            longitude: booking.cars.longitude!
           });
         }
         // Priority 3: Host location (fallback)
@@ -106,11 +103,11 @@ const Map = () => {
             .eq('id', hostId)
             .single();
             
-          if (hostProfile?.latitude && hostProfile?.longitude) {
+          if (Number.isFinite(hostProfile?.latitude) && Number.isFinite(hostProfile?.longitude)) {
             console.log("Setting destination to host location:", hostProfile);
             setDestination({
-              latitude: hostProfile.latitude,
-              longitude: hostProfile.longitude
+              latitude: hostProfile.latitude!,
+              longitude: hostProfile.longitude!
             });
           }
         }
@@ -148,7 +145,7 @@ const Map = () => {
       
       if (!hasHandoverParams) {
         setIsHandoverMode(false);
-        setDestination({ latitude: null, longitude: null });
+        setDestination(null);
         setRouteSteps([]);
         return;
       }
@@ -171,7 +168,7 @@ const Map = () => {
         
         toast.info("Invalid handover request - showing standard map");
         setIsHandoverMode(false);
-        setDestination({ latitude: null, longitude: null });
+        setDestination(null);
         setRouteSteps([]);
       } else {
         setIsHandoverMode(true);
@@ -217,7 +214,7 @@ const Map = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from('handover_sessions')
         .select(`
           host_id,
@@ -232,7 +229,10 @@ const Map = () => {
         `)
         .eq('renter_id', user.id)
         .eq('handover_completed', false)
-        .single();
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      const data = rows?.[0] ?? null;
 
       if (error || !data) {
         console.log("No active handover session found");
@@ -381,23 +381,17 @@ const Map = () => {
                 console.log("Current booking ID from URL:", bookingId);
                 console.log("Current handover sheet state:", isHandoverSheetOpen);
                 
-                if (handoverType === 'return') {
-                  // Navigate to rental details page for return handovers
-                  window.location.href = `/rental-details/${clickedBookingId}`;
-                  return;
-                }
-                
-                // For pickup handovers, open the handover sheet
-                // Update the current booking ID if different from URL
-                if (clickedBookingId !== bookingId) {
-                  console.log("Updating URL with new booking ID");
+                // MOB-207: Open handover sheet on map for both pickup and return
+                // Update the current booking ID and handover type in URL
+                if (clickedBookingId !== bookingId || handoverType === 'return') {
+                  console.log("Updating URL with booking ID and handover type:", handoverType);
                   window.history.replaceState(
                     {}, 
                     '', 
-                    `/map?mode=handover&bookingId=${clickedBookingId}`
+                    `/map?mode=handover&bookingId=${clickedBookingId}&handoverType=${handoverType}`
                   );
                 }
-                console.log("Opening handover sheet");
+                console.log("Opening handover sheet for", handoverType);
                 setIsHandoverSheetOpen(true);
               }}
             />

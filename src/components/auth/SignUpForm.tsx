@@ -11,10 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import countryCodes from "@/constants/Countries";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import { SignUpConsents, ConsentState, allRequiredConsentsChecked } from "@/components/auth/SignUpConsents";
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -31,26 +32,39 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [consents, setConsents] = useState<ConsentState>({
+    ageConfirmed: false,
+    termsAccepted: false,
+    privacyAccepted: false,
+    communityAccepted: false,
+    marketingOptedIn: false,
+  });
 
   const formatPhoneNumber = (number: string) => {
     return number.replace(/[^\d+]/g, "");
   };
 
+  const canSubmit = allRequiredConsentsChecked(consents) && !isLoading;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(""); // Clear any existing errors
+    setError("");
 
-    // Validate full name
     if (!fullName.trim()) {
       setError("Please enter your full name");
       setIsLoading(false);
       return;
     }
 
-    // Validate phone number
     if (!phoneNumber.trim()) {
       setError("Please enter your phone number");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!allRequiredConsentsChecked(consents)) {
+      setError("Please accept all required agreements to continue");
       setIsLoading(false);
       return;
     }
@@ -70,12 +84,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
 
-      // Use custom signup API endpoint
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           password,
@@ -89,7 +100,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
       if (!response.ok || !result.success) {
         console.error("Signup error:", result);
 
-        // Handle specific error cases from backend
         if (result.error?.includes('already exists') || result.error?.includes('already registered')) {
           if (result.error?.includes('phone number')) {
             setError('An account with this phone number already exists');
@@ -109,25 +119,29 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
         return;
       }
 
-      // Show success message
       toast.success('🎉 Account created successfully!', {
         description: 'You can now sign in with your credentials. Welcome to MobiRides!'
       });
 
-      // Reset form
       setEmail("");
       setPassword("");
       setConfirmPassword("");
       setFullName("");
       setPhoneNumber("");
       setCountryCode("+267");
+      setConsents({
+        ageConfirmed: false,
+        termsAccepted: false,
+        privacyAccepted: false,
+        communityAccepted: false,
+        marketingOptedIn: false,
+      });
 
       onSuccess?.();
       setIsLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
 
-      // Handle network and other errors
       if (error.message?.includes("network") || error.message?.includes("fetch")) {
         setError("Network error. Please check your connection and try again.");
       } else {
@@ -216,16 +230,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
             className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
             onClick={() => setShowPassword(!showPassword)}
           >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-            <span className="sr-only">
-              {showPassword ? "Hide password" : "Show password"}
-            </span>
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
           </Button>
         </div>
+        <PasswordStrengthMeter password={password} />
       </div>
 
       <div className="space-y-2">
@@ -247,19 +256,15 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
             className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           >
-            {showConfirmPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-            <span className="sr-only">
-              {showConfirmPassword ? "Hide password" : "Show password"}
-            </span>
+            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
           </Button>
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <SignUpConsents consents={consents} onChange={setConsents} />
+
+      <Button type="submit" className="w-full" disabled={!canSubmit}>
         {isLoading ? "Creating account..." : "Sign Up"}
       </Button>
     </form>

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import Dpad from "./Dpad";
 import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 import { ExtendedProfile } from "@/utils/profileTypes";
-import { useHandover } from "@/contexts/HandoverContext";
+import { useHandoverSafe } from "@/contexts/HandoverContext";
 import { HandoverLocation } from "@/services/handoverService";
 import { HostPopup } from "./HostPopup";
 import { HostCarsSideTray } from "./HostCarsSideTray";
@@ -84,7 +84,7 @@ const CustomMapbox = ({
   }, []);
 
   // Always call hooks - move conditional logic to usage
-  const handoverData = useHandover();
+  const handoverData = useHandoverSafe();
   const handover = isHandoverMode ? handoverData : null;
 
   // Memoize returnLocation callback to prevent unnecessary re-renders
@@ -547,6 +547,12 @@ const CustomMapbox = ({
 
     const { latitude, longitude } = destination;
 
+    // Guard: ensure coordinates are valid finite numbers
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      console.warn("Invalid destination coordinates:", { latitude, longitude });
+      return;
+    }
+
     const el = document.createElement("div");
     el.className = "destination-marker";
     el.style.width = "24px";
@@ -568,7 +574,7 @@ const CustomMapbox = ({
     return () => {
       marker.remove();
     };
-  });
+  }, [destination, mapInit]);
 
   useEffect(() => {
     if (!map.current || !mapInit || !destination) return;

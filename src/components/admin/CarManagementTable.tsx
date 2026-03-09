@@ -31,6 +31,7 @@ interface Car {
   is_available: boolean;
   created_at: string;
   owner_id: string;
+  image_url: string | null;
   description?: string | null;
   profiles?: {
     full_name: string | null;
@@ -45,7 +46,7 @@ const useAdminCars = () => {
         .from("cars")
         .select(`
           id, brand, model, year, price_per_day, location, 
-          is_available, created_at, owner_id,
+          is_available, created_at, owner_id, image_url, description,
           profiles:owner_id (full_name)
         `)
         .order("created_at", { ascending: false });
@@ -61,7 +62,7 @@ export const CarManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
+
   const { data: cars, isLoading, error, refetch } = useAdminCars();
 
   const filteredCars = useMemo(() => cars?.filter(car =>
@@ -81,7 +82,7 @@ export const CarManagementTable = () => {
         .eq("id", carId);
 
       if (error) throw error;
-      
+
       refetch();
       toast.success(`Car ${!currentStatus ? 'enabled' : 'disabled'} successfully`);
     } catch (error) {

@@ -2,10 +2,12 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, X, Star, Loader2 } from "lucide-react";
+import { ImagePlus, X, Star, Loader2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { compressImage } from "@/utils/imageCompression";
 import { useToast } from "@/hooks/use-toast";
 import { generateUUID } from "@/utils/uuid";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface CarImageManagerProps {
   carId: string;
@@ -32,7 +35,9 @@ interface CarImage {
 export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImageManagerProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [deleteImageId, setDeleteImageId] = useState<string | null>(null);
+  const [replaceImageId, setReplaceImageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -49,23 +54,34 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
 
       if (error) throw error;
 
-      // Combine main image with additional images
       const allImages: CarImage[] = [];
-      
-      if (mainImageUrl) {
+      const seenUrls = new Set<string>();
+
+      // Standardize the main URL for comparison
+      const mainUrlNormalized = mainImageUrl ? getCarImagePublicUrl(mainImageUrl) : null;
+
+      if (mainImageUrl && mainUrlNormalized) {
         allImages.push({
           id: "main",
           image_url: mainImageUrl,
           is_primary: true,
         });
+        seenUrls.add(mainUrlNormalized);
       }
 
       if (data) {
-        allImages.push(...data.map((img) => ({
-          id: img.id,
-          image_url: img.image_url,
-          is_primary: img.is_primary || false,
-        })));
+        data.forEach((img) => {
+          const urlNormalized = getCarImagePublicUrl(img.image_url);
+          // Deduplicate: Don't add if it's the main image or already seen
+          if (urlNormalized && !seenUrls.has(urlNormalized)) {
+            allImages.push({
+              id: img.id,
+              image_url: img.image_url,
+              is_primary: img.is_primary || false,
+            });
+            seenUrls.add(urlNormalized);
+          }
+        });
       }
 
       return allImages;
@@ -76,14 +92,12 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
   const deleteMutation = useMutation({
     mutationFn: async (imageId: string) => {
       if (imageId === "main") {
-        // Update cars table to remove main image
         const { error } = await supabase
           .from("cars")
           .update({ image_url: null })
           .eq("id", carId);
         if (error) throw error;
       } else {
-        // Delete from car_images table
         const { error } = await supabase
           .from("car_images")
           .delete()
@@ -110,7 +124,7 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
   // Set as primary mutation
   const setPrimaryMutation = useMutation({
     mutationFn: async (image: CarImage) => {
-      // Update cars table with new main image
+      // 1. First, update the cars table to ensure the listing has a cover
       const { error: updateCarError } = await supabase
         .from("cars")
         .update({ image_url: image.image_url })
@@ -118,13 +132,29 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
 
       if (updateCarError) throw updateCarError;
 
-      // If it was in car_images, we can optionally remove it or keep it
-      // For now, we'll keep it as a backup
+      // 2. Unset any existing primary in car_images for this specific car
+      // We do this BEFORE setting the new one to avoid unique constraint violation
+      const { error: unsetError } = await supabase
+        .from("car_images")
+        .update({ is_primary: false })
+        .eq("car_id", carId)
+        .eq("is_primary", true);
+
+      if (unsetError) {
+        console.warn("Could not unset existing primary images, continuing anyway...", unsetError);
+      }
+
+      // 3. Set the new primary in car_images
       if (image.id !== "main") {
-        await supabase
+        const { error: setError } = await supabase
           .from("car_images")
           .update({ is_primary: true })
           .eq("id", image.id);
+
+        if (setError) {
+          console.error("Error setting primary in car_images:", setError);
+          throw setError;
+        }
       }
     },
     onSuccess: () => {
@@ -143,6 +173,63 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
     },
   });
 
+  // Replace image mutation
+  const replaceMutation = useMutation({
+    mutationFn: async ({ file, imageId }: { file: File, imageId: string }) => {
+      const compressedFile = await compressImage(file, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        quality: 0.8,
+        maxSizeKB: 1024,
+      });
+
+      const fileExt = compressedFile.name.split(".").pop();
+      const fileName = `${generateUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("car-images")
+        .upload(fileName, compressedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("car-images")
+        .getPublicUrl(fileName);
+
+      if (imageId === "main") {
+        const { error } = await supabase
+          .from("cars")
+          .update({ image_url: publicUrl })
+          .eq("id", carId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("car_images")
+          .update({ image_url: publicUrl })
+          .eq("id", imageId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["car-images-manager", carId] });
+      queryClient.invalidateQueries({ queryKey: ["car-images", carId] });
+      queryClient.invalidateQueries({ queryKey: ["car", carId] });
+      toast({ title: "Image replaced successfully" });
+    },
+    onError: (error) => {
+      console.error("Replace error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to replace image",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setReplaceImageId(null);
+      if (replaceInputRef.current) replaceInputRef.current.value = "";
+    }
+  });
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -158,14 +245,12 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
     }
 
     setIsUploading(true);
-
     try {
+      let currentMainUrl = mainImageUrl;
       const filesToProcess = Array.from(files).slice(0, remainingSlots);
-
       for (const file of filesToProcess) {
         if (!file.type.startsWith("image/")) continue;
 
-        // Compress image
         const compressedFile = await compressImage(file, {
           maxWidth: 1920,
           maxHeight: 1080,
@@ -173,7 +258,6 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
           maxSizeKB: 1024,
         });
 
-        // Upload to storage
         const fileExt = compressedFile.name.split(".").pop();
         const fileName = `${generateUUID()}.${fileExt}`;
 
@@ -181,23 +265,36 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
           .from("car-images")
           .upload(fileName, compressedFile);
 
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-          continue;
-        }
+        if (uploadError) continue;
 
         const { data: { publicUrl } } = supabase.storage
           .from("car-images")
           .getPublicUrl(fileName);
 
-        // If no main image exists, set this as main
-        if (!mainImageUrl && images.length === 0) {
+        // Check if we need to set a primary image
+        // We set as primary if there is no main cover photo in the cars table currently
+        // and no image in the existing list is marked primary.
+        const hasExistingPrimary = images.some(img => img.is_primary);
+        const shouldBePrimary = !currentMainUrl && !hasExistingPrimary;
+
+        if (shouldBePrimary) {
+          // Update cars table
           await supabase
             .from("cars")
             .update({ image_url: publicUrl })
             .eq("id", carId);
+
+          // Insert into car_images as primary
+          await supabase.from("car_images").insert({
+            car_id: carId,
+            image_url: publicUrl,
+            is_primary: true,
+          });
+
+          // Set local flag to skip other images in this loop if multiple files
+          currentMainUrl = publicUrl;
         } else {
-          // Insert into car_images table
+          // Insert into car_images table as normal
           await supabase.from("car_images").insert({
             car_id: carId,
             image_url: publicUrl,
@@ -205,36 +302,29 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
           });
         }
       }
-
       queryClient.invalidateQueries({ queryKey: ["car-images-manager", carId] });
       queryClient.invalidateQueries({ queryKey: ["car-images", carId] });
       queryClient.invalidateQueries({ queryKey: ["car", carId] });
       toast({ title: "Images uploaded successfully" });
     } catch (error) {
       console.error("Error uploading images:", error);
-      toast({
-        title: "Error",
-        description: "Failed to upload some images",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to upload some images", variant: "destructive" });
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <input
         ref={fileInputRef}
         type="file"
@@ -244,102 +334,159 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
         className="hidden"
       />
 
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && replaceImageId) {
+            replaceMutation.mutate({ file, imageId: replaceImageId });
+          }
+        }}
+        className="hidden"
+      />
+
       {/* Image Grid */}
-      {images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <AnimatePresence>
           {images.map((image, index) => (
-            <div
+            <motion.div
               key={image.id}
-              className={`relative aspect-video rounded-lg overflow-hidden border-2 ${
-                index === 0 ? "border-primary" : "border-border"
-              }`}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className={cn(
+                "group relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border transition-all duration-300",
+                image.id === "main" ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
+              )}
             >
               <img
-                src={image.image_url}
+                src={getCarImagePublicUrl(image.image_url)}
                 alt={`Car image ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
 
-              {/* Primary badge */}
-              {index === 0 && (
-                <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                  Main Photo
-                </span>
+              {/* Status Badge */}
+              {image.id === "main" && (
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="flex items-center gap-1 bg-primary px-2 py-1 rounded-full text-[10px] font-bold text-primary-foreground shadow-lg animate-in fade-in zoom-in duration-300">
+                    <CheckCircle2 className="w-3 h-3" />
+                    COVER PHOTO
+                  </span>
+                </div>
               )}
 
-              {/* Action buttons */}
-              <div className="absolute top-2 right-2 flex gap-1">
-                {index !== 0 && (
+              {/* Glassmorphism Action Menu */}
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-2 p-2">
+                <div className="flex gap-2">
+                  {image.id !== "main" && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="secondary"
+                      className="h-9 w-9 bg-white/20 backdrop-blur-md border-white/30 hover:bg-primary hover:text-white transition-colors"
+                      onClick={() => setPrimaryMutation.mutate(image)}
+                      disabled={setPrimaryMutation.isPending}
+                      title="Set as cover"
+                    >
+                      <Star className={cn("h-4 w-4", image.id === "main" && "fill-current")} />
+                    </Button>
+                  )}
+
                   <Button
                     type="button"
                     size="icon"
                     variant="secondary"
-                    className="h-7 w-7"
-                    onClick={() => setPrimaryMutation.mutate(image)}
-                    disabled={setPrimaryMutation.isPending}
-                    title="Set as main photo"
+                    className="h-9 w-9 bg-white/20 backdrop-blur-md border-white/30 hover:bg-blue-500 hover:text-white transition-colors"
+                    onClick={() => {
+                      setReplaceImageId(image.id);
+                      replaceInputRef.current?.click();
+                    }}
+                    disabled={replaceMutation.isPending}
+                    title="Replace image"
                   >
-                    <Star className="h-3 w-3" />
+                    <RefreshCw className={cn("h-4 w-4", replaceMutation.isPending && "animate-spin")} />
                   </Button>
-                )}
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="destructive"
-                  className="h-7 w-7"
-                  onClick={() => setDeleteImageId(image.id)}
-                  disabled={deleteMutation.isPending}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="destructive"
+                    className="h-9 w-9 bg-red-500/20 backdrop-blur-md border-red-500/30 hover:bg-red-500 transition-colors"
+                    onClick={() => setDeleteImageId(image.id)}
+                    disabled={deleteMutation.isPending}
+                    title="Delete image"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+
+              {/* Loading Overlay for this specific image */}
+              {(replaceMutation.isPending && replaceImageId === image.id) && (
+                <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-20">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              )}
+            </motion.div>
           ))}
-        </div>
-      )}
 
-      {/* Upload Button */}
-      {images.length < maxImages && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-32 border-dashed"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-        >
-          <div className="flex flex-col items-center gap-2">
-            {isUploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            ) : (
-              <ImagePlus className="h-8 w-8 text-muted-foreground" />
-            )}
-            <span className="text-sm text-muted-foreground">
-              {isUploading
-                ? "Uploading..."
-                : images.length === 0
-                ? "Add Photos (up to 10)"
-                : `Add More Photos (${images.length}/${maxImages})`}
-            </span>
-          </div>
-        </Button>
-      )}
+          {/* Add More Button inside the grid */}
+          {images.length < maxImages && (
+            <motion.button
+              layout
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="group relative aspect-[4/3] rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 flex flex-col items-center justify-center gap-2 overflow-hidden"
+            >
+              {isUploading ? (
+                <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
+              ) : (
+                <>
+                  <div className="p-3 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
+                    <ImagePlus className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-sm font-medium text-muted-foreground group-hover:text-primary">
+                      Add Photos
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/60">
+                      {images.length} / {maxImages}
+                    </span>
+                  </div>
+                </>
+              )}
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        Click the star icon to set a different main photo. First image will be shown in listings.
-      </p>
+      <div className="flex items-center justify-between px-1">
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+          <Star className="w-3 h-3 text-primary fill-primary" />
+          Click the star icon to set the cover photo. The first image is used for listings.
+        </p>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteImageId} onOpenChange={() => setDeleteImageId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-background/95 backdrop-blur-lg border-white/10">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Image</AlertDialogTitle>
+            <AlertDialogTitle>Remove this photo?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this image? This action cannot be undone.
+              This image will be permanently removed from the car carousel.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="bg-muted hover:bg-muted/80">Cancel</AlertDialogCancel>
             <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 border-none"
               onClick={() => {
                 if (deleteImageId) {
                   deleteMutation.mutate(deleteImageId);
@@ -347,7 +494,7 @@ export const CarImageManager = ({ carId, mainImageUrl, maxImages = 10 }: CarImag
                 }
               }}
             >
-              Delete
+              Remove Photo
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
