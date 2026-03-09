@@ -547,6 +547,12 @@ const CustomMapbox = ({
 
     const { latitude, longitude } = destination;
 
+    // Guard: ensure coordinates are valid finite numbers
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      console.warn("Invalid destination coordinates:", { latitude, longitude });
+      return;
+    }
+
     const el = document.createElement("div");
     el.className = "destination-marker";
     el.style.width = "24px";
@@ -568,7 +574,7 @@ const CustomMapbox = ({
     return () => {
       marker.remove();
     };
-  });
+  }, [destination, mapInit]);
 
   useEffect(() => {
     if (!map.current || !mapInit || !destination) return;

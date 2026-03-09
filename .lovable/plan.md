@@ -15,13 +15,13 @@ The Map page crashes on load due to a runtime error in the Mapbox destination ma
 
 ---
 
-## Phase 1: Stop the Crash (Hotfix) 🔴 IN PROGRESS
+## Phase 1: Stop the Crash (Hotfix) ✅ DONE
 
 | Ticket | Title | Status | File(s) |
 |--------|-------|--------|---------|
-| MOB-401 | Fix destination state init to nullable | Todo | `src/pages/Map.tsx` |
-| MOB-402 | Add `Number.isFinite` coordinate guards in marker effects | Todo | `src/components/map/CustomMapbox.tsx` |
-| MOB-403 | Add dependency array to destination marker effect | Todo | `src/components/map/CustomMapbox.tsx` |
+| MOB-401 | Fix destination state init to nullable | Done ✅ | `src/pages/Map.tsx` |
+| MOB-402 | Add `Number.isFinite` coordinate guards in marker effects | Done ✅ | `src/components/map/CustomMapbox.tsx` |
+| MOB-403 | Add dependency array to destination marker effect | Done ✅ | `src/components/map/CustomMapbox.tsx` |
 
 ### Root Cause
 `Map.tsx` initializes `destination` as `{ latitude: null, longitude: null }` (truthy object). `CustomMapbox.tsx` checks `!destination` (always false), then calls `marker.setLngLat([null, null])` → Mapbox throws → ErrorBoundary catches → blank page.
@@ -33,12 +33,12 @@ The Map page crashes on load due to a runtime error in the Mapbox destination ma
 
 ---
 
-## Phase 2: Stabilize Handover Integration 🟡 TODO
+## Phase 2: Stabilize Handover Integration ✅ DONE
 
 | Ticket | Title | Status | File(s) |
 |--------|-------|--------|---------|
-| MOB-404 | Replace `.single()` with list + pick-latest in active handover query | Todo | `src/pages/Map.tsx` |
-| MOB-405 | Remove redundant HandoverProvider wrapping | Todo | `src/pages/Map.tsx`, `src/App.tsx` |
+| MOB-404 | Replace `.single()` with list + pick-latest in active handover query | Done ✅ | `src/pages/Map.tsx` |
+| MOB-405 | Remove redundant HandoverProvider wrapping | Deferred | `src/pages/Map.tsx`, `src/App.tsx` |
 | MOB-406 | Export and use `useHandoverSafe` consistently | Done ✅ | `src/contexts/HandoverContext.tsx`, `src/components/map/CustomMapbox.tsx` |
 
 ### Root Cause
