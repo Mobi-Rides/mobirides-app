@@ -125,22 +125,11 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
   const BookingButton = ({ booking, index }: { booking: BookingWithRelations; index: number }) => {
     const carImage = booking.cars?.image_url || "/placeholder.svg";
     
-    // Determine handover type based on date and handover session
-    const today = new Date();
-    const startDate = new Date(booking.start_date);
-    const endDate = new Date(booking.end_date);
-    const handoverSession = booking.handover_sessions?.[0];
-    
-    // Determine handover type more accurately
-    const isPickupDay = startDate.toDateString() === today.toDateString();
-    const isReturnDay = endDate.toDateString() === today.toDateString();
-    
+    // Determine handover type based on booking status (MOB-205 improved)
     let handoverType: 'pickup' | 'return' = 'pickup';
     
-    if (isReturnDay && handoverSession && !handoverSession.handover_completed) {
+    if (booking.status === 'in_progress') {
       handoverType = 'return';
-    } else if (isPickupDay && !handoverSession) {
-      handoverType = 'pickup';
     }
     
     return (
