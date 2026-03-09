@@ -66,7 +66,7 @@ const Map = () => {
         .single();
 
       if (error || !booking) {
-        console.log('Booking not found or not confirmed:', bookingId);
+        console.log('Booking not found or not in valid handover state (confirmed/in_progress):', bookingId);
         return false;
       }
 
