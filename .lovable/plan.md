@@ -1,155 +1,147 @@
 
-# Epic MOB-400: Map Module Hotfix — Full Diagnostic Recovery
 
-**Owner:** Modisa Maphanyane  
-**Created:** 2026-03-09  
-**Priority:** P0 — Blocker  
-**Status:** Phase 1 In Progress  
-**Affected Route:** `/map`
+# Migration Audit Report — Pre-Phase 3 Analysis
+
+**Date:** 2026-03-09  
+**Purpose:** Validate migration state before creating `handover_sessions` deduplication migration
 
 ---
 
-## Summary
+## 1. Migration Count Comparison
 
-The Map page crashes on load due to a runtime error in the Mapbox destination marker effect. Additional instability exists in handover session queries and provider architecture. This hotfix addresses the crash, stabilizes handover integration, and hardens the module against regressions.
+| Location | Count | Notes |
+|----------|-------|-------|
+| **Remote (Supabase)** | 231 | Non-empty entries in `schema_migrations` |
+| **Local (active)** | ~177 | `.sql` files in `supabase/migrations/` (excluding archive) |
+| **Archived** | ~60+ | In `supabase/migrations/archive/` |
 
----
-
-## Phase 1: Stop the Crash (Hotfix) ✅ DONE
-
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-401 | Fix destination state init to nullable | Done ✅ | `src/pages/Map.tsx` |
-| MOB-402 | Add `Number.isFinite` coordinate guards in marker effects | Done ✅ | `src/components/map/CustomMapbox.tsx` |
-| MOB-403 | Add dependency array to destination marker effect | Done ✅ | `src/components/map/CustomMapbox.tsx` |
-
-### Root Cause
-`Map.tsx` initializes `destination` as `{ latitude: null, longitude: null }` (truthy object). `CustomMapbox.tsx` checks `!destination` (always false), then calls `marker.setLngLat([null, null])` → Mapbox throws → ErrorBoundary catches → blank page.
-
-### Fix
-- Change `destination` default to `null`.
-- Guard all `setLngLat` calls with `Number.isFinite(lat) && Number.isFinite(lng)`.
-- Ensure marker effect has correct dependency array `[destination]`.
+**Status:** ⚠️ Remote has more entries than local active files — expected due to Lovable's timestamp-based tracking and previous consolidations.
 
 ---
 
-## Phase 2: Stabilize Handover Integration ✅ DONE
+## 2. `handover_sessions` Table Current State
 
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-404 | Replace `.single()` with list + pick-latest in active handover query | Done ✅ | `src/pages/Map.tsx` |
-| MOB-405 | Remove redundant HandoverProvider wrapping | Deferred | `src/pages/Map.tsx`, `src/App.tsx` |
-| MOB-406 | Export and use `useHandoverSafe` consistently | Done ✅ | `src/contexts/HandoverContext.tsx`, `src/components/map/CustomMapbox.tsx` |
+### Existing Indexes
+| Index | Type | Columns |
+|-------|------|---------|
+| `handover_sessions_pkey` | UNIQUE | `(id)` |
+| `idx_handover_sessions_booking_type` | NON-UNIQUE | `(booking_id, handover_type)` |
 
-### Root Cause
-`fetchActiveHandoverHost()` uses `.single()` but DB contains duplicate active sessions → 406 PGRST116. Dual `HandoverProvider` in `App.tsx` + `Map.tsx` risks double-init.
+### Existing Constraints
+- Foreign keys to `bookings(id)`, `profiles(id)` for host/renter
+- CHECK constraints for `handover_location_type` and `waiting_for`
 
-### Fix
-- Use `.order('updated_at', { ascending: false }).limit(1)` instead of `.single()`.
-- Audit provider tree; keep single canonical provider location.
-
----
-
-## Phase 3: Data Integrity (Backend) 🟡 TODO
-
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-407 | Deduplicate active handover sessions | Todo | `supabase/migrations/` |
-| MOB-408 | Add partial unique index on active sessions | Todo | `supabase/migrations/` |
-| MOB-409 | Make session creation idempotent (conflict-safe) | Todo | `src/services/handoverService.ts` |
-
-### Root Cause
-No unique constraint prevents multiple active `handover_sessions` for the same booking + type + renter. Concurrent calls create duplicates.
-
-### Fix
-- Migration: DELETE duplicates keeping newest, then CREATE UNIQUE INDEX on `(booking_id, handover_type, renter_id) WHERE handover_completed = false`.
-- Service: Use `INSERT ... ON CONFLICT` or check-then-create with row lock.
-
-### Migration Impact Checklist (MOB-113)
-
-Before deploying MOB-407/MOB-408 migration:
-
-- [ ] **1. Consumer Search** — Run: `grep -r "handover_sessions" src/ --include="*.ts" --include="*.tsx"`
-- [ ] **2. Return Schema Verification** — Confirm migration return schema matches all frontend TypeScript interfaces
-- [ ] **3. No Breaking Renames/Removals** — Use additive changes only; no column renames without UI updates
-- [ ] **4. Build Verification** — Run `npm run build` immediately after applying migration
-- [ ] **5. Dependency Documentation** — Add header comment listing consumers:
-  ```sql
-  -- Consumers: src/pages/Map.tsx, src/services/handoverService.ts, src/contexts/HandoverContext.tsx
-  -- Impact: Deduplicates active sessions, adds partial unique index, no breaking changes
-  ```
-
-#### RPC/Function Guidelines
-- Always `DROP FUNCTION IF EXISTS` before `CREATE`
-- Use `SECURITY DEFINER` with `SET search_path = public` for cross-schema joins
-- Grant execute: `GRANT EXECUTE ON FUNCTION ... TO authenticated;`
-
-#### RLS Policy Guidelines
-- Use `SECURITY DEFINER` helper functions to prevent infinite recursion
-- Never query the same table a policy protects without a security definer wrapper
-
-#### Rollback Strategy
-Document rollback SQL in migration comments for destructive changes.
+### Missing (Phase 3 Target)
+- ❌ **No unique constraint on active sessions** — Allows duplicates
+- ❌ **No partial unique index** for `(booking_id, handover_type, renter_id) WHERE handover_completed = false`
 
 ---
 
-## Phase 4: Module Hardening 🟡 TODO
+## 3. Duplicate Session Data (Production)
 
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-410 | Normalize all coordinate validation to `Number.isFinite` | Todo | `src/components/map/*` |
-| MOB-411 | Add error telemetry for map init + handover query failures | Todo | `src/components/map/CustomMapbox.tsx`, `src/pages/Map.tsx` |
+```
+booking_id                                handover_type  duplicates
+----------------------------------------  -------------  ----------
+eeefada8-371b-4b44-885a-d1fabccc87fb     pickup         10
+5ea991e2-ae2b-4ea9-af37-ebaba730bca0     pickup         9
+3c438b64-ad7f-4284-8460-bd377017fba7     pickup         6
+443bcb7f-f142-4dc9-9fd0-53169c7d2b83     pickup         4
+(... 16 more with 2-4 duplicates ...)
+```
 
----
-
-## Validation Checklist
-
-- [ ] `/map` renders without ErrorBoundary in preview and published
-- [ ] Non-handover mode: host markers load, no crash without destination
-- [ ] Handover mode: no 406 for active session query, single session used
-- [ ] Car details map and booking map still function (regression check)
-- [ ] No infinite remounting/flicker of map container
+**Finding:** Multiple active sessions exist per booking — confirms Phase 3 is needed and not previously implemented.
 
 ---
 
-## Architecture Decisions
+## 4. Existing Handover Migrations (No Conflicts)
 
-- **`useHandoverSafe`** (Option A — safe hook) chosen over try/catch wrapper. Returns `null` outside provider.
-- **Destination state** changed from `{ latitude: null, longitude: null }` to `null` to leverage JS falsy checks.
-- **Session dedup** uses partial unique index (PostgreSQL) rather than application-level locks.
+Searched 31 files referencing `handover_sessions`. Key migrations:
 
-## Files Changed (All Phases)
+| File | Purpose |
+|------|---------|
+| `20250101000002_create_handover_sessions_table.sql` | Original table + basic indexes |
+| `20250724124757_...corrected_RLS_policies...` | RLS policies |
+| `20250728080316_cleanup_orphaned_handovers.sql` | Data cleanup (completed sessions) |
 
-| File | Change |
-|------|--------|
-| `src/pages/Map.tsx` | Nullable destination, safe handover query, single provider |
-| `src/components/map/CustomMapbox.tsx` | Coordinate guards, safe hook, effect deps |
-| `src/contexts/HandoverContext.tsx` | Added `useHandoverSafe` export |
-| `src/services/handoverService.ts` | Idempotent session creation |
-| `supabase/migrations/` | Dedup + partial unique index migration |
+**Conclusion:** No existing migration creates a unique index on active sessions. Phase 3 is **safe to proceed** without duplication.
 
 ---
 
-## Previous Epic (Completed)
+## 5. Remote Entries Without Local Files
 
-<details>
-<summary>MOB-300: Help Center Hotfix (Completed)</summary>
+Several remote entries use short names (legacy Lovable format):
+- `add_handover_progress_rpc`
+- `interactive_handover_overhaul`
+- `interactive_handover_refinement`
 
-### Phase 1: Database-Driven Guides ✅
-- Migrated hardcoded guide content to `guides` table in Supabase
-- Created `useGuides`, `usePopularGuides`, `useSearchGuides` hooks
-- Created `useGuideContent` hook for individual guide rendering
-- Updated `HelpCenter.tsx` and `HelpSection.tsx` to fetch from DB
+These were applied via Supabase dashboard or Lovable deployments. **No action required** — they are already applied remotely.
 
-### Phase 2: Persist Progress ✅
-- Created `user_guide_progress` table with RLS policies
-- Created `useGuideProgress` hook (fetch/upsert via TanStack Query)
-- Added progress bar and completion badge to guide UI
+---
 
-### Phase 3: Content Expansion ✅
-- Seeded Renter Safety Guidelines, Host Handover Process, 4 shared platform guides
+## 6. Phase 3 Implementation Readiness
 
-### Phase 4: Component Library & Admin Management ✅
-- Extracted `GuideLayout`, `GuideProgressTracker` components
-- Built Admin FAQ & Guide Management page with full CRUD
-</details>
+### Pre-Conditions ✅
+- [x] No existing unique constraint to conflict with
+- [x] No prior deduplication migration exists
+- [x] Duplicate data confirmed in production
+- [x] Consumer files identified:
+  - `src/pages/Map.tsx`
+  - `src/services/handoverService.ts`
+  - `src/contexts/HandoverContext.tsx`
+  - `src/hooks/useHandoverSession.ts`
+
+### Migration Plan (MOB-407 + MOB-408)
+
+**File:** `20260309HHMMSS_dedupe_handover_sessions_and_add_unique_index.sql`
+
+```sql
+-- Consumers: src/pages/Map.tsx, src/services/handoverService.ts, 
+--            src/contexts/HandoverContext.tsx, src/hooks/useHandoverSession.ts
+-- Impact: Deduplicates active sessions (keeps newest), adds partial unique index
+-- Rollback: DROP INDEX IF EXISTS idx_unique_active_handover_session;
+
+-- Step 1: Deduplicate active sessions (keep most recent by updated_at)
+WITH ranked AS (
+  SELECT id, ROW_NUMBER() OVER (
+    PARTITION BY booking_id, handover_type, renter_id 
+    ORDER BY updated_at DESC
+  ) as rn
+  FROM handover_sessions
+  WHERE handover_completed = false
+)
+DELETE FROM handover_sessions
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+-- Step 2: Create partial unique index to prevent future duplicates
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_handover_session
+ON handover_sessions (booking_id, handover_type, renter_id)
+WHERE handover_completed = false;
+```
+
+### Service Change (MOB-409)
+
+Update `createPickupHandoverSession` / `createReturnHandoverSession` in `handoverService.ts` to use `INSERT ... ON CONFLICT DO NOTHING` pattern:
+
+```typescript
+const { data, error } = await supabase
+  .from('handover_sessions')
+  .upsert(sessionData, { 
+    onConflict: 'booking_id,handover_type,renter_id',
+    ignoreDuplicates: true 
+  })
+  .select()
+  .single();
+```
+
+---
+
+## 7. Recommendation
+
+**Proceed with Phase 3** — The audit confirms:
+1. No duplicate migrations exist
+2. No unique constraint exists on the table
+3. Production data confirms duplicates need cleanup
+4. All consumer files have been identified for the checklist
+
+The migration is additive (index creation) and data-cleaning (dedup), with no schema-breaking changes.
+
