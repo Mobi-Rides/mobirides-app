@@ -530,6 +530,7 @@ function App() {
 
                       {/* Global Chat Manager */}
                       <ChatManager />
+                      <TutorialManager />
 
                       <Toaster position="top-center" />
                       <CookieConsentBanner />
