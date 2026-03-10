@@ -283,6 +283,7 @@ export const RenterView = ({
         isFetchingNextPage={isFetchingNextPage}
         isAuthenticated={true}
       />
+      </div>
       {/* This hidden div is used with the intersection observer */}
       {hasNextPage && (
         <div ref={setRefs} className="h-10 w-full opacity-0">
