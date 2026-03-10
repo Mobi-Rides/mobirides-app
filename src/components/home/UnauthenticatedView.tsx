@@ -14,7 +14,7 @@ export const UnauthenticatedView = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const authParam = params.get("auth");
-    
+
     if (authParam === "signin" || authParam === "signup") {
       if (authParam === "signin") {
         openSignIn();
@@ -34,23 +34,18 @@ export const UnauthenticatedView = () => {
         </p>
 
         <Button
-          variant="outline"
-          size="icon"
-          className="rounded-2xl border-primary md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 mx-auto"
+          variant="default"
+          className="rounded-2xl px-8 py-3 flex items-center gap-2 mx-auto text-sm font-semibold"
           onClick={openSignIn}
         >
-          <LogIn className="h-4 w-4 text-primary" />
-          <span className="hidden md:inline-block">
-            <p className="text-primary text-xs md:text-sm lg:text-base font-semibold">
-              Sign in
-            </p>
-          </span>
+          <LogIn className="h-4 w-4" />
+          Sign In to Continue
         </Button>
       </div>
 
-      <AuthModal 
-        isOpen={isOpen} 
-        onClose={close} 
+      <AuthModal
+        isOpen={isOpen}
+        onClose={close}
         defaultTab={defaultTab}
         idPrefix="home"
       />

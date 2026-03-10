@@ -201,9 +201,9 @@ const CarDetails = () => {
           <div className="grid grid-cols-1 gap-4">
             <CarHeader
               brand={car.brand}
+              model={car.model}
               year={car.year}
-.model}
-              year              location={car.location}
+              location={car.location}
               pricePerDay={car.price_per_day}
               ownerId={car.owner_id}
             />

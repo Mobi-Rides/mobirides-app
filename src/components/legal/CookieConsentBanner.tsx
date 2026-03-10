@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
 const COOKIE_CONSENT_KEY = "mobirides_cookie_consent";
 
 export const CookieConsentBanner: React.FC = () => {
+  // Cookie consent is a web/browser concern — not required in native apps
+  if (Capacitor.isNativePlatform()) return null;
+
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

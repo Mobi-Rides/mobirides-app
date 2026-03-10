@@ -135,11 +135,10 @@ const MobileHeader = React.forwardRef<HTMLElement, MobileHeaderProps>(
                         )}
                     </div>
 
-                    {/* Center - Title */}
                     <div className="flex-1 min-w-0 px-2">
                         <h1
                             className={cn(
-                                "text-lg font-semibold text-center truncate",
+                                "text-base font-semibold text-center line-clamp-2 leading-tight",
                                 transparent
                                     ? "text-white drop-shadow-md"
                                     : "text-foreground dark:text-white"
