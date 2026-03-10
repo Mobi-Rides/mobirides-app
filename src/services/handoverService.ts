@@ -95,14 +95,10 @@ export const createPickupHandoverSession = async (
       is_interactive: true,
     };
     
-    // Use upsert with onConflict to handle race conditions
-    // The partial unique index idx_unique_active_handover_session prevents duplicates
+    // Use insert since we already check for existing sessions above
     const { data: sessionResult, error } = await supabase
       .from("handover_sessions")
-      .upsert(sessionData, {
-        onConflict: 'booking_id,handover_type,renter_id',
-        ignoreDuplicates: true
-      })
+      .insert(sessionData)
       .select()
       .single();
 
