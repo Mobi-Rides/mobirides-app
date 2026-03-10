@@ -36,7 +36,7 @@ export function FloatingChatButton({
   };
 
   return (
-    <div className={cn('fixed bottom-6 right-6 z-40', className)}>
+    <div className={cn('fixed bottom-[25vh] right-6 z-40', className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
