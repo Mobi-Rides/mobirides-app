@@ -202,12 +202,14 @@ export const RenterView = ({
     try {
       console.log("Starting handover for booking:", bookingId);
       
-      // Get booking details to find host and renter IDs
+      // Get booking details to find host and renter IDs and check payment status
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .select(`
           id,
           renter_id,
+          status,
+          payment_status,
           cars!inner(owner_id)
         `)
         .eq('id', bookingId)
@@ -215,6 +217,13 @@ export const RenterView = ({
 
       if (bookingError) throw bookingError;
       if (!booking) throw new Error('Booking not found');
+
+      // Guard: If payment is not completed, redirect to payment
+      if (booking.status === 'awaiting_payment' || booking.payment_status !== 'paid') {
+        toast.info("Please complete payment before pickup");
+        navigate(`/rental-details/${bookingId}?pay=true`);
+        return;
+      }
 
       const hostId = booking.cars.owner_id;
       const renterId = booking.renter_id;
