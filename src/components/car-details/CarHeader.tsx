@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, Info, Edit, MapPin, Calendar, CalendarCheck, MessageSquare } from "lucide-react";
+import { CalendarDays, Info, Edit, MapPin, Calendar, CalendarCheck, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
@@ -29,28 +29,28 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
   const [isLoading, setIsLoading] = useState(true);
 
   const { createConversation, isCreatingConversation } = useOptimizedConversations();
-  
+
   useEffect(() => {
     const checkOwnership = async () => {
       try {
         setIsLoading(true);
-        
+
         // Get current user
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData?.session?.user?.id;
-        
+
         if (!userId || !carId) {
           setIsOwner(false);
           return;
         }
-        
+
         // Get car to check ownership
         const { data: carData } = await supabase
           .from("cars")
           .select("owner_id")
           .eq("id", carId)
           .single();
-          
+
         setIsOwner(carData?.owner_id === userId || ownerId === userId);
       } catch (error) {
         console.error("Error checking car ownership:", error);
@@ -59,10 +59,10 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
         setIsLoading(false);
       }
     };
-    
+
     checkOwnership();
   }, [carId]);
-  
+
   // Prepare share data for the ShareDropdown component
   const getShareData = () => {
     if (!carId) {
@@ -82,27 +82,27 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
       toast.error("Please log in to contact the owner.");
       return;
     }
-    
+
     if (!ownerId) {
       toast.error("Owner information not available.");
       return;
     }
-    
+
     try {
       const conversationParams = {
         type: 'direct' as const,
         participantIds: [ownerId],
         title: `Chat about ${brand} ${model}`
       };
-      
+
       createConversation(conversationParams);
-      
+
       // Navigate to messages page with recipient info
-      navigate('/messages', { 
-        state: { 
-          recipientId: ownerId, 
-          recipientName: `${brand} ${model} Owner` 
-        } 
+      navigate('/messages', {
+        state: {
+          recipientId: ownerId,
+          recipientName: `${brand} ${model} Owner`
+        }
       });
       toast.success("Starting conversation...");
     } catch (error) {
@@ -110,17 +110,17 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
       toast.error("Failed to start conversation. Please try again.");
     }
   };
-  
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4">
       <div className="flex flex-col md:flex-row justify-between md:items-start">
         <div>
           <h1 className="text-2xl md:text-3xl text-left text-gray-700 dark:text-white font-bold">
-            {brand} {model} 
+            {brand} {model}
           </h1>
           <div className="flex items-center gap-1 mt-1 text-sm md:text-base text-muted-foreground dark:text-white">
             <CalendarCheck size={16} className="h-4 w-4 mr-1 text-blue-500" />
-                     <span className="text-sm md:text-base text-muted-foreground">
+            <span className="text-sm md:text-base text-muted-foreground">
 
               {year}
             </span>
@@ -141,16 +141,17 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
             </p>
           </div>
         </div>
-        <div className="flex gap-2 mt-4 md:mt-0">
+        <div className="flex gap-2 mt-4 md:mt-0" role="group" aria-label="Car actions">
           {isOwner && (
             <Button
               variant="outline"
               size="icon"
-              className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
+              className="rounded-2xl w-11 h-11 min-w-[44px] min-h-[44px] md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 touch-manipulation active:scale-95"
               asChild
+              aria-label="Edit car details"
             >
               <Link to={`/edit-car/${carId}`}>
-                <Edit className="h-4 w-4 text-[#581CFA] dark:text-white" />
+                <Edit className="h-5 w-5 text-[#581CFA] dark:text-white" aria-hidden="true" />
                 <span className="hidden md:inline-block">
                   <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
                     Edit Car
@@ -159,7 +160,7 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
               </Link>
             </Button>
           )}
-  
+
           {getShareData() && (
             <ShareDropdown
               shareData={getShareData()!}
@@ -168,15 +169,16 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
               showLabel={true}
             />
           )}
-  
+
           <Button
             variant="outline"
             size="icon"
-            className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
+            className="rounded-2xl w-11 h-11 min-w-[44px] min-h-[44px] md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 touch-manipulation active:scale-95"
             asChild
+            aria-label="View bookings"
           >
             <Link to="/bookings">
-              <Calendar className="h-4 w-4 text-[#581CFA] dark:text-white" />
+              <Calendar className="h-5 w-5 text-[#581CFA] dark:text-white" aria-hidden="true" />
               <span className="hidden md:inline-block">
                 <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
                   Bookings
@@ -184,16 +186,22 @@ export const CarHeader = ({ brand, model, year, location, pricePerDay, ownerId }
               </span>
             </Link>
           </Button>
-          
+
           {!isOwner && ownerId && (
             <Button
               variant="outline"
               size="icon"
-              className="rounded-2xl md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2"
+              className="rounded-2xl w-11 h-11 min-w-[44px] min-h-[44px] md:size-auto md:px-4 md:py-2 md:flex md:items-center md:gap-2 touch-manipulation active:scale-95"
               onClick={handleContactOwner}
               disabled={isCreatingConversation}
+              aria-label={isCreatingConversation ? "Connecting to owner" : "Contact owner"}
+              aria-busy={isCreatingConversation}
             >
-              <MessageSquare className="h-4 w-4 text-[#581CFA] dark:text-white" />
+              {isCreatingConversation ? (
+                <Loader2 className="h-5 w-5 text-[#581CFA] dark:text-white animate-spin" aria-hidden="true" />
+              ) : (
+                <MessageSquare className="h-5 w-5 text-[#581CFA] dark:text-white" aria-hidden="true" />
+              )}
               <span className="hidden md:inline-block">
                 <p className="text-[#581CFA] dark:text-white text-xs md:text-sm lg:text-base font-semibold">
                   {isCreatingConversation ? 'Connecting...' : 'Contact'}

@@ -22,6 +22,8 @@ const ForgotPassword: React.FC = () => {
     setIsSending(true);
     setError("");
 
+    console.log('[ForgotPassword] Sending request to /api/auth/forgot-password for:', email);
+
     try {
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
@@ -31,18 +33,36 @@ const ForgotPassword: React.FC = () => {
         body: JSON.stringify({ email }),
       });
 
-      const result = await response.json();
+      console.log('[ForgotPassword] Response status:', response.status);
+
+      let result;
+      try {
+        result = await response.json();
+        console.log('[ForgotPassword] Response data:', result);
+      } catch (parseError) {
+        console.error('[ForgotPassword] Error parsing response:', parseError);
+        setError('Server returned an invalid response. Please try again.');
+        return;
+      }
 
       if (!response.ok) {
-        setError(result.error || 'Failed to send reset email');
+        console.error('[ForgotPassword] Request failed:', result);
+        setError(result.error || result.details || `Server error (${response.status}): Failed to send reset email`);
         return;
       }
 
       toast.success("Password reset email sent! Check your inbox for instructions.");
       navigate("/password-reset-sent");
     } catch (error) {
-      console.error('Password reset error:', error);
-      setError("Failed to send reset email. Please try again.");
+      console.error('[ForgotPassword] Network or fetch error:', error);
+      console.error('[ForgotPassword] Error details:', error instanceof Error ? error.message : 'Unknown error');
+
+      // Provide more specific error messages based on error type
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setError("Cannot connect to server. Please ensure the API server is running (npm run api) and try again.");
+      } else {
+        setError("Network error. Please check your connection and try again.");
+      }
     } finally {
       setIsSending(false);
     }

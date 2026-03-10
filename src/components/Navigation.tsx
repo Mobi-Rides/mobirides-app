@@ -19,7 +19,7 @@ export const Navigation = () => {
   const location = useLocation();
   const [activeIndex, setActiveIndex] = useState(0);
   const queryClient = useQueryClient();
-  
+
   // Fetch unread messages count from conversation system
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unreadMessagesCount'],
@@ -37,7 +37,7 @@ export const Navigation = () => {
         console.error("Error fetching user participations:", participationError);
         return 0;
       }
-      
+
       if (!userParticipations?.length) {
         return 0;
       }
@@ -147,18 +147,18 @@ export const Navigation = () => {
     { path: "/", label: "Explore", icon: <Search className="w-5 h-5" />, activeIndex: 0 },
     { path: "/map", label: "Map", icon: <MapPin className="w-5 h-5" />, activeIndex: 1 },
     { path: "/bookings", label: "Bookings", icon: <CalendarClock className="w-5 h-5" />, activeIndex: 2 },
-    { 
-      path: "/messages", 
-      label: "Inbox", 
-      icon: <Bell className="w-5 h-5" />, 
+    {
+      path: "/messages",
+      label: "Inbox",
+      icon: <Bell className="w-5 h-5" />,
       activeIndex: 3,
       badge: unreadCount > 0 ? unreadCount : undefined
     },
-    { 
-      path: "/more", 
-      label: "More", 
-      icon: <Menu className="w-5 h-5" />, 
-      activeIndex: 4 
+    {
+      path: "/more",
+      label: "More",
+      icon: <Menu className="w-5 h-5" />,
+      activeIndex: 4
     },
   ], [unreadCount]);
 
@@ -166,20 +166,20 @@ export const Navigation = () => {
     const currentItem = items.find((item) => {
       // Handle role-specific booking routes
       if (item.path === "/bookings") {
-        return location.pathname === "/bookings" || 
-               location.pathname === "/host-bookings" || 
-               location.pathname === "/renter-bookings";
+        return location.pathname === "/bookings" ||
+          location.pathname === "/host-bookings" ||
+          location.pathname === "/renter-bookings";
       }
       return location.pathname === item.path;
     });
-    
+
     if (currentItem) {
       setActiveIndex(currentItem.activeIndex);
     }
   }, [location.pathname, items]);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-0 pb-safe-area-inset-bottom pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-0 pointer-events-none" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <nav className="w-full max-w-md mx-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-gray-100 dark:border-gray-800 h-[68px] pb-2 pointer-events-auto md:rounded-t-2xl md:mb-4 md:border md:h-16 md:pb-0 transition-all duration-300">
         <div className="grid grid-cols-5 h-full w-full">
           {items.map((item) => (
@@ -199,7 +199,7 @@ export const Navigation = () => {
                 "absolute top-0 w-8 h-1 rounded-b-full bg-primary transition-all duration-300 ease-out",
                 activeIndex === item.activeIndex ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
               )} />
-              
+
               <div className="relative p-1 transition-transform duration-200 group-active:scale-95">
                 <div className={cn(
                   "transition-all duration-300",
@@ -208,8 +208,8 @@ export const Navigation = () => {
                   {item.icon}
                 </div>
                 {item.badge && (
-                  <Badge 
-                    variant="destructive" 
+                  <Badge
+                    variant="destructive"
                     className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center p-0 text-[10px] animate-in zoom-in-50 duration-300 border-2 border-white dark:border-gray-900 shadow-sm"
                   >
                     {item.badge > 99 ? '99+' : item.badge}
@@ -218,8 +218,8 @@ export const Navigation = () => {
               </div>
               <span className={cn(
                 "text-[10px] font-medium transition-all duration-300 mt-0.5",
-                activeIndex === item.activeIndex 
-                  ? "opacity-100 translate-y-0" 
+                activeIndex === item.activeIndex
+                  ? "opacity-100 translate-y-0"
                   : "opacity-70 group-hover:opacity-100"
               )}>
                 {item.label}

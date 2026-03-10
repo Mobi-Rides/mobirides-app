@@ -73,8 +73,9 @@ export function TutorialBubble({
         return;
     }
 
-    // Clamp to viewport
-    top = Math.max(8, Math.min(top, window.innerHeight - bh - 8));
+    // Clamp to viewport — reserve 72px at bottom for the nav bar (64px) + margin (8px)
+    const BOTTOM_CLEARANCE = 72;
+    top = Math.max(8, Math.min(top, window.innerHeight - bh - BOTTOM_CLEARANCE));
     left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
 
     setPos({ top, left });
@@ -87,15 +88,21 @@ export function TutorialBubble({
       <motion.div
         key={step.key}
         ref={bubbleRef}
-        initial={{ opacity: 0, y: 16, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -12, scale: 0.95 }}
+        initial={isCentered
+          ? { opacity: 0, x: '-50%', y: 'calc(-50% + 16px)', scale: 0.95 }
+          : { opacity: 0, y: 16, scale: 0.95 }}
+        animate={isCentered
+          ? { opacity: 1, x: '-50%', y: '-50%', scale: 1 }
+          : { opacity: 1, y: 0, scale: 1 }}
+        exit={isCentered
+          ? { opacity: 0, x: '-50%', y: 'calc(-50% - 12px)', scale: 0.95 }
+          : { opacity: 0, y: -12, scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-        className={cn(
-          'fixed z-[9999] w-[340px] max-w-[calc(100vw-32px)] rounded-2xl border border-border bg-card text-card-foreground shadow-xl',
-          isCentered && 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
-        )}
-        style={pos ? { top: pos.top, left: pos.left } : undefined}
+        className='fixed z-[9999] w-[min(340px,calc(100vw-32px))] rounded-2xl border border-border bg-card text-card-foreground shadow-xl'
+        style={pos
+          ? { top: pos.top, left: pos.left }
+          : { top: '50%', left: '50%' }
+        }
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-4 pt-4 pb-2">
@@ -175,7 +182,7 @@ export function TutorialReminderBubble({ onRestart }: { onRestart: () => void })
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
       onClick={onRestart}
-      className="fixed bottom-20 right-6 z-[9998] flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 shadow-lg hover:bg-muted transition-colors"
+      className="fixed bottom-28 right-6 z-[9998] flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 shadow-lg hover:bg-muted transition-colors"
       title="Restart tutorial"
     >
       <RotateCcw className="h-4 w-4 text-primary" />

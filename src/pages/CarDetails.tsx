@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Navigation } from "@/components/Navigation";
+import { MobileHeader } from "@/components/ui/MobileHeader";
 import { CarActions } from "@/components/car-details/CarActions";
 import { CarHeader } from "@/components/car-details/CarHeader";
 import { CarSpecs } from "@/components/car-details/CarSpecs";
@@ -18,6 +19,7 @@ import { AlertTriangle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { incrementCarViewCount } from "@/services/carViewsService";
 import type { User } from "@supabase/supabase-js";
+import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
 import { forwardGeocode } from "@/utils/mapbox/geocoding";
 
 interface CarWithProfiles extends Car {
@@ -64,13 +66,14 @@ const toSafeCarWithProfiles = (car: CarWithProfiles): SafeCarWithProfiles => ({
   is_available: car.is_available ?? true,
 });
 
-import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
-
 const CarDetails = () => {
   const { carId } = useParams();
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const viewIncremented = useRef(false);
+
+  // Handle Android hardware back button
+  useHardwareBackButton();
 
   useEffect(() => {
     const getUser = async () => {
@@ -138,6 +141,7 @@ const CarDetails = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
+        <MobileHeader title="Car Details" showBackButton backTo="/" />
         <div className="container mx-auto">
           <div className="p-4">
             <Skeleton className="h-6 w-32 mb-4" />
@@ -168,14 +172,9 @@ const CarDetails = () => {
   if (error || !car) {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
+        <MobileHeader title="Error" showBackButton backTo="/" />
         <div className="container mx-auto">
-          <div className="p-4">
-            <Breadcrumbs items={[
-              { label: "Cars", path: "/" },
-              { label: "Error", path: "#" }
-            ]} />
-          </div>
-          <div className="p-4 text-center space-y-4">
+          <div className="p-4 text-center space-y-4 mt-8">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
             <h2 className="text-xl font-semibold text-red-500">Error loading vehicle details</h2>
             <p className="text-muted-foreground dark:text-gray-400">Please try again later</p>
@@ -190,14 +189,12 @@ const CarDetails = () => {
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
+      <MobileHeader
+        title={`${car.brand} ${car.model}`}
+        showBackButton
+        backTo="/"
+      />
       <div className="container mx-auto">
-        <div className="px-4 pt-4">
-          <Breadcrumbs items={[
-            { label: "Home", path: "/" },
-            { label: "Cars", path: "/" },
-            { label: `${car.brand} ${car.model}`, path: `/cars/${car.id}` }
-          ]} />
-        </div>
         <div className="space-y-4 p-4">
           <CarImageCarousel carId={car.id} mainImageUrl={car.image_url} />
 
