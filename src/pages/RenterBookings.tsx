@@ -194,7 +194,7 @@ const RenterBookings = () => {
           onStatusChange={setStatusFilter}
         />
 
-        <div className="px-4">
+        <div className="px-4" data-tutorial-target="bookings-list">
           {filteredBookings?.length === 0 ? (
             <div className="text-center py-8 border rounded-md">
               <p className="text-muted-foreground">
