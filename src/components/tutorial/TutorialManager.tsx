@@ -1,11 +1,13 @@
 import { AnimatePresence } from 'framer-motion';
 import { useTutorial } from '@/hooks/useTutorial';
 import { TutorialBubble, TutorialReminderBubble } from './TutorialBubble';
+import { TutorialContext } from './TutorialContext';
 import { useAuthStatus } from '@/hooks/useAuthStatus';
 
 /**
  * Global tutorial manager — renders at the app root level.
  * Auto-starts for new/returning users, shows reminder after dismissal.
+ * Provides restart() via context so other components (e.g. FloatingChatButton) can trigger it.
  */
 export function TutorialManager() {
   const { isAuthenticated } = useAuthStatus();
@@ -15,7 +17,7 @@ export function TutorialManager() {
   if (!isAuthenticated || tutorial.isLoading) return null;
 
   return (
-    <>
+    <TutorialContext.Provider value={{ restart: tutorial.restart }}>
       {/* Active tutorial overlay with subtle backdrop */}
       <AnimatePresence>
         {tutorial.isActive && tutorial.currentStep && (
@@ -44,6 +46,6 @@ export function TutorialManager() {
           <TutorialReminderBubble onRestart={tutorial.restart} />
         )}
       </AnimatePresence>
-    </>
+    </TutorialContext.Provider>
   );
 }
