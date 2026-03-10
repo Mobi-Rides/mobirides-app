@@ -385,7 +385,7 @@ export const Header = ({
       </div>
 
       <div className="flex gap-2 mt-8">
-        <div className="relative flex-1">
+        <div className="relative flex-1" data-tutorial-target="search">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#581CFA] h-4 w-4 md:h-5 md:w-5  lg:h-6 lg:w-6" />
           <input
             type="text"

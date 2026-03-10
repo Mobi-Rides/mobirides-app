@@ -528,9 +528,10 @@ function App() {
                         } />
                       </Routes>
 
-                      {/* Global Chat Manager */}
-                      <ChatManager />
-                      <TutorialManager />
+                      {/* Tutorial wraps ChatManager so it can access restart */}
+                      <TutorialManager>
+                        <ChatManager />
+                      </TutorialManager>
 
                       <Toaster position="top-center" />
                       <CookieConsentBanner />

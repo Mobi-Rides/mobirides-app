@@ -121,7 +121,7 @@ const Dashboard = () => {
           onViewChange={handleViewChange}
           isAdmin={isAdmin}
         />
-        <div className="mt-2">
+        <div className="mt-2" data-tutorial-target="dashboard-content">
           {renderDashboardContent()}
         </div>
         <Navigation />  

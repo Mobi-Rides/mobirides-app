@@ -274,6 +274,7 @@ export const RenterView = ({
           Available Cars
         </h3>
       </div>
+      <div data-tutorial-target="featured-cars">
       <CarGrid
         cars={carsWithRatings}
         isLoading={isLoadingCars}
@@ -282,6 +283,7 @@ export const RenterView = ({
         isFetchingNextPage={isFetchingNextPage}
         isAuthenticated={true}
       />
+      </div>
       {/* This hidden div is used with the intersection observer */}
       {hasNextPage && (
         <div ref={setRefs} className="h-10 w-full opacity-0">
