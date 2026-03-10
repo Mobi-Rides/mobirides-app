@@ -85,12 +85,14 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
     try {
       console.log("Starting handover for booking:", bookingId);
       
-      // Get booking details to find host and renter IDs
+      // Get booking details to find host and renter IDs and check payment
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .select(`
           id,
           renter_id,
+          status,
+          payment_status,
           cars!inner(owner_id)
         `)
         .eq('id', bookingId)
@@ -98,6 +100,12 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
 
       if (bookingError) throw bookingError;
       if (!booking) throw new Error('Booking not found');
+
+      // Guard: If payment is not completed, prevent handover
+      if (booking.status === 'awaiting_payment' || booking.payment_status !== 'paid') {
+        toast.info("Renter has not completed payment yet");
+        return;
+      }
 
       const hostId = booking.cars.owner_id;
       const renterId = booking.renter_id;
