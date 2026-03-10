@@ -274,6 +274,7 @@ export const RenterView = ({
           Available Cars
         </h3>
       </div>
+      <div data-tutorial-target="featured-cars">
       <CarGrid
         cars={carsWithRatings}
         isLoading={isLoadingCars}
