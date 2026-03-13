@@ -22,12 +22,16 @@ import { RentalDetailsNotFound } from "@/components/rental-details/RentalDetails
 import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
 import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer";
 import { handleExpiredBookings } from "@/services/bookingService";
+import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Handle Android hardware back button
+  useHardwareBackButton();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {

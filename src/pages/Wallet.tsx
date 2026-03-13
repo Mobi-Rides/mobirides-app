@@ -51,7 +51,7 @@ const Wallet = () => {
           </div>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2" data-tutorial-target="wallet-balance">
           <WalletBalanceCard />
           <WalletTransactionHistory />
         </div>

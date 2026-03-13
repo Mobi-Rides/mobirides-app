@@ -3,6 +3,7 @@ import { ChatPopup } from './ChatPopup';
 import { FloatingChatButton } from './FloatingChatButton';
 import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
 import { useNavigate } from 'react-router-dom';
+import { useTutorialContext } from '@/components/tutorial/TutorialContext';
 
 interface ChatManagerProps {
   recipientId?: string;
@@ -15,6 +16,7 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
   const [viewMode, setViewMode] = useState<'popup' | 'fullscreen'>('popup');
   const { conversations } = useOptimizedConversations(); // Will be empty array since no userId provided
   const navigate = useNavigate();
+  const tutorialCtx = useTutorialContext();
 
   // Calculate unread messages count from conversations
   const unreadCount = Array.isArray(conversations) ? conversations.reduce((total, conv) => {
@@ -55,7 +57,7 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
   const isOnMessagesPage = window.location.pathname === '/messages';
   
   // Feature flag to control floating chat button visibility
-  const SHOW_FLOATING_CHAT = false;
+  const SHOW_FLOATING_CHAT = true;
 
   return (
     <>
@@ -64,6 +66,7 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
         <FloatingChatButton
           onClick={handleOpenChat}
           unreadCount={unreadCount}
+          onStartTutorial={tutorialCtx?.restart}
         />
       )}
 

@@ -7,11 +7,13 @@ import { LoadingView } from '@/components/home/LoadingView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MobileHeader } from '@/components/ui/MobileHeader';
 import { Bell, Calendar, User, MessageSquare, Car, Wallet, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { NotificationClassifier } from '@/utils/NotificationClassifier';
 import type { Database } from '@/integrations/supabase/types';
 import { normalizeNotification, type NormalizedNotification } from '@/utils/notificationHelpers';
+import { useHardwareBackButton } from '@/hooks/useHardwareBackButton';
 
 type Notification = Database['public']['Tables']['notifications']['Row'];
 
@@ -20,14 +22,17 @@ export const NotificationDetails: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Handle Android hardware back button
+  useHardwareBackButton();
+
   const { data: notification, isLoading, error } = useQuery<NormalizedNotification>({
     queryKey: ['notification', id],
     queryFn: async () => {
       if (!id) throw new Error('Notification ID is required');
-      
+
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) throw new Error('Invalid notification ID');
-      
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -58,16 +63,24 @@ export const NotificationDetails: React.FC = () => {
   }
 
   if (isLoading) {
-    return <LoadingView />;
+    return (
+      <div className="min-h-screen bg-background">
+        <MobileHeader title="Notification" showBackButton backTo="/notifications" />
+        <LoadingView />
+      </div>
+    );
   }
 
   if (error || !notification) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Notification Not Found</h1>
-          <p className="text-muted-foreground mb-4">The notification you're looking for doesn't exist or you don't have permission to view it.</p>
-          <Button onClick={() => navigate('/notifications')}>Back to Notifications</Button>
+      <div className="min-h-screen bg-background">
+        <MobileHeader title="Notification" showBackButton backTo="/notifications" />
+        <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+          <div className="text-center p-4">
+            <h1 className="text-2xl font-bold mb-4">Notification Not Found</h1>
+            <p className="text-muted-foreground mb-4">The notification you're looking for doesn't exist or you don't have permission to view it.</p>
+            <Button onClick={() => navigate('/notifications')}>Back to Notifications</Button>
+          </div>
         </div>
       </div>
     );
@@ -125,7 +138,7 @@ export const NotificationDetails: React.FC = () => {
   };
 
   const hasRelatedAction = (notification: NormalizedNotification) => {
-    return notification.related_booking_id || 
+    return notification.related_booking_id ||
       NotificationClassifier.isPaymentNotification(notification) ||
       NotificationClassifier.isActiveRentalNotification(notification);
   };
@@ -133,8 +146,8 @@ export const NotificationDetails: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
       <div className="mb-6">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => navigate('/notifications')}
           className="mb-4"
         >
@@ -174,7 +187,7 @@ export const NotificationDetails: React.FC = () => {
               <span className="font-medium">Created:</span>
               <span>{formatDate(notification.created_at)}</span>
             </div>
-            
+
             {notification.is_read && (
               <div className="flex items-center gap-2 text-sm">
                 <User className="h-4 w-4" />

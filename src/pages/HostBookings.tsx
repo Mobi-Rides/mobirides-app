@@ -301,7 +301,7 @@ export const HostBookings = () => {
         </Card>
 
         {/* Booking Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" data-tutorial-target="host-bookings-list">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="active" className="relative">
               Active

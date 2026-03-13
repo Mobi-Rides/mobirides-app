@@ -2878,6 +2878,9 @@ export type Database = {
           marketing_notifications: boolean | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
+          tutorial_completed: boolean | null
+          tutorial_dismissed_at: string | null
+          tutorial_version: number | null
           updated_at: string
           verification_completed_at: string | null
           verification_rejected_reason: string | null
@@ -2905,6 +2908,9 @@ export type Database = {
           marketing_notifications?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tutorial_completed?: boolean | null
+          tutorial_dismissed_at?: string | null
+          tutorial_version?: number | null
           updated_at?: string
           verification_completed_at?: string | null
           verification_rejected_reason?: string | null
@@ -2932,6 +2938,9 @@ export type Database = {
           marketing_notifications?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tutorial_completed?: boolean | null
+          tutorial_dismissed_at?: string | null
+          tutorial_version?: number | null
           updated_at?: string
           verification_completed_at?: string | null
           verification_rejected_reason?: string | null
@@ -3526,6 +3535,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_tutorial_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          step_key: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          step_key: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          step_key?: string
           user_id?: string
         }
         Relationships: []

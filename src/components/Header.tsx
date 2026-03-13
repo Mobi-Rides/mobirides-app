@@ -230,7 +230,7 @@ export const Header = ({
       : `${locationData.city}, ${locationData.country}`;
 
   return (
-    <header className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-900 sticky top-0 z-10 shadow-sm p-6 md:p-8 rounded-b-3xl">
+    <header className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-900 sticky top-0 z-10 shadow-sm p-6 md:p-8 rounded-b-3xl pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between gap-4 mb-4">
         <img
           src="/lovable-uploads/a065be26-80b7-4e50-b683-b6afb0add925.png"
@@ -293,9 +293,9 @@ export const Header = ({
                 )}
               </button>
             </DropdownMenuTrigger>
-            
-            <DropdownMenuContent 
-              align="end" 
+
+            <DropdownMenuContent
+              align="end"
               className="w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
             >
               {user && (
@@ -311,17 +311,17 @@ export const Header = ({
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  
+
                   <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
-                  
+
                   <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  
+
                   <DropdownMenuItem onClick={() => navigate('/settings/verification')} className="cursor-pointer">
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center">
@@ -346,7 +346,7 @@ export const Header = ({
                       )}
                     </div>
                   </DropdownMenuItem>
-                  
+
                   <DropdownMenuItem onClick={() => navigate('/notifications')} className="cursor-pointer">
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center">
@@ -360,16 +360,16 @@ export const Header = ({
                       )}
                     </div>
                   </DropdownMenuItem>
-                  
+
                   <DropdownMenuSeparator />
-                  
+
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 dark:text-red-400">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
                 </>
               )}
-              
+
               {!user && (
                 <DropdownMenuItem onClick={() => {
                   setDefaultTab("signin");
@@ -385,7 +385,7 @@ export const Header = ({
       </div>
 
       <div className="flex gap-2 mt-8">
-        <div className="relative flex-1">
+        <div className="relative flex-1" data-tutorial-target="search">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#581CFA] h-4 w-4 md:h-5 md:w-5  lg:h-6 lg:w-6" />
           <input
             type="text"
@@ -395,7 +395,7 @@ export const Header = ({
             className="w-full h-12 md:h-14 pl-10 pr-4 py-2 rounded-2xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:border-primary dark:focus:border-primary text-xs md:text-sm lg:text-base placeholder:text-xs md:placeholder:text-sm lg:placeholder:text-base dark:placeholder:text-gray-400"
           />
         </div>
-      {/* Filter button - hidden via feature flag */}
+        {/* Filter button - hidden via feature flag */}
         {false && (
           <Sheet>
             <SheetTrigger asChild>

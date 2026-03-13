@@ -19,45 +19,64 @@ const asyncHandler = (fn) => (req, res, next) => {
 
 app.all('/api/{*path}', async (req, res) => {
   const apiPath = req.params.path;
-  console.log(`API Request: ${apiPath}`);
+  console.log(`[Server] API Request: ${req.method} ${apiPath}`);
+  console.log(`[Server] Request headers:`, req.headers['content-type']);
+  console.log(`[Server] Request body:`, req.body);
 
   try {
     let handler;
     // Map paths to files
     if (apiPath === 'auth/login') {
+      console.log('[Server] Routing to auth/login.js');
       handler = await import('./api/auth/login.js');
     } else if (apiPath === 'auth/signup') {
+      console.log('[Server] Routing to auth/signup.js');
       handler = await import('./api/auth/signup.js');
     } else if (apiPath === 'auth/forgot-password') {
+      console.log('[Server] Routing to auth/forgot-password.js');
       handler = await import('./api/auth/forgot-password.js');
     } else if (apiPath === 'auth/reset-password') {
+      console.log('[Server] Routing to auth/reset-password.js');
       handler = await import('./api/auth/reset-password.js');
     } else if (apiPath === 'notifications/booking-confirmation') {
+      console.log('[Server] Routing to notifications/booking-confirmation.js');
       handler = await import('./api/notifications/booking-confirmation.js');
     } else if (apiPath.startsWith('admin/')) {
       // Admin routes temporarily disabled due to missing files/merge conflict
-      console.warn(`Admin route ${apiPath} requested but admin handlers are missing.`);
+      console.warn(`[Server] Admin route ${apiPath} requested but admin handlers are missing.`);
       return res.status(503).json({ error: 'Admin services temporarily unavailable' });
     } else {
-      console.warn(`Route not found: ${apiPath}`);
+      console.warn(`[Server] Route not found: ${apiPath}`);
       return res.status(404).json({ error: 'Route not found' });
     }
 
     if (handler && handler.default) {
+      console.log(`[Server] Handler found for ${apiPath}, executing...`);
       await handler.default(req, res);
     } else {
+      console.error(`[Server] Invalid handler export for ${apiPath}`);
       res.status(500).json({ error: 'Invalid handler export' });
     }
   } catch (error) {
-    console.error(`Error handling ${apiPath}:`, error);
+    console.error(`[Server] Error handling ${apiPath}:`, error);
+    console.error(`[Server] Error stack:`, error.stack);
     // If module not found
     if (error.code === 'ERR_MODULE_NOT_FOUND') {
-      return res.status(404).json({ error: 'Handler not found' });
+      return res.status(404).json({ error: 'Handler not found', details: error.message });
     }
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
 app.listen(port, () => {
-  console.log(`API Server running on port ${port}`);
+  console.log('='.repeat(50));
+  console.log('🚀 API Server running on port ${port}');
+  console.log('='.repeat(50));
+  console.log('Available routes:');
+  console.log('  - POST /api/auth/login');
+  console.log('  - POST /api/auth/signup');
+  console.log('  - POST /api/auth/forgot-password');
+  console.log('  - POST /api/auth/reset-password');
+  console.log('  - POST /api/notifications/booking-confirmation');
+  console.log('='.repeat(50));
 });

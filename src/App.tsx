@@ -19,6 +19,7 @@ import { HandoverProvider } from "@/contexts/HandoverContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
@@ -527,8 +528,10 @@ function App() {
                         } />
                       </Routes>
 
-                      {/* Global Chat Manager */}
-                      <ChatManager />
+                      {/* Tutorial wraps ChatManager so it can access restart */}
+                      <TutorialManager>
+                        <ChatManager />
+                      </TutorialManager>
 
                       <Toaster position="top-center" />
                       <CookieConsentBanner />

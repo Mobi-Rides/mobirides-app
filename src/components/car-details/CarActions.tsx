@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart, Calendar, ShieldAlert } from "lucide-react";
+import { Heart, Calendar, ShieldAlert, Loader2 } from "lucide-react";
 import { BookingDialog } from "@/components/booking/BookingDialog";
 import { VerificationRequiredDialog } from "@/components/verification/VerificationRequiredDialog";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
@@ -10,6 +10,8 @@ import type { Car } from "@/types/car";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { TouchTarget } from "@/components/ui/TouchTarget";
+import { cn } from "@/lib/utils";
 
 interface CarActionsProps {
   car: Car;
@@ -136,35 +138,65 @@ export const CarActions = ({ car }: CarActionsProps) => {
   };
 
   return (
-    <div className="sticky bottom-[72px] bg-background dark:bg-gray-800 p-4 rounded-t-lg border-t border-gray-200 dark:border-gray-700 shadow-lg">
+    <div
+      className="sticky bottom-[72px] md:bottom-0 bg-background dark:bg-gray-800 p-4 rounded-t-2xl border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] safe-area-pb"
+      role="region"
+      aria-label="Car booking actions"
+    >
       {isOwner ? (
-        <div className="flex items-center justify-center p-2 bg-muted rounded-lg">
-          <ShieldAlert className="h-5 w-5 mr-2 text-amber-500" />
+        <div
+          className="flex items-center justify-center p-4 bg-muted rounded-xl"
+          role="status"
+        >
+          <ShieldAlert className="h-5 w-5 mr-2 text-amber-500 flex-shrink-0" aria-hidden="true" />
           <p className="text-sm text-muted-foreground">You own this vehicle</p>
         </div>
       ) : (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="w-12 flex-shrink-0"
-            onClick={handleSaveToggle}
-            disabled={isSaving}
-          >
-            <Heart
-              className={`${
-                isSaved
-                  ? "fill-red-500 text-red-500"
-                  : "text-gray-600 dark:text-gray-400"
-              }`}
-            />
-          </Button>
+        <div className="flex gap-3 items-center">
+          {/* Save Button - Ensures 44x44px touch target */}
+          <TouchTarget minWidth={48} minHeight={48}>
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn(
+                "w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl flex-shrink-0",
+                "active:scale-95 transition-transform duration-150",
+                "touch-manipulation"
+              )}
+              onClick={handleSaveToggle}
+              disabled={isSaving}
+              aria-label={isSaved ? "Remove from saved cars" : "Save this car"}
+              aria-pressed={isSaved}
+            >
+              {isSaving ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden="true" />
+              ) : (
+                <Heart
+                  className={cn(
+                    "h-5 w-5 transition-colors duration-200",
+                    isSaved
+                      ? "fill-red-500 text-red-500"
+                      : "text-gray-600 dark:text-gray-400"
+                  )}
+                  aria-hidden="true"
+                />
+              )}
+            </Button>
+          </TouchTarget>
 
+          {/* Book Now Button - Full height for easy tapping */}
           <Button
-            className="flex-1 flex items-center justify-center gap-2"
+            className={cn(
+              "flex-1 h-12 min-h-[48px] rounded-xl",
+              "flex items-center justify-center gap-2 text-base font-medium",
+              "active:scale-[0.98] transition-transform duration-150",
+              "touch-manipulation"
+            )}
             onClick={handleBookNow}
+            aria-label={`Book ${car.brand} ${car.model} now`}
           >
-            <Calendar className="w-5 h-5" />
-            Book Now
+            <Calendar className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+            <span>Book Now</span>
           </Button>
         </div>
       )}
@@ -184,3 +216,5 @@ export const CarActions = ({ car }: CarActionsProps) => {
     </div>
   );
 };
+
+export default CarActions;
