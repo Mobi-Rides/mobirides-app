@@ -14,6 +14,7 @@ interface RentalPaymentDetailsProps {
   dynamicMultiplier?: number;
   isPaid?: boolean;
   insurancePackageName?: string;
+  destinationType?: 'local' | 'out_of_zone' | 'cross_border';
 }
 
 export const RentalPaymentDetails = ({ 
@@ -25,7 +26,8 @@ export const RentalPaymentDetails = ({
   discountAmount,
   dynamicMultiplier,
   isPaid,
-  insurancePackageName
+  insurancePackageName,
+  destinationType
 }: RentalPaymentDetailsProps) => {
   
   // Backwards compatibility calculation if fields are missing
@@ -60,6 +62,7 @@ export const RentalPaymentDetails = ({
           discountAmount={discountAmount || 0}
           variant="full"
           isPaid={isPaid}
+          destinationType={destinationType}
         />
       </CardContent>
     </Card>

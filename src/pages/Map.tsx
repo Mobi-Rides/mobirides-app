@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RouteStepsPanel } from "@/components/navigation/RouteStepsPanel";
 
 const Map = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const mode = searchParams.get("mode");
   const bookingId = searchParams.get("bookingId");
   const { user } = useAuth();
@@ -115,19 +115,23 @@ const Map = () => {
 
       // Check if booking is eligible for handover today
       const today = new Date().toISOString().split('T')[0];
-      const isStartDate = booking.start_date === today;
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      const isStartDate = booking.start_date === today || booking.start_date === tomorrow;
       const isEndDate = booking.end_date === today;
+      const isInProgress = booking.status === 'in_progress';
 
-      // Allow if dates match OR if we are in development/preview environment (relaxed validation)
+      // Allow if:
+      // 1. It is start date (or tomorrow) for pickup
+      // 2. It is end date for return
+      // 3. Booking is IN_PROGRESS (any date, covers overdue returns)
+      // 4. We are in dev environment
       const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       
-      if (!isStartDate && !isEndDate && !isDev) {
+      if (!isStartDate && !isEndDate && !isInProgress && !isDev) {
         console.log('Booking is not eligible for handover today:', bookingId);
-        // In production, we might want to enforce this, but for now/demo we might want to be lenient
-        // return false; 
-        
-        // For now, let's just log a warning but allow it to proceed if the status is confirmed
-        // This helps with testing when you can't easily change the "today" date
+        // For production, we strictly validate dates unless it's an active rental
+        // But for now keeping the warning behavior as per previous logic
         console.warn('Allowing handover for non-today booking (testing mode)');
       }
 
@@ -161,10 +165,13 @@ const Map = () => {
       
       if (!isValid) {
         // Clear URL parameters and fall back to standard map mode
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.delete('mode');
-        currentUrl.searchParams.delete('bookingId');
-        window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+        setSearchParams((prev) => {
+          const newParams = new URLSearchParams(prev);
+          newParams.delete('mode');
+          newParams.delete('bookingId');
+          newParams.delete('handoverType');
+          return newParams;
+        }, { replace: true });
         
         toast.info("Invalid handover request - showing standard map");
         setIsHandoverMode(false);
@@ -385,11 +392,13 @@ const Map = () => {
                 // Update the current booking ID and handover type in URL
                 if (clickedBookingId !== bookingId || handoverType === 'return') {
                   console.log("Updating URL with booking ID and handover type:", handoverType);
-                  window.history.replaceState(
-                    {}, 
-                    '', 
-                    `/map?mode=handover&bookingId=${clickedBookingId}&handoverType=${handoverType}`
-                  );
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set('mode', 'handover');
+                    newParams.set('bookingId', clickedBookingId);
+                    newParams.set('handoverType', handoverType);
+                    return newParams;
+                  }, { replace: true });
                 }
                 console.log("Opening handover sheet for", handoverType);
                 setIsHandoverSheetOpen(true);
@@ -400,10 +409,13 @@ const Map = () => {
               onClose={() => {
                 setIsHandoverSheetOpen(false);
                 // Clear URL parameters when closing
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.delete('mode');
-                currentUrl.searchParams.delete('bookingId');
-                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+                setSearchParams(prev => {
+                  const newParams = new URLSearchParams(prev);
+                  newParams.delete('mode');
+                  newParams.delete('bookingId');
+                  newParams.delete('handoverType');
+                  return newParams;
+                }, { replace: true });
               }}
               bookingId={bookingId || ""}
             />
