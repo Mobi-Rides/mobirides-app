@@ -70,18 +70,21 @@ const RentalDetailsRefactored = () => {
     handleExpiredBookings();
   }, []);
 
-  // Auto-open payment modal via URL param (?pay=true) or legacy location.state
+  // Auto-open payment modal via URL param (?pay=true)
   useEffect(() => {
-    const shouldOpen = searchParams.get('pay') === 'true' || location.state?.openPayment;
+    const shouldOpen = searchParams.get('pay') === 'true';
     if (shouldOpen && booking?.status === 'awaiting_payment') {
       setIsPaymentModalOpen(true);
       // Clean up the URL param so refreshing doesn't re-trigger
       if (searchParams.get('pay')) {
-        searchParams.delete('pay');
-        setSearchParams(searchParams, { replace: true });
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev);
+          newParams.delete('pay');
+          return newParams;
+        }, { replace: true });
       }
     }
-  }, [booking, searchParams, location.state]);
+  }, [booking, searchParams, setSearchParams]);
 
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);
@@ -181,8 +184,10 @@ const RentalDetailsRefactored = () => {
             insurancePremium={booking.insurance_premium || 0}
             discountAmount={booking.discount_amount || 0}
             dynamicMultiplier={booking.dynamic_pricing_multiplier || 1}
+            destinationType={(booking as any).destination_type}
             isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
             insurancePackageName={insurancePackageName || undefined}
+            destinationType={booking.destination_type}
           />
         )}
 

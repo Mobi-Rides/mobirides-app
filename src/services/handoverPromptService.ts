@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format, isToday, isAfter, isBefore, addHours, subHours } from "date-fns";
+import { BookingStatus } from "@/types/booking";
 
 export interface HandoverPrompt {
   id: string;
@@ -39,6 +40,7 @@ interface PromptBooking {
   renter?: {
     full_name: string;
   };
+  payment_status?: string;
 }
 
 export class HandoverPromptService {
@@ -62,6 +64,7 @@ export class HandoverPromptService {
           start_date,
           end_date,
           status,
+          payment_status,
           cars (
             brand,
             model,
@@ -77,8 +80,7 @@ export class HandoverPromptService {
             full_name
           )
         `)
-        .eq('status', 'confirmed')
-        .or(`start_date.eq.${format(today, 'yyyy-MM-dd')},end_date.eq.${format(today, 'yyyy-MM-dd')}`);
+        .in('status', [BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS]);
 
       if (userRole === 'host') {
         // For hosts, get bookings for their cars
@@ -139,9 +141,9 @@ export class HandoverPromptService {
       for (const booking of bookings) {
         const sessions = bookingSessionMap.get(booking.id) || [];
         const startDate = new Date(booking.start_date);
-        const endDate = new Date(booking.end_date);
+        // const endDate = new Date(booking.end_date); // Not strictly needed for logic below
         const isPickupDay = isToday(startDate);
-        const isReturnDay = isToday(endDate);
+        // const isReturnDay = isToday(endDate); // Removed strict check for return day
         
         // Separate pickup and return sessions based on handover_type field
         const pickupSessions = sessions.filter(session => 
@@ -171,18 +173,29 @@ export class HandoverPromptService {
           continue;
         }
 
-        // Show pickup prompt if it's pickup day and pickup not completed
-        if (isPickupDay && !pickupCompleted) {
+        // Show pickup prompt if:
+        // 1. It is pickup day (today)
+        // 2. Booking is confirmed (not yet in progress)
+        // 3. Pickup not completed
+        if (isPickupDay && booking.status === BookingStatus.CONFIRMED && !pickupCompleted) {
           prompts.push(this.createHandoverPrompt(booking as PromptBooking, 'pickup', userRole));
         }
         
-        // Show return prompt if it's return day and pickup completed but return not completed
-        if (isReturnDay && pickupCompleted && !returnCompleted) {
+        // Show return prompt if:
+        // 1. Booking is IN_PROGRESS (implies pickup done)
+        // 2. Return not completed
+        // This covers both "return due today" and "overdue"
+        if (booking.status === BookingStatus.IN_PROGRESS && !returnCompleted) {
           prompts.push(this.createHandoverPrompt(booking as PromptBooking, 'return', userRole));
         }
       }
 
-      return prompts;
+      // Filter prompts: Handover is ONLY possible if booking is confirmed AND paid
+      // This is a safety guard to prevent handovers for unpaid bookings
+      return prompts.filter(prompt => {
+        const booking = bookings.find(b => b.id === prompt.bookingId);
+        return booking?.payment_status === 'paid';
+      });
     } catch (error) {
       logger.error('Error in detectHandoverPrompts:', error);
       // Return empty array instead of throwing to prevent UI crashes

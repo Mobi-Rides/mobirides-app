@@ -44,9 +44,9 @@ BEGIN
   END LOOP;
 END $$;
 
--- 3. Re-enable RLS (just in case)
+-- 3. Re-enable RLS (just in case for admins, storage handles its own)
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Skipping storage.objects RLS enable due to ownership restrictions in local migrations
 
 -- 4. Recreate IS_ADMIN (Security Definer) - ensuring it's fresh
 CREATE OR REPLACE FUNCTION public.is_admin()

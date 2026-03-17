@@ -25,6 +25,7 @@ interface UnifiedPriceSummaryProps {
   showBreakdown?: boolean;
   className?: string;
   isPaid?: boolean;
+  destinationType?: string;
 }
 
 export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
@@ -39,7 +40,8 @@ export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
   variant = 'full',
   showBreakdown = true,
   className,
-  isPaid = false
+  isPaid = false,
+  destinationType
 }) => {
   // Calculate rental subtotal with dynamic pricing
   const rentalSubtotal = dynamicPricing?.final_price ?? basePrice;
@@ -77,7 +79,11 @@ export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
         {/* Dynamic Pricing Adjustments */}
         {dynamicPricing?.is_dynamic && dynamicPricing.final_price !== basePrice && (
           <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
-            <span>Demand Adjustment</span>
+            <span>
+              {destinationType && destinationType !== 'local' 
+                ? `${destinationType === 'cross_border' ? 'Cross-Border' : 'Out of Zone'} Surcharge` 
+                : 'Demand Adjustment'}
+            </span>
             <span>
               {dynamicPricing.final_price > basePrice ? '+' : ''}
               {formatCurrency(dynamicPricing.final_price - basePrice)}

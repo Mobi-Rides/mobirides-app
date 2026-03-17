@@ -45,11 +45,22 @@ export interface HandoverStatus {
   updated_at: string;
 }
 
+// Shared map to prevent duplicate session creations from concurrent calls (e.g. React StrictMode or double clicks)
+const inFlightSessionCreations = new Map<string, Promise<HandoverStatus>>();
+
 // Create a pickup handover session with pickup-specific logic
 export const createPickupHandoverSession = async (
   data: PickupHandoverData
 ): Promise<HandoverStatus> => {
-  try {
+  const lockKey = `${data.booking_id}_pickup`;
+  
+  if (inFlightSessionCreations.has(lockKey)) {
+    console.log('Pickup handover session creation already in progress, waiting for existing promise');
+    return inFlightSessionCreations.get(lockKey)!;
+  }
+
+  const createPromise = (async () => {
+    try {
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
@@ -113,6 +124,22 @@ export const createPickupHandoverSession = async (
           "Permission denied: You don't have access to create a pickup handover session",
         );
         throw new Error('Permission denied - check RLS policies for handover_sessions');
+      } else if (error.code === '23505') {
+        // Unique violation - fetch existing session (race condition handler)
+        const { data: existingSession } = await supabase
+          .from('handover_sessions')
+          .select('*')
+          .eq('booking_id', data.booking_id)
+          .eq('handover_type', 'pickup')
+          .single();
+          
+        if (existingSession) {
+          return {
+            ...existingSession,
+            handover_type: (existingSession as any).handover_type || 'pickup'
+          } as unknown as HandoverStatus;
+        }
+        throw new Error('Failed to create pickup handover session: Duplicate session detected but could not be fetched');
       } else {
         throw new Error(`Failed to create pickup handover session: ${error.message}`);
       }
@@ -177,21 +204,35 @@ export const createPickupHandoverSession = async (
       }
     }
 
-    return {
-      ...sessionResult,
-      handover_type: (sessionResult as any).handover_type || 'pickup'
-    } as unknown as HandoverStatus;
-  } catch (error) {
-    console.error('Pickup handover session creation failed:', error);
-    throw error;
-  }
+      return {
+        ...sessionResult,
+        handover_type: (sessionResult as any).handover_type || 'pickup'
+      } as unknown as HandoverStatus;
+    } catch (error) {
+      console.error('Pickup handover session creation failed:', error);
+      throw error;
+    } finally {
+      inFlightSessionCreations.delete(lockKey);
+    }
+  })();
+
+  inFlightSessionCreations.set(lockKey, createPromise);
+  return createPromise;
 };
 
 // Create a return handover session with return-specific logic
 export const createReturnHandoverSession = async (
   data: ReturnHandoverData
 ): Promise<HandoverStatus> => {
-  try {
+  const lockKey = `${data.booking_id}_return`;
+  
+  if (inFlightSessionCreations.has(lockKey)) {
+    console.log('Return handover session creation already in progress, waiting for existing promise');
+    return inFlightSessionCreations.get(lockKey)!;
+  }
+
+  const createPromise = (async () => {
+    try {
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
@@ -255,6 +296,22 @@ export const createReturnHandoverSession = async (
           "Permission denied: You don't have access to create a return handover session",
         );
         throw new Error('Permission denied - check RLS policies for handover_sessions');
+      } else if (error.code === '23505') {
+        // Unique violation - fetch existing session (race condition handler)
+        const { data: existingSession } = await supabase
+          .from('handover_sessions')
+          .select('*')
+          .eq('booking_id', data.booking_id)
+          .eq('handover_type', 'return')
+          .single();
+          
+        if (existingSession) {
+          return {
+            ...existingSession,
+            handover_type: (existingSession as any).handover_type || 'return'
+          } as unknown as HandoverStatus;
+        }
+        throw new Error('Failed to create return handover session: Duplicate session detected but could not be fetched');
       } else {
         throw new Error(`Failed to create return handover session: ${error.message}`);
       }
@@ -319,14 +376,20 @@ export const createReturnHandoverSession = async (
       }
     }
 
-    return {
-      ...sessionResult,
-      handover_type: (sessionResult as any).handover_type || 'return'
-    } as unknown as HandoverStatus;
-  } catch (error) {
-    console.error('Return handover session creation failed:', error);
-    throw error;
-  }
+      return {
+        ...sessionResult,
+        handover_type: (sessionResult as any).handover_type || 'return'
+      } as unknown as HandoverStatus;
+    } catch (error) {
+      console.error('Return handover session creation failed:', error);
+      throw error;
+    } finally {
+      inFlightSessionCreations.delete(lockKey);
+    }
+  })();
+
+  inFlightSessionCreations.set(lockKey, createPromise);
+  return createPromise;
 };
 
 // Create a new handover session when a booking is confirmed (backward compatibility)

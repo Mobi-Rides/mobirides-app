@@ -17,8 +17,8 @@ const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-app.all('/api/{*path}', async (req, res) => {
-  const apiPath = req.params.path;
+app.use('/api', async (req, res) => {
+  const apiPath = req.url.replace(/^\//, ''); // Remove leading slash
   console.log(`[Server] API Request: ${req.method} ${apiPath}`);
   console.log(`[Server] Request headers:`, req.headers['content-type']);
   console.log(`[Server] Request body:`, req.body);
@@ -41,7 +41,7 @@ app.all('/api/{*path}', async (req, res) => {
     } else if (apiPath === 'notifications/booking-confirmation') {
       console.log('[Server] Routing to notifications/booking-confirmation.js');
       handler = await import('./api/notifications/booking-confirmation.js');
-    } else if (apiPath.startsWith('admin/')) {
+    } else if (apiPath && typeof apiPath === 'string' && apiPath.startsWith('admin/')) {
       // Admin routes temporarily disabled due to missing files/merge conflict
       console.warn(`[Server] Admin route ${apiPath} requested but admin handlers are missing.`);
       return res.status(503).json({ error: 'Admin services temporarily unavailable' });
@@ -70,7 +70,7 @@ app.all('/api/{*path}', async (req, res) => {
 
 app.listen(port, () => {
   console.log('='.repeat(50));
-  console.log('🚀 API Server running on port ${port}');
+  console.log(`🚀 API Server running on port ${port}`);
   console.log('='.repeat(50));
   console.log('Available routes:');
   console.log('  - POST /api/auth/login');
