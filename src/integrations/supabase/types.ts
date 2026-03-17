@@ -389,6 +389,7 @@ export type Database = {
           commission_amount: number | null
           commission_status: string | null
           created_at: string
+          destination_type: string | null
           discount_amount: number | null
           dynamic_pricing_multiplier: number | null
           early_return: boolean | null
@@ -421,6 +422,7 @@ export type Database = {
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          destination_type?: string | null
           discount_amount?: number | null
           dynamic_pricing_multiplier?: number | null
           early_return?: boolean | null
@@ -453,6 +455,7 @@ export type Database = {
           commission_amount?: number | null
           commission_status?: string | null
           created_at?: string
+          destination_type?: string | null
           discount_amount?: number | null
           dynamic_pricing_multiplier?: number | null
           early_return?: boolean | null
