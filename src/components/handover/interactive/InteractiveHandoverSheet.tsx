@@ -9,6 +9,7 @@ import { WaitingCard } from "./WaitingCard";
 import { LEGACY_STEP_NAMES } from "@/services/enhancedHandoverService";
 import { cn } from "@/lib/utils";
 import { toast } from "@/utils/toast-utils";
+import { bookingLifecycle } from "@/services/bookingLifecycle";
 
 // Step components — new consolidated steps
 import { LocationSelectionStep } from "./steps/LocationSelectionStep";
@@ -74,17 +75,11 @@ export const InteractiveHandoverSheet: React.FC<InteractiveHandoverSheetProps> =
           
           if (isReturn) {
             console.log("🔄 Return handover detected - updating booking status to completed");
-            const { error: bookingUpdateError } = await supabase
-              .from('bookings')
-              .update({ 
-                status: 'completed',
-                actual_end_date: new Date().toISOString()
-              })
-              .eq('id', session.booking_id);
+            const result = await bookingLifecycle.updateStatus(session.booking_id, 'completed', {
+              actual_end_date: new Date().toISOString()
+            });
               
-            if (bookingUpdateError) throw bookingUpdateError;
-            
-            toast.success("Return complete! Your rental has ended.");
+            if (!result.success) throw result.error;
             
             onClose();
             const isOnMap = location.pathname === '/map';
@@ -97,16 +92,9 @@ export const InteractiveHandoverSheet: React.FC<InteractiveHandoverSheetProps> =
             }
           } else {
             console.log("🔄 Pickup handover detected - updating booking status to in_progress");
-            const { error: bookingUpdateError } = await supabase
-              .from('bookings')
-              .update({ 
-                status: 'in_progress'
-              })
-              .eq('id', session.booking_id);
+            const result = await bookingLifecycle.updateStatus(session.booking_id, 'in_progress');
               
-            if (bookingUpdateError) throw bookingUpdateError;
-            
-            toast.success("Rental started! Your booking is now active.");
+            if (!result.success) throw result.error;
             
             onClose();
             const isOnMap = location.pathname === '/map';
