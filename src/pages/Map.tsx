@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RouteStepsPanel } from "@/components/navigation/RouteStepsPanel";
 
 const Map = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const mode = searchParams.get("mode");
   const bookingId = searchParams.get("bookingId");
   const { user } = useAuth();
@@ -113,6 +113,12 @@ const Map = () => {
         }
       }
 
+      // If the booking is in_progress, it's always eligible for return handover
+      if (booking.status === 'in_progress') {
+        console.log('Booking is in progress, allowing return handover:', bookingId);
+        return true;
+      }
+
       // Check if booking is eligible for handover today
       const today = new Date().toISOString().split('T')[0];
       const isStartDate = booking.start_date === today;
@@ -161,10 +167,11 @@ const Map = () => {
       
       if (!isValid) {
         // Clear URL parameters and fall back to standard map mode
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.delete('mode');
-        currentUrl.searchParams.delete('bookingId');
-        window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('mode');
+        newParams.delete('bookingId');
+        newParams.delete('handoverType');
+        setSearchParams(newParams, { replace: true });
         
         toast.info("Invalid handover request - showing standard map");
         setIsHandoverMode(false);
@@ -385,11 +392,11 @@ const Map = () => {
                 // Update the current booking ID and handover type in URL
                 if (clickedBookingId !== bookingId || handoverType === 'return') {
                   console.log("Updating URL with booking ID and handover type:", handoverType);
-                  window.history.replaceState(
-                    {}, 
-                    '', 
-                    `/map?mode=handover&bookingId=${clickedBookingId}&handoverType=${handoverType}`
-                  );
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.set('mode', 'handover');
+                  newParams.set('bookingId', clickedBookingId);
+                  newParams.set('handoverType', handoverType);
+                  setSearchParams(newParams, { replace: true });
                 }
                 console.log("Opening handover sheet for", handoverType);
                 setIsHandoverSheetOpen(true);
@@ -400,10 +407,11 @@ const Map = () => {
               onClose={() => {
                 setIsHandoverSheetOpen(false);
                 // Clear URL parameters when closing
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.delete('mode');
-                currentUrl.searchParams.delete('bookingId');
-                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+                const newParams = new URLSearchParams(searchParams);
+                newParams.delete('mode');
+                newParams.delete('bookingId');
+                newParams.delete('handoverType');
+                setSearchParams(newParams, { replace: true });
               }}
               bookingId={bookingId || ""}
             />

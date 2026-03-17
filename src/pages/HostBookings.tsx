@@ -16,6 +16,7 @@ import { HostBookingFilters } from "@/components/host-bookings/HostBookingFilter
 import { HostBookingStats } from "@/components/host-bookings/HostBookingStats";
 import { useToast } from "@/hooks/use-toast";
 import { BookingWithRelations, BookingStatus } from "@/types/booking";
+import { pushNotificationService } from "@/services/pushNotificationService";
 
 type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired" | "awaiting_payment";
 type SortOption = "date_asc" | "date_desc" | "earnings_asc" | "earnings_desc" | "status" | "renter";
@@ -159,6 +160,19 @@ export const HostBookings = () => {
         title: "Success",
         description: `Booking ${action}d successfully`,
       });
+
+      // Send notification if approved
+      if (action === "approve") {
+        const booking = bookings?.find(b => b.id === bookingId);
+        if (booking && booking.renter?.id) {
+          pushNotificationService.sendBookingNotification(booking.renter.id, {
+            type: 'awaiting_payment',
+            carBrand: booking.cars.brand,
+            carModel: booking.cars.model,
+            bookingReference: booking.id
+          }).catch(err => console.error("Failed to send notification:", err));
+        }
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -196,6 +210,21 @@ export const HostBookings = () => {
         title: "Success",
         description: `${selectedBookings.length} bookings ${action}d successfully`,
       });
+
+      // Send notifications for all approved bookings
+      if (action === "approve") {
+        selectedBookings.forEach(id => {
+          const booking = bookings?.find(b => b.id === id);
+          if (booking && booking.renter?.id) {
+            pushNotificationService.sendBookingNotification(booking.renter.id, {
+              type: 'awaiting_payment',
+              carBrand: booking.cars.brand,
+              carModel: booking.cars.model,
+              bookingReference: booking.id
+            }).catch(err => console.error("Failed to send notification for bulk approval:", err));
+          }
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",

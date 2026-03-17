@@ -102,7 +102,7 @@ export class PushNotificationService {
   async sendBookingNotification(
     userId: string,
     bookingData: {
-      type: 'confirmed' | 'request' | 'cancelled' | 'reminder';
+      type: 'confirmed' | 'request' | 'cancelled' | 'reminder' | 'awaiting_payment';
       carBrand: string;
       carModel: string;
       bookingReference: string;
@@ -130,6 +130,11 @@ export class PushNotificationService {
         title = 'Pickup Reminder';
         body = `Don't forget to pick up ${bookingData.carBrand} ${bookingData.carModel} today!`;
         break;
+      case 'awaiting_payment':
+        title = 'Payment Required';
+        body = `Your booking for ${bookingData.carBrand} ${bookingData.carModel} has been approved. Please complete payment to confirm your trip.`;
+        url = `/rental-details/${bookingData.bookingReference}?pay=true`;
+        break;
       default:
         title = 'Booking Update';
         body = `Update for your ${bookingData.carBrand} ${bookingData.carModel} booking`;
@@ -148,7 +153,7 @@ export class PushNotificationService {
       messagePreview?: string;
     }
   ): Promise<{ success: boolean; messageIds?: string[]; error?: string }> {
-    let title = 'New Message';
+    const title = 'New Message';
     let body = `${messageData.senderName} sent you a message`;
     
     if (messageData.messagePreview) {

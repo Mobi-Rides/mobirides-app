@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { X, GripHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -61,6 +61,7 @@ export const ResizableHandoverTray = ({
   bookingId
 }: ResizableHandoverTrayProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { isLoading, isHandoverSessionLoading, isHost, bookingDetails, handoverId, currentUserId, handoverStatus } = useHandover();
   const { handoverProgress } = useRealtimeHandover(handoverId);
@@ -300,29 +301,26 @@ export const ResizableHandoverTray = ({
     console.log("🔄 Handover type determination - isReturnHandover():", isReturn);
     
     setIsHandoverCompleted(false);
-    
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.delete('mode');
-    currentUrl.searchParams.delete('bookingId');
-    window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
-    
     onClose();
     
-    if (!isHost && isReturn) {
-      console.log("🔄 Return handover completed - redirecting renter to review page");
-      console.log("🚀 Navigating to:", `/rental-review/${bookingId}`);
-      navigate(`/rental-review/${bookingId}`);
-      return;
-    }
-    
-    if (isHost) {
-      console.log("🏠 Host user - navigating to host-bookings");
-      console.log("🚀 Navigating to: /host-bookings");
-      navigate("/host-bookings");
-    } else {
-      console.log("🚗 Renter user - pickup completed, navigating to renter-bookings");
-      console.log("🚀 Navigating to: /renter-bookings");
-      navigate("/renter-bookings");
+    const isOnMap = location.pathname === '/map';
+    if (!isOnMap) {
+      if (!isHost && isReturn) {
+        console.log("🔄 Return handover completed - redirecting renter to review page");
+        console.log("🚀 Navigating to:", `/rental-review/${bookingId}`);
+        navigate(`/rental-review/${bookingId}`);
+        return;
+      }
+      
+      if (isHost) {
+        console.log("🏠 Host user - navigating to host-bookings");
+        console.log("🚀 Navigating to: /host-bookings");
+        navigate("/host-bookings");
+      } else {
+        console.log("🚗 Renter user - pickup completed, navigating to renter-bookings");
+        console.log("🚀 Navigating to: /renter-bookings");
+        navigate("/renter-bookings");
+      }
     }
   };
 

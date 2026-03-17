@@ -39,6 +39,7 @@ interface PromptBooking {
   renter?: {
     full_name: string;
   };
+  payment_status?: string;
 }
 
 export class HandoverPromptService {
@@ -62,6 +63,7 @@ export class HandoverPromptService {
           start_date,
           end_date,
           status,
+          payment_status,
           cars (
             brand,
             model,
@@ -77,7 +79,7 @@ export class HandoverPromptService {
             full_name
           )
         `)
-        .eq('status', 'confirmed')
+        .in('status', ['confirmed', 'in_progress'])
         .or(`start_date.eq.${format(today, 'yyyy-MM-dd')},end_date.eq.${format(today, 'yyyy-MM-dd')}`);
 
       if (userRole === 'host') {
@@ -182,7 +184,12 @@ export class HandoverPromptService {
         }
       }
 
-      return prompts;
+      // Filter prompts: Handover is ONLY possible if booking is confirmed AND paid
+      // This is a safety guard to prevent handovers for unpaid bookings
+      return prompts.filter(prompt => {
+        const booking = bookings.find(b => b.id === prompt.bookingId);
+        return booking?.payment_status === 'paid';
+      });
     } catch (error) {
       logger.error('Error in detectHandoverPrompts:', error);
       // Return empty array instead of throwing to prevent UI crashes

@@ -24,6 +24,7 @@ import { WalletCommissionSection } from "@/components/booking-request/WalletComm
 import { BookingActions } from "@/components/booking-request/BookingActions";
 import { PostConfirmationGuidance } from "@/components/booking/PostConfirmationGuidance";
 import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
+import { pushNotificationService } from "@/services/pushNotificationService";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
@@ -146,12 +147,18 @@ const BookingRequestDetails = () => {
       });
 
       queryClient.invalidateQueries({
-        queryKey: ['booking-request', id]
-      });
-
-      queryClient.invalidateQueries({
         queryKey: ['wallet-balance']
       });
+
+      // Send notification if status changed to awaiting_payment
+      if (variables.status === 'awaiting_payment' && booking) {
+        pushNotificationService.sendBookingNotification(booking.renter_id, {
+          type: 'awaiting_payment',
+          carBrand: booking.car.brand,
+          carModel: booking.car.model,
+          bookingReference: booking.id
+        }).catch(err => console.error("Failed to send notification:", err));
+      }
     },
     onError: error => {
       console.error('Error updating booking status:', error);

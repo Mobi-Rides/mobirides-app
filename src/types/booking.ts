@@ -23,6 +23,7 @@ export interface BookingWithRelations {
   insurance_policy_id?: string;
   discount_amount?: number;
   promo_code_id?: string;
+  destination_type?: string;
   cars: {
     brand: string;
     model: string;
@@ -77,6 +78,7 @@ export enum BookingStatus {
   PENDING = "pending",
   AWAITING_PAYMENT = "awaiting_payment",
   CONFIRMED = "confirmed",
+  IN_PROGRESS = "in_progress",
   CANCELLED = "cancelled",
   COMPLETED = "completed",
   EXPIRED = "expired"

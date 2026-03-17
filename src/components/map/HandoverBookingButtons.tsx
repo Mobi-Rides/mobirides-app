@@ -60,7 +60,8 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
             )
           `)
           .in("status", ["confirmed", "in_progress"])
-          .or(`start_date.eq.${today},start_date.eq.${tomorrow},end_date.eq.${today}`);
+          .eq("payment_status", "paid")
+          .or(`start_date.eq.${today},start_date.eq.${tomorrow},status.eq.in_progress`);
 
         // Filter based on user role
         if (userRole === "renter") {
@@ -86,7 +87,6 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
         // Filter for bookings that actually need handover actions
         const filteredData = data.filter(booking => {
           const startDate = new Date(booking.start_date);
-          const endDate = new Date(booking.end_date);
           const handoverSession = booking.handover_sessions?.[0];
           
           // If handover is completed, don't show button
@@ -98,9 +98,8 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
           const isPickupDay = startDate.toDateString() === now.toDateString();
           const needsPickup = isPickupDay && booking.status === 'confirmed' && !handoverSession;
           
-          // For return: show on/after end date if booking is in_progress
-          const isReturnDayOrPast = endDate <= now || endDate.toDateString() === now.toDateString();
-          const needsReturn = isReturnDayOrPast && booking.status === 'in_progress';
+          // For return: show if booking is in_progress
+          const needsReturn = booking.status === 'in_progress';
           
           return needsPickup || needsReturn;
         });
