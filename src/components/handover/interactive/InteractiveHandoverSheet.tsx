@@ -1,5 +1,6 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { X, Loader2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -51,7 +52,81 @@ export const InteractiveHandoverSheet: React.FC<InteractiveHandoverSheetProps> =
     refresh
   } = useInteractiveHandover(sessionId);
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasProcessedCompletion, setHasProcessedCompletion] = useState(false);
+
+  // Reset completion flag if session is not completed
+  useEffect(() => {
+    if (session && !session.handover_completed) {
+      setHasProcessedCompletion(false);
+    }
+  }, [session?.handover_completed]);
+
+  // Handle completion and redirects
+  useEffect(() => {
+    const processCompletion = async () => {
+      if (session?.handover_completed && !hasProcessedCompletion) {
+        setHasProcessedCompletion(true);
+        try {
+          const isReturn = session.handover_type === 'return';
+          
+          if (isReturn) {
+            console.log("🔄 Return handover detected - updating booking status to completed");
+            const { error: bookingUpdateError } = await supabase
+              .from('bookings')
+              .update({ 
+                status: 'completed',
+                actual_end_date: new Date().toISOString()
+              })
+              .eq('id', session.booking_id);
+              
+            if (bookingUpdateError) throw bookingUpdateError;
+            
+            toast.success("Return complete! Your rental has ended.");
+            
+            onClose();
+            const isOnMap = location.pathname === '/map';
+            if (!isOnMap) {
+              if (userRole === 'renter') {
+                navigate(`/rental-review/${session.booking_id}`);
+              } else {
+                navigate("/host-bookings");
+              }
+            }
+          } else {
+            console.log("🔄 Pickup handover detected - updating booking status to in_progress");
+            const { error: bookingUpdateError } = await supabase
+              .from('bookings')
+              .update({ 
+                status: 'in_progress'
+              })
+              .eq('id', session.booking_id);
+              
+            if (bookingUpdateError) throw bookingUpdateError;
+            
+            toast.success("Rental started! Your booking is now active.");
+            
+            onClose();
+            const isOnMap = location.pathname === '/map';
+            if (!isOnMap) {
+              if (userRole === 'host') {
+                navigate("/host-bookings");
+              } else {
+                navigate("/renter-bookings");
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error updating booking status:", error);
+          toast.error("Handover completed but failed to update booking status.");
+        }
+      }
+    };
+    
+    processCompletion();
+  }, [session?.handover_completed, hasProcessedCompletion, session, userRole, navigate, onClose, location.pathname]);
 
   if (!isOpen) return null;
 

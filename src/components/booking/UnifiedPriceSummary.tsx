@@ -25,6 +25,7 @@ interface UnifiedPriceSummaryProps {
   showBreakdown?: boolean;
   className?: string;
   isPaid?: boolean;
+  destinationType?: string;
 }
 
 export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
@@ -39,7 +40,8 @@ export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
   variant = 'full',
   showBreakdown = true,
   className,
-  isPaid = false
+  isPaid = false,
+  destinationType
 }) => {
   // Calculate rental subtotal with dynamic pricing
   const rentalSubtotal = dynamicPricing?.final_price ?? basePrice;

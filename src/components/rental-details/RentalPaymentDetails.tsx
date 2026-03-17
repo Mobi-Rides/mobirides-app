@@ -60,9 +60,9 @@ export const RentalPaymentDetails = ({
           insurancePremium={insurancePremium || 0}
           insurancePackageName={insurancePackageName}
           discountAmount={discountAmount || 0}
+          destinationType={destinationType}
           variant="full"
           isPaid={isPaid}
-          destinationType={destinationType}
         />
       </CardContent>
     </Card>

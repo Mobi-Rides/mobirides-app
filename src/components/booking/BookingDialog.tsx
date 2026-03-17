@@ -362,6 +362,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           longitude: pickupLocation.longitude,
           destination_type: destinationType,
           status: "pending", // Explicitly set status to a valid enum value
+          destination_type: destinationType,
         })
         .select()
         .single();
@@ -879,6 +880,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Dates</span>
                     <span>{format(startDate!, "MMM dd")} – {format(endDate!, "MMM dd, yyyy")}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Destination</span>
+                    <span className="capitalize">{destinationType.replace('_', ' ')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Pickup</span>

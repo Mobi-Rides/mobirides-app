@@ -7,6 +7,7 @@ import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
 import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import { HandoverBanner } from "@/components/handover/HandoverBanner";
+import { PaymentRequiredBanner } from "./PaymentRequiredBanner";
 import { useHandoverPrompts } from "@/hooks/useHandoverPrompts";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createHandoverSession } from "@/services/handoverService";
@@ -245,6 +246,9 @@ export const RenterView = ({
 
   return (
     <div className="space-y-6">
+      {/* Payment Required Prompts */}
+      <PaymentRequiredBanner />
+
       {/* Handover Prompts */}
       {hasHandoverPrompts && (
         <div className="space-y-3">

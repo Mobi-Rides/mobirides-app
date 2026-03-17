@@ -3,6 +3,10 @@
 -- Removed legacy 'messages' table logic as requested
 
 -- 1. Ensure is_admin function is SECURITY DEFINER to bypass RLS
+-- Drop all variations to prevent ambiguity errors (is_admin() vs is_admin(uuid))
+DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
+DROP FUNCTION IF EXISTS public.is_admin(uuid) CASCADE;
+
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -15,6 +19,9 @@ AS $$
 $$;
 
 -- 2. Ensure is_super_admin function is SECURITY DEFINER
+DROP FUNCTION IF EXISTS public.is_super_admin() CASCADE;
+DROP FUNCTION IF EXISTS public.is_super_admin(uuid) CASCADE;
+
 CREATE OR REPLACE FUNCTION public.is_super_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -100,13 +107,9 @@ BEGIN
   END IF;
 
   -- ===================================================================
-  -- STEP 3: Cleanup Legacy Messages Table (If it still exists)
+  -- STEP 3: Cleanup Legacy Messages Table (Archived previously)
   -- ===================================================================
-  -- User requested to remove public.messages if it exists
-  
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'messages') THEN
-    DROP TABLE public.messages CASCADE;
-  END IF;
+  -- Table public.messages was moved to archive schema in 20251205 migration
 
 END $$;
 

@@ -59,7 +59,9 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
               created_at
             )
           `)
-          .in("status", [BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS]);
+          .in("status", [BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS])
+          .eq("payment_status", "paid")
+          .or(`start_date.eq.${today},start_date.eq.${tomorrow},status.eq.in_progress`);
 
         // Filter based on user role
         if (userRole === "renter") {
@@ -85,7 +87,6 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
         // Filter for bookings that actually need handover actions
         const filteredData = data.filter(booking => {
           const startDate = new Date(booking.start_date);
-          const endDate = new Date(booking.end_date);
           const handoverSession = booking.handover_sessions?.[0];
           
           // If handover is completed, don't show button

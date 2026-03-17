@@ -113,6 +113,12 @@ const Map = () => {
         }
       }
 
+      // If the booking is in_progress, it's always eligible for return handover
+      if (booking.status === 'in_progress') {
+        console.log('Booking is in progress, allowing return handover:', bookingId);
+        return true;
+      }
+
       // Check if booking is eligible for handover today
       const today = new Date().toISOString().split('T')[0];
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
