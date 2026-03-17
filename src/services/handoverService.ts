@@ -124,6 +124,22 @@ export const createPickupHandoverSession = async (
           "Permission denied: You don't have access to create a pickup handover session",
         );
         throw new Error('Permission denied - check RLS policies for handover_sessions');
+      } else if (error.code === '23505') {
+        // Unique violation - fetch existing session (race condition handler)
+        const { data: existingSession } = await supabase
+          .from('handover_sessions')
+          .select('*')
+          .eq('booking_id', data.booking_id)
+          .eq('handover_type', 'pickup')
+          .single();
+          
+        if (existingSession) {
+          return {
+            ...existingSession,
+            handover_type: (existingSession as any).handover_type || 'pickup'
+          } as unknown as HandoverStatus;
+        }
+        throw new Error('Failed to create pickup handover session: Duplicate session detected but could not be fetched');
       } else {
         throw new Error(`Failed to create pickup handover session: ${error.message}`);
       }
@@ -280,6 +296,22 @@ export const createReturnHandoverSession = async (
           "Permission denied: You don't have access to create a return handover session",
         );
         throw new Error('Permission denied - check RLS policies for handover_sessions');
+      } else if (error.code === '23505') {
+        // Unique violation - fetch existing session (race condition handler)
+        const { data: existingSession } = await supabase
+          .from('handover_sessions')
+          .select('*')
+          .eq('booking_id', data.booking_id)
+          .eq('handover_type', 'return')
+          .single();
+          
+        if (existingSession) {
+          return {
+            ...existingSession,
+            handover_type: (existingSession as any).handover_type || 'return'
+          } as unknown as HandoverStatus;
+        }
+        throw new Error('Failed to create return handover session: Duplicate session detected but could not be fetched');
       } else {
         throw new Error(`Failed to create return handover session: ${error.message}`);
       }

@@ -65,6 +65,8 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
         return <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100 flex items-center gap-1 text-xs"><CreditCard className="h-3 w-3" /> Awaiting Payment</Badge>;
       case "confirmed":
         return <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 flex items-center gap-1 text-xs"><Check className="h-3 w-3" /> Confirmed</Badge>;
+      case "in_progress":
+        return <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 flex items-center gap-1 text-xs"><Clock className="h-3 w-3" /> Active</Badge>;
       case "cancelled":
         return <Badge variant="destructive" className="flex items-center gap-1 text-xs"><X className="h-3 w-3" /> Cancelled</Badge>;
       case "completed":
@@ -130,7 +132,7 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
                     Review
                   </Button>
                 )}
-                {booking.status === "awaiting_payment" && (
+                {(booking.status === "awaiting_payment" || booking.status === "approved") && (
                   <Button 
                     size="sm" 
                     onClick={(e) => {

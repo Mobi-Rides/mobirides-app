@@ -80,10 +80,8 @@ export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
         {dynamicPricing?.is_dynamic && dynamicPricing.final_price !== basePrice && (
           <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
             <span>
-              {destinationType === 'out_of_town' || destinationType === 'out_of_zone' 
-                ? 'Out of Town Surcharge' 
-                : destinationType === 'cross_border' 
-                ? 'Cross Border Surcharge' 
+              {destinationType && destinationType !== 'local' 
+                ? `${destinationType === 'cross_border' ? 'Cross-Border' : 'Out of Zone'} Surcharge` 
                 : 'Demand Adjustment'}
             </span>
             <span>

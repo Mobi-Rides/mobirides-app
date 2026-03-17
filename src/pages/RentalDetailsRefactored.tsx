@@ -77,8 +77,11 @@ const RentalDetailsRefactored = () => {
       setIsPaymentModalOpen(true);
       // Clean up the URL param so refreshing doesn't re-trigger
       if (searchParams.get('pay')) {
-        searchParams.delete('pay');
-        setSearchParams(searchParams, { replace: true });
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev);
+          newParams.delete('pay');
+          return newParams;
+        }, { replace: true });
       }
     }
   }, [booking, searchParams, setSearchParams]);
@@ -184,6 +187,7 @@ const RentalDetailsRefactored = () => {
             destinationType={(booking as any).destination_type}
             isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
             insurancePackageName={insurancePackageName || undefined}
+            destinationType={booking.destination_type}
           />
         )}
 

@@ -30,7 +30,7 @@ import { HandoverSuccessPopup } from "./HandoverSuccessPopup";
 import { HandoverProgressIndicator } from "./HandoverProgressIndicator";
 import { useRealtimeHandover } from "@/hooks/useRealtimeHandover";
 import { toast } from "@/utils/toast-utils";
-import { BookingWithRelations } from "@/types/booking";
+import { BookingWithRelations, BookingStatus } from "@/types/booking";
 
 // Extended booking type for handover with additional location data
 interface HandoverBookingDetails extends BookingWithRelations {
@@ -204,7 +204,7 @@ export const ResizableHandoverTray = ({
           const { error: bookingUpdateError } = await supabase
             .from('bookings')
             .update({ 
-              status: 'completed' as any,
+              status: BookingStatus.COMPLETED,
               actual_end_date: new Date().toISOString()
             })
             .eq('id', bookingIdValue);
@@ -222,7 +222,7 @@ export const ResizableHandoverTray = ({
           const { error: bookingUpdateError } = await supabase
             .from('bookings')
             .update({ 
-              status: 'in_progress' as any
+              status: BookingStatus.IN_PROGRESS
             })
             .eq('id', bookingIdValue);
             

@@ -14,7 +14,7 @@ interface RentalPaymentDetailsProps {
   dynamicMultiplier?: number;
   isPaid?: boolean;
   insurancePackageName?: string;
-  destinationType?: string;
+  destinationType?: 'local' | 'out_of_zone' | 'cross_border';
 }
 
 export const RentalPaymentDetails = ({ 

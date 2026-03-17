@@ -360,6 +360,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           promo_code_id: appliedPromo?.id,
           latitude: pickupLocation.latitude,
           longitude: pickupLocation.longitude,
+          destination_type: destinationType,
           status: "pending", // Explicitly set status to a valid enum value
           destination_type: destinationType,
         })
@@ -888,6 +889,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     <span className="text-muted-foreground">Pickup</span>
                     <span className="text-right max-w-[200px] truncate">{formatLocationDescription()}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Trip Type</span>
+                    <span className="text-right capitalize">{destinationType.replace(/_/g, " ")}</span>
+                  </div>
                 </div>
 
                 {/* Promo Code */}
@@ -911,6 +916,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                   insurancePackageName={selectedInsurancePackageName}
                   discountAmount={discountAmount}
                   promoCode={appliedPromo?.code}
+                  destinationType={destinationType}
                 />
               </div>
             )}

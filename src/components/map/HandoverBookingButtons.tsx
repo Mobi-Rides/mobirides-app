@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
-import { BookingWithRelations } from "@/types/booking";
+import { BookingWithRelations, BookingStatus } from "@/types/booking";
 import { 
   Tooltip, 
   TooltipContent, 
@@ -59,7 +59,7 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
               created_at
             )
           `)
-          .in("status", ["confirmed", "in_progress"])
+          .in("status", [BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS])
           .eq("payment_status", "paid")
           .or(`start_date.eq.${today},start_date.eq.${tomorrow},status.eq.in_progress`);
 
@@ -94,12 +94,18 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
             return false;
           }
           
-          // For pickup: show on start date if booking is confirmed and no handover session
-          const isPickupDay = startDate.toDateString() === now.toDateString();
-          const needsPickup = isPickupDay && booking.status === 'confirmed' && !handoverSession;
+          // For pickup: show on start date (or tomorrow) if booking is confirmed and no handover session
+          // Also allowing start_date to be tomorrow for early preparation
+          const isPickupTime = startDate.toDateString() === now.toDateString() || 
+                              startDate.toDateString() === tomorrow;
+                              
+          const needsPickup = isPickupTime && 
+                             booking.status === BookingStatus.CONFIRMED && 
+                             !handoverSession;
           
-          // For return: show if booking is in_progress
-          const needsReturn = booking.status === 'in_progress';
+          // For return: show if booking is in_progress (regardless of date, as it might be overdue)
+          // Or if it's confirmed but end date is today/past (unlikely but safe fallback)
+          const needsReturn = booking.status === BookingStatus.IN_PROGRESS;
           
           return needsPickup || needsReturn;
         });
@@ -127,7 +133,7 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
     // Determine handover type based on booking status (MOB-205 improved)
     let handoverType: 'pickup' | 'return' = 'pickup';
     
-    if (booking.status === 'in_progress') {
+    if (booking.status === BookingStatus.IN_PROGRESS) {
       handoverType = 'return';
     }
     
