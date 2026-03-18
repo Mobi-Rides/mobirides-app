@@ -72,7 +72,7 @@ export const CarManagementTable = () => {
     car.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [], [cars, searchTerm]);
 
-  const { sortedData: sortedCars, sortKey, sortDirection, handleSort } = useTableSort(filteredCars);
+  const { sortedData: sortedCars, sortKey, sortDirection, handleSort } = useTableSort<Car>(filteredCars);
 
   const handleToggleAvailability = async (carId: string, currentStatus: boolean) => {
     try {

@@ -414,7 +414,7 @@ export const AuditLogViewer = () => {
                           <SelectItem value="">All event types</SelectItem>
                           {Array.from(new Set(auditLogs?.map(log => log.event_type) || [])).map((eventType) => (
                             <SelectItem key={eventType} value={eventType}>
-                              {eventType.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                              {String(eventType).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
                             </SelectItem>
                           ))}
                         </SelectContent>

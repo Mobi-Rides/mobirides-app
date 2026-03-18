@@ -63,7 +63,7 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     );
   }, [users, searchTerm]);
 
-  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort(filteredUsers);
+  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort<AdminUserComplete>(filteredUsers);
 
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
