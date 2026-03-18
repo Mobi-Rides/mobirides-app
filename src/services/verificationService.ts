@@ -390,7 +390,7 @@ export class VerificationService {
 
       // Determine initial step based on profile completeness
       // FORCE STEP 1: Always start at personal_info regardless of profile data
-      let currentStep: any = "personal_info";
+      const currentStep: any = "personal_info";
       
       /* 
       // Previously skipped step 1 if profile was complete

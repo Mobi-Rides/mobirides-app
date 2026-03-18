@@ -43,18 +43,12 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
         // DEV ONLY: Simulate Webhook Effect
         // In real app, webhook updates this. In dev, we do it manually to unblock flow.
         if (!result.requires_user_action) {
-          // Remove payment_transaction_id update since mock service returns non-UUID string
-          // In real flow, the webhook handles this and links a real transaction UUID
-          const { error: dbError } = await supabase
-            .from('bookings')
-            .update({ 
-              status: 'confirmed', 
-              payment_status: 'paid'
-            })
-            .eq('id', request.booking_id);
-            
-          if (dbError) {
-            console.error("Dev DB Update Failed:", dbError);
+          // Use the centralized lifecycle service to handle status update and notifications
+          const { bookingLifecycle } = await import("@/services/bookingLifecycle");
+          const updateResult = await bookingLifecycle.updateStatus(request.booking_id, 'confirmed');
+          
+          if (!updateResult.success) {
+            console.error("Dev lifecycle update failed:", updateResult.error);
             throw new Error("Failed to update booking status");
           }
         }

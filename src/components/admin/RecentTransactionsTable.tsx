@@ -73,7 +73,7 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
     transaction.description?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [], [transactions, searchTerm]);
 
-  const { sortedData: sortedTransactions, sortKey, sortDirection, handleSort } = useTableSort(filteredTransactions);
+  const { sortedData: sortedTransactions, sortKey, sortDirection, handleSort } = useTableSort<Transaction>(filteredTransactions);
 
   const displayTransactions = isPreview ? sortedTransactions.slice(0, maxItems) : sortedTransactions;
 

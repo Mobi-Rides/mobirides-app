@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
 
     // Prefer parameterized RPC with end-user auth context
     const adminRpc = await supabaseUser.rpc('is_admin', { user_uuid: user.id });
-    let isAdminRaw: unknown = adminRpc.data;
+    const isAdminRaw: unknown = adminRpc.data;
     adminCheckError = adminRpc.error;
 
     console.log("DEBUG: Admin RPC result:", { data: isAdminRaw, error: adminCheckError?.message });
