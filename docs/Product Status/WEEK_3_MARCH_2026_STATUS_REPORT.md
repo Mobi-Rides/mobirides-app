@@ -540,6 +540,19 @@ The MOB-600 epic addresses several compliance gaps:
 | `src/pages/PrivacyPolicy.tsx` | **Created** | Public Privacy Policy page |
 | `src/pages/CommunityGuidelines.tsx` | **Created** | Public Community Guidelines page |
 | `src/App.tsx` | Modified | Added 3 legal routes + CookieConsentBanner integration |
+| `src/components/chat/FloatingChatButton.tsx` | Modified | Repositioned from `bottom-6` to `bottom-[25vh]` |
+| `src/services/handoverService.ts` | Modified | Replaced `.upsert()` with `.insert()` to fix unique constraint |
+| `src/components/home/RenterView.tsx` | Modified | Added `payment_status === 'paid'` guard before handover prompts |
+| `src/components/home/HostView.tsx` | Modified | Added payment status check before handover prompts |
+| `src/components/rental-details/RentalActions.tsx` | Modified | Added Pay Now button for `awaiting_payment` bookings |
+| `src/components/renter-bookings/RenterBookingFilters.tsx` | Modified | Added `awaiting_payment` filter option |
+| `src/components/booking/BookingDialog.tsx` | Modified | ⚠️ **BUILD ERROR** — duplicate object literal property |
+| `src/components/dashboard/HostDashboard.tsx` | Modified | ⚠️ **BUILD ERROR** — `destination_type` string narrowing |
+| `src/components/dashboard/RenterDashboard.tsx` | Modified | ⚠️ **BUILD ERROR** — `destination_type` string narrowing |
+| `src/components/map/HandoverBookingButtons.tsx` | Modified | ⚠️ **BUILD ERROR** — `destination_type` + `.length`/`.map` on query data |
+| `src/pages/HostBookings.tsx` | Modified | ⚠️ **BUILD ERROR** — `BookingStatus` vs `BookingFilterStatus` type mismatch |
+| `src/pages/Map.tsx` | Modified | ⚠️ **BUILD ERROR** — compares against non-existent `"in_progress"` status |
+| `src/pages/RentalDetailsRefactored.tsx` | Modified | ⚠️ **BUILD ERROR** — duplicate JSX attribute + `destination_type` narrowing |
 
 ---
 
