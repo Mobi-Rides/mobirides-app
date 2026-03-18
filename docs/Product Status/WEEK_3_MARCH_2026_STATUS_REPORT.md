@@ -494,7 +494,7 @@ The MOB-600 epic addresses several compliance gaps:
 | February 2026 | +25 (MOB-201-225) | +3 (MOB-114-116) | +22 | ~38 |
 | Week 1 March | +13 (MOB-300) | +9 (MOB-300 P1-3) | +4 | ~38 |
 | Week 2 March | +11 (MOB-400) | +21 (MOB-100/300/400) | -10 | ~41 |
-| **Week 3 March** | **+19 (MOB-600 + Payment)** | **+13 (MOB-600)** | **+6** | **~47** |
+| **Week 3 March** | **+23 (MOB-600 + Payment + Build Regression)** | **+13 (MOB-600)** | **+10** | **~47** |
 
 ---
 
