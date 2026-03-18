@@ -125,7 +125,7 @@ const Map = () => {
       
       const isStartDate = booking.start_date === today || booking.start_date === tomorrow;
       const isEndDate = booking.end_date === today;
-      const isInProgress = booking.status === 'in_progress';
+      const isInProgress = (booking.status as string) === 'in_progress';
 
       // Allow if:
       // 1. It is start date (or tomorrow) for pickup

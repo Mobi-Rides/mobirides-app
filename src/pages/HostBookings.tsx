@@ -283,7 +283,7 @@ export const HostBookings = () => {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(value: BookingStatus) => setStatusFilter(value)}>
+            <Select value={statusFilter} onValueChange={(value: string) => setStatusFilter(value as BookingFilterStatus)}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
