@@ -61,28 +61,37 @@ Week 3 of March 2026 was focused on **compliance, payment flow analysis, and ren
 
 | Metric | Week 1 Mar | Week 2 Mar | **Week 3 Mar** | Change | Target |
 |--------|------------|------------|----------------|--------|--------|
-| Build Errors | 0 | 0 | **0** | — | 0 |
+| Build Errors | 0 | 0 | **18+ (REGRESSION)** | ⚠️ ↑ +18 | 0 |
 | Linter Warnings | 15 | 15 | **15** | — | <20 |
-| System Health | 83% | 84% | **85%** | ↑ +1% | 95% |
-| Production Readiness | 80% | 81% | **82%** | ↑ +1% | 95% |
+| System Health | 83% | 84% | **80%** | ↓ -4% | 95% |
+| Production Readiness | 80% | 81% | **78%** | ↓ -3% | 95% |
 | Test Coverage | 62% | 62% | **62%** | — | 85% |
 | Security Vulnerabilities | 4 | 4 | **4** | — | 0 |
 | Database Migrations | 231 | ~233 | **~233** | — | — |
 | Edge Functions | 27 | 27 | **27** | — | — |
-| Known Bugs | 38 | 38 | **39** | ↑ +1 | 0 |
+| Known Bugs | 38 | 38 | **43** | ↑ +5 | 0 |
 | Capacitor Packages | 3 | 3 | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
 
 | Category | Current | Gap | Path to Close |
 |----------|---------|-----|---------------|
-| Production Readiness | 82% | 13% | Payment flow fix, MOB-200 lifecycle fixes, MOB-500 handover consolidation |
+| Production Readiness | 78% | 17% | Fix 18+ build errors, payment flow fix, MOB-200 lifecycle fixes, MOB-500 handover consolidation |
 | Test Coverage | 62% | 23% | Phase 3 re-test sprint + automated test suite |
-| System Health | 85% | 10% | Resolve 39 known bugs, security fixes, payment flow |
+| System Health | 80% | 15% | Resolve 43 known bugs, fix build errors, security fixes, payment flow |
 
-### System Health Improvement Explanation
+### System Health Explanation (March 18 Update)
 
-The +1% system health (84% → 85%) and +1% production readiness (81% → 82%) reflect the completion of the Auth Compliance Epic (MOB-600), which closes a major go-live compliance gap (legal consent, password strength, cookie consent). The known bug count increased by 1 (38 → 39) due to the newly identified payment flow gap being formally tracked.
+System health **dropped 4% (84% → 80%)** and production readiness **dropped 3% (81% → 78%)** due to the introduction of 18+ TypeScript build errors in the latest commits. The build errors are categorized as:
+
+1. **`destination_type` type narrowing (7 files):** Supabase returns `string` for `destination_type`, but `BookingWithRelations` expects `"cross_border" | "local" | "out_of_zone"`. Affects: `HostDashboard.tsx`, `RenterDashboard.tsx`, `HandoverBookingButtons.tsx`, `RentalDetailsRefactored.tsx`
+2. **Duplicate JSX properties (2 files):** `BookingDialog.tsx` has duplicate object literal key; `RentalDetailsRefactored.tsx` has duplicate JSX attribute
+3. **Enum mismatch (2 files):** `HostBookings.tsx` passes `BookingStatus` where `BookingFilterStatus` expected; `Map.tsx` compares against non-existent `"in_progress"` status
+4. **Dev script broken:** `concurrently` command not found — prevents local dev server start
+
+**Console Log Review:** No user-facing errors observed. Auth flow is clean (TOKEN_REFRESHED, SIGNED_IN events working). Vercel Analytics/Speed Insights scripts fail to load (non-critical — ad blocker interference). No runtime crashes or unhandled exceptions detected in user sessions.
+
+Known bug count increased from 39 → 43 (+4) accounting for: build regression errors (grouped as 1), `destination_type` type mismatch (1), duplicate property bugs (1), and dev script failure (1).
 
 ---
 
