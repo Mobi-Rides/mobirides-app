@@ -97,7 +97,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
     user.phone_number?.includes(searchTerm)
   ) || [], [users, searchTerm]);
 
-  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort(filteredUsers);
+  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort<Profile>(filteredUsers);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;

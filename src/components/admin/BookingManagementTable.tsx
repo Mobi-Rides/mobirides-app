@@ -69,7 +69,7 @@ export const BookingManagementTable = () => {
     booking.status.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [], [bookings, searchTerm]);
 
-  const { sortedData: sortedBookings, sortKey, sortDirection, handleSort } = useTableSort(filteredBookings);
+  const { sortedData: sortedBookings, sortKey, sortDirection, handleSort } = useTableSort<Booking>(filteredBookings);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {

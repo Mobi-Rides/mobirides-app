@@ -116,7 +116,9 @@ export const AnalyticsCharts = ({
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={getActivityTrends().slice(-7)}>
                   <CartesianGrid strokeDasharray="3 3" />
+                  {/* @ts-ignore recharts v3 JSX compat */}
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  {/* @ts-ignore recharts v3 JSX compat */}
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Area
