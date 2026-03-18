@@ -362,7 +362,6 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           longitude: pickupLocation.longitude,
           destination_type: destinationType,
           status: "pending", // Explicitly set status to a valid enum value
-          destination_type: destinationType,
         })
         .select()
         .single();

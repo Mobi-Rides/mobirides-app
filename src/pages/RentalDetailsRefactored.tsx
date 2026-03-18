@@ -184,10 +184,9 @@ const RentalDetailsRefactored = () => {
             insurancePremium={booking.insurance_premium || 0}
             discountAmount={booking.discount_amount || 0}
             dynamicMultiplier={booking.dynamic_pricing_multiplier || 1}
-            destinationType={(booking as any).destination_type}
+            destinationType={booking.destination_type}
             isPaid={booking.payment_status === 'paid' || booking.status === 'confirmed' || booking.status === 'completed'}
             insurancePackageName={insurancePackageName || undefined}
-            destinationType={booking.destination_type}
           />
         )}
 
