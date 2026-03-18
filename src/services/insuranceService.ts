@@ -106,8 +106,8 @@ export class InsuranceService {
     );
 
     // Apply rental-based formula with risk adjustment
-    let premiumPerDay = dailyRentalAmount * insurancePackage.premium_percentage * premiumMultiplier;
-    let totalPremium = premiumPerDay * numberOfDays;
+    const premiumPerDay = dailyRentalAmount * insurancePackage.premium_percentage * premiumMultiplier;
+    const totalPremium = premiumPerDay * numberOfDays;
 
     return {
       packageId: insurancePackage.id,

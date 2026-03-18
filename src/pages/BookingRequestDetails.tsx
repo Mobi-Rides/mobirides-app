@@ -24,7 +24,7 @@ import { WalletCommissionSection } from "@/components/booking-request/WalletComm
 import { BookingActions } from "@/components/booking-request/BookingActions";
 import { PostConfirmationGuidance } from "@/components/booking/PostConfirmationGuidance";
 import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
-import { pushNotificationService } from "@/services/pushNotificationService";
+import { bookingLifecycle } from "@/services/bookingLifecycle";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
@@ -104,14 +104,6 @@ const BookingRequestDetails = () => {
           throw new Error(canAccept.message || 'Insufficient wallet balance');
         }
 
-        // Note: We deduct commission later/or reserve it? 
-        // Logic says "processCommissionOnBookingConfirmation".
-        // If we change status to awaiting_payment, maybe we shouldn't deduct yet?
-        // But the previous code did it on 'confirmed'.
-        // Let's keep it here for now if that's the business rule (Host pays commission to accept?)
-        // Actually, usually commission is deducted from Payout.
-        // But here there seems to be a wallet check.
-
         const commissionDeducted = await commissionService.processCommissionOnBookingConfirmation(
           userId,
           booking.id,
@@ -123,18 +115,10 @@ const BookingRequestDetails = () => {
         }
       }
 
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          status,
-          ...(status === 'awaiting_payment' ? {
-            payment_status: 'unpaid', // Reset/Ensure it's unpaid
-            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-          } : {})
-        })
-        .eq('id', id);
-
-      if (error) throw error;
+      const result = await bookingLifecycle.updateStatus(id as string, status);
+      if (!result.success) {
+        throw result.error;
+      }
     },
     onSuccess: (_, variables) => {
       const action = variables.status === 'awaiting_payment' ? 'approved' : 'cancelled';
@@ -147,18 +131,12 @@ const BookingRequestDetails = () => {
       });
 
       queryClient.invalidateQueries({
+        queryKey: ['booking-request', id]
+      });
+      
+      queryClient.invalidateQueries({
         queryKey: ['wallet-balance']
       });
-
-      // Send notification if status changed to awaiting_payment
-      if (variables.status === 'awaiting_payment' && booking) {
-        pushNotificationService.sendBookingNotification(booking.renter_id, {
-          type: 'awaiting_payment',
-          carBrand: booking.car.brand,
-          carModel: booking.car.model,
-          bookingReference: booking.id
-        }).catch(err => console.error("Failed to send notification:", err));
-      }
     },
     onError: error => {
       console.error('Error updating booking status:', error);

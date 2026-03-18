@@ -11,19 +11,9 @@ export const useBookingActions = () => {
 
   const mutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: string; status: Database["public"]["Enums"]["booking_status"] | 'awaiting_payment'; }) => {
-      // Update booking status - this will trigger the notification via database trigger
-      const { error } = await supabase
-        .from('bookings')
-        .update({ 
-          status: status as Database["public"]["Enums"]["booking_status"], // Type assertion for Supabase compatibility
-          // Add payment deadline for approved bookings
-          ...(status === 'awaiting_payment' ? {
-            payment_status: 'unpaid',
-            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-          } : {})
-        })
-        .eq('id', bookingId);
-      if (error) throw error;
+      const { bookingLifecycle } = await import("@/services/bookingLifecycle");
+      const result = await bookingLifecycle.updateStatus(bookingId, status as any);
+      if (!result.success) throw result.error;
     },
     onSuccess: (_, variables) => {
       const action = variables.status === 'awaiting_payment' ? 'approved' : 'cancelled';
