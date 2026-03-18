@@ -477,12 +477,12 @@ The MOB-600 epic addresses several compliance gaps:
 
 | Metric | Week 4 Jan | Week 1 Feb | Week 2 Feb | Week 3 Feb | Week 4 Feb | Week 1 Mar | Week 2 Mar | **Week 3 Mar** | Trend |
 |--------|-----------|------------|------------|------------|------------|------------|------------|----------------|-------|
-| Build Errors | 0 | 0 | 50+ | 0 | 0 | 0 | 0 | **0** | ✅ Stable |
+| Build Errors | 0 | 0 | 50+ | 0 | 0 | 0 | 0 | **18+** | ⚠️ Regression |
 | Linter Warnings | 15 | 15 | 15 | 15 | 15 | 15 | 15 | **15** | ➡️ Flat |
-| System Health | 85% | 86% | 78% | 82% | 83% | 83% | 84% | **85%** | 🟢 Climbing |
-| Prod Readiness | 72% | 74% | 76% | 79% | 80% | 80% | 81% | **82%** | 🟢 Climbing |
+| System Health | 85% | 86% | 78% | 82% | 83% | 83% | 84% | **80%** | ⚠️ Dropped |
+| Prod Readiness | 72% | 74% | 76% | 79% | 80% | 80% | 81% | **78%** | ⚠️ Dropped |
 | Test Coverage | 45% | 47% | 47% | 47% | 62% | 62% | 62% | **62%** | ➡️ Plateau |
-| Known Bugs | ~10 | ~12 | ~15 | ~15 | 38 | 38 | 38 | **39** | ⚠️ Slight increase |
+| Known Bugs | ~10 | ~12 | ~15 | ~15 | 38 | 38 | 38 | **43** | ⚠️ Increasing |
 | Migrations | 216 | 216 | 221 | 225 | 227 | 231 | ~233 | **~233** | ➡️ Stable |
 | Edge Functions | 22 | 22 | 27 | 27 | 27 | 27 | 27 | **27** | ➡️ Stable |
 
