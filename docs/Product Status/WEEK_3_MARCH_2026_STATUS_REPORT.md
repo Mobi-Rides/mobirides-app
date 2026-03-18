@@ -31,6 +31,8 @@
 
 Week 3 of March 2026 was focused on **compliance, payment flow analysis, and rental lifecycle investigation**. The **Auth Compliance Epic (MOB-600)** was completed to near-full completion (13/15 tickets), adding legal consent checkboxes, password strength meter, standalone legal pages, and GDPR cookie consent to the platform. A critical **payment flow gap** was identified and fully analyzed: renters are not prompted to pay after host confirmation due to missing notification triggers, no payment banner on the Explore page, and the `/bookings/:id` route lacking any payment UI. The correct flow (Host confirms → Renter prompted to pay → Payment → Handover) was documented and implementation planned.
 
+**Post-commit update (March 18):** Latest commits introduced **18+ TypeScript build errors** across dashboard, booking, and map components — primarily `destination_type` string narrowing failures and duplicate JSX property issues. The `BookingWithRelations` type's `destination_type` field (`"cross_border" | "local" | "out_of_zone"`) is incompatible with Supabase's inferred `string` type, causing cascading errors in `HostDashboard`, `RenterDashboard`, `HandoverBookingButtons`, and `RentalDetailsRefactored`. Additionally, `BookingDialog.tsx` has a duplicate object literal property, `HostBookings.tsx` has a type mismatch on filter status, and `Map.tsx` compares against a non-existent `"in_progress"` booking status. The dev server start script is also broken (`concurrently` not found).
+
 **Sprint 6 did not achieve its full planned scope** — MOB-200 (Rental Lifecycle) and MOB-210 (Signup) fixes, which were P0 priorities, were not started due to the emergence of the MOB-600 compliance work and the payment flow investigation.
 
 ### Key Achievements This Period
@@ -38,9 +40,14 @@ Week 3 of March 2026 was focused on **compliance, payment flow analysis, and ren
 - ✅ **Payment Flow Gap Analysis** — Identified 3 critical gaps: no renter notification on host approval, no payment banner on Explore, BookingDetails.tsx missing payment UI
 - ✅ **Correct Booking Flow Documented** — Host confirms → status `awaiting_payment` → renter notification → Pay Now banner → payment → `confirmed` → handover
 - ✅ **Handover Prompt Guard Identified** — `handoverPromptService.ts` line 80 filters `status = 'confirmed'` but lacks `payment_status = 'paid'` guard
+- ✅ **Payment guard partially implemented** — `RenterView.tsx`, `HostView.tsx`, and `RentalActions.tsx` now check `payment_status === 'paid'` before handover; Pay Now button added to `RentalActions.tsx`; `awaiting_payment` filter added to `RenterBookingFilters.tsx`
+- ✅ **FloatingChatButton repositioned** — Moved from `bottom-6` to `bottom-[25vh]` for better visibility
+- ✅ **Handover service fix** — Replaced `.upsert()` with `.insert()` to resolve unique constraint errors
 
 ### Critical Issues
-- 🔴 **Payment Flow Broken** — Renters have no way to discover they need to pay after host confirmation; no notification, no banner, no button on `/bookings/:id`
+- 🔴 **18+ Build Errors (NEW REGRESSION)** — `destination_type` type narrowing failures across 7 files; duplicate properties; status enum mismatches
+- 🔴 **Dev Server Start Script Broken** — `concurrently` command not found in sandbox environment
+- 🔴 **Payment Flow Still Incomplete** — Payment guards added but notification trigger, PaymentRequiredBanner, and BookingDetails Pay Now still missing
 - 🔴 **MOB-200: Rental Lifecycle Still Unstarted** — P0 carried forward for 2nd consecutive week
 - 🔴 **MOB-202: Return Handover Still Broken** — Carried forward from Week 4 Feb
 - 🔴 **MOB-210: Signup Flow Still Broken** — Carried forward from Week 4 Feb
