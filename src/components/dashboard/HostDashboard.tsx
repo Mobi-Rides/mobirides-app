@@ -71,7 +71,7 @@ export const HostDashboard = () => {
       if (error) throw error;
       
       console.log("Host bookings:", data);
-      return data;
+      return data as unknown as BookingWithRelations[];
     }
   });
 
