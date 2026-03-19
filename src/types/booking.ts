@@ -42,9 +42,9 @@ export interface BookingWithRelations {
   };
   renter?: {
     id: string;
-    full_name: string;
-    avatar_url?: string;
-    phone_number?: string;
+    full_name: string | null;
+    avatar_url?: string | null;
+    phone_number?: string | null;
   };
   reviews?: {
     id: string;
