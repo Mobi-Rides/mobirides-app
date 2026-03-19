@@ -111,7 +111,7 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
         });
 
         console.log("HandoverBookingButtons: Filtered bookings", filteredData);
-        return filteredData;
+        return filteredData as unknown as BookingWithRelations[];
       } catch (error) {
         console.error('HandoverBookingButtons: Query failed:', error);
         // Return empty array instead of throwing to prevent UI crashes

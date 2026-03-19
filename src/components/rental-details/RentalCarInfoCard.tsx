@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 interface RentalCarInfoCardProps {
   car: {
-    id: string;
+    id?: string;
     brand: string;
     model: string;
-    year: number;
+    year?: number;
     price_per_day: number;
     location: string;
     image_url: string | null;
