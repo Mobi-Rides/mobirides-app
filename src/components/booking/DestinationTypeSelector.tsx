@@ -1,6 +1,8 @@
 import { MapPin, Globe, Navigation } from "lucide-react";
+import type { DestinationType } from "@/types/booking";
 
-export type DestinationType = 'local' | 'out_of_zone' | 'cross_border';
+// Re-export for backward compatibility
+export type { DestinationType };
 
 interface DestinationOption {
   type: DestinationType;
@@ -60,17 +62,15 @@ export const DestinationTypeSelector = ({
               key={option.type}
               type="button"
               onClick={() => onSelect(option.type)}
-              className={`w-full text-left border rounded-lg p-4 transition-colors flex items-start gap-3 ${
-                isSelected
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-muted-foreground/30"
-              }`}
+              className={`w-full text-left border rounded-lg p-4 transition-colors flex items-start gap-3 ${isSelected
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-muted-foreground/30"
+                }`}
             >
               {/* Radio indicator */}
               <div
-                className={`mt-0.5 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  isSelected ? "border-primary" : "border-muted-foreground/40"
-                }`}
+                className={`mt-0.5 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? "border-primary" : "border-muted-foreground/40"
+                  }`}
               >
                 {isSelected && (
                   <div className="h-2 w-2 rounded-full bg-primary" />
