@@ -54,7 +54,7 @@ export const RenterDashboard = () => {
 
       if (error) throw error;
       console.log("Renter bookings:", data);
-      return data;
+      return data as unknown as BookingWithRelations[];
     }
   });
 
