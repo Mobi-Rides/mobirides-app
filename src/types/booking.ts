@@ -23,7 +23,7 @@ export interface BookingWithRelations {
   insurance_policy_id?: string;
   discount_amount?: number;
   promo_code_id?: string;
-  destination_type?: string;
+  destination_type?: DestinationType;
   cars: {
     brand: string;
     model: string;
@@ -67,7 +67,7 @@ export type Booking = BookingWithRelations;
 // Add this enum for notifications related to bookings
 export enum BookingNotificationType {
   BOOKING_REQUEST = "booking_request",
-  BOOKING_CONFIRMATION = "booking_confirmation", 
+  BOOKING_CONFIRMATION = "booking_confirmation",
   BOOKING_CANCELLATION = "booking_cancellation",
   BOOKING_REMINDER = "booking_reminder",
   EARLY_RETURN_NOTIFICATION = "early_return_notification"
@@ -89,6 +89,9 @@ export enum HandoverType {
   PICKUP = "pickup",
   RETURN = "return"
 }
+
+// Add this type for destination types
+export type DestinationType = 'local' | 'out_of_zone' | 'cross_border';
 
 // Add this type for location data
 export enum LocationType {
