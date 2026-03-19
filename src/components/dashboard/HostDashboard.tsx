@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { HostStats } from "./HostStats";
 import { HostTabContent } from "./host/HostTabContent";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { BookingStatus } from "@/types/booking";
+import { BookingStatus, BookingWithRelations } from "@/types/booking";
 import { WalletBalanceIndicator } from "./WalletBalanceIndicator";
 import { walletService } from "@/services/walletService";
 import { Alert, AlertDescription } from "@/components/ui/alert";

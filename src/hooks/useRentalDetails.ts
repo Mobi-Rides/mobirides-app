@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { differenceInDays, isWithinInterval, addDays } from "date-fns";
 import { createHandoverSession } from "@/services/handoverService";
 import { toast } from "sonner";
-import { BookingStatus, HandoverType } from "@/types/booking";
+import { BookingStatus, BookingWithRelations, HandoverType } from "@/types/booking";
 
 export const useRentalDetails = () => {
   const { id } = useParams();
