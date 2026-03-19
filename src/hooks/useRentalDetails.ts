@@ -57,7 +57,7 @@ export const useRentalDetails = () => {
         throw error;
       }
       console.log("Rental details fetched successfully:", data);
-      return data;
+      return data as unknown as BookingWithRelations;
     },
   });
 
