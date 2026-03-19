@@ -5,7 +5,7 @@ import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 interface RentalUserCardProps {
   user: {
     full_name: string | null;
-    avatar_url: string | null;
+    avatar_url?: string | null;
   };
   role: "Renter" | "Host";
 }
