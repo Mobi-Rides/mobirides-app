@@ -92,7 +92,7 @@ const ResetPassword = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <img
-            src="/lovable-uploads/a065be26-80b7-4e50-b683-b6afb0add925.png"
+            src="/lovable-uploads/MOBI_LOGO.png"
             alt="Mobirides Logo"
             className="mx-auto h-48 w-48"
           />

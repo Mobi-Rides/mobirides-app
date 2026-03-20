@@ -233,7 +233,7 @@ export const Header = ({
     <header className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-900 sticky top-0 z-10 shadow-sm p-6 md:p-8 rounded-b-3xl pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between gap-4 mb-4">
         <img
-          src="/lovable-uploads/a065be26-80b7-4e50-b683-b6afb0add925.png"
+          src="/lovable-uploads/MOBI_LOGO.png"
           alt="Mobirides Logo"
           className="h-14 w-14 cursor-pointer"
           onClick={() => navigate("/")}
