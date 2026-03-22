@@ -12,6 +12,10 @@ isProject: false
 - **Epic:** Car listing approval and admin tooling  
 - **Stories:** 4 (car approval flow, one-time data revert, carousel display fix, admin edit-car access)
 
+### Execution status (March 22, 2026)
+
+No commits in the **last 7 days** touched `AddCar.tsx`, `CarImageCarousel.tsx`, `CarVerificationTable.tsx`, or `EditCar.tsx` — tasks **CAR-APPROVE-1**, **CAR-REVERT-1**, **CAROUSEL-1**, **ADMIN-EDIT-1–3** remain **unchecked** until implemented.
+
 ---
 
 ## 1. New listings require admin approval
