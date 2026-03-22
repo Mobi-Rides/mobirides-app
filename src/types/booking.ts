@@ -23,27 +23,28 @@ export interface BookingWithRelations {
   insurance_policy_id?: string;
   discount_amount?: number;
   promo_code_id?: string;
-  destination_type?: DestinationType;
+  destination_type?: DestinationType | string;
   cars: {
+    id?: string;
     brand: string;
     model: string;
     location: string;
-    image_url: string;
+    image_url: string | null;
     owner_id: string;
     price_per_day: number;
-    description?: string;
+    description?: string | null;
     year?: number;
     owner?: {
       id: string;
       full_name: string;
-      avatar_url?: string;
+      avatar_url?: string | null;
     };
   };
   renter?: {
     id: string;
-    full_name: string;
-    avatar_url?: string;
-    phone_number?: string;
+    full_name: string | null;
+    avatar_url?: string | null;
+    phone_number?: string | null;
   };
   reviews?: {
     id: string;

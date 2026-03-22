@@ -1,4 +1,5 @@
 
+import { BookingWithRelations } from "@/types/booking";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -54,7 +55,7 @@ export const RenterDashboard = () => {
 
       if (error) throw error;
       console.log("Renter bookings:", data);
-      return data;
+      return data as unknown as BookingWithRelations[];
     }
   });
 

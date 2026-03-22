@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { HostStats } from "./HostStats";
 import { HostTabContent } from "./host/HostTabContent";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { BookingStatus } from "@/types/booking";
+import { BookingWithRelations } from "@/types/booking";
 import { WalletBalanceIndicator } from "./WalletBalanceIndicator";
 import { walletService } from "@/services/walletService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -71,7 +71,7 @@ export const HostDashboard = () => {
       if (error) throw error;
       
       console.log("Host bookings:", data);
-      return data;
+      return data as unknown as BookingWithRelations[];
     }
   });
 

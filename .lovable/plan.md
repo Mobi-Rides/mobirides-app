@@ -1,128 +1,35 @@
 
-# Epic MOB-400: Map Module Hotfix — Full Diagnostic Recovery
 
-**Owner:** Modisa Maphanyane  
-**Created:** 2026-03-09  
-**Priority:** P0 — Blocker  
-**Status:** Phase 1 In Progress  
-**Affected Route:** `/map`
+## Root Cause: Database Column Default
 
----
+The `cars.is_available` column has a **default value of `true`** at the database level. While `AddCar.tsx` correctly passes `is_available: false`, any insert that omits this field (direct DB inserts, other code paths, or even edge cases where the field is dropped) will default to `true`, bypassing the approval requirement.
 
-## Summary
-
-The Map page crashes on load due to a runtime error in the Mapbox destination marker effect. Additional instability exists in handover session queries and provider architecture. This hotfix addresses the crash, stabilizes handover integration, and hardens the module against regressions.
-
----
-
-## Phase 1: Stop the Crash (Hotfix) ✅ DONE
-
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-401 | Fix destination state init to nullable | Done ✅ | `src/pages/Map.tsx` |
-| MOB-402 | Add `Number.isFinite` coordinate guards in marker effects | Done ✅ | `src/components/map/CustomMapbox.tsx` |
-| MOB-403 | Add dependency array to destination marker effect | Done ✅ | `src/components/map/CustomMapbox.tsx` |
-
-### Root Cause
-`Map.tsx` initializes `destination` as `{ latitude: null, longitude: null }` (truthy object). `CustomMapbox.tsx` checks `!destination` (always false), then calls `marker.setLngLat([null, null])` → Mapbox throws → ErrorBoundary catches → blank page.
+Evidence from production data (since March 1, 2026):
+- Honda Fit (Mar 14): `is_available: true`, `verification_status: pending` -- live without approval
+- Audi A5 (Mar 10, 15:37): `is_available: false`, `verification_status: pending` -- correctly pending
+- Audi A5 (Mar 10, 15:00): `is_available: true`, `verification_status: pending` -- live without approval
 
 ### Fix
-- Change `destination` default to `null`.
-- Guard all `setLngLat` calls with `Number.isFinite(lat) && Number.isFinite(lng)`.
-- Ensure marker effect has correct dependency array `[destination]`.
 
----
+**1. Database migration: Change column default from `true` to `false`**
 
-## Phase 2: Stabilize Handover Integration ✅ DONE
+```sql
+ALTER TABLE public.cars 
+  ALTER COLUMN is_available SET DEFAULT false;
+```
 
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-404 | Replace `.single()` with list + pick-latest in active handover query | Done ✅ | `src/pages/Map.tsx` |
-| MOB-405 | Remove redundant HandoverProvider wrapping | Deferred | `src/pages/Map.tsx`, `src/App.tsx` |
-| MOB-406 | Export and use `useHandoverSafe` consistently | Done ✅ | `src/contexts/HandoverContext.tsx`, `src/components/map/CustomMapbox.tsx` |
+This ensures every new car listing defaults to unavailable, requiring admin approval via the existing `CarVerificationTable` approve action to set `is_available: true`.
 
-### Root Cause
-`fetchActiveHandoverHost()` uses `.single()` but DB contains duplicate active sessions → 406 PGRST116. Dual `HandoverProvider` in `App.tsx` + `Map.tsx` risks double-init.
+**2. Fix existing unapproved-but-available cars**
 
-### Fix
-- Use `.order('updated_at', { ascending: false }).limit(1)` instead of `.single()`.
-- Audit provider tree; keep single canonical provider location.
+Use the insert/update tool to correct the 2 cars currently live without approval:
 
----
+```sql
+UPDATE cars 
+SET is_available = false 
+WHERE verification_status = 'pending' 
+  AND is_available = true;
+```
 
-## Phase 3: Data Integrity (Backend) ✅ DONE
+No frontend code changes needed -- `AddCar.tsx` already sets `is_available: false` explicitly, and the admin approve flow already sets it to `true`.
 
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-407 | Deduplicate active handover sessions | Done ✅ | `supabase/migrations/` |
-| MOB-408 | Add partial unique index on active sessions | Done ✅ | `supabase/migrations/` |
-| MOB-409 | Make session creation idempotent (conflict-safe) | Done ✅ | `src/services/handoverService.ts` |
-
-### Root Cause
-No unique constraint prevents multiple active `handover_sessions` for the same booking + type + renter. Concurrent calls create duplicates.
-
-### Fix Applied
-- Migration: Deleted duplicates keeping newest, created `idx_unique_active_handover_session` partial unique index on `(booking_id, handover_type, renter_id) WHERE handover_completed = false`.
-- Service: Updated `createPickupHandoverSession` and `createReturnHandoverSession` to use `upsert` with `onConflict` and `ignoreDuplicates: true`.
-
-
-## Phase 4: Module Hardening 🟡 TODO
-
-| Ticket | Title | Status | File(s) |
-|--------|-------|--------|---------|
-| MOB-410 | Normalize all coordinate validation to `Number.isFinite` | Todo | `src/components/map/*` |
-| MOB-411 | Add error telemetry for map init + handover query failures | Todo | `src/components/map/CustomMapbox.tsx`, `src/pages/Map.tsx` |
-
----
-
-## Validation Checklist
-
-- [ ] `/map` renders without ErrorBoundary in preview and published
-- [ ] Non-handover mode: host markers load, no crash without destination
-- [ ] Handover mode: no 406 for active session query, single session used
-- [ ] Car details map and booking map still function (regression check)
-- [ ] No infinite remounting/flicker of map container
-
----
-
-## Architecture Decisions
-
-- **`useHandoverSafe`** (Option A — safe hook) chosen over try/catch wrapper. Returns `null` outside provider.
-- **Destination state** changed from `{ latitude: null, longitude: null }` to `null` to leverage JS falsy checks.
-- **Session dedup** uses partial unique index (PostgreSQL) rather than application-level locks.
-
-## Files Changed (All Phases)
-
-| File | Change |
-|------|--------|
-| `src/pages/Map.tsx` | Nullable destination, safe handover query, single provider |
-| `src/components/map/CustomMapbox.tsx` | Coordinate guards, safe hook, effect deps |
-| `src/contexts/HandoverContext.tsx` | Added `useHandoverSafe` export |
-| `src/services/handoverService.ts` | Idempotent session creation |
-| `supabase/migrations/` | Dedup + partial unique index migration |
-
----
-
-## Previous Epic (Completed)
-
-<details>
-<summary>MOB-300: Help Center Hotfix (Completed)</summary>
-
-### Phase 1: Database-Driven Guides ✅
-- Migrated hardcoded guide content to `guides` table in Supabase
-- Created `useGuides`, `usePopularGuides`, `useSearchGuides` hooks
-- Created `useGuideContent` hook for individual guide rendering
-- Updated `HelpCenter.tsx` and `HelpSection.tsx` to fetch from DB
-
-### Phase 2: Persist Progress ✅
-- Created `user_guide_progress` table with RLS policies
-- Created `useGuideProgress` hook (fetch/upsert via TanStack Query)
-- Added progress bar and completion badge to guide UI
-
-### Phase 3: Content Expansion ✅
-- Seeded Renter Safety Guidelines, Host Handover Process, 4 shared platform guides
-
-### Phase 4: Component Library & Admin Management ✅
-- Extracted `GuideLayout`, `GuideProgressTracker` components
-- Built Admin FAQ & Guide Management page with full CRUD
-</details>
