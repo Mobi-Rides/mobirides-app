@@ -1,25 +1,35 @@
 
 
-## Replace App Logo with Uploaded Image
+## Root Cause: Database Column Default
 
-The uploaded `MOBI_LOGO.png` will replace the current logo across the entire app.
+The `cars.is_available` column has a **default value of `true`** at the database level. While `AddCar.tsx` correctly passes `is_available: false`, any insert that omits this field (direct DB inserts, other code paths, or even edge cases where the field is dropped) will default to `true`, bypassing the approval requirement.
 
-### Current Logo Locations
+Evidence from production data (since March 1, 2026):
+- Honda Fit (Mar 14): `is_available: true`, `verification_status: pending` -- live without approval
+- Audi A5 (Mar 10, 15:37): `is_available: false`, `verification_status: pending` -- correctly pending
+- Audi A5 (Mar 10, 15:00): `is_available: true`, `verification_status: pending` -- live without approval
 
-The current logo (`a065be26-80b7-4e50-b683-b6afb0add925.png`) is used in 4 files:
-1. **`src/components/Header.tsx`** (line 236) -- main app header
-2. **`src/pages/Login.tsx`** (line 258) -- login page
-3. **`src/pages/signup.tsx`** (line 13) -- signup page
-4. **`src/pages/ResetPassword.tsx`** (line 95) -- reset password page
+### Fix
 
-The favicon (`e4db7130-ffbd-4628-9728-eb992434cd6c.png`) is in:
-5. **`index.html`** (line 8)
+**1. Database migration: Change column default from `true` to `false`**
 
-### Steps
+```sql
+ALTER TABLE public.cars 
+  ALTER COLUMN is_available SET DEFAULT false;
+```
 
-1. **Copy the uploaded image** to `public/lovable-uploads/MOBI_LOGO.png`
-2. **Update all 4 component files** to reference `/lovable-uploads/MOBI_LOGO.png` instead of the old logo path
-3. **Update `index.html`** favicon to use the new logo as well
+This ensures every new car listing defaults to unavailable, requiring admin approval via the existing `CarVerificationTable` approve action to set `is_available: true`.
 
-This is a straightforward find-and-replace across 5 files -- no logic changes needed.
+**2. Fix existing unapproved-but-available cars**
+
+Use the insert/update tool to correct the 2 cars currently live without approval:
+
+```sql
+UPDATE cars 
+SET is_available = false 
+WHERE verification_status = 'pending' 
+  AND is_available = true;
+```
+
+No frontend code changes needed -- `AddCar.tsx` already sets `is_available: false` explicitly, and the admin approve flow already sets it to `true`.
 
