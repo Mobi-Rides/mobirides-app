@@ -57,6 +57,9 @@ VALUES (0.10, '2026-03-23')
 ON CONFLICT DO NOTHING;
 
 -- 4. Create premium_remittance_batches table
+-- Sequence must be created before the table that references it in a DEFAULT
+CREATE SEQUENCE IF NOT EXISTS premium_remittance_seq START 1;
+
 CREATE TABLE IF NOT EXISTS public.premium_remittance_batches (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   batch_number text UNIQUE NOT NULL DEFAULT 'REM-' || to_char(now(), 'YYYY') || '-' || lpad(nextval('premium_remittance_seq')::text, 5, '0'),
@@ -75,9 +78,6 @@ CREATE TABLE IF NOT EXISTS public.premium_remittance_batches (
   notes text DEFAULT NULL,
   created_at timestamptz DEFAULT now()
 );
-
--- Sequence for batch numbers
-CREATE SEQUENCE IF NOT EXISTS premium_remittance_seq START 1;
 
 ALTER TABLE public.premium_remittance_batches ENABLE ROW LEVEL SECURITY;
 
