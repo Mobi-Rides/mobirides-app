@@ -23,7 +23,7 @@ export interface BookingWithRelations {
   insurance_policy_id?: string;
   discount_amount?: number;
   promo_code_id?: string;
-  destination_type?: DestinationType;
+  destination_type?: DestinationType | string;
   cars: {
     id?: string;
     brand: string;

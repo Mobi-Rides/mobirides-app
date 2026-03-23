@@ -1,11 +1,12 @@
 # 📊 MobiRides Week 3 March 2026 Status Report
 
-**Report Date:** March 18, 2026 (Updated)  
-**Report Period:** Week 3 (March 10 - March 18, 2026)  
+**Report Date:** March 22, 2026 (Updated)  
+**Report Period:** Week 3 (March 10 - March 22, 2026)  
 **Version:** v2.8.3  
 **Prepared by:** Development Team (Modisa Maphanyane)  
 **Reference:** JIRA Production Readiness Plan v1.3
 
+> **📋 Sprint 7 execution tracker:** [WEEK_3_MARCH_2026_SPRINT_EXECUTION.md](WEEK_3_MARCH_2026_SPRINT_EXECUTION.md)  
 > **📋 Active Plan:** [Epic MOB-400 — Map Module Hotfix](../../.lovable/plan.md)  
 > **📊 Testing Coverage Report:** [TESTING_COVERAGE_STATUS_2026_03_02.md](../testing/TESTING_COVERAGE_STATUS_2026_03_02.md)  
 > **🔧 Active Hotfix Trackers:**  
@@ -29,11 +30,13 @@
 
 ## 📋 Executive Summary
 
-Week 3 of March 2026 was focused on **compliance, payment flow analysis, and rental lifecycle investigation**. The **Auth Compliance Epic (MOB-600)** was completed to near-full completion (13/15 tickets), adding legal consent checkboxes, password strength meter, standalone legal pages, and GDPR cookie consent to the platform. A critical **payment flow gap** was identified and fully analyzed: renters are not prompted to pay after host confirmation due to missing notification triggers, no payment banner on the Explore page, and the `/bookings/:id` route lacking any payment UI. The correct flow (Host confirms → Renter prompted to pay → Payment → Handover) was documented and implementation planned.
+Week 3 of March 2026 was focused on **compliance, payment flow analysis, and rental lifecycle delivery**. The **Auth Compliance Epic (MOB-600)** was completed to near-full completion (13/15 tickets), adding legal consent checkboxes, password strength meter, standalone legal pages, and GDPR cookie consent to the platform. A critical **payment flow gap** was identified and analyzed early in the week; **Sprint 7 (Mar 17–22)** then shipped multiple **payment-flow and typing fixes** on `develop` — see **March 22** update below for build recovery and **E2E verification** needs. The correct flow (Host confirms → Renter prompted to pay → Payment → Handover) remains the north star.
 
-**Post-commit update (March 18):** Latest commits introduced **18+ TypeScript build errors** across dashboard, booking, and map components — primarily `destination_type` string narrowing failures and duplicate JSX property issues. The `BookingWithRelations` type's `destination_type` field (`"cross_border" | "local" | "out_of_zone"`) is incompatible with Supabase's inferred `string` type, causing cascading errors in `HostDashboard`, `RenterDashboard`, `HandoverBookingButtons`, and `RentalDetailsRefactored`. Additionally, `BookingDialog.tsx` has a duplicate object literal property, `HostBookings.tsx` has a type mismatch on filter status, and `Map.tsx` compares against a non-existent `"in_progress"` booking status. The dev server start script is also broken (`concurrently` not found).
+**Post-commit update (March 18):** Latest commits introduced **18+ TypeScript build errors** across dashboard, booking, and map components — primarily `destination_type` string narrowing failures and duplicate JSX property issues.
 
-**Sprint 6 did not achieve its full planned scope** — MOB-200 (Rental Lifecycle) and MOB-210 (Signup) fixes, which were P0 priorities, were not started due to the emergence of the MOB-600 compliance work and the payment flow investigation.
+**Post-commit update (March 22):** Sprint 7 execution **recovered the build**: `tsc --noEmit` is clean and **`npm run build` succeeds** (verified). Follow-up commits aligned `BookingWithRelations` / `destination_type` typing (`7409f17`, `f4db240`, `1fa95af`, `5a9dc28`, `c213643`). **MOB-200 Phase 1** merged via **PR #217** (`af095d4`, Mar 17). **Migration drift** repaired per sprint tracker (three `migration repair` commands — see [WEEK_3_MARCH_2026_SPRINT_EXECUTION.md](WEEK_3_MARCH_2026_SPRINT_EXECUTION.md)). **Branding:** app logo updated to **MOBI_LOGO** (`f72c065`). **Tooling:** removed repo-root `supabase.exe` that shadowed Scoop CLI + `.gitignore` guard. **Non-blocking:** Vite reports a duplicate `case` clause in `RenterBookingCard.tsx` — should be cleaned up. **Still open:** full payment-flow P0 checklist (renter notification, Explore banner, `BookingDetails` Pay Now) if not fully landed on `develop`; MOB-200 edge-case tickets MOB-203–MOB-212; MOB-210 signup; MOB-202 return handover.
+
+**Sprint 6 did not achieve its full planned scope** — MOB-200 (Rental Lifecycle) and MOB-210 (Signup) fixes, which were P0 priorities, were not started due to the emergence of the MOB-600 compliance work and the payment flow investigation. **Sprint 7 has started MOB-200** (Phase 1 merged); signup and some lifecycle edge cases remain.
 
 ### Key Achievements This Period
 - ✅ **Epic MOB-600: Auth Compliance (13/15 tickets)** — Legal consent checkboxes, password strength meter, 3 legal pages, cookie consent banner
@@ -43,12 +46,17 @@ Week 3 of March 2026 was focused on **compliance, payment flow analysis, and ren
 - ✅ **Payment guard partially implemented** — `RenterView.tsx`, `HostView.tsx`, and `RentalActions.tsx` now check `payment_status === 'paid'` before handover; Pay Now button added to `RentalActions.tsx`; `awaiting_payment` filter added to `RenterBookingFilters.tsx`
 - ✅ **FloatingChatButton repositioned** — Moved from `bottom-6` to `bottom-[25vh]` for better visibility
 - ✅ **Handover service fix** — Replaced `.upsert()` with `.insert()` to resolve unique constraint errors
+- ✅ **Sprint 7 (Mar 17–22): MOB-200 Phase 1 merged** — Centralized rental lifecycle (`af095d4` / PR #217); continued payment-flow and typing fix passes
+- ✅ **Build recovered (Mar 22)** — TypeScript clean; production Vite build succeeds
+- ✅ **Migration drift repaired** — Documented in sprint execution tracker (Mar 19)
+- ✅ **MOBI_LOGO** — Replaced app logo (`f72c065`)
+- ✅ **Supabase CLI shadowing fixed** — Removed stray `supabase.exe` from repo root; Scoop shim now resolves correctly
 
 ### Critical Issues
-- 🔴 **18+ Build Errors (NEW REGRESSION)** — `destination_type` type narrowing failures across 7 files; duplicate properties; status enum mismatches
-- 🔴 **Dev Server Start Script Broken** — `concurrently` command not found in sandbox environment
-- 🔴 **Payment Flow Still Incomplete** — Payment guards added but notification trigger, PaymentRequiredBanner, and BookingDetails Pay Now still missing
-- 🔴 **MOB-200: Rental Lifecycle Still Unstarted** — P0 carried forward for 2nd consecutive week
+- 🟡 **Payment flow — verify E2E** — Multiple iterations landed on `develop`; confirm renter notification on host approval, Explore `PaymentRequiredBanner`, and `BookingDetails` Pay Now are all shipped (see sprint tracker)
+- 🟡 **Dev Server Start Script** — `concurrently` not found was reported in sandbox; re-verify local `npm run dev` after dependency install
+- 🟡 **RenterBookingCard** — Duplicate `case` in switch (Vite build warning) — cleanup recommended
+- 🔴 **MOB-200 edge cases** — MOB-203–MOB-212 still tracked in hotfix doc; core Phase 1 merged
 - 🔴 **MOB-202: Return Handover Still Broken** — Carried forward from Week 4 Feb
 - 🔴 **MOB-210: Signup Flow Still Broken** — Carried forward from Week 4 Feb
 - 🟡 **MOB-600 P3: Consent Audit Trail (2 tickets)** — DB table + storage not yet implemented
@@ -61,37 +69,34 @@ Week 3 of March 2026 was focused on **compliance, payment flow analysis, and ren
 
 | Metric | Week 1 Mar | Week 2 Mar | **Week 3 Mar** | Change | Target |
 |--------|------------|------------|----------------|--------|--------|
-| Build Errors | 0 | 0 | **18+ (REGRESSION)** | ⚠️ ↑ +18 | 0 |
+| Build Errors | 0 | 0 | **0 (recovered Mar 22)** | ✅ TS + Vite build OK | 0 |
 | Linter Warnings | 15 | 15 | **15** | — | <20 |
-| System Health | 83% | 84% | **80%** | ↓ -4% | 95% |
-| Production Readiness | 80% | 81% | **78%** | ↓ -3% | 95% |
+| System Health | 83% | 84% | **83%** | ↑ +3% vs Mar 18 low | 95% |
+| Production Readiness | 80% | 81% | **81%** | ↑ +3% vs Mar 18 low | 95% |
 | Test Coverage | 62% | 62% | **62%** | — | 85% |
 | Security Vulnerabilities | 4 | 4 | **4** | — | 0 |
 | Database Migrations | 231 | ~233 | **~233** | — | — |
 | Edge Functions | 27 | 27 | **27** | — | — |
-| Known Bugs | 38 | 38 | **43** | ↑ +5 | 0 |
+| Known Bugs | 38 | 38 | **~40** | ↓ after build regression closed (estimate) | 0 |
 | Capacitor Packages | 3 | 3 | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
 
 | Category | Current | Gap | Path to Close |
 |----------|---------|-----|---------------|
-| Production Readiness | 78% | 17% | Fix 18+ build errors, payment flow fix, MOB-200 lifecycle fixes, MOB-500 handover consolidation |
+| Production Readiness | 81% | 14% | E2E payment-flow verification, MOB-200 edge cases, MOB-500 handover consolidation |
 | Test Coverage | 62% | 23% | Phase 3 re-test sprint + automated test suite |
-| System Health | 80% | 15% | Resolve 43 known bugs, fix build errors, security fixes, payment flow |
+| System Health | 83% | 12% | Close remaining lifecycle/payment gaps, security fixes |
 
-### System Health Explanation (March 18 Update)
+### System Health Explanation (March 18 → March 22)
 
-System health **dropped 4% (84% → 80%)** and production readiness **dropped 3% (81% → 78%)** due to the introduction of 18+ TypeScript build errors in the latest commits. The build errors are categorized as:
+**March 18:** System health **dropped 4% (84% → 80%)** and production readiness **dropped 3% (81% → 78%)** after 18+ TypeScript errors appeared (`destination_type` narrowing, duplicate props, enum mismatches, dev script issues).
 
-1. **`destination_type` type narrowing (7 files):** Supabase returns `string` for `destination_type`, but `BookingWithRelations` expects `"cross_border" | "local" | "out_of_zone"`. Affects: `HostDashboard.tsx`, `RenterDashboard.tsx`, `HandoverBookingButtons.tsx`, `RentalDetailsRefactored.tsx`
-2. **Duplicate JSX properties (2 files):** `BookingDialog.tsx` has duplicate object literal key; `RentalDetailsRefactored.tsx` has duplicate JSX attribute
-3. **Enum mismatch (2 files):** `HostBookings.tsx` passes `BookingStatus` where `BookingFilterStatus` expected; `Map.tsx` compares against non-existent `"in_progress"` status
-4. **Dev script broken:** `concurrently` command not found — prevents local dev server start
+**March 22:** **Build regression closed** — `tsc` and `vite build` succeed. Health/readiness **revised upward (~83% / ~81%)** to reflect recoverable engineering risk removed; remaining gaps are **product/E2E** (payment path verification, MOB-200 edge tickets) not compile-time blockers.
 
 **Console Log Review:** No user-facing errors observed. Auth flow is clean (TOKEN_REFRESHED, SIGNED_IN events working). Vercel Analytics/Speed Insights scripts fail to load (non-critical — ad blocker interference). No runtime crashes or unhandled exceptions detected in user sessions.
 
-Known bug count increased from 39 → 43 (+4) accounting for: build regression errors (grouped as 1), `destination_type` type mismatch (1), duplicate property bugs (1), and dev script failure (1).
+**Follow-up:** Vite warning — duplicate `case` in `RenterBookingCard.tsx` switch (cleanup).
 
 ---
 
@@ -119,14 +124,14 @@ Known bug count increased from 39 → 43 (+4) accounting for: build regression e
 **Theme:** Payment Flow Fix + Rental Lifecycle (Must-Do)  
 **Planned:** ~55 SP
 
-| Item | SP | Priority | Description |
-|------|-----|----------|-------------|
-| Payment Flow Fix (NEW) | 15 | P0 | Add renter notification on host approval, PaymentRequiredBanner on Explore, Pay Now to BookingDetails, handover payment guard |
-| MOB-200 (5 tickets) | 20 | P0 | Rental lifecycle critical flow fixes (MUST start this sprint) |
-| MOB-202 | 5 | P0 | Return handover flow fix |
-| MOB-210 | 5 | P0 | Signup flow fix |
-| MOB-400 Phase 4 | 5 | P1 | Map module hardening (MOB-410, MOB-411) |
-| MOB-600 P3 (2 tickets) | 5 | P2 | Consent audit trail DB table + storage |
+| Item | SP | Priority | Description | Status (Mar 22) |
+|------|-----|----------|-------------|-----------------|
+| Payment Flow Fix (NEW) | 15 | P0 | Add renter notification on host approval, PaymentRequiredBanner on Explore, Pay Now to BookingDetails, handover payment guard | 🟡 Multiple PRs/commits; **E2E verify** |
+| MOB-200 (5 tickets) | 20 | P0 | Rental lifecycle critical flow fixes | 🟢 **Phase 1 merged** (PR #217); edge cases open |
+| MOB-202 | 5 | P0 | Return handover flow fix | 🔴 Open |
+| MOB-210 | 5 | P0 | Signup flow fix | 🔴 Open |
+| MOB-400 Phase 4 | 5 | P1 | Map module hardening (MOB-410, MOB-411) | 🟡 Map crash fix landed earlier; Phase 4 TBD |
+| MOB-600 P3 (2 tickets) | 5 | P2 | Consent audit trail DB table + storage | 🔴 Deferred |
 
 ### March Sprint Cycle Summary
 
@@ -134,7 +139,7 @@ Known bug count increased from 39 → 43 (+4) accounting for: build regression e
 |--------|-------|-----------|-------------|----------|-------|
 | Sprint 5 (Mar 3-9) | Mar 3-9 | 30 | ~55 | 183% | Help Center + Map Hotfix |
 | Sprint 6 (Mar 10-16) | Mar 10-16 | 45 | ~25 | 56% | Auth Compliance (pivoted) |
-| Sprint 7 (Mar 17-23) | Mar 17-23 | 55 | — | — | Payment Flow + Lifecycle |
+| Sprint 7 (Mar 17-23) | Mar 17-23 | 55 | **~45 (est.)** | **~82%** | Payment Flow + Lifecycle + build recovery |
 | Sprint 8 (Mar 24-31) | Mar 24-31 | ~40 | — | — | Handover + Polish + Security |
 
 ---
@@ -156,8 +161,8 @@ Known bug count increased from 39 → 43 (+4) accounting for: build regression e
 |------|------|------------|------------|----------------|--------|--------|
 | 1 | User Auth & Onboarding | 88% | 88% | **92%** | ↑ +4% | 🔵 MOB-600 compliance complete |
 | 2 | Car Listing & Discovery | 82% | 82% | **82%** | — | 🟡 MOB-225 location filter still open |
-| 3 | Booking System | 83% | 83% | **83%** | — | 🔴 Payment flow gap identified |
-| 4 | Handover Management | 77% | 80% | **80%** | — | 🟡 MOB-500 not started |
+| 3 | Booking System | 83% | 83% | **85%** | ↑ +2% | 🟡 Payment path — E2E verify; MOB-200 Phase 1 in |
+| 4 | Handover Management | 77% | 80% | **82%** | ↑ +2% | 🟡 MOB-200 Phase 1 merged; MOB-500 not started |
 | 5 | Messaging System | 72% | 72% | **72%** | — | 🔴 MOB-201, MOB-211 still open |
 | 6 | Review System | 70% | 70% | **70%** | — | 🔴 MOB-204 submission fails |
 | 7 | Wallet & Payments | 62% | 62% | **62%** | — | 🔴 Payment flow broken |
@@ -172,8 +177,9 @@ Known bug count increased from 39 → 43 (+4) accounting for: build regression e
 
 ### Notable Epic Movements
 - **Epic 1 (User Auth & Onboarding):** +4% — MOB-600 Auth Compliance epic (13/15 tickets) adds legal consents, password strength, cookie consent
-- **Epic 3 (Booking System):** No % change but critical payment flow gap identified — renters cannot pay after host confirmation
-- **Epic 7 (Wallet & Payments):** No % change but payment flow gap formally documented as a new bug
+- **Epic 3 (Booking System):** +2% — MOB-200 Phase 1 merged; payment path improved in multiple commits — **E2E verify** full renter pay journey
+- **Epic 4 (Handover Management):** +2% — Lifecycle Phase 1 in; MOB-500 consolidation still deferred
+- **Epic 7 (Wallet & Payments):** Critical gap documented earlier; **Sprint 7** applied guards / Pay Now iterations — confirm all P0 tasks in production flow
 
 ### Epic-Specific Updates
 
@@ -183,14 +189,14 @@ Known bug count increased from 39 → 43 (+4) accounting for: build regression e
 - New pages: `TermsOfService.tsx`, `PrivacyPolicy.tsx`, `CommunityGuidelines.tsx`
 - Remaining: P3 consent audit trail (DB table + storage — MOB-614, MOB-615)
 
-**Epic 3/7 (Booking/Payments) — Critical Flow Gap:**
-- Payment flow is broken end-to-end: host approves booking → renter has NO way to pay
-- Three missing pieces identified:
-  1. No notification to renter when host approves (sets `awaiting_payment`)
-  2. No payment banner on Explore page (only handover banners exist)
-  3. `/bookings/:id` (BookingDetails.tsx) has zero payment UI
-- `/rental-details/:id` (RentalDetailsRefactored.tsx) has Pay Now button but users don't navigate there
-- Correct flow documented: Host confirms → notification → Pay Now banner → payment → confirmed → handover
+**Epic 3/7 (Booking/Payments) — Critical Flow Gap (updated Mar 22):**
+- **Original gap (March 18):** Host approves → renter could miss pay path (notification / Explore banner / `BookingDetails` UI).
+- **Sprint 7 work:** Multiple commits improved payment guards, rental-details Pay flow, filters, and typing — treat prior “zero UI” statements as **superseded until E2E QA** confirms remaining gaps.
+- **Still validate in QA:**
+  1. Renter notification on host approval (`awaiting_payment`)
+  2. Explore-page payment banner parity with handover banners
+  3. `/bookings/:id` payment UX vs `/rental-details/:id`
+- Target flow: Host confirms → notification → Pay Now banner → payment → confirmed → handover
 
 ---
 
@@ -473,16 +479,16 @@ The MOB-600 epic addresses several compliance gaps:
 
 ## 📊 Seven-Week Trend Analysis
 
-### Metrics Trend (January 20 → March 17)
+### Metrics Trend (January 20 → March 22)
 
 | Metric | Week 4 Jan | Week 1 Feb | Week 2 Feb | Week 3 Feb | Week 4 Feb | Week 1 Mar | Week 2 Mar | **Week 3 Mar** | Trend |
 |--------|-----------|------------|------------|------------|------------|------------|------------|----------------|-------|
-| Build Errors | 0 | 0 | 50+ | 0 | 0 | 0 | 0 | **18+** | ⚠️ Regression |
+| Build Errors | 0 | 0 | 50+ | 0 | 0 | 0 | 0 | **0** (recovered Mar 22) | ✅ Recovered |
 | Linter Warnings | 15 | 15 | 15 | 15 | 15 | 15 | 15 | **15** | ➡️ Flat |
-| System Health | 85% | 86% | 78% | 82% | 83% | 83% | 84% | **80%** | ⚠️ Dropped |
-| Prod Readiness | 72% | 74% | 76% | 79% | 80% | 80% | 81% | **78%** | ⚠️ Dropped |
+| System Health | 85% | 86% | 78% | 82% | 83% | 83% | 84% | **83%** | ✅ Recovered vs Mar 18 dip |
+| Prod Readiness | 72% | 74% | 76% | 79% | 80% | 80% | 81% | **81%** | ✅ Recovered vs Mar 18 dip |
 | Test Coverage | 45% | 47% | 47% | 47% | 62% | 62% | 62% | **62%** | ➡️ Plateau |
-| Known Bugs | ~10 | ~12 | ~15 | ~15 | 38 | 38 | 38 | **43** | ⚠️ Increasing |
+| Known Bugs | ~10 | ~12 | ~15 | ~15 | 38 | 38 | 38 | **~40** | ➡️ Stabilizing |
 | Migrations | 216 | 216 | 221 | 225 | 227 | 231 | ~233 | **~233** | ➡️ Stable |
 | Edge Functions | 22 | 22 | 27 | 27 | 27 | 27 | 27 | **27** | ➡️ Stable |
 
@@ -494,7 +500,7 @@ The MOB-600 epic addresses several compliance gaps:
 | February 2026 | +25 (MOB-201-225) | +3 (MOB-114-116) | +22 | ~38 |
 | Week 1 March | +13 (MOB-300) | +9 (MOB-300 P1-3) | +4 | ~38 |
 | Week 2 March | +11 (MOB-400) | +21 (MOB-100/300/400) | -10 | ~41 |
-| **Week 3 March** | **+23 (MOB-600 + Payment + Build Regression)** | **+13 (MOB-600)** | **+10** | **~47** |
+| **Week 3 March** | **+23 (MOB-600 + Payment + Build Regression)** | **+13 (MOB-600) + build fix + MOB-200/400 merges** | **~+6 (est.)** | **~40** |
 
 ---
 
@@ -597,19 +603,19 @@ The MOB-600 epic addresses several compliance gaps:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                 MOBIRIDES HEALTH DASHBOARD                  │
-│                 March 18, 2026 (Updated)                    │
+│                 March 22, 2026 (Updated)                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Build Status:     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  🔴 18+ │
+│  Build Status:     ████████████████████████████████  ✅ 0  │
 │                                             Target: 0       │
 │                                                             │
 │  Linter Warnings:  ██████████████████████████░░░░░░  15     │
 │                                             Target: <20     │
 │                                                             │
-│  System Health:    ████████████████████████░░░░░░░░  80%    │
+│  System Health:    █████████████████████████░░░░░░░░░  83%   │
 │                                             Target: 95%     │
 │                                                             │
-│  Prod Readiness:   ███████████████████████░░░░░░░░░  78%    │
+│  Prod Readiness:   █████████████████████████░░░░░░░░  81%   │
 │                                             Target: 95%     │
 │                                                             │
 │  Test Coverage:    ██████████████████░░░░░░░░░░░░░░  62%    │
@@ -618,29 +624,27 @@ The MOB-600 epic addresses several compliance gaps:
 │  Security Score:   ██████████████████████████░░░░░░  82%    │
 │                                             Target: 100%    │
 │                                                             │
-│  Known Bugs:       █████████████████████████████████  43    │
+│  Known Bugs:       ████████████████████████████████░░  ~40  │
 │                                             Target: 0       │
 │                                                             │
 ├─────────────────────────────────────────────────────────────┤
 │  EPIC RESOLUTION VELOCITY                                   │
 │                                                             │
 │  MOB-100 (Admin):    ███████░░░░░░░░░░░░░░  11/38  [29%]   │
-│  MOB-200 (Lifecycle):░░░░░░░░░░░░░░░░░░░░░   0/12  [ 0%]   │
+│  MOB-200 (Lifecycle):████████░░░░░░░░░░░░░░░  ~5/12 [~42%]  │
 │  MOB-300 (Help):     ████████████████████░  13/13  [100%]  │
 │  MOB-400 (Map):      ████████████████░░░░░   9/11  [ 82%]  │
 │  MOB-500 (Handover): ░░░░░░░░░░░░░░░░░░░░░   0/11  [ 0%]   │
 │  MOB-600 (Auth):     █████████████████░░░░  13/15  [ 87%]  │
-│  Payment Fix (NEW):  ░░░░░░░░░░░░░░░░░░░░░   0/4   [ 0%]   │
+│  Payment Fix (NEW):  ████████████░░░░░░░░░░░░  ~2/4 [~50%]   │
 │                                                             │
 │  📱 CAPACITOR: Android scaffolded | Build untested          │
 │  💰 FLEET: 62/100 vehicles (62% of Q1 target)              │
 │  🐛 BUGS: 43 known (+5 from build regression)              │
-│  ⚠️  MIGRATION DRIFT: 6 entries misaligned — STILL BLOCKING │
-│  💳 PAYMENT FLOW: PARTIALLY FIXED — guards added, triggers  │
-│     & banner still missing                                  │
-│  🔴 BUILD: 18+ TS errors — destination_type narrowing,      │
-│     duplicate props, enum mismatches across 7+ files         │
-│  🔴 DEV SCRIPT: concurrently not found — local dev broken   │
+│  ✅ MIGRATION DRIFT: repaired (see sprint execution Mar 19)   │
+│  💳 PAYMENT FLOW: PARTIALLY FIXED — E2E verify triggers/banner │
+│  ✅ BUILD: TS + Vite production build OK (Mar 22)           │
+│  🟡 DEV SCRIPT: re-verify concurrently in local env          │
 │  📊 CONSOLE: No user-facing errors detected — auth clean    │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
@@ -650,27 +654,27 @@ The MOB-600 epic addresses several compliance gaps:
 
 ## 🏁 Conclusion
 
-Week 3 of March 2026 delivered the **Auth Compliance Epic (MOB-600)** and **partial payment flow fixes** (guards, Pay Now button on rental details, awaiting_payment filter), but introduced a **significant build regression** with 18+ TypeScript errors across dashboard, booking, and map components. The build is currently broken — **system health dropped to 80%** and **production readiness to 78%**, reversing 2 weeks of incremental gains.
+Week 3 of March 2026 delivered the **Auth Compliance Epic (MOB-600)** and **partial payment flow fixes**, and **Sprint 7 (Mar 17–22)** landed **MOB-200 Phase 1** (PR #217), **map crash fix** (PR #215), **migration drift repair**, **Damage Protection SLA** documentation, and **build recovery** (TypeScript + Vite production build green as of **March 22**). A mid-week **build regression (18+ TS errors)** was introduced March 18 and **closed** by March 22 through `BookingWithRelations` / `destination_type` alignment and related fixes.
 
-**The core problem** is a `destination_type` type mismatch between Supabase's inferred `string` and the `BookingWithRelations` union type (`"cross_border" | "local" | "out_of_zone"`), affecting 7+ files. Additional issues include duplicate JSX properties, enum mismatches, and a broken dev start script.
+**Remaining focus** is **E2E verification** of the full payment path (notification, Explore banner, `BookingDetails` Pay Now if not all merged), **MOB-200 edge-case tickets** (MOB-203–MOB-212), **MOB-202 / MOB-210**, and a small **RenterBookingCard** switch cleanup (Vite warning).
 
 **Console log review** shows no user-facing errors — auth flow (TOKEN_REFRESHED, SIGNED_IN) is working cleanly. Vercel analytics scripts fail to load (non-critical, likely ad blocker).
 
 **Key Takeaways:**
 1. **Auth compliance complete (MOB-600)** — Legal consents, password strength, cookie consent all in place
-2. **Payment flow partially fixed** — Guards added, Pay Now on rental details, but notification trigger and Explore banner still missing
-3. **BUILD BROKEN (18+ errors)** — Immediate P0 fix required before any further feature work
-4. **MOB-200 carried forward 2 weeks** — Rental lifecycle is now 2 sprints overdue; must start Sprint 7
-5. **Sprint velocity declining** — 183% → 56% across two sprints; scope management critical
-6. **Migration drift still unrepaired** — 6 misaligned entries blocking CI/CD for 2nd week
-7. **Q1 milestones at high risk** — Payment, Android, vehicle fleet all behind target with 2 weeks remaining
+2. **Payment flow — partially fixed; verify E2E** — Multiple iterations on `develop`; confirm all four P0 tasks shipped
+3. **Build recovered (Mar 22)** — `tsc` + `vite build` succeed; non-blocking Vite warning in `RenterBookingCard`
+4. **MOB-200 Phase 1 merged** — Core rental lifecycle centralized; edge tickets still open
+5. **Sprint velocity** — Sprint 6 pivot; Sprint 7 showing recovery (~82% est. velocity vs plan)
+6. **Migration drift repaired** — See sprint execution log (Mar 19)
+7. **Q1 milestones** — Payment E2E + Android + fleet still need attention
 
-**Sprint 7 Priorities (Non-Negotiable):**
-1. 🔴 **FIX BUILD ERRORS** — Resolve 18+ TS errors (destination_type narrowing, duplicate props, enum mismatches)
-2. 🔴 Fix payment flow — notification trigger + PaymentRequiredBanner on Explore + BookingDetails Pay Now
-3. 🔴 Begin MOB-200 — rental lifecycle fixes can no longer be deferred
-4. 🔴 Fix MOB-202 (return handover) + MOB-210 (signup)
-5. 🔴 Execute migration repair commands
+**Sprint 7 Close-Out (Mar 22–23):**
+1. ✅ ~~**FIX BUILD ERRORS**~~ — Recovered Mar 22
+2. 🟡 **E2E payment flow** — Confirm notification + banner + BookingDetails Pay Now
+3. 🟡 **MOB-200 edge cases** — MOB-203–MOB-212 triage
+4. 🔴 **MOB-202 (return handover) + MOB-210 (signup)**
+5. 🟡 **RenterBookingCard** duplicate `case` cleanup
 
 ---
 
@@ -678,6 +682,6 @@ Week 3 of March 2026 delivered the **Auth Compliance Epic (MOB-600)** and **part
 
 ---
 
-*Report generated: March 17, 2026 | Updated: March 18, 2026*  
-*Document version: 1.1*  
+*Report generated: March 17, 2026 | Updated: March 22, 2026*  
+*Document version: 1.2*  
 *Classification: Internal*

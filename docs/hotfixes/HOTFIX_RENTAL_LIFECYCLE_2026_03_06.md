@@ -7,6 +7,8 @@
 **Triggered By:** Failed Mazda rental — destination pricing lost, navigation broken, payment didn't fire, pickup handover duplicated, return handover didn't trigger, reviews never appeared  
 **Related:** [HOTFIX_ADMIN_PORTAL_2026_02_24.md](./HOTFIX_ADMIN_PORTAL_2026_02_24.md) (Epic MOB-100)
 
+> **📌 Progress (March 17–22, 2026):** **MOB-200 Phase 1** merged to `develop` (**PR #217**, commit `af095d4` — centralized rental lifecycle, destination type persistence, handover guard work). **TypeScript / Vite build** green again (**March 22**). **Map crash** fix merged earlier (**PR #215**). Individual ticket checklists below are **not** all re-validated in this doc update — use the [Week 3 March 2026 Sprint Execution](../Product%20Status/WEEK_3_MARCH_2026_SPRINT_EXECUTION.md) tracker for sprint-level status.
+
 ---
 
 ## Executive Summary

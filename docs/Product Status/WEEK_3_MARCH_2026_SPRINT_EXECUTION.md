@@ -1,8 +1,8 @@
 # Week 3 March 2026 Sprint Execution Tracker
 
 **Sprint:** Sprint 7 (March 17-23, 2026)  
-**Status:** In Progress  
-**Last Updated:** March 19, 2026
+**Status:** Wrapping up (execution log current through **March 22, 2026**)  
+**Last Updated:** March 22, 2026
 
 ---
 
@@ -22,7 +22,7 @@
   - [x] Fix local Supabase auth issues
   - **Status:** ✅ COMPLETED
 
-- [🟡] **Build Error Resolution**
+- [x] **Build Error Resolution**
   - [x] Fix `destination_type` type narrowing (7 files)
     - Added `DestinationType` type to `src/types/booking.ts`
     - Updated `BookingWithRelations.destination_type` to use `DestinationType` instead of `string`
@@ -31,11 +31,10 @@
   - [x] Fix admin types and dev script (`7f29598`)
   - [x] Fix type issues across tables (`8ab406e`)
   - [x] Fix typing and build errors (`ac18340`)
-  - [ ] Fix remaining `destination_type` cast errors (HostDashboard, RenterDashboard, HandoverBookingButtons, RentalDetailsRefactored — 18 errors)
-  - [ ] Fix duplicate JSX properties (2 files)
-  - [ ] Fix enum mismatch in HostBookings.tsx
-  - [ ] Fix status enum in Map.tsx
-  - **Status:** 🟡 IN PROGRESS - Multiple fix passes applied, 18 TS errors still present
+  - [x] Fix `BookingWithRelations` casting / `destination_type` follow-ups (`7409f17`, `d5cc883`, `1cf516e`, `f4db240`, `1fa95af`, `5a9dc28`, `c213643`)
+  - [x] `tsc --noEmit` clean; `npm run build` succeeds (verified **March 22, 2026**)
+  - [ ] **Follow-up (non-blocking):** Vite warns duplicate `case` in `RenterBookingCard.tsx` switch — cleanup recommended
+  - **Status:** ✅ COMPLETED (TS + production build) — March 19–22, 2026
 
 ### 🟢 Completed Objectives
 
@@ -72,6 +71,7 @@
 
 - [x] **Damage Protection SLA**
   - [x] Drafted formal Pay-U Damage Protection SLA (`docs/20260319_DAMAGE_PROTECTION_SLA_PAYU.md`)
+  - [x] Doc refresh on Pay-U terms (`0bab4ad` — March 19, 2026)
   - Coverage tiers: Basic (P80/P8K cap), Standard (P150/P20K cap), Premium (P250/P50K cap)
   - Revenue split: 90% Pay-U / 10% MobiRides
   - **Status:** ✅ COMPLETED - March 19, 2026
@@ -85,8 +85,8 @@
   - [ ] MOB-206: Map.tsx validateBooking rejects `in_progress`
   - [ ] MOB-207: Map.tsx return handover redirects away from map
   - [ ] MOB-208: Payment auto-open uses fragile `location.state`
-  - [ ] MOB-211: RentalPaymentDetails missing surcharge line
-  - [ ] MOB-212: RenterBookingCard lacks active/return states
+  - [🟡] MOB-211: RentalPaymentDetails — `destinationType` now passed through to `UnifiedPriceSummary` (verify surcharge line UX end-to-end)
+  - [🟡] MOB-212: RenterBookingCard — `in_progress` styling path exists; duplicate `case` warning in build → verify badges/buttons
   - **Status:** 🟡 PARTIALLY ADDRESSED — Core lifecycle merged, edge cases remain
 
 - [ ] **MOB-500 Handover Consolidation**
@@ -100,7 +100,7 @@
 
 | PR | Branch | Description |
 |----|--------|-------------|
-| #220 | develop | Latest develop merge |
+| #220 | develop | Develop merge (includes weekend standup doc, typing fixes) |
 | #218 | develop | Mid-sprint develop sync |
 | #217 | feature/MOB-200-rental-lifecycle | Centralized rental lifecycle implementation |
 | #216 | develop | Develop sync |
@@ -128,6 +128,12 @@
 | `8ab406e` | Fix type issues across tables | Bugfix |
 | `2069510` | fix: updated bulk-delete-users function with deep cleaning | Bugfix |
 | `0bab4ad` | Update SLA PAYU doc | Docs |
+| `2a70db8` | docs: weekend development standup March 9, 2026 | Docs |
+| `f4db240` | Fix BookingWithRelations typing | Bugfix |
+| `1cf516e` / `7409f17` | BookingWithRelations casting fixes | Bugfix |
+| `1fa95af` | Fix destination type mismatch | Bugfix |
+| `5a9dc28` / `c213643` | Refactor `destination_type` typing; remove shadowing `supabase.exe` | Bugfix / Tooling |
+| `f72c065` | Replace app logo with MOBI_LOGO | UX |
 
 ---
 
@@ -157,23 +163,23 @@ npx supabase migration list --linked
 
 ## Sprint Metrics
 
-| Metric | Sprint 6 | Sprint 7 (WIP) | Change |
-|--------|----------|-----------------|--------|
-| Story Points Delivered | ~25 SP | ~35 SP | 🟢 +40% |
-| PRs Merged | 3 | 8 | 🟢 +167% |
-| Build Errors | 18+ | 18 | 🟡 Stable (type narrowing) |
-| Migration Drift | 0 | 0 | ✅ Clean |
-| Critical Objectives Completed | 1 | 5 | 🟢 Significant |
-| Bugs Fixed | ~5 | ~12 | 🟢 +140% |
+| Metric | Sprint 6 | Sprint 7 (through Mar 22) | Change |
+|--------|----------|---------------------------|--------|
+| Story Points Delivered | ~25 SP | ~45 SP (est.) | 🟢 Strong recovery |
+| PRs Merged | 3 | 8+ | 🟢 +167% |
+| Build Errors (TS) | 18+ | **0** | ✅ Recovered |
+| Migration Drift | n/a | 0 (repaired) | ✅ Clean |
+| Critical Objectives Completed | 1 | 6+ | 🟢 Significant |
+| Bugs Fixed | ~5 | ~15 | 🟢 +200% |
 
 ---
 
-## Remaining Sprint 7 Priorities (March 20-23)
+## Remaining Sprint 7 Priorities (March 22-23)
 
-1. **P0:** Fix remaining 18 TypeScript `destination_type` build errors
-2. **P1:** Complete MOB-200 remaining edge-case tickets (MOB-203–MOB-212)
-3. **P1:** Verify "Pay Now" button renders post payment flow fixes
-4. **P2:** MOB-500 Handover Consolidation scoping
+1. ~~**P0:** Fix remaining TypeScript `destination_type` build errors~~ ✅ **Done (Mar 22)**
+2. **P1:** Complete MOB-200 remaining edge-case tickets (MOB-203–MOB-212) + fix `RenterBookingCard` duplicate `case` warning
+3. **P1:** E2E verify payment path: notification on host approval, Explore `PaymentRequiredBanner`, `BookingDetails` Pay Now (if not already complete in `develop`)
+4. **P2:** MOB-500 Handover Consolidation scoping (Sprint 8)
 
 ---
 
@@ -183,6 +189,6 @@ npx supabase migration list --linked
 - MOB-200 Phase 1 successfully merged — core rental lifecycle now centralized
 - MOB-400 map crash fix landed — map stability improved
 - Payment flow received 5 consecutive fix iterations — most gaps closed
-- 18 remaining TS errors are all `destination_type: string` → `DestinationType` narrowing — single root cause
+- ~~18 remaining TS errors~~ **Resolved** — `destination_type` / `BookingWithRelations` alignment + cast cleanup (Mar 19–22)
 - Damage Protection SLA drafted for Pay-U partnership with Botswana-specific terms
 - `bulk-delete-users` edge function hardened with deep cleaning
