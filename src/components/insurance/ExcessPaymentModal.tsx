@@ -35,10 +35,19 @@ export const ExcessPaymentModal: React.FC<ExcessPaymentModalProps> = ({
   const handlePay = async () => {
     setIsProcessing(true);
     try {
-      // Simulate Payment Process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Update Claim
+      const { mockBookingPaymentService } = await import("../../services/mockBookingPaymentService");
+      const result = await mockBookingPaymentService.processPayment({
+        booking_id: claimId, // reuse field for claim context
+        payment_method: selectedMethod as any,
+        base_rental_price: amount,
+        dynamic_pricing_adjustment: 0,
+        insurance_premium: 0,
+        discount_amount: 0,
+        grand_total: amount,
+      });
+
+      if (!result.success) throw new Error(result.error_message || 'Payment failed');
+
       await supabase
         .from('insurance_claims')
         .update({

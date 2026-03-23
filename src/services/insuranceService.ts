@@ -30,6 +30,10 @@ export interface PremiumCalculation {
   // T&C
   features: string[];
   exclusions: string[];
+
+  // SLA pricing flags (G1/G2)
+  isFlatDailyRate: boolean;       // true when daily_premium_amount was used
+  excessPercentage: number | null; // e.g. 0.20 = 20% of approved claim
 }
 
 /**
@@ -130,6 +134,9 @@ export class InsuranceService {
 
       features: insurancePackage.features || [],
       exclusions: insurancePackage.exclusions || [],
+
+      isFlatDailyRate: !!(insurancePackage.daily_premium_amount && insurancePackage.daily_premium_amount > 0),
+      excessPercentage: insurancePackage.excess_percentage ?? null,
     };
   }
 
@@ -672,7 +679,7 @@ export class InsuranceService {
         .from('notifications')
         .insert({
           user_id: hostId,
-          type: 'booking_request_received' as any, // Temporary fix: notification types need update
+          type: 'insurance_claim_filed' as any,
           title: 'Insurance Claim Filed',
           description: `An insurance claim (#${claim.claim_number}) has been filed for your ${carName}.`,
           is_read: false,
