@@ -91,13 +91,9 @@ export class InsuranceService {
     if (renterId && carId) {
       const risk = await UnderwriterService.assessRisk(renterId, carId);
 
-      // If risk is prohibitive, we might want to throw or return unavailable
-      // For now, we'll just apply the load. If load is 0, it means prohibited.
+      // If risk is prohibitive, block the calculation
       if (risk.premiumLoad === 0) {
-        // Logic to handle prohibited could go here, 
-        // e.g. set premium to explicitly high number or handle in UI
-        // For simplistic MVP, we'll force a very high multiplier to discourage/block
-        premiumMultiplier = 10.0; // Prohibitive pricing as fallback
+        throw new Error('Insurance is not available for this booking due to risk assessment.');
       } else {
         premiumMultiplier = risk.premiumLoad;
       }
@@ -267,7 +263,7 @@ export class InsuranceService {
     if (error) {
       // Fallback if function doesn't exist yet
       const year = new Date().getFullYear();
-      const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+      const random = crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase();
       return `INS-${year}-${random}`;
     }
 

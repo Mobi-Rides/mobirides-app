@@ -81,6 +81,10 @@ CREATE TABLE IF NOT EXISTS public.premium_remittance_batches (
 
 ALTER TABLE public.premium_remittance_batches ENABLE ROW LEVEL SECURITY;
 
+CREATE POLICY "Admins can view remittance batches"
+  ON public.premium_remittance_batches FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.admins WHERE id = auth.uid()));
+
 CREATE POLICY "Super admins manage remittance batches"
   ON public.premium_remittance_batches FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.admins WHERE id = auth.uid() AND is_super_admin = true));

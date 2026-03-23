@@ -43,20 +43,28 @@ export const ExcessPaymentModal: React.FC<ExcessPaymentModalProps> = ({
 
       // If provider returns a redirect (e.g. PayGate), open it
       if (data.redirect_url) {
-        window.open(data.redirect_url, '_blank');
+        // Use Capacitor Browser plugin if available (mobile), otherwise fallback to window.open
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({ url: data.redirect_url });
+        } catch {
+          window.open(data.redirect_url, '_blank');
+        }
         toast({ title: "Payment initiated", description: "Complete the payment in the opened window." });
         onClose();
         return;
       }
 
-      // Direct success (Orange Money / wallet)
-      await supabase
+      // Direct success (Orange Money / wallet) — update claim record
+      const { error: updateError } = await supabase
         .from('insurance_claims' as any)
         .update({
           excess_paid: amount,
           excess_payment_date: new Date().toISOString(),
         })
         .eq('id', claimId);
+
+      if (updateError) throw new Error(`Payment succeeded but failed to update claim: ${updateError.message}`);
 
       toast({ title: "Excess paid", description: `BWP ${amount.toFixed(2)} excess payment processed.` });
       onSuccess();
