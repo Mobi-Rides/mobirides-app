@@ -558,15 +558,28 @@ export const markUserReady = async (
 // Complete the handover process
 export const completeHandover = async (handoverId: string) => {
   try {
+    const { data: session, error: fetchError } = await supabase
+      .from("handover_sessions")
+      .select("booking_id, handover_type")
+      .eq("id", handoverId)
+      .single();
+
+    if (fetchError || !session) throw fetchError ?? new Error("Session not found");
+
     const { error } = await supabase
       .from("handover_sessions")
-      .update({
-        handover_completed: true,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ handover_completed: true, updated_at: new Date().toISOString() })
       .eq("id", handoverId);
 
     if (error) throw error;
+
+    if (session.handover_type === 'pickup') {
+      await supabase.from("bookings").update({ status: 'in_progress' }).eq("id", session.booking_id);
+    } else if (session.handover_type === 'return') {
+      await supabase.from("bookings").update({ status: 'completed' }).eq("id", session.booking_id);
+      await supabase.rpc('release_pending_earnings', { p_booking_id: session.booking_id });
+    }
+
     return true;
   } catch (error) {
     console.error("Error completing handover:", error);

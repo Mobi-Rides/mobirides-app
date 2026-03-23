@@ -4,6 +4,7 @@ import { InsuranceService } from '../../services/insuranceService';
 import { supabase } from '@/integrations/supabase/client';
 import ClaimsSubmissionForm from './ClaimsSubmissionForm';
 import { ClaimResponseDialog } from './ClaimResponseDialog';
+import { ExcessPaymentModal } from './ExcessPaymentModal';
 import { useAuth } from '../../hooks/useAuth';
 import { InsuranceClaim } from '@/types/insurance-schema';
 
@@ -19,6 +20,10 @@ export default function UserClaimsList() {
   // Response Dialog State
   const [responseClaim, setResponseClaim] = useState<InsuranceClaim | null>(null);
   const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
+
+  // Excess Payment State
+  const [excessClaim, setExcessClaim] = useState<InsuranceClaim | null>(null);
+  const [isExcessModalOpen, setIsExcessModalOpen] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -550,6 +555,19 @@ export default function UserClaimsList() {
                           Respond
                         </button>
                       )}
+
+                      {claim.status === 'approved' && !claim.excess_paid && claim.excess_amount != null && (
+                        <button
+                          onClick={() => {
+                            setExcessClaim(claim);
+                            setIsExcessModalOpen(true);
+                          }}
+                          className="text-green-600 hover:text-green-900 flex items-center inline-block ml-3"
+                        >
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          Pay Excess
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -570,6 +588,22 @@ export default function UserClaimsList() {
           }}
           claimId={responseClaim.id}
           claimNumber={responseClaim.claim_number}
+        />
+      )}
+
+      {excessClaim && (
+        <ExcessPaymentModal
+          isOpen={isExcessModalOpen}
+          onClose={() => {
+            setIsExcessModalOpen(false);
+            setExcessClaim(null);
+          }}
+          claimId={excessClaim.id}
+          bookingId={excessClaim.booking_id}
+          amount={excessClaim.excess_amount!}
+          onSuccess={() => {
+            fetchUserClaims();
+          }}
         />
       )}
     </div>
