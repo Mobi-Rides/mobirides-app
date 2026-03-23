@@ -12,8 +12,10 @@ export interface InsurancePackage {
   display_name: string
   description: string
   premium_percentage: number
+  daily_premium_amount?: number | null
   coverage_cap: number | null
   excess_amount: number | null
+  excess_percentage?: number | null
   covers_minor_damage: boolean
   covers_major_incidents: boolean
   features: string[]
