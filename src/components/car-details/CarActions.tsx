@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart, Calendar, ShieldAlert, Loader2 } from "lucide-react";
+import { Heart, Calendar, ShieldAlert, Loader2, Pencil } from "lucide-react";
 import { BookingDialog } from "@/components/booking/BookingDialog";
 import { VerificationRequiredDialog } from "@/components/verification/VerificationRequiredDialog";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
@@ -101,6 +101,14 @@ export const CarActions = ({ car }: CarActionsProps) => {
     setIsBookingOpen(true);
   };
 
+  const handleEditListing = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    navigate(`/edit-car/${car.id}`);
+  };
+
   const handleSaveToggle = async () => {
     if (!isAuthenticated) {
       navigate("/login");
@@ -144,12 +152,26 @@ export const CarActions = ({ car }: CarActionsProps) => {
       aria-label="Car booking actions"
     >
       {isOwner ? (
-        <div
-          className="flex items-center justify-center p-4 bg-muted rounded-xl"
-          role="status"
-        >
-          <ShieldAlert className="h-5 w-5 mr-2 text-amber-500 flex-shrink-0" aria-hidden="true" />
-          <p className="text-sm text-muted-foreground">You own this vehicle</p>
+        <div className="space-y-3">
+          <div
+            className="flex items-center justify-center p-3 bg-muted rounded-xl"
+            role="status"
+          >
+            <ShieldAlert className="h-5 w-5 mr-2 text-amber-500 flex-shrink-0" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground">You own this vehicle</p>
+          </div>
+          <Button
+            onClick={handleEditListing}
+            className={cn(
+              "w-full h-12 min-h-[48px] rounded-xl",
+              "flex items-center justify-center gap-2 text-base font-medium",
+              "active:scale-[0.98] transition-transform duration-150"
+            )}
+            aria-label="Edit listing"
+          >
+            <Pencil className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+            <span>Edit Listing</span>
+          </Button>
         </div>
       ) : (
         <div className="flex gap-3 items-center">

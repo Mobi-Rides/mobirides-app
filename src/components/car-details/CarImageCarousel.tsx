@@ -57,11 +57,11 @@ export const CarImageCarousel = ({ carId, mainImageUrl }: CarImageCarouselProps)
       <CarouselContent>
         {images.map((image) => (
           <CarouselItem key={image.id}>
-            <div className="w-full h-64 flex items-center justify-center bg-muted rounded-lg">
+            <div className="relative w-full aspect-[16/9] overflow-hidden rounded-lg bg-muted">
               <img
                 src={getCarImagePublicUrl(image.image_url) || "/placeholder.svg"}
                 alt="Car"
-                className="max-w-full max-h-full object-contain rounded-lg"
+                className="w-full h-full object-cover"
               />
             </div>
           </CarouselItem>
