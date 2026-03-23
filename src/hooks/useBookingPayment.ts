@@ -40,10 +40,37 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
       if (result.success) {
         setProcessingStep('confirming');
         
-        // DEV ONLY: Simulate Webhook Effect
-        // In real app, webhook updates this. In dev, we do it manually to unblock flow.
         if (!result.requires_user_action) {
-          // Use the centralized lifecycle service to handle status update and notifications
+          // Record the payment transaction
+          const { data: { user } } = await supabase.auth.getUser();
+          const amount = request.grand_total;
+          const commission = amount * 0.15;
+          const hostEarnings = amount - commission;
+          const { data: txn, error: txnError } = await supabase
+            .from('payment_transactions')
+            .insert({
+              booking_id: request.booking_id,
+              user_id: user?.id,
+              amount,
+              currency: 'BWP',
+              payment_method: request.payment_method,
+              status: 'completed',
+              platform_commission: commission,
+              host_earnings: hostEarnings,
+              commission_rate: 0.15,
+              completed_at: new Date().toISOString(),
+            })
+            .select('id')
+            .single();
+
+          if (!txnError && txn) {
+            await supabase.rpc('credit_pending_earnings', {
+              p_booking_id: request.booking_id,
+              p_host_earnings: hostEarnings,
+              p_platform_commission: commission,
+            });
+          }
+
           const { bookingLifecycle } = await import("@/services/bookingLifecycle");
           const updateResult = await bookingLifecycle.updateStatus(request.booking_id, 'confirmed');
           
