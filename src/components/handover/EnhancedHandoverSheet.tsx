@@ -37,6 +37,7 @@ import { useRealtimeHandover } from "@/hooks/useRealtimeHandover";
 import { InteractiveHandoverSheet } from "./interactive/InteractiveHandoverSheet";
 import { toast } from "@/utils/toast-utils";
 import { BookingWithRelations, BookingStatus } from "@/types/booking";
+import { bookingLifecycle } from "@/services/bookingLifecycle";
 
 // Extended booking type for handover with additional location data
 interface HandoverBookingDetails extends BookingWithRelations {
@@ -407,18 +408,13 @@ export const EnhancedHandoverSheet = ({
         const bookingIdValue = (bookingDetails as unknown as HandoverBookingDetails)?.id;
         
         if (isReturnHandover() && bookingIdValue) {
-          // MOB-203: Return handover → mark booking completed
+          // MOB-203: Return handover → mark booking completed (triggers release_pending_earnings via bookingLifecycle)
           console.log("🔄 Return handover detected - updating booking status to completed");
-          const { error: bookingUpdateError } = await supabase
-            .from('bookings')
-            .update({ 
-              status: BookingStatus.COMPLETED,
-              actual_end_date: new Date().toISOString()
-            })
-            .eq('id', bookingIdValue);
-            
-          if (bookingUpdateError) {
-            console.error("❌ Failed to update booking status:", bookingUpdateError);
+          const result = await bookingLifecycle.updateStatus(bookingIdValue, 'completed', {
+            actual_end_date: new Date().toISOString()
+          });
+          if (result.error) {
+            console.error("❌ Failed to update booking status:", result.error);
             toast.error("Handover recorded but failed to complete booking. Please contact support.");
           } else {
             console.log("✅ Booking marked as completed");
@@ -427,15 +423,9 @@ export const EnhancedHandoverSheet = ({
         } else if (!isReturnHandover() && bookingIdValue) {
           // MOB-202: Pickup handover → transition booking to in_progress
           console.log("🔄 Pickup handover detected - updating booking status to in_progress");
-          const { error: bookingUpdateError } = await supabase
-            .from('bookings')
-            .update({ 
-              status: BookingStatus.IN_PROGRESS
-            })
-            .eq('id', bookingIdValue);
-            
-          if (bookingUpdateError) {
-            console.error("❌ Failed to update booking status to in_progress:", bookingUpdateError);
+          const result = await bookingLifecycle.updateStatus(bookingIdValue, 'in_progress');
+          if (result.error) {
+            console.error("❌ Failed to update booking status to in_progress:", result.error);
             toast.error("Handover recorded but failed to start rental. Please contact support.");
           } else {
             console.log("✅ Booking marked as in_progress");

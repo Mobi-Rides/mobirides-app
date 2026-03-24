@@ -35,7 +35,7 @@ export const bookingLifecycle = {
       }
 
       // 2. Perform the update
-      const updatePayload: any = { status: newStatus };
+      const updatePayload: any = { status: newStatus, ...metadata };
       
       // Handle status-specific logic
       if (newStatus === 'awaiting_payment') {
