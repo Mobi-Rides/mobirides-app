@@ -42,7 +42,8 @@ This document consolidates all Sprint 8 tasks from the Week 4 Status Report and 
 | Insurance Readiness (INS-xxx) | 9 | 0 | 9 |
 | Admin Settings (ADM-xxx) | 4 | 0 | 4 |
 | Notifications (MOB-8xx) | 11 | 0 | 11 |
-| **TOTAL** | **56** | **0** | **56** |
+| UI/Display Polish (UI-xxx) | 13 | 0 | 13 |
+| **TOTAL** | **69** | **0** | **69** |
 
 ---
 
@@ -552,6 +553,55 @@ This document consolidates all Sprint 8 tasks from the Week 4 Status Report and 
 | **Story Points** | 3 |
 | **Dependencies** | None |
 | **Acceptance Criteria** | ✅ Filter query correct; ✅ Triggers refetch; ✅ Respects pagination |
+
+---
+
+### D. General UI & Display Polish
+
+#### UI-008 through UI-012 — Mobile Tab Overflow
+
+| Field | Value |
+|-------|-------|
+| **Ticket Key** | UI-008 to UI-012 |
+| **Summary** | Tab labels overflow on mobile screens - implement icon-based responsive tabs |
+| **Description** | Convert text tabs to icon-first unselected tabs for mobile viewports across HostBookings, RenterDashboard, and Notifications pages. |
+| **Issue Type** | Story |
+| **Priority** | Medium |
+| **Status** | Not Started |
+| **Assignee** | Tapologo |
+| **Story Points** | 10 (cluster) |
+| **Dependencies** | [`docs/UI_DISPLAY_ISSUES_2026-02-02.md`](docs/UI_DISPLAY_ISSUES_2026-02-02.md) |
+| **Acceptance Criteria** | ✅ New ResponsiveTabTrigger component; ✅ Mobile handles overflow gracefully without truncation; ✅ Desktop untouched |
+
+#### UI-013 through UI-017 — Dark/Light Mode Color Contrast
+
+| Field | Value |
+|-------|-------|
+| **Ticket Key** | UI-013 to UI-017 |
+| **Summary** | Hardcoded visual gray tokens cause invisible text in dark mode |
+| **Description** | Hardcoded text-gray-700/etc tokens override semantic text-foreground tags. Need batch replacement of tailwind gray colors. |
+| **Issue Type** | Bug |
+| **Priority** | High |
+| **Status** | Not Started |
+| **Assignee** | Tapologo |
+| **Story Points** | 12 (cluster) |
+| **Dependencies** | [`docs/UI_DISPLAY_ISSUES_2026-02-02.md`](docs/UI_DISPLAY_ISSUES_2026-02-02.md) |
+| **Acceptance Criteria** | ✅ Dark mode legible on all pages; ✅ Auth modals handle themes |
+
+#### UI-018 through UI-020 — Auth Flow Duplication
+
+| Field | Value |
+|-------|-------|
+| **Ticket Key** | UI-018 to UI-020 |
+| **Summary** | Unnecessary click needed on welcome screen to trigger login |
+| **Description** | `UnauthenticatedView.tsx` needs to auto-open `AuthModal` rather than require user interaction, reducing duplication with `/login` page. |
+| **Issue Type** | Story |
+| **Priority** | Medium |
+| **Status** | Not Started |
+| **Assignee** | Tapologo |
+| **Story Points** | 4 (cluster) |
+| **Dependencies** | [`docs/UI_DISPLAY_ISSUES_2026-02-02.md`](docs/UI_DISPLAY_ISSUES_2026-02-02.md) |
+| **Acceptance Criteria** | ✅ AuthModal opens on mount; ✅ Duplicate routes deprecated where possible |
 
 ---
 
