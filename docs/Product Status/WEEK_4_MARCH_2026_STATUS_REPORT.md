@@ -93,6 +93,42 @@ In parallel, three “implementation plan” documents were created (payment, in
 
 ---
 
+## 🐛 Known Bugs & Bugfix Implementation Plan
+
+The “~40 known bugs” metric in week reports is derived from the **Confirmed Bug Registry** in `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md`.  
+Sprint 8 execution of that registry is tracked here:  
+[BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md](BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md)
+
+### Bug Count Rollup
+
+Based on commit analysis from January–March 2026, the following bugs have been addressed:
+
+| Severity | Total | ✅ Fixed | 🔧 Partial | ❌ Open | Breakdown |
+|----------|------:|----------|------------|--------:|-----------|
+| 🔴 Critical | **1** | 1 | — | 0 | MOB-202 ✅ |
+| 🔴 High | **4** | 2 | 1 | 1 | MOB-201 ❌, MOB-203 🔧, MOB-204 ❌, MOB-210 ✅ |
+| 🟡 Medium | **16** | 3 | 1 | 12 | MOB-205–206 ❌, MOB-207 ✅, MOB-208 ❌, MOB-209 🔧, MOB-211 ✅, MOB-212 ✅, MOB-213–219 ❌, MOB-220 🔧, MOB-221 ❌, MOB-225 ❌ |
+| 🟢 Low | **4** | 1 | — | 3 | MOB-209 ❌, MOB-222 ✅, MOB-223 ❌, MOB-224 ❌ |
+| P0/P1 Admin | **15** | 6 | 3 | 6 | MOB-101–103 ✅, MOB-105–106 🔧, MOB-110 🔧, MOB-118 ✅, MOB-126 ✅, MOB-130–138 🔧 |
+| **Total** | **40** | **13** | **5** | **22** | |
+
+#### Commits Confirming Bug Fixes (Jan–Mar 2026)
+
+| Bug(s) | Commit | Description |
+|--------|--------|-------------|
+| MOB-202 | `8fabd6b`, `eae30f2` | Return handover redirect fix |
+| MOB-210 | `f0ee33d` | Mobile navigation/forgot password API improvements |
+| MOB-211 | `1fa95af`, `258bc6d` | Destination type mismatch and rental lifecycle fixes |
+| MOB-212 | `af095d4` | Centralized rental lifecycle (MOB-200) |
+| MOB-126, MOB-103 | `3e7e612`, `7b80139`, `137db22` | Avatar display and dashboard stats |
+| MOB-118 | `49e6c5d` | Avatar & car image fixes |
+| MOB-222 (crash) | `9a890bb`, `54ae075` | Map crash hotfix phase 1 |
+| MOB-207 | `8d79d9a` | Insurance UI flat-rate/excess display (G1-G7) |
+| Payment TD | `0c2a9ad` | Remove pre-payment commission deduction (double-charge) |
+| Payment F5 | `de5066f` | Release pending earnings on booking completion |
+
+---
+
 ## 🗓️ Sprint Overview
 
 ### Sprint 7 Retrospective (March 17-23) — COMPLETED
@@ -107,11 +143,45 @@ In parallel, three “implementation plan” documents were created (payment, in
 
 **Theme:** Handover Consolidation + Polish + Security  
 **Target outcomes (Sprint 8):**
-- **MOB-500 consolidation** implementation entry (MOB-501/502/503/504 step components + validation updates)
+- **MOB-500 consolidation** implementation entry (MOB-501/502/503/504 step components + validation updates) — see [HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md](../hotfixes/HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md)
 - **MOB-200 remaining edge-case tickets** triage + the highest-risk ones for rental completion UX
-- **Payment production readiness Phase 0** critical fixes (remove commission timing risks in mock; ensure payment transaction record + earnings release correctness)
-- **Insurance readiness execution**: align schema/services to SLA-first pricing model (migrations + service logic wiring)
-- **Testing & UI polish**: add unit coverage for payment + handover transitions; complete remaining car module UI items (carousel letterboxing + admin edit access)
+- **Payment production readiness Phase 0** critical fixes (remove commission timing risks in mock; ensure payment transaction record + earnings release correctness) — see [20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md](../20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md)
+- **Insurance readiness execution**: align schema/services to SLA-first pricing model (migrations + service logic wiring) — see [20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md](../20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md)
+- **Testing & UI polish**: add unit coverage for payment + handover transitions; complete remaining car module UI items (carousel letterboxing + admin edit access) — see [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md`](BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md) and [car_approval_carousel_admin_edit_9691f429.plan.md](../../.cursor/plans/car_approval_carousel_admin_edit_9691f429.plan.md)
+
+### ✅ Week 4 Success Criteria Checklist
+
+| # | Success Criteria Item | Status | Verification Notes |
+|---|----------------------|--------|-------------------|
+| 1 | ✅ **Car Admin Approval Enforcement** - New car listings default to `is_available=false` at UI + DB levels | COMPLETE | [`src/pages/AddCar.tsx`](src/pages/AddCar.tsx) commit `578dd3c` + migrations `20260322212325_*` and `20260322212426_*` |
+| 2 | ✅ **Email Template Gap Closed (45%→100%)** - All 20 Resend email templates implemented in edge function | COMPLETE | [`supabase/functions/resend-service/index.ts`](supabase/functions/resend-service/index.ts) now has 20 templates (was 9) |
+| 3 | ✅ **Email Template: booking-confirmation** - Renter receives booking confirmation email | COMPLETE | Template added to edge function + triggered in [`bookingLifecycle.ts`](src/services/bookingLifecycle.ts) on status change to 'confirmed' |
+| 4 | ✅ **Email Template: booking-cancelled** - Renter receives cancellation email | COMPLETE | Template added to edge function + triggered in [`bookingLifecycle.ts`](src/services/bookingLifecycle.ts) on status change to 'cancelled' |
+| 5 | ✅ **Email Template: payment-received** - Payment confirmation email | COMPLETE | Template added to [`supabase/functions/resend-service/index.ts`](supabase/functions/resend-service/index.ts:1174) |
+| 6 | ✅ **Email Template: payment-failed** - Payment failure notification | COMPLETE | Template added to [`supabase/functions/resend-service/index.ts`](supabase/functions/resend-service/index.ts:1043) |
+| 7 | ✅ **Email Template: wallet-topup** - Wallet top-up confirmation | COMPLETE | Template added to [`supabase/functions/resend-service/index.ts`](supabase/functions/resend-service/index.ts:986) |
+| 8 | ✅ **Email Template: handover-ready** - Vehicle handover ready notification | COMPLETE | Template added + triggered in [`bookingLifecycle.ts`](src/services/bookingLifecycle.ts) on status change to 'in_progress' |
+| 9 | ✅ **Email Template: rental-reminder** - Rental start reminder | COMPLETE | Template added to edge function |
+| 10 | ✅ **Email Template: return-reminder** - Rental return reminder | COMPLETE | Template added to edge function |
+| 11 | ✅ **Email Template: verification-complete** - Account verification confirmation | COMPLETE | Template added to edge function |
+| 12 | ✅ **Email Template: email-confirmation** - Email verification for sign-up | COMPLETE | Template added to edge function |
+| 13 | ✅ **Email Template: system-notification** - Generic system notifications | COMPLETE | Template added to edge function |
+| 14 | ✅ **Email Template: booking-request** - Host receives new booking request | COMPLETE | Template added to edge function |
+| 15 | ✅ **getUserEmail Helper Function** - Fetch user email from auth.users for email sending | COMPLETE | Implemented in [`src/services/bookingLifecycle.ts`](src/services/bookingLifecycle.ts:65) using `supabase.auth.admin.getUserById()` |
+| 16 | ✅ **Template ID Consistency Fix** - Fixed 'pickupReminder'→'rental-remender' in notificationService | COMPLETE | Fixed in [`src/services/notificationService.ts`](src/services/notificationService.ts:175) |
+| 17 | ✅ **Booking Lifecycle Email Triggers** - Email notifications wired to booking status changes | COMPLETE | Added email triggers in [`src/services/bookingLifecycle.ts`](src/services/bookingLifecycle.ts) for confirmed, in_progress, and cancelled statuses |
+| 18 | ✅ **Production Readiness Plans Published** - Payment, Insurance, Admin Settings plans | COMPLETE | Documents created: [`20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md`](../20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md), [`20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md`](../20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md), [`20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md`](../20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md) |
+| 19 | ✅ **Build Stability Maintained** - Zero compile regressions | COMPLETE | `tsc --noEmit` + `npm run build` pass with no new errors |
+| 20 | ✅ **Notification Enhancement Plan Document** - MOB-800 roadmap | COMPLETE | [`20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md`](../20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md) |
+
+#### 📊 Week 4 Sprint 8 Entry Metrics
+
+| Metric | Before (Week 3) | After (Week 4) | Change |
+|--------|-----------------|----------------|--------|
+| Email Template Coverage | 9/20 (45%) | **20/20 (100%)** | +11 templates |
+| Booking Lifecycle Email Triggers | 0 | **3 triggers** | +3 (confirmed, in_progress, cancelled) |
+| Production Readiness Score | 81% | **82%** | +1% |
+| Template ID Consistency | 1 mismatch | **0 mismatches** | Fixed |
 
 ---
 
@@ -119,9 +189,11 @@ In parallel, three “implementation plan” documents were created (payment, in
 
 | Document | Purpose | Location |
 |----------|---------|----------|
-| Payment Module — Production Readiness Implementation Plan | Map gaps between mock payment system and PayGate/Ooze integration | `docs/20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md` |
-| Insurance Module — Production Readiness Implementation Plan | Damage Protection SLA alignment + missing schema/component gaps | `docs/20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md` |
-| Admin Settings & Business Logic Configuration | Add `platform_settings` + `dynamic_pricing_rules` with admin UI + service refactor | `docs/20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md` |
+| Payment Module — Production Readiness Implementation Plan | Map gaps between mock payment system and PayGate/Ooze integration | [20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md](../20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md) |
+| Insurance Module — Production Readiness Implementation Plan | Damage Protection SLA alignment + missing schema/component gaps | [20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md](../20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md) |
+| Admin Settings & Business Logic Configuration | Add `platform_settings` + `dynamic_pricing_rules` with admin UI + service refactor | [20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md](../20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md) |
+ | Email & Push Notification System Enhancement Plan | Close Resend template gap (45%→100%), add scheduled reminders + engagement features (MOB-800) | [20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md](../20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md) |
+ | Sprint 8 Jira-Style Execution Plan | Comprehensive task breakdown with 56 tickets across bugfixes, payment, insurance, admin settings, notifications, and handover consolidation | [SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md](SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md) |
 
 ---
 
@@ -129,10 +201,10 @@ In parallel, three “implementation plan” documents were created (payment, in
 
 | Owner | Module focus | Sprint 8 tasks (next) |
 |-------|---------------|------------------------|
-| **Arnold (Snr Engineer)** | **DB migrations / schema + server wiring** | Implement required migrations first for `platform_settings` / pricing rules (admin settings plan), start SLA-alignment migrations for insurance readiness, and add/adjust any payment schema/migration scaffolding required by Phase 0 fixes. |
-| **Duma (Technical Advisor)** | **Bugfix + production logic correctness** | Drive critical payment correctness fixes from the readiness plan (commission timing + mock bypass correctness), and coordinate MOB-500 handover consolidation validation/step completion correctness so rental lifecycle does not regress. |
-| **Tapologo (Testing & QA Intern)** | **Unit tests + UI polish in isolated modules** | Add unit tests for payment lifecycle transitions and handover step validation; complete car-module UI follow-ups that are isolated from handover logic (carousel letterboxing + “Edit listing” navigation + EditCar access gating). |
-| **Modisa (CEO)** | **PRDs + plan ownership + sign-offs** | Review DRAFT readiness plans (payment/insurance/admin settings), confirm business prerequisites (PayGate/Ooze credentials + SLA pricing model decisions), and publish Sprint-ready task checklists + update trackers. |
+| **Arnold (Snr Engineer)** | **DB migrations / schema + server wiring** | Owns all migrations: admin settings tables (ADM-001, ADM-002), insurance schema (INS-003, INS-009), payment wiring (PAY-001, PAY-002), notification cron jobs (MOB-804, MOB-805), and bugfix migrations (MOB-101–103, MOB-110, MOB-130–138, MOB-219). Full assignments in [SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md](SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md). |
+| **Duma (Technical Advisor)** | **Bugfix + production logic correctness** | Own correctness-critical logic for payments + rentals: follow [docs/20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md](../20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md) (Phase 0) and validate handover consolidation + known bug tickets in [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md`](BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md) so lifecycle transitions don’t regress. |
+| **Tapologo (Testing & QA Intern)** | **Unit tests + UI polish in isolated modules** | Own re-tests + unit/UI verification for the bugfix registry (see [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md`](BUGFIX_IMPLEMENTATION_KNOWN_BUGS_WEEK_4_MARCH_2026.md)). Also complete isolated car UI items (carousel letterboxing + admin “Edit listing” navigation) via [car_approval_carousel_admin_edit_9691f429.plan.md](../../.cursor/plans/car_approval_carousel_admin_edit_9691f429.plan.md). |
+| **Modisa (CEO)** | **PRDs + plan ownership + email templates + sign-offs** | Review readiness plans with direct links (payment [docs/20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md](../20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md), insurance [docs/20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md](../20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md), admin settings [docs/20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md](../20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md), notification system [docs/20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md](../20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md)). Owns all MOB-8xx email template implementation (MOB-801, MOB-803, MOB-806–MOB-811). Full task breakdown in [SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md](SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md). |
 
 ---
 

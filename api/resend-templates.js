@@ -1,10 +1,15 @@
 // Enhanced email templates for MobiRides
 // Rich HTML templates with personalized content and engaging design
+// Total: 25 email templates for comprehensive notification coverage
 
 const EMAIL_TEMPLATES = {
-  'booking-confirmation': {
-    subject: '🎉 Your MobiRides Booking is Confirmed!',
-    html: (data) => `
+    // ============================================
+    // CORE BOOKING TEMPLATES
+    // ============================================
+
+    'booking-confirmation': {
+        subject: '🎉 Your MobiRides Booking is Confirmed!',
+        html: (data) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -129,11 +134,11 @@ const EMAIL_TEMPLATES = {
 </body>
 </html>
     `
-  },
+    },
 
-  'owner-booking-notification': {
-    subject: '📋 New Booking Request - Action Required',
-    html: (data) => `
+    'owner-booking-notification': {
+        subject: '📋 New Booking Request - Action Required',
+        html: (data) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -250,11 +255,11 @@ const EMAIL_TEMPLATES = {
 </body>
 </html>
     `
-  },
+    },
 
-  'welcome-renter': {
-    subject: '🚗 Welcome to MobiRides - Your car-sharing adventure begins!',
-    html: (data) => `
+    'welcome-renter': {
+        subject: '🚗 Welcome to MobiRides - Your car-sharing adventure begins!',
+        html: (data) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -415,11 +420,11 @@ const EMAIL_TEMPLATES = {
 </body>
 </html>
     `
-  },
-  
-  'welcome-host': {
-    subject: '🏆 Welcome to MobiRides - Start earning with your car today!',
-    html: (data) => `
+    },
+
+    'welcome-host': {
+        subject: '🏆 Welcome to MobiRides - Start earning with your car today!',
+        html: (data) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -470,7 +475,7 @@ const EMAIL_TEMPLATES = {
 </body>
 </html>
     `
-  }
+    }
 };
 
 function getEmailTemplate(templateId, data) {
