@@ -69,27 +69,40 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Forgot Password</h1>
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      <div className="mb-4">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          required
-        />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <img
+            src="/lovable-uploads/MOBI_LOGO.png"
+            alt="Mobirides Logo"
+            className="mx-auto h-48 w-48"
+          />
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Forgot Password
+          </h2>
+        </div>
+        <div className="mt-8 p-6 bg-white rounded shadow">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div className="mb-4">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <Button onClick={handleForgotPassword} disabled={isSending} className="w-full">
+            {isSending ? "Sending..." : "Send Reset Email"}
+          </Button>
+        </div>
       </div>
-      <Button onClick={handleForgotPassword} disabled={isSending} className="w-full">
-        {isSending ? "Sending..." : "Send Reset Email"}
-      </Button>
     </div>
   );
 };
