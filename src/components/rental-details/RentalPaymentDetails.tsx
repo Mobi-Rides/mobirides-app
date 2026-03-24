@@ -33,14 +33,20 @@ export const RentalPaymentDetails = ({
   // Backwards compatibility calculation if fields are missing
   const basePrice = baseRentalPrice ?? (pricePerDay * durationDays);
   
+  // Derive multiplier from destination type if not explicitly provided
+  const destinationMultiplier =
+    dynamicMultiplier ??
+    (destinationType === 'cross_border' ? 2.0 :
+     destinationType === 'out_of_zone'  ? 1.5 : 1);
+
   // Construct dynamic pricing object if multiplier exists and isn't 1
-  const dynamicPricing = (dynamicMultiplier && dynamicMultiplier !== 1) ? {
+  const dynamicPricing = (destinationMultiplier !== 1) ? {
     is_dynamic: true,
-    final_price: basePrice * dynamicMultiplier,
+    final_price: basePrice * destinationMultiplier,
     original_price: basePrice,
-    multiplier: dynamicMultiplier,
+    multiplier: destinationMultiplier,
     base_price: basePrice,
-    total_multiplier: dynamicMultiplier
+    total_multiplier: destinationMultiplier
   } : undefined;
 
   return (

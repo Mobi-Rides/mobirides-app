@@ -79,14 +79,22 @@
 ### 🔴 Carried Forward / Remaining
 
 - [ ] **MOB-200 Series — Remaining Tickets**
-  - [ ] MOB-203: ResizableHandoverTray missing return status update
-  - [ ] MOB-204: Prevent duplicate handover session creation
-  - [ ] MOB-205: HandoverBookingButtons only queries `confirmed`
-  - [ ] MOB-206: Map.tsx validateBooking rejects `in_progress`
-  - [ ] MOB-207: Map.tsx return handover redirects away from map
-  - [ ] MOB-208: Payment auto-open uses fragile `location.state`
-  - [🟡] MOB-211: RentalPaymentDetails — `destinationType` now passed through to `UnifiedPriceSummary` (verify surcharge line UX end-to-end)
-  - [🟡] MOB-212: RenterBookingCard — `in_progress` styling path exists; duplicate `case` warning in build → verify badges/buttons
+  - [x] MOB-203: ResizableHandoverTray missing return status update — ✅ FIXED (PR #230, Mar 24) — routed through `bookingLifecycle.updateStatus()`, also fixed `EnhancedHandoverSheet`
+  - [x] MOB-204: Prevent duplicate handover session creation — ✅ FIXED (PR #232, Mar 24) — added `UNIQUE(booking_id, handover_type)` DB constraint; service-level guards were already present
+  - [x] MOB-205: HandoverBookingButtons only queries `confirmed` — ✅ ALREADY FIXED — queries `confirmed` + `in_progress` (verified Mar 24)
+  - [x] MOB-206: Map.tsx validateBooking rejects `in_progress` — ✅ ALREADY FIXED — accepts both statuses (verified Mar 24)
+  - [x] MOB-207: Map.tsx return handover redirects away from map — ✅ ALREADY FIXED — opens handover sheet on map (verified Mar 24)
+  - [x] MOB-208: Payment auto-open uses fragile `location.state` — ✅ ALREADY FIXED — uses `?pay=true` URL param (verified Mar 24)
+  - [x] MOB-211: Destination surcharge line hidden when `dynamicMultiplier` absent — ✅ FIXED (PR #233, Mar 24) — fallback multiplier derived from `destinationType` in `RentalPaymentDetails`
+  - [x] MOB-212: RenterBookingCard — duplicate `case 'in_progress'` — ✅ FIXED (PR #232, Mar 24) — removed duplicate case, Vite warning resolved
+
+- [x] **F1–F5 Payment Mock Flow Fixes** — ✅ FIXED (PR #229 + PR #230, Mar 24)
+  - F1: Pre-payment commission deduction removed from `BookingRequestDetails`
+  - F2: Mock payment now creates `payment_transactions` + calls `credit_pending_earnings()`
+  - F3: `in_progress` transition after pickup handover — confirmed in all 3 handover components
+  - F4/F5: Return handover → `completed` + `release_pending_earnings()` — fixed in `EnhancedHandoverSheet`, `ResizableHandoverTray`; DB trigger also patched (migration `20260324000100`)
+
+- [x] **npm audit fix** — ✅ DONE (PR #231, Mar 24) — resolved 13 of 21 vulnerabilities; 8 remain (unfixable without breaking changes)
   - **Status:** 🟡 PARTIALLY ADDRESSED — Core lifecycle merged, edge cases remain
 
 - [ ] **MOB-500 Handover Consolidation**
@@ -100,7 +108,14 @@
 
 | PR | Branch | Description |
 |----|--------|-------------|
-| #220 | develop | Develop merge (includes weekend standup doc, typing fixes) |
+| #233 | fix/mob-211-destination-surcharge-display | MOB-211: destination surcharge fallback in RentalPaymentDetails |
+| #232 | fix/mob-204-212-handover-booking-fixes | MOB-204: unique handover session constraint; MOB-212: duplicate switch case |
+| #231 | chore/npm-audit-fix | npm audit fix — 13 of 21 vulnerabilities resolved |
+| #230 | fix/f4-f5-handover-booking-status-transitions | F4/F5: route handover completions through bookingLifecycle; fix DB trigger |
+| #229 | feature/duma-sprint8-payment-phase0 | F1–F5 payment mock flow fixes + Dockerfile + jest config |
+| #227 | feat--fix-login-navigation-and-create-detailed-bugfix-plan | Email notifications, Index page, auth flow |
+| #222 | feature/duma-sprint8-payment-correctness | Release pending earnings on completion, Android build fixes |
+| #220 | develop | Develop merge (weekend standup, typing fixes) |
 | #218 | develop | Mid-sprint develop sync |
 | #217 | feature/MOB-200-rental-lifecycle | Centralized rental lifecycle implementation |
 | #216 | develop | Develop sync |
@@ -174,12 +189,13 @@ npx supabase migration list --linked
 
 ---
 
-## Remaining Sprint 7 Priorities (March 22-23)
+## Remaining Sprint 7 Priorities (March 22-23) — Updated Mar 24
 
 1. ~~**P0:** Fix remaining TypeScript `destination_type` build errors~~ ✅ **Done (Mar 22)**
-2. **P1:** Complete MOB-200 remaining edge-case tickets (MOB-203–MOB-212) + fix `RenterBookingCard` duplicate `case` warning
-3. **P1:** E2E verify payment path: notification on host approval, Explore `PaymentRequiredBanner`, `BookingDetails` Pay Now (if not already complete in `develop`)
-4. **P2:** MOB-500 Handover Consolidation scoping (Sprint 8)
+2. ~~**P1:** Complete MOB-200 remaining edge-case tickets (MOB-203–MOB-212)~~ ✅ **All done (Mar 24)**
+3. ~~**P1:** E2E verify payment path~~ ✅ **F1–F5 mock flow fixed (Mar 24)**
+4. ~~**npm audit fix**~~ ✅ **Done (Mar 24) — 13/21 resolved**
+5. **P2:** MOB-500 Handover Consolidation (14→8 steps) — 🔴 NOT STARTED (Sprint 8)
 
 ---
 
