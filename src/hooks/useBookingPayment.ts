@@ -48,7 +48,7 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
           const commissionRate = await getCurrentCommissionRate();
           const commission = amount * commissionRate;
           const hostEarnings = amount - commission;
-          const { data: txn, error: txnError } = await supabase
+          const { error: txnError } = await supabase
             .from('payment_transactions')
             .insert({
               booking_id: request.booking_id,

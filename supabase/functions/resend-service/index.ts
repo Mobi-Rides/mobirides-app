@@ -438,7 +438,7 @@ const EMAIL_TEMPLATES = {
     `
   },
 
-  'insurance-policy-confirmation': {
+  'insurance-policy-confirmation-v2': {
     subject: '✅ Your MobiRides Insurance Policy is Active',
     html: (data: any) => `
 <!DOCTYPE html>
