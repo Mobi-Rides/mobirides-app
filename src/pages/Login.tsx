@@ -1,8 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { SignInForm } from "@/components/auth/SignInForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -267,46 +266,13 @@ const Login = () => {
           </p>
         </div>
 
-        <div className="mt-8">
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: "#7C3AED",
-                    brandAccent: "#6D28D9",
-                  },
-                },
-              },
-            }}
-            theme="light"
-            providers={[]}
-            localization={{
-              variables: {
-                sign_up: {
-                  link_text: "",
-                },
-              },
-            }}
-          />
-          <p className="mt-4 text-center text-sm text-gray-600">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/forgot-password");
-              }}
-              className="text-[#7C3AED] hover:text-[#6D28D9]"
-            >
-              Forgot Password?
-            </button>
-          </p>
-          <p className="mt-2 text-center text-sm text-gray-600">
+        <div className="mt-8 bg-white p-6 sm:p-8 rounded shadow border border-gray-100">
+          <SignInForm />
+          <p className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}
-              className="text-[#7C3AED] hover:text-[#6D28D9]"
+              className="font-medium text-[#7C3AED] hover:text-[#6D28D9]"
             >
               Sign up
             </button>

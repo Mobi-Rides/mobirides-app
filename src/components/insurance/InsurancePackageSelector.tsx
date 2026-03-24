@@ -144,7 +144,9 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                     <CardDescription className="text-xs mt-1">
                       {calc.premiumPercentage === 0
                         ? 'No insurance coverage'
-                        : `${(calc.premiumPercentage * 100).toFixed(0)}% of rental amount`
+                        : calc.isFlatDailyRate
+                          ? `BWP ${calc.premiumPerDay.toFixed(2)}/day flat rate`
+                          : `${(calc.premiumPercentage * 100).toFixed(0)}% of rental amount`
                       }
                     </CardDescription>
                   </div>
@@ -185,10 +187,15 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                   )}
                 </div>
 
-                {calc.excessAmount !== null && (
+                {(calc.excessAmount !== null || calc.excessPercentage !== null) && (
                   <div className="flex items-center justify-between pt-2 border-t text-xs">
                     <span className="text-muted-foreground">Excess per claim:</span>
-                    <span className="font-medium">{formatCurrency(calc.excessAmount)}</span>
+                    <span className="font-medium">
+                      {calc.excessPercentage !== null
+                        ? `${(calc.excessPercentage * 100).toFixed(0)}% of approved claim`
+                        : formatCurrency(calc.excessAmount!)
+                      }
+                    </span>
                   </div>
                 )}
               </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { mockBookingPaymentService, BookingPaymentRequest, BookingPaymentResult } from '../services/mockBookingPaymentService';
 import { useToast } from './use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentCommissionRate } from '@/services/commission/commissionRates';
 
 interface UseBookingPaymentOptions {
   onSuccess?: (result: BookingPaymentResult) => void;
@@ -40,10 +41,40 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
       if (result.success) {
         setProcessingStep('confirming');
         
-        // DEV ONLY: Simulate Webhook Effect
-        // In real app, webhook updates this. In dev, we do it manually to unblock flow.
         if (!result.requires_user_action) {
-          // Use the centralized lifecycle service to handle status update and notifications
+          // Record the payment transaction
+          const { data: { user } } = await supabase.auth.getUser();
+          const amount = request.grand_total;
+          const commissionRate = await getCurrentCommissionRate();
+          const commission = amount * commissionRate;
+          const hostEarnings = amount - commission;
+          const { error: txnError } = await supabase
+            .from('payment_transactions')
+            .insert({
+              booking_id: request.booking_id,
+              user_id: user?.id,
+              amount,
+              currency: 'BWP',
+              payment_method: request.payment_method,
+              status: 'completed',
+              platform_commission: commission,
+              host_earnings: hostEarnings,
+              commission_rate: commissionRate,
+              completed_at: new Date().toISOString(),
+            })
+            .select('id')
+            .single();
+
+          if (txnError) throw new Error(`Failed to record payment transaction: ${txnError.message}`);
+
+          const { error: earningsError } = await supabase.rpc('credit_pending_earnings', {
+            p_booking_id: request.booking_id,
+            p_host_earnings: hostEarnings,
+            p_platform_commission: commission,
+          });
+
+          if (earningsError) throw new Error(`Failed to credit host earnings: ${earningsError.message}`);
+
           const { bookingLifecycle } = await import("@/services/bookingLifecycle");
           const updateResult = await bookingLifecycle.updateStatus(request.booking_id, 'confirmed');
           

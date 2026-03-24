@@ -98,20 +98,12 @@ const BookingRequestDetails = () => {
       console.log('Updating booking status:', status);
 
       if (status === 'awaiting_payment' && booking && userId) {
+        // UX guard only: warn host if wallet balance is too low to cover commission.
+        // Commission is NOT deducted here — it fires post-payment via the webhook path.
         const canAccept = await commissionService.checkHostCanAcceptBooking(userId, booking.total_price);
 
         if (!canAccept.canAccept) {
           throw new Error(canAccept.message || 'Insufficient wallet balance');
-        }
-
-        const commissionDeducted = await commissionService.processCommissionOnBookingConfirmation(
-          userId,
-          booking.id,
-          booking.total_price
-        );
-
-        if (!commissionDeducted) {
-          throw new Error('Failed to process commission payment');
         }
       }
 

@@ -30,6 +30,10 @@ export interface PremiumCalculation {
   // T&C
   features: string[];
   exclusions: string[];
+
+  // SLA pricing flags (G1/G2)
+  isFlatDailyRate: boolean;       // true when daily_premium_amount was used
+  excessPercentage: number | null; // e.g. 0.20 = 20% of approved claim
 }
 
 /**
@@ -87,13 +91,9 @@ export class InsuranceService {
     if (renterId && carId) {
       const risk = await UnderwriterService.assessRisk(renterId, carId);
 
-      // If risk is prohibitive, we might want to throw or return unavailable
-      // For now, we'll just apply the load. If load is 0, it means prohibited.
+      // If risk is prohibitive, block the calculation
       if (risk.premiumLoad === 0) {
-        // Logic to handle prohibited could go here, 
-        // e.g. set premium to explicitly high number or handle in UI
-        // For simplistic MVP, we'll force a very high multiplier to discourage/block
-        premiumMultiplier = 10.0; // Prohibitive pricing as fallback
+        throw new Error('Insurance is not available for this booking due to risk assessment.');
       } else {
         premiumMultiplier = risk.premiumLoad;
       }
@@ -105,8 +105,10 @@ export class InsuranceService {
       Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
     );
 
-    // Apply rental-based formula with risk adjustment
-    const premiumPerDay = dailyRentalAmount * insurancePackage.premium_percentage * premiumMultiplier;
+    // Apply flat daily rate (SLA model) if available, otherwise fall back to % of rental
+    const premiumPerDay = (insurancePackage.daily_premium_amount && insurancePackage.daily_premium_amount > 0)
+      ? insurancePackage.daily_premium_amount * premiumMultiplier
+      : dailyRentalAmount * insurancePackage.premium_percentage * premiumMultiplier;
     const totalPremium = premiumPerDay * numberOfDays;
 
     return {
@@ -128,6 +130,9 @@ export class InsuranceService {
 
       features: insurancePackage.features || [],
       exclusions: insurancePackage.exclusions || [],
+
+      isFlatDailyRate: !!(insurancePackage.daily_premium_amount && insurancePackage.daily_premium_amount > 0),
+      excessPercentage: insurancePackage.excess_percentage ?? null,
     };
   }
 
@@ -258,7 +263,7 @@ export class InsuranceService {
     if (error) {
       // Fallback if function doesn't exist yet
       const year = new Date().getFullYear();
-      const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+      const random = crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase();
       return `INS-${year}-${random}`;
     }
 
@@ -338,13 +343,15 @@ export class InsuranceService {
   /**
    * Calculate claim payout
    * Formula: Payout = MIN(Damage Cost, Coverage Cap) - Excess
+   * Excess = fixed excess_amount OR (approvedAmount × excess_percentage) per SLA
    * Total Claim Cost = Payout + Admin Fee (P 150)
    */
   static calculateClaimPayout(
     damageCost: number,
     coverageCap: number,
     excess: number,
-    adminFee: number = 150
+    adminFee: number = 150,
+    excessPercentage?: number | null
   ): {
     approvedAmount: number;
     excessPaid: number;
@@ -353,17 +360,15 @@ export class InsuranceService {
     totalClaimCost: number;
     renterPays: number;
   } {
-    // Approved amount is capped at coverage limit
     const approvedAmount = Math.min(damageCost, coverageCap);
 
-    // Renter pays excess (deductible) + admin fee
-    const excessPaid = excess;
+    // Use percentage-based excess (SLA model) if available, otherwise fixed amount
+    const excessPaid = (excessPercentage && excessPercentage > 0)
+      ? Math.round(approvedAmount * excessPercentage * 100) / 100
+      : excess;
+
     const renterPays = excessPaid + adminFee;
-
-    // Insurance pays the rest (up to coverage cap)
     const payoutAmount = Math.max(0, approvedAmount - excessPaid);
-
-    // Total cost to insurance (payout + admin fee)
     const totalClaimCost = payoutAmount + adminFee;
 
     return {
@@ -670,7 +675,7 @@ export class InsuranceService {
         .from('notifications')
         .insert({
           user_id: hostId,
-          type: 'booking_request_received' as any, // Temporary fix: notification types need update
+          type: 'insurance_claim_filed' as any,
           title: 'Insurance Claim Filed',
           description: `An insurance claim (#${claim.claim_number}) has been filed for your ${carName}.`,
           is_read: false,

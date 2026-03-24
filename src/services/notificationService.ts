@@ -171,8 +171,8 @@ export class ResendEmailService {
     };
 
     return this.sendEmail(
-      recipient.email, 
-      'pickupReminder',
+      recipient.email,
+      'rental-reminder',
       templateData,
       `Pickup Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
     );

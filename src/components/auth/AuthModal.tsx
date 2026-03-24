@@ -46,6 +46,11 @@ export const AuthModal = ({ isOpen, onClose, defaultTab = "signin", idPrefix = "
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
+          <img
+            src="/lovable-uploads/MOBI_LOGO.png"
+            alt="Mobirides Logo"
+            className="mx-auto h-16 w-16 mb-2"
+          />
           <DialogTitle className="text-center text-2xl font-bold">
             Welcome to <span className="text-primary">Mobirides</span>
           </DialogTitle>

@@ -14,7 +14,15 @@ isProject: false
 
 ### Execution status (March 22, 2026)
 
-No commits in the **last 7 days** touched `AddCar.tsx`, `CarImageCarousel.tsx`, `CarVerificationTable.tsx`, or `EditCar.tsx` — tasks **CAR-APPROVE-1**, **CAR-REVERT-1**, **CAROUSEL-1**, **ADMIN-EDIT-1–3** remain **unchecked** until implemented.
+✅ Admin approval enforcement shipped:
+
+- **CAR-APPROVE-1**: new listings now default to `is_available: false` (commit `578dd3c`)
+- **CAR-REVERT-1**: DB default set to `is_available=false` and existing pending-but-live cars disabled via migrations (commits `2b8c8a9`, `aded85e` merged via `f77b39a`)
+
+Remaining:
+
+- **CAROUSEL-1** (carousel letterboxing/full image) — pending
+- **ADMIN-EDIT-1–3** (Edit Car access + navigation) — pending
 
 ---
 
