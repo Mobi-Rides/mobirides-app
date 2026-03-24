@@ -33,7 +33,7 @@
   - [x] Fix typing and build errors (`ac18340`)
   - [x] Fix `BookingWithRelations` casting / `destination_type` follow-ups (`7409f17`, `d5cc883`, `1cf516e`, `f4db240`, `1fa95af`, `5a9dc28`, `c213643`)
   - [x] `tsc --noEmit` clean; `npm run build` succeeds (verified **March 22, 2026**)
-  - [ ] **Follow-up (non-blocking):** Vite warns duplicate `case` in `RenterBookingCard.tsx` switch — cleanup recommended
+  - [x] **Follow-up:** Vite warns duplicate `case` in `RenterBookingCard.tsx` — ✅ FIXED (PR #232, Mar 24)
   - **Status:** ✅ COMPLETED (TS + production build) — March 19–22, 2026
 
 ### 🟢 Completed Objectives
@@ -76,9 +76,9 @@
   - Revenue split: 90% Pay-U / 10% MobiRides
   - **Status:** ✅ COMPLETED - March 19, 2026
 
-### 🔴 Carried Forward / Remaining
+### ✅ Carried Forward — ALL RESOLVED (Mar 24)
 
-- [ ] **MOB-200 Series — Remaining Tickets**
+- [x] **MOB-200 Series — All Tickets Complete**
   - [x] MOB-203: ResizableHandoverTray missing return status update — ✅ FIXED (PR #230, Mar 24) — routed through `bookingLifecycle.updateStatus()`, also fixed `EnhancedHandoverSheet`
   - [x] MOB-204: Prevent duplicate handover session creation — ✅ FIXED (PR #232, Mar 24) — added `UNIQUE(booking_id, handover_type)` DB constraint; service-level guards were already present
   - [x] MOB-205: HandoverBookingButtons only queries `confirmed` — ✅ ALREADY FIXED — queries `confirmed` + `in_progress` (verified Mar 24)
@@ -95,7 +95,7 @@
   - F4/F5: Return handover → `completed` + `release_pending_earnings()` — fixed in `EnhancedHandoverSheet`, `ResizableHandoverTray`; DB trigger also patched (migration `20260324000100`)
 
 - [x] **npm audit fix** — ✅ DONE (PR #231, Mar 24) — resolved 13 of 21 vulnerabilities; 8 remain (unfixable without breaking changes)
-  - **Status:** 🟡 PARTIALLY ADDRESSED — Core lifecycle merged, edge cases remain
+  - **Status:** ✅ ALL TICKETS COMPLETE (Mar 24)
 
 - [x] **MOB-500 Handover Consolidation** — ✅ VERIFIED & CLEANED (PR #234, Mar 24)
   - [x] MOB-501: 8-step flow already implemented in `HANDOVER_STEPS` + `InteractiveHandoverSheet` — verified
@@ -195,7 +195,7 @@ npx supabase migration list --linked
 2. ~~**P1:** Complete MOB-200 remaining edge-case tickets (MOB-203–MOB-212)~~ ✅ **All done (Mar 24)**
 3. ~~**P1:** E2E verify payment path~~ ✅ **F1–F5 mock flow fixed (Mar 24)**
 4. ~~**npm audit fix**~~ ✅ **Done (Mar 24) — 13/21 resolved**
-5. **P2:** MOB-500 Handover Consolidation (14→8 steps) — 🔴 NOT STARTED (Sprint 8)
+5. ~~**P2:** MOB-500 Handover Consolidation (14→8 steps)~~ ✅ **Verified complete + dead code removed (PR #234, Mar 24)**
 
 ---
 
