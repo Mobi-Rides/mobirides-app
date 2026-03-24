@@ -97,10 +97,10 @@
 - [x] **npm audit fix** — ✅ DONE (PR #231, Mar 24) — resolved 13 of 21 vulnerabilities; 8 remain (unfixable without breaking changes)
   - **Status:** 🟡 PARTIALLY ADDRESSED — Core lifecycle merged, edge cases remain
 
-- [ ] **MOB-500 Handover Consolidation**
-  - [ ] MOB-501: Consolidate 14→8 handover steps
-  - [ ] MOB-502: Simplify handover UI
-  - **Status:** 🔴 NOT STARTED (Deferred to Sprint 8)
+- [x] **MOB-500 Handover Consolidation** — ✅ VERIFIED & CLEANED (PR #234, Mar 24)
+  - [x] MOB-501: 8-step flow already implemented in `HANDOVER_STEPS` + `InteractiveHandoverSheet` — verified
+  - [x] MOB-502: UI simplified — `EnhancedHandoverSheet` delegates to `InteractiveHandoverSheet` for all `is_interactive` sessions (all new sessions); legacy fallback retained for old sessions
+  - [x] `ResizableHandoverTray.tsx` removed — confirmed dead code (zero imports outside itself)
 
 ---
 
