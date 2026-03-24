@@ -162,7 +162,7 @@ async function handleSideEffects(booking: any, newStatus: BookingStatus) {
 
     case 'completed':
       toast.success("Trip completed! Hope you enjoyed the ride.");
-      // Could trigger review prompt here
+      await supabase.rpc('release_pending_earnings', { p_booking_id: booking.id });
       break;
 
     case 'cancelled':
