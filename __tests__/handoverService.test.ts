@@ -38,7 +38,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 describe('Handover Service', () => {
     const mockUser = { id: 'user-123' };
-    const mockHost = { id: 'host-456' };
 
     beforeEach(() => {
         jest.clearAllMocks();
