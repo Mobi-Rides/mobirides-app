@@ -10,6 +10,12 @@ jest.mock('../src/hooks/useInteractiveHandover', () => ({
   useInteractiveHandover: jest.fn()
 }));
 
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn(),
+  useLocation: () => ({ pathname: '/' }),
+}));
+
 // Mock child components to simplify testing
 jest.mock('../src/components/handover/interactive/WaitingCard', () => ({
   WaitingCard: ({ waitingFor }) => <div data-testid="waiting-card">Waiting for {waitingFor}</div>

@@ -1,7 +1,8 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
     preset: 'ts-jest',
-    testEnvironment: 'jsdom',
+    testEnvironment: 'jest-environment-jsdom',
+    setupFiles: ['<rootDir>/src/__mocks__/jest.setup.ts'],
     moduleNameMapper: {
         '^@/integrations/supabase/client(\\.ts)?$': '<rootDir>/src/__mocks__/supabaseClient.ts',
         '^@/(.*)$': '<rootDir>/src/$1',
