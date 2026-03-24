@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { pushNotificationService } from "./pushNotificationService";
+import { ResendEmailService } from "./notificationService";
 
 export type BookingStatus = 'pending' | 'awaiting_payment' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
 
@@ -63,22 +64,43 @@ export const bookingLifecycle = {
   }
 };
 
+// Helper function to get user email from auth.users
+async function getUserEmail(userId: string): Promise<{ email?: string; name?: string } | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) return null;
+  
+  // Get email from auth.users
+  const { data: authData } = await supabase.auth.admin.getUserById(userId);
+  
+  return {
+    email: authData?.user?.email,
+    name: data.full_name
+  };
+}
+
 async function handleSideEffects(booking: any, newStatus: BookingStatus) {
   const car = booking.cars;
+  const emailService = ResendEmailService.getInstance();
   
   switch (newStatus) {
     case 'awaiting_payment':
-      // Notify renter to pay
+      // Notify renter to pay - push
       await pushNotificationService.sendBookingNotification(booking.renter_id, {
         type: 'awaiting_payment',
         carBrand: car.brand,
         carModel: car.model,
         bookingReference: booking.id
       });
+      // TODO: Add email notification once email lookup is implemented
       break;
 
     case 'confirmed':
-      // Notify host and renter that it's confirmed
+      // Notify host and renter that it's confirmed - push
       await Promise.all([
         pushNotificationService.sendBookingNotification(booking.renter_id, {
           type: 'confirmed',
@@ -93,10 +115,49 @@ async function handleSideEffects(booking: any, newStatus: BookingStatus) {
           bookingReference: booking.id
         })
       ]);
+      // Send booking confirmation email to renter
+      try {
+        const user = await getUserEmail(booking.renter_id);
+        if (user?.email) {
+          await emailService.sendEmail(
+            user.email,
+            'booking-confirmation',
+            {
+              customerName: user.name,
+              bookingReference: booking.id,
+              carBrand: car.brand,
+              carModel: car.model,
+              totalPrice: booking.total_price
+            },
+            '🎉 Your MobiRides Booking is Confirmed!'
+          );
+        }
+      } catch (emailError) {
+        console.error('[BookingLifecycle] Failed to send confirmation email:', emailError);
+      }
       break;
 
     case 'in_progress':
       toast.success("Trip started! Drive safely.");
+      // Send handover ready email
+      try {
+        const user = await getUserEmail(booking.renter_id);
+        if (user?.email) {
+          await emailService.sendEmail(
+            user.email,
+            'handover-ready',
+            {
+              customerName: user.name,
+              bookingReference: booking.id,
+              carBrand: car.brand,
+              carModel: car.model
+            },
+            '🚗 Your Vehicle is Ready for Handover - MobiRides'
+          );
+        }
+      } catch (emailError) {
+        console.error('[BookingLifecycle] Failed to send handover ready email:', emailError);
+      }
       break;
 
     case 'completed':
@@ -106,6 +167,26 @@ async function handleSideEffects(booking: any, newStatus: BookingStatus) {
 
     case 'cancelled':
       toast.info("Booking cancelled.");
+      // Send cancellation email to renter
+      try {
+        const user = await getUserEmail(booking.renter_id);
+        if (user?.email) {
+          await emailService.sendEmail(
+            user.email,
+            'booking-cancelled',
+            {
+              customerName: user.name,
+              bookingReference: booking.id,
+              carBrand: car.brand,
+              carModel: car.model,
+              cancelledDate: new Date().toLocaleDateString()
+            },
+            '❌ Your MobiRides Booking Has Been Cancelled'
+          );
+        }
+      } catch (emailError) {
+        console.error('[BookingLifecycle] Failed to send cancellation email:', emailError);
+      }
       break;
   }
 }

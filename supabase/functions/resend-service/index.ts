@@ -437,212 +437,6 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
-
-  'insurance-policy-confirmation-v2': {
-    subject: '✅ Your MobiRides Insurance Policy is Active',
-    html: (data: any) => `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-  .container { max-width: 600px; margin: 0 auto; background-color: white; }
-  .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
-  .header h1 { color: white; margin: 0; font-size: 26px; }
-  .header p { color: #e2e8f0; margin: 8px 0 0; }
-  .content { padding: 40px 30px; }
-  .policy-box { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #667eea; }
-  .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-  .detail-label { font-weight: 600; color: #2d3748; }
-  .detail-value { color: #4a5568; }
-  .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; }
-  .footer { background-color: #2d3748; color: #a0aec0; padding: 25px; text-align: center; font-size: 13px; }
-  .footer a { color: #63b3ed; text-decoration: none; }
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>🛡️ Insurance Policy Active</h1>
-    <p>Your vehicle is protected for this rental</p>
-  </div>
-  <div class="content">
-    <p style="font-size:17px;color:#2d3748;">Hi ${data.name || 'there'},</p>
-    <p style="color:#4a5568;line-height:1.6;">Your MobiRides Damage Protection policy has been issued and is now active. Keep this for your records.</p>
-    <div class="policy-box">
-      <h3 style="color:#2d3748;margin:0 0 18px;">📋 Policy Details</h3>
-      <div class="detail-row"><span class="detail-label">Policy Number:</span><span class="detail-value">${data.policyNumber}</span></div>
-      <div class="detail-row"><span class="detail-label">Plan:</span><span class="detail-value">${data.planName}</span></div>
-      <div class="detail-row"><span class="detail-label">Coverage Period:</span><span class="detail-value">${data.startDate} – ${data.endDate}</span></div>
-      <div class="detail-row"><span class="detail-label">Total Premium:</span><span class="detail-value">BWP ${data.premiumAmount}</span></div>
-    </div>
-    ${data.downloadLink ? `<div style="text-align:center;margin:30px 0;"><a href="${data.downloadLink}" class="cta-button">📄 Download Policy PDF</a></div>` : ''}
-    <div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936;margin-top:25px;">
-      <p style="color:#744210;margin:0;font-size:14px;">To file a claim, open the MobiRides app → My Bookings → Insurance → File a Claim.</p>
-    </div>
-  </div>
-  <div class="footer">
-    <p>MobiRides Damage Protection | <a href="mailto:support@mobirides.com">support@mobirides.com</a></p>
-    <p style="color:#718096;margin-top:10px;">MobiRides, Gaborone, Botswana</p>
-  </div>
-</div>
-</body></html>`
-  },
-
-  'insurance-claim-received': {
-    subject: '📋 Claim Received – We\'re On It',
-    html: (data: any) => `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-  .container { max-width: 600px; margin: 0 auto; background-color: white; }
-  .header { background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); padding: 40px 20px; text-align: center; }
-  .header h1 { color: white; margin: 0; font-size: 26px; }
-  .header p { color: #bee3f8; margin: 8px 0 0; }
-  .content { padding: 40px 30px; }
-  .claim-box { background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #3182ce; }
-  .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-  .detail-label { font-weight: 600; color: #2d3748; }
-  .detail-value { color: #4a5568; }
-  .status-badge { display: inline-block; background: #3182ce; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-  .footer { background-color: #2d3748; color: #a0aec0; padding: 25px; text-align: center; font-size: 13px; }
-  .footer a { color: #63b3ed; text-decoration: none; }
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>📋 Claim Received</h1>
-    <p>We've received your insurance claim</p>
-  </div>
-  <div class="content">
-    <p style="font-size:17px;color:#2d3748;">Hi ${data.name || 'there'},</p>
-    <p style="color:#4a5568;line-height:1.6;">We've received your insurance claim and our team will review it within 2–3 business days. You'll receive updates as your claim progresses.</p>
-    <div class="claim-box">
-      <h3 style="color:#2d3748;margin:0 0 18px;">📄 Claim Summary</h3>
-      <div class="detail-row"><span class="detail-label">Claim Number:</span><span class="detail-value">${data.claimNumber}</span></div>
-      <div class="detail-row"><span class="detail-label">Incident Date:</span><span class="detail-value">${data.incidentDate}</span></div>
-      <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-value"><span class="status-badge">${data.status || 'Submitted'}</span></span></div>
-    </div>
-    <div style="background:#f0fff4;padding:18px;border-radius:10px;border-left:4px solid #38a169;margin-top:20px;">
-      <p style="color:#2d3748;font-weight:600;margin:0 0 8px;">What happens next?</p>
-      <ul style="color:#4a5568;margin:0;padding-left:18px;font-size:14px;line-height:1.8;">
-        <li>Our claims team will review your submission</li>
-        <li>We may contact you for additional information</li>
-        <li>You'll receive an email when a decision is made</li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer">
-    <p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p>
-    <p style="color:#718096;margin-top:10px;">MobiRides, Gaborone, Botswana</p>
-  </div>
-</div>
-</body></html>`
-  },
-
-  'insurance-claim-update': {
-    subject: '🔔 Claim Status Update',
-    html: (data: any) => {
-      const statusColors: Record<string, string> = {
-        approved: '#38a169', rejected: '#e53e3e', under_review: '#3182ce',
-        more_info_needed: '#ed8936', paid: '#38a169', closed: '#718096'
-      };
-      const color = statusColors[data.newStatus] || '#3182ce';
-      return `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-  .container { max-width: 600px; margin: 0 auto; background-color: white; }
-  .header { background: linear-gradient(135deg, ${color} 0%, ${color}cc 100%); padding: 40px 20px; text-align: center; }
-  .header h1 { color: white; margin: 0; font-size: 26px; }
-  .header p { color: rgba(255,255,255,0.85); margin: 8px 0 0; }
-  .content { padding: 40px 30px; }
-  .status-box { background: #f7fafc; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid ${color}; }
-  .status-badge { display: inline-block; background: ${color}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; text-transform: capitalize; }
-  .footer { background-color: #2d3748; color: #a0aec0; padding: 25px; text-align: center; font-size: 13px; }
-  .footer a { color: #63b3ed; text-decoration: none; }
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>🔔 Claim Update</h1>
-    <p>Your claim status has changed</p>
-  </div>
-  <div class="content">
-    <p style="font-size:17px;color:#2d3748;">Hi ${data.name || 'there'},</p>
-    <p style="color:#4a5568;line-height:1.6;">There's an update on your insurance claim. Please review the details below.</p>
-    <div class="status-box">
-      <div style="margin-bottom:14px;font-size:14px;"><span style="font-weight:600;color:#2d3748;">Claim Number: </span><span style="color:#4a5568;">${data.claimNumber}</span></div>
-      <div style="margin-bottom:14px;"><span style="font-weight:600;color:#2d3748;font-size:14px;">New Status: </span><span class="status-badge">${(data.newStatus || '').replace(/_/g, ' ')}</span></div>
-      <div style="font-size:14px;"><span style="font-weight:600;color:#2d3748;">Updated: </span><span style="color:#4a5568;">${data.updatedAt}</span></div>
-    </div>
-    ${data.notes ? `<div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936;"><p style="color:#744210;font-weight:600;margin:0 0 6px;">Notes from our team:</p><p style="color:#975a16;margin:0;font-size:14px;">${data.notes}</p></div>` : ''}
-  </div>
-  <div class="footer">
-    <p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p>
-    <p style="color:#718096;margin-top:10px;">MobiRides, Gaborone, Botswana</p>
-  </div>
-</div>
-</body></html>`;
-    }
-  },
-
-  'insurance-host-claim-notification': {
-    subject: '⚠️ Insurance Claim Filed for Your Vehicle',
-    html: (data: any) => `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-  .container { max-width: 600px; margin: 0 auto; background-color: white; }
-  .header { background: linear-gradient(135deg, #ed8936 0%, #c05621 100%); padding: 40px 20px; text-align: center; }
-  .header h1 { color: white; margin: 0; font-size: 26px; }
-  .header p { color: #feebc8; margin: 8px 0 0; }
-  .content { padding: 40px 30px; }
-  .claim-box { background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%); padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #ed8936; }
-  .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
-  .detail-label { font-weight: 600; color: #2d3748; }
-  .detail-value { color: #4a5568; }
-  .footer { background-color: #2d3748; color: #a0aec0; padding: 25px; text-align: center; font-size: 13px; }
-  .footer a { color: #63b3ed; text-decoration: none; }
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>⚠️ Claim Filed on Your Vehicle</h1>
-    <p>An insurance claim has been submitted</p>
-  </div>
-  <div class="content">
-    <p style="font-size:17px;color:#2d3748;">Hi ${data.name || 'there'},</p>
-    <p style="color:#4a5568;line-height:1.6;">A renter has filed an insurance claim for an incident involving your <strong>${data.carName}</strong>. Our claims team is reviewing the submission.</p>
-    <div class="claim-box">
-      <h3 style="color:#2d3748;margin:0 0 18px;">📄 Claim Details</h3>
-      <div class="detail-row"><span class="detail-label">Claim Number:</span><span class="detail-value">${data.claimNumber}</span></div>
-      <div class="detail-row"><span class="detail-label">Vehicle:</span><span class="detail-value">${data.carName}</span></div>
-      <div class="detail-row"><span class="detail-label">Incident Date:</span><span class="detail-value">${data.incidentDate}</span></div>
-      <div class="detail-row"><span class="detail-label">Incident Type:</span><span class="detail-value" style="text-transform:capitalize;">${data.incidentType}</span></div>
-    </div>
-    ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:10px;margin-top:20px;"><p style="color:#2d3748;font-weight:600;margin:0 0 8px;font-size:14px;">Incident Description:</p><p style="color:#4a5568;margin:0;font-size:14px;">${data.description}</p></div>` : ''}
-    <div style="background:#f0fff4;padding:18px;border-radius:10px;border-left:4px solid #38a169;margin-top:20px;">
-      <p style="color:#2d3748;margin:0;font-size:14px;">Our claims team will handle this process. You may be contacted if we need additional information about your vehicle. <strong>No action is required from you at this time.</strong></p>
-    </div>
-  </div>
-  <div class="footer">
-    <p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p>
-    <p style="color:#718096;margin-top:10px;">MobiRides, Gaborone, Botswana</p>
-  </div>
-</div>
-</body></html>`
-  },
-
   'insurance-policy-confirmation': {
     subject: '✅ Your MobiRides Insurance Policy is Active',
     html: (data: any) => `<!DOCTYPE html>
@@ -746,6 +540,692 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </div>
 <div class="footer"><p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p></div>
 </div></body></html>`
+  },
+
+  'booking-request': {
+    subject: '📋 New Booking Request - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Booking Request - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #feebc8; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #feebc8 0%, #fbd38d 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #dd6b20; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .renter-info { background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .next-steps { background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .step { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .step-number { background: #38a169; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; margin-top: 2px; }
+        .step-text { color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 New Booking Request!</h1>
+            <p>Someone wants to rent your vehicle</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.hostName || data.name || 'there'}!</p>
+                <p>Great news! You have a new booking request for your vehicle <strong>${data.carBrand || 'N/A'} ${data.carModel || 'N/A'}</strong>.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📅 Booking Details</h3>
+                <div class="detail-row"><span class="detail-label">Booking Reference:</span><span class="detail-value">${data.bookingReference || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Rental Period:</span><span class="detail-value">${data.startDate || 'N/A'} to ${data.endDate || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Total Earnings:</span><span class="detail-value">P${data.earnings || 'N/A'}</span></div>
+            </div>
+            <div class="renter-info">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">👤 Renter Information</h3>
+                <div class="detail-row"><span class="detail-label">Name:</span><span class="detail-value">${data.renterName || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Verification:</span><span class="detail-value">${data.verificationStatus || 'Verified'}</span></div>
+            </div>
+            <div class="next-steps">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">💡 Next Steps</h3>
+                <div class="step"><div class="step-number">1</div><div class="step-text">Review the booking details and renter profile</div></div>
+                <div class="step"><div class="step-number">2</div><div class="step-text">Accept or decline the request within 24 hours</div></div>
+                <div class="step"><div class="step-number">3</div><div class="step-text">Prepare vehicle for handover if accepted</div></div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.manage_url || 'https://mobirides.com/host/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">✓ Review Booking Request</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions about hosting?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Host Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'system-notification': {
+    subject: '🔔 System Notification - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Notification - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #718096 0%, #4a5568 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #cbd5e0; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .alert-box { background: linear-gradient(135deg, #feebc8 0%, #fbd38d 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #d69e2e; }
+        .alert-title { font-weight: 600; color: #2d3748; margin-bottom: 10px; font-size: 16px; }
+        .alert-content { color: #4a5568; line-height: 1.6; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 System Notification</h1>
+            <p>Important update from MobiRides</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>${data.message || 'You have a new notification from MobiRides.'}</p>
+            </div>
+            <div class="alert-box">
+                <div class="alert-title">${data.notificationTitle || 'Notification Details'}</div>
+                <div class="alert-content">${data.notificationContent || ''}</div>
+            </div>
+            ${data.action_url ? `<div style="text-align: center; margin: 30px 0;">
+                <a href="${data.action_url}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">${data.action_text || 'View Details'}</a>
+            </div>` : ''}
+            <p style="color: #718096; font-size: 14px; margin-top: 30px;">This is an automated notification. Please do not reply to this email.</p>
+        </div>
+        <div class="footer">
+            <p>Need help?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'email-confirmation': {
+    subject: '📧 Confirm Your Email - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Confirmation - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #e2e8f0; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .button-container { text-align: center; margin: 40px 0; }
+        .confirm-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; }
+        .fallback { background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%); padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .fallback p { margin: 5px 0; color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Confirm Your Email</h1>
+            <p>One last step to get started</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>Thank you for signing up for MobiRides. Please confirm your email address by clicking the button below:</p>
+            </div>
+            <div class="button-container">
+                <a href="${data.confirmation_url || 'https://mobirides.com/confirm-email?token=' + (data.token || '')}" class="confirm-button">✓ Confirm Email</a>
+            </div>
+            <div class="fallback">
+                <p>Button not working? Copy and paste this link into your browser:</p>
+                <p style="word-break: break-all; font-size: 14px;">${data.confirmation_url || 'https://mobirides.com/confirm-email?token=' + (data.token || 'YOUR_TOKEN')}</p>
+            </div>
+            <p style="color: #718096; font-size: 14px; margin-top: 30px;">If you didn't create an account with MobiRides, please ignore this email.</p>
+        </div>
+        <div class="footer">
+            <p>Questions?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'verification-complete': {
+    subject: '✅ Account Verification Complete - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Complete - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #c6f6d5; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #38a169; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .features { background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .feature-item { display: flex; align-items: center; margin-bottom: 12px; }
+        .feature-icon { color: #38a169; font-size: 20px; margin-right: 12px; }
+        .feature-text { color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Verification Complete!</h1>
+            <p>Welcome to full MobiRides access</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>Great news! Your account verification is now complete. You now have full access to all MobiRides features.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📋 Verification Summary</h3>
+                <div class="detail-row"><span class="detail-label">Verified On:</span><span class="detail-value">${data.verificationDate || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Verification Type:</span><span class="detail-value">${data.verificationType || 'Identity & License'}</span></div>
+            </div>
+            <div class="features">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">✨ What's Now Available</h3>
+                <div class="feature-item"><span class="feature-icon">✓</span><span class="feature-text">Browse and book vehicles</span></div>
+                <div class="feature-item"><span class="feature-icon">✓</span><span class="feature-text">List your own vehicle as a host</span></div>
+                <div class="feature-item"><span class="feature-icon">✓</span><span class="feature-text">Access all payment methods</span></div>
+                <div class="feature-item"><span class="feature-icon">✓</span><span class="feature-text">Full insurance coverage</span></div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.dashboard_url || 'https://mobirides.com/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">🚀 Go to Dashboard</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions about your account?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'return-reminder': {
+    subject: '🔄 Return Reminder - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Reminder - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #bee3f8; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #3182ce; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .next-steps { background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .step { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .step-number { background: #38a169; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; margin-top: 2px; }
+        .step-text { color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Return Reminder</h1>
+            <p>Your rental period ends soon</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>This is a friendly reminder that your rental period ends <strong>${data.returnDate || 'soon'}</strong>. Please ensure timely return to avoid any late fees.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📅 Return Details</h3>
+                <div class="detail-row"><span class="detail-label">Booking Reference:</span><span class="detail-value">${data.bookingReference || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Vehicle:</span><span class="detail-value">${data.carBrand || 'N/A'} ${data.carModel || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Return Date:</span><span class="detail-value">${data.returnDate || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Return Location:</span><span class="detail-value">${data.returnLocation || 'N/A'}</span></div>
+            </div>
+            <div class="next-steps">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">💡 Before Returning</h3>
+                <div class="step"><div class="step-number">1</div><div class="step-text">Return vehicle to the designated location</div></div>
+                <div class="step"><div class="step-number">2</div><div class="step-text">Ensure fuel level matches pickup level</div></div>
+                <div class="step"><div class="step-number">3</div><div class="step-text">Remove personal belongings and check for items</div></div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions about returning your vehicle?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'rental-reminder': {
+    subject: '⏰ Rental Starts Tomorrow - MobiRides Reminder',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rental Reminder - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #feebc8; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #feebc8 0%, #fbd38d 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #dd6b20; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .next-steps { background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .step { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .step-number { background: #3182ce; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; margin-top: 2px; }
+        .step-text { color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏰ Rental Starts Tomorrow!</h1>
+            <p>Your adventure awaits</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>This is a friendly reminder that your rental period begins <strong>tomorrow</strong>. We're excited to have you!</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📅 Rental Details</h3>
+                <div class="detail-row"><span class="detail-label">Booking Reference:</span><span class="detail-value">${data.bookingReference || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Vehicle:</span><span class="detail-value">${data.carBrand || 'N/A'} ${data.carModel || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Pickup Date:</span><span class="detail-value">${data.pickupDate || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Pickup Location:</span><span class="detail-value">${data.pickupLocation || 'N/A'}</span></div>
+            </div>
+            <div class="next-steps">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">💡 Reminder Checklist</h3>
+                <div class="step"><div class="step-number">1</div><div class="step-text">Bring your valid driver's license</div></div>
+                <div class="step"><div class="step-number">2</div><div class="step-text">Bring proof of identity</div></div>
+                <div class="step"><div class="step-number">3</div><div class="step-text">Review the vehicle condition report</div></div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions before your trip?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'handover-ready': {
+    subject: '🚗 Your Vehicle is Ready for Handover - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handover Ready - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #e2e8f0; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #e9d8fd 0%, #d6bcfa 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #805ad5; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .next-steps { background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .step { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .step-number { background: #3182ce; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; margin-top: 2px; }
+        .step-text { color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Ready for Handover!</h1>
+            <p>Your vehicle is waiting for you</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>Great news! Your vehicle is ready for handover. Please proceed to the pickup location at your scheduled time.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📅 Handover Details</h3>
+                <div class="detail-row"><span class="detail-label">Booking Reference:</span><span class="detail-value">${data.bookingReference || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Vehicle:</span><span class="detail-value">${data.carBrand || 'N/A'} ${data.carModel || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Pickup Location:</span><span class="detail-value">${data.pickupLocation || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Scheduled Time:</span><span class="detail-value">${data.scheduledTime || 'N/A'}</span></div>
+            </div>
+            <div class="next-steps">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📋 What to Bring</h3>
+                <div class="step"><div class="step-number">1</div><div class="step-text">Valid driver's license</div></div>
+                <div class="step"><div class="step-number">2</div><div class="step-text">Proof of identity (ID/Passport)</div></div>
+                <div class="step"><div class="step-number">3</div><div class="step-text">Payment method for security deposit</div></div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions about your handover?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'wallet-topup': {
+    subject: '💳 Wallet Top-up Successful - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Top-up - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #c6f6d5; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #38a169; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Wallet Top-up Successful!</h1>
+            <p>Your MobiRides wallet has been credited</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>Great news! Your MobiRides wallet has been successfully topped up.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">💰 Transaction Details</h3>
+                <div class="detail-row"><span class="detail-label">Amount Added:</span><span class="detail-value">P${data.amount || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">New Balance:</span><span class="detail-value">P${data.newBalance || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Payment Method:</span><span class="detail-value">${data.paymentMethod || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Transaction ID:</span><span class="detail-value">${data.transactionId || 'N/A'}</span></div>
+            </div>
+            <p style="color: #4a5568;">You can now use your wallet balance for bookings, rentals, and other MobiRides services.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.wallet_url || 'https://mobirides.com/dashboard/wallet'}" style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">💳 View Wallet</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions about your wallet?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'payment-failed': {
+    subject: '⚠️ Payment Failed - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #fed7d7; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #e53e3e; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .next-steps { background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .step { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .step-number { background: #3182ce; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; margin-top: 2px; }
+        .step-text { color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Payment Failed</h1>
+            <p>Action required to complete your booking</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>We were unable to process your payment for booking <strong>${data.bookingReference || 'N/A'}</strong>.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📋 Payment Details</h3>
+                <div class="detail-row"><span class="detail-label">Booking Reference:</span><span class="detail-value">${data.bookingReference || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Amount:</span><span class="detail-value">P${data.amount || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Failure Reason:</span><span class="detail-value">${data.failureReason || 'Payment declined'}</span></div>
+            </div>
+            <div class="next-steps">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">💡 What to Do Next</h3>
+                <div class="step"><div class="step-number">1</div><div class="step-text">Check your card details and try again</div></div>
+                <div class="step"><div class="step-number">2</div><div class="step-text">Use a different payment method</div></div>
+                <div class="step"><div class="step-number">3</div><div class="step-text">Contact your bank if the issue persists</div></div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.retry_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">🔄 Retry Payment</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Need help?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'booking-cancelled': {
+    subject: '❌ Your MobiRides Booking Has Been Cancelled',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Cancelled - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #fed7d7; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #e53e3e; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .next-steps { background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .step { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .step-number { background: #3182ce; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; margin-top: 2px; }
+        .step-text { color: #2d3748; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>❌ Booking Cancelled</h1>
+            <p>We're sorry this didn't work out</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>We regret to inform you that your booking with reference <strong>${data.bookingReference || 'N/A'}</strong> has been cancelled.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📅 Booking Details</h3>
+                <div class="detail-row"><span class="detail-label">Booking Reference:</span><span class="detail-value">${data.bookingReference || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Vehicle:</span><span class="detail-value">${data.carBrand || 'N/A'} ${data.carModel || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Cancelled Date:</span><span class="detail-value">${data.cancelledDate || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Reason:</span><span class="detail-value">${data.cancellationReason || 'Host cancellation'}</span></div>
+            </div>
+            <div class="next-steps">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">💡 What's Next?</h3>
+                <div class="step"><div class="step-number">1</div><div class="step-text">Your payment will be refunded within 3-5 business days</div></div>
+                <div class="step"><div class="step-number">2</div><div class="step-text">Browse other available vehicles in your area</div></div>
+                <div class="step"><div class="step-number">3</div><div class="step-text">Contact support if you need assistance</div></div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.browse_cars_url || 'https://mobirides.com/cars'}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">🔍 Browse Available Cars</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions about your refund?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'payment-received': {
+    subject: '💰 Payment Received - MobiRides',
+    html: (data: any) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Received - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #c6f6d5; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #38a169; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Payment Received!</h1>
+            <p>Your payment has been successfully processed</p>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.customerName || data.name || 'there'}!</p>
+                <p>Great news! Your payment for booking <strong>${data.bookingReference || 'N/A'}</strong> has been successfully processed.</p>
+            </div>
+            <div class="details-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">📅 Payment Details</h3>
+                <div class="detail-row"><span class="detail-label">Booking Reference:</span><span class="detail-value">${data.bookingReference || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Amount Paid:</span><span class="detail-value">P${data.amount || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Payment Method:</span><span class="detail-value">${data.paymentMethod || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Transaction ID:</span><span class="detail-value">${data.transactionId || 'N/A'}</span></div>
+            </div>
+            <p style="color: #4a5568;">Your booking is now confirmed. You'll receive a reminder email 24 hours before your pickup time.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Questions about your payment?</p>
+            <p>📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Payment Support</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
   },
 
   'owner-booking-notification': {
