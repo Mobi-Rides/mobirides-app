@@ -51,8 +51,15 @@ export function CapabilityAssignment({
   const { data: capabilities } = useQuery({
     queryKey: ["capabilities"],
     queryFn: async (): Promise<Capability[]> => {
+      const { data: { session } } = await supabase.auth.getSession();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/capabilities`;
-      const response = await fetch(url, { method: 'GET' });
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+      });
       if (!response.ok) throw new Error('Failed to fetch capabilities');
       const json = await response.json();
       const source = json?.data || json;
