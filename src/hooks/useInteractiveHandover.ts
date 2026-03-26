@@ -92,6 +92,23 @@ export const useInteractiveHandover = (sessionId: string | null) => {
     fetchSessionData();
   }, [fetchSessionData]);
 
+  // Re-fetch on reconnect / tab becoming visible to recover missed updates
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchSessionData();
+    };
+    const handleOnline = () => fetchSessionData();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [sessionId, fetchSessionData]);
+
   // Real-time subscription
   useEffect(() => {
     if (!sessionId) return;
