@@ -73,9 +73,28 @@ gh pr create --base develop --head fix/mob-XXX-short-description \
 
 ---
 
-## After Merging (or after a colleague merges)
+## After the Human Merges
 
-**Always do these two things:**
+**You (the human) merge the PR. The AI never merges.**
+
+Once you've merged, tell the AI. It will then:
+
+### 1. Pull latest develop
+```bash
+git checkout develop && git pull origin develop
+```
+
+### 2. Update the status report in a new branch + PR
+```bash
+git checkout -b docs/update-status-mob-XXX
+# edit status report
+git add "docs/Product Status/..."
+git commit -m "docs: update status for MOB-XXX merged"
+git push origin docs/update-status-mob-XXX
+gh pr create --base develop --title "docs: update status for MOB-XXX"
+```
+
+You then merge the doc PR too.
 
 ### 1. Pull latest develop
 ```bash
@@ -118,10 +137,14 @@ git push origin develop
 ## Rules
 
 - **Never start a task without pulling latest develop first** — your colleague may have already fixed it
-- **Never commit directly to develop** except for doc-only updates
+- **Never push directly to develop** — not code, not docs, not anything
+- **All changes go through a PR** — create the PR, then wait for a human to merge
+- **Humans merge, AI does not** — never use `git push origin HEAD:develop` or any equivalent
 - **Always run `tsc --noEmit`** before pushing — broken builds block everyone
 - **One PR per ticket** — don't bundle unrelated fixes
-- **Update docs on the same day** — stale status reports cause duplicate work
+- **Update docs after the human merges** — open a separate doc-only PR once the code PR is merged
+
+> **Why:** Direct pushes to develop bypass code review, break the audit trail, and remove the human's ability to control what goes into the main branch. This is non-negotiable regardless of how trivial the change appears.
 
 ---
 
