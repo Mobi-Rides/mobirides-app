@@ -940,17 +940,7 @@ alter table "public"."verification_bypass_logs" enable row level security;
 
 alter table "public"."verification_bypass_sessions" enable row level security;
 
-drop type "public"."booking_status__old_version_to_be_dropped";
-
-drop type "public"."notification_role__old_version_to_be_dropped";
-
-drop type "public"."notification_type__old_version_to_be_dropped";
-
-drop type "public"."review_type__old_version_to_be_dropped";
-
-drop type "public"."user_role__old_version_to_be_dropped";
-
-drop type "public"."vehicle_type__old_version_to_be_dropped";
+-- DROP TYPE statements moved below (after ALTER TABLE USING casts convert columns to new enums)
 
 alter table "archive"."messages" add column "forwarded" boolean default false;
 
@@ -1221,6 +1211,19 @@ alter table "public"."verification_documents" alter column "document_type" set d
 alter table "public"."verification_documents" alter column "status" set default 'pending_review'::public.verification_status;
 
 alter table "public"."verification_documents" alter column "status" set data type public.verification_status using "status"::text::public.verification_status;
+
+-- Moved from earlier in migration: columns now use new enums, safe to drop old versions
+drop type "public"."booking_status__old_version_to_be_dropped";
+
+drop type "public"."notification_role__old_version_to_be_dropped";
+
+drop type "public"."notification_type__old_version_to_be_dropped";
+
+drop type "public"."review_type__old_version_to_be_dropped";
+
+drop type "public"."user_role__old_version_to_be_dropped";
+
+drop type "public"."vehicle_type__old_version_to_be_dropped";
 
 alter table "public"."wallet_transactions" add column "booking_reference" character varying(50);
 
