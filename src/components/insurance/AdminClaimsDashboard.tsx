@@ -863,16 +863,16 @@ export default function AdminClaimsDashboard() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {claim.status === 'approved' ? (
+                            {(claim.status === 'approved' || claim.status === 'paid') ? (
                               <div className="flex flex-col">
                                 <span className="text-xs text-gray-500">Approved Amount:</span>
                                 <span className="text-sm font-medium text-green-600">
                                   {formatCurrency(claim.approved_amount || 0)}
                                 </span>
-                                <span className="text-xs text-yellow-600">
-                                  {(claim as any).payout_status === 'paid' ? '✓ Paid' :
-                                    (claim as any).payout_status === 'processing' ? '⏳ Processing' :
-                                      (claim as any).payout_status === 'pending' ? '○ Pending' : '-'}
+                                <span className={`text-xs mt-0.5 ${claim.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                  {claim.status === 'paid'
+                                    ? `✓ Paid${claim.paid_at ? ` ${new Date(claim.paid_at).toLocaleDateString()}` : ''}`
+                                    : '○ Pending payout'}
                                 </span>
                               </div>
                             ) : (
