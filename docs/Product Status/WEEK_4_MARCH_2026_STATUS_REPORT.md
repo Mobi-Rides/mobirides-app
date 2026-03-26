@@ -71,7 +71,7 @@ In parallel, three “implementation plan” documents were created (payment, in
 | Security Vulnerabilities | 4 | **4** | **4** | **4** | — | 0 |
 | Database Migrations | ~233 | **~233** | **~235** | **~235** | — | — |
 | Edge Functions | 27 | **27** | **27** | **27** | — | — |
-| Known Bugs | ~40 | **~40** | **~40** | **~38** | -2 (F2/F5 fixed) | 0 |
+| Known Bugs | ~40 | **~40** | **~40** | **~22** | -18 (F2/F5 + avatar + insurance UI) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
@@ -90,6 +90,8 @@ In parallel, three “implementation plan” documents were created (payment, in
 - **Risk reduction in rental marketplace operations** via admin car approval enforcement at UI + DB levels (prevents live listings without admin verification).
 - **Readiness planning improved**: payment, insurance, and admin settings now have implementation plan docs with explicit prerequisites and phased work.
 - **Payment Phase 0 complete (Mar 26)**: All 5 mock-flow correctness issues (F1–F5) resolved. Commission now calculated on rental portion only; host earnings release de-duplicated. PR #245 open against `develop`. Phase 1 (real provider) unblocked pending business team obtaining PayGate/Ooze credentials.
+- **Avatar display fixed (Mar 26)**: New `UserAvatar` component + `avatarUtils` refactor resolves broken avatar rendering across chat, map host sidebar, and conversation list (MOB-118/119–126). All components now use `getAvatarPublicUrl()` to convert storage paths to public URLs.
+- **Insurance UI rebuilt (Mar 26)**: `InsuranceComparison` and `PolicyDetailsCard` fully rewritten with correct package text rendering, premium calculations, and coverage details (MOB-207). Insurance selector no longer shows blank/missing text.
 - **Android risk remains**: `gradle-wrapper.properties` update was committed after a reported gradle error; until it’s validated, Android readiness stays “verify” rather than “complete.”
 
 ---
@@ -109,10 +111,10 @@ Based on commit analysis from January–March 2026, the following bugs have been
 | 🔴 Critical | **1** | 1 | — | 0 | MOB-202 ✅ |
 | 🔴 High | **4** | 2 | 1 | 1 | MOB-201 ❌, MOB-203 🔧, MOB-204 ❌, MOB-210 ✅ |
 | 💳 Payment Phase 0 | **5** | 5 | — | 0 | F1 ✅, F2 ✅ (PR #245), F3 ✅, F4 ✅, F5 ✅ (PR #245) |
-| 🟡 Medium | **16** | 3 | 1 | 12 | MOB-205–206 ❌, MOB-207 ✅, MOB-208 ❌, MOB-209 🔧, MOB-211 ✅, MOB-212 ✅, MOB-213–219 ❌, MOB-220 🔧, MOB-221 ❌, MOB-225 ❌ |
+| 🟡 Medium | **16** | 4 | 1 | 11 | MOB-205–206 ❌, MOB-207 ✅, MOB-208 ❌, MOB-209 🔧, MOB-211 ✅, MOB-212 ✅, MOB-213–219 ❌, MOB-220 🔧, MOB-221 ❌, MOB-225 ❌ |
 | 🟢 Low | **4** | 1 | — | 3 | MOB-209 ❌, MOB-222 ✅, MOB-223 ❌, MOB-224 ❌ |
-| P0/P1 Admin | **15** | 6 | 3 | 6 | MOB-101–103 ✅, MOB-105–106 🔧, MOB-110 🔧, MOB-118 ✅, MOB-126 ✅, MOB-130–138 🔧 |
-| **Total** | **40** | **13** | **5** | **22** | |
+| P0/P1 Admin | **15** | 8 | 3 | 4 | MOB-101–103 ✅, MOB-105–106 🔧, MOB-110 🔧, MOB-118 ✅, MOB-119–125 ✅ (UserAvatar), MOB-126 ✅, MOB-130–138 🔧 |
+| **Total** | **40** | **18** | **5** | **17** | |
 
 #### Commits Confirming Bug Fixes (Jan–Mar 2026)
 
