@@ -346,20 +346,36 @@ export class InsuranceService {
    * Excess = fixed excess_amount OR (approvedAmount × excess_percentage) per SLA
    * Total Claim Cost = Payout + Admin Fee (P 150)
    */
-  static calculateClaimPayout(
+  static async calculateClaimPayout(
     damageCost: number,
     coverageCap: number,
     excess: number,
-    adminFee: number = 150,
-    excessPercentage?: number | null
-  ): {
+    excessPercentage?: number | null,
+    fallbackAdminFee: number = 150
+  ): Promise<{
     approvedAmount: number;
     excessPaid: number;
     payoutAmount: number;
     adminFee: number;
     totalClaimCost: number;
     renterPays: number;
-  } {
+  }> {
+
+    let adminFee = fallbackAdminFee;
+    try {
+      const { data } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'insurance_admin_fee_pula')
+        .single();
+
+      if (data && data.setting_value) {
+        adminFee = Number(data.setting_value) || fallbackAdminFee;
+      }
+    } catch (err) {
+      console.error('Failed to fetch insurance_admin_fee_pula, using fallback', err);
+    }
+
     const approvedAmount = Math.min(damageCost, coverageCap);
 
     // Use percentage-based excess (SLA model) if available, otherwise fixed amount

@@ -1,4 +1,5 @@
 import { format, parseISO, differenceInDays, getDay, getMonth } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 import {
   PricingRule,
   PricingRuleType,
@@ -18,9 +19,53 @@ export class DynamicPricingService {
     try {
       console.log("[DynamicPricing] Calculating price for request:", request);
 
-      // Get hardcoded pricing rules for now (can be made configurable later)
-      const rules = this.getDefaultPricingRules();
-      
+      // Check if dynamic pricing is enabled globally
+      let isDynamicPricingEnabled = true;
+      try {
+        const { data: settingsData } = await supabase
+          .from("platform_settings")
+          .select("setting_value")
+          .eq("setting_key", "dynamic_pricing_enabled")
+          .single();
+
+        if (settingsData) {
+          isDynamicPricingEnabled = settingsData.setting_value === true || settingsData.setting_value === "true";
+        }
+      } catch (err) {
+        console.error("[DynamicPricing] Failed to fetch dynamic pricing toggle:", err);
+      }
+
+      if (!isDynamicPricingEnabled) {
+        return {
+          base_price: request.base_price,
+          applied_rules: [],
+          total_multiplier: 1.0,
+          final_price: request.base_price,
+          is_dynamic: false
+        };
+      }
+
+      // Get hardcoded pricing rules as fallback
+      let rules = this.getDefaultPricingRules();
+
+      // Attempt to load from DB
+      try {
+        const { data: dbRules, error } = await supabase
+          .from("dynamic_pricing_rules")
+          .select("*")
+          .eq("is_active", true);
+
+        if (!error && dbRules && dbRules.length > 0) {
+          // ensure enum types match
+          rules = dbRules as unknown as PricingRule[];
+        } else {
+          rules = rules.filter(r => r.is_active);
+        }
+      } catch (err) {
+        console.error("[DynamicPricing] Failed to fetch dynamic rules from DB:", err);
+        rules = rules.filter(r => r.is_active);
+      }
+
       // Get user loyalty data if user is provided
       let loyaltyData: UserLoyaltyData | null = null;
       if (request.user_id) {
@@ -42,7 +87,7 @@ export class DynamicPricingService {
 
       for (const rule of sortedRules) {
         const ruleApplies = this.evaluateRule(rule, request, loyaltyData, demandData);
-        
+
         if (ruleApplies) {
           appliedRules.push({
             rule_id: rule.id,
@@ -212,28 +257,28 @@ export class DynamicPricingService {
     switch (rule.type) {
       case PricingRuleType.SEASONAL:
         return this.evaluateSeasonalRule(rule, pickupDate);
-      
+
       case PricingRuleType.DEMAND:
         return this.evaluateDemandRule(rule, demandData);
-      
+
       case PricingRuleType.EARLY_BIRD:
         return this.evaluateEarlyBirdRule(rule, pickupDate, bookingDate);
-      
+
       case PricingRuleType.LOYALTY:
         return this.evaluateLoyaltyRule(rule, loyaltyData);
-      
+
       case PricingRuleType.WEEKEND:
         return this.evaluateWeekendRule(rule, pickupDate);
-      
+
       case PricingRuleType.HOLIDAY:
         return this.evaluateHolidayRule(rule, pickupDate);
-      
+
       case PricingRuleType.LOCATION:
         return this.evaluateLocationRule(rule, request.pickup_latitude, request.pickup_longitude);
 
       case PricingRuleType.DESTINATION:
         return this.evaluateDestinationRule(rule, request.destination_type);
-      
+
       default:
         return false;
     }
@@ -408,7 +453,7 @@ export class DynamicPricingService {
    * Generate human-readable description for a pricing rule
    */
   static generateRuleDescription(rule: PricingRule): string {
-    const multiplierText = rule.multiplier > 1 
+    const multiplierText = rule.multiplier > 1
       ? `+${((rule.multiplier - 1) * 100).toFixed(0)}%`
       : `-${((1 - rule.multiplier) * 100).toFixed(0)}%`;
 

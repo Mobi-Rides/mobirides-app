@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    nodePolyfills(),
+    nodePolyfills({ exclude: ['string_decoder'] }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
@@ -50,8 +50,7 @@ export default defineConfig(({ mode }) => ({
           'mapbox-vendor': ['mapbox-gl'],
           'form-vendor': ['react-hook-form', 'zod'],
           'date-vendor': ['date-fns'],
-          'supabase-vendor': ['@supabase/supabase-js'],
-          'webrtc-vendor': ['simple-peer']
+          'supabase-vendor': ['@supabase/supabase-js']
         }
       }
     },

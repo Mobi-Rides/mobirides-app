@@ -251,7 +251,6 @@ export default function AdminClaimsDashboard() {
 
 interface ExtendedInsuranceClaim extends InsuranceClaim {
   excess_requested?: boolean;
-  excess_amount_due?: number;
 }
 
 // ... existing code ...

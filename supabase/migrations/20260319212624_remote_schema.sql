@@ -708,9 +708,7 @@ drop view if exists "public"."conversation_messages_with_replies";
 
 drop function if exists "public"."get_admin_users"();
 
-drop type "public"."http_request";
-
-drop type "public"."http_response";
+-- Removed DROP TYPE commands for HTTP extension types
 
 alter table "public"."notification_logs" drop constraint "notification_logs_pkey";
 

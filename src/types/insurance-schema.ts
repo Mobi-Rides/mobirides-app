@@ -49,6 +49,8 @@ export interface InsuranceClaim {
   status: 'submitted' | 'under_review' | 'more_info_needed' | 'approved' | 'rejected' | 'paid' | 'closed' | 'pending' // Added 'pending' for filters
   approved_amount: number | null
   excess_paid: number | null
+  excess_amount_due: number | null
+  excess_amount?: number | null // Alias for excess_amount_due used in UI
   admin_fee: number | null
   payout_amount: number | null
   total_claim_cost: number | null

@@ -8,10 +8,25 @@ export interface CommissionRate {
   effective_until?: string;
 }
 
+const getDefaultCommissionRate = async (): Promise<number> => {
+  try {
+    const { data, error } = await supabase
+      .from("platform_settings")
+      .select("setting_value")
+      .eq("setting_key", "commission_rate_default")
+      .single();
+
+    if (error || !data) return 0.15;
+    return Number(data.setting_value) || 0.15;
+  } catch (e) {
+    return 0.15;
+  }
+};
+
 export const getCurrentCommissionRate = async (): Promise<number> => {
   try {
     console.log("CommissionRates: Fetching current commission rate");
-    
+
     const { data, error } = await supabase
       .from("commission_rates")
       .select("rate")
@@ -23,13 +38,13 @@ export const getCurrentCommissionRate = async (): Promise<number> => {
 
     if (error) {
       console.error("CommissionRates: Error fetching commission rate:", error);
-      return 0.15; // Default 15% fallback
+      return await getDefaultCommissionRate();
     }
 
     console.log("CommissionRates: Commission rate fetched:", data.rate);
     return data.rate;
   } catch (error) {
     console.error("CommissionRates: Unexpected error fetching commission rate:", error);
-    return 0.15; // Default 15% fallback
+    return await getDefaultCommissionRate();
   }
 };

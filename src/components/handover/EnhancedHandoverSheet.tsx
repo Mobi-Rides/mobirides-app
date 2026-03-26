@@ -28,11 +28,16 @@ import { KeyTransferStep } from "./steps/KeyTransferStep";
 import { DigitalSignatureStep } from "./steps/DigitalSignatureStep";
 import { HandoverNavigationStep } from "./steps/HandoverNavigationStep";
 import { HandoverSuccessPopup } from "./HandoverSuccessPopup";
+import { ConfirmAndEnRouteStep } from "./interactive/steps/ConfirmAndEnRouteStep";
+import { VehicleInspectionConsolidatedStep } from "./interactive/steps/VehicleInspectionConsolidatedStep";
+import { KeyExchangeStep } from "./interactive/steps/KeyExchangeStep";
+import { SignAndCompleteStep } from "./interactive/steps/SignAndCompleteStep";
 import { HandoverProgressIndicator } from "./HandoverProgressIndicator";
 import { useRealtimeHandover } from "@/hooks/useRealtimeHandover";
 import { InteractiveHandoverSheet } from "./interactive/InteractiveHandoverSheet";
 import { toast } from "@/utils/toast-utils";
 import { BookingWithRelations, BookingStatus } from "@/types/booking";
+import { bookingLifecycle } from "@/services/bookingLifecycle";
 
 // Extended booking type for handover with additional location data
 interface HandoverBookingDetails extends BookingWithRelations {
@@ -73,7 +78,7 @@ export const EnhancedHandoverSheet = ({
   const [mileage, setMileage] = useState<number>();
   const [digitalSignature, setDigitalSignature] = useState<string>();
   const [isHandoverCompleted, setIsHandoverCompleted] = useState(false);
-  
+  const [isSubmitting] = useState(false);  
   // Resizable functionality state
   const [sheetHeight, setSheetHeight] = useState<number>(90); // vh units
   const [isDragging, setIsDragging] = useState(false);
@@ -403,18 +408,13 @@ export const EnhancedHandoverSheet = ({
         const bookingIdValue = (bookingDetails as unknown as HandoverBookingDetails)?.id;
         
         if (isReturnHandover() && bookingIdValue) {
-          // MOB-203: Return handover → mark booking completed
+          // MOB-203: Return handover → mark booking completed (triggers release_pending_earnings via bookingLifecycle)
           console.log("🔄 Return handover detected - updating booking status to completed");
-          const { error: bookingUpdateError } = await supabase
-            .from('bookings')
-            .update({ 
-              status: BookingStatus.COMPLETED,
-              actual_end_date: new Date().toISOString()
-            })
-            .eq('id', bookingIdValue);
-            
-          if (bookingUpdateError) {
-            console.error("❌ Failed to update booking status:", bookingUpdateError);
+          const result = await bookingLifecycle.updateStatus(bookingIdValue, 'completed', {
+            actual_end_date: new Date().toISOString()
+          });
+          if (result.error) {
+            console.error("❌ Failed to update booking status:", result.error);
             toast.error("Handover recorded but failed to complete booking. Please contact support.");
           } else {
             console.log("✅ Booking marked as completed");
@@ -423,15 +423,9 @@ export const EnhancedHandoverSheet = ({
         } else if (!isReturnHandover() && bookingIdValue) {
           // MOB-202: Pickup handover → transition booking to in_progress
           console.log("🔄 Pickup handover detected - updating booking status to in_progress");
-          const { error: bookingUpdateError } = await supabase
-            .from('bookings')
-            .update({ 
-              status: BookingStatus.IN_PROGRESS
-            })
-            .eq('id', bookingIdValue);
-            
-          if (bookingUpdateError) {
-            console.error("❌ Failed to update booking status to in_progress:", bookingUpdateError);
+          const result = await bookingLifecycle.updateStatus(bookingIdValue, 'in_progress');
+          if (result.error) {
+            console.error("❌ Failed to update booking status to in_progress:", result.error);
             toast.error("Handover recorded but failed to start rental. Please contact support.");
           } else {
             console.log("✅ Booking marked as in_progress");
@@ -605,16 +599,17 @@ export const EnhancedHandoverSheet = ({
   const getStepComponent = (step: typeof HANDOVER_STEPS[0], stepIndex: number) => {
     const bookingData = bookingDetails as unknown as HandoverBookingDetails | null;
     const otherUser = isHost ? bookingData?.renter : bookingData?.cars?.owner;
-    
+    const userRole = isHost ? 'host' : 'renter';
+    const handoverType = (handoverStatus?.handover_type ?? 'pickup') as 'pickup' | 'return';
+
     switch (step.name) {
-      case "navigation": {
-        // Get destination location (preset or user location)
+      // ── 8-step consolidated flow ──
+      case "location_selection": {
         const destinationLocation = {
           latitude: bookingData?.latitude || bookingData?.cars?.latitude || -24.65451,
           longitude: bookingData?.longitude || bookingData?.cars?.longitude || 25.90859,
           address: bookingData?.cars?.location || "Handover Location"
         };
-        
         return (
           <HandoverNavigationStep
             handoverSessionId={handoverId || ""}
@@ -622,12 +617,27 @@ export const EnhancedHandoverSheet = ({
             otherUserName={otherUser?.full_name || "User"}
             isHost={isHost}
             onStepComplete={() => handleStepComplete(step.name)}
-            onNavigationStart={() => toast.info("Navigation started. Follow the directions to reach the handover location.")}
+            onNavigationStart={() => toast.info("Navigation started.")}
           />
         );
       }
 
-      case "identity_verification": {
+      case "confirm_and_head_out": {
+        const locationData = {
+          latitude: bookingData?.latitude || bookingData?.cars?.latitude || -24.65451,
+          longitude: bookingData?.longitude || bookingData?.cars?.longitude || 25.90859,
+          address: bookingData?.cars?.location || "Handover Location"
+        };
+        return (
+          <ConfirmAndEnRouteStep
+            locationData={locationData}
+            onConfirm={() => handleStepComplete(step.name)}
+            isSubmitting={isSubmitting}
+          />
+        );
+      }
+
+      case "identity_verification":
         return (
           <IdentityVerificationStep
             handoverSessionId={handoverId || ""}
@@ -637,43 +647,19 @@ export const EnhancedHandoverSheet = ({
             onStepComplete={() => handleStepComplete(step.name)}
           />
         );
-      }
-        
-      case "vehicle_inspection_exterior": {
-        const exteriorPhotos = vehiclePhotos.filter(p => p.type.startsWith('exterior_'));
+
+      case "vehicle_inspection":
         return (
-          <VehicleInspectionStep
+          <VehicleInspectionConsolidatedStep
             handoverSessionId={handoverId || ""}
-            inspectionType="exterior"
-            onPhotosUpdate={(photos) => {
-              const filteredPhotos = vehiclePhotos.filter(p => p.type && !p.type.startsWith('exterior_'));
-              setVehiclePhotos([...filteredPhotos, ...photos]);
-            }}
-            onStepComplete={() => handleStepComplete(step.name)}
-            initialPhotos={vehiclePhotos.filter(p => p.type && p.type.startsWith('exterior_'))}
+            handoverType={handoverType}
+            userRole={userRole}
+            onComplete={(data) => handleStepComplete(step.name, data)}
+            isSubmitting={isSubmitting}
           />
         );
-      }
-        
-      case "vehicle_inspection_interior": {
-        const interiorPhotos = vehiclePhotos.filter(p => 
-          p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)
-        );
-        return (
-          <VehicleInspectionStep
-            handoverSessionId={handoverId || ""}
-            inspectionType="interior"
-            onPhotosUpdate={(photos) => {
-              const filteredPhotos = vehiclePhotos.filter(p => p.type && !p.type.startsWith('interior_') && !['fuel_gauge', 'odometer'].includes(p.type));
-              setVehiclePhotos([...filteredPhotos, ...photos]);
-            }}
-            onStepComplete={() => handleStepComplete(step.name)}
-            initialPhotos={vehiclePhotos.filter(p => p.type && (p.type.startsWith('interior_') || ['fuel_gauge', 'odometer'].includes(p.type)))}
-          />
-        );
-      }
-        
-      case "damage_documentation": {
+
+      case "damage_documentation":
         return (
           <DamageDocumentationStep
             handoverSessionId={handoverId || ""}
@@ -682,56 +668,45 @@ export const EnhancedHandoverSheet = ({
             initialReports={damageReports}
           />
         );
-      }
 
-      case "fuel_mileage_check": {
+      case "key_exchange": {
+        const stepData = completedSteps.find(s => s.step_name === step.name);
+        const completionData = (stepData?.completion_data as any) || {};
         return (
-          <FuelMileageStep
-            handoverSessionId={handoverId || ""}
-            onFuelLevelChange={setFuelLevel}
-            onMileageChange={setMileage}
-            onStepComplete={() => handleStepComplete(step.name, { fuel_level: fuelLevel, mileage })}
-            initialFuelLevel={fuelLevel}
-            initialMileage={mileage}
+          <KeyExchangeStep
+            hostCompleted={!!completionData.host_completed}
+            renterCompleted={!!completionData.renter_completed}
+            onComplete={() => handleStepComplete(step.name)}
+            isSubmitting={isSubmitting}
+            userRole={userRole}
           />
         );
       }
 
-      case "key_transfer": {
+      case "sign_and_complete": {
+        const stepData = completedSteps.find(s => s.step_name === step.name);
+        const completionData = (stepData?.completion_data as any) || {};
         return (
-          <KeyTransferStep
-            handoverSessionId={handoverId || ""}
-            otherUserName={otherUser?.full_name || "User"}
-            isHost={isHost}
-            onStepComplete={() => handleStepComplete(step.name)}
+          <SignAndCompleteStep
+            hostCompleted={!!completionData.host_completed}
+            renterCompleted={!!completionData.renter_completed}
+            onComplete={(data) => handleStepComplete(step.name, data)}
+            isSubmitting={isSubmitting}
+            userRole={userRole}
           />
         );
       }
 
-      case "digital_signature": {
-        return (
-          <DigitalSignatureStep
-            handoverSessionId={handoverId || ""}
-            onSignatureComplete={(signature) => {
-              setDigitalSignature(signature);
-              handleStepComplete(step.name, { signature });
-            }}
-            initialSignature={digitalSignature}
-          />
-        );
-      }
-        
+      // ── Legacy step fallback (active sessions pre-migration) ──
       default:
+        console.warn(`[EnhancedHandoverSheet] Unrecognized step name: "${step.name}" — using generic fallback`);
         return (
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
                 <h3 className="font-medium mb-2">{step.title}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{step.description}</p>
-                <Button 
-                  onClick={() => handleStepComplete(step.name)}
-                  disabled={!canProceedToNextStep(step.name)}
-                >
+                <Button onClick={() => handleStepComplete(step.name)}>
                   Complete {step.title}
                 </Button>
               </div>
