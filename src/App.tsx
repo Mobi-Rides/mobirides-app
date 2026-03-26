@@ -103,6 +103,7 @@ const AdminBookings = lazy(() => import("@/pages/admin/AdminBookings"));
 const AdminTransactions = lazy(() => import("@/pages/admin/AdminTransactions"));
 const AdminVerifications = lazy(() => import("@/pages/admin/AdminVerifications"));
 const AdminMessages = lazy(() => import("@/pages/admin/AdminMessages"));
+const AdminSettings = lazy(() => import("@/pages/admin/AdminSettings"));
 const AdminManagement = lazy(() => import("@/pages/admin/AdminManagement"));
 const AdminAudit = lazy(() => import("@/pages/admin/AdminAudit"));
 const SuperAdminAnalytics = lazy(() => import("@/pages/SuperAdminAnalytics"));
@@ -473,6 +474,11 @@ function App() {
                         <Route path="/admin/analytics" element={
                           <Suspense fallback={<LoadingView />}>
                             <SuperAdminAnalytics />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/settings" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminSettings />
                           </Suspense>
                         } />
                         <Route path="/admin/promo-codes" element={
