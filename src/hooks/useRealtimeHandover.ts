@@ -57,6 +57,23 @@ export const useRealtimeHandover = (handoverSessionId: string | null): RealtimeH
     fetchProgress();
   }, [handoverSessionId]);
 
+  // Re-fetch on reconnect / tab becoming visible to recover missed updates
+  useEffect(() => {
+    if (!handoverSessionId) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchProgress();
+    };
+    const handleOnline = () => fetchProgress();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [handoverSessionId]);
+
   // Set up real-time subscription
   useEffect(() => {
     if (!handoverSessionId) return;
