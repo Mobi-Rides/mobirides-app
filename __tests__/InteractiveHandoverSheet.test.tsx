@@ -71,7 +71,7 @@ describe('InteractiveHandoverSheet Component', () => {
   });
 
   test('renders loading state initially', () => {
-    useInteractiveHandover.mockReturnValue({
+    (useInteractiveHandover as jest.Mock).mockReturnValue({
       currentStep: null,
       loading: true,
       error: null,
