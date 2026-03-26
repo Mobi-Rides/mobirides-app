@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Star, StarHalf, MessageSquare, User, ChevronDown } from "lucide-react";
+import { Star, StarHalf, MessageSquare, User, ChevronDown, Reply } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -19,16 +19,56 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { CategoryRatingDisplay } from "@/components/reviews/CategoryRatingDisplay";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 
 interface CarReviewsProps {
   car: Car;
+}
+
+interface ReviewWithResponse {
+  id: string;
+  booking_id: string | null;
+  car_id: string | null;
+  category_ratings: Record<string, number> | null;
+  comment: string | null;
+  created_at: string;
+  rating: number;
+  response: string | null;
+  response_at: string | null;
+  review_images: string[] | null;
+  review_type: string;
+  reviewee_id: string;
+  reviewer_id: string;
+  status: string | null;
+  updated_at: string;
+  reviewer: {
+    full_name: string;
+    avatar_url: string | null;
+  };
 }
 
 export const CarReviews = ({ car }: CarReviewsProps) => {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [respondingToReview, setRespondingToReview] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState("");
+  const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Check if current user is the host
+  useEffect(() => {
+    const checkHostStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+        setIsHost(user.id === car.owner_id);
+      }
+    };
+    checkHostStatus();
+  }, [car.owner_id]);
 
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["car-reviews", car.id],
@@ -72,7 +112,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
   const handleSubmitReview = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.user) {
         toast({
           title: "Error",
@@ -124,7 +164,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         title: "Review submitted",
         description: "Thank you for your feedback!",
       });
-      
+
       setIsReviewDialogOpen(false);
       setRating(0);
       setComment("");
@@ -135,6 +175,48 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         description: "Could not submit the review. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSubmitResponse = async (reviewId: string) => {
+    if (!responseText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a response.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingResponse(true);
+    try {
+      const { error } = await supabase
+        .from("reviews")
+        .update({
+          response: responseText.trim(),
+          response_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", reviewId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Response submitted",
+        description: "Your response has been posted.",
+      });
+
+      setRespondingToReview(null);
+      setResponseText("");
+    } catch (error) {
+      console.error("Error submitting response:", error);
+      toast({
+        title: "Error",
+        description: "Could not submit response. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingResponse(false);
     }
   };
 
@@ -164,14 +246,14 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
               </span>
             </div>
           )}
-          
-          {reviews?.map((review) => (
+
+          {reviews?.map((review: ReviewWithResponse) => (
             <div key={review.id} className="border rounded-lg p-4 dark:border-gray-700">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   {review.reviewer.avatar_url ? (
-                    <img 
-                      src={getAvatarPublicUrl(review.reviewer.avatar_url)} 
+                    <img
+                      src={getAvatarPublicUrl(review.reviewer.avatar_url)}
                       alt={review.reviewer.full_name}
                       className="w-8 h-8 rounded-full object-cover"
                     />
@@ -206,6 +288,67 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
                     <CategoryRatingDisplay categoryAverages={review.category_ratings as Record<string, number>} />
                   </CollapsibleContent>
                 </Collapsible>
+              )}
+
+              {/* Host Response Section */}
+              {review.response && (
+                <div className="mt-4 ml-4 pl-4 border-l-2 border-primary/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Reply className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-primary">Host Response</span>
+                    {review.response_at && (
+                      <span className="text-xs text-muted-foreground">
+                        • {format(new Date(review.response_at), 'MMM d, yyyy')}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{review.response}</p>
+                </div>
+              )}
+
+              {/* Host Response Form */}
+              {isHost && !review.response && respondingToReview !== review.id && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 text-xs"
+                  onClick={() => setRespondingToReview(review.id)}
+                >
+                  <Reply className="h-3 w-3 mr-1" />
+                  Respond to this review
+                </Button>
+              )}
+
+              {isHost && respondingToReview === review.id && (
+                <div className="mt-3 space-y-2">
+                  <Separator />
+                  <Textarea
+                    placeholder="Write your response to this review..."
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    className="min-h-[80px] text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleSubmitResponse(review.id)}
+                      disabled={isSubmittingResponse || !responseText.trim()}
+                    >
+                      {isSubmittingResponse ? "Submitting..." : "Submit Response"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setRespondingToReview(null);
+                        setResponseText("");
+                      }}
+                      disabled={isSubmittingResponse}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           ))}
