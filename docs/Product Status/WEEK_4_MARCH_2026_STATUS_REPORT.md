@@ -71,7 +71,7 @@ In parallel, three “implementation plan” documents were created (payment, in
 | Security Vulnerabilities | 4 | **4** | **4** | **4** | — | 0 |
 | Database Migrations | ~233 | **~233** | **~235** | **~235** | — | — |
 | Edge Functions | 27 | **27** | **27** | **27** | — | — |
-| Known Bugs | ~40 | **~40** | **~40** | **~7** | -33 (all prior + MOB-217/218) | 0 |
+| Known Bugs | ~40 | **~40** | **~40** | **~6** | -34 (all prior + MOB-206) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
@@ -112,11 +112,11 @@ Based on commit analysis from January–March 2026, the following bugs have been
 | 🔴 Critical | **1** | 1 | — | 0 | MOB-202 ✅ |
 | 🔴 High | **4** | 4 | 0 | 0 | MOB-201 ✅, MOB-203 ✅ (PR #243), MOB-204 ✅ (PR #251), MOB-210 ✅ |
 | 💳 Payment Phase 0 | **5** | 5 | — | 0 | F1 ✅, F2 ✅ (PR #245), F3 ✅, F4 ✅, F5 ✅ (PR #245) |
-| 🟡 Medium | **16** | 12 | 1 | 3 | MOB-205 ✅ (PR #249), MOB-206 ❌, MOB-207 ✅, MOB-208 ✅, MOB-209 🔧, MOB-211 ✅, MOB-212 ✅, MOB-213 ✅, MOB-214–215 ❌, MOB-216 ✅, MOB-217 ✅ (PR #252), MOB-218 ✅ (PR #252), MOB-219 ❌, MOB-220 ✅ (PR #243), MOB-221 ❌, MOB-225 ❌ |
+| 🟡 Medium | **16** | 13 | 1 | 2 | MOB-205 ✅ (PR #249), MOB-206 ✅ (PR #254), MOB-207 ✅, MOB-208 ✅, MOB-209 🔧, MOB-211 ✅, MOB-212 ✅, MOB-213 ✅, MOB-214–215 ❌, MOB-216 ✅, MOB-217 ✅ (PR #252), MOB-218 ✅ (PR #252), MOB-219 ❌, MOB-220 ✅ (PR #243), MOB-221 ❌, MOB-225 ❌ |
 | 🟢 Low | **4** | 1 | — | 3 | MOB-209 ❌, MOB-222 ✅, MOB-223 ❌, MOB-224 ❌ |
 | P0/P1 Admin | **15** | 9 | 3 | 3 | MOB-101–103 ✅, MOB-105–106 🔧, MOB-110 🔧, MOB-118 ✅, MOB-119–125 ✅ (UserAvatar), MOB-126 ✅, MOB-130–138 🔧 |
 | MOB-500 Handover | **1** | 1 | — | 0 | MOB-500 ✅ (PR #234 handover consolidation) |
-| **Total** | **41** | **30** | **4** | **7** | |
+| **Total** | **41** | **31** | **4** | **6** | |
 
 #### Commits Confirming Bug Fixes (Jan–Mar 2026)
 
@@ -142,6 +142,7 @@ Based on commit analysis from January–March 2026, the following bugs have been
 | MOB-204 | PR #251 | Review submission — missing bucket + disabled button fix |
 | MOB-500 | PR #234 | Handover consolidation complete |
 | MOB-217/218 | PR #252 | Notification prefs DB persistence + Active Rentals tab filter |
+| MOB-206 | PR #254 | Booking extension dialog + booking_extensions table |
 | Payment TD | `0c2a9ad` | Remove pre-payment commission deduction (double-charge) |
 | Payment F5 | `de5066f` | Release pending earnings on booking completion |
 
