@@ -211,6 +211,7 @@ const RentalDetailsRefactored = () => {
             isCompletedRental={isCompletedRental}
             isActiveRental={isActiveRental}
             isRenter={isRenter}
+            pricePerDay={booking.cars?.price_per_day ?? 0}
             onHandoverInitiate={onInitiateHandover}
             onExtensionRequested={handleExtensionUpdate}
             onPayNow={() => setIsPaymentModalOpen(true)}
