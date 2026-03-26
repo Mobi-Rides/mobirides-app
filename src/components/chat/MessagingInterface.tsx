@@ -175,14 +175,14 @@ export function MessagingInterface({ className, recipientId, recipientName, init
 
           if (error) {
             console.error("❌ [READ_TRACKING] Error updating last_read_at:", error);
-            // Revert optimistic updates if needed (optional, or just invalidate)
+            // Revert optimistic updates on failure
             queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
             queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
           } else {
             console.log("✅ [READ_TRACKING] Successfully updated last_read_at");
-            // Force refresh of unread count and conversation list to ensure eventual consistency
-            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
-            queryClient.invalidateQueries({ queryKey: ['optimized-conversations'] });
+            // Optimistic update already zeroed the badge — do NOT invalidate unreadMessagesCount
+            // here as it causes a race where the re-fetch returns stale data before the DB write
+            // is visible, re-showing the badge. The 10s refetchInterval handles eventual consistency.
           }
         } catch (error) {
           console.error("❌ [READ_TRACKING] Error in updateLastReadAt:", error);
@@ -191,7 +191,10 @@ export function MessagingInterface({ className, recipientId, recipientName, init
 
       updateLastReadAt();
     }
-  }, [selectedConversationId, currentUser?.id, messages, queryClient]);
+  // Intentionally exclude `messages` — we only need to mark-read when the conversation
+  // is selected, not on every new message arrival while it's open.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConversationId, currentUser?.id, queryClient]);
 
   // Memoize the createConversation function to prevent infinite loops
   const handleCreateConversation = useCallback((params: { participantIds: string[], title?: string }) => {
