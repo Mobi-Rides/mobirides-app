@@ -16,14 +16,27 @@ import {
 } from '../src/services/handoverService';
 
 // Mock the supabase client
-jest.mock('@/integrations/supabase/client', () => ({
-    supabase: {
-        from: jest.fn(),
-        auth: {
-            getUser: jest.fn()
+jest.mock('@/integrations/supabase/client', () => {
+    const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
+    return {
+        supabase: {
+            from: jest.fn().mockReturnValue(mockQueryBuilder),
+            auth: {
+                getUser: jest.fn()
+            }
         }
-    }
-}));
+    };
+});
 
 // Mock toast
 jest.mock('@/utils/toast-utils', () => ({
@@ -38,13 +51,28 @@ import { supabase } from '@/integrations/supabase/client';
 
 describe('Handover Service', () => {
     const mockUser = { id: 'user-123' };
+    const createMockChain = (data: any = null, error: any = null) => {
+        const chain: any = {
+            select: jest.fn().mockReturnThis(),
+            insert: jest.fn().mockReturnThis(),
+            update: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            order: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data, error }),
+            maybeSingle: jest.fn().mockResolvedValue({ data, error }),
+            then: (onFulfilled: any) => Promise.resolve({ data, error }).then(onFulfilled),
+        };
+        return chain;
+    };
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        jest.resetAllMocks();
         (supabase.auth.getUser as jest.Mock).mockResolvedValue({
             data: { user: mockUser },
             error: null
         });
+        (supabase.from as jest.Mock).mockReturnValue(createMockChain(null));
     });
 
     describe('createPickupHandoverSession', () => {
@@ -69,54 +97,16 @@ describe('Handover Service', () => {
                 updated_at: new Date().toISOString()
             };
 
-            // Mock no existing session
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
-                        })
-                    })
-                })
-            });
-
-            // Mock profile fetch
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({
-                            data: { full_name: 'Test Host' },
-                            error: null
-                        })
-                    })
-                })
-            });
-
-            // Mock booking fetch
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({
-                            data: { car_id: 'car-1' },
-                            error: null
-                        })
-                    })
-                })
-            });
-
-            // Mock notification insert
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                insert: jest.fn().mockResolvedValue({ error: null })
-            });
-
-            // Mock session insert
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                insert: jest.fn().mockReturnValue({
-                    select: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: mockSession, error: null })
-                    })
-                })
-            });
+            // 1. Mock no existing session
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
+            // 2. Mock session insert
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(mockSession));
+            // 3. Mock profile fetch
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain({ full_name: 'Test Host' }));
+            // 4. Mock booking fetch
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain({ car_id: 'car-1' }));
+            // 5. Mock notification insert
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
 
             const result = await createPickupHandoverSession(pickupData);
 
@@ -133,15 +123,7 @@ describe('Handover Service', () => {
                 handover_type: 'pickup'
             };
 
-            (supabase.from as jest.Mock).mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            maybeSingle: jest.fn().mockResolvedValue({ data: existingSession, error: null })
-                        })
-                    })
-                })
-            });
+            (supabase.from as jest.Mock).mockReturnValue(createMockChain(existingSession));
 
             const result = await createPickupHandoverSession(pickupData);
 
@@ -160,27 +142,11 @@ describe('Handover Service', () => {
         });
 
         it('should handle RLS policy violations gracefully', async () => {
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
-                        })
-                    })
-                })
-            });
+            // 1. Mock no existing session
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
 
-            // Mock session insert with RLS error
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                insert: jest.fn().mockReturnValue({
-                    select: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({
-                            data: null,
-                            error: { code: '42501', message: 'Permission denied' }
-                        })
-                    })
-                })
-            });
+            // 2. Mock session insert with RLS error
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null, { code: '42501', message: 'Permission denied' }));
 
             await expect(createPickupHandoverSession(pickupData)).rejects.toThrow(
                 'Permission denied'
@@ -210,54 +176,16 @@ describe('Handover Service', () => {
                 updated_at: new Date().toISOString()
             };
 
-            // Mock no existing session
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
-                        })
-                    })
-                })
-            });
-
-            // Mock profile fetch
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({
-                            data: { full_name: 'Test Renter' },
-                            error: null
-                        })
-                    })
-                })
-            });
-
-            // Mock booking fetch
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({
-                            data: { car_id: 'car-1' },
-                            error: null
-                        })
-                    })
-                })
-            });
-
-            // Mock notification insert
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                insert: jest.fn().mockResolvedValue({ error: null })
-            });
-
-            // Mock session insert
-            (supabase.from as jest.Mock).mockReturnValueOnce({
-                insert: jest.fn().mockReturnValue({
-                    select: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: mockSession, error: null })
-                    })
-                })
-            });
+            // 1. Mock no existing session
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
+            // 2. Mock session insert
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(mockSession));
+            // 3. Mock profile fetch
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain({ full_name: 'Test Renter' }));
+            // 4. Mock booking fetch
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain({ car_id: 'car-1' }));
+            // 5. Mock notification insert
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
 
             const result = await createReturnHandoverSession(returnData);
 
@@ -274,15 +202,7 @@ describe('Handover Service', () => {
                 handover_type: 'pickup'
             };
 
-            (supabase.from as jest.Mock).mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            maybeSingle: jest.fn().mockResolvedValue({ data: mockSession, error: null })
-                        })
-                    })
-                })
-            });
+            (supabase.from as jest.Mock).mockReturnValue(createMockChain(mockSession));
 
             const result = await createHandoverSession(
                 'booking-456',
@@ -327,19 +247,7 @@ describe('Handover Service', () => {
                 handover_type: 'pickup'
             };
 
-            (supabase.from as jest.Mock).mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            order: jest.fn().mockReturnValue({
-                                limit: jest.fn().mockReturnValue({
-                                    maybeSingle: jest.fn().mockResolvedValue({ data: mockSession, error: null })
-                                })
-                            })
-                        })
-                    })
-                })
-            });
+            (supabase.from as jest.Mock).mockReturnValue(createMockChain(mockSession));
 
             const result = await getHandoverSession('booking-123');
 
@@ -347,27 +255,13 @@ describe('Handover Service', () => {
         });
 
         it('should filter by handover type when provided', async () => {
-            (supabase.from as jest.Mock).mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            eq: jest.fn().mockReturnValue({
-                                order: jest.fn().mockReturnValue({
-                                    limit: jest.fn().mockReturnValue({
-                                        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
-                                    })
-                                })
-                            })
-                        })
-                    })
-                })
-            });
+            const mockChain = createMockChain(null);
+            (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
             await getHandoverSession('booking-123', 'pickup');
 
-            // Verify the query chain includes handover_type filter
-            const mockFrom = supabase.from as jest.Mock;
-            expect(mockFrom).toHaveBeenCalledWith('handover_sessions');
+            expect(supabase.from).toHaveBeenCalledWith('handover_sessions');
+            expect(mockChain.eq).toHaveBeenCalledWith('handover_type', 'pickup');
         });
     });
 
@@ -378,17 +272,7 @@ describe('Handover Service', () => {
                 booking_id: 'booking-123'
             };
 
-            (supabase.from as jest.Mock).mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        order: jest.fn().mockReturnValue({
-                            limit: jest.fn().mockReturnValue({
-                                maybeSingle: jest.fn().mockResolvedValue({ data: mockSession, error: null })
-                            })
-                        })
-                    })
-                })
-            });
+            (supabase.from as jest.Mock).mockReturnValue(createMockChain(mockSession));
 
             const result = await getLatestHandoverSession('booking-123');
 
@@ -398,20 +282,7 @@ describe('Handover Service', () => {
 
     describe('hasCompletedPickupHandover', () => {
         it('should return true when pickup handover is completed', async () => {
-            (supabase.from as jest.Mock).mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            eq: jest.fn().mockReturnValue({
-                                maybeSingle: jest.fn().mockResolvedValue({
-                                    data: { handover_completed: true },
-                                    error: null
-                                })
-                            })
-                        })
-                    })
-                })
-            });
+            (supabase.from as jest.Mock).mockReturnValue(createMockChain({ handover_completed: true }));
 
             const result = await hasCompletedPickupHandover('booking-123');
 
@@ -419,17 +290,7 @@ describe('Handover Service', () => {
         });
 
         it('should return false when pickup handover is not completed', async () => {
-            (supabase.from as jest.Mock).mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            eq: jest.fn().mockReturnValue({
-                                maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
-                            })
-                        })
-                    })
-                })
-            });
+            (supabase.from as jest.Mock).mockReturnValue(createMockChain(null));
 
             const result = await hasCompletedPickupHandover('booking-123');
 

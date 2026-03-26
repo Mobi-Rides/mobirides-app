@@ -26,6 +26,15 @@ jest.mock('@/services/pushNotificationService', () => ({
     }
 }));
 
+// Mock the email notification service
+jest.mock('@/services/notificationService', () => ({
+    ResendEmailService: {
+        getInstance: jest.fn().mockReturnValue({
+            sendEmail: jest.fn().mockResolvedValue({ success: true })
+        })
+    }
+}));
+
 // Mock toast
 jest.mock('sonner', () => ({
     toast: {

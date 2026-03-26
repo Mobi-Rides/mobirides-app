@@ -56,6 +56,7 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
               amount,
               currency: 'BWP',
               payment_method: request.payment_method,
+              payment_provider: request.payment_method === 'card' ? 'PayU' : 'MobileMoney',
               status: 'completed',
               platform_commission: commission,
               host_earnings: hostEarnings,
