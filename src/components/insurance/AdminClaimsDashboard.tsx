@@ -166,7 +166,7 @@ export default function AdminClaimsDashboard() {
   const calculateStats = (claims: InsuranceClaim[]): ClaimsStats => {
     return {
       totalClaims: claims.length,
-      pendingClaims: claims.filter(c => c.status === 'submitted' || c.status === 'pending').length, // Handle 'submitted' as pending
+      pendingClaims: claims.filter(c => c.status === 'submitted' || c.status === 'pending' || c.status === 'more_info_needed').length, // Handle 'submitted' and 'more_info_needed' as pending
       approvedClaims: claims.filter(c => c.status === 'approved').length,
       rejectedClaims: claims.filter(c => c.status === 'rejected').length,
       totalValue: claims.reduce((sum, c) => sum + (c.estimated_repair_cost || 0), 0),
@@ -191,6 +191,8 @@ export default function AdminClaimsDashboard() {
       case 'submitted':
       case 'pending':
         return <Clock className="w-5 h-5 text-yellow-500" />;
+      case 'more_info_needed':
+        return <AlertCircle className="w-5 h-5 text-orange-500" />;
       case 'under_review':
         return <AlertCircle className="w-5 h-5 text-blue-500" />;
       case 'approved':
@@ -207,6 +209,8 @@ export default function AdminClaimsDashboard() {
       case 'submitted':
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
+      case 'more_info_needed':
+        return 'bg-orange-100 text-orange-800';
       case 'under_review':
         return 'bg-blue-100 text-blue-800';
       case 'approved':
@@ -224,6 +228,8 @@ export default function AdminClaimsDashboard() {
         return 'Submitted';
       case 'pending':
         return 'Pending';
+      case 'more_info_needed':
+        return 'Info Needed';
       case 'under_review':
         return 'Under Review';
       case 'approved':
@@ -261,7 +267,8 @@ export default function AdminClaimsDashboard() {
         approved_amount: approvedAmount,
         reviewed_by: (await supabase.auth.getUser()).data.user?.id,
         updated_at: new Date().toISOString(),
-        resolved_at: newStatus === 'approved' || newStatus === 'rejected' ? new Date().toISOString() : null
+        resolved_at: newStatus === 'approved' || newStatus === 'rejected' ? new Date().toISOString() : null,
+        more_info_requested_at: newStatus === 'more_info_needed' ? new Date().toISOString() : undefined
       };
 
       if (requestExcess) {
@@ -766,6 +773,7 @@ export default function AdminClaimsDashboard() {
                 >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
+                  <option value="more_info_needed">Info Needed</option>
                   <option value="under_review">Under Review</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
