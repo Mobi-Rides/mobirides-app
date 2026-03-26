@@ -71,7 +71,7 @@ In parallel, three “implementation plan” documents were created (payment, in
 | Security Vulnerabilities | 4 | **4** | **4** | **4** | — | 0 |
 | Database Migrations | ~233 | **~233** | **~235** | **~235** | — | — |
 | Edge Functions | 27 | **27** | **27** | **27** | — | — |
-| Known Bugs | ~40 | **~40** | **~40** | **~2** | -38 (all prior + MOB-215) | 0 |
+| Known Bugs | ~40 | **~40** | **~40** | **~1** | -39 (all prior + MOB-223) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
@@ -113,10 +113,10 @@ Based on commit analysis from January–March 2026, the following bugs have been
 | 🔴 High | **4** | 4 | 0 | 0 | MOB-201 ✅, MOB-203 ✅ (PR #243), MOB-204 ✅ (PR #251), MOB-210 ✅ |
 | 💳 Payment Phase 0 | **5** | 5 | — | 0 | F1 ✅, F2 ✅ (PR #245), F3 ✅, F4 ✅, F5 ✅ (PR #245) |
 | 🟡 Medium | **16** | 16 | 0 | 0 | MOB-205 ✅ (PR #249), MOB-206 ✅ (PR #254), MOB-207 ✅, MOB-208 ✅, MOB-209 🔧, MOB-211 ✅, MOB-212 ✅, MOB-213 ✅, MOB-214 ✅ (PR #262), MOB-215 ✅ (PR #264), MOB-216 ✅, MOB-217 ✅ (PR #252), MOB-218 ✅ (PR #252), MOB-219 ❌, MOB-220 ✅ (PR #243), MOB-221 ✅ (PR #256), MOB-225 ✅ (PR #260) |
-| 🟢 Low | **4** | 1 | — | 3 | MOB-209 ❌, MOB-222 ✅, MOB-223 ❌, MOB-224 ❌ |
+| 🟢 Low | **4** | 2 | — | 2 | MOB-209 ❌, MOB-222 ✅, MOB-223 ✅ (PR #266), MOB-224 ❌ |
 | P0/P1 Admin | **15** | 9 | 3 | 3 | MOB-101–103 ✅, MOB-105–106 🔧, MOB-110 🔧, MOB-118 ✅, MOB-119–125 ✅ (UserAvatar), MOB-126 ✅, MOB-130–138 🔧 |
 | MOB-500 Handover | **1** | 1 | — | 0 | MOB-500 ✅ (PR #234 handover consolidation) |
-| **Total** | **41** | **35** | **4** | **2** | |
+| **Total** | **41** | **36** | **4** | **1** | |
 
 #### Commits Confirming Bug Fixes (Jan–Mar 2026)
 
@@ -147,6 +147,7 @@ Based on commit analysis from January–March 2026, the following bugs have been
 | MOB-225 | PR #260 | Car location filter — wrong sort column rental_price→price_per_day |
 | MOB-214 | PR #262 | Handover notifications — missing user_id in insert |
 | MOB-215 | PR #264 | Handover state disconnect — visibilitychange + online re-fetch |
+| MOB-223 | PR #266 | Evidence upload navigation — stale state in setTimeout closure |
 | Payment TD | `0c2a9ad` | Remove pre-payment commission deduction (double-charge) |
 | Payment F5 | `de5066f` | Release pending earnings on booking completion |
 
