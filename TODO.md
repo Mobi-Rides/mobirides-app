@@ -58,6 +58,8 @@
 - [ ] Plan Postgres version upgrade
 
 #### Feature Development
+- [x] fix(MOB-219): audit logs not displaying
+- [x] fix(MOB-105-106): admin capability assign/revoke broken
 - [ ] Enhanced user profile customization
 - [ ] Advanced car filtering options
 - [ ] Payment system integration improvements

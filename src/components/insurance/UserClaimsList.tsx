@@ -445,6 +445,7 @@ export default function UserClaimsList() {
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
+              <option value="more_info_needed">Info Needed</option>
               <option value="under_review">Under Review</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>

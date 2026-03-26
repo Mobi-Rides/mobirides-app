@@ -42,10 +42,10 @@ Week reports reference a “**~40 known bugs**” metric, but the numeric count 
 - Severity: P1 (security/ops impact)
 - Reference: `docs/hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md` (Sections MOB-105..MOB-106)
 - Jira Tasks:
-  - [ ] Remove missing auth/role checks and ensure only intended roles can assign/revoke
-  - [ ] Validate the UI writes correct records (no stale `user_roles`/capability state)
-  - [ ] Confirm capability changes are reflected in the admin authorization paths
-  - [ ] Re-test admin capability assign/revoke flows
+- [x] Remove missing auth/role checks and ensure only intended roles can assign/revoke
+  - [x] Validate the UI writes correct records (no stale `user_roles`/capability state)
+  - [x] Confirm capability changes are reflected in the admin authorization paths
+  - [x] Re-test admin capability assign/revoke flows
 
 ### MOB-118 through MOB-126 — Avatar/image display issues
 
@@ -175,10 +175,10 @@ Week reports reference a “**~40 known bugs**” metric, but the numeric count 
   - Registry: `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md`
   - Suggested area: `src/components/insurance/AdminClaimsDashboard.tsx`
 - Jira Tasks:
-  - [ ] Implement missing admin action to request additional claim evidence
-  - [ ] Add DB update + notification to renter when requested
-  - [ ] Ensure action is gated to admin role only
-  - [ ] Re-test INS-015
+  - [x] Implement missing admin action to request additional claim evidence
+  - [x] Add DB update + notification to renter when requested
+  - [x] Ensure action is gated to admin role only
+  - [x] Re-test INS-015
 
 ### MOB-210 — Signup flow broken for some users (AUTH-009)
 
@@ -303,10 +303,10 @@ These tickets do not appear to have dedicated hotfix docs yet; execution here is
   - Registry: `docs/testing/TESTING_COVERAGE_STATUS_2026_03_02.md`
   - Relevant UI: `src/pages/admin/AdminAudit.tsx`, `src/components/admin/AuditLogViewer.tsx`
 - Jira Tasks:
-  - [ ] Fix API/query so audit logs return correctly (schema + ordering)
-  - [ ] Ensure viewer component maps fields correctly to UI
-  - [ ] Validate admin auth gating for the audit route
-  - [ ] Re-test ADM-014
+- [x] Fix API/query so audit logs return correctly (schema + ordering)
+  - [x] Ensure viewer component maps fields correctly to UI
+  - [x] Validate admin auth gating for the audit route
+  - [x] Re-test ADM-014
 
 ### MOB-220 — Geolocation centering fails (MAP-002)
 
