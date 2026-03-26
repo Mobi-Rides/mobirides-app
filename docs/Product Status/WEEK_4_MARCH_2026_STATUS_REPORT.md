@@ -61,34 +61,35 @@ In parallel, three “implementation plan” documents were created (payment, in
 
 ## 📈 Production Readiness Metrics
 
-| Metric | Week 2 Mar | Week 3 Mar | **Week 4 Mar** | Change | Target |
-|--------|------------|------------|----------------|--------|--------|
-| Build Errors | 0 | **0** | **0** | — | 0 |
-| Linter Warnings | 15 | **15** | **15** | — | <20 |
-| System Health | 84% | **83%** | **83%** | Stable (planning + safeguards) | 95% |
-| Production Readiness | 81% | **81%** | **82%** | +1 (readiness plans + safeguards) | 95% |
-| Test Coverage | 62% | **62%** | **62%** | — | 85% |
-| Security Vulnerabilities | 4 | **4** | **4** | — | 0 |
-| Database Migrations | ~233 | **~233** | **~235** | +2 car-approval migrations | — |
-| Edge Functions | 27 | **27** | **27** | — | — |
-| Known Bugs | ~40 | **~40** | **~40** | No new runtime regressions confirmed | 0 |
-| Capacitor Packages | 3 | **3** | **3** | — | — |
+| Metric | Week 2 Mar | Week 3 Mar | **Week 4 Mar** | **Sprint 8 (Mar 26)** | Change | Target |
+|--------|------------|------------|----------------|----------------------|--------|--------|
+| Build Errors | 0 | **0** | **0** | **0** | — | 0 |
+| Linter Warnings | 15 | **15** | **15** | **15** | — | <20 |
+| System Health | 84% | **83%** | **83%** | **84%** | +1 (payment flow correctness) | 95% |
+| Production Readiness | 81% | **81%** | **82%** | **83%** | +1 (Phase 0 complete) | 95% |
+| Test Coverage | 62% | **62%** | **62%** | **62%** | — | 85% |
+| Security Vulnerabilities | 4 | **4** | **4** | **4** | — | 0 |
+| Database Migrations | ~233 | **~233** | **~235** | **~235** | — | — |
+| Edge Functions | 27 | **27** | **27** | **27** | — | — |
+| Known Bugs | ~40 | **~40** | **~40** | **~38** | -2 (F2/F5 fixed) | 0 |
+| Capacitor Packages | 3 | **3** | **3** | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
 
 | Category | Current | Gap | Path to Close |
 |----------|---------|-----|---------------|
-| Production Readiness | 82% | 13% | Payment E2E + provider integration scaffolding, MOB-500 consolidation, insurance readiness execution, admin-settings implementation |
+| Production Readiness | 83% | 12% | Payment Phase 1 (provider creds needed), MOB-500 consolidation, insurance readiness execution, admin-settings implementation |
 | Test Coverage | 62% | 23% | Add unit tests around payment + handover step validation, UI/QA regression suites |
-| System Health | 83% | 12% | Close remaining lifecycle/payment gaps and verify Android toolchain |
+| System Health | 84% | 11% | Close remaining lifecycle/payment gaps and verify Android toolchain |
 
 ---
 
-## 🧩 System Health Explanation (Mar 22 → Mar 23/24)
+## 🧩 System Health Explanation (Mar 22 → Mar 26)
 
 - **No compile regressions observed** since Week 3’s `tsc --noEmit` and `npm run build` recovery.
 - **Risk reduction in rental marketplace operations** via admin car approval enforcement at UI + DB levels (prevents live listings without admin verification).
 - **Readiness planning improved**: payment, insurance, and admin settings now have implementation plan docs with explicit prerequisites and phased work.
+- **Payment Phase 0 complete (Mar 26)**: All 5 mock-flow correctness issues (F1–F5) resolved. Commission now calculated on rental portion only; host earnings release de-duplicated. PR #245 open against `develop`. Phase 1 (real provider) unblocked pending business team obtaining PayGate/Ooze credentials.
 - **Android risk remains**: `gradle-wrapper.properties` update was committed after a reported gradle error; until it’s validated, Android readiness stays “verify” rather than “complete.”
 
 ---
@@ -107,6 +108,7 @@ Based on commit analysis from January–March 2026, the following bugs have been
 |----------|------:|----------|------------|--------:|-----------|
 | 🔴 Critical | **1** | 1 | — | 0 | MOB-202 ✅ |
 | 🔴 High | **4** | 2 | 1 | 1 | MOB-201 ❌, MOB-203 🔧, MOB-204 ❌, MOB-210 ✅ |
+| 💳 Payment Phase 0 | **5** | 5 | — | 0 | F1 ✅, F2 ✅ (PR #245), F3 ✅, F4 ✅, F5 ✅ (PR #245) |
 | 🟡 Medium | **16** | 3 | 1 | 12 | MOB-205–206 ❌, MOB-207 ✅, MOB-208 ❌, MOB-209 🔧, MOB-211 ✅, MOB-212 ✅, MOB-213–219 ❌, MOB-220 🔧, MOB-221 ❌, MOB-225 ❌ |
 | 🟢 Low | **4** | 1 | — | 3 | MOB-209 ❌, MOB-222 ✅, MOB-223 ❌, MOB-224 ❌ |
 | P0/P1 Admin | **15** | 6 | 3 | 6 | MOB-101–103 ✅, MOB-105–106 🔧, MOB-110 🔧, MOB-118 ✅, MOB-126 ✅, MOB-130–138 🔧 |

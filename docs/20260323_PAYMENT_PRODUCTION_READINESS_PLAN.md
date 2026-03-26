@@ -153,16 +153,16 @@ graph TD
     style G fill:#ff6b6b,color:#fff
 ```
 
-| # | Issue | Where | Fix |
-|---|---|---|---|
-| **F1** | Commission deducted from host wallet before renter pays | [BookingRequestDetails.tsx:107](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/src/pages/BookingRequestDetails.tsx#L107) | Remove pre-payment commission; commission comes from renter's payment |
-| **F2** | Mock payment bypasses webhook — no `payment_transaction`, no `pending_balance` credit | [useBookingPayment.ts:48](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/src/hooks/useBookingPayment.ts#L48) | Mock should create a `payment_transactions` record and call `credit_pending_earnings()` |
-| **F3** | No `in_progress` status transition after pickup handover | Not implemented anywhere | Add `bookingLifecycle.updateStatus(bookingId, 'in_progress')` after pickup handover completion |
-| **F4** | No `completed` status transition after return handover | Not implemented anywhere | Add `bookingLifecycle.updateStatus(bookingId, 'completed')` after return handover completion |
-| **F5** | Host earnings never released (`pending_balance` → `balance`) | `release_pending_earnings()` RPC exists but never called | Call after booking status → `completed`, or via scheduled `release-earnings` edge function |
+| # | Issue | Where | Fix | Status |
+|---|---|---|---|---|
+| **F1** | Commission deducted from host wallet before renter pays | `BookingRequestDetails.tsx` | Remove pre-payment commission; commission comes from renter's payment | ✅ **Fixed** (prior commit — approval flow is UX-guard only) |
+| **F2** | Mock payment bypasses webhook — no `payment_transaction`, no `pending_balance` credit | `useBookingPayment.ts` | Mock creates `payment_transactions` record and calls `credit_pending_earnings()` + **commission base fixed to rental portion only** | ✅ **Fixed** (PR #245, 2026-03-26) |
+| **F3** | No `in_progress` status transition after pickup handover | `InteractiveHandoverSheet.tsx` | `bookingLifecycle.updateStatus(bookingId, 'in_progress')` called on pickup completion | ✅ **Fixed** (prior commit) |
+| **F4** | No `completed` status transition after return handover | `InteractiveHandoverSheet.tsx` | `bookingLifecycle.updateStatus(bookingId, 'completed')` called on return completion | ✅ **Fixed** (prior commit) |
+| **F5** | Host earnings double-released — `release_pending_earnings()` called in both `bookingLifecycle.ts` and `completeHandover()` | `bookingLifecycle.ts` | Removed duplicate RPC call from `bookingLifecycle.ts`; `completeHandover()` is the single authoritative caller | ✅ **Fixed** (PR #245, 2026-03-26) |
 
 > [!IMPORTANT]
-> **Fixes F1–F5 should be implemented BEFORE Phase 1 (provider integration)**. They represent sequencing bugs in the mock flow itself. Getting the mock flow correctly mirroring the production architecture is essential groundwork — otherwise we'll be debugging payment gateway issues and flow logic issues simultaneously.
+> **All F1–F5 fixes are now resolved.** Phase 0 mock flow correctness is complete. Phase 1 (provider integration) is unblocked from a flow-sequencing perspective — remaining blocker is obtaining PayGate/Ooze credentials (business team).
 
 ---
 

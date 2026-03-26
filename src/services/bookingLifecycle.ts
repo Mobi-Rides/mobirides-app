@@ -162,7 +162,8 @@ async function handleSideEffects(booking: any, newStatus: BookingStatus) {
 
     case 'completed':
       toast.success("Trip completed! Hope you enjoyed the ride.");
-      await supabase.rpc('release_pending_earnings', { p_booking_id: booking.id });
+      // NOTE: release_pending_earnings is called by completeHandover() in handoverService.ts.
+      // Do NOT call it here to avoid double-releasing host earnings.
       break;
 
     case 'cancelled':
