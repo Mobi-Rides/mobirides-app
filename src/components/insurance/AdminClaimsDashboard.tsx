@@ -249,19 +249,19 @@ export default function AdminClaimsDashboard() {
       // Cast to any to avoid strict type checks on partial data
       const claim = rawClaim as unknown as InsuranceClaim;
 
-interface ExtendedInsuranceClaim extends InsuranceClaim {
-  excess_requested?: boolean;
-}
+      interface ExtendedInsuranceClaim extends InsuranceClaim {
+        excess_requested?: boolean;
+      }
 
-// ... existing code ...
+      // ... existing code ...
 
       const updateData: Partial<ExtendedInsuranceClaim> = {
-          status: newStatus as InsuranceClaim['status'],
-          admin_notes: notes,
-          approved_amount: approvedAmount,
-          reviewed_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString(),
-          resolved_at: newStatus === 'approved' || newStatus === 'rejected' ? new Date().toISOString() : null
+        status: newStatus as InsuranceClaim['status'],
+        admin_notes: notes,
+        approved_amount: approvedAmount,
+        reviewed_by: (await supabase.auth.getUser()).data.user?.id,
+        updated_at: new Date().toISOString(),
+        resolved_at: newStatus === 'approved' || newStatus === 'rejected' ? new Date().toISOString() : null
       };
 
       if (requestExcess) {
@@ -295,13 +295,13 @@ interface ExtendedInsuranceClaim extends InsuranceClaim {
         // Dynamic import to avoid circular dependencies
         const { insuranceNotificationService } = await import('@/services/wallet/insuranceNotificationService');
 
-interface NotificationPayload {
-  claim_number: string;
-  status: string;
-  admin_notes?: string;
-}
+        interface NotificationPayload {
+          claim_number: string;
+          status: string;
+          admin_notes?: string;
+        }
 
-// ... existing code ...
+        // ... existing code ...
 
         // 1. Send Email Notification
         if (renterEmail) {
@@ -579,7 +579,7 @@ interface NotificationPayload {
                     id="review-notes"
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <button
                     onClick={() => {
                       const notes = (document.getElementById('review-notes') as HTMLTextAreaElement)?.value;
@@ -608,6 +608,17 @@ interface NotificationPayload {
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       Mark Under Review
+                    </button>
+                  )}
+                  {(selectedClaim.status === 'submitted' || selectedClaim.status === 'under_review') && (
+                    <button
+                      onClick={() => {
+                        const notes = (document.getElementById('review-notes') as HTMLTextAreaElement)?.value;
+                        updateClaimStatus(selectedClaim.id, 'more_info_needed', notes || 'Please provide additional information to process this claim.');
+                      }}
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+                    >
+                      Request More Info
                     </button>
                   )}
                 </div>
@@ -641,230 +652,250 @@ interface NotificationPayload {
     <AdminProtectedRoute>
       <AdminLayout>
         <div className="max-w-7xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Insurance Claims</h1>
-          <p className="text-gray-500 mt-2">Manage and process insurance claims</p>
-        </div>
-        <button
-          onClick={runAutomation}
-          disabled={automationRunning}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {automationRunning ? (
-            <>Running...</>
-          ) : (
-            <>
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-              Run Automation
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Activity className="w-6 h-6 text-blue-600" />
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Insurance Claims</h1>
+              <p className="text-gray-500 mt-2">Manage and process insurance claims</p>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Claims</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalClaims}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pendingClaims}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Approved</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.approvedClaims}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertCircle className="w-6 h-6 text-red-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Rejected</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.rejectedClaims}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Financial Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Total Claim Value</h3>
-            <TrendingUp className="w-5 h-5 text-green-500" />
-          </div>
-          <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalValue)}</p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Approved Value</h3>
-            <CheckCircle className="w-5 h-5 text-green-500" />
-          </div>
-          <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.approvedValue)}</p>
-        </div>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search claims by number, location, or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="relative">
-            <Filter className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+            <button
+              onClick={runAutomation}
+              disabled={automationRunning}
+              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="under_review">Under Review</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
+              {automationRunning ? (
+                <>Running...</>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  Run Automation
+                </>
+              )}
+            </button>
           </div>
-        </div>
-      </div>
 
-      {/* Claims List */}
-      {loading ? (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading claims...</p>
-        </div>
-      ) : filteredClaims.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Claims Found</h3>
-          <p className="text-gray-600">No claims match your search criteria.</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Claim #
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Incident Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Location
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estimated Cost
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredClaims.map((claim) => {
-                  const policy = getPolicyById(claim.policy_id);
-                  const booking = policy ? getBookingById(policy.booking_id) : null;
-                  // User info is now joined directly on claim.renter
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Activity className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Total Claims</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalClaims}</p>
+                </div>
+              </div>
+            </div>
 
-                  return (
-                    <tr key={claim.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">#{claim.claim_number}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {claim.renter?.full_name || 'Unknown User'}
-                        </div>
-                        <div className="text-sm text-gray-500">{claim.renter?.phone_number || ''}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                          <div className="text-sm text-gray-900">{formatDate(claim.incident_date)}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">
-                          {claim.incident_location}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
-                          <div className="text-sm text-gray-900">
-                            {formatCurrency(claim.estimated_damage_cost || 0)}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {getStatusIcon(claim.status)}
-                          <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
-                            {getStatusText(claim.status)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => setSelectedClaim(claim)}
-                          className="text-blue-600 hover:text-blue-900 flex items-center"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          Review
-                        </button>
-                      </td>
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Clock className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Pending</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.pendingClaims}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Approved</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.approvedClaims}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Rejected</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.rejectedClaims}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Total Claim Value</h3>
+                <TrendingUp className="w-5 h-5 text-green-500" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalValue)}</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Approved Value</h3>
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.approvedValue)}</p>
+            </div>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search claims by number, location, or description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="relative">
+                <Filter className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="under_review">Under Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Claims List */}
+          {loading ? (
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading claims...</p>
+            </div>
+          ) : filteredClaims.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Claims Found</h3>
+              <p className="text-gray-600">No claims match your search criteria.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Claim #
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Incident Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Location
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estimated Cost
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Payout Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredClaims.map((claim) => {
+                      const policy = getPolicyById(claim.policy_id);
+                      const booking = policy ? getBookingById(policy.booking_id) : null;
+                      // User info is now joined directly on claim.renter
+
+                      return (
+                        <tr key={claim.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">#{claim.claim_number}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900">
+                              {claim.renter?.full_name || 'Unknown User'}
+                            </div>
+                            <div className="text-sm text-gray-500">{claim.renter?.phone_number || ''}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                              <div className="text-sm text-gray-900">{formatDate(claim.incident_date)}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900 max-w-xs truncate">
+                              {claim.incident_location}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
+                              <div className="text-sm text-gray-900">
+                                {formatCurrency(claim.estimated_damage_cost || 0)}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {getStatusIcon(claim.status)}
+                              <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(claim.status)}`}>
+                                {getStatusText(claim.status)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {claim.status === 'approved' ? (
+                              <div className="flex flex-col">
+                                <span className="text-xs text-gray-500">Approved Amount:</span>
+                                <span className="text-sm font-medium text-green-600">
+                                  {formatCurrency(claim.approved_amount || 0)}
+                                </span>
+                                <span className="text-xs text-yellow-600">
+                                  {(claim as any).payout_status === 'paid' ? '✓ Paid' :
+                                    (claim as any).payout_status === 'processing' ? '⏳ Processing' :
+                                      (claim as any).payout_status === 'pending' ? '○ Pending' : '-'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => setSelectedClaim(claim)}
+                              className="text-blue-600 hover:text-blue-900 flex items-center"
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Review
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </AdminLayout>
     </AdminProtectedRoute>
