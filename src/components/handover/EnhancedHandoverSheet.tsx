@@ -78,7 +78,7 @@ export const EnhancedHandoverSheet = ({
   const [mileage, setMileage] = useState<number>();
   const [digitalSignature, setDigitalSignature] = useState<string>();
   const [isHandoverCompleted, setIsHandoverCompleted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);  
+  const [isSubmitting] = useState(false);  
   // Resizable functionality state
   const [sheetHeight, setSheetHeight] = useState<number>(90); // vh units
   const [isDragging, setIsDragging] = useState(false);
