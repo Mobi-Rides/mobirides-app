@@ -16,8 +16,8 @@ import { Conversation, Message, User, TypingIndicator } from '@/types/message';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { QuickReplySuggestions } from './QuickReplySuggestions';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -91,7 +91,7 @@ export function ChatWindow({
   // Or better, derive matches during render? 
   // No, we need matches for navigation state.
   // Let's use useMemo for matches to avoid effect for derivation
-  
+
   const derivedMatches = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
@@ -287,17 +287,13 @@ export function ChatWindow({
               <Users className="w-5 h-5 text-primary" />
             </div>
           ) : (
-            <div className="relative">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={conversation.participants.find(p => p.id !== currentUser.id)?.avatar} />
-                <AvatarFallback>
-                  {getConversationTitle().charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              {isOnline && (
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full" />
-              )}
-            </div>
+            <UserAvatar
+              avatarUrl={conversation.participants.find(p => p.id !== currentUser.id)?.avatar}
+              name={getConversationTitle()}
+              size="md"
+              showOnlineStatus={true}
+              isOnline={isOnline}
+            />
           )}
 
           {/* Title and status */}
