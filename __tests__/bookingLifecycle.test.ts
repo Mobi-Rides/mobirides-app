@@ -9,8 +9,12 @@ import { bookingLifecycle, BookingStatus } from '../src/services/bookingLifecycl
 jest.mock('@/integrations/supabase/client', () => ({
     supabase: {
         from: jest.fn(),
+        rpc: jest.fn().mockResolvedValue({ error: null }),
         auth: {
-            getUser: jest.fn()
+            getUser: jest.fn(),
+            admin: {
+                getUserById: jest.fn().mockResolvedValue({ data: { user: { email: 'test@example.com' } }, error: null })
+            }
         }
     }
 }));
