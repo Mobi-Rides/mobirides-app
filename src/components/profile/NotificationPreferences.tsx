@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Info, ArrowLeft } from 'lucide-react';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Car rental-specific notification groups and notifications
 const notificationGroups = [
@@ -98,7 +100,37 @@ notificationGroups.forEach(group => {
 const NotificationPreferences = () => {
   const [prefs, setPrefs] = useState(defaultPrefs);
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+
+  // Load persisted preferences on mount
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      if (!data) return;
+      // Map coarse DB columns back onto fine-grained UI prefs
+      setPrefs(prev => {
+        const next = { ...prev };
+        Object.keys(next).forEach(key => {
+          const group = notificationGroups.find(g => g.notifications.some(n => n.key === key))?.key;
+          next[key] = {
+            email: group === 'promotions' ? data.marketing_notifications : data.email_notifications,
+            sms: data.sms_notifications,
+            push: group === 'booking' || group === 'payment' ? data.booking_notifications && data.push_notifications : data.push_notifications,
+            inApp: true,
+          };
+        });
+        return next;
+      });
+    };
+    load();
+  }, []);
 
   const handleToggle = (notifKey, channel) => {
     setPrefs(prev => ({
@@ -106,13 +138,54 @@ const NotificationPreferences = () => {
       [notifKey]: { ...prev[notifKey], [channel]: !prev[notifKey][channel] },
     }));
   };
+
   const handleReset = () => {
     setPrefs(defaultPrefs);
     setSaved(false);
   };
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Derive coarse-grained DB columns from fine-grained UI state
+      const anyEmail = Object.values(prefs).some((p: any) => p.email);
+      const anyPush = Object.values(prefs).some((p: any) => p.push);
+      const anySms = Object.values(prefs).some((p: any) => p.sms);
+      const bookingOn = notificationGroups
+        .find(g => g.key === 'booking')!.notifications
+        .some(n => prefs[n.key]?.push);
+      const paymentOn = notificationGroups
+        .find(g => g.key === 'payment')!.notifications
+        .some(n => prefs[n.key]?.email);
+      const marketingOn = notificationGroups
+        .find(g => g.key === 'promotions')!.notifications
+        .some(n => prefs[n.key]?.email);
+
+      const { error } = await supabase
+        .from('notification_preferences')
+        .upsert({
+          user_id: user.id,
+          email_notifications: anyEmail,
+          push_notifications: anyPush,
+          sms_notifications: anySms,
+          booking_notifications: bookingOn,
+          payment_notifications: paymentOn,
+          marketing_notifications: marketingOn,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+      setSaved(true);
+      toast.success('Preferences saved');
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save preferences');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -168,15 +241,10 @@ const NotificationPreferences = () => {
         {/* Sticky action bar */}
         <div className="sticky bottom-0 bg-white dark:bg-gray-900 p-3 border-t flex gap-2 justify-end z-10 mt-8">
           <button onClick={handleReset} className="btn btn-secondary">Reset</button>
-          <button onClick={handleSave} className="btn btn-primary">Save Changes</button>
+          <button onClick={handleSave} disabled={isSaving} className="btn btn-primary">
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
           {saved && <span className="text-green-600 text-xs ml-2">Preferences saved!</span>}
-        </div>
-        {/* Info banner */}
-        <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-md p-3 flex items-start gap-2 mt-6 text-xs text-blue-900 dark:text-blue-100">
-          <Info className="w-4 h-4 mt-0.5 text-blue-500 dark:text-blue-300" />
-          <div>
-            <div>Preferences are stored locally for demo purposes. In production, sync with your backend.</div>
-          </div>
         </div>
       </main>
     </div>
