@@ -46,8 +46,10 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
           const { data: { user } } = await supabase.auth.getUser();
           const amount = request.grand_total;
           const commissionRate = await getCurrentCommissionRate();
-          const commission = amount * commissionRate;
-          const hostEarnings = amount - commission;
+          // Commission applies to rental portion only (not insurance premium)
+          const rentalPortion = request.base_rental_price + request.dynamic_pricing_adjustment - request.discount_amount;
+          const commission = rentalPortion * commissionRate;
+          const hostEarnings = rentalPortion - commission;
           const { error: txnError } = await supabase
             .from('payment_transactions')
             .insert({
