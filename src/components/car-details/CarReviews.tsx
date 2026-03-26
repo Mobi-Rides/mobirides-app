@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Star, StarHalf, MessageSquare, User, ChevronDown } from "lucide-react";
+import { Star, StarHalf, MessageSquare, User, ChevronDown, Reply, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -30,7 +29,24 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
   const [comment, setComment] = useState("");
   const { toast } = useToast();
 
-  const { data: reviews, isLoading } = useQuery({
+  // Host response state
+  const [isResponding, setIsResponding] = useState(false);
+  const [responseText, setResponseText] = useState("");
+  const [respondingReviewId, setRespondingReviewId] = useState<string | null>(null);
+  const [submittingResponse, setSubmittingResponse] = useState(false);
+
+  // Check if current user is the car owner
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.user || null;
+    },
+  });
+
+  const isCarOwner = currentUser?.id === car.owner_id;
+
+  const { data: reviews, isLoading, refetch } = useQuery({
     queryKey: ["car-reviews", car.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -72,7 +88,7 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
   const handleSubmitReview = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.user) {
         toast({
           title: "Error",
@@ -124,10 +140,11 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         title: "Review submitted",
         description: "Thank you for your feedback!",
       });
-      
+
       setIsReviewDialogOpen(false);
       setRating(0);
       setComment("");
+      refetch();
     } catch (error) {
       console.error("Error submitting review:", error);
       toast({
@@ -135,6 +152,65 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
         description: "Could not submit the review. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Handle starting host response
+  const handleStartResponse = (reviewId: string, existingResponse?: string) => {
+    setRespondingReviewId(reviewId);
+    setResponseText(existingResponse || "");
+    setIsResponding(true);
+  };
+
+  // Handle cancel response
+  const handleCancelResponse = () => {
+    setIsResponding(false);
+    setRespondingReviewId(null);
+    setResponseText("");
+  };
+
+  // Handle submit host response
+  const handleSubmitResponse = async () => {
+    if (!respondingReviewId || !responseText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a response.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmittingResponse(true);
+    try {
+      const { error } = await supabase
+        .from("reviews")
+        .update({
+          response: responseText.trim(),
+          response_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", respondingReviewId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Response submitted",
+        description: "Your response has been posted.",
+      });
+
+      setIsResponding(false);
+      setRespondingReviewId(null);
+      setResponseText("");
+      refetch();
+    } catch (error) {
+      console.error("Error submitting response:", error);
+      toast({
+        title: "Error",
+        description: "Could not submit the response. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmittingResponse(false);
     }
   };
 
@@ -164,14 +240,14 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
               </span>
             </div>
           )}
-          
+
           {reviews?.map((review) => (
             <div key={review.id} className="border rounded-lg p-4 dark:border-gray-700">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   {review.reviewer.avatar_url ? (
-                    <img 
-                      src={getAvatarPublicUrl(review.reviewer.avatar_url)} 
+                    <img
+                      src={getAvatarPublicUrl(review.reviewer.avatar_url)}
                       alt={review.reviewer.full_name}
                       className="w-8 h-8 rounded-full object-cover"
                     />
@@ -206,6 +282,93 @@ export const CarReviews = ({ car }: CarReviewsProps) => {
                     <CategoryRatingDisplay categoryAverages={review.category_ratings as Record<string, number>} />
                   </CollapsibleContent>
                 </Collapsible>
+              )}
+
+              {/* Host Response Section */}
+              {review.response && (
+                <div className="mt-4 ml-4 pl-4 border-l-2 border-primary/30 bg-muted/30 rounded-r-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Reply className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-primary">Host Response</span>
+                    {review.response_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(review.response_at), 'MMM d, yyyy')}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{review.response}</p>
+                  {isCarOwner && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2 h-7 text-xs"
+                      onClick={() => handleStartResponse(review.id, review.response)}
+                    >
+                      Edit Response
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Show Respond button for car owner if no response exists */}
+              {isCarOwner && !review.response && respondingReviewId !== review.id && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 text-xs"
+                  onClick={() => handleStartResponse(review.id)}
+                >
+                  <Reply className="h-3 w-3 mr-1" />
+                  Respond as Host
+                </Button>
+              )}
+
+              {/* Host Response Form */}
+              {isResponding && respondingReviewId === review.id && (
+                <div className="mt-4 ml-4 pl-4 border-l-2 border-primary rounded-r-lg p-3 bg-muted/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-primary">Your Response</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={handleCancelResponse}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    placeholder="Write a response to this review..."
+                    className="min-h-[80px] text-sm"
+                    maxLength={500}
+                  />
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-muted-foreground">
+                      {responseText.length}/500
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={handleCancelResponse}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={handleSubmitResponse}
+                        disabled={!responseText.trim() || submittingResponse}
+                      >
+                        <Send className="h-3 w-3 mr-1" />
+                        {submittingResponse ? "Posting..." : "Post Response"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           ))}
