@@ -9,17 +9,18 @@ interface HostPopupProps {
 
 export const HostPopup = ({ host, onViewCars }: HostPopupProps) => {
   const getAvatarUrl = () => {
-    return getAvatarPublicUrl(host.avatar_url) || "/placeholder.svg";
+    const url = getAvatarPublicUrl(host.avatar_url);
+    return url || "/placeholder.svg";
   };
 
   return (
     <div className="bg-background border rounded-lg shadow-lg p-3 min-w-[200px] cursor-pointer hover:bg-muted/50 transition-colors"
-         onClick={() => onViewCars(host.id)}>
+      onClick={() => onViewCars(host.id)}>
       <div className="flex items-center gap-3">
         {host.avatar_url ? (
-          <img 
-            src={getAvatarUrl()} 
-            alt={host.full_name || "Host"} 
+          <img
+            src={getAvatarUrl()}
+            alt={host.full_name || "Host"}
             className="w-12 h-12 rounded-full object-cover"
           />
         ) : (
