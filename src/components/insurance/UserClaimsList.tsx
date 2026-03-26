@@ -67,7 +67,12 @@ export default function UserClaimsList() {
 
           if (claimsError) throw claimsError;
 
-          setClaims((claimsData as any[]) || []);
+          setClaims(((claimsData as any[]) || []).map((c: any) => ({
+            ...c,
+            incident_location: c.incident_location ?? c.location,
+            estimated_repair_cost: c.estimated_repair_cost ?? c.estimated_damage_cost,
+            excess_amount: c.excess_amount ?? c.excess_amount_due,
+          })));
         } else {
           setClaims([]);
         }
