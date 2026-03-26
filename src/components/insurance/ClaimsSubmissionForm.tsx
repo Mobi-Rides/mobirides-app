@@ -13,21 +13,21 @@ const claimSchema = z.object({
       if (!val) return false;
       const [year, month, day] = val.split('-').map(Number);
       const date = new Date(year, month - 1, day); // Local midnight
-      
+
       const today = new Date();
       today.setHours(23, 59, 59, 999); // End of today
-      
+
       return date <= today;
     }, 'Incident date cannot be in the future')
     .refine((val) => {
       if (!val) return false;
       const [year, month, day] = val.split('-').map(Number);
       const date = new Date(year, month - 1, day); // Local midnight
-      
+
       const limit = new Date();
       limit.setDate(limit.getDate() - 30);
       limit.setHours(0, 0, 0, 0); // Start of 30 days ago
-      
+
       return date >= limit;
     }, 'Incident date cannot be more than 30 days ago'),
   incident_time: z.string().min(1, 'Incident time is required'),
@@ -124,6 +124,16 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
 
         if (data) {
           setUploadedFiles(prev => [...prev, data.path]);
+        }
+      }
+
+      // Show success message and auto-navigate to next step if files were uploaded successfully
+      const successCount = uploadedFiles.length + Array.from(files).filter(f => allowedTypes.includes(f.type) && f.size <= maxSizeBytes).length;
+      if (successCount > 0) {
+        alert(`Successfully uploaded ${successCount} file(s).`);
+        // Auto-advance to next step after successful upload
+        if (currentStep < 3) {
+          nextStep();
         }
       }
     } catch (error) {
