@@ -32,8 +32,8 @@ class MapboxSearchService {
         throw new Error('Mapbox token not available');
       }
       this.token = token;
-      console.log('Mapbox Search service initialized successfully');
     } catch (error) {
+      this.token = null; // Allow retry on next call
       console.error('Failed to initialize Mapbox Search service:', error);
       throw error;
     }
@@ -76,7 +76,7 @@ class MapboxSearchService {
       return { suggestions, query };
     } catch (error) {
       console.error('Search failed:', error);
-      return { suggestions: [], query };
+      throw error; // Re-throw so context can surface the error to the UI
     }
   }
 
