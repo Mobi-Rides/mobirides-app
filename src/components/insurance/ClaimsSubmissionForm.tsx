@@ -129,14 +129,16 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
       }
 
       // Show success message and auto-navigate to next step after successful upload
-      if (uploadedFiles.length > 0 || Array.from(files).length > 0) {
+      const newPaths: string[] = [];
+      for (const file of Array.from(files)) {
+        // already uploaded above — collect paths from uploadedFiles update
+      }
+      const hasUploads = Array.from(files).length > 0;
+      if (hasUploads) {
         toast.success('Files uploaded successfully!');
-        // Auto-navigate to next step after a short delay
-        setTimeout(() => {
-          if (currentStep === 2) {
-            nextStep();
-          }
-        }, 500);
+        if (currentStep === 2) {
+          setTimeout(() => nextStep(), 500);
+        }
       }
     } catch (error) {
       console.error('File upload failed:', error);
