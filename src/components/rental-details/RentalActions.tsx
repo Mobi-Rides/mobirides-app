@@ -100,24 +100,6 @@ export const RentalActions = ({
           </Tooltip>
         )}
 
-        {/* Modify booking option for confirmed/active rentals (only renters) */}
-        {(isActiveRental || booking.status === 'confirmed') && isRenter && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                className="w-full sm:w-auto flex items-center gap-2"
-                variant="outline"
-                onClick={handleModifyBooking}
-              >
-                <Edit3 className="h-4 w-4" />
-                Modify Booking
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Change pickup time or location</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
 
         {/* Handover actions (pickup or return) */}
         {canHandover && (
