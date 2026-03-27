@@ -9,13 +9,13 @@ export const usePlatformSettings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const { data, error: fetchError } = await supabase.rpc('get_platform_settings');
+      const { data, error: fetchError } = await supabase.rpc('get_platform_settings' as any);
       
       if (fetchError) throw fetchError;
       
       const settingsMap: Record<string, any> = {};
-      if (data) {
-        data.forEach((item: any) => {
+      if (data && Array.isArray(data)) {
+        (data as any[]).forEach((item: any) => {
           settingsMap[item.setting_key] = item.setting_value;
         });
       }
@@ -40,7 +40,7 @@ export const usePlatformSettings = () => {
 
   const updateSetting = async (key: string, value: any) => {
     try {
-      const { error: updateError } = await supabase.rpc('update_platform_setting', {
+      const { error: updateError } = await supabase.rpc('update_platform_setting' as any, {
         p_key: key,
         p_value: value
       });

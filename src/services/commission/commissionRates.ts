@@ -10,14 +10,14 @@ export interface CommissionRate {
 
 const getDefaultCommissionRate = async (): Promise<number> => {
   try {
-    const { data, error } = await supabase
-      .from("platform_settings")
+    const { data, error } = await (supabase
+      .from("platform_settings" as any)
       .select("setting_value")
       .eq("setting_key", "commission_rate_default")
-      .single();
+      .single() as any);
 
     if (error || !data) return 0.15;
-    return Number(data.setting_value) || 0.15;
+    return Number((data as any).setting_value) || 0.15;
   } catch (e) {
     return 0.15;
   }
