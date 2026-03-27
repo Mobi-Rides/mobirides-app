@@ -17,7 +17,6 @@
 > **🗑️ Anonymize-on-Delete Plan:** [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)  
 > **🛡️ Damage Protection Spec:** [20260305_DAMAGE_PROTECTION_OVERVIEW.md](../20260305_DAMAGE_PROTECTION_OVERVIEW.md)  
 > **📋 Pre-Launch Testing Protocol:** [PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md](../testing/PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md)  
-> **💳 Payment Integration Tasks:** [Payment Integration Implementation Tasks.md](../../.trae/documents/Payment%20Integration%20Implementation%20Tasks.md)  
 > **🐛 Active Bug Report:** [BUG_REPORT.md](../BUG_REPORT.md)  
 > **🔧 AI Development Workflow:** [AI_WORKFLOW.md](../conventions/AI_WORKFLOW.md)
 
@@ -75,8 +74,8 @@ Developer workflow improvements were shipped this week: the `AI_WORKFLOW.md` con
 
 | Category | Current | Gap | Path to Close |
 |----------|---------|-----|---------------|
-| Production Readiness | 84% | 11% | BUG-001 fix, platform_settings migration, payment Phase 1 (provider creds), anonymize-on-delete |
-| Test Coverage | 62% | 23% | Unit tests for payment + handover transitions; UI/QA regression suites |
+| Production Readiness | 84% | 11% | BUG-001 fix, platform_settings migration, anonymize-on-delete, auth compliance P3, notification scheduled reminders |
+| Test Coverage | 62% | 23% | Unit tests for handover transitions, insurance flows, admin portal; UI/QA regression suites |
 | System Health | 85% | 10% | Close BUG-001, ship platform_settings/dynamic_pricing tables, verify Android toolchain |
 
 ---
@@ -157,14 +156,13 @@ Sprint 8 bug registry execution is tracked in [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS
 
 ### Sprint 9 Plan (April 7–13) — UPCOMING
 
-**Theme:** Infrastructure Stability + Payment Phase 1 Groundwork + Compliance  
+**Theme:** Infrastructure Stability + Compliance + Test Coverage  
 **Target outcomes:**
 - **BUG-001 fix** — Drop legacy `create_handover_notification` overload (one migration)
 - **platform_settings + dynamic_pricing_rules migration** — Arnold to ship DB tables so admin settings UI and dynamic pricing service become functional
 - **MOB-110/130–138 (Anonymize-on-Delete) Phase 1** — Begin soft-delete column additions and edge function refactor per `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md`
 - **MOB-614/615 (Auth Compliance P3)** — `user_consents` table + consent record on signup
-- **Payment Phase 1 prerequisites** — Confirm PayGate/Ooze credentials status with business team; scaffold edge function stubs
-- **Test coverage uplift** — Add unit tests for payment flow and handover transitions (target: 62% → 70%)
+- **Test coverage uplift** — Add unit tests for handover transitions, insurance flows, and admin portal (target: 62% → 70%)
 - **Android build verification** — Tapologo to confirm `gradle-wrapper.properties` update works in CI
 
 ---
@@ -199,10 +197,9 @@ Sprint 8 bug registry execution is tracked in [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS
 
 | Epic | ID | Status | Progress | Notes |
 |------|----|--------|----------|-------|
-| Payment Integration (PayGate/Ooze) | PAY | 🟡 Phase 0 Complete | 30% | Phase 1 blocked on provider credentials |
+| Admin Settings & Business Logic | ADM | 🔴 Blocked | 20% | platform_settings table not yet in DB — Sprint 9 P0 |
+| Dynamic Pricing | DYN | 🔴 Blocked | 25% | dynamic_pricing_rules table not yet in DB — Sprint 9 P0 |
 | Insurance / Damage Protection | INS | ✅ Schema + UI Complete | 75% | Claim management consolidated (PR #273) |
-| Admin Settings & Business Logic | ADM | 🔴 Blocked | 20% | platform_settings table not yet in DB |
-| Dynamic Pricing | DYN | 🔴 Blocked | 25% | dynamic_pricing_rules table not yet in DB |
 | Handover Consolidation | MOB-500 | ✅ Complete | 100% | PR #234 |
 | Auth Compliance (MOB-600) | MOB-600 | 🟡 P0–P2 Done | 85% | MOB-614/615 (consent DB) still Todo |
 | Anonymize-on-Delete | MOB-110 | 🔴 Not Started | 0% | Plan exists, no code yet |
@@ -223,7 +220,6 @@ Sprint 8 bug registry execution is tracked in [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS
 |------|-----------|--------|------------|
 | BUG-001 blocks next `db pull` / type regen | High | Medium | Ship one-line migration in Sprint 9 day 1 |
 | platform_settings missing blocks admin UI + dynamic pricing | High | High | Arnold to prioritise migration in Sprint 9 |
-| PayGate/Ooze credentials not obtained | Medium | High | Business team follow-up; Phase 1 cannot start without them |
 | Anonymize-on-Delete compliance gap | Medium | High | Begin Phase 1 (soft-delete columns) in Sprint 9 |
 | Android CI inconsistency | Medium | Medium | Tapologo to verify gradle wrapper in Sprint 9 |
 | 4 remaining security vulnerabilities | Low | High | Schedule security audit; address in Sprint 9/10 |
@@ -247,14 +243,12 @@ Sprint 8 bug registry execution is tracked in [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS
 |---|--------|-------|-----|
 | 4 | Ship MOB-614/615 (`user_consents` table + consent record on signup) | Duma | Apr 10 |
 | 5 | Verify Android gradle wrapper in CI | Tapologo | Apr 8 |
-| 6 | Confirm PayGate/Ooze credentials status with business team | Modisa | Apr 7 |
-| 7 | Add unit tests for payment flow transitions (target: 62%→70%) | Tapologo | Apr 11 |
+| 6 | Add unit tests for handover + insurance + admin flows (target: 62%→70%) | Tapologo | Apr 11 |
 
 ### P2 — Backlog
 
 | # | Action | Owner | Due |
 |---|--------|-------|-----|
-| 8 | Payment Phase 1 edge function scaffolding (once creds confirmed) | Duma | Apr 14+ |
 | 9 | Address 4 remaining security vulnerabilities | Arnold | Apr 14+ |
 | 10 | SMS service integration for Botswana | TBD | TBD |
 
@@ -263,7 +257,6 @@ Sprint 8 bug registry execution is tracked in [`BUGFIX_IMPLEMENTATION_KNOWN_BUGS
 ## 📚 Reference Documents
 
 ### Active Plans
-- [Payment Production Readiness Plan](../20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md)
 - [Insurance Production Readiness Plan](../20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md)
 - [Admin Settings Implementation Plan](../20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md)
 - [Email Notification Enhancement Plan](../20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md)
