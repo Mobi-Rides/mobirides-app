@@ -381,6 +381,79 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_extensions: {
+        Row: {
+          additional_cost: number
+          additional_days: number
+          approved_at: string | null
+          approved_by: string | null
+          booking_id: string
+          created_at: string
+          current_end_date: string
+          id: string
+          reason: string | null
+          rejected_reason: string | null
+          requested_by: string
+          requested_end_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          additional_cost: number
+          additional_days: number
+          approved_at?: string | null
+          approved_by?: string | null
+          booking_id: string
+          created_at?: string
+          current_end_date: string
+          id?: string
+          reason?: string | null
+          rejected_reason?: string | null
+          requested_by: string
+          requested_end_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          additional_cost?: number
+          additional_days?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          booking_id?: string
+          created_at?: string
+          current_end_date?: string
+          id?: string
+          reason?: string | null
+          rejected_reason?: string | null
+          requested_by?: string
+          requested_end_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_extensions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_extensions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_extensions_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           actual_end_date: string | null
