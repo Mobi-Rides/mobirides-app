@@ -143,6 +143,7 @@ git push origin develop
 - **Always run `tsc --noEmit`** before pushing — broken builds block everyone
 - **One PR per ticket** — don't bundle unrelated fixes
 - **Update docs after the human merges** — open a separate doc-only PR once the code PR is merged
+- **Migration filenames must be descriptive** — use `YYYYMMDDHHMMSS_description.sql` per `docs/conventions/MIGRATION_PROTOCOL.md`. Never use auto-generated UUIDs or vague names. Every migration must have a header comment explaining what it does and why.
 
 > **Why:** Direct pushes to develop bypass code review, break the audit trail, and remove the human's ability to control what goes into the main branch. This is non-negotiable regardless of how trivial the change appears.
 
