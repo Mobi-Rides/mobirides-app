@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Message, User, MessageReaction } from '@/types/message';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -73,12 +73,11 @@ export function MessageBubble({
       {/* Avatar */}
       <div className="flex-shrink-0">
         {showAvatar ? (
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={sender.avatar} />
-            <AvatarFallback className="text-xs">
-              {sender.name ? sender.name.charAt(0).toUpperCase() : 'U'}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            avatarUrl={sender.avatar}
+            name={sender.name}
+            size="sm"
+          />
         ) : (
           <div className="w-8 h-8" />
         )}

@@ -429,7 +429,7 @@ export const RentalReview = () => {
 
           <Button
             onClick={handleSubmitReview}
-            disabled={rating === 0 || Object.keys(categoryRatings).length < RENTER_CATEGORIES.length || isSubmitting}
+            disabled={rating === 0 || isSubmitting}
             className="w-full"
           >
             {isSubmitting ? "Submitting..." : "Submit Review"}

@@ -7,11 +7,11 @@ import {
   Users
 } from 'lucide-react';
 import { Conversation, User } from '@/types/message';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn } from '@/lib/utils';
 
 interface ConversationListProps {
@@ -82,13 +82,11 @@ export function ConversationList({
     return otherParticipants.map(p => p.name).join(', ');
   };
 
-  const getConversationAvatar = (conversation: Conversation) => {
+  const getConversationParticipant = (conversation: Conversation) => {
     if (conversation.type === 'group') {
-      return null; // Will show group icon instead
+      return null;
     }
-
-    const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
-    return otherParticipant?.avatar;
+    return (conversation.participants || []).find(p => p.id !== currentUser.id);
   };
 
   const getLastMessagePreview = (conversation: Conversation) => {
@@ -144,7 +142,7 @@ export function ConversationList({
             <div className="space-y-1">
               {filteredConversations.map((conversation) => {
                 const isSelected = conversation.id === selectedConversationId;
-                const otherParticipant = (conversation.participants || []).find(p => p.id !== currentUser.id);
+                const otherParticipant = getConversationParticipant(conversation);
 
                 return (
                   <div
@@ -163,22 +161,13 @@ export function ConversationList({
                           <Users className="w-6 h-6 text-primary" />
                         </div>
                       ) : (
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={getConversationAvatar(conversation)} />
-                          <AvatarFallback>
-                            {getConversationTitle(conversation).charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-
-                      {/* Online status for direct messages */}
-                      {conversation.type === 'direct' && otherParticipant && (
-                        <div className={cn(
-                          "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-card",
-                          otherParticipant.status === 'online' && "bg-green-500",
-                          otherParticipant.status === 'away' && "bg-yellow-500",
-                          otherParticipant.status === 'offline' && "bg-gray-400"
-                        )} />
+                        <UserAvatar
+                          avatarUrl={otherParticipant?.avatar}
+                          name={otherParticipant?.name}
+                          size="lg"
+                          showOnlineStatus={true}
+                          isOnline={otherParticipant?.status === 'online'}
+                        />
                       )}
                     </div>
 

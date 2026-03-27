@@ -119,11 +119,11 @@ const CustomMapbox = ({
 
       // Only add GeolocateControl if in a secure context or not localhost (browsers block geolocation on insecure origins)
       // Also allow if it looks like a local network IP (192.168.x.x, 10.x.x.x, etc)
-      const isLocalNetwork = window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1' ||
-                            window.location.hostname.startsWith('192.168.') ||
-                            window.location.hostname.startsWith('10.') ||
-                            window.location.hostname.endsWith('.local');
+      const isLocalNetwork = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.startsWith('192.168.') ||
+        window.location.hostname.startsWith('10.') ||
+        window.location.hostname.endsWith('.local');
 
       if (window.isSecureContext || isLocalNetwork) {
         try {
@@ -141,15 +141,15 @@ const CustomMapbox = ({
 
           geolocateControl.on("error", (e: GeolocationPositionError) => {
             console.error("Geolocation error:", e);
-            
+
             // If geolocation fails (e.g. denied or timeout), fallback to default
             if (!userLocation.latitude || !userLocation.longitude) {
-               console.log("Geolocation failed, using default location");
-               // Default to Gaborone if no location
-               setUserLocation({
-                 latitude: -24.65451,
-                 longitude: 25.90859
-               });
+              console.log("Geolocation failed, using default location");
+              // Default to Gaborone if no location
+              setUserLocation({
+                latitude: -24.65451,
+                longitude: 25.90859
+              });
             }
 
             toast.error(
@@ -160,15 +160,15 @@ const CustomMapbox = ({
           console.warn("GeolocateControl failed to initialize:", e);
         }
       } else {
-         console.warn("Insecure context detected, skipping GeolocateControl");
-         toast.info("Location services unavailable (Insecure connection). Using default location.");
+        console.warn("Insecure context detected, skipping GeolocateControl");
+        toast.info("Location services unavailable (Insecure connection). Using default location.");
       }
 
       map.current.on("load", () => {
         console.log("Map loaded successfully");
         setMapInit(true);
         setMapInstance(map.current);
-        
+
         // If on localhost/insecure context, fly to default location manually since GeolocateControl might fail
         if (isLocalNetwork) {
           // Try to trigger geolocation first
@@ -176,8 +176,8 @@ const CustomMapbox = ({
             console.log("Triggering geolocation on local network...");
             geolocateControlRef.current.trigger();
           } else {
-             // Fallback if no control
-             map.current?.flyTo({
+            // Fallback if no control
+            map.current?.flyTo({
               center: [25.90859, -24.65451], // Gaborone
               zoom: 14
             });
@@ -289,6 +289,23 @@ const CustomMapbox = ({
     }
   }, [mapStyle, mapInit]);
 
+  // Fly to user location when it's updated
+  useEffect(() => {
+    if (map.current && mapInit && userLocation.latitude && userLocation.longitude) {
+      // Only fly if we have actual user location (not the default)
+      const hasUserLocation = userLocation.latitude !== latitude || userLocation.longitude !== longitude;
+      if (hasUserLocation) {
+        console.log("Flying to user location:", userLocation);
+        map.current.flyTo({
+          center: [userLocation.longitude, userLocation.latitude],
+          zoom: 15,
+          duration: 1500,
+          essential: true
+        });
+      }
+    }
+  }, [userLocation, mapInit, latitude, longitude]);
+
   const handleViewHostCars = (hostId: string) => {
     console.log("Trying to view cars for host:", hostId);
     const host = onlineHosts?.find(h => h.id === hostId);
@@ -364,7 +381,7 @@ const CustomMapbox = ({
           const bounds = new mapboxgl.LngLatBounds()
             .extend([userLocation.longitude, userLocation.latitude])
             .extend([host.longitude, host.latitude]);
-          
+
           map.current!.fitBounds(bounds, {
             padding: 50,
             maxZoom: 15,
@@ -436,8 +453,8 @@ const CustomMapbox = ({
             closeOnClick: false,
             className: 'host-popup'
           })
-          .setDOMContent(popupDiv)
-          .addTo(map.current!);
+            .setDOMContent(popupDiv)
+            .addTo(map.current!);
 
           marker.setPopup(popup);
           popup.addTo(map.current!);
@@ -580,7 +597,7 @@ const CustomMapbox = ({
     if (!map.current || !mapInit || !destination) return;
 
     const { latitude, longitude } = destination;
-    
+
     // Guard clause: Ensure destination coordinates are valid before fetching
     if (!latitude || !longitude || !userLocation.latitude || !userLocation.longitude) {
       return;
@@ -591,7 +608,7 @@ const CustomMapbox = ({
         const response = await fetch(
           `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${longitude},${latitude}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`
         );
-        
+
         if (!response.ok) {
           console.warn('Route fetch failed:', response.statusText);
           return;
@@ -800,7 +817,7 @@ const CustomMapbox = ({
               </p>
               <p className="text-xs text-muted-foreground">
                 {handover.handoverStatus.host_location &&
-                handover.handoverStatus.renter_location
+                  handover.handoverStatus.renter_location
                   ? "Both locations shared"
                   : "Waiting for location..."}
               </p>
@@ -808,7 +825,7 @@ const CustomMapbox = ({
           </div>
         </div>
       )}
-      
+
       {dpad && (
         <Dpad
           onUp={onUp}
@@ -824,12 +841,12 @@ const CustomMapbox = ({
         onClose={() => setIsHostTrayOpen(false)}
         host={selectedHost}
       />
-      
+
       {activeNavigationState.isNavigating && (
-        <RouteLayer 
-          map={mapInstance} 
-          route={activeNavigationState.activeRoute} 
-          userLocation={userLocation} 
+        <RouteLayer
+          map={mapInstance}
+          route={activeNavigationState.activeRoute}
+          userLocation={userLocation}
           showTraffic={activeNavigationState.showTraffic}
         />
       )}

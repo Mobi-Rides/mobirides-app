@@ -45,7 +45,7 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
 
   const fetchHostCars = async (hostId: string) => {
     setLoading(true);
-    
+
     try {
       // Fetch available cars directly from cars table
       const { data, error } = await supabase
@@ -72,18 +72,18 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
       console.warn("No image URL provided, using placeholder");
       return "/placeholder.svg";
     }
-    
+
     try {
       // Check if imageUrl is already a full URL
       if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
         return imageUrl;
       }
-      
+
       // If it's just a storage path, generate the public URL
       const publicUrl = supabase.storage
         .from("car-images")
         .getPublicUrl(imageUrl).data.publicUrl;
-      
+
       return publicUrl;
     } catch (error) {
       console.error("Error processing image URL:", error, "Original URL:", imageUrl);
@@ -92,7 +92,8 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
   };
 
   const getHostAvatarUrl = () => {
-    return getAvatarPublicUrl(host?.avatar_url) || "/placeholder.svg";
+    const url = getAvatarPublicUrl(host?.avatar_url);
+    return url || "/placeholder.svg";
   };
 
   const handleCarClick = (carId: string) => {
@@ -105,11 +106,11 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 z-40"
         onClick={onClose}
       />
-      
+
       {/* Side Tray */}
       <div className="fixed left-0 top-0 h-full w-80 bg-background border-r shadow-xl z-50 transform transition-transform duration-300">
         <div className="flex flex-col h-full">
@@ -121,7 +122,7 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {/* Host Info */}
             {host && (
               <div className="flex items-center gap-3">
@@ -161,8 +162,8 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
                 </div>
               ) : (
                 cars.map((car) => (
-                  <Card 
-                    key={car.id} 
+                  <Card
+                    key={car.id}
                     className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => handleCarClick(car.id)}
                   >
@@ -174,7 +175,7 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex items-start justify-between">
                           <div>

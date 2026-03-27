@@ -1,10 +1,10 @@
 
 import React, { useState } from "react";
-import { KeyRound, MapPin, Star, Clock, Edit3, CreditCard } from "lucide-react";
+import { KeyRound, MapPin, Star, Clock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
-// Note: Extension and modification dialogs removed for simplification
+import { ExtensionRequestDialog } from "./ExtensionRequestDialog";
 import { Booking } from "@/types/booking";
 
 interface RentalActionsProps {
@@ -16,6 +16,7 @@ interface RentalActionsProps {
   isCompletedRental: boolean;
   isActiveRental: boolean;
   isRenter: boolean;
+  pricePerDay?: number;
   onHandoverInitiate: () => void;
   onExtensionRequested?: () => void;
   onPayNow?: () => void;
@@ -30,13 +31,13 @@ export const RentalActions = ({
   isCompletedRental,
   isActiveRental,
   isRenter,
+  pricePerDay = 0,
   onHandoverInitiate,
   onExtensionRequested,
   onPayNow
 }: RentalActionsProps) => {
   const navigate = useNavigate();
   const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false);
-  const [isModificationDialogOpen, setIsModificationDialogOpen] = useState(false);
 
 
 
@@ -44,16 +45,8 @@ export const RentalActions = ({
     setIsExtensionDialogOpen(true);
   };
 
-  const handleModifyBooking = () => {
-    setIsModificationDialogOpen(true);
-  };
-
   const handleExtensionRequested = () => {
     onExtensionRequested?.();
-  };
-
-  const handleModificationRequested = () => {
-    onExtensionRequested?.(); // Use same refresh function
   };
 
   return (
@@ -107,24 +100,6 @@ export const RentalActions = ({
           </Tooltip>
         )}
 
-        {/* Modify booking option for confirmed/active rentals (only renters) */}
-        {(isActiveRental || booking.status === 'confirmed') && isRenter && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                className="w-full sm:w-auto flex items-center gap-2"
-                variant="outline"
-                onClick={handleModifyBooking}
-              >
-                <Edit3 className="h-4 w-4" />
-                Modify Booking
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Change pickup time or location</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
 
         {/* Handover actions (pickup or return) */}
         {canHandover && (
@@ -167,7 +142,14 @@ export const RentalActions = ({
         )}
       </TooltipProvider>
 
-      {/* Extension and modification dialogs removed for simplification */}
+      <ExtensionRequestDialog
+        open={isExtensionDialogOpen}
+        onClose={() => setIsExtensionDialogOpen(false)}
+        onSuccess={() => onExtensionRequested?.()}
+        bookingId={bookingId}
+        currentEndDate={booking.end_date}
+        pricePerDay={pricePerDay}
+      />
     </div>
   );
 };

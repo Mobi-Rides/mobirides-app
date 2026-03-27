@@ -177,6 +177,7 @@ export const createPickupHandoverSession = async (
           const { error: notificationError } = await supabase
             .from("notifications")
             .insert({
+              user_id: data.renter_id,
               type: "pickup_location_shared",
               title: "Car Pickup Ready",
               content: notificationContent,
@@ -349,6 +350,7 @@ export const createReturnHandoverSession = async (
           const { error: notificationError } = await supabase
             .from("notifications")
             .insert({
+              user_id: data.host_id,
               type: "arrival_notification",
               title: "Car Return Ready",
               content: notificationContent,

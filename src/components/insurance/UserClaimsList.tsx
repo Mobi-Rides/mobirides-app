@@ -67,7 +67,12 @@ export default function UserClaimsList() {
 
           if (claimsError) throw claimsError;
 
-          setClaims((claimsData as any[]) || []);
+          setClaims(((claimsData as any[]) || []).map((c: any) => ({
+            ...c,
+            incident_location: c.incident_location ?? c.location,
+            estimated_repair_cost: c.estimated_repair_cost ?? c.estimated_damage_cost,
+            excess_amount: c.excess_amount ?? c.excess_amount_due,
+          })));
         } else {
           setClaims([]);
         }
@@ -440,6 +445,7 @@ export default function UserClaimsList() {
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
+              <option value="more_info_needed">Info Needed</option>
               <option value="under_review">Under Review</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>

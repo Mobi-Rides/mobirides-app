@@ -80,7 +80,12 @@ export class NotificationClassifier {
   }
 
   static isActiveRentalNotification(notification: Notification): boolean {
-    return this.isHandoverNotification(notification);
+    if (this.isHandoverNotification(notification)) return true;
+    const type = String(notification.type);
+    // Also include in-progress rental and confirmed booking notifications
+    return type.includes('in_progress') || type.includes('rental_started') ||
+           type.includes('trip_started') || type.includes('rental_active') ||
+           type === 'confirmed' || type === 'booking_confirmed';
   }
 
   static isSystemNotification(notification: Notification): boolean {

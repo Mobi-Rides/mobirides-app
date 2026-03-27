@@ -53,7 +53,7 @@ const CarListing = () => {
         }
 
         // Apply sorting
-        const sortColumn = filters.sortBy === 'price' ? 'rental_price' : 'created_at';
+        const sortColumn = filters.sortBy === 'price' ? 'price_per_day' : 'created_at';
         query = query.order(sortColumn, { ascending: filters.sortOrder === 'asc' });
 
         const { data, error, count } = await query;

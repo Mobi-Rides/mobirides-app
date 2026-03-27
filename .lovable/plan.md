@@ -1,35 +1,13 @@
 
 
-## Root Cause: Database Column Default
+## Plan: Regenerate Supabase Types and Fix Build Errors
 
-The `cars.is_available` column has a **default value of `true`** at the database level. While `AddCar.tsx` correctly passes `is_available: false`, any insert that omits this field (direct DB inserts, other code paths, or even edge cases where the field is dropped) will default to `true`, bypassing the approval requirement.
+### Step 1: Regenerate Supabase types
+Run the Supabase type generation to pull in `platform_settings`, `dynamic_pricing_rules`, and their associated RPCs (`get_platform_settings`, `update_platform_setting`) into `src/integrations/supabase/types.ts`. This should resolve all 20+ type errors across `useDynamicPricingRules.ts`, `usePlatformSettings.ts`, `commissionRates.ts`, `dynamicPricingService.ts`, and `insuranceService.ts`.
 
-Evidence from production data (since March 1, 2026):
-- Honda Fit (Mar 14): `is_available: true`, `verification_status: pending` -- live without approval
-- Audi A5 (Mar 10, 15:37): `is_available: false`, `verification_status: pending` -- correctly pending
-- Audi A5 (Mar 10, 15:00): `is_available: true`, `verification_status: pending` -- live without approval
+### Step 2: Remove "Modify Booking" button from `RentalActions.tsx`
+Remove the entire block (lines ~103-117) that renders the "Modify Booking" button and references `handleModifyBooking`. This eliminates the `TS2304: Cannot find name 'handleModifyBooking'` error.
 
-### Fix
-
-**1. Database migration: Change column default from `true` to `false`**
-
-```sql
-ALTER TABLE public.cars 
-  ALTER COLUMN is_available SET DEFAULT false;
-```
-
-This ensures every new car listing defaults to unavailable, requiring admin approval via the existing `CarVerificationTable` approve action to set `is_available: true`.
-
-**2. Fix existing unapproved-but-available cars**
-
-Use the insert/update tool to correct the 2 cars currently live without approval:
-
-```sql
-UPDATE cars 
-SET is_available = false 
-WHERE verification_status = 'pending' 
-  AND is_available = true;
-```
-
-No frontend code changes needed -- `AddCar.tsx` already sets `is_available: false` explicitly, and the admin approve flow already sets it to `true`.
+### Step 3: Verify build
+After type regeneration and the button removal, check for any remaining type mismatches (e.g., `.forEach` on RPC return, `.setting_value` property access) and fix if the regenerated types reveal different shapes than what the code expects.
 

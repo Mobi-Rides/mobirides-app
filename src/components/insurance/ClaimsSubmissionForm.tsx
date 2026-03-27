@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { AlertCircle, Upload, FileText, Camera, Calendar, MapPin, Phone, User, Car } from 'lucide-react';
 import { InsuranceService } from '../../services/insuranceService';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const claimSchema = z.object({
   incident_date: z.string()
@@ -13,21 +14,21 @@ const claimSchema = z.object({
       if (!val) return false;
       const [year, month, day] = val.split('-').map(Number);
       const date = new Date(year, month - 1, day); // Local midnight
-      
+
       const today = new Date();
       today.setHours(23, 59, 59, 999); // End of today
-      
+
       return date <= today;
     }, 'Incident date cannot be in the future')
     .refine((val) => {
       if (!val) return false;
       const [year, month, day] = val.split('-').map(Number);
       const date = new Date(year, month - 1, day); // Local midnight
-      
+
       const limit = new Date();
       limit.setDate(limit.getDate() - 30);
       limit.setHours(0, 0, 0, 0); // Start of 30 days ago
-      
+
       return date >= limit;
     }, 'Incident date cannot be more than 30 days ago'),
   incident_time: z.string().min(1, 'Incident time is required'),
@@ -126,9 +127,22 @@ export default function ClaimsSubmissionForm({ policyId, bookingId, onSuccess, o
           setUploadedFiles(prev => [...prev, data.path]);
         }
       }
+
+      // Show success message and auto-navigate to next step after successful upload
+      const newPaths: string[] = [];
+      for (const file of Array.from(files)) {
+        // already uploaded above — collect paths from uploadedFiles update
+      }
+      const hasUploads = Array.from(files).length > 0;
+      if (hasUploads) {
+        toast.success('Files uploaded successfully!');
+        if (currentStep === 2) {
+          setTimeout(() => nextStep(), 500);
+        }
+      }
     } catch (error) {
       console.error('File upload failed:', error);
-      alert('An unexpected error occurred during file upload.');
+      toast.error('An unexpected error occurred during file upload.');
     } finally {
       // Reset input so verify same file can be selected again if needed, 
       // but strictly speaking not required. 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PricingRule } from '@/types/pricing';
@@ -10,10 +11,10 @@ export const useDynamicPricingRules = () => {
   const fetchRules = async () => {
     try {
       setLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from('dynamic_pricing_rules')
+      const { data, error: fetchError } = await (supabase
+        .from('dynamic_pricing_rules' as any)
         .select('*')
-        .order('priority', { ascending: false });
+        .order('priority', { ascending: false }) as any);
 
       if (fetchError) throw fetchError;
       setRules((data as unknown as PricingRule[]) || []);
@@ -30,10 +31,10 @@ export const useDynamicPricingRules = () => {
 
   const updateRule = async (id: string, updates: Partial<PricingRule>) => {
     try {
-      const { error: updateError } = await supabase
-        .from('dynamic_pricing_rules')
+      const { error: updateError } = await (supabase
+        .from('dynamic_pricing_rules' as any)
         .update(updates)
-        .eq('id', id);
+        .eq('id', id) as any);
 
       if (updateError) throw updateError;
       await fetchRules();
@@ -46,9 +47,9 @@ export const useDynamicPricingRules = () => {
 
   const addRule = async (rule: Omit<PricingRule, 'created_at' | 'updated_at'>) => {
     try {
-      const { error: insertError } = await supabase
-        .from('dynamic_pricing_rules')
-        .insert([rule]);
+      const { error: insertError } = await (supabase
+        .from('dynamic_pricing_rules' as any)
+        .insert([rule]) as any);
 
       if (insertError) throw insertError;
       await fetchRules();

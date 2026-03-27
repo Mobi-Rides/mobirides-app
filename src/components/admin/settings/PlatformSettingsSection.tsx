@@ -1,139 +1,284 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { usePlatformSettings } from "@/hooks/usePlatformSettings";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Settings, Globe, Mail, Bell, Shield, Palette } from 'lucide-react';
 
 export const PlatformSettingsSection = () => {
-  const { getSetting, updateSetting, loading } = usePlatformSettings();
   const { toast } = useToast();
-  
-  const [isSaving, setIsSaving] = useState(false);
-  
-  // Local state for forms
-  const [dynamicPricingEnabled, setDynamicPricingEnabled] = 
-    useState(() => typeof getSetting('dynamic_pricing_enabled', true) === 'boolean' 
-      ? getSetting('dynamic_pricing_enabled', true) 
-      : getSetting('dynamic_pricing_enabled', "true") === "true");
-  
-  const [adminFee, setAdminFee] = useState(getSetting('insurance_admin_fee_pula', 150).toString());
-  const [silverTier, setSilverTier] = useState(getSetting('loyalty_tier_silver_threshold', 5).toString());
-  const [goldTier, setGoldTier] = useState(getSetting('loyalty_tier_gold_threshold', 10).toString());
-  const [platinumTier, setPlatinumTier] = useState(getSetting('loyalty_tier_platinum_threshold', 20).toString());
+  const [saving, setSaving] = useState(false);
 
-  // Update local state when remote loads
-  React.useEffect(() => {
-    if (!loading) {
-      const dpEval = getSetting('dynamic_pricing_enabled', true);
-      setDynamicPricingEnabled(typeof dpEval === 'boolean' ? dpEval : dpEval === "true");
-      setAdminFee(getSetting('insurance_admin_fee_pula', 150).toString());
-      setSilverTier(getSetting('loyalty_tier_silver_threshold', 5).toString());
-      setGoldTier(getSetting('loyalty_tier_gold_threshold', 10).toString());
-      setPlatinumTier(getSetting('loyalty_tier_platinum_threshold', 20).toString());
-    }
-  }, [loading]);
+  // General settings
+  const [appName, setAppName] = useState('MobiRides');
+  const [supportEmail, setSupportEmail] = useState('support@mobirides.co.bw');
+  const [supportPhone, setSupportPhone] = useState('+267 XX XXX XXX');
 
-  if (loading) {
-    return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
+  // Notification settings
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [smsNotifications, setSmsNotifications] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(true);
+
+  // Security settings
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [sessionTimeout, setSessionTimeout] = useState('60');
+
+  // Appearance settings
+  const [themeMode, setThemeMode] = useState('system');
+  const [primaryColor, setPrimaryColor] = useState('#3B82F6');
+  const [fontSize, setFontSize] = useState('medium');
 
   const handleSave = async () => {
-    setIsSaving(true);
+    setSaving(true);
     try {
-      await updateSetting('dynamic_pricing_enabled', dynamicPricingEnabled);
-      await updateSetting('insurance_admin_fee_pula', Number(adminFee));
-      await updateSetting('loyalty_tier_silver_threshold', Number(silverTier));
-      await updateSetting('loyalty_tier_gold_threshold', Number(goldTier));
-      await updateSetting('loyalty_tier_platinum_threshold', Number(platinumTier));
-      
+      // Simulate save - in production, this would call an API
+      await new Promise(resolve => setTimeout(resolve, 1000));
       toast({
-        title: "Settings Saved",
-        description: "Platform settings updated successfully.",
+        title: 'Settings saved',
+        description: 'Platform settings have been updated successfully.',
       });
-    } catch (e) {
+    } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save settings. Please ensure you have super admin access.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to save settings. Please try again.',
+        variant: 'destructive',
       });
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
+  };
+
+  const handleReset = () => {
+    setAppName('MobiRides');
+    setSupportEmail('support@mobirides.co.bw');
+    setSupportPhone('+267 XX XXX XXX');
+    setEmailNotifications(true);
+    setSmsNotifications(false);
+    setPushNotifications(true);
+    setTwoFactorEnabled(false);
+    setSessionTimeout('60');
+    setThemeMode('system');
+    setPrimaryColor('#3B82F6');
+    setFontSize('medium');
+    toast({
+      title: 'Settings reset',
+      description: 'All settings have been reset to defaults.',
+    });
   };
 
   return (
     <div className="space-y-6">
+      {/* General Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Global Platform Toggles</CardTitle>
-          <CardDescription>Master switches for major platform features.</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            General Settings
+          </CardTitle>
+          <CardDescription>
+            Basic platform information and contact details
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="appName">Application Name</Label>
+              <Input
+                id="appName"
+                value={appName}
+                onChange={(e) => setAppName(e.target.value)}
+                placeholder="Enter app name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supportEmail">Support Email</Label>
+              <Input
+                id="supportEmail"
+                type="email"
+                value={supportEmail}
+                onChange={(e) => setSupportEmail(e.target.value)}
+                placeholder="support@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supportPhone">Support Phone</Label>
+              <Input
+                id="supportPhone"
+                value={supportPhone}
+                onChange={(e) => setSupportPhone(e.target.value)}
+                placeholder="+267 XX XXX XXX"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notification Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notification Settings
+          </CardTitle>
+          <CardDescription>
+            Configure how users receive notifications
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Dynamic Pricing</Label>
+              <Label>Email Notifications</Label>
               <p className="text-sm text-muted-foreground">
-                Enable or disable dynamic pricing algorithms globally.
+                Send notifications via email
               </p>
             </div>
-            <Switch 
-              checked={dynamicPricingEnabled} 
-              onCheckedChange={setDynamicPricingEnabled} 
+            <Switch
+              checked={emailNotifications}
+              onCheckedChange={setEmailNotifications}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>SMS Notifications</Label>
+              <p className="text-sm text-muted-foreground">
+                Send notifications via SMS
+              </p>
+            </div>
+            <Switch
+              checked={smsNotifications}
+              onCheckedChange={setSmsNotifications}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Push Notifications</Label>
+              <p className="text-sm text-muted-foreground">
+                Send push notifications to mobile devices
+              </p>
+            </div>
+            <Switch
+              checked={pushNotifications}
+              onCheckedChange={setPushNotifications}
             />
           </div>
         </CardContent>
       </Card>
 
+      {/* Security Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Insurance & Fees</CardTitle>
-          <CardDescription>Configure fixed values for insurance processing.</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Security Settings
+          </CardTitle>
+          <CardDescription>
+            Platform security and access controls
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Insurance Admin Fee (BWP)</Label>
-            <Input 
-              type="number" 
-              value={adminFee} 
-              onChange={(e) => setAdminFee(e.target.value)} 
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Two-Factor Authentication</Label>
+              <p className="text-sm text-muted-foreground">
+                Require 2FA for all admin users
+              </p>
+            </div>
+            <Switch
+              checked={twoFactorEnabled}
+              onCheckedChange={setTwoFactorEnabled}
             />
-            <p className="text-xs text-muted-foreground">Fixed fee applied to processed insurance claims.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+            <Select value={sessionTimeout} onValueChange={setSessionTimeout}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select timeout" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 minutes</SelectItem>
+                <SelectItem value="30">30 minutes</SelectItem>
+                <SelectItem value="60">1 hour</SelectItem>
+                <SelectItem value="120">2 hours</SelectItem>
+                <SelectItem value="240">4 hours</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
+      {/* Appearance Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Loyalty Tiers</CardTitle>
-          <CardDescription>Configure the number of trips required for loyalty tiers.</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Appearance
+          </CardTitle>
+          <CardDescription>
+            Customize the look and feel
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Silver Tier Minimum</Label>
-              <Input type="number" value={silverTier} onChange={(e) => setSilverTier(e.target.value)} />
+              <Label htmlFor="themeMode">Theme Mode</Label>
+              <Select value={themeMode} onValueChange={setThemeMode}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label>Gold Tier Minimum</Label>
-              <Input type="number" value={goldTier} onChange={(e) => setGoldTier(e.target.value)} />
+              <Label htmlFor="primaryColor">Primary Color</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="primaryColor"
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="w-12 h-10 p-1"
+                />
+                <Input
+                  type="text"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label>Platinum Tier Minimum</Label>
-              <Input type="number" value={platinumTier} onChange={(e) => setPlatinumTier(e.target.value)} />
+              <Label htmlFor="fontSize">Font Size</Label>
+              <Select value={fontSize} onValueChange={setFontSize}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
-        <CardFooter className="justify-end bg-muted/50 p-4 border-t">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Save Changes
-          </Button>
-        </CardFooter>
       </Card>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" onClick={handleReset}>
+          Reset to Defaults
+        </Button>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
     </div>
   );
 };

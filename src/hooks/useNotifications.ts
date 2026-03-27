@@ -116,6 +116,7 @@ export const useNotifications = (options?: {
 
     if (!error) {
       queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
     }
     
     return { error };
@@ -133,6 +134,7 @@ export const useNotifications = (options?: {
 
     if (!error) {
       queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
     }
 
     return { error };
