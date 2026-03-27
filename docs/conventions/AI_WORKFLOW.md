@@ -144,6 +144,11 @@ git push origin develop
 - **One PR per ticket** — don't bundle unrelated fixes
 - **Update docs after the human merges** — open a separate doc-only PR once the code PR is merged
 - **Migration filenames must be descriptive** — use `YYYYMMDDHHMMSS_description.sql` per `docs/conventions/MIGRATION_PROTOCOL.md`. Never use auto-generated UUIDs or vague names. Every migration must have a header comment explaining what it does and why.
+- **Regenerate Supabase types after any migration** — whenever you create a migration or detect a new one was merged, run:
+  ```bash
+  npm run gen:types
+  ```
+  Then commit the updated `src/integrations/supabase/types.ts` in the same PR as the migration.   This keeps TypeScript types in sync with the DB schema and prevents silent runtime errors from stale types.
 
 > **Why:** Direct pushes to develop bypass code review, break the audit trail, and remove the human's ability to control what goes into the main branch. This is non-negotiable regardless of how trivial the change appears.
 
