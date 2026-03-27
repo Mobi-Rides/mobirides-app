@@ -22,14 +22,14 @@ export class DynamicPricingService {
       // Check if dynamic pricing is enabled globally
       let isDynamicPricingEnabled = true;
       try {
-        const { data: settingsData } = await supabase
-          .from("platform_settings")
+        const { data: settingsData } = await (supabase
+          .from("platform_settings" as any)
           .select("setting_value")
           .eq("setting_key", "dynamic_pricing_enabled")
-          .single();
+          .single() as any);
 
         if (settingsData) {
-          isDynamicPricingEnabled = settingsData.setting_value === true || settingsData.setting_value === "true";
+          isDynamicPricingEnabled = (settingsData as any).setting_value === true || (settingsData as any).setting_value === "true";
         }
       } catch (err) {
         console.error("[DynamicPricing] Failed to fetch dynamic pricing toggle:", err);
@@ -50,10 +50,10 @@ export class DynamicPricingService {
 
       // Attempt to load from DB
       try {
-        const { data: dbRules, error } = await supabase
-          .from("dynamic_pricing_rules")
+        const { data: dbRules, error } = await (supabase
+          .from("dynamic_pricing_rules" as any)
           .select("*")
-          .eq("is_active", true);
+          .eq("is_active", true) as any);
 
         if (!error && dbRules && dbRules.length > 0) {
           // ensure enum types match

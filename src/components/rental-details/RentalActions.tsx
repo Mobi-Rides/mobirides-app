@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { KeyRound, MapPin, Star, Clock, Edit3, CreditCard } from "lucide-react";
+import { KeyRound, MapPin, Star, Clock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
