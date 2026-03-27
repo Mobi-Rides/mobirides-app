@@ -10,6 +10,7 @@ import {
     getHandoverSession,
     getLatestHandoverSession,
     hasCompletedPickupHandover,
+    completeHandover,
     HandoverType,
     PickupHandoverData,
     ReturnHandoverData
@@ -33,7 +34,8 @@ jest.mock('@/integrations/supabase/client', () => {
             from: jest.fn().mockReturnValue(mockQueryBuilder),
             auth: {
                 getUser: jest.fn()
-            }
+            },
+            rpc: jest.fn()
         }
     };
 });
@@ -293,6 +295,65 @@ describe('Handover Service', () => {
             (supabase.from as jest.Mock).mockReturnValue(createMockChain(null));
 
             const result = await hasCompletedPickupHandover('booking-123');
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('completeHandover', () => {
+        it('should set booking status to in_progress when completing pickup handover', async () => {
+            const mockSession = {
+                id: 'session-pickup',
+                booking_id: 'booking-123',
+                handover_type: 'pickup'
+            };
+
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(mockSession));
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
+
+            const result = await completeHandover('session-pickup');
+
+            expect(result).toBe(true);
+            expect(supabase.from).toHaveBeenCalledWith('handover_sessions');
+            expect(supabase.from).toHaveBeenCalledWith('bookings');
+        });
+
+        it('should set booking status to completed when completing return handover', async () => {
+            const mockSession = {
+                id: 'session-return',
+                booking_id: 'booking-456',
+                handover_type: 'return'
+            };
+
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(mockSession));
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
+
+            const result = await completeHandover('session-return');
+
+            expect(result).toBe(true);
+        });
+
+        it('should call release_pending_earnings RPC when completing return handover', async () => {
+            const mockSession = {
+                id: 'session-return-rpc',
+                booking_id: 'booking-789',
+                handover_type: 'return'
+            };
+
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(mockSession));
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null));
+            (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
+
+            const result = await completeHandover('session-return-rpc');
+
+            expect(result).toBe(true);
+            expect(supabase.rpc).toHaveBeenCalledWith('release_pending_earnings', { p_booking_id: 'booking-789' });
+        });
+
+        it('should return false when session not found', async () => {
+            (supabase.from as jest.Mock).mockReturnValueOnce(createMockChain(null, new Error('Not found')));
+
+            const result = await completeHandover('non-existent-session');
 
             expect(result).toBe(false);
         });
