@@ -940,17 +940,7 @@ alter table "public"."verification_bypass_logs" enable row level security;
 
 alter table "public"."verification_bypass_sessions" enable row level security;
 
-drop type "public"."booking_status__old_version_to_be_dropped";
-
-drop type "public"."notification_role__old_version_to_be_dropped";
-
-drop type "public"."notification_type__old_version_to_be_dropped";
-
-drop type "public"."review_type__old_version_to_be_dropped";
-
-drop type "public"."user_role__old_version_to_be_dropped";
-
-drop type "public"."vehicle_type__old_version_to_be_dropped";
+-- DROP TYPE statements moved below (after ALTER TABLE USING casts convert columns to new enums)
 
 alter table "archive"."messages" add column "forwarded" boolean default false;
 
@@ -1030,11 +1020,13 @@ alter table "public"."bookings" alter column "created_at" set default timezone('
 
 alter table "public"."bookings" alter column "created_at" set not null;
 
+alter table "public"."bookings" alter column "status" drop default;
+
+alter table "public"."bookings" alter column "status" set data type public.booking_status using "status"::text::public.booking_status;
+
 alter table "public"."bookings" alter column "status" set default 'pending'::public.booking_status;
 
 alter table "public"."bookings" alter column "status" set not null;
-
-alter table "public"."bookings" alter column "status" set data type public.booking_status using "status"::text::public.booking_status;
 
 alter table "public"."bookings" alter column "total_price" set data type numeric using "total_price"::numeric;
 
@@ -1142,9 +1134,11 @@ alter table "public"."notifications" alter column "id" add generated always as i
 
 alter table "public"."notifications" alter column "metadata" drop default;
 
-alter table "public"."notifications" alter column "role_target" set default 'system_wide'::public.notification_role;
+alter table "public"."notifications" alter column "role_target" drop default;
 
 alter table "public"."notifications" alter column "role_target" set data type public.notification_role using "role_target"::text::public.notification_role;
+
+alter table "public"."notifications" alter column "role_target" set default 'system_wide'::public.notification_role;
 
 alter table "public"."notifications" alter column "title" set not null;
 
@@ -1176,9 +1170,11 @@ alter table "public"."profiles" alter column "created_at" set default timezone('
 
 alter table "public"."profiles" alter column "created_at" set not null;
 
-alter table "public"."profiles" alter column "role" set default 'renter'::public.user_role;
+alter table "public"."profiles" alter column "role" drop default;
 
 alter table "public"."profiles" alter column "role" set data type public.user_role using "role"::text::public.user_role;
+
+alter table "public"."profiles" alter column "role" set default 'renter'::public.user_role;
 
 alter table "public"."profiles" alter column "updated_at" set default timezone('utc'::text, now());
 
@@ -1221,6 +1217,19 @@ alter table "public"."verification_documents" alter column "document_type" set d
 alter table "public"."verification_documents" alter column "status" set default 'pending_review'::public.verification_status;
 
 alter table "public"."verification_documents" alter column "status" set data type public.verification_status using "status"::text::public.verification_status;
+
+-- Moved from earlier in migration: columns now use new enums, safe to drop old versions
+drop type "public"."booking_status__old_version_to_be_dropped";
+
+drop type "public"."notification_role__old_version_to_be_dropped";
+
+drop type "public"."notification_type__old_version_to_be_dropped";
+
+drop type "public"."review_type__old_version_to_be_dropped";
+
+drop type "public"."user_role__old_version_to_be_dropped";
+
+drop type "public"."vehicle_type__old_version_to_be_dropped";
 
 alter table "public"."wallet_transactions" add column "booking_reference" character varying(50);
 
@@ -3760,6 +3769,7 @@ END;
 $function$
 ;
 
+DROP FUNCTION IF EXISTS public.cleanup_expired_notifications();
 CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications()
  RETURNS trigger
  LANGUAGE plpgsql
