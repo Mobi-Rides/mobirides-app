@@ -19,7 +19,8 @@
     "test:watch": "jest --watch",
     "android": "npx cap open android",
     "android:run": "npx cap run android",
-    "android:sync": "npm run build && npx cap sync android"
+    "android:sync": "npm run build && npx cap sync android",
+    "gen:types": "supabase gen types typescript --project-id putjowciegpzdheideaf > src/integrations/supabase/types.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.2",
