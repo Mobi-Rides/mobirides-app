@@ -2,20 +2,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const usePlatformSettings = () => {
-  const [settings, setSettings] = useState<Record<string, any>>({});
+  const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const { data, error: fetchError } = await supabase.rpc('get_platform_settings' as any);
+      const { data, error: fetchError } = await supabase.rpc('get_platform_settings');
       
       if (fetchError) throw fetchError;
       
-      const settingsMap: Record<string, any> = {};
+      const settingsMap: Record<string, string> = {};
       if (data && Array.isArray(data)) {
-        (data as any[]).forEach((item: any) => {
+        data.forEach((item) => {
           settingsMap[item.setting_key] = item.setting_value;
         });
       }
@@ -40,9 +40,9 @@ export const usePlatformSettings = () => {
 
   const updateSetting = async (key: string, value: any) => {
     try {
-      const { error: updateError } = await supabase.rpc('update_platform_setting' as any, {
+      const { error: updateError } = await supabase.rpc('update_platform_setting', {
         p_key: key,
-        p_value: value
+        p_value: String(value)
       });
       if (updateError) throw updateError;
       await fetchSettings();

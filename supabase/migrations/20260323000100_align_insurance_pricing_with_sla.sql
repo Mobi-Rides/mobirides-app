@@ -51,6 +51,9 @@ CREATE POLICY "Super admins manage commission rates"
   ON public.insurance_commission_rates FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.admins WHERE id = auth.uid() AND is_super_admin = true));
 
+-- Ensure rate column exists (table may have been created by 20260204000000 with different schema)
+ALTER TABLE public.insurance_commission_rates ADD COLUMN IF NOT EXISTS rate decimal(5,4);
+
 -- Seed default 10% commission rate
 INSERT INTO public.insurance_commission_rates (rate, effective_from)
 VALUES (0.10, '2026-03-23')
