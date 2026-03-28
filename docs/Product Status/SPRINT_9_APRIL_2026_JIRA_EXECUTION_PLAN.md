@@ -4,7 +4,7 @@
 **Prepared by:** Modisa Maphanyane  
 **Sprint:** Sprint 9  
 **Date:** April 4, 2026  
-**Status:** READY — Assigned for Standup
+**Status:** IN PROGRESS — Arnold's 9 tickets complete (2026-03-28)
 
 ---
 
@@ -37,14 +37,14 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 
 | Category | Total Tickets | Arnold | Duma | Tapologo |
 |----------|:------------:|:------:|:----:|:--------:|
-| Infrastructure / DB (BUG-001 + migrations) | 4 | 4 | — | — |
+| Infrastructure / DB (BUG-001 + migrations) | 4 | 4 ✅ | — | — |
 | Admin Settings wiring | 3 | — | 3 | — |
-| Anonymize-on-Delete | 5 | 3 | 2 | — |
-| Auth Compliance P3 | 2 | 1 | 1 | — |
-| Notification Enhancement | 3 | 1 | 2 | — |
+| Anonymize-on-Delete | 5 | 3 ✅ | 2 | — |
+| Auth Compliance P3 | 2 | 1 ✅ | 1 | — |
+| Notification Enhancement | 3 | 1 ✅ | 2 | — |
 | Test Coverage | 4 | — | — | 4 |
 | Android Verification | 1 | — | — | 1 |
-| **TOTAL** | **22** | **9** | **8** | **5** |
+| **TOTAL** | **22** | **9 ✅ (all done)** | **8** | **5** |
 
 ---
 
@@ -59,15 +59,16 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P0 — Day 1 |
 | **Ref** | `docs/BUG_REPORT.md` |
 | **Summary** | Drop the legacy 4-arg void-returning overload of `create_handover_notification` that conflicts with the current 8-arg bigint-returning version, blocking `supabase db pull` and `npm run gen:types` |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Create migration `20260407000100_drop_legacy_handover_notification_fn.sql`
-- [ ] Migration body: `DROP FUNCTION IF EXISTS public.create_handover_notification(uuid, uuid, text, text);`
-- [ ] Add header comment documenting the legacy origin (migration `20250130000021`) and why it's safe to drop (no callers)
-- [ ] Run `npm run gen:types` after merge and commit updated `types.ts`
-- [ ] Verify `supabase db pull` completes without error
+- [x] Create migration `20260319212623_drop_legacy_handover_notification_fn.sql`
+- [x] Migration body drops legacy overloads and no-arg `is_admin()` conflict
+- [x] Additional migration conflicts fixed (see `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`)
+- [x] Run `npm run gen:types` — completed without error, `types.ts` updated
+- [x] Verified `supabase db pull` completes without error
 
-**Acceptance Criteria:** `supabase db pull` and `npm run gen:types` complete without `SQLSTATE 42P13` error.
+**Acceptance Criteria:** `supabase db pull` and `npm run gen:types` complete without `SQLSTATE 42P13` error. ✅
 
 ---
 
@@ -80,15 +81,17 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P0 — Day 1 |
 | **Ref** | `docs/20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md` |
 | **Summary** | Create `platform_settings` key-value table with default rows mirroring current hardcoded values |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Create migration `20260407000200_create_platform_settings.sql`
-- [ ] Table: `id`, `setting_key` (unique), `setting_value`, `description`, `updated_by`, `updated_at`
-- [ ] Seed default rows: `commission_rate_default` (0.15), `insurance_admin_fee` (150), `dynamic_pricing_enabled` (true)
-- [ ] RLS: super_admin read/write, admin read-only
-- [ ] Run `npm run gen:types` after merge
+- [x] Create migration `20260328161800_create_platform_settings.sql`
+- [x] Table: `id`, `setting_key` (unique), `setting_value`, `description`, `updated_by`, `updated_at`
+- [x] Seeded defaults: `commission_rate_default` (0.15), `insurance_admin_fee` (150), `dynamic_pricing_enabled` (true)
+- [x] RLS: super_admin read/write, admin read-only
+- [x] `get_platform_settings` and `update_platform_setting` RPCs created and typed
+- [x] Run `npm run gen:types` — `types.ts` updated
 
-**Acceptance Criteria:** `platform_settings` table exists in DB with seeded defaults; `usePlatformSettings` hook returns values without `as any` cast.
+**Acceptance Criteria:** `platform_settings` table exists in DB with seeded defaults; `usePlatformSettings` hook returns values without `as any` cast. ✅
 
 ---
 
@@ -101,15 +104,17 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P0 — Day 2 |
 | **Ref** | `docs/20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md` |
 | **Summary** | Create `dynamic_pricing_rules` table seeded with the 8 rules currently hardcoded in `dynamicPricingService.ts:91-197` |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Create migration `20260407000300_create_dynamic_pricing_rules.sql`
-- [ ] Table: `id`, `rule_name`, `multiplier`, `condition_type`, `condition_value`, `is_active`, `priority`, `created_at`
-- [ ] Seed all 8 existing rules from `dynamicPricingService.ts` as default rows
-- [ ] RLS: super_admin read/write, admin read-only
-- [ ] Run `npm run gen:types` after merge
+- [x] Create migration `20260328162700_create_dynamic_pricing_rules.sql`
+- [x] Table: `id`, `rule_name`, `multiplier`, `condition_type`, `condition_value`, `is_active`, `priority`, `created_at`
+- [x] Seeded all 8 rules from `dynamicPricingService.ts`
+- [x] RLS: super_admin read/write, admin read-only
+- [x] `useDynamicPricingRules` hook — all `as any` casts removed
+- [x] Run `npm run gen:types` — `types.ts` updated
 
-**Acceptance Criteria:** `dynamic_pricing_rules` table exists with 8 seeded rows; `useDynamicPricingRules` hook returns rows without `as any` cast.
+**Acceptance Criteria:** `dynamic_pricing_rules` table exists with 8 seeded rows; `useDynamicPricingRules` hook returns rows without `as any` cast. ✅
 
 ---
 
@@ -122,16 +127,17 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P1 — Day 2 |
 | **Ref** | `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md` Phase 1 |
 | **Summary** | Add `is_deleted`, `deleted_at`, `deleted_by` columns to `profiles` table |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Create migration `20260407000400_profiles_soft_delete_columns.sql`
-- [ ] `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false`
-- [ ] `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`
-- [ ] `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS deleted_by UUID`
-- [ ] Update RLS SELECT policies to filter `is_deleted = false` for non-admin queries
-- [ ] Run `npm run gen:types` after merge
+- [x] Create migration `20260328164500_profiles_soft_delete_columns.sql`
+- [x] `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false`
+- [x] `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`
+- [x] `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS deleted_by UUID`
+- [x] Updated RLS SELECT policies to filter `is_deleted = false` for non-admin queries
+- [x] Run `npm run gen:types` — `types.ts` updated
 
-**Acceptance Criteria:** Columns exist with correct defaults; existing queries unaffected; admin can query deleted profiles.
+**Acceptance Criteria:** Columns exist with correct defaults; existing queries unaffected; admin can query deleted profiles. ✅
 
 ---
 
@@ -222,11 +228,19 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P1 — after S9-004 merged |
 | **Ref** | `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md` Phase 2, `supabase/functions/bulk-delete-users/` |
 | **Summary** | Apply same anonymize + soft-delete logic to bulk delete edge function |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Mirror the logic from S9-008 for bulk operations
-- [ ] Ensure atomicity — if any user fails, log and continue (don't abort entire batch)
-- [ ] Return per-user success/failure in response
+- [x] Hard-deletes PII tables (conversations, notifications, verifications, etc.)
+- [x] Anonymizes reviews (`comment = '[removed]'`) and cars (`description/location = '[removed]'`)
+- [x] Deletes car images (PII)
+- [x] Preserves analytics tables (bookings, wallet_transactions, payment_transactions)
+- [x] Soft-deletes profile (`is_deleted = true`, `full_name = 'Deleted User'`)
+- [x] Hard-deletes auth user last
+- [x] Per-user atomicity — logs failure and continues batch
+- [x] Returns per-user success/failure in response
+
+**Acceptance Criteria:** Anonymize + soft-delete applied per user; batch continues on individual failure. ✅
 
 ---
 
@@ -239,11 +253,16 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P2 |
 | **Ref** | `docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md` Phase 3 |
 | **Summary** | Filter `is_deleted = true` profiles from admin user lists; show `[Deleted User]` placeholder where needed |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Update `AdminUsers.tsx` query to exclude `is_deleted = true` by default
-- [ ] Add optional "Show deleted" toggle for super admins
-- [ ] Ensure deleted user references in bookings/reviews show `[Deleted User]` gracefully
+- [x] Updated `get_admin_users_complete` RPC with `show_deleted` param (default false) — migration `20260328170100`
+- [x] `useAdminUsersComplete` hook accepts `showDeleted` param, passes to RPC
+- [x] `UnifiedUserTable` — "Show deleted users" toggle visible to super admins only
+- [x] `[Deleted]` badge shown in status column for soft-deleted users
+- [x] Run `npm run gen:types` — `types.ts` updated
+
+**Acceptance Criteria:** Deleted users excluded by default; visible with toggle; `[Deleted]` badge shown. ✅
 
 ---
 
@@ -258,12 +277,15 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P1 |
 | **Ref** | `docs/Product Status/2026-03-09_AUTH_COMPLIANCE_EPIC.md` |
 | **Summary** | Create `user_consents` table to store GDPR-compliant consent records on signup |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Create migration `20260407000500_create_user_consents.sql`
-- [ ] Table: `id`, `user_id`, `terms_accepted`, `privacy_accepted`, `community_accepted`, `age_confirmed`, `marketing_opted_in`, `consent_version`, `ip_address`, `user_agent`, `created_at`
-- [ ] RLS: user can insert own record; admin can read all
-- [ ] Run `npm run gen:types` after merge
+- [x] Create migration `20260328171500_create_user_consents.sql`
+- [x] Table: `id`, `user_id`, `terms_accepted`, `privacy_accepted`, `community_accepted`, `age_confirmed`, `marketing_opted_in`, `consent_version`, `ip_address`, `user_agent`, `created_at`
+- [x] RLS: user can insert/read own record; admin can read all
+- [x] Run `npm run gen:types` — `types.ts` updated
+
+**Acceptance Criteria:** Table exists with correct schema; RLS enforced; `types.ts` updated. ✅
 
 ---
 
@@ -331,11 +353,16 @@ Sprint 9 focuses on **infrastructure stability, compliance, and test coverage**.
 | **Priority** | P2 |
 | **Ref** | `docs/20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md` |
 | **Summary** | Send reminder email to users who signed up 7 days ago but haven't completed verification |
+| **Status** | ✅ DONE — 2026-03-28 |
 
 **Tasks:**
-- [ ] Query `profiles` where `created_at < now() - 7 days` and verification status is incomplete
-- [ ] Send `unverified-reminder` email via Resend service
-- [ ] Schedule as daily cron job
+- [x] Deployed `supabase/functions/unverified-reminder/index.ts` edge function
+- [x] Queries `profiles` where `created_at < now() - 7 days` AND `verification_status != completed` AND `is_deleted = false`
+- [x] Sends `unverified-reminder` email via Resend service
+- [x] Scheduled as daily cron job at 08:00 UTC — migration `20260328172900`
+- [x] Fixed bug: enum value `verified` → `completed`
+
+**Acceptance Criteria:** Function deployed; cron scheduled daily; emails sent to unverified users 7+ days old. ✅
 
 ---
 
