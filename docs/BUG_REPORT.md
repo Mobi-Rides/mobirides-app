@@ -8,7 +8,7 @@
 |-------|--------|
 | **Date Reported** | 2026-03-27 |
 | **Severity** | High |
-| **Status** | Open |
+| **Status** | ✅ Resolved — 2026-03-28 |
 | **Affects** | Database schema sync (`supabase db pull`) |
 | **Error Code** | `SQLSTATE 42P13` |
 
@@ -55,4 +55,5 @@ The 8-arg `bigint`-returning function remains untouched.
 
 ## Resolved Bugs
 
-_None yet._
+### BUG-001 — `create_handover_notification` Return Type Conflict
+Resolved 2026-03-28. See `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`.

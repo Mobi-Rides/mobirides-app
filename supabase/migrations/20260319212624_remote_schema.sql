@@ -4193,59 +4193,7 @@ END;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.create_handover_notification(p_user_id uuid, p_booking_id uuid, p_handover_type text, p_location text DEFAULT NULL::text)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-    v_title TEXT;
-    v_description TEXT;
-    v_car_info TEXT;
-BEGIN
-    -- Get car information
-    SELECT c.brand || ' ' || c.model INTO v_car_info
-    FROM bookings b
-    JOIN cars c ON c.id = b.car_id
-    WHERE b.id = p_booking_id;
-    
-    IF p_handover_type = 'pickup' THEN
-        v_title := 'Vehicle Ready for Pickup';
-        v_description := 'Your ' || COALESCE(v_car_info, 'vehicle') || ' is ready for pickup';
-    ELSE
-        v_title := 'Vehicle Return Ready';
-        v_description := 'Please return your ' || COALESCE(v_car_info, 'vehicle');
-    END IF;
-    
-    IF p_location IS NOT NULL THEN
-        v_description := v_description || ' at ' || p_location;
-    END IF;
-    
-    INSERT INTO notifications (
-        user_id, 
-        type, 
-        title,
-        description,
-        related_booking_id,
-        is_read,
-        role_target
-    ) VALUES (
-        p_user_id,
-        'handover_ready'::notification_type,
-        v_title,
-        v_description,
-        p_booking_id,
-        false,
-        'system_wide'::notification_role
-    );
-    
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE WARNING 'Failed to create handover notification: %', SQLERRM;
-END;
-$function$
-;
+-- Legacy 4-arg void overload removed (dropped via 20260319212623_drop_legacy_handover_notification_fn.sql)
 
 CREATE OR REPLACE FUNCTION public.create_handover_notification(p_user_id uuid, p_handover_type text, p_car_brand text, p_car_model text, p_location text, p_status text DEFAULT 'ready'::text, p_step_name text DEFAULT NULL::text, p_progress_percentage integer DEFAULT 0)
  RETURNS bigint
@@ -5493,9 +5441,13 @@ END;
 $function$
 ;
 
-create type "public"."http_request" as ("method" public.http_method, "uri" character varying, "headers" public.http_header[], "content_type" character varying, "content" character varying);
+DO $$ BEGIN
+  create type "public"."http_request" as ("method" public.http_method, "uri" character varying, "headers" public.http_header[], "content_type" character varying, "content" character varying);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-create type "public"."http_response" as ("status" integer, "content_type" character varying, "headers" public.http_header[], "content" character varying);
+DO $$ BEGIN
+  create type "public"."http_response" as ("status" integer, "content_type" character varying, "headers" public.http_header[], "content" character varying);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 CREATE OR REPLACE FUNCTION public.increment_car_view_count(car_id uuid)
  RETURNS void

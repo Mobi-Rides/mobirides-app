@@ -10,6 +10,7 @@ export interface AdminUserComplete {
   created_at: string;
   avatar_url: string | null;
   verification_status: string | null;
+  is_deleted: boolean;
   user_roles: string[];
   is_restricted: boolean;
   active_restrictions: Array<{
@@ -23,11 +24,13 @@ export interface AdminUserComplete {
   bookings_count: number;
 }
 
-export const useAdminUsersComplete = () => {
+export const useAdminUsersComplete = (showDeleted = false) => {
   return useQuery<AdminUserComplete[], Error>({
-    queryKey: ["admin-users-complete"],
+    queryKey: ["admin-users-complete", showDeleted],
     queryFn: async (): Promise<AdminUserComplete[]> => {
-      const { data, error } = await supabase.rpc('get_admin_users_complete');
+      const { data, error } = await supabase.rpc('get_admin_users_complete', {
+        show_deleted: showDeleted
+      });
 
       if (error) {
         console.error("Error fetching admin users:", error);
@@ -43,6 +46,7 @@ export const useAdminUsersComplete = () => {
         created_at: user.created_at,
         avatar_url: user.avatar_url,
         verification_status: user.verification_status,
+        is_deleted: user.is_deleted || false,
         user_roles: user.user_roles || [],
         is_restricted: user.is_restricted || false,
         active_restrictions: user.active_restrictions || [],
@@ -50,6 +54,6 @@ export const useAdminUsersComplete = () => {
         bookings_count: user.bookings_count || 0,
       }));
     },
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
   });
 };
