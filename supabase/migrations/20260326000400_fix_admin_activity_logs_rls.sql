@@ -1,5 +1,9 @@
 -- Restore RLS policies for admin_activity_logs dropped by remote schema sync (20260319212624)
 
+DROP POLICY IF EXISTS "Admins can view their own activity logs" ON public.admin_activity_logs;
+DROP POLICY IF EXISTS "Super admins can view all activity logs" ON public.admin_activity_logs;
+DROP POLICY IF EXISTS "Admins can insert their own activity logs" ON public.admin_activity_logs;
+
 CREATE POLICY "Admins can view their own activity logs"
   ON public.admin_activity_logs FOR SELECT
   USING (auth.uid() = admin_id);

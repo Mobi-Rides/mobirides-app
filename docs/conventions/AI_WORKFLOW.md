@@ -148,7 +148,7 @@ git push origin develop
   ```bash
   npm run gen:types
   ```
-  Commit the updated `src/integrations/supabase/types.ts` in the same PR as the migration.
+  Then commit the updated `src/integrations/supabase/types.ts` in the same PR as the migration.   This keeps TypeScript types in sync with the DB schema and prevents silent runtime errors from stale types.
 
 > **Why:** Direct pushes to develop bypass code review, break the audit trail, and remove the human's ability to control what goes into the main branch. This is non-negotiable regardless of how trivial the change appears.
 
