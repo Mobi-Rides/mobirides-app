@@ -1097,6 +1097,39 @@ export type Database = {
           },
         ]
       }
+      dynamic_pricing_rules: {
+        Row: {
+          condition_type: string
+          condition_value: Json
+          created_at: string | null
+          id: string
+          is_active: boolean
+          multiplier: number
+          priority: number
+          rule_name: string
+        }
+        Insert: {
+          condition_type: string
+          condition_value?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          multiplier: number
+          priority?: number
+          rule_name: string
+        }
+        Update: {
+          condition_type?: string
+          condition_value?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          multiplier?: number
+          priority?: number
+          rule_name?: string
+        }
+        Relationships: []
+      }
       email_analytics_daily: {
         Row: {
           average_latency_ms: number | null
@@ -2807,6 +2840,33 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       policy_selections: {
         Row: {
           booking_id: string
@@ -2938,6 +2998,8 @@ export type Database = {
           account_locked_until: string | null
           avatar_url: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           email_confirmed: boolean | null
           email_confirmed_at: string | null
           emergency_contact_name: string | null
@@ -2946,6 +3008,7 @@ export type Database = {
           full_name: string | null
           id: string
           id_photo_url: string | null
+          is_deleted: boolean | null
           is_sharing_location: boolean | null
           last_login_attempt: string | null
           latitude: number | null
@@ -2968,6 +3031,8 @@ export type Database = {
           account_locked_until?: string | null
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email_confirmed?: boolean | null
           email_confirmed_at?: string | null
           emergency_contact_name?: string | null
@@ -2976,6 +3041,7 @@ export type Database = {
           full_name?: string | null
           id: string
           id_photo_url?: string | null
+          is_deleted?: boolean | null
           is_sharing_location?: boolean | null
           last_login_attempt?: string | null
           latitude?: number | null
@@ -2998,6 +3064,8 @@ export type Database = {
           account_locked_until?: string | null
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email_confirmed?: boolean | null
           email_confirmed_at?: string | null
           emergency_contact_name?: string | null
@@ -3006,6 +3074,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           id_photo_url?: string | null
+          is_deleted?: boolean | null
           is_sharing_location?: boolean | null
           last_login_attempt?: string | null
           latitude?: number | null
@@ -3469,6 +3538,48 @@ export type Database = {
           session_data?: Json
           signed_pre_key?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_consents: {
+        Row: {
+          age_confirmed: boolean
+          community_accepted: boolean
+          consent_version: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          marketing_opted_in: boolean
+          privacy_accepted: boolean
+          terms_accepted: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          age_confirmed?: boolean
+          community_accepted?: boolean
+          consent_version?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          marketing_opted_in?: boolean
+          privacy_accepted?: boolean
+          terms_accepted?: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          age_confirmed?: boolean
+          community_accepted?: boolean
+          consent_version?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          marketing_opted_in?: boolean
+          privacy_accepted?: boolean
+          terms_accepted?: boolean
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -4490,29 +4601,19 @@ export type Database = {
         }
         Returns: string
       }
-      create_handover_notification:
-        | {
-            Args: {
-              p_booking_id: string
-              p_handover_type: string
-              p_location?: string
-              p_user_id: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_car_brand: string
-              p_car_model: string
-              p_handover_type: string
-              p_location: string
-              p_progress_percentage?: number
-              p_status?: string
-              p_step_name?: string
-              p_user_id: string
-            }
-            Returns: number
-          }
+      create_handover_notification: {
+        Args: {
+          p_car_brand: string
+          p_car_model: string
+          p_handover_type: string
+          p_location: string
+          p_progress_percentage?: number
+          p_status?: string
+          p_step_name?: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       create_handover_progress_notification: {
         Args: { p_handover_session_id: string }
         Returns: undefined
@@ -4651,7 +4752,7 @@ export type Database = {
         }[]
       }
       get_admin_users_complete: {
-        Args: never
+        Args: { show_deleted?: boolean }
         Returns: {
           active_restrictions: Json
           avatar_url: string
@@ -4661,6 +4762,7 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean
+          is_deleted: boolean
           is_restricted: boolean
           phone_number: string
           role: string
@@ -4710,6 +4812,14 @@ export type Database = {
           default_expiration_hours: number
           estimated_expiration: string
           notification_type: Database["public"]["Enums"]["notification_type"]
+        }[]
+      }
+      get_platform_settings: {
+        Args: never
+        Returns: {
+          description: string
+          setting_key: string
+          setting_value: string
         }[]
       }
       get_public_profile: {
@@ -5060,6 +5170,10 @@ export type Database = {
           p_notification_type: Database["public"]["Enums"]["notification_type"]
         }
         Returns: boolean
+      }
+      update_platform_setting: {
+        Args: { p_key: string; p_value: string }
+        Returns: undefined
       }
       update_user_location: {
         Args: { lat: number; lng: number; user_id: string }

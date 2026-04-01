@@ -29,6 +29,7 @@ import { UserActionsDropdown } from "./UserActionsDropdown";
 import { UserEditDialog } from "./UserEditDialog";
 import { UserDetailDialog } from "./UserDetailDialog";
 import { getDisplayName } from "@/utils/displayName";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface UnifiedUserTableProps {
   selectedUsers: string[];
@@ -46,9 +47,11 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
   const [selectedUser, setSelectedUser] = useState<AdminUserComplete | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
   const itemsPerPage = 15;
 
-  const { data: users, isLoading, error, refetch } = useAdminUsersComplete();
+  const { isSuperAdmin } = useIsAdmin();
+  const { data: users, isLoading, error, refetch } = useAdminUsersComplete(showDeleted);
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
@@ -144,17 +147,28 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
-          <div className="relative max-w-sm">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, email, role..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-8"
-            />
+          <div className="flex items-center gap-3">
+            {isSuperAdmin && (
+              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                <Checkbox
+                  checked={showDeleted}
+                  onCheckedChange={(v) => { setShowDeleted(!!v); setCurrentPage(1); }}
+                />
+                Show deleted users
+              </label>
+            )}
+            <div className="relative max-w-sm">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, email, role..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-8"
+              />
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -238,7 +252,9 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
                           </div>
                         </TableCell>
                         <TableCell>
-                          {user.is_restricted ? (
+                          {user.is_deleted ? (
+                            <Badge variant="outline" className="text-muted-foreground">Deleted</Badge>
+                          ) : user.is_restricted ? (
                             <Badge variant="destructive" className="flex items-center gap-1 w-fit">
                               <AlertTriangle className="h-3 w-3" />
                               Restricted
