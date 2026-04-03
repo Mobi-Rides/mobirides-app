@@ -377,7 +377,7 @@ export const InsuranceSettingsSection = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600" />
+              <Check className="h-4 w-4 text-primary" />
               Coverage Inclusions
             </CardTitle>
           </CardHeader>
@@ -385,7 +385,7 @@ export const InsuranceSettingsSection = () => {
             <ul className="space-y-2">
               {COVERAGE_INCLUSIONS.map((item, i) => (
                 <li key={i} className="text-sm flex items-start gap-2">
-                  <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                  <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {item}
                 </li>
               ))}
@@ -448,7 +448,7 @@ export const InsuranceSettingsSection = () => {
                     <td className="py-2 pl-4 text-xs text-muted-foreground">{pkg.targetSegment || '—'}</td>
                     <td className="text-center py-2">
                       {pkg.active ? (
-                        <Check className="h-4 w-4 text-green-600 inline" />
+                        <Check className="h-4 w-4 text-primary inline" />
                       ) : (
                         <span className="text-muted-foreground text-xs">Disabled</span>
                       )}
