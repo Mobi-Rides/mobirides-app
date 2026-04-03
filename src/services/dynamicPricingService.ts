@@ -56,8 +56,18 @@ export class DynamicPricingService {
           .eq("is_active", true) as any);
 
         if (!error && dbRules && dbRules.length > 0) {
-          // ensure enum types match
-          rules = dbRules as unknown as PricingRule[];
+          // map db rows to PricingRule format
+          rules = dbRules.map((dbRule: any) => ({
+            id: dbRule.id,
+            name: dbRule.rule_name,
+            type: dbRule.condition_type as PricingRuleType,
+            is_active: dbRule.is_active,
+            multiplier: dbRule.multiplier,
+            conditions: dbRule.condition_value as unknown,
+            priority: dbRule.priority || 0,
+            created_at: dbRule.created_at || new Date().toISOString(),
+            updated_at: dbRule.created_at || new Date().toISOString(),
+          })) as PricingRule[];
         } else {
           rules = rules.filter(r => r.is_active);
         }
