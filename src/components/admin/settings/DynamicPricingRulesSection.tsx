@@ -24,11 +24,6 @@ const RULE_TYPE_LABELS: Record<PricingRuleType, string> = {
   [PricingRuleType.DESTINATION]: 'Destination',
 };
 
-const DEFAULT_MULTIPLIERS: Partial<Record<string, number>> = {
-  'out_of_zone': 1.5,
-  'cross_border': 2.0,
-  'local': 1.0,
-};
 
 export const DynamicPricingRulesSection = () => {
   const { toast } = useToast();
