@@ -1,94 +1,97 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useDynamicPricingRules } from '@/hooks/useDynamicPricingRules';
+import { PricingRuleType } from '@/types/pricing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, TrendingUp, Calendar, MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { PricingRuleConditionFields } from './pricing/PricingRuleConditionFields';
 
-interface PricingRule {
-  id: string;
-  name: string;
-  type: 'surge' | 'discount';
-  condition: string;
-  multiplier: string;
-  active: boolean;
-}
+const RULE_TYPE_LABELS: Record<PricingRuleType, string> = {
+  [PricingRuleType.SEASONAL]: 'Seasonal',
+  [PricingRuleType.DEMAND]: 'Demand-Based',
+  [PricingRuleType.EARLY_BIRD]: 'Early Bird',
+  [PricingRuleType.LOYALTY]: 'Loyalty',
+  [PricingRuleType.WEEKEND]: 'Weekend',
+  [PricingRuleType.HOLIDAY]: 'Holiday',
+  [PricingRuleType.LOCATION]: 'Location',
+  [PricingRuleType.DESTINATION]: 'Destination',
+};
+
+const DEFAULT_MULTIPLIERS: Partial<Record<string, number>> = {
+  'out_of_zone': 1.5,
+  'cross_border': 2.0,
+  'local': 1.0,
+};
 
 export const DynamicPricingRulesSection = () => {
   const { toast } = useToast();
-  const [saving, setSaving] = useState(false);
+  const { rules, loading, error, updateRule, addRule, deleteRule } = useDynamicPricingRules();
   const [pricingEnabled, setPricingEnabled] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
-  const [rules, setRules] = useState<PricingRule[]>([
-    {
-      id: '1',
-      name: 'Weekend Surge',
-      type: 'surge',
-      condition: 'saturday_sunday',
-      multiplier: '1.2',
-      active: true,
-    },
-    {
-      id: '2',
-      name: 'Peak Hours',
-      type: 'surge',
-      condition: '8am_6pm',
-      multiplier: '1.15',
-      active: true,
-    },
-    {
-      id: '3',
-      name: 'Long-term Discount',
-      type: 'discount',
-      condition: '7_plus_days',
-      multiplier: '0.9',
-      active: true,
-    },
-  ]);
-
-  const addRule = () => {
-    const newRule: PricingRule = {
-      id: Date.now().toString(),
+  const handleAddRule = async () => {
+    const newRule = {
+      id: uuidv4(),
       name: 'New Rule',
-      type: 'surge',
-      condition: '',
-      multiplier: '1.0',
-      active: true,
+      type: PricingRuleType.DESTINATION,
+      is_active: true,
+      multiplier: 1.0,
+      conditions: {},
+      priority: rules.length + 1,
     };
-    setRules([...rules, newRule]);
-    toast({ title: 'New pricing rule added' });
-  };
-
-  const removeRule = (id: string) => {
-    setRules(rules.filter(r => r.id !== id));
-    toast({ title: 'Pricing rule removed' });
-  };
-
-  const updateRule = (id: string, updates: Partial<PricingRule>) => {
-    setRules(rules.map(r => r.id === id ? { ...r, ...updates } : r));
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: 'Pricing rules saved',
-        description: 'Dynamic pricing rules have been updated.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save rules. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSaving(false);
+    const result = await addRule(newRule);
+    if (result.success) {
+      toast({ title: 'New pricing rule created' });
+    } else {
+      toast({ title: 'Failed to create rule', variant: 'destructive' });
     }
   };
+
+  const handleDeleteRule = async (id: string) => {
+    const result = await deleteRule(id);
+    if (result.success) {
+      toast({ title: 'Pricing rule deleted' });
+    } else {
+      toast({ title: 'Failed to delete rule', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateRule = async (id: string, updates: Record<string, any>) => {
+    setSavingId(id);
+    const result = await updateRule(id, updates);
+    setSavingId(null);
+    if (!result.success) {
+      toast({ title: 'Failed to update rule', variant: 'destructive' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-destructive">Failed to load pricing rules: {error.message}</p>
+          <Button variant="outline" className="mt-2" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -99,21 +102,18 @@ export const DynamicPricingRulesSection = () => {
             Dynamic Pricing
           </CardTitle>
           <CardDescription>
-            Enable and configure dynamic pricing based on demand and conditions
+            Enable and configure dynamic pricing based on demand, destination, seasons, and more
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Enable Dynamic Pricing</Label>
               <p className="text-sm text-muted-foreground">
-                Automatically adjust prices based on demand and conditions
+                Automatically adjust prices based on configured rules
               </p>
             </div>
-            <Switch
-              checked={pricingEnabled}
-              onCheckedChange={setPricingEnabled}
-            />
+            <Switch checked={pricingEnabled} onCheckedChange={setPricingEnabled} />
           </div>
         </CardContent>
       </Card>
@@ -123,67 +123,76 @@ export const DynamicPricingRulesSection = () => {
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Pricing Rules
+            <Badge variant="secondary" className="ml-2">{rules.length}</Badge>
           </CardTitle>
           <CardDescription>
-            Configure surge pricing and discount rules
+            Configure surge pricing, discounts, and destination-based multipliers
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {rules.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No pricing rules configured. Add your first rule below.
+              </p>
+            )}
+
             {rules.map((rule) => (
               <div key={rule.id} className="p-4 border rounded-lg space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Switch
-                      checked={rule.active}
-                      onCheckedChange={(checked) => updateRule(rule.id, { active: checked })}
+                      checked={rule.is_active}
+                      onCheckedChange={(checked) => handleUpdateRule(rule.id, { is_active: checked })}
                     />
                     <Input
                       value={rule.name}
-                      onChange={(e) => updateRule(rule.id, { name: e.target.value })}
+                      onChange={(e) => handleUpdateRule(rule.id, { name: e.target.value })}
                       className="w-48"
                       placeholder="Rule name"
                     />
+                    {savingId === rule.id && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeRule(rule.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                  <Button variant="ghost" size="sm" onClick={() => handleDeleteRule(rule.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Rule Type</Label>
-                    <Select value={rule.type} onValueChange={(value) => updateRule(rule.id, { type: value as 'surge' | 'discount' })}>
+                    <Select
+                      value={rule.type}
+                      onValueChange={(value) => {
+                        const updates: Record<string, any> = { type: value, conditions: {} };
+                        if (value === PricingRuleType.DESTINATION) {
+                          updates.conditions = { destination_type: 'local' };
+                          updates.multiplier = 1.0;
+                        }
+                        handleUpdateRule(rule.id, updates);
+                      }}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="surge">Surge (Price Increase)</SelectItem>
-                        <SelectItem value="discount">Discount (Price Decrease)</SelectItem>
+                        {Object.entries(RULE_TYPE_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Condition</Label>
-                    <Select value={rule.condition} onValueChange={(value) => updateRule(rule.id, { condition: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="saturday_sunday">Weekends (Sat-Sun)</SelectItem>
-                        <SelectItem value="friday_evening">Friday Evening</SelectItem>
-                        <SelectItem value="8am_6pm">Peak Hours (8AM-6PM)</SelectItem>
-                        <SelectItem value="7_plus_days">Long-term (7+ days)</SelectItem>
-                        <SelectItem value="30_plus_days">Monthly (30+ days)</SelectItem>
-                        <SelectItem value="high_demand">High Demand Period</SelectItem>
-                        <SelectItem value="low_demand">Low Demand Period</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Priority</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={rule.priority}
+                      onChange={(e) => handleUpdateRule(rule.id, { priority: parseInt(e.target.value) || 1 })}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -195,51 +204,37 @@ export const DynamicPricingRulesSection = () => {
                         min="0.5"
                         max="3"
                         value={rule.multiplier}
-                        onChange={(e) => updateRule(rule.id, { multiplier: e.target.value })}
+                        onChange={(e) => handleUpdateRule(rule.id, { multiplier: parseFloat(e.target.value) || 1 })}
                         className="w-24"
                       />
-                      <span className="text-sm text-muted-foreground">
-                        {rule.type === 'surge' ? '× price' : '× price'}
-                      </span>
+                      <span className="text-sm text-muted-foreground">× price</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {rule.type === 'surge'
-                        ? `1.2 = 20% higher, 1.5 = 50% higher`
-                        : `0.9 = 10% off, 0.8 = 20% off`}
+                      {rule.multiplier > 1
+                        ? `${Math.round((rule.multiplier - 1) * 100)}% surcharge`
+                        : rule.multiplier < 1
+                        ? `${Math.round((1 - rule.multiplier) * 100)}% discount`
+                        : 'No change'}
                     </p>
                   </div>
                 </div>
+
+                <PricingRuleConditionFields
+                  ruleType={rule.type}
+                  conditions={rule.conditions}
+                  onConditionsChange={(conditions) => handleUpdateRule(rule.id, { conditions })}
+                  onMultiplierChange={(multiplier) => handleUpdateRule(rule.id, { multiplier })}
+                />
               </div>
             ))}
 
-            <Button variant="outline" onClick={addRule} className="w-full">
+            <Button variant="outline" onClick={handleAddRule} className="w-full">
               <Plus className="h-4 w-4 mr-2" />
               Add Pricing Rule
             </Button>
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => {
-          setRules([
-            {
-              id: '1',
-              name: 'Weekend Surge',
-              type: 'surge',
-              condition: 'saturday_sunday',
-              multiplier: '1.2',
-              active: true,
-            },
-          ]);
-          toast({ title: 'Reset to default rules' });
-        }}>
-          Reset to Defaults
-        </Button>
-        <Button onClick={handleSave} disabled={saving || !pricingEnabled}>
-          {saving ? 'Saving...' : 'Save Rules'}
-        </Button>
-      </div>
     </div>
   );
 };
