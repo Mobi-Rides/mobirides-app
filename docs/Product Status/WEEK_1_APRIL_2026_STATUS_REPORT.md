@@ -40,7 +40,7 @@ Developer workflow improvements were shipped this week: the `AI_WORKFLOW.md` con
 - ✅ **Supabase types regenerated** (commit `01c5c98`) — `src/integrations/supabase/types.ts` updated to reflect current DB schema including new `old_notification_type` enum (PR #274)
 - ✅ **AI workflow conventions updated** (PRs #276, #277) — Migration naming convention rule + `gen:types` script added; all contributors now have a standardised workflow
 - ✅ **Modify Booking button removed** (commit `5aae075`) — Cleaned up dead UI element from `RentalActions.tsx`
-- 🟡 **BUG-001 fix not yet implemented** — Migration to drop legacy `create_handover_notification(uuid, uuid, text, text)` overload is documented but not yet shipped
+- ✅ **BUG-001 fix shipped — 2026-03-28 (S9-001)** — Migration to drop legacy `create_handover_notification(uuid, uuid, text, text)` overload delivered in Sprint 9
 - 🟡 **MOB-110/130–138 (Anonymize-on-Delete)** — Multi-phase compliance work; not started in code
 
 ---
