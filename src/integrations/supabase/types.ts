@@ -2007,16 +2007,20 @@ export type Database = {
           covers_major_incidents: boolean | null
           covers_minor_damage: boolean | null
           created_at: string | null
+          daily_rate: number | null
           description: string
           display_name: string
           excess_amount: number | null
+          excess_percentage: number | null
           exclusions: string[]
           features: string[]
           id: string
+          international_cap_usd: number | null
           is_active: boolean | null
           name: string
           premium_percentage: number
           sort_order: number | null
+          target_segment: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2024,16 +2028,20 @@ export type Database = {
           covers_major_incidents?: boolean | null
           covers_minor_damage?: boolean | null
           created_at?: string | null
+          daily_rate?: number | null
           description: string
           display_name: string
           excess_amount?: number | null
+          excess_percentage?: number | null
           exclusions: string[]
           features: string[]
           id?: string
+          international_cap_usd?: number | null
           is_active?: boolean | null
           name: string
           premium_percentage: number
           sort_order?: number | null
+          target_segment?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2041,16 +2049,20 @@ export type Database = {
           covers_major_incidents?: boolean | null
           covers_minor_damage?: boolean | null
           created_at?: string | null
+          daily_rate?: number | null
           description?: string
           display_name?: string
           excess_amount?: number | null
+          excess_percentage?: number | null
           exclusions?: string[]
           features?: string[]
           id?: string
+          international_cap_usd?: number | null
           is_active?: boolean | null
           name?: string
           premium_percentage?: number
           sort_order?: number | null
+          target_segment?: string | null
           updated_at?: string | null
         }
         Relationships: []
