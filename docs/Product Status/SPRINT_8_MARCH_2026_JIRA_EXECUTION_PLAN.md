@@ -4,7 +4,7 @@
 **Prepared by:** Modisa Maphanyane  
 **Sprint:** Sprint 8  
 **Date:** March 24, 2026  
-**Status:** DRAFT — Ready for Standup Assignment
+**Status:** COMPLETED — Critical bugs fixed, Payment Phase 0 done, handover consolidated (2026-03-26)
 
 ---
 
@@ -1103,6 +1103,55 @@ This document consolidates all Sprint 8 tasks from the Week 4 Status Report and 
 - [ ] MOB-507 handover consolidation in progress
 - [ ] Bugfix regression testing completed by Tapologo
 - [ ] No new runtime regressions introduced
+
+---
+
+## 📊 Sprint 8 Completion Status by Team Member
+
+| Task ID | Member | Status | Notes |
+|---------|--------|--------|-------|
+| MOB-105/106 | Arnold | ✅ Completed | Admin capability assign/revoke fixed (2026-03-26) |
+| MOB-219 | Arnold | ✅ Completed | Audit logs display fixed (2026-03-26) |
+| MOB-224 | Arnold | ✅ Completed | Admin claim payout visibility fixed (2026-03-26) |
+| MOB-223 | Arnold | ✅ Completed | Evidence upload navigation fixed (2026-03-26) |
+| MOB-215 | Arnold | ✅ Completed | Handover state disconnect fixed (2026-03-26) |
+| MOB-214 | Arnold | ✅ Completed | Handover notifications fixed (2026-03-26) |
+| MOB-225 | Arnold | ✅ Completed | Car location filter fixed (2026-03-26) |
+| MOB-221 | Arnold | ✅ Completed | Location search fixed (2026-03-26) |
+| MOB-206 | Arnold | ✅ Completed | Booking extension functional (2026-03-26) |
+| MOB-208 | Arnold | ✅ Completed | Claim status visible to renter (2026-03-26) |
+| MOB-213 | Arnold | ✅ Completed | Wallet transaction history works (2026-03-26) |
+| MOB-216 | Arnold | ✅ Completed | Notification mark-as-read works (2026-03-26) |
+| MOB-201 | Arnold | ✅ Completed | Unread badge fixed (2026-03-26) |
+| MOB-204 | Arnold | ✅ Completed | Review submission fixed (2026-03-26) |
+| MOB-212 | Arnold | ✅ Completed | Duplicate case in RenterBookingCard fixed (2026-03-24) |
+| MOB-211 | Arnold | ✅ Completed | Destination surcharge display fixed (2026-03-24) |
+| MOB-209 | Arnold | ✅ Completed | Insurance claim management completed (2026-03-26) |
+| MOB-507 | Duma | ✅ Completed | Handover 8-step flow verified (2026-03-24) |
+| PAY-001 | Duma | ✅ Completed | Pre-payment commission deduction removed (PR #245) |
+| PAY-002 | Duma | ✅ Completed | Mock payment webhook bypass fixed (PR #245) |
+| MOB-203 | Duma | ✅ Completed | GPS location tracking fixed (pre-March 24) |
+| MOB-202 | Duma | ✅ Completed | Return handover flow fixed (pre-March 24) |
+| MOB-200 | Duma | ✅ Completed | Rental lifecycle Phase 1 merged (pre-March 24) |
+| MOB-101-103 | Arnold | ❌ Not Started | Dashboard stats bugs — moved to Sprint 9 |
+| MOB-110/130-138 | Arnold | ❌ Not Started | Anonymize-on-delete — moved to Sprint 9 |
+| ADM-001-004 | Arnold/Tapologo | ❌ Not Started | Admin settings migrations + UI — moved to Sprint 9 |
+| INS-001-009 | Arnold/Duma/Tapologo | ❌ Not Started | Insurance schema + wiring — moved to Sprint 9 |
+| PAY-003-005 | Modisa | ❌ Not Started | Payment email templates — moved to Sprint 9 |
+| MOB-801-811 | Modisa | ❌ Not Started | Notification email templates — moved to Sprint 9 |
+| UI-008-020 | Tapologo | ❌ Not Started | UI polish (tabs, dark mode, auth flow) — deferred |
+| MOB-118-126 | Tapologo | ❌ Not Started | Avatar/image display issues — deferred |
+| MOB-220/222 | Tapologo | ❌ Not Started | Map features — deferred |
+
+### Summary
+
+| Member | Completed | Not Started | Total |
+|--------|-----------|-------------|-------|
+| Arnold | 17 | 8 | 25 |
+| Duma | 5 | 0 | 5 |
+| Tapologo | 0 | 10 | 10 |
+| Modisa | 0 | 11 | 11 |
+| **TOTAL** | **22** | **47** | **69** |
 
 ---
 
