@@ -467,6 +467,42 @@ A ticket is **Done** when:
 
 ---
 
+## 📊 Sprint 9 Completion Status by Team Member
+
+| Task ID | Member | Status | Notes |
+|---------|--------|--------|-------|
+| S9-001 | Arnold | ✅ Completed | Legacy handover notification overload dropped (2026-03-28) |
+| S9-002 | Arnold | ✅ Completed | platform_settings table created + seeded + RPCs (2026-03-28) |
+| S9-003 | Arnold | ✅ Completed | dynamic_pricing_rules table created + 8 rules seeded (2026-03-28) |
+| S9-004 | Arnold | ✅ Completed | profiles soft-delete columns added (2026-03-28) |
+| S9-009 | Arnold | ✅ Completed | bulk-delete-users anonymize + soft-delete refactored (2026-03-28) |
+| S9-010 | Arnold | ✅ Completed | Admin UI guard for deleted users (2026-03-28) |
+| S9-011 | Arnold | ✅ Completed | user_consents table created + RLS (2026-03-28) |
+| S9-015 | Arnold | ✅ Completed | unverified-reminder edge function deployed + cron scheduled (2026-03-28) |
+| S9-005 | Duma | 🔄 In Progress | commissionRates.ts reads from platform_settings — verify + clean up |
+| S9-006 | Duma | 🔄 In Progress | dynamicPricingService.ts already loads from DB with fallback — audit + clean up |
+| S9-007 | Duma | 🔄 In Progress | insuranceService.ts reads insurance_admin_fee from platform_settings — verify |
+| S9-008 | Duma | ❌ Not Started | delete-user-with-transfer edge function refactor |
+| S9-012 | Duma | ❌ Not Started | Store consent record on signup |
+| S9-013 | Duma | ❌ Not Started | rental-reminder cron job |
+| S9-014 | Duma | ❌ Not Started | return-reminder cron job |
+| S9-016 | Tapologo | ❌ Not Started | Unit tests: handover lifecycle transitions |
+| S9-017 | Tapologo | ❌ Not Started | Unit tests: insurance claim submission flow |
+| S9-018 | Tapologo | ❌ Not Started | Unit tests: admin portal (audit logs + capability assignment) |
+| S9-019 | Tapologo | ❌ Not Started | Unit tests: booking extension request |
+| S9-020 | Tapologo | ❌ Not Started | Android gradle wrapper CI verification |
+
+### Summary
+
+| Member | Completed | In Progress | Not Started | Total |
+|--------|-----------|-------------|-------------|-------|
+| Arnold | 9 | 0 | 0 | 9 ✅ ALL DONE |
+| Duma | 0 | 3 | 5 | 8 |
+| Tapologo | 0 | 0 | 5 | 5 |
+| **TOTAL** | **9** | **3** | **10** | **22** |
+
+---
+
 ## 🗓️ Suggested Day-by-Day Schedule
 
 | Day | Arnold | Duma | Tapologo |
