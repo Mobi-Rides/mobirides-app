@@ -1,22 +1,28 @@
 
 
-# Fix: Rename Migration to Follow Convention
+# Update Status Documentation for Completed Items
 
-The migration `20260403232558_a98c994c-6fa0-4c62-856c-78a1d57b658f.sql` violates the project's naming convention defined in `docs/conventions/MIGRATION_PROTOCOL.md`.
+## Confirmation
 
-**Convention:** `YYYYMMDDHHMMSS_description.sql`
-**Current:** `20260403232558_a98c994c-6fa0-4c62-856c-78a1d57b658f.sql`
-**Correct:** `20260403232558_add_insurance_sla_columns.sql`
+Both items are verified complete:
 
-## Changes
+- **BUG-001 (S9-001)**: Resolved 2026-03-28 per `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`. Sprint 9 plan already marks it `✅ DONE`.
+- **platform_settings migration (S9-002 / ADM-001)**: Completed 2026-03-28. Table exists with seeded defaults, RPCs working. Sprint 9 plan already marks it `✅ DONE`.
 
-1. **Rename the migration file** to `20260403232558_add_insurance_sla_columns.sql`
-2. **Add the required dependency documentation header** inside the file:
-```sql
--- Consumers: src/components/admin/settings/InsuranceSettingsSection.tsx
--- Impact: Adds daily_rate, excess_percentage, target_segment, international_cap_usd columns with defaults, no breaking changes
-```
+## Files to Update
 
-## Technical Note
-Since this migration was already applied to the connected Supabase instance, renaming the file locally is safe — the migration won't re-run. If a `supabase migration repair` is needed later, it will reference the new filename.
+### 1. `docs/BUG_REPORT.md`
+- **Move BUG-001** from "Active Bugs" to the "Resolved Bugs" section (it currently appears in both — the active entry is stale)
+- Remove the full active BUG-001 block (lines 5-53), keep only the resolved entry at the bottom
+
+### 2. `docs/Product Status/WEEK_1_APRIL_2026_STATUS_REPORT.md`
+- **Line 43**: Change `🟡 BUG-001 fix not yet implemented` to `✅ BUG-001 fix shipped — 2026-03-28 (S9-001)`
+- **Line 50**: Change `🔴 BUG-001` critical issue to `✅ Resolved` with reference to hotfix doc
+- **Line 51**: Change `🔴 platform_settings / dynamic_pricing_rules tables missing` to `✅ Resolved — tables created 2026-03-28 (S9-002, S9-003)`
+
+### 3. `docs/Product Status/SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md`
+- **ADM-001 (line 851)**: Change `Not Started` → `✅ Done — Delivered in Sprint 9 (S9-002, 2026-03-28)`
+- **ADM-002 (line 867)**: Change `Not Started` → `✅ Done — Delivered in Sprint 9 (S9-003, 2026-03-28)`
+
+No code changes. No migrations. Documentation-only updates across 3 files.
 
