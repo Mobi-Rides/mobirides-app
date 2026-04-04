@@ -848,7 +848,7 @@ This document consolidates all Sprint 8 tasks from the Week 4 Status Report and 
 | **Description** | New table for storing global platform parameters (commission, fees, toggles). |
 | **Issue Type** | Task |
 | **Priority** | High |
-| **Status** | Not Started |
+| **Status** | ✅ Done — Delivered in Sprint 9 (S9-002, 2026-03-28) |
 | **Assignee** | Arnold |
 | **Story Points** | 3 |
 | **Dependencies** | None |
