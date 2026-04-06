@@ -119,7 +119,7 @@ export const HandoverBookingButtons = ({ onBookingClick }: HandoverBookingButton
       }
     },
     enabled: !!userId && !!userRole,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // Relaxed polling every 60s
     retry: (failureCount, error) => {
       console.warn("HandoverBookingButtons: Query failed, retry attempt", { failureCount, error });
       return failureCount < 2; // Only retry twice

@@ -22,36 +22,7 @@ export const NotificationsSection = () => {
     }
   });
 
-  // Set up real-time subscription for notifications
-  useEffect(() => {
-    const setupRealtimeSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const channel = supabase
-        .channel('notifications-realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            // Refresh notifications when new ones are created
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-
-    setupRealtimeSubscription();
-  }, [queryClient]);
+  // Realtime subscription removed — useNotifications.ts already handles this via 'notifications-changes' channel
 
   const handleNotificationClick = (notificationId: string) => {
     console.log('Navigating to notification:', notificationId);

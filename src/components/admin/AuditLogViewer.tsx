@@ -154,7 +154,7 @@ export const AuditLogViewer = () => {
 
       return enrichedLogs;
     },
-    refetchInterval: 30000,
+    refetchInterval: 60000, // Relaxed polling every 60s (admin-only, no urgency)
   });
 
   // Advanced filtering logic

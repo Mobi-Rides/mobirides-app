@@ -190,7 +190,7 @@ export const Header = ({
 
       return count || 0;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    // No polling — Navigation.tsx + realtime handles notification count updates
     enabled: !!user,
   });
 
