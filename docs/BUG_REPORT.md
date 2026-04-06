@@ -55,6 +55,9 @@ Supabase Security flagged suspicious outbound scanning traffic to `vip.66591.vip
 3. Added SSRF domain whitelist to `send-push-notification/index.ts` — only `fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.notify.windows.com`, `*.wns.windows.com`, `web.push.apple.com` allowed
 4. All Supabase keys rotated in Dashboard; legacy API keys disabled
 
+**Redeployment Verified (2026-04-06 16:44 UTC):**
+Edge function force-redeployed to Supabase runtime. Test request to `https://evil.example.com/.env` returned `403 — Push endpoint domain not allowed`. Log entry confirmed: `Blocked push to disallowed endpoint: https://evil.example.com/.env`. SSRF whitelist is **live in production**.
+
 **Tickets:** MOB-710 (SSRF endpoint validation), MOB-701 (hardcoded secrets — now in progress).
 
 ---
