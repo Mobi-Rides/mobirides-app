@@ -21,6 +21,22 @@ const supabaseAdmin = createClient(
 );
 
 /**
+ * Sanitize input to prevent XSS/injection
+ */
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return '';
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\x00/g, '')
+    .replace(/[\b\r\n\t]/g, (match) => ({ '\b': '', '\r': '', '\n': '<br>', '\t': ' ' }[match] || ''))
+    .trim()
+    .slice(0, 10000);
+};
+
+/**
  * Handle user signup with automatic email confirmation
  */
 export async function signupUser(req, res) {
@@ -41,8 +57,12 @@ export async function signupUser(req, res) {
       });
     }
 
+    // Sanitize inputs to prevent XSS/injection
+    const sanitizedFullName = sanitizeInput(fullName);
+    const sanitizedEmail = sanitizeInput(email).toLowerCase().slice(0, 254);
+
     // Format phone number for consistency
-    const formattedPhoneNumber = phoneNumber.replace(/[^\d+]/g, "");
+    const formattedPhoneNumber = (phoneNumber || '').replace(/\D/g, "").slice(0, 15);
 
     // Check if phone number is already registered
     const { data: existingProfile, error: checkError } = await supabaseAdmin
@@ -60,12 +80,12 @@ export async function signupUser(req, res) {
 
     // Create user with service role (bypass email confirmation for development)
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: sanitizedEmail,
       password,
       email_confirm: true,
       user_metadata: {
-        full_name: fullName,
-        phone_number: phoneNumber
+        full_name: sanitizedFullName,
+        phone_number: formattedPhoneNumber
       }
     });
 
@@ -130,8 +150,8 @@ export async function signupUser(req, res) {
           .insert({
             id: data.user.id,
             role: 'renter',
-            full_name: fullName,
-            phone_number: phoneNumber,
+            full_name: sanitizedFullName,
+            phone_number: formattedPhoneNumber,
             email_confirmed: true,
             email_confirmed_at: new Date().toISOString(),
             created_at: new Date().toISOString(),
@@ -196,8 +216,8 @@ export async function signupUser(req, res) {
         id: data.user.id,
         email: data.user.email,
         emailConfirmed: true,
-        fullName,
-        phoneNumber
+        fullName: sanitizedFullName,
+        phoneNumber: formattedPhoneNumber
       },
       message: 'Account created successfully! You can now sign in with your credentials.'
     });

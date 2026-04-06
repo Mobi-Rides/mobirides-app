@@ -5,6 +5,7 @@
 
 import { z } from "zod";
 import { DocumentType } from "@/types/verification";
+import { sanitizeName, sanitizeHtml } from "./sanitization";
 
 /**
  * Personal Information Validation Schema
@@ -15,7 +16,11 @@ export const PersonalInfoSchema = z.object({
     .string()
     .min(2, "Full name must be at least 2 characters")
     .max(100, "Full name must not exceed 100 characters")
-    .regex(/^[a-zA-Z\s]+$/, "Full name can only contain letters and spaces")
+    .transform(sanitizeName)
+    .refine(
+      (name) => /^[a-zA-Z\s]+$/.test(name),
+      "Full name can only contain letters and spaces",
+    )
     .refine(
       (name) => name.trim().split(" ").length >= 2,
       "Please provide at least first and last name",
