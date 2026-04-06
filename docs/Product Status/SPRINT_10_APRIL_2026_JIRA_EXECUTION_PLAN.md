@@ -14,7 +14,7 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 
 | Epic | Current | Target |
 |------|---------|--------|
-| Security Hardening (MOB-700) | 10% | 70% |
+| Security Hardening (MOB-700) | 25% | 70% |
 | DB Pull Fix (BUG-003) | 0% | 100% |
 | Admin Settings Service Wiring | 60% | 100% |
 | Anonymize-on-Delete (MOB-110) | 40% | 70% |
@@ -48,7 +48,8 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | Test Coverage (S9-016–019) | 4 | — | — | 4 | — |
 | Android Verification (S9-020) | 1 | — | — | 1 | — |
 | Sprint Sign-off & Reporting | 1 | — | — | — | 1 |
-| **TOTAL** | **21** | **8** | **7** | **5** | **1** |
+| SSRF Endpoint Validation (MOB-710) | 1 | 1 | — | — | — |
+| **TOTAL** | **22** | **9** | **7** | **5** | **1** |
 
 ---
 
@@ -451,6 +452,26 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 
 ---
 
+### S10-022 — MOB-710: SSRF endpoint validation in `send-push-notification`
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S10-022 / MOB-710 |
+| **Owner** | Arnold |
+| **Priority** | P0 — Done |
+| **Ref** | BUG-004, Supabase Security alert (2026-04-06) |
+| **Summary** | Add domain whitelist to `send-push-notification` to prevent SSRF via malicious push subscription endpoints |
+
+**Tasks:**
+- [x] Add `ALLOWED_PUSH_DOMAINS` whitelist (`fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.notify.windows.com`, `web.push.apple.com`)
+- [x] Add `isAllowedPushEndpoint()` validation function
+- [x] Return 403 for non-whitelisted endpoints
+- [x] Deployed 2026-04-06
+
+**Acceptance Criteria:** Only known push service domains accepted; all other outbound requests blocked with 403.
+
+---
+
 ## 📊 Sprint 10 Definition of Done
 
 A ticket is **Done** when:
@@ -480,7 +501,7 @@ A ticket is **Done** when:
 |---------|--------|--------|-------|
 | S10-001 | Arnold | ❌ Not Started | MOB-801: drop enum-dependent functions |
 | S10-002 | Arnold | ❌ Not Started | MOB-802: remove redundant enum block |
-| S10-003 | Arnold | ❌ Not Started | MOB-701: remove hardcoded secrets |
+| S10-003 | Arnold | 🟡 In Progress | MOB-701: 16 scripts deleted, `.env` cleaned, keys rotated (2026-04-06). Remaining: final grep verification + credential rotation confirmation |
 | S10-004 | Arnold | ❌ Not Started | MOB-702: auth-gate add-admin |
 | S10-005 | Arnold | ❌ Not Started | MOB-703: notifications RLS |
 | S10-006 | Arnold | ❌ Not Started | MOB-704: financial tables RLS |
@@ -499,16 +520,17 @@ A ticket is **Done** when:
 | S10-019 | Tapologo | ❌ Not Started | Booking extension tests |
 | S10-020 | Tapologo | ❌ Not Started | Android gradle verification |
 | S10-021 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
+| S10-022 | Arnold | ✅ Done | MOB-710: SSRF endpoint validation in `send-push-notification` (2026-04-06) |
 
 ### Summary
 
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
-| Arnold | 0 | 0 | 8 | 8 |
+| Arnold | 1 | 1 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
 | Tapologo | 0 | 0 | 5 | 5 |
 | Modisa | 0 | 0 | 1 | 1 |
-| **TOTAL** | **0** | **0** | **21** | **21** |
+| **TOTAL** | **1** | **1** | **19** | **22** |
 
 ---
 

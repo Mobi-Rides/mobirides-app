@@ -39,12 +39,15 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 - ✅ **BUG-003 documented** — `notification_type__old_version_to_be_dropped` dependency error identified, root cause analysed, fix plan created with MOB-801/MOB-802
 - ✅ **Documentation sync** — BUG-001 moved to Resolved in `BUG_REPORT.md`; Sprint 8 ADM-001/ADM-002 marked Done; Week 1 April status updated
 - ✅ **Sprint 9 Arnold tickets all complete** — S9-001 through S9-004, S9-009, S9-010, S9-011, S9-015 all delivered 2026-03-28
+- ✅ **SSRF protection shipped** — Domain whitelist added to `send-push-notification/index.ts` blocking malicious outbound scanning (BUG-004)
+- ✅ **16 compromised scripts deleted** — All hardcoded `service_role` and `anon` keys removed from codebase (9 on Apr 5, 7 on Apr 6)
+- ✅ **`.env` secured** — `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` removed; service role key now only in Edge Function Secrets
 
 ---
 
 ### Critical Issues
 
-- 🔴 **BUG-002: Security Vulnerabilities (MOB-701–709)** — 9 findings including hardcoded secrets, unauthenticated admin creation, blanket notification access, missing RLS on financial tables. Plan exists, execution not started.
+- 🟡 **BUG-002: Security Vulnerabilities (MOB-701–709)** — MOB-701 (hardcoded secrets) now in progress: 16 scripts deleted, `.env` cleaned, keys rotated. MOB-710 (SSRF) resolved. Remaining: MOB-702–709.
 - 🔴 **BUG-003: `notification_type` enum blocks `db pull`** — 7 functions reference old enum type. Fix plan exists (MOB-801/802), not yet applied to migrations.
 - 🟡 **Sprint 9 Duma tickets (S9-005–S9-008, S9-012–S9-014)** — 5 not started, 3 in progress. Service wiring, consent on signup, and cron jobs pending.
 - 🟡 **Sprint 9 Tapologo tickets (S9-016–S9-020)** — All 5 not started. Unit tests and Android verification pending.
@@ -62,10 +65,10 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 | System Health | 84% | **85%** | **86%** | +1 (Admin Settings + Insurance SLA aligned) | 95% |
 | Production Readiness | 83% | **84%** | **86%** | +2 (Dynamic Pricing UI + Insurance SLA + security plan) | 95% |
 | Test Coverage | 62% | **62%** | **62%** | — | 85% |
-| Security Vulnerabilities | 4 | **4** | **9** | +5 (full audit revealed additional findings) | 0 |
+| Security Vulnerabilities | 4 | **4** | **7** | +3 (9 found, 2 addressed: hardcoded keys + SSRF) | 0 |
 | Database Migrations | ~257 | **~257** | **~258** | +1 (insurance_packages SLA columns) | — |
 | Edge Functions | 31 | **31** | **31** | — | — |
-| Known Bugs | ~2 | **~2** | **~4** | +2 (BUG-002 registered as 1 epic, BUG-003 new) | 0 |
+| Known Bugs | ~2 | **~2** | **~4** | +2 (BUG-002 epic, BUG-003 new; BUG-004 resolved same period) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
@@ -99,6 +102,7 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 | BUG-001 | Critical | ✅ Resolved (2026-03-28) | `create_handover_notification` return type conflict | [HOTFIX_DB_PULL_FIX_2026_03_28.md](../hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md) |
 | BUG-002 | Critical–Low (9 findings) | 🔴 Open | Security vulnerabilities: RLS, edge functions, credentials | [SECURITY_REMEDIATION_2026_04_04.md](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 | BUG-003 | Critical (blocks db pull) | 🔴 Open | `notification_type__old_version_to_be_dropped` dependency error | [HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md](../hotfixes/HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md) |
+| BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, `.env` cleaned, SSRF whitelist added |
 
 ---
 
@@ -153,6 +157,9 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | BUG-003 root cause analysis + fix plan | 2026-04-04 | Modisa | MOB-801/802 plan ready for execution |
 | Documentation status sync (BUG-001, ADM-001/002) | 2026-04-04 | Modisa | All reports now reflect accurate completion status |
 | S9-001 through S9-004, S9-009–011, S9-015 | 2026-03-28 | Arnold | Sprint 9 infrastructure + compliance tickets |
+| SSRF endpoint whitelist in `send-push-notification` (MOB-710) | 2026-04-06 | Modisa | Blocks malicious outbound scanning via push endpoints |
+| 16 scripts with hardcoded keys deleted (MOB-701 partial) | 2026-04-06 | Modisa | Eliminates credential exposure from codebase |
+| `.env` service role key + access token removed | 2026-04-06 | Modisa | Prevents plaintext secrets in source control |
 
 ---
 
@@ -172,7 +179,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | S9-018: Unit tests — admin portal | Tapologo | Apr 13 | P2 |
 | S9-019: Unit tests — booking extension | Tapologo | Apr 13 | P2 |
 | S9-020: Android gradle verification | Tapologo | Apr 11 | P1 |
-| MOB-701: Remove hardcoded secrets | Arnold | Apr 14 | P0 |
+| MOB-701: Remove hardcoded secrets (🟡 In Progress — 16 scripts deleted, keys rotated; remaining: final verification) | Arnold | Apr 14 | P0 |
 | MOB-702: Auth-gate `add-admin` edge function | Arnold | Apr 14 | P0 |
 | MOB-703: Drop blanket notifications policy | Arnold | Apr 15 | P0 |
 | MOB-801: Drop old enum-dependent functions | Arnold | Apr 14 | P0 |
@@ -209,7 +216,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | Auth Compliance (MOB-600) | MOB-600 | 🟡 P0–P2 Done | 85% | `user_consents` table exists; consent storage on signup pending (S9-012) |
 | Anonymize-on-Delete | MOB-110 | 🟡 Phase 1 Done | 40% | Soft-delete columns + bulk-delete refactored; `delete-user-with-transfer` pending (S9-008) |
 | Notification Enhancement (MOB-800) | MOB-800 | 🟡 Email done | 65% | Unverified reminder deployed; rental/return cron pending (S9-013/014) |
-| Security Hardening | MOB-700 | 🔴 Planned | 10% | 9 findings documented; remediation not started |
+| Security Hardening | MOB-700 | 🟡 In Progress | 25% | MOB-701 partially done (scripts + keys), MOB-710 SSRF fix shipped; MOB-702–709 remaining |
 | DB Pull Fix | BUG-003 | 🔴 Plan Ready | 0% | MOB-801/802 fix plan created; migrations not edited |
 | Admin Portal Restoration | MOB-100 | ✅ Complete | 100% | — |
 | Rental Lifecycle (MOB-200) | MOB-200 | ✅ Complete | 100% | — |
@@ -302,7 +309,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 
 ## 🏁 Conclusion
 
-Week 2 April delivered significant alignment work: Admin Settings now match the PRD (destination pricing) and Pay-U SLA v1.1 (insurance tiers), and the first comprehensive security audit established the MOB-700 remediation backlog. Arnold's Sprint 9 infrastructure tickets are all complete. The focus for Sprint 10 shifts to **security remediation** (MOB-701–709), **BUG-003 fix** (db pull), completing Duma's service wiring carry-overs, and Tapologo's test coverage push. The path to 95% production readiness is now primarily blocked by security fixes and test coverage — both have clear execution plans.
+Week 2 April delivered significant alignment work: Admin Settings now match the PRD (destination pricing) and Pay-U SLA v1.1 (insurance tiers), and the first comprehensive security audit established the MOB-700 remediation backlog. Arnold's Sprint 9 infrastructure tickets are all complete. A critical Supabase Security incident (BUG-004 — outbound SSRF traffic) was reported and resolved same-day with script deletion, `.env` cleanup, SSRF endpoint whitelisting, and key rotation. The focus for Sprint 10 shifts to completing **security remediation** (MOB-702–709), **BUG-003 fix** (db pull), Duma's service wiring carry-overs, and Tapologo's test coverage push.
 
 **Next:** Week 3 April 2026 Status Report (April 17, 2026)
 
