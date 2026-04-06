@@ -40,15 +40,15 @@ Developer workflow improvements were shipped this week: the `AI_WORKFLOW.md` con
 - ✅ **Supabase types regenerated** (commit `01c5c98`) — `src/integrations/supabase/types.ts` updated to reflect current DB schema including new `old_notification_type` enum (PR #274)
 - ✅ **AI workflow conventions updated** (PRs #276, #277) — Migration naming convention rule + `gen:types` script added; all contributors now have a standardised workflow
 - ✅ **Modify Booking button removed** (commit `5aae075`) — Cleaned up dead UI element from `RentalActions.tsx`
-- 🟡 **BUG-001 fix not yet implemented** — Migration to drop legacy `create_handover_notification(uuid, uuid, text, text)` overload is documented but not yet shipped
+- ✅ **BUG-001 fix shipped — 2026-03-28 (S9-001)** — Migration to drop legacy `create_handover_notification(uuid, uuid, text, text)` overload delivered in Sprint 9
 - 🟡 **MOB-110/130–138 (Anonymize-on-Delete)** — Multi-phase compliance work; not started in code
 
 ---
 
 ### Critical Issues
 
-- 🔴 **BUG-001: `create_handover_notification` return type conflict** — Blocks `supabase db pull` and `supabase gen types`. Fix is a one-line migration (`DROP FUNCTION IF EXISTS public.create_handover_notification(uuid, uuid, text, text)`). Must be resolved before next schema sync or type regen attempt.
-- 🔴 **`platform_settings` / `dynamic_pricing_rules` tables missing from DB** — Code references these tables with `as any` casts as a workaround. Admin settings UI and dynamic pricing service are non-functional until Arnold ships the migration. See `docs/20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md`.
+- ✅ **BUG-001: `create_handover_notification` return type conflict** — Resolved 2026-03-28 (S9-001). See `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`.
+- ✅ **`platform_settings` / `dynamic_pricing_rules` tables** — Resolved 2026-03-28 (S9-002, S9-003). Tables created with seed data and RLS.
 - 🟡 **MOB-110/130–138 (Anonymize-on-Delete)** — User deletion currently hard-deletes records, violating data retention compliance. Multi-phase implementation plan exists (`docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md`) but no code started.
 - 🟡 **Android build pipeline verification** — `gradle-wrapper.properties` was updated in Sprint 7; local + CI consistency still unverified by Tapologo/QA.
 - 🟡 **MOB-614/615 (Auth Compliance P3)** — `user_consents` DB table and consent record storage on signup still Todo per `2026-03-09_AUTH_COMPLIANCE_EPIC.md`.

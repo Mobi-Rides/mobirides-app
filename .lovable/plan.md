@@ -1,13 +1,28 @@
 
 
-## Plan: Regenerate Supabase Types and Fix Build Errors
+# Update Status Documentation for Completed Items
 
-### Step 1: Regenerate Supabase types
-Run the Supabase type generation to pull in `platform_settings`, `dynamic_pricing_rules`, and their associated RPCs (`get_platform_settings`, `update_platform_setting`) into `src/integrations/supabase/types.ts`. This should resolve all 20+ type errors across `useDynamicPricingRules.ts`, `usePlatformSettings.ts`, `commissionRates.ts`, `dynamicPricingService.ts`, and `insuranceService.ts`.
+## Confirmation
 
-### Step 2: Remove "Modify Booking" button from `RentalActions.tsx`
-Remove the entire block (lines ~103-117) that renders the "Modify Booking" button and references `handleModifyBooking`. This eliminates the `TS2304: Cannot find name 'handleModifyBooking'` error.
+Both items are verified complete:
 
-### Step 3: Verify build
-After type regeneration and the button removal, check for any remaining type mismatches (e.g., `.forEach` on RPC return, `.setting_value` property access) and fix if the regenerated types reveal different shapes than what the code expects.
+- **BUG-001 (S9-001)**: Resolved 2026-03-28 per `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`. Sprint 9 plan already marks it `✅ DONE`.
+- **platform_settings migration (S9-002 / ADM-001)**: Completed 2026-03-28. Table exists with seeded defaults, RPCs working. Sprint 9 plan already marks it `✅ DONE`.
+
+## Files to Update
+
+### 1. `docs/BUG_REPORT.md`
+- **Move BUG-001** from "Active Bugs" to the "Resolved Bugs" section (it currently appears in both — the active entry is stale)
+- Remove the full active BUG-001 block (lines 5-53), keep only the resolved entry at the bottom
+
+### 2. `docs/Product Status/WEEK_1_APRIL_2026_STATUS_REPORT.md`
+- **Line 43**: Change `🟡 BUG-001 fix not yet implemented` to `✅ BUG-001 fix shipped — 2026-03-28 (S9-001)`
+- **Line 50**: Change `🔴 BUG-001` critical issue to `✅ Resolved` with reference to hotfix doc
+- **Line 51**: Change `🔴 platform_settings / dynamic_pricing_rules tables missing` to `✅ Resolved — tables created 2026-03-28 (S9-002, S9-003)`
+
+### 3. `docs/Product Status/SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md`
+- **ADM-001 (line 851)**: Change `Not Started` → `✅ Done — Delivered in Sprint 9 (S9-002, 2026-03-28)`
+- **ADM-002 (line 867)**: Change `Not Started` → `✅ Done — Delivered in Sprint 9 (S9-003, 2026-03-28)`
+
+No code changes. No migrations. Documentation-only updates across 3 files.
 

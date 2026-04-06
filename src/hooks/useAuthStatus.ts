@@ -7,6 +7,7 @@ type UserRole = "host" | "renter" | null;
 export const useAuthStatus = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -39,6 +40,8 @@ export const useAuthStatus = () => {
       } catch (error) {
         console.error("Error checking auth:", error);
         setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
       }
     };
 
@@ -68,6 +71,11 @@ export const useAuthStatus = () => {
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
+        // Don't fetch role until auth check is complete
+        if (isCheckingAuth) {
+          return;
+        }
+
         if (!isAuthenticated) {
           console.log("Not authenticated, skipping role fetch");
           setIsLoadingRole(false);
@@ -127,7 +135,8 @@ export const useAuthStatus = () => {
     };
 
     fetchUserRole();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isCheckingAuth]);
 
-  return { isAuthenticated, userRole, isLoadingRole, userId };
+  // isLoadingRole covers both phases: auth check + role fetch
+  return { isAuthenticated, userRole, isLoadingRole: isCheckingAuth || isLoadingRole, userId };
 };
