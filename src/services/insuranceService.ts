@@ -363,14 +363,14 @@ export class InsuranceService {
 
     let adminFee = fallbackAdminFee;
     try {
-      const { data } = await (supabase
-        .from('platform_settings' as any)
+      const { data } = await supabase
+        .from('platform_settings')
         .select('setting_value')
         .eq('setting_key', 'insurance_admin_fee_pula')
-        .single() as any);
+        .single();
 
-      if (data && (data as any).setting_value) {
-        adminFee = Number((data as any).setting_value) || fallbackAdminFee;
+      if (data && data.setting_value) {
+        adminFee = Number(data.setting_value) || fallbackAdminFee;
       }
     } catch (err) {
       console.error('Failed to fetch insurance_admin_fee_pula, using fallback', err);

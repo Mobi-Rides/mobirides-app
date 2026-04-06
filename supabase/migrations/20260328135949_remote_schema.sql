@@ -128,15 +128,6 @@ drop table "public"."dynamic_pricing_rules";
 
 drop table "public"."platform_settings";
 
-alter type "public"."notification_type" rename to "notification_type__old_version_to_be_dropped";
-
-create type "public"."notification_type" as enum ('booking_request_received', 'booking_request_sent', 'booking_confirmed_host', 'booking_confirmed_renter', 'booking_cancelled_host', 'booking_cancelled_renter', 'pickup_reminder_host', 'pickup_reminder_renter', 'return_reminder_host', 'return_reminder_renter', 'wallet_topup', 'wallet_deduction', 'message_received', 'handover_ready', 'payment_received', 'payment_failed', 'system_notification', 'navigation_started', 'pickup_location_shared', 'return_location_shared', 'arrival_notification', 'early_return_notification', 'pickup_reminder', 'return_reminder', 'claim_submitted', 'claim_status_updated');
-
-alter table "public"."notification_expiration_policies" alter column notification_type type "public"."notification_type" using notification_type::text::"public"."notification_type";
-
-alter table "public"."notifications" alter column type type "public"."notification_type" using type::text::"public"."notification_type";
-
-drop type "public"."notification_type__old_version_to_be_dropped";
 
 alter table "public"."insurance_commission_rates" drop column "rate";
 

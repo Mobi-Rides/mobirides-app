@@ -1223,6 +1223,14 @@ drop type "public"."booking_status__old_version_to_be_dropped";
 
 drop type "public"."notification_role__old_version_to_be_dropped";
 
+DROP FUNCTION IF EXISTS public.create_booking_notification(uuid, public.notification_type__old_version_to_be_dropped, public.notification_type__old_version_to_be_dropped, text, text, jsonb);
+DROP FUNCTION IF EXISTS public.create_booking_notification(uuid, public.notification_type__old_version_to_be_dropped, public.notification_type__old_version_to_be_dropped, text, text, jsonb, public.notification_role__old_version_to_be_dropped);
+DROP FUNCTION IF EXISTS public.create_notification_with_expiration(uuid, public.notification_type__old_version_to_be_dropped, text, text, text, public.notification_role__old_version_to_be_dropped, uuid, uuid, uuid, integer, jsonb, integer);
+DROP FUNCTION IF EXISTS public.create_wallet_notification(uuid, uuid, public.notification_type__old_version_to_be_dropped, text, text, jsonb, public.notification_role__old_version_to_be_dropped);
+DROP FUNCTION IF EXISTS public.get_notification_expiration_info(public.notification_type__old_version_to_be_dropped);
+DROP FUNCTION IF EXISTS public.get_user_notifications(integer, integer, boolean);
+DROP FUNCTION IF EXISTS public.update_notification_expiration_policy(public.notification_type__old_version_to_be_dropped, integer, boolean);
+
 drop type "public"."notification_type__old_version_to_be_dropped";
 
 drop type "public"."review_type__old_version_to_be_dropped";

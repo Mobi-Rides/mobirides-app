@@ -8,7 +8,8 @@ import {
   AppliedRule,
   Season,
   DemandData,
-  UserLoyaltyData
+  UserLoyaltyData,
+  PricingConditions
 } from "@/types/pricing";
 
 export class DynamicPricingService {
@@ -22,14 +23,14 @@ export class DynamicPricingService {
       // Check if dynamic pricing is enabled globally
       let isDynamicPricingEnabled = true;
       try {
-        const { data: settingsData } = await (supabase
-          .from("platform_settings" as any)
+        const { data: settingsData } = await supabase
+          .from("platform_settings")
           .select("setting_value")
           .eq("setting_key", "dynamic_pricing_enabled")
-          .single() as any);
+          .single();
 
         if (settingsData) {
-          isDynamicPricingEnabled = (settingsData as any).setting_value === true || (settingsData as any).setting_value === "true";
+          isDynamicPricingEnabled = settingsData.setting_value === "true";
         }
       } catch (err) {
         console.error("[DynamicPricing] Failed to fetch dynamic pricing toggle:", err);
@@ -45,29 +46,29 @@ export class DynamicPricingService {
         };
       }
 
-      // Get hardcoded pricing rules as fallback
+      // Get hardcoded pricing rules as secondary fallback
       let rules = this.getDefaultPricingRules();
 
       // Attempt to load from DB
       try {
-        const { data: dbRules, error } = await (supabase
-          .from("dynamic_pricing_rules" as any)
+        const { data: dbRules, error } = await supabase
+          .from("dynamic_pricing_rules")
           .select("*")
-          .eq("is_active", true) as any);
+          .eq("is_active", true);
 
         if (!error && dbRules && dbRules.length > 0) {
           // map db rows to PricingRule format
-          rules = dbRules.map((dbRule: any) => ({
+          rules = dbRules.map((dbRule) => ({
             id: dbRule.id,
             name: dbRule.rule_name,
             type: dbRule.condition_type as PricingRuleType,
             is_active: dbRule.is_active,
             multiplier: dbRule.multiplier,
-            conditions: dbRule.condition_value as unknown,
+            conditions: dbRule.condition_value as unknown as PricingConditions,
             priority: dbRule.priority || 0,
             created_at: dbRule.created_at || new Date().toISOString(),
             updated_at: dbRule.created_at || new Date().toISOString(),
-          })) as PricingRule[];
+          }));
         } else {
           rules = rules.filter(r => r.is_active);
         }
