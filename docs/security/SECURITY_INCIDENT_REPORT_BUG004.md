@@ -84,6 +84,10 @@ All registered users of the MobiRides platform are potentially affected, as the 
 | 6 | Redeployed edge function with whitelist | ✅ Complete | 2026-04-06 |
 | 7 | Verified whitelist blocking via edge function logs | ✅ Complete | 2026-04-06 |
 | 8 | Reduced excessive polling traffic (85% reduction) | ✅ Complete | 2026-04-06 |
+| 9 | Added `enabled: !!user` auth guards to all useQuery hooks — eliminated 401 spam on login page | ✅ Complete | 2026-04-06 |
+| 10 | Replaced inline `supabase.auth.getUser()` with cached `useAuth().user` in high-traffic components | ✅ Complete | 2026-04-06 |
+| 11 | Added `staleTime` (10s–120s) to prevent unnecessary refetches on mount/focus | ✅ Complete | 2026-04-06 |
+| 12 | Removed duplicate realtime subscription in `NotificationsSection.tsx` | ✅ Complete | 2026-04-06 |
 
 ---
 
