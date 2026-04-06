@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 
 export const NotificationsSection = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery({
     queryKey: ['notifications'],
