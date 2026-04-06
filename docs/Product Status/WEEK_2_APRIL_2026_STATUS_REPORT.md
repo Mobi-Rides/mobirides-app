@@ -179,7 +179,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | S9-018: Unit tests — admin portal | Tapologo | Apr 13 | P2 |
 | S9-019: Unit tests — booking extension | Tapologo | Apr 13 | P2 |
 | S9-020: Android gradle verification | Tapologo | Apr 11 | P1 |
-| MOB-701: Remove hardcoded secrets | Arnold | Apr 14 | P0 |
+| MOB-701: Remove hardcoded secrets (🟡 In Progress — 16 scripts deleted, keys rotated; remaining: final verification) | Arnold | Apr 14 | P0 |
 | MOB-702: Auth-gate `add-admin` edge function | Arnold | Apr 14 | P0 |
 | MOB-703: Drop blanket notifications policy | Arnold | Apr 15 | P0 |
 | MOB-801: Drop old enum-dependent functions | Arnold | Apr 14 | P0 |
