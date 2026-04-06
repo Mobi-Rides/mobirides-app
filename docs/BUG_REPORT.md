@@ -36,6 +36,29 @@ Security scan identified 9 actionable findings: hardcoded secrets in scripts, un
 
 ---
 
+### BUG-004: Outbound SSRF Traffic via `send-push-notification`
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-06 |
+| **Severity** | Critical |
+| **Status** | ✅ Resolved |
+| **Affects** | `supabase/functions/send-push-notification/index.ts`, `.env`, 16 scripts with hardcoded keys |
+| **Reported By** | Supabase Security (Matthias Luft) |
+
+**Description:**  
+Supabase Security flagged suspicious outbound scanning traffic to `vip.66591.vip/.env.test` originating from the application. Root cause: attacker used the previously leaked `service_role` key to invoke the `send-push-notification` edge function with a malicious `subscription.endpoint`, triggering SSRF to scan external targets for environment files.
+
+**Fix Applied (2026-04-06):**
+1. Deleted 16 scripts containing hardcoded `service_role` and `anon` keys (9 on Apr 5, 7 on Apr 6)
+2. Removed `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` from `.env`
+3. Added SSRF domain whitelist to `send-push-notification/index.ts` — only `fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.notify.windows.com`, `*.wns.windows.com`, `web.push.apple.com` allowed
+4. All Supabase keys rotated in Dashboard; legacy API keys disabled
+
+**Tickets:** MOB-710 (SSRF endpoint validation), MOB-701 (hardcoded secrets — now in progress).
+
+---
+
 ## Resolved Bugs
 
 ### BUG-001 — `create_handover_notification` Return Type Conflict

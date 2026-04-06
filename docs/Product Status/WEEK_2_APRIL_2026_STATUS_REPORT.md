@@ -309,7 +309,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 
 ## 🏁 Conclusion
 
-Week 2 April delivered significant alignment work: Admin Settings now match the PRD (destination pricing) and Pay-U SLA v1.1 (insurance tiers), and the first comprehensive security audit established the MOB-700 remediation backlog. Arnold's Sprint 9 infrastructure tickets are all complete. The focus for Sprint 10 shifts to **security remediation** (MOB-701–709), **BUG-003 fix** (db pull), completing Duma's service wiring carry-overs, and Tapologo's test coverage push. The path to 95% production readiness is now primarily blocked by security fixes and test coverage — both have clear execution plans.
+Week 2 April delivered significant alignment work: Admin Settings now match the PRD (destination pricing) and Pay-U SLA v1.1 (insurance tiers), and the first comprehensive security audit established the MOB-700 remediation backlog. Arnold's Sprint 9 infrastructure tickets are all complete. A critical Supabase Security incident (BUG-004 — outbound SSRF traffic) was reported and resolved same-day with script deletion, `.env` cleanup, SSRF endpoint whitelisting, and key rotation. The focus for Sprint 10 shifts to completing **security remediation** (MOB-702–709), **BUG-003 fix** (db pull), Duma's service wiring carry-overs, and Tapologo's test coverage push.
 
 **Next:** Week 3 April 2026 Status Report (April 17, 2026)
 
