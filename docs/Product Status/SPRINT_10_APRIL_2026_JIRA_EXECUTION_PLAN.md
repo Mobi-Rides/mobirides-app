@@ -480,7 +480,7 @@ A ticket is **Done** when:
 |---------|--------|--------|-------|
 | S10-001 | Arnold | ❌ Not Started | MOB-801: drop enum-dependent functions |
 | S10-002 | Arnold | ❌ Not Started | MOB-802: remove redundant enum block |
-| S10-003 | Arnold | ❌ Not Started | MOB-701: remove hardcoded secrets |
+| S10-003 | Arnold | 🟡 In Progress | MOB-701: 16 scripts deleted, `.env` cleaned, keys rotated (2026-04-06). Remaining: final grep verification + credential rotation confirmation |
 | S10-004 | Arnold | ❌ Not Started | MOB-702: auth-gate add-admin |
 | S10-005 | Arnold | ❌ Not Started | MOB-703: notifications RLS |
 | S10-006 | Arnold | ❌ Not Started | MOB-704: financial tables RLS |
