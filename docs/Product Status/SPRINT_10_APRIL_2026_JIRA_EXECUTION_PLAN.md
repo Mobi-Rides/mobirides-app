@@ -499,16 +499,17 @@ A ticket is **Done** when:
 | S10-019 | Tapologo | ❌ Not Started | Booking extension tests |
 | S10-020 | Tapologo | ❌ Not Started | Android gradle verification |
 | S10-021 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
+| S10-022 | Arnold | ✅ Done | MOB-710: SSRF endpoint validation in `send-push-notification` (2026-04-06) |
 
 ### Summary
 
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
-| Arnold | 0 | 0 | 8 | 8 |
+| Arnold | 1 | 1 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
 | Tapologo | 0 | 0 | 5 | 5 |
 | Modisa | 0 | 0 | 1 | 1 |
-| **TOTAL** | **0** | **0** | **21** | **21** |
+| **TOTAL** | **1** | **1** | **19** | **22** |
 
 ---
 
