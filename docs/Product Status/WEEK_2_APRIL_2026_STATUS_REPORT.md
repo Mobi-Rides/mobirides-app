@@ -216,7 +216,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | Auth Compliance (MOB-600) | MOB-600 | 🟡 P0–P2 Done | 85% | `user_consents` table exists; consent storage on signup pending (S9-012) |
 | Anonymize-on-Delete | MOB-110 | 🟡 Phase 1 Done | 40% | Soft-delete columns + bulk-delete refactored; `delete-user-with-transfer` pending (S9-008) |
 | Notification Enhancement (MOB-800) | MOB-800 | 🟡 Email done | 65% | Unverified reminder deployed; rental/return cron pending (S9-013/014) |
-| Security Hardening | MOB-700 | 🔴 Planned | 10% | 9 findings documented; remediation not started |
+| Security Hardening | MOB-700 | 🟡 In Progress | 25% | MOB-701 partially done (scripts + keys), MOB-710 SSRF fix shipped; MOB-702–709 remaining |
 | DB Pull Fix | BUG-003 | 🔴 Plan Ready | 0% | MOB-801/802 fix plan created; migrations not edited |
 | Admin Portal Restoration | MOB-100 | ✅ Complete | 100% | — |
 | Rental Lifecycle (MOB-200) | MOB-200 | ✅ Complete | 100% | — |
