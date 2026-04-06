@@ -47,7 +47,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 
 ### Critical Issues
 
-- 🔴 **BUG-002: Security Vulnerabilities (MOB-701–709)** — 9 findings including hardcoded secrets, unauthenticated admin creation, blanket notification access, missing RLS on financial tables. Plan exists, execution not started.
+- 🟡 **BUG-002: Security Vulnerabilities (MOB-701–709)** — MOB-701 (hardcoded secrets) now in progress: 16 scripts deleted, `.env` cleaned, keys rotated. MOB-710 (SSRF) resolved. Remaining: MOB-702–709.
 - 🔴 **BUG-003: `notification_type` enum blocks `db pull`** — 7 functions reference old enum type. Fix plan exists (MOB-801/802), not yet applied to migrations.
 - 🟡 **Sprint 9 Duma tickets (S9-005–S9-008, S9-012–S9-014)** — 5 not started, 3 in progress. Service wiring, consent on signup, and cron jobs pending.
 - 🟡 **Sprint 9 Tapologo tickets (S9-016–S9-020)** — All 5 not started. Unit tests and Android verification pending.
