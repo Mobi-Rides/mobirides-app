@@ -65,7 +65,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 | System Health | 84% | **85%** | **86%** | +1 (Admin Settings + Insurance SLA aligned) | 95% |
 | Production Readiness | 83% | **84%** | **86%** | +2 (Dynamic Pricing UI + Insurance SLA + security plan) | 95% |
 | Test Coverage | 62% | **62%** | **62%** | — | 85% |
-| Security Vulnerabilities | 4 | **4** | **9** | +5 (full audit revealed additional findings) | 0 |
+| Security Vulnerabilities | 4 | **4** | **7** | +3 (9 found, 2 addressed: hardcoded keys + SSRF) | 0 |
 | Database Migrations | ~257 | **~257** | **~258** | +1 (insurance_packages SLA columns) | — |
 | Edge Functions | 31 | **31** | **31** | — | — |
 | Known Bugs | ~2 | **~2** | **~4** | +2 (BUG-002 registered as 1 epic, BUG-003 new) | 0 |
