@@ -14,7 +14,7 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 
 | Epic | Current | Target |
 |------|---------|--------|
-| Security Hardening (MOB-700) | 10% | 70% |
+| Security Hardening (MOB-700) | 25% | 70% |
 | DB Pull Fix (BUG-003) | 0% | 100% |
 | Admin Settings Service Wiring | 60% | 100% |
 | Anonymize-on-Delete (MOB-110) | 40% | 70% |
