@@ -157,6 +157,9 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | BUG-003 root cause analysis + fix plan | 2026-04-04 | Modisa | MOB-801/802 plan ready for execution |
 | Documentation status sync (BUG-001, ADM-001/002) | 2026-04-04 | Modisa | All reports now reflect accurate completion status |
 | S9-001 through S9-004, S9-009–011, S9-015 | 2026-03-28 | Arnold | Sprint 9 infrastructure + compliance tickets |
+| SSRF endpoint whitelist in `send-push-notification` (MOB-710) | 2026-04-06 | Modisa | Blocks malicious outbound scanning via push endpoints |
+| 16 scripts with hardcoded keys deleted (MOB-701 partial) | 2026-04-06 | Modisa | Eliminates credential exposure from codebase |
+| `.env` service role key + access token removed | 2026-04-06 | Modisa | Prevents plaintext secrets in source control |
 
 ---
 
