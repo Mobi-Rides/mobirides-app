@@ -452,6 +452,26 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 
 ---
 
+### S10-022 — MOB-710: SSRF endpoint validation in `send-push-notification`
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S10-022 / MOB-710 |
+| **Owner** | Arnold |
+| **Priority** | P0 — Done |
+| **Ref** | BUG-004, Supabase Security alert (2026-04-06) |
+| **Summary** | Add domain whitelist to `send-push-notification` to prevent SSRF via malicious push subscription endpoints |
+
+**Tasks:**
+- [x] Add `ALLOWED_PUSH_DOMAINS` whitelist (`fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.notify.windows.com`, `web.push.apple.com`)
+- [x] Add `isAllowedPushEndpoint()` validation function
+- [x] Return 403 for non-whitelisted endpoints
+- [x] Deployed 2026-04-06
+
+**Acceptance Criteria:** Only known push service domains accepted; all other outbound requests blocked with 403.
+
+---
+
 ## 📊 Sprint 10 Definition of Done
 
 A ticket is **Done** when:
