@@ -68,7 +68,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 | Security Vulnerabilities | 4 | **4** | **7** | +3 (9 found, 2 addressed: hardcoded keys + SSRF) | 0 |
 | Database Migrations | ~257 | **~257** | **~258** | +1 (insurance_packages SLA columns) | — |
 | Edge Functions | 31 | **31** | **31** | — | — |
-| Known Bugs | ~2 | **~2** | **~4** | +2 (BUG-002 registered as 1 epic, BUG-003 new) | 0 |
+| Known Bugs | ~2 | **~2** | **~4** | +2 (BUG-002 epic, BUG-003 new; BUG-004 resolved same period) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
