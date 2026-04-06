@@ -39,6 +39,9 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 - ✅ **BUG-003 documented** — `notification_type__old_version_to_be_dropped` dependency error identified, root cause analysed, fix plan created with MOB-801/MOB-802
 - ✅ **Documentation sync** — BUG-001 moved to Resolved in `BUG_REPORT.md`; Sprint 8 ADM-001/ADM-002 marked Done; Week 1 April status updated
 - ✅ **Sprint 9 Arnold tickets all complete** — S9-001 through S9-004, S9-009, S9-010, S9-011, S9-015 all delivered 2026-03-28
+- ✅ **SSRF protection shipped** — Domain whitelist added to `send-push-notification/index.ts` blocking malicious outbound scanning (BUG-004)
+- ✅ **16 compromised scripts deleted** — All hardcoded `service_role` and `anon` keys removed from codebase (9 on Apr 5, 7 on Apr 6)
+- ✅ **`.env` secured** — `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` removed; service role key now only in Edge Function Secrets
 
 ---
 
