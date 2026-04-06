@@ -1,9 +1,8 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 export const NotificationsSection = () => {
   const navigate = useNavigate();
