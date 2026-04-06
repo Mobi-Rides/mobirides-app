@@ -1,13 +1,11 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 export const NotificationsSection = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery({
     queryKey: ['notifications'],
@@ -22,36 +20,7 @@ export const NotificationsSection = () => {
     }
   });
 
-  // Set up real-time subscription for notifications
-  useEffect(() => {
-    const setupRealtimeSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const channel = supabase
-        .channel('notifications-realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            // Refresh notifications when new ones are created
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-
-    setupRealtimeSubscription();
-  }, [queryClient]);
+  // Realtime subscription removed — useNotifications.ts already handles this via 'notifications-changes' channel
 
   const handleNotificationClick = (notificationId: string) => {
     console.log('Navigating to notification:', notificationId);
