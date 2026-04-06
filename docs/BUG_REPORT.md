@@ -8,7 +8,7 @@
 |-------|--------|
 | **Date Reported** | 2026-04-04 |
 | **Severity** | Critical / High / Medium / Low (9 findings) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Progress |
 | **Affects** | RLS policies, edge functions, credentials, password storage |
 | **Plan** | [`docs/hotfixes/SECURITY_REMEDIATION_2026_04_04.md`](./hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 
