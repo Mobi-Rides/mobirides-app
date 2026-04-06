@@ -521,6 +521,7 @@ A ticket is **Done** when:
 | S10-020 | Tapologo | ❌ Not Started | Android gradle verification |
 | S10-021 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
 | S10-022 | Arnold | ✅ Done | MOB-710: SSRF endpoint validation in `send-push-notification` (2026-04-06) |
+| S10-023 | Modisa | ✅ Done | BUG-005: Query optimization — auth guards, cached useAuth(), reduced polling, staleTime (2026-04-06). ~85% request reduction. |
 
 ### Summary
 
@@ -529,8 +530,8 @@ A ticket is **Done** when:
 | Arnold | 1 | 1 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
 | Tapologo | 0 | 0 | 5 | 5 |
-| Modisa | 0 | 0 | 1 | 1 |
-| **TOTAL** | **1** | **1** | **19** | **22** |
+| Modisa | 1 | 0 | 1 | 2 |
+| **TOTAL** | **2** | **1** | **19** | **23** |
 
 ---
 

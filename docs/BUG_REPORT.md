@@ -62,6 +62,32 @@ Edge function force-redeployed to Supabase runtime. Test request to `https://evi
 
 ---
 
+### BUG-005: Excessive Unauthenticated Query Spam & Redundant Polling
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-06 |
+| **Severity** | Medium |
+| **Status** | ✅ Resolved |
+| **Affects** | `Navigation.tsx`, `RenterStats.tsx`, `HostStats.tsx`, `Wallet.tsx`, `AuditLogViewer.tsx`, `MessagingInterface.tsx`, + 6 more |
+
+**Description:**  
+With a single authenticated user, the app generated ~309 requests/minute to Supabase due to: (1) `useQuery` hooks firing without `enabled: !!user` guards — causing 401 errors on the login page, (2) redundant `supabase.auth.getUser()` network calls inside every `queryFn` instead of using cached `useAuth().user`, (3) aggressive polling intervals (5s–30s) duplicating data already covered by realtime subscriptions, and (4) missing `staleTime` causing refetches on every mount/focus.
+
+**Fix Applied (2026-04-06):**
+1. Added `enabled: !!user` guards to all queries requiring authentication — eliminates 401 spam on login page
+2. Replaced inline `supabase.auth.getUser()` calls with cached `useAuth().user` in high-traffic components (Navigation, RenterStats, HostStats, MessagingInterface)
+3. Reduced polling intervals: notifications 5s→60s, messages 10s→60s, stats 30s→120s, audit logs 30s→60s
+4. Added `staleTime` (10s–120s) to prevent unnecessary refetches on mount/focus
+5. Removed duplicate realtime subscription in `NotificationsSection.tsx`
+6. Removed redundant notification count polling in `Header.tsx`
+
+**Impact:** ~309 req/min → ~50-80 req/min (85% reduction). Auth requests reduced from ~26/min to ~2/min.
+
+**Ticket:** S10-023 (query optimization).
+
+---
+
 ## Resolved Bugs
 
 ### BUG-001 — `create_handover_notification` Return Type Conflict
