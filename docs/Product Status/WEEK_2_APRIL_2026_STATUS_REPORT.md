@@ -42,6 +42,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 - ✅ **SSRF protection shipped** — Domain whitelist added to `send-push-notification/index.ts` blocking malicious outbound scanning (BUG-004)
 - ✅ **16 compromised scripts deleted** — All hardcoded `service_role` and `anon` keys removed from codebase (9 on Apr 5, 7 on Apr 6)
 - ✅ **`.env` secured** — `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` removed; service role key now only in Edge Function Secrets
+- ✅ **Full JWT & API Key Rotation completed** — Migrated to new Supabase JWT Signing Keys (ECC P-256), explicitly revoked compromised Legacy HS256 JWT Secret, and rotated all Publishable and Secret API keys in local and production hosting environments to instantly terminate unauthorized sessions (BUG-004 mitigation).
 
 ---
 
@@ -102,7 +103,7 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 | BUG-001 | Critical | ✅ Resolved (2026-03-28) | `create_handover_notification` return type conflict | [HOTFIX_DB_PULL_FIX_2026_03_28.md](../hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md) |
 | BUG-002 | Critical–Low (9 findings) | 🔴 Open | Security vulnerabilities: RLS, edge functions, credentials | [SECURITY_REMEDIATION_2026_04_04.md](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 | BUG-003 | Critical (blocks db pull) | 🔴 Open | `notification_type__old_version_to_be_dropped` dependency error | [HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md](../hotfixes/HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md) |
-| BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, `.env` cleaned, SSRF whitelist added |
+| BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, whitelist added, full API & JWT key rotation executed to contain breach |
 | BUG-005 | Medium | ✅ Resolved (2026-04-06) | Excessive unauthenticated query spam & redundant polling (~309 req/min → ~50-80 req/min) | S10-023 |
 | BUG-006 | Medium (blocks build) | 🔴 Open | Supabase `RejectExcessProperties` strict type errors across 7 files (9 errors) | S10-024 (Tapologo) |
 
@@ -311,7 +312,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 
 ## 🏁 Conclusion
 
-Week 2 April delivered significant alignment work: Admin Settings now match the PRD (destination pricing) and Pay-U SLA v1.1 (insurance tiers), and the first comprehensive security audit established the MOB-700 remediation backlog. Arnold's Sprint 9 infrastructure tickets are all complete. A critical Supabase Security incident (BUG-004 — outbound SSRF traffic) was reported and resolved same-day with script deletion, `.env` cleanup, SSRF endpoint whitelisting, and key rotation. The focus for Sprint 10 shifts to completing **security remediation** (MOB-702–709), **BUG-003 fix** (db pull), Duma's service wiring carry-overs, and Tapologo's test coverage push.
+Week 2 April delivered significant alignment work: Admin Settings now match the PRD (destination pricing) and Pay-U SLA v1.1 (insurance tiers), and the first comprehensive security audit established the MOB-700 remediation backlog. Arnold's Sprint 9 infrastructure tickets are all complete. A critical Supabase Security incident (BUG-004 — outbound SSRF traffic) was reported and resolved same-day with script deletion, `.env` cleanup, SSRF endpoint whitelisting, and a full cryptographic rotation of API and JWT signing keys (transitioning to ECC P-256 asymmetric keys and revoking the legacy shared secret) to guarantee complete lockout of unauthorized sessions. The focus for Sprint 10 shifts to completing **security remediation** (MOB-702–709), **BUG-003 fix** (db pull), Duma's service wiring carry-overs, and Tapologo's test coverage push.
 
 **Next:** Week 3 April 2026 Status Report (April 17, 2026)
 
