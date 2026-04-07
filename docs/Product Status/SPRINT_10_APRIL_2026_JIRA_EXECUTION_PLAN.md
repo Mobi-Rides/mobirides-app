@@ -50,7 +50,7 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | Type Alignment Fix (BUG-006) | 1 | — | — | 1 | — |
 | Sprint Sign-off & Reporting | 1 | — | — | — | 1 |
 | SSRF Endpoint Validation (MOB-710) | 1 | 1 | — | — | — |
-| **TOTAL** | **22** | **9** | **7** | **5** | **1** |
+| **TOTAL** | **23** | **9** | **7** | **6** | **1** |
 
 ---
 

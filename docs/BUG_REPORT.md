@@ -88,6 +88,29 @@ With a single authenticated user, the app generated ~309 requests/minute to Supa
 
 ---
 
+### BUG-006: Supabase Strict Type (`RejectExcessProperties`) Build Errors
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-07 |
+| **Severity** | Medium (blocks build) |
+| **Status** | 🔴 Open |
+| **Affects** | `AdminClaimsDashboard.tsx`, `AddressSection.tsx`, `EmergencyContactSection.tsx`, `PersonalInfoSection.tsx`, `HostBookings.tsx`, `enhancedHandoverService.ts`, `handoverService.ts` |
+| **Assigned To** | Tapologo |
+
+**Description:**  
+Supabase's updated TypeScript client enforces `RejectExcessProperties` on `.update()` and `.insert()` calls. 9 build errors across 7 files caused by three patterns: (1) UI alias properties (`estimated_repair_cost`, `renter`, `supporting_documents`) passed to DB operations that don't match schema columns, (2) non-existent `user_role` property included in `user_verifications` inserts, (3) dynamic computed keys (`{ [field]: value }`) producing index-signature types incompatible with strict column typing.
+
+**Remediation Plan:**
+1. **Map alias fields** — In `AdminClaimsDashboard.tsx`, build update objects using real DB column names (`estimated_damage_cost`, `location`, `excess_amount_due`, `evidence_urls`) instead of UI aliases
+2. **Remove `user_role`** — Delete `user_role: profile.role` from `.insert()` calls in `AddressSection.tsx`, `EmergencyContactSection.tsx`, `PersonalInfoSection.tsx` (column doesn't exist on `user_verifications`)
+3. **Replace dynamic keys** — Use explicit conditional assignments typed with `Tables<'table_name'>['Update']` instead of `{ [field]: value }` in `PersonalInfoSection.tsx`, `HostBookings.tsx`, `handoverService.ts`, `enhancedHandoverService.ts`
+4. **No `as any` casts** — All fixes use Supabase's generated types for proper type alignment
+
+**Ticket:** S10-024
+
+---
+
 ## Resolved Bugs
 
 ### BUG-001 — `create_handover_notification` Return Type Conflict
