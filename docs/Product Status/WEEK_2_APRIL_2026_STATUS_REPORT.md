@@ -103,6 +103,8 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 | BUG-002 | Critical–Low (9 findings) | 🔴 Open | Security vulnerabilities: RLS, edge functions, credentials | [SECURITY_REMEDIATION_2026_04_04.md](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 | BUG-003 | Critical (blocks db pull) | 🔴 Open | `notification_type__old_version_to_be_dropped` dependency error | [HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md](../hotfixes/HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md) |
 | BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, `.env` cleaned, SSRF whitelist added |
+| BUG-005 | Medium | ✅ Resolved (2026-04-06) | Excessive unauthenticated query spam & redundant polling (~309 req/min → ~50-80 req/min) | S10-023 |
+| BUG-006 | Medium (blocks build) | 🔴 Open | Supabase `RejectExcessProperties` strict type errors across 7 files (9 errors) | S10-024 (Tapologo) |
 
 ---
 
