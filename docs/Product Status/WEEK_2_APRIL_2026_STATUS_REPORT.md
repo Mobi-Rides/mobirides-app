@@ -68,7 +68,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 | Security Vulnerabilities | 4 | **4** | **7** | +3 (9 found, 2 addressed: hardcoded keys + SSRF) | 0 |
 | Database Migrations | ~257 | **~257** | **~258** | +1 (insurance_packages SLA columns) | — |
 | Edge Functions | 31 | **31** | **31** | — | — |
-| Known Bugs | ~2 | **~2** | **~4** | +2 (BUG-002 epic, BUG-003 new; BUG-004 resolved same period) | 0 |
+| Known Bugs | ~2 | **~2** | **~5** | +3 (BUG-002 epic, BUG-003 new; BUG-004 resolved; BUG-005 resolved; BUG-006 new) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | — | — |
 
 ### Gap Analysis to Target (95%)
@@ -103,6 +103,8 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 | BUG-002 | Critical–Low (9 findings) | 🔴 Open | Security vulnerabilities: RLS, edge functions, credentials | [SECURITY_REMEDIATION_2026_04_04.md](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 | BUG-003 | Critical (blocks db pull) | 🔴 Open | `notification_type__old_version_to_be_dropped` dependency error | [HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md](../hotfixes/HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md) |
 | BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, `.env` cleaned, SSRF whitelist added |
+| BUG-005 | Medium | ✅ Resolved (2026-04-06) | Excessive unauthenticated query spam & redundant polling (~309 req/min → ~50-80 req/min) | S10-023 |
+| BUG-006 | Medium (blocks build) | 🔴 Open | Supabase `RejectExcessProperties` strict type errors across 7 files (9 errors) | S10-024 (Tapologo) |
 
 ---
 

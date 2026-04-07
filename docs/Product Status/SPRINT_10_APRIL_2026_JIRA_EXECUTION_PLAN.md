@@ -47,9 +47,10 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | Notification Crons (S9-013/014) | 2 | — | 2 | — | — |
 | Test Coverage (S9-016–019) | 4 | — | — | 4 | — |
 | Android Verification (S9-020) | 1 | — | — | 1 | — |
+| Type Alignment Fix (BUG-006) | 1 | — | — | 1 | — |
 | Sprint Sign-off & Reporting | 1 | — | — | — | 1 |
 | SSRF Endpoint Validation (MOB-710) | 1 | 1 | — | — | — |
-| **TOTAL** | **22** | **9** | **7** | **5** | **1** |
+| **TOTAL** | **23** | **9** | **7** | **6** | **1** |
 
 ---
 
@@ -452,6 +453,30 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 
 ---
 
+### S10-024 — BUG-006: Fix Supabase `RejectExcessProperties` build errors
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S10-024 / BUG-006 |
+| **Owner** | Tapologo |
+| **Priority** | P1 — Day 2 |
+| **Ref** | `docs/BUG_REPORT.md` (BUG-006) |
+| **Summary** | Fix 9 build errors across 7 files caused by Supabase strict type checking (`RejectExcessProperties`) |
+
+**Tasks:**
+- [ ] `AdminClaimsDashboard.tsx`: Build update object with real DB columns (`estimated_damage_cost`, `location`, `excess_amount_due`, `evidence_urls`); strip UI alias fields before `.update()`
+- [ ] `AddressSection.tsx`: Remove `user_role` from `.insert()` call on `user_verifications`
+- [ ] `EmergencyContactSection.tsx`: Remove `user_role` from `.insert()` call on `user_verifications`
+- [ ] `PersonalInfoSection.tsx`: Type `field` param as `'full_name' | 'phone_number'` union; remove `user_role` from `.insert()`
+- [ ] `HostBookings.tsx`: Replace `Record<string, unknown>` with `Tables<'bookings'>['Update']` and explicit field assignments
+- [ ] `enhancedHandoverService.ts`: Replace `Record<string, unknown>` with `Tables<'vehicle_condition_reports'>['Update']`
+- [ ] `handoverService.ts` (2 locations): Replace computed keys with conditional explicit assignments using `Tables<'handover_sessions'>['Update']`
+- [ ] `tsc --noEmit` passes clean with zero `RejectExcessProperties` errors
+
+**Acceptance Criteria:** All 9 build errors resolved; no `as any` casts; `tsc --noEmit` clean.
+
+---
+
 ### S10-022 — MOB-710: SSRF endpoint validation in `send-push-notification`
 
 | Field | Value |
@@ -522,6 +547,7 @@ A ticket is **Done** when:
 | S10-021 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
 | S10-022 | Arnold | ✅ Done | MOB-710: SSRF endpoint validation in `send-push-notification` (2026-04-06) |
 | S10-023 | Modisa | ✅ Done | BUG-005: Query optimization — auth guards, cached useAuth(), reduced polling, staleTime (2026-04-06). ~85% request reduction. |
+| S10-024 | Tapologo | ❌ Not Started | BUG-006: Fix Supabase `RejectExcessProperties` build errors across 7 files — map alias fields, remove `user_role` from inserts, replace dynamic keys with typed explicit assignments |
 
 ### Summary
 
@@ -529,9 +555,9 @@ A ticket is **Done** when:
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 1 | 1 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
-| Tapologo | 0 | 0 | 5 | 5 |
+| Tapologo | 0 | 0 | 6 | 6 |
 | Modisa | 1 | 0 | 1 | 2 |
-| **TOTAL** | **2** | **1** | **19** | **23** |
+| **TOTAL** | **2** | **1** | **20** | **24** |
 
 ---
 
