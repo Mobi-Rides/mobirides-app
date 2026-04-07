@@ -50,7 +50,8 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | Type Alignment Fix (BUG-006) | 1 | — | — | 1 | — |
 | Sprint Sign-off & Reporting | 1 | — | — | — | 1 |
 | SSRF Endpoint Validation (MOB-710) | 1 | 1 | — | — | — |
-| **TOTAL** | **23** | **9** | **7** | **6** | **1** |
+| Admin Detailed Views (MOB-711) | 1 | 1 | — | — | — |
+| **TOTAL** | **24** | **10** | **7** | **6** | **1** |
 
 ---
 
@@ -215,6 +216,25 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 - [ ] Verify no runtime regressions
 
 **Acceptance Criteria:** Supabase linter shows 0 `search_path` warnings for these functions.
+
+---
+
+### S10-025 — MOB-711: Admin Portal Detailed Views (Eye Icons)
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S10-025 / MOB-711 |
+| **Owner** | Arnold |
+| **Priority** | P1 — Day 4 |
+| **Ref** | `docs/Product Status/MOB_711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md` |
+| **Summary** | Add `<Eye />` view action icons to Bookings, Withdrawals, Messages, etc. to open read-only detailed inspection dialogs |
+
+**Tasks:**
+- [ ] Add `BookingDetailsDialog`, `PayoutDetailsDialog`, `MessageThreadViewer`
+- [ ] Inject `<Eye />` icon actions into 6 targeted Management Tables
+- [ ] Maintain 0 unused lucide-react imports
+
+**Acceptance Criteria:** `<Eye />` icons exist on listed tables, opening read-only dialogs with deep related data fetched via react-query.
 
 ---
 

@@ -71,6 +71,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 | Edge Functions | 31 | **31** | **31** | — | — |
 | Known Bugs | ~2 | **~2** | **~5** | +3 (BUG-002 epic, BUG-003 new; BUG-004 resolved; BUG-005 resolved; BUG-006 new) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | — | — |
+| UI Enhancements | — | **—** | **1** | +1 (MOB-711 Admin Detailed Views injected to plan) | — |
 
 ### Gap Analysis to Target (95%)
 
@@ -106,6 +107,7 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 | BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, whitelist added, full API & JWT key rotation executed to contain breach |
 | BUG-005 | Medium | ✅ Resolved (2026-04-06) | Excessive unauthenticated query spam & redundant polling (~309 req/min → ~50-80 req/min) | S10-023 |
 | BUG-006 | Medium (blocks build) | 🔴 Open | Supabase `RejectExcessProperties` strict type errors across 7 files (9 errors) | S10-024 (Tapologo) |
+| FEATURE-001 | Low (Enhancement) | 🔴 Open | Missing detailed `<Eye />` view action icons on Bookings, Withdrawals, Messages tables | S10-025 / MOB-711 |
 
 ---
 
