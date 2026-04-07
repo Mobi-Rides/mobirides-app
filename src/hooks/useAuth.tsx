@@ -26,6 +26,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    /**
+     * Detect stale / revoked session errors (e.g. after JWT key rotation)
+     * and silently clear the corrupted local state so the user sees a
+     * clean sign-in form instead of a cryptic API error.
+     */
+    const isStaleSessionError = (err: unknown): boolean => {
+      if (!err || typeof err !== 'object') return false;
+      const msg = (err as { message?: string }).message ?? '';
+      return (
+        msg.includes('Legacy API keys are disabled') ||
+        msg.includes('Invalid Refresh Token') ||
+        msg.includes('Refresh Token Not Found') ||
+        msg.includes('invalid JWT')
+      );
+    };
+
+    const clearStaleSession = () => {
+      console.warn('[AuthProvider] Stale session detected — clearing local auth state');
+      // Remove Supabase auth keys from localStorage
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          localStorage.removeItem(key);
+        }
+      }
+      setSession(null);
+      setUser(null);
+      setIsLoading(false);
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
@@ -51,11 +80,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session: currentSession }, error }) => {
+        if (error && isStaleSessionError(error)) {
+          clearStaleSession();
+          return;
+        }
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (isStaleSessionError(err)) {
+          clearStaleSession();
+        } else {
+          console.error('[AuthProvider] Unexpected getSession error:', err);
+          setIsLoading(false);
+        }
+      });
 
     return () => subscription.unsubscribe();
   }, []);
