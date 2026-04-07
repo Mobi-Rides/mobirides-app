@@ -81,8 +81,9 @@ The following remediation steps were taken immediately upon discovery:
 | 1 | Removed all hardcoded credentials from source code (16 files) | 4 April 2026 |
 | 2 | Removed credentials from environment configuration files | 4 April 2026 |
 | 3 | Implemented domain whitelisting to prevent outbound exploitation | 5 April 2026 |
-| 4 | Rotated all database access credentials | 6 April 2026 |
-| 5 | Disabled all legacy/previous credential versions | 6 April 2026 |
+| 4 | Rotated all database access API keys (Anon / Service Role) | 7 April 2026 |
+| 5 | Upgraded to asymmetric JWT Signing Keys (ECC P-256) and revoked compromised legacy JWT Secret to instantly invalidate any compromised active user sessions | 7 April 2026 |
+| 6 | Disabled all legacy/previous credential API key versions | 7 April 2026 |
 | 6 | Redeployed affected services with security controls active | 6 April 2026 |
 | 7 | Verified security controls are operational via system logs | 6 April 2026 |
 | 8 | Reduced excessive polling traffic (85% reduction) | 6 April 2026 |

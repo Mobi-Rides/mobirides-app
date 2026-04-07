@@ -49,13 +49,13 @@ Security scan identified 9 actionable findings: hardcoded secrets in scripts, un
 **Description:**  
 Supabase Security flagged suspicious outbound scanning traffic to `vip.66591.vip/.env.test` originating from the application. Root cause: attacker used the previously leaked `service_role` key to invoke the `send-push-notification` edge function with a malicious `subscription.endpoint`, triggering SSRF to scan external targets for environment files.
 
-**Fix Applied (2026-04-06):**
+**Fix Applied:**
 1. Deleted 16 scripts containing hardcoded `service_role` and `anon` keys (9 on Apr 5, 7 on Apr 6)
 2. Removed `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` from `.env`
 3. Added SSRF domain whitelist to `send-push-notification/index.ts` — only `fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.notify.windows.com`, `*.wns.windows.com`, `web.push.apple.com` allowed
-4. All Supabase keys rotated in Dashboard; legacy API keys disabled
+4. Full API and JWT Key Rotation (2026-04-07): Upgraded JWT Signing Keys to ECC P-256 and explicitly revoked compromised Legacy HS256 JWT Secret to invalidate active attacker sessions. Rotated publishable and secret API keys in local and production hosting environments.
 
-**Redeployment Verified (2026-04-06 16:44 UTC):**
+**Redeployment Verified:**
 Edge function force-redeployed to Supabase runtime. Test request to `https://evil.example.com/.env` returned `403 — Push endpoint domain not allowed`. Log entry confirmed: `Blocked push to disallowed endpoint: https://evil.example.com/.env`. SSRF whitelist is **live in production**.
 
 **Tickets:** MOB-710 (SSRF endpoint validation), MOB-701 (hardcoded secrets — now in progress).
