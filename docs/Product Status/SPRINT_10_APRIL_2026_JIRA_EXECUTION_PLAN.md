@@ -47,6 +47,7 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | Notification Crons (S9-013/014) | 2 | — | 2 | — | — |
 | Test Coverage (S9-016–019) | 4 | — | — | 4 | — |
 | Android Verification (S9-020) | 1 | — | — | 1 | — |
+| Type Alignment Fix (BUG-006) | 1 | — | — | 1 | — |
 | Sprint Sign-off & Reporting | 1 | — | — | — | 1 |
 | SSRF Endpoint Validation (MOB-710) | 1 | 1 | — | — | — |
 | **TOTAL** | **22** | **9** | **7** | **5** | **1** |
