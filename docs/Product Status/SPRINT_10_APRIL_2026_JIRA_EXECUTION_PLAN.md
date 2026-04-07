@@ -453,6 +453,30 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 
 ---
 
+### S10-024 — BUG-006: Fix Supabase `RejectExcessProperties` build errors
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S10-024 / BUG-006 |
+| **Owner** | Tapologo |
+| **Priority** | P1 — Day 2 |
+| **Ref** | `docs/BUG_REPORT.md` (BUG-006) |
+| **Summary** | Fix 9 build errors across 7 files caused by Supabase strict type checking (`RejectExcessProperties`) |
+
+**Tasks:**
+- [ ] `AdminClaimsDashboard.tsx`: Build update object with real DB columns (`estimated_damage_cost`, `location`, `excess_amount_due`, `evidence_urls`); strip UI alias fields before `.update()`
+- [ ] `AddressSection.tsx`: Remove `user_role` from `.insert()` call on `user_verifications`
+- [ ] `EmergencyContactSection.tsx`: Remove `user_role` from `.insert()` call on `user_verifications`
+- [ ] `PersonalInfoSection.tsx`: Type `field` param as `'full_name' | 'phone_number'` union; remove `user_role` from `.insert()`
+- [ ] `HostBookings.tsx`: Replace `Record<string, unknown>` with `Tables<'bookings'>['Update']` and explicit field assignments
+- [ ] `enhancedHandoverService.ts`: Replace `Record<string, unknown>` with `Tables<'vehicle_condition_reports'>['Update']`
+- [ ] `handoverService.ts` (2 locations): Replace computed keys with conditional explicit assignments using `Tables<'handover_sessions'>['Update']`
+- [ ] `tsc --noEmit` passes clean with zero `RejectExcessProperties` errors
+
+**Acceptance Criteria:** All 9 build errors resolved; no `as any` casts; `tsc --noEmit` clean.
+
+---
+
 ### S10-022 — MOB-710: SSRF endpoint validation in `send-push-notification`
 
 | Field | Value |
