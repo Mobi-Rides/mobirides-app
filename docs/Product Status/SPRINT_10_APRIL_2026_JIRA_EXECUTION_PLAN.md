@@ -522,6 +522,7 @@ A ticket is **Done** when:
 | S10-021 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
 | S10-022 | Arnold | ✅ Done | MOB-710: SSRF endpoint validation in `send-push-notification` (2026-04-06) |
 | S10-023 | Modisa | ✅ Done | BUG-005: Query optimization — auth guards, cached useAuth(), reduced polling, staleTime (2026-04-06). ~85% request reduction. |
+| S10-024 | Tapologo | ❌ Not Started | BUG-006: Fix Supabase `RejectExcessProperties` build errors across 7 files — map alias fields, remove `user_role` from inserts, replace dynamic keys with typed explicit assignments |
 
 ### Summary
 
