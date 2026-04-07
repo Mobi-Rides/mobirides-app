@@ -4,11 +4,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { X, Users, Trash2, Shield, Ban } from 'lucide-react';
+import { X, Users, Trash2, Shield, Download } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { exportToCSV, buildExportFilename } from '@/utils/exportToCSV';
 
 type BulkAction = 'assign_role' | 'delete' | 'suspend';
 type UserRole = 'renter' | 'host' | 'admin' | 'super_admin';
@@ -195,6 +196,25 @@ export function BulkActionBar({ selectedUsers, onClearSelection, className }: Bu
                 Assign Role
               </Button>
             </div>
+
+            {/* Export Selected Action */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const rows = selectedUsers.map((id) => ({ user_id: id }));
+                exportToCSV(
+                  rows,
+                  buildExportFilename('selected_users'),
+                  [{ key: 'user_id', label: 'User ID' }]
+                );
+                toast.success(`Exported ${selectedUsers.length} user ID${selectedUsers.length !== 1 ? 's' : ''}`);
+              }}
+              disabled={isPending}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export Selected
+            </Button>
 
             {/* Delete Action */}
             <Button

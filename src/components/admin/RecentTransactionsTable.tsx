@@ -12,10 +12,12 @@ import {
 import { useTableSort } from "@/hooks/useTableSort";
 import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, TrendingUp, TrendingDown } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Download } from "lucide-react";
+import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 
 interface Transaction {
   id: string;
@@ -89,6 +91,30 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
     return type === "credit" || type === "top_up" ? "text-green-600" : "text-red-600";
   };
 
+  const handleExport = () => {
+    const rows = sortedTransactions.map((t) => ({
+      txn_id: t.id,
+      user: t.host_wallets?.profiles?.full_name ?? "Unknown",
+      date: new Date(t.created_at).toLocaleDateString(),
+      description: t.description ?? t.transaction_type,
+      type: t.transaction_type === "commission_deduction" ? "Debit" : "Credit",
+      amount_bwp:
+        (t.transaction_type === "commission_deduction" ? "-" : "+") +
+        Math.abs(t.amount).toFixed(2),
+      status: t.status,
+    }));
+    const columns = [
+      { key: "txn_id", label: "Transaction ID" },
+      { key: "user", label: "User" },
+      { key: "date", label: "Date" },
+      { key: "description", label: "Description" },
+      { key: "type", label: "Type" },
+      { key: "amount_bwp", label: "Amount (BWP)" },
+      { key: "status", label: "Status" },
+    ];
+    exportToCSV(rows, buildExportFilename("transactions"), columns);
+  };
+
   const renderTransactionRow = (transaction: Transaction) => (
     <TableRow key={transaction.id}>
       <TableCell className="font-medium">
@@ -137,14 +163,27 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle>Recent Transactions ({filteredTransactions.length})</CardTitle>
-            <div className="relative max-w-sm">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search transactions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search transactions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              {sortedTransactions.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExport}
+                  className="gap-2 shrink-0"
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>

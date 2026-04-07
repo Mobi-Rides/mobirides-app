@@ -10,6 +10,7 @@ import {
 import { useTableSort } from "@/hooks/useTableSort";
 import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, AlertTriangle } from "lucide-react";
+import { Search, AlertTriangle, Download } from "lucide-react";
+import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 
 import { useAdminUsersComplete, type AdminUserComplete } from "@/hooks/useAdminUsersComplete";
 import { UserActionsDropdown } from "./UserActionsDropdown";
@@ -132,6 +134,32 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     setSelectedUser(null);
   };
 
+  const handleExport = useCallback(() => {
+    const rows = sortedUsers.map((u) => ({
+      name: u.full_name ?? "",
+      email: u.email ?? "",
+      role: u.role ?? "",
+      user_roles: u.user_roles.join(" | "),
+      kyc_status: u.verification_status ?? "not_started",
+      account_status: u.is_deleted ? "deleted" : u.is_restricted ? "restricted" : "active",
+      vehicles: u.vehicles_count,
+      bookings: u.bookings_count,
+      joined: new Date(u.created_at).toLocaleDateString(),
+    }));
+    const columns = [
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email" },
+      { key: "role", label: "Profile Role" },
+      { key: "user_roles", label: "User Roles" },
+      { key: "kyc_status", label: "KYC Status" },
+      { key: "account_status", label: "Account Status" },
+      { key: "vehicles", label: "Vehicles" },
+      { key: "bookings", label: "Bookings" },
+      { key: "joined", label: "Joined" },
+    ];
+    exportToCSV(rows, buildExportFilename("users"), columns);
+  }, [sortedUsers]);
+
   if (error) {
     return (
       <Card>
@@ -147,7 +175,7 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {isSuperAdmin && (
               <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                 <Checkbox
@@ -169,6 +197,17 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
                 className="pl-8"
               />
             </div>
+            {sortedUsers.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                className="gap-2 shrink-0"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
