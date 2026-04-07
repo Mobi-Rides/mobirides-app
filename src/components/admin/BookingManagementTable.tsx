@@ -16,8 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Eye, Calendar, DollarSign } from "lucide-react";
+import { Search, Eye, Calendar, DollarSign, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 
 interface Booking {
   id: string;
@@ -98,6 +99,30 @@ export const BookingManagementTable = () => {
     }
   };
 
+  const handleExport = () => {
+    const rows = sortedBookings.map((b) => ({
+      vehicle: b.cars ? `${b.cars.brand} ${b.cars.model} (${b.cars.year})` : "Unknown",
+      renter: b.renter?.full_name ?? "Unknown",
+      start_date: new Date(b.start_date).toLocaleDateString(),
+      end_date: new Date(b.end_date).toLocaleDateString(),
+      total_bwp: b.total_price,
+      status: b.status,
+      created: new Date(b.created_at).toLocaleDateString(),
+      booking_id: b.id,
+    }));
+    const columns = [
+      { key: "booking_id", label: "Booking ID" },
+      { key: "vehicle", label: "Vehicle" },
+      { key: "renter", label: "Renter" },
+      { key: "start_date", label: "Start Date" },
+      { key: "end_date", label: "End Date" },
+      { key: "total_bwp", label: "Total (BWP)" },
+      { key: "status", label: "Status" },
+      { key: "created", label: "Created" },
+    ];
+    exportToCSV(rows, buildExportFilename("bookings"), columns);
+  };
+
   if (error) {
     return (
       <Card>
@@ -124,7 +149,20 @@ export const BookingManagementTable = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Bookings ({filteredBookings.length})</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>Bookings ({filteredBookings.length})</CardTitle>
+            {sortedBookings.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                className="gap-2 w-fit"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (

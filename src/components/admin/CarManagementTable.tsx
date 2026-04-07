@@ -18,8 +18,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CarEditDialog } from "./CarEditDialog";
-import { Search, Eye, Edit, CheckCircle, XCircle } from "lucide-react";
+import { Search, Eye, Edit, CheckCircle, XCircle, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 
 interface Car {
   id: string;
@@ -103,6 +104,30 @@ export const CarManagementTable = () => {
     toast.success("Car updated successfully");
   };
 
+  const handleExport = () => {
+    const rows = sortedCars.map((c) => ({
+      vehicle: `${c.brand} ${c.model}`,
+      year: c.year,
+      owner: c.profiles?.full_name ?? "Unknown",
+      location: c.location,
+      price_per_day_bwp: c.price_per_day,
+      status: c.is_available ? "Available" : "Disabled",
+      added: new Date(c.created_at).toLocaleDateString(),
+      car_id: c.id,
+    }));
+    const columns = [
+      { key: "car_id", label: "Car ID" },
+      { key: "vehicle", label: "Vehicle" },
+      { key: "year", label: "Year" },
+      { key: "owner", label: "Owner" },
+      { key: "location", label: "Location" },
+      { key: "price_per_day_bwp", label: "Price/Day (BWP)" },
+      { key: "status", label: "Status" },
+      { key: "added", label: "Added" },
+    ];
+    exportToCSV(rows, buildExportFilename("cars"), columns);
+  };
+
   if (error) {
     return (
       <Card>
@@ -129,7 +154,20 @@ export const CarManagementTable = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Cars ({filteredCars.length})</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>Cars ({filteredCars.length})</CardTitle>
+            {sortedCars.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                className="gap-2 w-fit"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
