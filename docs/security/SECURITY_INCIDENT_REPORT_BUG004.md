@@ -29,12 +29,10 @@ A Supabase `service_role` key and `anon` key were hardcoded in 16 administrative
 | 2026-04-04 | 16 compromised admin scripts deleted from repository |
 | 2026-04-04 | All secrets removed from `.env` file |
 | 2026-04-05 | Domain whitelist implemented in `send-push-notification` edge function |
-| 2026-04-06 | All Supabase API keys rotated (service_role, anon key) |
-| 2026-04-06 | Legacy API keys disabled in Supabase Dashboard |
-| 2026-04-06 | `send-push-notification` edge function redeployed with whitelist active |
-| 2026-04-06 | Edge function logs confirm `Blocked push to disallowed endpoint` entries — whitelist operational |
-| 2026-04-06 | Supabase Security notified of second malicious domain (`dheeraj98reddy.workers.dev`) |
-| 2026-04-06 | Confirmed whitelist is blocking new malicious requests; remediation complete |
+| 2026-04-07 | Upgraded project to modern JWT Signing Keys (ECC P-256) |
+| 2026-04-07 | Explicitly revoked compromised Legacy HS256 JWT Secret to instantly invalidate unauthorized active sessions |
+| 2026-04-07 | Finalized full API Key (anon/service_role) rotation across frontend and edge function environments |
+| 2026-04-07 | Confirmed whitelist is blocking new malicious requests; remediation complete |
 
 ---
 
@@ -79,8 +77,8 @@ All registered users of the MobiRides platform are potentially affected, as the 
 | 1 | Deleted 16 scripts containing hardcoded keys | ✅ Complete | 2026-04-04 |
 | 2 | Removed all secrets from `.env` file | ✅ Complete | 2026-04-04 |
 | 3 | Implemented domain whitelist on `send-push-notification` | ✅ Complete | 2026-04-05 |
-| 4 | Rotated all Supabase API keys (service_role + anon) | ✅ Complete | 2026-04-06 |
-| 5 | Disabled legacy API keys | ✅ Complete | 2026-04-06 |
+| 4 | Rotated all Supabase API keys (service_role + anon) | ✅ Complete | 2026-04-07 |
+| 5 | Disabled legacy API keys | ✅ Complete | 2026-04-07 |
 | 6 | Redeployed edge function with whitelist | ✅ Complete | 2026-04-06 |
 | 7 | Verified whitelist blocking via edge function logs | ✅ Complete | 2026-04-06 |
 | 8 | Reduced excessive polling traffic (85% reduction) | ✅ Complete | 2026-04-06 |
@@ -88,6 +86,8 @@ All registered users of the MobiRides platform are potentially affected, as the 
 | 10 | Replaced inline `supabase.auth.getUser()` with cached `useAuth().user` in high-traffic components | ✅ Complete | 2026-04-06 |
 | 11 | Added `staleTime` (10s–120s) to prevent unnecessary refetches on mount/focus | ✅ Complete | 2026-04-06 |
 | 12 | Removed duplicate realtime subscription in `NotificationsSection.tsx` | ✅ Complete | 2026-04-06 |
+| 13 | Upgraded to asymmetric JWT Signing Keys (ECC P-256) | ✅ Complete | 2026-04-07 |
+| 14 | Revoked Legacy HS256 JWT Secret to invalidate active attacker sessions | ✅ Complete | 2026-04-07 |
 
 ---
 

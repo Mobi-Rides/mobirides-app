@@ -107,12 +107,13 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | **Summary** | Delete `scripts/check-restrictions-by-phone.cjs` (contains service role key, admin email, admin password). Rotate credentials. |
 
 **Tasks:**
-- [ ] Delete `scripts/check-restrictions-by-phone.cjs`
-- [ ] Verify no other scripts contain hardcoded secrets (`grep -r "service_role" scripts/`)
-- [ ] Rotate service role key in Supabase Dashboard (Settings > API)
-- [ ] Rotate admin password referenced in script
+- [x] Delete `scripts/check-restrictions-by-phone.cjs`
+- [x] Verify no other scripts contain hardcoded secrets (`grep -r "service_role" scripts/`)
+- [x] Rotate service role key in Supabase Dashboard (Settings > API)
+- [x] Rotate JWT Signing Keys to ECC P-256 and explicitly revoke legacy HS256 secret (2026-04-07)
+- [x] Rotate admin password referenced in script
 
-**Acceptance Criteria:** No hardcoded secrets in git-tracked files; credentials rotated.
+**Acceptance Criteria:** No hardcoded secrets in git-tracked files; API and JWT credentials confirmed rotated.
 
 ---
 
@@ -526,7 +527,7 @@ A ticket is **Done** when:
 |---------|--------|--------|-------|
 | S10-001 | Arnold | ❌ Not Started | MOB-801: drop enum-dependent functions |
 | S10-002 | Arnold | ❌ Not Started | MOB-802: remove redundant enum block |
-| S10-003 | Arnold | 🟡 In Progress | MOB-701: 16 scripts deleted, `.env` cleaned, keys rotated (2026-04-06). Remaining: final grep verification + credential rotation confirmation |
+| S10-003 | Arnold | ✅ Done | MOB-701: 16 scripts deleted, `.env` cleaned, full API Key & JWT Signing Key (ECC P-256) rotation completed (2026-04-07). Legacy secrets explicitly revoked. |
 | S10-004 | Arnold | ❌ Not Started | MOB-702: auth-gate add-admin |
 | S10-005 | Arnold | ❌ Not Started | MOB-703: notifications RLS |
 | S10-006 | Arnold | ❌ Not Started | MOB-704: financial tables RLS |
@@ -553,11 +554,11 @@ A ticket is **Done** when:
 
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
-| Arnold | 1 | 1 | 6 | 8 |
+| Arnold | 2 | 0 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
 | Tapologo | 0 | 0 | 6 | 6 |
 | Modisa | 1 | 0 | 1 | 2 |
-| **TOTAL** | **2** | **1** | **20** | **24** |
+| **TOTAL** | **3** | **0** | **21** | **24** |
 
 ---
 
