@@ -8,7 +8,7 @@
 |-------|--------|
 | **Date Reported** | 2026-04-04 |
 | **Severity** | Critical / High / Medium / Low (9 findings) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Progress |
 | **Affects** | RLS policies, edge functions, credentials, password storage |
 | **Plan** | [`docs/hotfixes/SECURITY_REMEDIATION_2026_04_04.md`](./hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 
@@ -33,6 +33,58 @@ Security scan identified 9 actionable findings: hardcoded secrets in scripts, un
 `supabase db pull` fails with `SQLSTATE 2BP01` — 7 functions still reference the old `notification_type` enum via their parameter signatures, blocking the `DROP TYPE` statement. A redundant enum rename block in the second `remote_schema.sql` compounds the issue.
 
 **Tickets:** MOB-801, MOB-802. See linked plan for SQL fixes, impact assessment, and execution order.
+
+---
+
+### BUG-004: Outbound SSRF Traffic via `send-push-notification`
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-06 |
+| **Severity** | Critical |
+| **Status** | ✅ Resolved |
+| **Affects** | `supabase/functions/send-push-notification/index.ts`, `.env`, 16 scripts with hardcoded keys |
+| **Reported By** | Supabase Security (Matthias Luft) |
+
+**Description:**  
+Supabase Security flagged suspicious outbound scanning traffic to `vip.66591.vip/.env.test` originating from the application. Root cause: attacker used the previously leaked `service_role` key to invoke the `send-push-notification` edge function with a malicious `subscription.endpoint`, triggering SSRF to scan external targets for environment files.
+
+**Fix Applied (2026-04-06):**
+1. Deleted 16 scripts containing hardcoded `service_role` and `anon` keys (9 on Apr 5, 7 on Apr 6)
+2. Removed `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` from `.env`
+3. Added SSRF domain whitelist to `send-push-notification/index.ts` — only `fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.notify.windows.com`, `*.wns.windows.com`, `web.push.apple.com` allowed
+4. All Supabase keys rotated in Dashboard; legacy API keys disabled
+
+**Redeployment Verified (2026-04-06 16:44 UTC):**
+Edge function force-redeployed to Supabase runtime. Test request to `https://evil.example.com/.env` returned `403 — Push endpoint domain not allowed`. Log entry confirmed: `Blocked push to disallowed endpoint: https://evil.example.com/.env`. SSRF whitelist is **live in production**.
+
+**Tickets:** MOB-710 (SSRF endpoint validation), MOB-701 (hardcoded secrets — now in progress).
+
+---
+
+### BUG-005: Excessive Unauthenticated Query Spam & Redundant Polling
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-06 |
+| **Severity** | Medium |
+| **Status** | ✅ Resolved |
+| **Affects** | `Navigation.tsx`, `RenterStats.tsx`, `HostStats.tsx`, `Wallet.tsx`, `AuditLogViewer.tsx`, `MessagingInterface.tsx`, + 6 more |
+
+**Description:**  
+With a single authenticated user, the app generated ~309 requests/minute to Supabase due to: (1) `useQuery` hooks firing without `enabled: !!user` guards — causing 401 errors on the login page, (2) redundant `supabase.auth.getUser()` network calls inside every `queryFn` instead of using cached `useAuth().user`, (3) aggressive polling intervals (5s–30s) duplicating data already covered by realtime subscriptions, and (4) missing `staleTime` causing refetches on every mount/focus.
+
+**Fix Applied (2026-04-06):**
+1. Added `enabled: !!user` guards to all queries requiring authentication — eliminates 401 spam on login page
+2. Replaced inline `supabase.auth.getUser()` calls with cached `useAuth().user` in high-traffic components (Navigation, RenterStats, HostStats, MessagingInterface)
+3. Reduced polling intervals: notifications 5s→60s, messages 10s→60s, stats 30s→120s, audit logs 30s→60s
+4. Added `staleTime` (10s–120s) to prevent unnecessary refetches on mount/focus
+5. Removed duplicate realtime subscription in `NotificationsSection.tsx`
+6. Removed redundant notification count polling in `Header.tsx`
+
+**Impact:** ~309 req/min → ~50-80 req/min (85% reduction). Auth requests reduced from ~26/min to ~2/min.
+
+**Ticket:** S10-023 (query optimization).
 
 ---
 

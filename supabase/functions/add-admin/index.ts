@@ -11,10 +11,46 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // 1. Verify caller's identity
+    const { data: { user: caller }, error: userError } = await supabaseClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (userError || !caller) {
+      console.error('[add-admin] Auth error:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. Check if caller is a Super Admin
+    const { data: adminRecord, error: adminError } = await supabaseClient
+      .from('admins')
+      .select('is_super_admin')
+      .eq('id', caller.id)
+      .single();
+
+    if (adminError || !adminRecord?.is_super_admin) {
+      console.warn(`[add-admin] Unauthorized access attempt by user: ${caller.id}`);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Super Admin access required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { userId, isSuperAdmin, userName } = await req.json();
 

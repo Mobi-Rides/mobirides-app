@@ -39,15 +39,34 @@ serve(async (req: Request) => {
     // 2. Update Transaction Status
     const newStatus = status === 'success' ? 'completed' : 'failed'
 
-    // Calculate Splits
-    // Correctly separate insurance from commissionable amount
+    // Fetch dynamic commission rate from platform_settings
+    let commissionRate = 0.15; // default fallback
+    try {
+      const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'commission_rate_default')
+        .single();
+      
+      if (settingsData && settingsData.setting_value) {
+        commissionRate = Number(settingsData.setting_value) || 0.15;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch dynamic commission, using 0.15 code default', err);
+    }
+
+    // Calculate Splits according to Pay-U SLA (90/10 for insurance)
     // @ts-expect-error - trust database value
     const booking = transaction.bookings
     const insurance_premium = booking.insurance_premium || 0
     const rental_portion = Math.max(0, transaction.amount - insurance_premium)
 
-    const platform_commission = rental_portion * 0.15
-    const host_earnings = rental_portion - platform_commission
+    const rental_platform_commission = rental_portion * commissionRate
+    const insurance_platform_commission = insurance_premium * 0.10 // 10% kept by MobiRides
+    const insurance_payu_remittance = insurance_premium * 0.90 // 90% goes to Pay-U
+
+    const total_platform_commission = rental_platform_commission + insurance_platform_commission
+    const host_earnings = rental_portion - rental_platform_commission
 
     await supabase
       .from('payment_transactions')
@@ -55,9 +74,9 @@ serve(async (req: Request) => {
         status: newStatus,
         provider_transaction_id: provider_ref,
         completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
-        platform_commission: newStatus === 'completed' ? platform_commission : 0,
+        platform_commission: newStatus === 'completed' ? total_platform_commission : 0,
         host_earnings: newStatus === 'completed' ? host_earnings : 0,
-        commission_rate: 0.15
+        commission_rate: commissionRate
       })
       .eq('id', transaction_id)
 
@@ -69,11 +88,23 @@ serve(async (req: Request) => {
         .update({ status: 'confirmed', payment_status: 'paid' })
         .eq('id', transaction.booking_id)
 
+      // Update Insurance Policy (SLA Split)
+      if (insurance_premium > 0) {
+        await supabase
+          .from('insurance_policies')
+          .update({
+            payu_amount: insurance_payu_remittance,
+            mobirides_commission: insurance_platform_commission,
+            status: 'active'
+          })
+          .eq('booking_id', transaction.booking_id);
+      }
+
       // Credit Host Pending Earnings (DB Function)
       const { error: creditError } = await supabase.rpc('credit_pending_earnings', {
         p_booking_id: transaction.booking_id,
         p_host_earnings: host_earnings,
-        p_platform_commission: platform_commission
+        p_platform_commission: total_platform_commission
       })
 
       if (creditError) throw creditError

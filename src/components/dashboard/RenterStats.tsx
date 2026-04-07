@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const RenterStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["renter-stats"],
-    refetchInterval: 30000, // Refetch every 30 seconds to ensure real-time updates
+    refetchInterval: 120000, // Relaxed polling every 2 minutes (stats don't change frequently)
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");

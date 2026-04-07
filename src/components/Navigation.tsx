@@ -72,7 +72,7 @@ export const Navigation = () => {
 
       return totalUnread;
     },
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 60000, // Fallback polling every 60s (realtime handles instant updates)
   });
 
   // Fetch unread notifications count
@@ -95,7 +95,7 @@ export const Navigation = () => {
 
       return count || 0;
     },
-    refetchInterval: 5000, // Refetch every 5 seconds for faster notification updates
+    refetchInterval: 60000, // Fallback polling every 60s (realtime handles instant updates)
   });
 
   // Listen for real-time changes to refresh counts

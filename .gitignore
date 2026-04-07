@@ -42,3 +42,10 @@ mcp-config.json
 
 # Avoid shadowing Scoop-managed Supabase CLI
 supabase.exe
+# Sensitive test files
+api/test/
+test-*.js
+node_test.js
+*.test.js
+!src/**/*.test.js
+!test/**/*.test.js

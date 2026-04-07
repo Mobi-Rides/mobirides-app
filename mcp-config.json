@@ -2,7 +2,7 @@
     "mcpServers": {
         "supabase-remote": {
             "type": "http",
-            "url": "https://mcp.supabase.com/mcp?project_ref=putjowciegpzdheideaf",
+            "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_ID",
             "headers": {
                 "Authorization": "Bearer YOUR_SUPABASE_PERSONAL_ACCESS_TOKEN"
             }
