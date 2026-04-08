@@ -111,6 +111,26 @@ Supabase's updated TypeScript client enforces `RejectExcessProperties` on `.upda
 
 ---
 
+### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
+
+| Field | Detail |
+|-------|--------|
+| **Date Requested** | 2026-04-07 |
+| **Severity** | Low (Enhancement) |
+| **Status** | 🔴 Open |
+| **Affects** | `BookingManagementTable`, `WithdrawalRequestsTable`, `MessageManagementTable`, `InsuranceRemittanceTable`, `CarManagementTable`, `TransactionLedgerTable` |
+| **Assigned To** | Arnold |
+
+**Description:**  
+Admin Portal lacks explicit "View Details" capabilities on complex related tables. Instead of relying purely on inline aggregated fields or edit modes that shouldn't be exposed arbitrarily, tables need a read-only detailed inspection view attached to an `<Eye />` action icon.
+
+**Implementation Plan:**
+Follow `docs/Product Status/MOB_711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Create read-only dialogs like `BookingDetailsDialog`, `PayoutDetailsDialog`, etc., fetching joined related entities via `react-query`, and wire them up to the missing icons.
+
+**Ticket:** S10-025 / MOB-711
+
+---
+
 ## Resolved Bugs
 
 ### BUG-001 — `create_handover_notification` Return Type Conflict
