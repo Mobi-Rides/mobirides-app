@@ -19,9 +19,9 @@
 |-------|--------|
 | **Organisation** | MobiRides (Pty) Ltd |
 | **Data Protection Officer** | Modisa Maphanyane |
-| **Contact Email** | [INSERT OFFICIAL EMAIL] |
-| **Contact Phone** | [INSERT PHONE NUMBER] |
-| **Physical Address** | [INSERT ADDRESS] |
+| **Contact Email** | maphanyane@mobirides.africa |
+| **Contact Phone** | +267 78689464 |
+| **Physical Address** | Plot 16530, Gwest Phase 1 |
 
 ---
 
@@ -29,7 +29,7 @@
 
 A security credential (database service role key) was inadvertently included in application source code files. This credential, if obtained by an unauthorized party, could have been used to bypass the platform's access controls and potentially access user data stored in the MobiRides database.
 
-The breach was detected on **4 April 2026** when the platform's infrastructure provider (Supabase) flagged suspicious outbound network traffic originating from the application.
+The breach was detected on **6 April 2026** at 14:00hrs when the platform's infrastructure provider (Supabase) flagged suspicious outbound network traffic originating from the application.
 
 ---
 
@@ -51,7 +51,7 @@ In accordance with **Section 2** (Interpretation) of the Data Protection Act, 20
 
 ### 4. Data Subjects Affected
 
-All registered users of the MobiRides platform are potentially affected. The exact number of affected individuals is: **[INSERT USER COUNT]**.
+All registered users of the MobiRides platform are potentially affected. The exact number of affected individuals is: 244.
 
 The categories of data subjects include:
 - **Renters** — individuals who book vehicles through the platform
@@ -78,16 +78,16 @@ The following remediation steps were taken immediately upon discovery:
 
 | # | Action | Date Completed |
 |---|--------|---------------|
-| 1 | Removed all hardcoded credentials from source code (16 files) | 4 April 2026 |
-| 2 | Removed credentials from environment configuration files | 4 April 2026 |
-| 3 | Implemented domain whitelisting to prevent outbound exploitation | 5 April 2026 |
-| 4 | Rotated all database access API keys (Anon / Service Role) | 7 April 2026 |
-| 5 | Upgraded to asymmetric JWT Signing Keys (ECC P-256) and revoked compromised legacy JWT Secret to instantly invalidate any compromised active user sessions | 7 April 2026 |
+| 1 | Removed all hardcoded credentials from source code (16 files) | 6 April 2026 |
+| 2 | Removed credentials from environment configuration files | 6 April 2026 |
+| 3 | Implemented domain whitelisting to prevent outbound exploitation | 6 April 2026 |
+| 4 | Rotated all database access API keys (Anon / Service Role) | 6 April 2026 |
+| 5 | Upgraded to asymmetric JWT Signing Keys (ECC P-256) and revoked compromised legacy JWT Secret to instantly invalidate any compromised active user sessions | 6 April 2026 |
 | 6 | Disabled all legacy/previous credential API key versions | 7 April 2026 |
-| 6 | Redeployed affected services with security controls active | 6 April 2026 |
-| 7 | Verified security controls are operational via system logs | 6 April 2026 |
-| 8 | Reduced excessive polling traffic (85% reduction) | 6 April 2026 |
-| 9 | Added auth guards to eliminate unauthenticated query spam | 6 April 2026 |
+| 6 | Redeployed affected services with security controls active | 7 April 2026 |
+| 7 | Verified security controls are operational via system logs | 7 April 2026 |
+| 8 | Reduced excessive polling traffic (85% reduction) to embed deviation warning | 7 April 2026 |
+| 9 | Added auth guards to eliminate unauthenticated query spam | 7 April 2026 |
 
 ---
 
@@ -99,7 +99,7 @@ We recommend the following precautionary steps:
 2. **Monitor for suspicious communications** — be alert for unexpected emails, SMS messages, or calls claiming to be from MobiRides
 3. **Review your account activity** — log in and review your booking history and wallet transactions for any unauthorized activity
 4. **Enable two-factor authentication** — if available, enable additional security on your account
-5. **Report suspicious activity** — contact MobiRides immediately at **[INSERT SUPPORT EMAIL]** if you notice anything unusual
+5. **Report suspicious activity** — contact MobiRides immediately at **hello@mobirides.com** if you notice anything unusual
 
 ---
 
@@ -107,10 +107,9 @@ We recommend the following precautionary steps:
 
 In accordance with **Section 64** of the Data Protection Act, 2024, affected data subjects will be notified **without undue delay** where the breach poses a high risk to their rights and freedoms, via:
 
-- [ ] **Email** — notification sent to registered email addresses
-- [ ] **In-app notification** — alert displayed within the MobiRides application
-- [ ] **SMS** — text message to registered phone numbers (if applicable)
-- [ ] **Website notice** — public notice posted on the MobiRides website
+- [X] **Email** — notification sent to registered email addresses
+- [X] **In-app notification** — alert displayed within the MobiRides application
+- [X] **Website notice** — public notice posted on the MobiRides website
 
 ---
 
@@ -118,8 +117,8 @@ In accordance with **Section 64** of the Data Protection Act, 2024, affected dat
 
 Data subjects may direct enquiries to:
 
-- **Email:** [INSERT PRIVACY EMAIL, e.g., privacy@mobirides.com]
-- **Phone:** [INSERT PHONE]
+- **Email:** hello@mobirides.africa
+- **Phone:** +267 78689464
 - **In-app:** Via the MobiRides support/chat feature
 
 ---
@@ -142,15 +141,15 @@ Data subjects may also contact the IDPC directly:
 
 ## Internal Checklist — Before Sending
 
-- [ ] Confirm exact date range of exposure window with infrastructure provider
-- [ ] Obtain exact count of registered users (data subjects)
+- [X] Confirm exact date range of exposure window with infrastructure provider
+- [X] Obtain exact count of registered users (data subjects)
 - [ ] Review with legal counsel for DPA 2024 Section 64 compliance
-- [ ] Assess whether sensitive personal data (biometric/identity docs) triggers enhanced notification obligations
-- [ ] Insert all placeholder fields marked with `[INSERT ...]`
-- [ ] Decide notification channels (email, SMS, in-app, website)
+- [X] Assess whether sensitive personal data (biometric/identity docs) triggers enhanced notification obligations
+- [X] Insert all placeholder fields marked with `[INSERT ...]`
+- [X] Decide notification channels (email, SMS, in-app, website)
 - [ ] Prepare user-facing FAQ document
 - [ ] **File notification with IDPC within 72 hours of becoming aware of the breach (Section 64)**
-- [ ] Notify affected data subjects without undue delay where breach poses high risk
+- [X] Notify affected data subjects without undue delay where breach poses high risk
 - [ ] Retain proof of notification for compliance records
 
 > **Penalties:** Non-compliance with the Data Protection Act, 2024 may result in fines of up to **BWP 50 million or 4% of global annual turnover** (whichever is higher).
