@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Eye, Calendar, DollarSign, Download } from "lucide-react";
+import { Search, Download } from "lucide-react";
 import { toast } from "sonner";
 import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 
