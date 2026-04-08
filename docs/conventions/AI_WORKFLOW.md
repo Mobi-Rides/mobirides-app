@@ -150,6 +150,19 @@ git push origin develop
   ```
   Then commit the updated `src/integrations/supabase/types.ts` in the same PR as the migration.   This keeps TypeScript types in sync with the DB schema and prevents silent runtime errors from stale types.
 
+- **Documentation goes in the correct folder — never mix plan types:**
+
+  | Folder | What belongs here |
+  |--------|-------------------|
+  | `docs/plans/` | Implementation plans, feature plans, architectural decision records. Named `YYYYMMDD_DESCRIPTION.md` |
+  | `docs/Product Status/` | Weekly status reports, sprint execution trackers (JIRA-style), current-state analyses, epics. Named with descriptive ALLCAPS or period labels |
+  | `docs/hotfixes/` | Hotfix trackers and security remediation plans |
+  | `docs/conventions/` | Standards, protocols, and workflow rules (like this file) |
+  | `docs/testing/` | Test coverage reports and testing protocols |
+  | `docs/security/` | Security incident reports and audit findings |
+
+  **Rule:** If you are writing a *plan to do future work*, it goes in `docs/plans/`. If you are writing a *record of current or past state*, it goes in `docs/Product Status/`. When in doubt, ask before creating the file.
+
 > **Why:** Direct pushes to develop bypass code review, break the audit trail, and remove the human's ability to control what goes into the main branch. This is non-negotiable regardless of how trivial the change appears.
 
 ---

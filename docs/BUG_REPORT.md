@@ -125,7 +125,7 @@ Supabase's updated TypeScript client enforces `RejectExcessProperties` on `.upda
 Admin Portal lacks explicit "View Details" capabilities on complex related tables. Instead of relying purely on inline aggregated fields or edit modes that shouldn't be exposed arbitrarily, tables need a read-only detailed inspection view attached to an `<Eye />` action icon.
 
 **Implementation Plan:**
-Follow `docs/Product Status/MOB_711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Create read-only dialogs like `BookingDetailsDialog`, `PayoutDetailsDialog`, etc., fetching joined related entities via `react-query`, and wire them up to the missing icons.
+Follow `docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Create read-only dialogs like `BookingDetailsDialog`, `PayoutDetailsDialog`, etc., fetching joined related entities via `react-query`, and wire them up to the missing icons.
 
 **Ticket:** S10-025 / MOB-711
 
