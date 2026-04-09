@@ -24,6 +24,13 @@ Here are the development guidelines:
 - Maintain 100% ESLint compliance
 - Use Supabase RLS for security
 
+### Security — Credential Handling (Mandatory)
+- **NEVER** hardcode Supabase `service_role` keys, `anon` keys, JWT secrets, or any API credentials in source code, scripts, or configuration files committed to version control.
+- **ALWAYS** use environment variables or secret management services for credentials.
+- **NEVER** create administrative scripts that embed database credentials directly.
+- If a task requires `service_role` access, it must be performed via Supabase Edge Functions with proper authentication guards — never from client-side code.
+- Report any discovered hardcoded credentials immediately as a security incident.
+
 ### Framework-Specific Guidelines
 - **React:** Functional components with hooks only
 - **Styling:** Tailwind CSS with custom components
