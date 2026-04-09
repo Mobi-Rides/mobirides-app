@@ -136,6 +136,12 @@ git push origin develop
 
 ## Rules
 
+- **Security — Credential Handling (Mandatory):**
+  - **NEVER** hardcode Supabase `service_role` keys, `anon` keys, JWT secrets, or any API credentials in source code, scripts, or configuration files committed to version control.
+  - **ALWAYS** use environment variables or secret management services for credentials.
+  - **NEVER** create administrative scripts that embed database credentials directly.
+  - If a task requires `service_role` access, it must be performed via Supabase Edge Functions with proper authentication guards — never from client-side code.
+  - Report any discovered hardcoded credentials immediately as a security incident.
 - **Never start a task without pulling latest develop first** — your colleague may have already fixed it
 - **Never push directly to develop** — not code, not docs, not anything
 - **All changes go through a PR** — create the PR, then wait for a human to merge

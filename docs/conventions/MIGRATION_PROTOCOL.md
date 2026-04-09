@@ -44,3 +44,11 @@ Add a header comment in the migration listing all known consumers:
 ## Rollback Strategy
 
 For every migration, consider: can this be reversed? Document rollback SQL in comments if the change is destructive.
+
+## Security — Credential Handling (Mandatory)
+
+- **NEVER** hardcode Supabase `service_role` keys, `anon` keys, JWT secrets, or any API credentials in migration scripts or configuration files committed to version control.
+- **ALWAYS** use environment variables or secret management services for credentials.
+- **NEVER** create administrative scripts that embed database credentials directly.
+- If a migration requires `service_role` access, it must be performed via Supabase Edge Functions with proper authentication guards — never from client-side code.
+- Report any discovered hardcoded credentials immediately as a security incident.
