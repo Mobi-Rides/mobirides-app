@@ -18,7 +18,20 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Security Hardening (MOB-700) | 25% | 80% |
 | DB Pull Fix (BUG-003) | 0% | 100% |
 | Admin Settings Service Wiring | 60% | 100% |
+| Auth Compliance P3 (MOB-614/615) | 85% | 100% |
+| Anonymize-on-Delete (MOB-110) | 40% | 70% |
 | Test Coverage | 62% | 72% |
+
+---
+
+## 🏛️ Past Sprint Reviews
+
+| Sprint | Date | Focus | Review Link |
+|--------|------|-------|-------------|
+| Sprint 8 | Mar 24-31 | Bugfixes & Payment P0 | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+| Sprint 9 | Apr 7-13 | Infrastructure & Compliance | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_9_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+| Sprint 10 | Apr 14-20 | Security & Standardization | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+
 
 ---
 
@@ -42,8 +55,10 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Type Alignment Fix (BUG-006) | 1 | — | 1 | — |
 | Test Coverage Carry-over (S10) | 5 | — | 5 | — |
 | Sprint Sign-off & Reporting | 1 | — | — | 1 |
-| Partner Onboarding Traction (S11-028) | 1 | — | — | 1 |
-| **TOTAL** | **26** | **11** | **6** | **9** |
+| Partner Onboarding Strategy (S11-028) | 1 | — | — | 1 |
+| Beta & Investor Prep (S11-026/027) | 2 | — | — | 2 |
+| PRD Audit (S11-029) | 1 | — | — | 1 |
+| **TOTAL** | **29** | **11** | **6** | **12** |
 
 ---
 
@@ -185,8 +200,52 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 |-------|-------|
 | **Ticket** | S11-025 |
 | **Owner** | Modisa |
-| **Priority** | P2 — End of Sprint |
-| **Summary** | Verify all deliverables, update status reports, confirm email system operational |
+| **Priority** | P0 — Continuous |
+| **Summary** | Weekly oversight, PR review, and generation of Week 4 April status report |
+
+---
+
+### S11-026 — Beta Launch Program (Prep)
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-026 |
+| **Owner** | Modisa |
+| **Priority** | P1 |
+| **Summary** | Define criteria for the 50-user Beta pilot and map Gaborone operational boundaries |
+
+---
+
+### S11-027 — Pre-Seed Funding Prep
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-027 |
+| **Owner** | Modisa |
+| **Priority** | P1 |
+| **Summary** | Update investor pitch materials with latest traction metrics (247 users / 66 vehicles) |
+
+---
+
+### S11-028 — Partner Onboarding Strategy
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-028 |
+| **Owner** | Modisa |
+| **Priority** | P2 |
+| **Summary** | Finalize the Fleet Partner onboarding flow for Dumba Rentals integration |
+
+---
+
+### S11-029 — PRD Audit: Onboarding & Consent
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-029 |
+| **Owner** | Modisa |
+| **Priority** | P1 |
+| **Summary** | Verify that S11-016 (Consent recording) aligns with the Auth Compliance PRD |
 
 ---
 
@@ -205,11 +264,11 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 | Day | Arnold | Tapologo | Modisa |
 |-----|--------|----------|--------|
-| Mon Apr 21 | S11-001 (routing fix) | S11-019 (BUG-006 type fixes) | Draft sprint kickoff, S11-012, S11-028 |
-| Tue Apr 22 | S11-002 (missing templates) | S11-020 (handover tests) | Review PRs, S11-013 |
-| Wed Apr 23 | S11-003 (wire callers) | S11-021 (insurance tests) | Review PRs, S11-014, S11-015 |
-| Thu Apr 24 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-022, S11-023 (admin + booking tests) | Email verification, S11-016, S11-017 |
-| Fri Apr 25 | S11-007–S11-011 (security) | S11-024 (Android CI) | S11-025 (sign-off), S11-018 |
+| Mon Apr 21 | S11-001 (routing fix) | S11-019 (BUG-006 type fixes) | S11-012, S11-028, Sprint kickoff |
+| Tue Apr 22 | S11-002 (missing templates) | S11-020 (handover tests) | S11-013, S11-026, Review PRs |
+| Wed Apr 23 | S11-003 (wire callers) | S11-021 (insurance tests) | S11-014, S11-015, S11-027 |
+| Thu Apr 24 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-022, S11-023 (admin + booking tests) | S11-016, S11-017, S11-029 |
+| Fri Apr 25 | S11-007–S11-011 (security) | S11-024 (Android CI) | S11-018, S11-025 (sign-off) |
 
 ---
 
@@ -242,7 +301,10 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-023 | Tapologo | ❌ Not Started | Booking extension tests (carry-over S10-019) |
 | S11-024 | Tapologo | ❌ Not Started | Android gradle verification (carry-over S10-020) |
 | S11-025 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
+| S11-026 | Modisa | ❌ Not Started | Beta pilot preparation |
+| S11-027 | Modisa | ❌ Not Started | Pre-seed funding materials |
 | S11-028 | Modisa | ❌ Not Started | Partner onboarding: Dumba Rentals / Trillo rentals traction metrics |
+| S11-029 | Modisa | ❌ Not Started | PRD Audit: Onboarding & Consent |
 
 ### Summary
 
@@ -250,8 +312,8 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 0 | 0 | 11 | 11 |
 | Tapologo | 0 | 0 | 6 | 6 |
-| Modisa | 6 | 0 | 3 | 9 |
-| **TOTAL** | **6** | **0** | **20** | **26** |
+| Modisa | 6 | 0 | 7 | 13 |
+| **TOTAL** | **6** | **0** | **23** | **30** |
 
 ---
 
