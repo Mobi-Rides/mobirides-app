@@ -1,5 +1,4 @@
 import { useInteractiveHandover } from '../src/hooks/useInteractiveHandover';
-import * as handoverService from '../src/services/handoverService';
 
 describe('Handover Lifecycle Transitions', () => {
   it('pickup handover sets booking status to in_progress', async () => {
