@@ -535,6 +535,3 @@ A ticket is **Done** when:
 - **Tickets Rolled**: 13 (CARRY → Sprint 10)
 - **Velocity**: 12 points achieved / 38 points planned
 - **Code Coverage**: Stagnant at 58%
-
----
-

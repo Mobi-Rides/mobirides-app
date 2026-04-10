@@ -1,14 +1,20 @@
 
 import { CreditCard, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentCommissionRate } from "@/services/commission/commissionRates";
 
 interface BookingPriceProps {
   totalPrice: number;
 }
 
 export const BookingPrice = ({ totalPrice }: BookingPriceProps) => {
-  // Constants for Host View - These should match DB or Config
-  const COMMISSION_RATE = 0.15; // 15%
+  const { data: commissionRateData } = useQuery({
+    queryKey: ['commissionRate'],
+    queryFn: getCurrentCommissionRate,
+  });
+
+  const COMMISSION_RATE = commissionRateData ?? 0.15; // 15% fallback
   const commissionAmount = totalPrice * COMMISSION_RATE;
   const hostEarnings = totalPrice - commissionAmount;
 
@@ -27,7 +33,7 @@ export const BookingPrice = ({ totalPrice }: BookingPriceProps) => {
       <div className="pt-2 border-t space-y-2">
         <div className="flex justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            <span>Platform Commission (15%)</span>
+            <span>Platform Commission ({((COMMISSION_RATE) * 100).toFixed(0)}%)</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>

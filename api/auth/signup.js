@@ -204,6 +204,32 @@ export async function signupUser(req, res) {
       profilePhoneNumber: profileData[0].phone_number
     });
 
+    // Handle user_consents insertion
+    if (req.body.consents) {
+      const { consents } = req.body;
+      const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+      const userAgent = req.headers['user-agent'] || '';
+
+      try {
+        await supabaseAdmin
+          .from('user_consents')
+          .insert({
+            user_id: data.user.id,
+            terms_accepted: !!consents.termsAccepted,
+            privacy_accepted: !!consents.privacyAccepted,
+            community_accepted: !!consents.communityAccepted,
+            age_confirmed: !!consents.ageConfirmed,
+            marketing_opted_in: !!consents.marketingOptedIn,
+            ip_address: ipAddress,
+            user_agent: userAgent
+          });
+        console.log('User consents inserted for:', data.user.id);
+      } catch (consentError) {
+        console.error('Failed to insert user consents:', consentError);
+        // Do not fail signup if consent logging fails
+      }
+    }
+
     console.log('User created successfully:', {
       userId: data.user.id,
       email: data.user.email,

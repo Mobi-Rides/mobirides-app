@@ -40,9 +40,7 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Owner | Module Focus | Primary Responsibilities |
 |-------|-------------|-------------------------|
 | **Arnold (Snr Engineer)** | Email system fix + Security | MOB-712 (S11-001 to S11-004), S10 security carry-overs |
-| **Duma (Technical Advisor)** | Service wiring + crons | S10 carry-overs (platform_settings, crons, compliance) |
-| **Tapologo (Testing & QA Intern)** | Test coverage + BUG-006 | S10-024 (type fixes), test suite carry-overs |
-| **Modisa (CEO)** | PRD alignment + sign-offs | Sprint oversight, status reporting, audit verification |
+| **Modisa (CEO)** | Service wiring, crons, PRD alignment, sign-offs | S10 carry-overs (platform_settings, crons), sprint oversight, status reporting |
 
 ---
 
@@ -57,8 +55,9 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Type Alignment Fix (BUG-006) | 1 | — | 1 | — |
 | Test Coverage Carry-over (S10) | 5 | — | 5 | — |
 | Sprint Sign-off & Reporting | 1 | — | — | 1 |
-| Beta & Investor Prep | 3 | — | — | 3 |
-| PRD Audit | 1 | — | — | 1 |
+| Partner Onboarding Strategy (S11-028) | 1 | — | — | 1 |
+| Beta & Investor Prep (S11-026/027) | 2 | — | — | 2 |
+| PRD Audit (S11-029) | 1 | — | — | 1 |
 | **TOTAL** | **29** | **11** | **6** | **12** |
 
 ---
@@ -174,6 +173,7 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-016 | Consent on signup | S10-013 |
 | S11-017 | Rental-reminder cron | S10-014 |
 | S11-018 | Return-reminder cron | S10-015 |
+| S11-028 | Partner Onboarding: Dumba Rentals / Trillo rentals traction metrics | — |
 
 ---
 
@@ -249,15 +249,26 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 ---
 
+### S11-028 — Partner Onboarding Traction Metrics
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-028 |
+| **Owner** | Modisa |
+| **Priority** | P1 — Day 1 |
+| **Summary** | Check "Dumba Rentals or Trillo rentals" traction metrics against current analytics |
+
+---
+
 ## 📅 Suggested Day-by-Day Schedule
 
 | Day | Arnold | Tapologo | Modisa |
 |-----|--------|----------|--------|
-| Mon Apr 21 | S11-001 (routing fix) | S11-019 (BUG-006 type fixes) | S11-012 (commission), Sprint kickoff |
-| Tue Apr 22 | S11-002 (missing templates) | S11-020 (handover tests) | S11-013 (pricing), Review PRs |
-| Wed Apr 23 | S11-003 (wire callers) | S11-021 (insurance tests) | S11-014 (insurance), S11-015 (delete) |
-| Thu Apr 24 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-022, S11-023 (admin + booking tests) | S11-016 (consent), S11-017 (rental cron) |
-| Fri Apr 25 | S11-007–S11-011 (security) | S11-024 (Android CI) | S11-018 (return cron), S11-025 (sign-off) |
+| Mon Apr 21 | S11-001 (routing fix) | S11-019 (BUG-006 type fixes) | S11-012, S11-028, Sprint kickoff |
+| Tue Apr 22 | S11-002 (missing templates) | S11-020 (handover tests) | S11-013, S11-026, Review PRs |
+| Wed Apr 23 | S11-003 (wire callers) | S11-021 (insurance tests) | S11-014, S11-015, S11-027 |
+| Thu Apr 24 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-022, S11-023 (admin + booking tests) | S11-016, S11-017, S11-029 |
+| Fri Apr 25 | S11-007–S11-011 (security) | S11-024 (Android CI) | S11-018, S11-025 (sign-off) |
 
 ---
 
@@ -276,13 +287,13 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-009 | Arnold | ❌ Not Started | MOB-704: Financial tables RLS (carry-over S10-006) |
 | S11-010 | Arnold | ❌ Not Started | MOB-705: Edge function validation (carry-over S10-007) |
 | S11-011 | Arnold | ❌ Not Started | MOB-706: search_path fixes (carry-over S10-008) |
-| S11-012 | Modisa | ❌ Not Started | Commission → platform_settings (carry-over S10-009) |
-| S11-013 | Modisa | ❌ Not Started | Dynamic pricing → DB (carry-over S10-010) |
-| S11-014 | Modisa | ❌ Not Started | Insurance fee → platform_settings (carry-over S10-011) |
+| S11-012 | Modisa | ✅ Done | Commission → platform_settings (carry-over S10-009) |
+| S11-013 | Modisa | ✅ Done | Dynamic pricing → DB (carry-over S10-010) |
+| S11-014 | Modisa | ✅ Done | Insurance fee → platform_settings (carry-over S10-011) |
 | S11-015 | Modisa | ❌ Not Started | delete-user-with-transfer refactor (carry-over S10-012) |
-| S11-016 | Modisa | ❌ Not Started | Consent on signup (carry-over S10-013) |
-| S11-017 | Modisa | ❌ Not Started | Rental-reminder cron (carry-over S10-014) |
-| S11-018 | Modisa | ❌ Not Started | Return-reminder cron (carry-over S10-015) |
+| S11-016 | Modisa | ✅ Done | Consent on signup (carry-over S10-013) |
+| S11-017 | Modisa | ✅ Done | Rental-reminder cron (carry-over S10-014) |
+| S11-018 | Modisa | ✅ Done | Return-reminder cron (carry-over S10-015) |
 | S11-019 | Tapologo | ❌ Not Started | BUG-006: Fix RejectExcessProperties build errors (carry-over S10-024) |
 | S11-020 | Tapologo | ❌ Not Started | Handover lifecycle tests (carry-over S10-016) |
 | S11-021 | Tapologo | ❌ Not Started | Insurance claim tests (carry-over S10-017) |
@@ -292,7 +303,7 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-025 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
 | S11-026 | Modisa | ❌ Not Started | Beta pilot preparation |
 | S11-027 | Modisa | ❌ Not Started | Pre-seed funding materials |
-| S11-028 | Modisa | ❌ Not Started | Partner onboarding refinement (Dumba Rentals) |
+| S11-028 | Modisa | ❌ Not Started | Partner onboarding: Dumba Rentals / Trillo rentals traction metrics |
 | S11-029 | Modisa | ❌ Not Started | PRD Audit: Onboarding & Consent |
 
 ### Summary
@@ -300,10 +311,9 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 0 | 0 | 11 | 11 |
-| Duma | 0 | 0 | 0 | 0 (Unavailable) |
 | Tapologo | 0 | 0 | 6 | 6 |
-| Modisa | 0 | 0 | 12 | 12 |
-| **TOTAL** | **0** | **0** | **29** | **29** |
+| Modisa | 6 | 0 | 7 | 13 |
+| **TOTAL** | **6** | **0** | **23** | **30** |
 
 ---
 

@@ -159,6 +159,57 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Get in_progress bookings returning today for 4h reminders
+    const { data: returnBookings } = await supabaseClient
+      .from('bookings')
+      .select(`
+        id,
+        end_date,
+        end_time,
+        renter_id,
+        cars (
+          id,
+          brand,
+          model,
+          owner_id
+        )
+      `)
+      .eq('status', 'in_progress')
+      .eq('end_date', now.toISOString().split('T')[0]);
+
+    if (returnBookings) {
+      for (const booking of returnBookings) {
+        const bookingEndTime = new Date(`${booking.end_date}T${booking.end_time || '17:00'}`);
+        const timeDiff = bookingEndTime.getTime() - now.getTime();
+        const hoursUntilEnd = timeDiff / (1000 * 60 * 60);
+
+        const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
+
+        // 4-hour return reminder
+        if (hoursUntilEnd <= 4.1 && hoursUntilEnd >= 3.9) {
+          // Notification for renter
+          await supabaseClient.from('notifications').insert({
+            user_id: booking.renter_id,
+            type: 'booking_reminder',
+            content: `Your rental of ${carTitle} is scheduled to end in 4 hours. Please prepare for return!`,
+            related_booking_id: booking.id,
+            related_car_id: booking.cars[0]?.id
+          });
+
+          // Notification for host
+          await supabaseClient.from('notifications').insert({
+            user_id: booking.cars[0]?.owner_id,
+            type: 'booking_reminder',
+            content: `The rental for ${carTitle} is ending in 4 hours. Time to prep for the return handover!`,
+            related_booking_id: booking.id,
+            related_car_id: booking.cars[0]?.id
+          });
+          
+          processedCount++;
+        }
+      }
+    }
+
     console.log(`Processed ${processedCount} booking reminders`);
 
     return new Response(

@@ -588,6 +588,8 @@ A ticket is **Done** when:
 
 ---
 
+---
+
 ## 🏁 Sprint Review
 
 **Review Date:** April 20, 2026  
@@ -596,6 +598,7 @@ A ticket is **Done** when:
 ### Key Accomplishments
 - **Security Hardening**: Completed critical **Secrets Rotation** (MOB-701) and **SSRF Mitigation** (MOB-710). Deployed ECC P-256 JWT keys.
 - **Admin Standardization**: Successfully standardized all 10 Admin Management tables with sliding-window pagination and accurate RPC-based entry counts (BUG-007).
+- **UX & Compliance**: Implemented **Contextual Loading States** across core screens and successfully wired the **`user_consents` table insertion** for new signups.
 - **Performance**: Optimized Auth guards and reduced polling redundancy, resulting in an ~85% reduction in frontend-to-backend requests (BUG-005).
 - **Critical Audit**: Identified a major architectural failure in the email notification system (BUG-008). Created a 4-phase restoration roadmap for Sprint 11.
 
@@ -612,4 +615,3 @@ A ticket is **Done** when:
 ---
 
 *Signed off by: Modisa Maphanyane*
-
