@@ -54,66 +54,46 @@ export class ResendEmailService {
   }
 
   /**
-   * Send email via API endpoint using Resend (same as password reset flow)
+   * Send email via Supabase Edge Function using Resend
    */
   public async sendEmail(
     to: string,
-    templateId: string,
+    templateKey: string,
     dynamicData: Record<string, unknown>,
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      // Map legacy template keys to Edge Function template keys
-      let resolvedTemplateId = templateId;
-      if (templateId === 'owner-booking-notification') {
-        resolvedTemplateId = 'booking-request';
-      } else if (templateId === 'booking_confirmation') {
-        resolvedTemplateId = 'booking-confirmation';
-      }
+      // Get template configuration
+      const template = RESEND_TEMPLATES[templateKey as ResendTemplateKey] || DEFAULT_TEMPLATE;
+      const resolvedTemplateId = template.id;
+      const resolvedSubject = subject || template.subject;
+
+      console.log(`📤 Sending email to ${to} using template ${resolvedTemplateId}`);
 
       const { data, error } = await supabase.functions.invoke('resend-service', {
         body: {
           to,
           templateId: resolvedTemplateId,
           dynamicData,
-          subject
+          subject: resolvedSubject
         }
       });
 
       if (error) {
-        console.error("Error from Edge Function:", error);
+        console.error("❌ Error from Edge Function:", error);
         return { success: false, error: error.message };
       }
 
-      // Supabase edge functions return JSON. Parse it if needed, or if invoke auto-parses, just map it.
       if (!data?.success) {
-        console.error("Error from Resend service:", data?.error);
+        console.error("❌ Error from Resend service:", data?.error);
         return { success: false, error: data?.error };
       }
 
+      console.log(`✅ Email sent successfully: ${data?.data?.id}`);
       return { success: true, messageId: data?.data?.id };
     } catch (e) {
-      console.error("Unhandled error in sendEmail:", e);
-      const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-      return { success: false, error: errorMessage };
-    }
-  }
-
-  /**
-   * Get default subject based on template type
-   */
-  private getDefaultSubject(templateId: string): string {
-    switch (templateId) {
-      case 'booking-confirmation':
-        return 'Booking Confirmation - MobiRides';
-      case 'booking-request':
-        return 'New Booking Request - MobiRides';
-      case 'pickup-reminder':
-        return 'Pickup Reminder - MobiRides';
-      case 'return-reminder':
-        return 'Return Reminder - MobiRides';
-      default:
-        return 'Notification from MobiRides';
+      console.error("❌ Unhandled error in sendEmail:", e);
+      return { success: false, error: e instanceof Error ? e.message : "An unknown error occurred" };
     }
   }
 
@@ -144,12 +124,9 @@ export class ResendEmailService {
       carImage: bookingData.carImage || ''
     };
 
-    const templateKey = isHost ? 'owner-booking-notification' : 'booking-confirmation';
-    const subject = isHost 
-      ? `New Booking Request - ${bookingData.carBrand} ${bookingData.carModel}`
-      : `Booking Confirmed - ${bookingData.carBrand} ${bookingData.carModel}`;
-
-    return this.sendEmail(recipient.email, templateKey, templateData, subject);
+    const templateKey: ResendTemplateKey = isHost ? 'booking-request' : 'booking-confirmation';
+    
+    return this.sendEmail(recipient.email, templateKey, templateData);
   }
 
   /**
@@ -176,8 +153,7 @@ export class ResendEmailService {
     return this.sendEmail(
       recipient.email,
       'rental-reminder',
-      templateData,
-      `Pickup Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
+      templateData
     );
   }
 
@@ -203,8 +179,7 @@ export class ResendEmailService {
     return this.sendEmail(
       recipient.email, 
       'return-reminder',
-      templateData,
-      `Return Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
+      templateData
     );
   }
 
@@ -234,9 +209,8 @@ export class ResendEmailService {
 
     return this.sendEmail(
       recipient.email,
-      'promo-notification', // Requires this template ID in Resend
-      templateData,
-      `Special Offer: ${promoData.discount} with code ${promoData.code}`
+      'promo-notification', 
+      templateData
     );
   }
 }
@@ -522,8 +496,7 @@ export class TwilioNotificationService {
           originalEndDate: bookingData.pickupDate, // This should be end date in real implementation
           hostName: bookingData.hostName,
           totalAmount: bookingData.totalAmount
-        },
-        'Early Return Notification - Booking Completed'
+        }
       );
 
       results.email = emailResult;
