@@ -572,6 +572,8 @@ A ticket is **Done** when:
 | S10-024 | Tapologo | ❌ Not Started | BUG-006: Fix Supabase `RejectExcessProperties` build errors across 7 files — map alias fields, remove `user_role` from inserts, replace dynamic keys with typed explicit assignments |
 | S10-025 | Arnold | ❌ Not Started | MOB-711: Add `<Eye />` view action icons to 6 Admin Portal tables opening read-only detail dialogs |
 | S10-026 | Tapologo | ❌ Not Started | UX: Replace all bare `Loading...` text and silent skeletons with contextual per-screen loading messages — see `docs/plans/20260407_CONTEXTUAL_LOADING_MESSAGES_PLAN.md` |
+| S10-027 | Modisa | ✅ Done | BUG-007: Standardize all Admin Portal Management Tables (Pagination, Accurate Entry Counts, Export logic, Sorting) |
+| S10-028 | Modisa | ➡️ Moved to S11 | BUG-008 / MOB-712: Email notification system audit revealed 18/20 templates non-functional — escalated to Critical, moved to Sprint 11 as S11-001 |
 
 ### Summary
 
@@ -580,8 +582,8 @@ A ticket is **Done** when:
 | Arnold | 2 | 0 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
 | Tapologo | 0 | 0 | 7 | 7 |
-| Modisa | 1 | 0 | 1 | 2 |
-| **TOTAL** | **3** | **0** | **22** | **25** |
+| Modisa | 2 | 0 | 1 | 5 |
+| **TOTAL** | **4** | **0** | **22** | **27** |
 
 ---
 

@@ -131,7 +131,38 @@ Follow `docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Crea
 
 ---
 
+### BUG-008: Email Notification System Non-Functional — 18/20 Templates Dead (MOB-712)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-10 |
+| **Severity** | Critical |
+| **Status** | 🔴 Open |
+| **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts`, `api/notifications/booking-confirmation.js`, `src/services/completeNotificationService.ts`, `src/services/bookingLifecycle.ts`, `src/services/wallet/insuranceNotificationService.ts`, `src/services/wallet/notificationService.ts` |
+| **Assigned To** | Arnold |
+
+**Description:**  
+A comprehensive audit revealed that **18 of 20 email templates** in the `resend-service` Edge Function are **non-functional**. The root cause is an **architectural routing failure**: `ResendEmailService.sendEmail()` hardcodes ALL email sends to `POST /api/notifications/booking-confirmation`, a handler that only resolves 2 template IDs (`booking-confirmation` and `owner-booking-notification`). Every other template ID is silently discarded.
+
+**Impact Breakdown:**
+- **Working (2):** `booking-confirmation`, `owner-booking-notification`
+- **Dead — route mismatch (13):** Have callers in code, but emails never deliver (`booking-cancelled`, `booking-request`, `handover-ready`, `rental-reminder`, `return-reminder`, `payment-received`, `payment-failed`, `wallet-topup`, `system-notification`, + 4 insurance templates)
+- **Dead — zero callers (3):** `verification-complete`, `welcome-renter`, `welcome-host` — full HTML exists, nobody calls them
+- **Orphaned (2):** `password-reset`, `email-confirmation` — handled natively by Supabase Auth
+- **Ghost references (3):** `wallet-notification`, `early-return-notification`, `promo-notification` — called in code but no HTML template exists
+- **Missing entirely (1):** `verification-rejected` — not defined anywhere
+
+**Implementation Plan:**  
+Follow `docs/plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md`
+
+**Ticket:** S11-001 / MOB-712
+
+---
+
 ## Resolved Bugs
+
+### BUG-007 — Admin Portal Data Inaccuracies (Export/Pagination/Sorting)
+Resolved 2026-04-10. Standardized 10 Management tables with robust sliding-window pagination, fixed accurate entry counts, removed the 100-user export limit, and added multi-direction sorting logic (`useTableSort`).
 
 ### BUG-001 — `create_handover_notification` Return Type Conflict
 Resolved 2026-03-28. See `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`.
