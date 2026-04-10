@@ -10,6 +10,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +74,8 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = isPreview ? maxItems : 5;
   const { data: cars, isLoading, error, refetch } = usePendingCars();
 
   const filteredCars = cars?.filter(car =>
@@ -72,7 +84,15 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
     car.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const displayCars = isPreview ? filteredCars.slice(0, maxItems) : filteredCars;
+  const { sortedData: sortedCars, sortKey, sortDirection, handleSort } = useTableSort<PendingCar>(filteredCars);
+
+  const paginatedCars = sortedCars.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const displayCars = isPreview ? sortedCars.slice(0, maxItems) : paginatedCars;
+  const totalPages = Math.ceil(sortedCars.length / itemsPerPage);
 
   const handleApproveCar = async (carId: string) => {
     try {
@@ -206,11 +226,11 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Make</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Year</TableHead>
-                    <TableHead>Seller</TableHead>
-                    <TableHead>Submitted At</TableHead>
+                    <SortableTableHead sortKey="brand" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Make</SortableTableHead>
+                    <SortableTableHead sortKey="model" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Model</SortableTableHead>
+                    <SortableTableHead sortKey="year" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Year</SortableTableHead>
+                    <SortableTableHead sortKey="profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Seller</SortableTableHead>
+                    <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Submitted At</SortableTableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -218,6 +238,62 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
                   {displayCars.map((car) => renderCarRow(car))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+          
+          {!isLoading && filteredCars.length > 0 && !isPreview && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+              <div className="text-sm text-muted-foreground order-2 sm:order-1">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, sortedCars.length)} of {sortedCars.length}{" "}
+                entries
+              </div>
+              {totalPages > 1 && (
+                <div className="order-1 sm:order-2">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+
+                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(pageNum)}
+                              isActive={currentPage === pageNum}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </div>
           )}
           
@@ -255,11 +331,11 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Make</TableHead>
-            <TableHead>Model</TableHead>
-            <TableHead>Year</TableHead>
-            <TableHead>Seller</TableHead>
-            <TableHead>Submitted At</TableHead>
+            <SortableTableHead sortKey="brand" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Make</SortableTableHead>
+            <SortableTableHead sortKey="model" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Model</SortableTableHead>
+            <SortableTableHead sortKey="year" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Year</SortableTableHead>
+            <SortableTableHead sortKey="profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Seller</SortableTableHead>
+            <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Submitted At</SortableTableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
