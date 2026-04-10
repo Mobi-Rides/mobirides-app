@@ -46,13 +46,8 @@ async function getUserBookingIds(supabaseAdmin: any, userId: string): Promise<st
 async function deepCleanUserReferences(supabaseAdmin: any, userId: string): Promise<string[]> {
   const cleanupSteps: string[] = [];
   
-  // Define all tables and their user ID columns
-  const tableConfigs = [
-    { table: 'profiles', column: 'id' },
-    { table: 'cars', column: 'owner_id' },
-    { table: 'bookings', column: 'renter_id' },
-    { table: 'reviews', column: 'reviewer_id' },
-    { table: 'reviews', column: 'reviewee_id' },
+  // 1. HARD DELETE TABLES 
+  const hardDeleteConfigs = [
     { table: 'notifications', column: 'user_id' },
     { table: 'conversations', column: 'created_by' },
     { table: 'conversation_messages', column: 'sender_id' },
@@ -62,7 +57,7 @@ async function deepCleanUserReferences(supabaseAdmin: any, userId: string): Prom
     { table: 'messages', column: 'receiver_id' },
   ];
   
-  for (const config of tableConfigs) {
+  for (const config of hardDeleteConfigs) {
     try {
       const { count, error: countError } = await supabaseAdmin
         .from(config.table)
@@ -70,7 +65,7 @@ async function deepCleanUserReferences(supabaseAdmin: any, userId: string): Prom
         .eq(config.column, userId);
       
       if (!countError && count && count > 0) {
-        console.log(`🧹 Found ${count} rows in ${config.table}.${config.column}`);
+        console.log(`🧹 Found ${count} rows in ${config.table}.${config.column} for hard deletion`);
         
         const { error: deleteError } = await supabaseAdmin
           .from(config.table)
@@ -78,15 +73,70 @@ async function deepCleanUserReferences(supabaseAdmin: any, userId: string): Prom
           .eq(config.column, userId);
         
         if (deleteError) {
-          cleanupSteps.push(`⚠️ Failed to clean ${config.table}.${config.column}: ${deleteError.message}`);
+          cleanupSteps.push(`⚠️ Failed to hard-delete ${config.table}.${config.column}: ${deleteError.message}`);
         } else {
-          cleanupSteps.push(`✅ Cleaned ${count} rows from ${config.table}.${config.column}`);
+          cleanupSteps.push(`✅ Hard-deleted ${count} rows from ${config.table}.${config.column}`);
         }
       }
     } catch (e) {
-      // Table might not exist or column might not exist
       console.log(`ℹ️ Skipping ${config.table}.${config.column}:`, (e as Error).message);
     }
+  }
+
+  // 2. SOFT DELETE / ANONYMIZE TABLES
+  
+  // A. Cars
+  const { error: carError } = await supabaseAdmin
+    .from('cars')
+    .update({
+      description: '[removed]',
+      location_details: '[removed]',
+      is_active: false
+    })
+    .eq('owner_id', userId);
+  
+  if (carError) {
+    cleanupSteps.push(`⚠️ Failed to anonymize cars: ${carError.message}`);
+  } else {
+    cleanupSteps.push(`✅ Anonymized cars for user`);
+  }
+
+  // B. Reviews (reviewer)
+  const { error: reviewerError } = await supabaseAdmin
+    .from('reviews')
+    .update({ comment: '[removed]' })
+    .eq('reviewer_id', userId);
+
+  // C. Reviews (reviewee)
+  const { error: revieweeError } = await supabaseAdmin
+    .from('reviews')
+    .update({ comment: '[removed]' })
+    .eq('reviewee_id', userId);
+
+  if (reviewerError || revieweeError) {
+    cleanupSteps.push(`⚠️ Handled review text anonymization with partial errors`);
+  } else {
+    cleanupSteps.push(`✅ Anonymized review text for user interactions`);
+  }
+
+  // D. Profile
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .update({
+      full_name: `user_${userId.substring(0, 5)}_deleted`,
+      email: `deleted_${userId.substring(0, 5)}@obfuscated.local`,
+      is_deleted: true,
+      bio: null,
+      phone_number: null,
+      avatar_url: null,
+      address: null
+    })
+    .eq('id', userId);
+
+  if (profileError) {
+    cleanupSteps.push(`⚠️ Failed to soft-delete profile: ${profileError.message}`);
+  } else {
+    cleanupSteps.push(`✅ Soft-deleted and anonymized profile tombstone`);
   }
   
   return cleanupSteps;
@@ -490,9 +540,7 @@ Deno.serve(async (req: Request) => {
       }
       
       if (finalProfileCheck) {
-        console.error("❌ Final verification failed: Profile still exists");
-        // Try to delete it one more time
-        await supabaseAdmin.from("profiles").delete().eq("id", userId);
+        console.log("ℹ️ Final verification: Profile exists, which is expected for the tombstone record.");
       }
       
       console.log("✅ Final verification passed");
