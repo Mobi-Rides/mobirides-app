@@ -18,7 +18,20 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Security Hardening (MOB-700) | 25% | 80% |
 | DB Pull Fix (BUG-003) | 0% | 100% |
 | Admin Settings Service Wiring | 60% | 100% |
+| Auth Compliance P3 (MOB-614/615) | 85% | 100% |
+| Anonymize-on-Delete (MOB-110) | 40% | 70% |
 | Test Coverage | 62% | 72% |
+
+---
+
+## 🏛️ Past Sprint Reviews
+
+| Sprint | Date | Focus | Review Link |
+|--------|------|-------|-------------|
+| Sprint 8 | Mar 24-31 | Bugfixes & Payment P0 | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+| Sprint 9 | Apr 7-13 | Infrastructure & Compliance | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_9_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+| Sprint 10 | Apr 14-20 | Security & Standardization | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+
 
 ---
 
@@ -35,16 +48,18 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 ## 🎯 Sprint Backlog Summary
 
-| Category | Total Tickets | Arnold | Duma | Tapologo | Modisa |
-|----------|:------------:|:------:|:----:|:--------:|:------:|
-| Email System Fix (MOB-712) | 4 | 4 | — | — | — |
-| Security Carry-over (MOB-700) | 5 | 5 | — | — | — |
-| BUG-003 Fix (MOB-801/802) | 2 | 2 | — | — | — |
-| Service Wiring Carry-over (S10) | 7 | — | 7 | — | — |
-| Type Alignment Fix (BUG-006) | 1 | — | — | 1 | — |
-| Test Coverage Carry-over (S10) | 5 | — | — | 5 | — |
-| Sprint Sign-off & Reporting | 1 | — | — | — | 1 |
-| **TOTAL** | **25** | **11** | **7** | **6** | **1** |
+| Category | Total Tickets | Arnold | Tapologo | Modisa |
+|----------|:------------:|:------:|:--------:|:------:|
+| Email System Fix (MOB-712) | 4 | 4 | — | — |
+| Security Carry-over (MOB-700) | 5 | 5 | — | — |
+| BUG-003 Fix (MOB-801/802) | 2 | 2 | — | — |
+| Service Wiring Carry-over (S10) | 7 | — | — | 7 |
+| Type Alignment Fix (BUG-006) | 1 | — | 1 | — |
+| Test Coverage Carry-over (S10) | 5 | — | 5 | — |
+| Sprint Sign-off & Reporting | 1 | — | — | 1 |
+| Beta & Investor Prep | 3 | — | — | 3 |
+| PRD Audit | 1 | — | — | 1 |
+| **TOTAL** | **29** | **11** | **6** | **12** |
 
 ---
 
@@ -146,7 +161,7 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 ---
 
-## 📋 Module 3: Service Wiring & Compliance — P1 (Duma)
+## 📋 Module 3: Service Wiring & Compliance — P1 (Modisa)
 
 > Carried over from Sprint 10. See Sprint 10 plan for full ticket details.
 
@@ -185,20 +200,64 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 |-------|-------|
 | **Ticket** | S11-025 |
 | **Owner** | Modisa |
-| **Priority** | P2 — End of Sprint |
-| **Summary** | Verify all deliverables, update status reports, confirm email system operational |
+| **Priority** | P0 — Continuous |
+| **Summary** | Weekly oversight, PR review, and generation of Week 4 April status report |
+
+---
+
+### S11-026 — Beta Launch Program (Prep)
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-026 |
+| **Owner** | Modisa |
+| **Priority** | P1 |
+| **Summary** | Define criteria for the 50-user Beta pilot and map Gaborone operational boundaries |
+
+---
+
+### S11-027 — Pre-Seed Funding Prep
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-027 |
+| **Owner** | Modisa |
+| **Priority** | P1 |
+| **Summary** | Update investor pitch materials with latest traction metrics (247 users / 66 vehicles) |
+
+---
+
+### S11-028 — Partner Onboarding Strategy
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-028 |
+| **Owner** | Modisa |
+| **Priority** | P2 |
+| **Summary** | Finalize the Fleet Partner onboarding flow for Dumba Rentals integration |
+
+---
+
+### S11-029 — PRD Audit: Onboarding & Consent
+
+| Field | Value |
+|-------|-------|
+| **Ticket** | S11-029 |
+| **Owner** | Modisa |
+| **Priority** | P1 |
+| **Summary** | Verify that S11-016 (Consent recording) aligns with the Auth Compliance PRD |
 
 ---
 
 ## 📅 Suggested Day-by-Day Schedule
 
-| Day | Arnold | Duma | Tapologo | Modisa |
-|-----|--------|------|----------|--------|
-| Mon Apr 21 | S11-001 (routing fix) | S11-012 (commission) | S11-019 (BUG-006 type fixes) | Sprint kickoff |
-| Tue Apr 22 | S11-002 (missing templates) | S11-013 (pricing) | S11-020 (handover tests) | Review PRs |
-| Wed Apr 23 | S11-003 (wire callers) | S11-014 (insurance), S11-015 (delete) | S11-021 (insurance tests) | Review PRs |
-| Thu Apr 24 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-016 (consent), S11-017 (rental cron) | S11-022, S11-023 (admin + booking tests) | Email system verification |
-| Fri Apr 25 | S11-007–S11-011 (security) | S11-018 (return cron) | S11-024 (Android CI) | S11-025 (sign-off) |
+| Day | Arnold | Tapologo | Modisa |
+|-----|--------|----------|--------|
+| Mon Apr 21 | S11-001 (routing fix) | S11-019 (BUG-006 type fixes) | S11-012 (commission), Sprint kickoff |
+| Tue Apr 22 | S11-002 (missing templates) | S11-020 (handover tests) | S11-013 (pricing), Review PRs |
+| Wed Apr 23 | S11-003 (wire callers) | S11-021 (insurance tests) | S11-014 (insurance), S11-015 (delete) |
+| Thu Apr 24 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-022, S11-023 (admin + booking tests) | S11-016 (consent), S11-017 (rental cron) |
+| Fri Apr 25 | S11-007–S11-011 (security) | S11-024 (Android CI) | S11-018 (return cron), S11-025 (sign-off) |
 
 ---
 
@@ -217,13 +276,13 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-009 | Arnold | ❌ Not Started | MOB-704: Financial tables RLS (carry-over S10-006) |
 | S11-010 | Arnold | ❌ Not Started | MOB-705: Edge function validation (carry-over S10-007) |
 | S11-011 | Arnold | ❌ Not Started | MOB-706: search_path fixes (carry-over S10-008) |
-| S11-012 | Duma | ❌ Not Started | Commission → platform_settings (carry-over S10-009) |
-| S11-013 | Duma | ❌ Not Started | Dynamic pricing → DB (carry-over S10-010) |
-| S11-014 | Duma | ❌ Not Started | Insurance fee → platform_settings (carry-over S10-011) |
-| S11-015 | Duma | ❌ Not Started | delete-user-with-transfer refactor (carry-over S10-012) |
-| S11-016 | Duma | ❌ Not Started | Consent on signup (carry-over S10-013) |
-| S11-017 | Duma | ❌ Not Started | Rental-reminder cron (carry-over S10-014) |
-| S11-018 | Duma | ❌ Not Started | Return-reminder cron (carry-over S10-015) |
+| S11-012 | Modisa | ❌ Not Started | Commission → platform_settings (carry-over S10-009) |
+| S11-013 | Modisa | ❌ Not Started | Dynamic pricing → DB (carry-over S10-010) |
+| S11-014 | Modisa | ❌ Not Started | Insurance fee → platform_settings (carry-over S10-011) |
+| S11-015 | Modisa | ❌ Not Started | delete-user-with-transfer refactor (carry-over S10-012) |
+| S11-016 | Modisa | ❌ Not Started | Consent on signup (carry-over S10-013) |
+| S11-017 | Modisa | ❌ Not Started | Rental-reminder cron (carry-over S10-014) |
+| S11-018 | Modisa | ❌ Not Started | Return-reminder cron (carry-over S10-015) |
 | S11-019 | Tapologo | ❌ Not Started | BUG-006: Fix RejectExcessProperties build errors (carry-over S10-024) |
 | S11-020 | Tapologo | ❌ Not Started | Handover lifecycle tests (carry-over S10-016) |
 | S11-021 | Tapologo | ❌ Not Started | Insurance claim tests (carry-over S10-017) |
@@ -231,16 +290,20 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-023 | Tapologo | ❌ Not Started | Booking extension tests (carry-over S10-019) |
 | S11-024 | Tapologo | ❌ Not Started | Android gradle verification (carry-over S10-020) |
 | S11-025 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
+| S11-026 | Modisa | ❌ Not Started | Beta pilot preparation |
+| S11-027 | Modisa | ❌ Not Started | Pre-seed funding materials |
+| S11-028 | Modisa | ❌ Not Started | Partner onboarding refinement (Dumba Rentals) |
+| S11-029 | Modisa | ❌ Not Started | PRD Audit: Onboarding & Consent |
 
 ### Summary
 
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 0 | 0 | 11 | 11 |
-| Duma | 0 | 0 | 7 | 7 |
+| Duma | 0 | 0 | 0 | 0 (Unavailable) |
 | Tapologo | 0 | 0 | 6 | 6 |
-| Modisa | 0 | 0 | 1 | 1 |
-| **TOTAL** | **0** | **0** | **25** | **25** |
+| Modisa | 0 | 0 | 12 | 12 |
+| **TOTAL** | **0** | **0** | **29** | **29** |
 
 ---
 

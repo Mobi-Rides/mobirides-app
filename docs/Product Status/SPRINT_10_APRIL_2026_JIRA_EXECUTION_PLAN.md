@@ -574,11 +574,7 @@ A ticket is **Done** when:
 | S10-025 | Arnold | ❌ Not Started | MOB-711: Add `<Eye />` view action icons to 6 Admin Portal tables opening read-only detail dialogs |
 | S10-026 | Tapologo | ❌ Not Started | UX: Replace all bare `Loading...` text and silent skeletons with contextual per-screen loading messages — see `docs/plans/20260407_CONTEXTUAL_LOADING_MESSAGES_PLAN.md` |
 | S10-027 | Modisa | ✅ Done | BUG-007: Standardize all Admin Portal Management Tables (Pagination, Accurate Entry Counts, Export logic, Sorting) |
-<<<<<<< HEAD
 | S10-028 | Modisa | ➡️ Moved to S11 | BUG-008 / MOB-712: Email notification system audit revealed 18/20 templates non-functional — escalated to Critical, moved to Sprint 11 as S11-001 |
-=======
-| S10-028 | Modisa | ❌ Not Started | BUG-008 / MOB-712: Implement missing verification and lifecycle email templates in resend-service |
->>>>>>> origin/develop
 
 ### Summary
 
@@ -587,9 +583,33 @@ A ticket is **Done** when:
 | Arnold | 2 | 0 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
 | Tapologo | 0 | 0 | 7 | 7 |
-| Modisa | 2 | 0 | 1 | 5 |
-| **TOTAL** | **4** | **0** | **22** | **27** |
+| Modisa | 3 | 0 | 0 | 3 |
+| **TOTAL** | **5** | **0** | **20** | **25** |
+
+---
+
+## 🏁 Sprint Review
+
+**Review Date:** April 20, 2026  
+**Status:** 🟡 INFRASTRUCTURE STABILIZED / SERVICE CARRY-OVER  
+
+### Key Accomplishments
+- **Security Hardening**: Completed critical **Secrets Rotation** (MOB-701) and **SSRF Mitigation** (MOB-710). Deployed ECC P-256 JWT keys.
+- **Admin Standardization**: Successfully standardized all 10 Admin Management tables with sliding-window pagination and accurate RPC-based entry counts (BUG-007).
+- **Performance**: Optimized Auth guards and reduced polling redundancy, resulting in an ~85% reduction in frontend-to-backend requests (BUG-005).
+- **Critical Audit**: Identified a major architectural failure in the email notification system (BUG-008). Created a 4-phase restoration roadmap for Sprint 11.
+
+### Critical Blockers & Carry-Overs
+- **Logic & Wiring**: Duma's service wiring carry-overs from Sprint 9 remain unfinished due to higher priority infrastructure stabilization tasks.
+- **Testing Surface**: Test coverage remains a vulnerability as Tapologo's allocated unit testing tickets rolled again.
+- **Build Quality**: BUG-006 (Strict type checking errors) remains in the backlog, blocking clean builds in strict environments.
+
+### Metrics
+- **Tickets Completed**: 5
+- **Tickets Rolled**: 20 (CARRY → Sprint 11)
+- **Technical Debt**: Reduced via secrets cleanup; increased via email audit discovery.
 
 ---
 
 *Signed off by: Modisa Maphanyane*
+
