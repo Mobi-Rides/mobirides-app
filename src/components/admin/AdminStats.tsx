@@ -1,5 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { getCurrentCommissionRate } from "@/services/commission/commissionRates";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ interface AdminStatsData {
   grossRevenue: number;
   platformRevenue: number;
   hostRevenue: number;
+  commissionRateLabel: string;
 }
 
 const useAdminStats = () => {
@@ -32,7 +34,7 @@ const useAdminStats = () => {
       const grossRevenue = revenueResult.data?.reduce((sum, booking) => 
         sum + Number(booking.total_price), 0) || 0;
 
-      const COMMISSION_RATE = 0.15;
+      const COMMISSION_RATE = await getCurrentCommissionRate();
       const platformRevenue = grossRevenue * COMMISSION_RATE;
       const hostRevenue = grossRevenue * (1 - COMMISSION_RATE);
 
@@ -43,7 +45,8 @@ const useAdminStats = () => {
         pendingVerifications: verificationsResult.count || 0,
         grossRevenue,
         platformRevenue,
-        hostRevenue
+        hostRevenue,
+        commissionRateLabel: `${(COMMISSION_RATE * 100).toFixed(0)}%`
       };
     },
   });
@@ -122,14 +125,14 @@ export const AdminStats = () => {
       title: "Host Earnings",
       value: `P${(stats?.hostRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: TrendingUp,
-      description: "85% to hosts",
+      description: `${stats ? (100 - parseFloat(stats.commissionRateLabel)) : 85}% to hosts`,
       onClick: () => navigate("/admin/transactions")
     },
     {
       title: "Platform Commission",
       value: `P${(stats?.platformRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: CreditCard,
-      description: "15% platform fee",
+      description: `${stats?.commissionRateLabel || '15%'} platform fee`,
       onClick: () => navigate("/admin/transactions")
     }
   ];
