@@ -43,6 +43,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 - ✅ **16 compromised scripts deleted** — All hardcoded `service_role` and `anon` keys removed from codebase (9 on Apr 5, 7 on Apr 6)
 - ✅ **`.env` secured** — `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` removed; service role key now only in Edge Function Secrets
 - ✅ **Full JWT & API Key Rotation completed** — Migrated to new Supabase JWT Signing Keys (ECC P-256), explicitly revoked compromised Legacy HS256 JWT Secret, and rotated all Publishable and Secret API keys in local and production hosting environments to instantly terminate unauthorized sessions (BUG-004 mitigation).
+- ✅ **Admin Portal Data Standardization** — Standardized 10 Management Tables with robust sliding-window pagination, fixed entry counts, removed the 100-user export limit, and deployed uniform multi-direction sorting logic (BUG-007).
 
 ---
 
@@ -71,7 +72,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 | Edge Functions | 31 | **31** | **31** | — | — |
 | Known Bugs | ~2 | **~2** | **~5** | +3 (BUG-002 epic, BUG-003 new; BUG-004 resolved; BUG-005 resolved; BUG-006 new) | 0 |
 | Capacitor Packages | 3 | **3** | **3** | — | — |
-| UI Enhancements | — | **—** | **1** | +1 (MOB-711 Admin Detailed Views injected to plan) | — |
+| UI Enhancements | — | **—** | **2** | +2 (MOB-711 Admin Detailed Views injected, BUG-007 Data Tables implemented) | — |
 
 ### Gap Analysis to Target (95%)
 
@@ -107,6 +108,7 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 | BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, whitelist added, full API & JWT key rotation executed to contain breach |
 | BUG-005 | Medium | ✅ Resolved (2026-04-06) | Excessive unauthenticated query spam & redundant polling (~309 req/min → ~50-80 req/min) | S10-023 |
 | BUG-006 | Medium (blocks build) | 🔴 Open | Supabase `RejectExcessProperties` strict type errors across 7 files (9 errors) | S10-024 (Tapologo) |
+| BUG-007 | Medium | ✅ Resolved (2026-04-10) | Admin Portal Data Inaccuracies (Export constraints, Pagination bugs, Sorting absent) | S10-027 (Modisa) |
 | FEATURE-001 | Low (Enhancement) | 🔴 Open | Missing detailed `<Eye />` view action icons on Bookings, Withdrawals, Messages tables | S10-025 / MOB-711 |
 
 ---
@@ -165,6 +167,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | SSRF endpoint whitelist in `send-push-notification` (MOB-710) | 2026-04-06 | Modisa | Blocks malicious outbound scanning via push endpoints |
 | 16 scripts with hardcoded keys deleted (MOB-701 partial) | 2026-04-06 | Modisa | Eliminates credential exposure from codebase |
 | `.env` service role key + access token removed | 2026-04-06 | Modisa | Prevents plaintext secrets in source control |
+| Standardize all 10 Admin Management Tables | 2026-04-10 | Modisa | Resolves BUG-007 data inaccuracies, pagination bugs, and missing sorting UI |
 
 ---
 
