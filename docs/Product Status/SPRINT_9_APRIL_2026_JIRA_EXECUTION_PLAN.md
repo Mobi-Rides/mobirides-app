@@ -512,3 +512,10 @@ A ticket is **Done** when:
 | Wed Apr 9 | S9-009 (bulk-delete refactor), S9-010 (admin UI guard) | S9-006 (dynamic pricing wiring), S9-008 (delete-user refactor) | S9-017 (insurance tests) |
 | Thu Apr 10 | S9-011 (user_consents table), S9-015 (unverified reminder) | S9-012 (consent on signup), S9-013 (rental reminder cron) | S9-018 (admin portal tests) |
 | Fri Apr 11 | Review + buffer | S9-014 (return reminder cron) | S9-019 (extension tests), review |
+
+
+## ?? Sprint 9 Review
+
+**Completed:** Database schema changes (platform_settings, dynamic_pricing_rules, user_consents), schema migrations execution, auth compliance foundations, admin data table issues.
+**Carried Over:** S9-005 to S9-008 and S9-012 to S9-014 (Service Wiring and Crons) carried over due to migration-related blocks and urgent admin bug fixes.
+**Notes:** Foundation and database layer successfully upgraded. Service wiring shifted to S10 to ensure stability.

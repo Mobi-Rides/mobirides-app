@@ -574,11 +574,7 @@ A ticket is **Done** when:
 | S10-025 | Arnold | ❌ Not Started | MOB-711: Add `<Eye />` view action icons to 6 Admin Portal tables opening read-only detail dialogs |
 | S10-026 | Tapologo | ❌ Not Started | UX: Replace all bare `Loading...` text and silent skeletons with contextual per-screen loading messages — see `docs/plans/20260407_CONTEXTUAL_LOADING_MESSAGES_PLAN.md` |
 | S10-027 | Modisa | ✅ Done | BUG-007: Standardize all Admin Portal Management Tables (Pagination, Accurate Entry Counts, Export logic, Sorting) |
-<<<<<<< HEAD
 | S10-028 | Modisa | ➡️ Moved to S11 | BUG-008 / MOB-712: Email notification system audit revealed 18/20 templates non-functional — escalated to Critical, moved to Sprint 11 as S11-001 |
-=======
-| S10-028 | Modisa | ❌ Not Started | BUG-008 / MOB-712: Implement missing verification and lifecycle email templates in resend-service |
->>>>>>> origin/develop
 
 ### Summary
 
@@ -593,3 +589,11 @@ A ticket is **Done** when:
 ---
 
 *Signed off by: Modisa Maphanyane*
+
+
+## ?? Sprint 10 Review
+
+**Completed:** Resolution of BUG-007 (Admin Data loading inconsistencies and export limits), Admin Contextual Loading States, user_consents table insertion wire-up for signup.
+**Escalated:** BUG-008 (Email Notification Missing Templates) discovered during audit and escalated to P0 for Sprint 11.
+**Carried Over:** Service wiring (Commission, Pricing, Insurance), user anonymization logic, and testing coverage moved to Sprint 11.
+**Notes:** Important progress on admin tools and auth compliance. Critical discovery on email infrastructure shifted priorities for Sprint 11.

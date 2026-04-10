@@ -63,32 +63,35 @@ export class ResendEmailService {
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      const response = await fetch('/api/notifications/booking-confirmation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Map legacy template keys to Edge Function template keys
+      let resolvedTemplateId = templateId;
+      if (templateId === 'owner-booking-notification') {
+        resolvedTemplateId = 'booking-request';
+      } else if (templateId === 'booking_confirmation') {
+        resolvedTemplateId = 'booking-confirmation';
+      }
+
+      const { data, error } = await supabase.functions.invoke('resend-service', {
+        body: {
           to,
-          templateId,
-          bookingData: dynamicData,
-          isHost: templateId === 'owner-booking-notification'
-        }),
+          templateId: resolvedTemplateId,
+          dynamicData,
+          subject
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Error sending email:", data.error);
-        return { success: false, error: data.error || 'Failed to send email' };
+      if (error) {
+        console.error("Error from Edge Function:", error);
+        return { success: false, error: error.message };
       }
 
-      if (!data.success) {
-        console.error("Error from API:", data.error);
-        return { success: false, error: data.error };
+      // Supabase edge functions return JSON. Parse it if needed, or if invoke auto-parses, just map it.
+      if (!data?.success) {
+        console.error("Error from Resend service:", data?.error);
+        return { success: false, error: data?.error };
       }
 
-      return { success: true, messageId: data.messageId };
+      return { success: true, messageId: data?.data?.id };
     } catch (e) {
       console.error("Unhandled error in sendEmail:", e);
       const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
