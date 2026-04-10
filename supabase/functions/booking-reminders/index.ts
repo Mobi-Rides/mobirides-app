@@ -18,6 +18,10 @@ Deno.serve(async (req) => {
     );
 
     const now = new Date();
+    const currentHourUTC = now.getUTCHours();
+    // 08:00 SAST is 06:00 UTC
+    const isMorningInSA = currentHourUTC === 6;
+
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
@@ -48,6 +52,12 @@ Deno.serve(async (req) => {
       .eq('start_date', tomorrow.toISOString().split('T')[0])
       .eq('preparation_reminder_sent', false);
 
+    // Only process 24-hour reminders at 08:00 SAST (06:00 UTC) hour window
+    let tomorrowBookingsFiltered = null;
+    if (isMorningInSA) {
+      tomorrowBookingsFiltered = tomorrowBookings;
+    }
+
     // Get confirmed bookings starting today for 2h and 30min reminders
     const { data: todayBookings } = await supabaseClient
       .from('bookings')
@@ -69,8 +79,8 @@ Deno.serve(async (req) => {
     let processedCount = 0;
 
     // Process 24-hour reminders
-    if (tomorrowBookings) {
-      for (const booking of tomorrowBookings) {
+    if (tomorrowBookingsFiltered) {
+      for (const booking of tomorrowBookingsFiltered) {
         const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
         
         // Notification for renter
@@ -111,8 +121,8 @@ Deno.serve(async (req) => {
 
         const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
 
-        // 2-hour reminder
-        if (hoursUntilStart <= 2.1 && hoursUntilStart >= 1.9) {
+        // 2-hour reminder (window: 1.75h to 2.25h) so 15 min cron catches it
+        if (hoursUntilStart <= 2.25 && hoursUntilStart > 1.9) {
           // Notification for renter
           await supabaseClient.from('notifications').insert({
             user_id: booking.renter_id,
@@ -134,8 +144,8 @@ Deno.serve(async (req) => {
           processedCount++;
         }
 
-        // 30-minute reminder
-        if (minutesUntilStart <= 35 && minutesUntilStart >= 25) {
+        // 30-minute reminder (window: 20 to 40 mins) so 15 min cron catches it
+        if (minutesUntilStart <= 40 && minutesUntilStart > 25) {
           // Notification for renter
           await supabaseClient.from('notifications').insert({
             user_id: booking.renter_id,
@@ -185,8 +195,8 @@ Deno.serve(async (req) => {
 
         const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
 
-        // 4-hour return reminder
-        if (hoursUntilEnd <= 4.1 && hoursUntilEnd >= 3.9) {
+        // 4-hour return reminder (window: 3.75h to 4.25h)
+        if (hoursUntilEnd <= 4.25 && hoursUntilEnd > 3.9) {
           // Notification for renter
           await supabaseClient.from('notifications').insert({
             user_id: booking.renter_id,

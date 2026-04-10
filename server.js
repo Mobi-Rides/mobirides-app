@@ -38,9 +38,6 @@ app.use('/api', async (req, res) => {
     } else if (apiPath === 'auth/reset-password') {
       console.log('[Server] Routing to auth/reset-password.js');
       handler = await import('./api/auth/reset-password.js');
-    } else if (apiPath === 'notifications/booking-confirmation') {
-      console.log('[Server] Routing to notifications/booking-confirmation.js');
-      handler = await import('./api/notifications/booking-confirmation.js');
     } else if (apiPath && typeof apiPath === 'string' && apiPath.startsWith('admin/')) {
       // Admin routes temporarily disabled due to missing files/merge conflict
       console.warn(`[Server] Admin route ${apiPath} requested but admin handlers are missing.`);
@@ -77,6 +74,5 @@ app.listen(port, () => {
   console.log('  - POST /api/auth/signup');
   console.log('  - POST /api/auth/forgot-password');
   console.log('  - POST /api/auth/reset-password');
-  console.log('  - POST /api/notifications/booking-confirmation');
   console.log('='.repeat(50));
 });
