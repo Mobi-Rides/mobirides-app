@@ -429,7 +429,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
         </Table>
       </div>
 
-      {!isLoading && !isPreview && sortedUsers.length > 0 && (
+      {!isLoading && sortedUsers.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
           <div className="text-sm text-muted-foreground order-2 sm:order-1">
             Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
