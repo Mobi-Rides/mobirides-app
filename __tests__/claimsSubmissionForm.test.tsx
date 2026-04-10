@@ -1,4 +1,3 @@
-import { render, fireEvent, waitFor } from '@testing-library/react';
 import ClaimsSubmissionForm from '../src/components/insurance/ClaimsSubmissionForm';
 
 describe('ClaimsSubmissionForm', () => {
