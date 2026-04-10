@@ -105,11 +105,11 @@ export class CompleteNotificationService {
 
       if (emailResponse.data && emailResponse.data.length > 0) {
         const emailService = ResendEmailService.getInstance();
-        const templateKey = this.getEmailTemplateKey(type);
+        const templateId = this.getEmailTemplateId(type);
         
         await emailService.sendEmail(
           emailResponse.data,
-          templateKey,
+          templateId,
           {
             name: profileResponse.data?.full_name || 'User',
             title,
@@ -129,51 +129,30 @@ export class CompleteNotificationService {
   /**
    * Map notification type to email template ID
    */
-  private getEmailTemplateKey(type: NotificationType): string {
+  private getEmailTemplateId(type: NotificationType): string {
     switch (type) {
       case 'booking_request_received':
       case 'booking_request_sent':
-        return 'booking-request';
+        return 'booking_request';
       case 'booking_confirmed_host':
       case 'booking_confirmed_renter':
-        return 'booking-confirmation';
+        return 'booking_confirmation';
       case 'booking_cancelled_host':
       case 'booking_cancelled_renter':
-        return 'booking-cancelled';
+        return 'booking_cancelled';
       case 'payment_received':
-        return 'payment-received';
+        return 'payment_received';
       case 'payment_failed':
-        return 'payment-failed';
+        return 'payment_failed';
       case 'wallet_topup':
       case 'wallet_deduction':
-        return 'wallet-notification';
+        return 'wallet_topup';
       case 'handover_ready':
-        return 'handover-ready';
+        return 'handover_ready';
       case 'message_received':
-        return 'system-notification';
-      case 'early_return_notification':
-        return 'early-return-notification';
-      case 'pickup_reminder':
-      case 'pickup_reminder_host':
-      case 'pickup_reminder_renter':
-        return 'rental-reminder';
-      case 'return_reminder':
-      case 'return_reminder_host':
-      case 'return_reminder_renter':
-        return 'return-reminder';
-      case 'claim_submitted':
-        return 'insurance-claim-received';
-      case 'claim_status_updated':
-        return 'insurance-claim-update';
-      case 'arrival_notification':
-        return 'arrival-notification';
-      case 'pickup_location_shared':
-        return 'pickup-location-shared';
-      case 'return_location_shared':
-        return 'return-location-shared';
-      case 'system_notification':
+        return 'system_notification';
       default:
-        return 'system-notification';
+        return 'system_notification';
     }
   }
 

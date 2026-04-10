@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Eye, Flag, Trash2 } from "lucide-react";
+import { MessageThreadViewer } from "./MessageThreadViewer";
 import { toast } from "sonner";
 
 interface Message {
@@ -82,6 +83,7 @@ const useAdminMessages = () => {
 
 export const MessageManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   
   const { data: messages, isLoading, error, refetch } = useAdminMessages();
 
@@ -239,6 +241,14 @@ export const MessageManagementTable = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => setSelectedConversationId(message.conversation_id)}
+                          title="View thread"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => flagMessage(message.id)}
                           disabled={false}
                         >
@@ -261,5 +271,6 @@ export const MessageManagementTable = () => {
         </CardContent>
       </Card>
     </div>
+    <MessageThreadViewer conversationId={selectedConversationId} onClose={() => setSelectedConversationId(null)} />
   );
 };

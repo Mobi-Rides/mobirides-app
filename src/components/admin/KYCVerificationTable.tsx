@@ -9,16 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useTableSort } from "@/hooks/useTableSort";
-import { SortableTableHead } from "./SortableTableHead";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,8 +61,6 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
   maxItems = 5
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = isPreview ? maxItems : 5;
   const { data: verifications, isLoading, error, refetch } = usePendingVerifications();
 
   const filteredVerifications = verifications?.filter(verification =>
@@ -80,15 +68,7 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
     verification.overall_status.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const { sortedData: sortedVerifications, sortKey, sortDirection, handleSort } = useTableSort<PendingVerification>(filteredVerifications);
-
-  const paginatedVerifications = sortedVerifications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const displayVerifications = isPreview ? sortedVerifications.slice(0, maxItems) : paginatedVerifications;
-  const totalPages = Math.ceil(sortedVerifications.length / itemsPerPage);
+  const displayVerifications = isPreview ? filteredVerifications.slice(0, maxItems) : filteredVerifications;
 
   const handleApproveVerification = async (verificationId: string) => {
     try {
@@ -226,11 +206,11 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortableTableHead sortKey="profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>User</SortableTableHead>
-                    <SortableTableHead sortKey="profiles.phone_number" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Phone</SortableTableHead>
-                    <SortableTableHead sortKey="overall_status" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
-                    <SortableTableHead sortKey="current_step" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Current Step</SortableTableHead>
-                    <SortableTableHead sortKey="started_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Submitted</SortableTableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Current Step</TableHead>
+                    <TableHead>Submitted</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -238,62 +218,6 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
                   {displayVerifications.map((verification) => renderVerificationRow(verification))}
                 </TableBody>
               </Table>
-            </div>
-          )}
-
-          {!isLoading && filteredVerifications.length > 0 && !isPreview && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-              <div className="text-sm text-muted-foreground order-2 sm:order-1">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                {Math.min(currentPage * itemsPerPage, sortedVerifications.length)} of {sortedVerifications.length}{" "}
-                entries
-              </div>
-              {totalPages > 1 && (
-                <div className="order-1 sm:order-2">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-
-                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-                        let pageNum: number;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-
-                        return (
-                          <PaginationItem key={pageNum}>
-                            <PaginationLink
-                              onClick={() => setCurrentPage(pageNum)}
-                              isActive={currentPage === pageNum}
-                              className="cursor-pointer"
-                            >
-                              {pageNum}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      })}
-
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
             </div>
           )}
 
@@ -331,11 +255,11 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <SortableTableHead sortKey="profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>User</SortableTableHead>
-            <SortableTableHead sortKey="profiles.phone_number" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Phone</SortableTableHead>
-            <SortableTableHead sortKey="overall_status" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
-            <SortableTableHead sortKey="current_step" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Current Step</SortableTableHead>
-            <SortableTableHead sortKey="started_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Submitted</SortableTableHead>
+            <TableHead>User</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Current Step</TableHead>
+            <TableHead>Submitted</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>

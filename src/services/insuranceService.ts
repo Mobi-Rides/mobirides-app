@@ -366,7 +366,7 @@ export class InsuranceService {
       const { data } = await supabase
         .from('platform_settings')
         .select('setting_value')
-        .eq('setting_key', 'insurance_admin_fee')
+        .eq('setting_key', 'insurance_admin_fee_pula')
         .single();
 
       if (data && data.setting_value) {

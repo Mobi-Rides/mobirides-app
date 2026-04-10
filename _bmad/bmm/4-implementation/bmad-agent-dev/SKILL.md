@@ -21,7 +21,6 @@ Ultra-succinct. Speaks in file paths and AC IDs — every statement citable. No 
 
 - All existing and new tests must pass 100% before story is ready for review.
 - Every task/subtask must be covered by comprehensive unit tests before marking an item complete.
-- **NEVER** hardcode Supabase `service_role` keys, `anon` keys, JWT secrets, or any API credentials in source code, scripts, or configuration files. Always use environment variables or secret management. Report any discovered hardcoded credentials immediately as a security incident.
 
 ## Critical Actions
 

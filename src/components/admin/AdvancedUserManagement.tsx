@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useTableSort } from "@/hooks/useTableSort";
-import { SortableTableHead } from "./SortableTableHead";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -46,7 +44,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { logUserRestrictionCreated, logUserDeleted } from "@/utils/auditLogger";
-import { useAdminUsersComplete } from "@/hooks/useAdminUsersComplete";
 import type { Database } from "@/integrations/supabase/types";
 import {
   Pagination,
@@ -93,6 +90,58 @@ interface RestrictionFormData {
   durationValue: number;
 }
 
+const useUsers = () => {
+  return useQuery<UserProfile[], Error>({
+    queryKey: ["admin-users"],
+    queryFn: async (): Promise<UserProfile[]> => {
+      // Use the RPC function that joins profiles with auth.users to get email
+      const { data: profiles, error: profilesError } = await supabase.rpc(
+        "get_admin_users"
+      );
+
+      if (profilesError) throw profilesError;
+
+      const usersWithRestrictions = await Promise.all(
+        (profiles || []).map(async (profile: any) => {
+          const { data: restrictions } = await supabase
+            .from("user_restrictions")
+            .select("*")
+            .eq("user_id", profile.id)
+            .eq("active", true);
+
+          const { count: vehiclesCount } = await supabase
+            .from("cars")
+            .select("id", { count: "exact", head: true })
+            .eq("owner_id", profile.id);
+
+          const { count: bookingsCount } = await supabase
+            .from("bookings")
+            .select("id", { count: "exact", head: true })
+            .or(`renter_id.eq.${profile.id}`);
+
+          const reviewsCount = 0;
+
+          return {
+            id: profile.id,
+            email: profile.email || undefined,
+            full_name: profile.full_name,
+            phone_number: profile.phone_number,
+            role: profile.role,
+            created_at: profile.created_at,
+            is_restricted: (restrictions?.length || 0) > 0,
+            restrictions: restrictions || [],
+            vehicles_count: vehiclesCount || 0,
+            bookings_count: bookingsCount || 0,
+            reviews_count: reviewsCount || 0,
+          };
+        })
+      );
+
+      return usersWithRestrictions;
+    },
+  });
+};
+
 export const AdvancedUserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -111,49 +160,8 @@ export const AdvancedUserManagement = () => {
   });
 
   const queryClient = useQueryClient();
-  const { data: adminUsers, isLoading, error } = useAdminUsersComplete();
+  const { data: users, isLoading, error } = useUsers();
   const { isSuperAdmin } = useIsAdmin();
-
-  const users: UserProfile[] = React.useMemo(() => {
-    return (adminUsers || []).map(u => ({
-      id: u.id,
-      email: u.email || undefined,
-      full_name: u.full_name,
-      phone_number: u.phone_number,
-      role: u.role as UserProfile["role"],
-      created_at: u.created_at,
-      is_restricted: u.is_restricted,
-      restrictions: u.active_restrictions.map(r => ({
-        ...r,
-        active: true,
-        created_at: u.created_at,
-        created_by: '',
-        ends_at: r.ends_at || '',
-        updated_at: u.created_at
-      })) as UserProfile["restrictions"],
-      vehicles_count: u.vehicles_count,
-      bookings_count: u.bookings_count,
-      reviews_count: 0
-    }));
-  }, [adminUsers]);
-
-  const filteredUsers = useMemo(() => {
-    return users.filter(
-      (user) =>
-        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [users, searchTerm]);
-
-  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort<UserProfile>(filteredUsers);
-
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return sortedUsers.slice(start, start + itemsPerPage);
-  }, [sortedUsers, currentPage]);
-
-  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
 
   // Reset pagination when search term changes
   React.useEffect(() => {
@@ -716,7 +724,21 @@ export const AdvancedUserManagement = () => {
     });
   };
 
+  const filteredUsers =
+    users?.filter(
+      (user) =>
+        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   if (error) {
     return (
@@ -738,7 +760,12 @@ export const AdvancedUserManagement = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                 Advanced User Management ({filteredUsers.length})
+                Advanced User Management ({filteredUsers.length})
+                {totalPages > 1 && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                )}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 Manage user accounts, restrictions, and administrative actions
@@ -775,12 +802,12 @@ export const AdvancedUserManagement = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortableTableHead sortKey="full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>User</SortableTableHead>
-                    <SortableTableHead sortKey="role" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Role</SortableTableHead>
-                    <SortableTableHead sortKey="is_restricted" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Activity</TableHead>
-                    <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Joined</SortableTableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -895,59 +922,56 @@ export const AdvancedUserManagement = () => {
                 </TableBody>
               </Table>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-                <div className="text-sm text-muted-foreground order-2 sm:order-1">
-                  Showing {sortedUsers.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{" "}
-                  {Math.min(currentPage * itemsPerPage, sortedUsers.length)} of {sortedUsers.length}{" "}
-                  entries
-                </div>
-                {totalPages > 1 && (
-                  <div className="order-1 sm:order-2">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                          />
-                        </PaginationItem>
-
-                        {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-                          let pageNum: number;
-                          if (totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i;
-                          } else {
-                            pageNum = currentPage - 2 + i;
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(prev - 1, 1))
                           }
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
 
-                          return (
-                            <PaginationItem key={pageNum}>
-                              <PaginationLink
-                                onClick={() => setCurrentPage(pageNum)}
-                                isActive={currentPage === pageNum}
-                                className="cursor-pointer"
-                              >
-                                {pageNum}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        })}
+                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(pageNum)}
+                              isActive={currentPage === pageNum}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
 
-                        <PaginationItem>
-                          <PaginationNext
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                )}
-              </div>
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(prev + 1, totalPages)
+                            )
+                          }
+                          className={
+                            currentPage === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </>
           )}
         </CardContent>

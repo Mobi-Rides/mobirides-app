@@ -13,7 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, DollarSign, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { Search, DollarSign, ArrowUpRight, ArrowDownLeft, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TransactionJourneyDialog } from "./finance/TransactionJourneyDialog";
 
 interface Transaction {
   id: string;
@@ -56,6 +58,7 @@ const useAdminTransactions = () => {
 
 export const TransactionLedgerTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [journeyBookingId, setJourneyBookingId] = useState<string | null>(null);
   
   const { data: transactions, isLoading, error } = useAdminTransactions();
 
@@ -170,6 +173,7 @@ export const TransactionLedgerTable = () => {
                   <TableHead>Description</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -199,6 +203,13 @@ export const TransactionLedgerTable = () => {
                     <TableCell>
                       {new Date(transaction.created_at).toLocaleDateString()}
                     </TableCell>
+                    <TableCell>
+                      {transaction.booking_id && (
+                        <Button variant="ghost" size="sm" onClick={() => setJourneyBookingId(transaction.booking_id)} title="View journey">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -207,5 +218,6 @@ export const TransactionLedgerTable = () => {
         </CardContent>
       </Card>
     </div>
+    <TransactionJourneyDialog isOpen={!!journeyBookingId} onClose={() => setJourneyBookingId(null)} bookingId={journeyBookingId} />
   );
 };

@@ -1,7 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentCommissionRate } from "@/services/commission/commissionRates";
 import {
   Dialog,
   DialogContent,
@@ -65,7 +64,12 @@ const useTransactionJourney = (bookingId: string | null) => {
       }
 
       // Fetch commission rate
-      const commissionRate = await getCurrentCommissionRate();
+      const { data: commissionRate } = await supabase
+        .from("commission_rates")
+        .select("rate")
+        .order("effective_from", { ascending: false })
+        .limit(1)
+        .single();
 
       return { booking, walletTxns: walletTxns || [], paymentTxn, commissionRate };
     },
@@ -96,7 +100,7 @@ export const TransactionJourneyDialog: React.FC<TransactionJourneyDialogProps> =
   const buildSteps = (): JourneyStep[] => {
     if (!data?.booking) return [];
     const { booking, paymentTxn, walletTxns, commissionRate } = data;
-    const rate = commissionRate;
+    const rate = commissionRate?.rate ?? 0.15;
 
     const steps: JourneyStep[] = [];
 

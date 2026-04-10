@@ -3,16 +3,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export const NotificationsSection = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: notifications } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

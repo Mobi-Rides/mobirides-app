@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
+import { z } from "npm:zod@3"
+
+const bodySchema = z.object({
+  payment_transaction_id: z.string().uuid(),
+})
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +21,11 @@ serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { payment_transaction_id } = await req.json()
+    const parsed = bodySchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: 'Invalid request body', details: parsed.error.flatten() }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    const { payment_transaction_id } = parsed.data
 
     const { data: transaction, error } = await supabase
       .from('payment_transactions')

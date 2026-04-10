@@ -16,17 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Download } from "lucide-react";
+import { Search, Download, Eye } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
+import { BookingDetailsDialog } from "./BookingDetailsDialog";
 
 interface Booking {
   id: string;
@@ -68,10 +61,9 @@ const useAdminBookings = () => {
 
 export const BookingManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   
   const { data: bookings, isLoading, error, refetch } = useAdminBookings();
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   const filteredBookings = useMemo(() => bookings?.filter(booking =>
     booking.cars?.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,13 +73,6 @@ export const BookingManagementTable = () => {
   ) || [], [bookings, searchTerm]);
 
   const { sortedData: sortedBookings, sortKey, sortDirection, handleSort } = useTableSort<Booking>(filteredBookings);
-
-  const paginatedBookings = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return sortedBookings.slice(start, start + itemsPerPage);
-  }, [sortedBookings, currentPage]);
-
-  const totalPages = Math.ceil(sortedBookings.length / itemsPerPage);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -155,13 +140,10 @@ export const BookingManagementTable = () => {
       <div className="flex items-center space-x-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
+          <Input
             placeholder="Search bookings..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"
           />
         </div>
@@ -198,9 +180,8 @@ export const BookingManagementTable = () => {
               ))}
             </div>
           ) : (
-            <>
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
                 <TableRow>
                   <SortableTableHead sortKey="cars.brand" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Vehicle</SortableTableHead>
                   <SortableTableHead sortKey="renter.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Renter</SortableTableHead>
@@ -212,7 +193,7 @@ export const BookingManagementTable = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedBookings.map((booking) => (
+                {sortedBookings.map((booking) => (
                   <TableRow key={booking.id}>
                     <TableCell className="font-medium">
                       {booking.cars ? 
@@ -238,6 +219,14 @@ export const BookingManagementTable = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedBookingId(booking.id)}
+                          title="View details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         {booking.status === "pending" && (
                           <>
                             <Button
@@ -271,64 +260,10 @@ export const BookingManagementTable = () => {
                 ))}
               </TableBody>
             </Table>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-              <div className="text-sm text-muted-foreground order-2 sm:order-1">
-                Showing {sortedBookings.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{" "}
-                {Math.min(currentPage * itemsPerPage, sortedBookings.length)} of {sortedBookings.length}{" "}
-                entries
-              </div>
-              {totalPages > 1 && (
-                <div className="order-1 sm:order-2">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-                        let pageNum: number;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-
-                        return (
-                          <PaginationItem key={pageNum}>
-                            <PaginationLink
-                              onClick={() => setCurrentPage(pageNum)}
-                              isActive={currentPage === pageNum}
-                              className="cursor-pointer"
-                            >
-                              {pageNum}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      })}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </div>
-            </>
           )}
         </CardContent>
       </Card>
     </div>
+    <BookingDetailsDialog bookingId={selectedBookingId} onClose={() => setSelectedBookingId(null)} />
   );
 };
