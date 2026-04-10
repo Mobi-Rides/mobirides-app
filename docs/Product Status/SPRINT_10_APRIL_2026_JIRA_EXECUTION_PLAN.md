@@ -52,7 +52,8 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | SSRF Endpoint Validation (MOB-710) | 1 | 1 | — | — | — |
 | Admin Detailed Views (MOB-711) | 1 | 1 | — | — | — |
 | Contextual Loading Messages (S10-026) | 1 | — | — | 1 | — |
-| **TOTAL** | **25** | **10** | **7** | **7** | **1** |
+| Admin Data Table Standardization (S10-027) | 1 | — | — | — | 1 |
+| **TOTAL** | **26** | **10** | **7** | **7** | **2** |
 
 ---
 
@@ -573,7 +574,11 @@ A ticket is **Done** when:
 | S10-025 | Arnold | ❌ Not Started | MOB-711: Add `<Eye />` view action icons to 6 Admin Portal tables opening read-only detail dialogs |
 | S10-026 | Tapologo | ❌ Not Started | UX: Replace all bare `Loading...` text and silent skeletons with contextual per-screen loading messages — see `docs/plans/20260407_CONTEXTUAL_LOADING_MESSAGES_PLAN.md` |
 | S10-027 | Modisa | ✅ Done | BUG-007: Standardize all Admin Portal Management Tables (Pagination, Accurate Entry Counts, Export logic, Sorting) |
+<<<<<<< HEAD
 | S10-028 | Modisa | ➡️ Moved to S11 | BUG-008 / MOB-712: Email notification system audit revealed 18/20 templates non-functional — escalated to Critical, moved to Sprint 11 as S11-001 |
+=======
+| S10-028 | Modisa | ❌ Not Started | BUG-008 / MOB-712: Implement missing verification and lifecycle email templates in resend-service |
+>>>>>>> origin/develop
 
 ### Summary
 

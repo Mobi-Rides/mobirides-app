@@ -129,6 +129,24 @@ Follow `docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Crea
 
 **Ticket:** S10-025 / MOB-711
 
+### BUG-008: Missing Email Notification Templates (MOB-712)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-10 |
+| **Severity** | Medium |
+| **Status** | 🔴 Open |
+| **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts` |
+| **Assigned To** | Modisa |
+
+**Description:**  
+Audit of the email notification infrastructure (`resend-service`) revealed several missing lifecycle templates that are standard in SaaS/MaaS platforms. Although `verification-complete` exists, `verification-rejected` is completely missing, which is a critical gap for user communication during onboarding. Additionally, other critical communications are absent: Host Payout Confirmation, Post-Trip Review Request, Host Listing Approval/Rejection, Booking Modification, and Security/Login Alerts. 
+
+**Implementation Plan:** 
+Follow `docs/plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md`
+
+**Ticket:** S10-028 / MOB-712
+
 ---
 
 ### BUG-008: Email Notification System Non-Functional — 18/20 Templates Dead (MOB-712)

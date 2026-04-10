@@ -24,6 +24,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Star, MoreVertical, Eye, Check, Flag, EyeOff, Trash2, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import type { ReviewWithDetails } from "@/pages/admin/AdminReviews";
 
 interface ReviewManagementTableProps {
@@ -40,6 +48,8 @@ export const ReviewManagementTable = ({
   onRefetch,
 }: ReviewManagementTableProps) => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const updateReviewStatus = async (reviewId: string, status: string) => {
     try {
@@ -105,6 +115,13 @@ export const ReviewManagementTable = ({
 
   const { sortedData: sortedReviews, sortKey, sortDirection, handleSort } = useTableSort(reviews);
 
+  const paginatedReviews = sortedReviews.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(sortedReviews.length / itemsPerPage);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -124,6 +141,7 @@ export const ReviewManagementTable = ({
   }
 
   return (
+    <>
     <Table>
       <TableHeader>
         <TableRow>
@@ -138,7 +156,7 @@ export const ReviewManagementTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {sortedReviews.map((review) => (
+        {paginatedReviews.map((review) => (
           <TableRow key={review.id}>
             <TableCell>
               <div className="flex items-center gap-2">
@@ -231,5 +249,60 @@ export const ReviewManagementTable = ({
         ))}
       </TableBody>
     </Table>
+
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <div className="text-sm text-muted-foreground order-2 sm:order-1">
+        Showing {sortedReviews.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{" "}
+        {Math.min(currentPage * itemsPerPage, sortedReviews.length)} of {sortedReviews.length}{" "}
+        entries
+      </div>
+      {totalPages > 1 && (
+        <div className="order-1 sm:order-2">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+
+              {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                let pageNum: number;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(pageNum)}
+                      isActive={currentPage === pageNum}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+    </div>
+  </>
   );
 };

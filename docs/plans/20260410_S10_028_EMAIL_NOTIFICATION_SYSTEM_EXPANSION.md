@@ -1,7 +1,7 @@
 # [S11-001 / MOB-712] Email Notification System — Architecture Fix & Template Expansion
 
 ## Objective
-Fix the broken email notification routing architecture and restore all 20 email templates to full operational status. Add missing lifecycle templates (`verification-rejected`, `wallet-notification`, `early-return-notification`).
+Fix the broken email notification routing architecture and restore all 20+ email templates to full operational status. Standardize lifecycle communication by adding critical missing templates (e.g., `verification-rejected`, `payout-confirmation`, `review-request`).
 
 ## Background
 A comprehensive audit on 2026-04-10 revealed that **18 of 20** email templates in the `resend-service` Edge Function are completely non-functional. The root cause is an architectural routing failure:
@@ -9,64 +9,56 @@ A comprehensive audit on 2026-04-10 revealed that **18 of 20** email templates i
 - `ResendEmailService.sendEmail()` hardcodes ALL sends to `POST /api/notifications/booking-confirmation`
 - That handler only resolves **2** template IDs (`booking-confirmation` and `owner-booking-notification`)
 - The Edge Function (`supabase/functions/resend-service`) has 20 fully-built HTML templates but is **never invoked** from the frontend
-- 3 template IDs are referenced in code but have no corresponding HTML template
-- 3 templates (`verification-complete`, `welcome-renter`, `welcome-host`) have zero callers
+- Users currently receive no verification results (rejections), payouts, reviews, or listing updates.
 
-> **Severity:** Critical — users receive no cancellation, payment, verification, welcome, reminder, insurance, or wallet emails
+> **Severity:** Critical — the majority of the platform's lifecycle communication is currently "Dead Code."
+
+---
 
 ## Scope of Work
 
 ### Phase 1: Fix Routing Architecture (Critical)
-**Goal:** Repoint all email sends from the broken `/api/notifications/booking-confirmation` route to the Supabase Edge Function.
+**Goal:** Repoint all email sends from the broken legacy API to the Supabase Edge Function to unblock the existing 18 unreachable templates.
 
 #### [MODIFY] `src/services/notificationService.ts`
-- Replace `fetch('/api/notifications/booking-confirmation', ...)` with `supabase.functions.invoke('resend-service', { body: { to, templateId, dynamicData, subject } })`
-- This single change will restore all 13 "dead — route mismatch" templates to operational status
-- Preserve the `ResendEmailService` singleton pattern and public API
+- Replace `fetch('/api/notifications/booking-confirmation', ...)` with `supabase.functions.invoke('resend-service', { body: { to, templateId, dynamicData, subject } })`.
+- This restores delivery for: Cancellation, Payment, Verification, Reminders, and Insurance emails.
 
 #### [MODIFY] `src/config/resend-templates.ts`
-- Add missing template keys: `verification-rejected`, `wallet-notification`, `early-return-notification`
-- Remove orphaned keys (`password_reset`, `email_confirmation`) or mark them as Supabase Auth-managed
+- Synchronize all template IDs and dynamic data interfaces.
 
 ---
 
-### Phase 2: Add Missing Templates in Edge Function
-**Goal:** Create HTML templates for template IDs that are referenced in code but have no HTML definition.
+### Phase 2: Template Expansion (Add Missing MaaS Logic)
+**Goal:** Create HTML templates for the operational gaps identified in both branches.
 
 #### [MODIFY] `supabase/functions/resend-service/index.ts`
-Add new templates to `EMAIL_TEMPLATES`:
-- `verification-rejected` — Explains why verification was denied, with re-submission instructions and support contact. Includes dynamic `reason` field.
-- `wallet-notification` — Generic wallet event email (topup, deduction, payment received). Called by `wallet/notificationService.ts:42`.
-- `early-return-notification` — Sent when a renter returns a vehicle before the scheduled end date. Called by `notificationService.ts:513`.
+Add the following rich HTML templates (matching Mobi Rides branding):
+- **`verification-rejected`**: Dynamic `reason` for denial, re-submission link.
+- **`payout-confirmation`**: Notification for hosts when funds are released.
+- **`review-request`**: Automated post-trip prompt for renter/host reviews.
+- **`listing-status-update`**: Approval/rejection notification for new car listings.
+- **`booking-modification`**: Alerts for changes to active bookings.
+- **`wallet-notification`**: Balance changes, top-ups, and deductions.
+- **`early-return-notification`**: Alerts for vehicle returns before the end date.
 
 ---
 
-### Phase 3: Wire Up Uncalled Templates
-**Goal:** Connect the 3 templates that have full HTML but zero callers.
+### Phase 3: Wiring & Triggers
+**Goal:** Connect the expanded template library to the application flow.
 
-#### `verification-complete`
-- Wire into admin verification approval flow (wherever the admin sets `user_verifications.status = 'approved'`)
-- Likely in an admin action handler or a database trigger
-
-#### `welcome-renter`
-- Wire into the signup flow or `onAuthStateChange` for new users with `role = 'renter'`
-- Could also be triggered via a Supabase Auth hook or database trigger on `profiles` insert
-
-#### `welcome-host`
-- Wire into the host registration flow when a user first lists a vehicle or toggles to host mode
-- Trigger on `profiles` role change or first car listing
+- **Frontend Wiring**: Update `notificationService.ts` to export helper functions for the new templates.
+- **Database Automations**: Implement SQL triggers where appropriate (e.g., triggering `verification-rejected` on `user_verifications` status update).
+- **Orphaned Templates**: Connect `verification-complete`, `welcome-renter`, and `welcome-host` which currently have HTML but no callers.
 
 ---
 
-### Phase 4: Cleanup & Consolidation
-**Goal:** Remove dead code and duplicate template systems.
+### Phase 4: Cleanup & Deprecation
+**Goal:** Safely remove redundant legacy infrastructure.
 
-#### [DELETE or DEPRECATE] `api/notifications/booking-confirmation.js`
-- Once Phase 1 is complete, this handler is redundant — all emails route through the Edge Function
-- Can be deprecated immediately and removed after verification
-
-#### [DELETE or DEPRECATE] `api/resend-templates.js`
-- Duplicate template definitions that are no longer needed once the Edge Function handles all templates
+- **[DEPRECATE]** `api/notifications/booking-confirmation.js`
+- **[DEPRECATE]** `api/resend-templates.js`
+- Ensure all calls are successfully transitioned to the Edge Function before deletion.
 
 ---
 
@@ -74,35 +66,18 @@ Add new templates to `EMAIL_TEMPLATES`:
 
 | File | Action | Phase |
 |------|--------|-------|
-| `src/services/notificationService.ts` | Repoint `sendEmail()` to Edge Function | Phase 1 |
-| `src/config/resend-templates.ts` | Add missing keys, cleanup orphaned keys | Phase 1 |
-| `supabase/functions/resend-service/index.ts` | Add 3 missing HTML templates | Phase 2 |
-| Admin verification flow (TBD) | Wire `verification-complete` caller | Phase 3 |
-| Signup/Auth flow (TBD) | Wire `welcome-renter` caller | Phase 3 |
-| Host registration flow (TBD) | Wire `welcome-host` caller | Phase 3 |
+| `src/services/notificationService.ts` | Repoint `sendEmail()` + Add helpers | Phase 1-3 |
+| `src/config/resend-templates.ts` | Sync template definitions | Phase 1 |
+| `supabase/functions/resend-service/index.ts` | Add 7+ new HTML templates | Phase 2 |
 | `api/notifications/booking-confirmation.js` | Deprecate/Delete | Phase 4 |
-| `api/resend-templates.js` | Deprecate/Delete | Phase 4 |
 
 ## Acceptance Criteria
-- [ ] ALL 20 existing email templates deliver successfully when their trigger conditions are met
-- [ ] 3 new templates (`verification-rejected`, `wallet-notification`, `early-return-notification`) render correctly with dynamic data
-- [ ] `verification-complete`, `welcome-renter`, `welcome-host` have active trigger paths
-- [ ] No emails route through `api/notifications/booking-confirmation.js`
-- [ ] Edge Function logs show successful email sends for at least 5 different template IDs
-
-## Verification Plan
-
-### Automated Testing
-- Invoke `supabase.functions.invoke('resend-service', ...)` directly with each of the 23 template IDs and verify 200 response
-- Confirm the Edge Function logs show successful Resend API calls
-
-### Manual Verification
-- Trigger a booking confirmation, cancellation, and verification approval in staging
-- Verify actual email delivery to a test inbox for each
-- Confirm welcome emails fire on new user signup
+- [ ] ALL 20+ templates deliver successfully when triggers fire.
+- [ ] `verification-rejected` renders with dynamic reasoning context.
+- [ ] Edge Function logs confirm 100% of emails route through the consolidated service.
+- [ ] No emails route through legacy JS API handlers.
 
 ## Notes & Risks
-- **Testing safety:** All testing must use developer email addresses — do not send to real users during verification
-- **Deployment order:** Phase 1 must deploy before Phase 4 (deprecation) — simultaneous deployment would break the 2 templates that currently work
-- **Branding consistency:** New templates must use the existing MobiRides branding (`#E2EE0D` accents, gradient headers, standard footer)
-- **Supabase Auth emails:** `password-reset` and `email-confirmation` are handled by Supabase Auth natively — do NOT attempt to send duplicates via Resend
+- **Testing:** Use developer email addresses only for verification.
+- **Branding:** Re-use the existing header/footer components (`#E2EE0D`) for consistency.
+- **Deployment:** Phase 1 must deploy first to avoid breaking current functionality.

@@ -1,6 +1,3 @@
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import ClaimsSubmissionForm from '../src/components/insurance/ClaimsSubmissionForm';
-
 describe('ClaimsSubmissionForm', () => {
   it('evidence upload advances to next step', async () => {
     // TODO: Mock file upload and test step advancement
