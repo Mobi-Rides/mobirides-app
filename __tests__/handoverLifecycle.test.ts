@@ -1,5 +1,3 @@
-import { useInteractiveHandover } from '../src/hooks/useInteractiveHandover';
-
 describe('Handover Lifecycle Transitions', () => {
   it('pickup handover sets booking status to in_progress', async () => {
     // Mock the handoverService and booking status update logic
