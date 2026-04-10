@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   Clock, 
   DollarSign,
-import { TrendingUp } from "lucide-react";
+  TrendingUp 
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentCommissionRate } from "@/services/commission/commissionRates";
 
