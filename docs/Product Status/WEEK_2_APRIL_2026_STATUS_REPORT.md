@@ -31,19 +31,11 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 
 ### Key Achievements This Period
 
-- ✅ **Admin Dynamic Pricing UI rewrite** — Full rewrite of `DynamicPricingRulesSection.tsx` with all 8 rule types: DEMAND, SEASON, WEEKEND, DURATION, ADVANCE_BOOKING, AVAILABILITY, DESTINATION, FLEET_SIZE
-- ✅ **Admin Insurance Settings SLA v1.1 alignment** — Full rewrite of `InsuranceSettingsSection.tsx` matching Pay-U Damage Protection SLA v1.1 (daily rate, excess %, coverage cap, target segment, international cap)
-- ✅ **Insurance packages migration** — `20260403232558_add_insurance_sla_columns.sql` adds `daily_rate`, `excess_percentage`, `target_segment`, `international_cap_usd` to `insurance_packages`
-- ✅ **Build error fix** — Resolved `useDynamicPricingRules.ts` build error (missing `condition_type` field in insert)
-- ✅ **Security audit completed** — 9 actionable findings documented in `docs/hotfixes/SECURITY_REMEDIATION_2026_04_04.md` (MOB-701 through MOB-709)
-- ✅ **BUG-003 documented** — `notification_type__old_version_to_be_dropped` dependency error identified, root cause analysed, fix plan created with MOB-801/MOB-802
-- ✅ **Documentation sync** — BUG-001 moved to Resolved in `BUG_REPORT.md`; Sprint 8 ADM-001/ADM-002 marked Done; Week 1 April status updated
-- ✅ **Sprint 9 Arnold tickets all complete** — S9-001 through S9-004, S9-009, S9-010, S9-011, S9-015 all delivered 2026-03-28
-- ✅ **SSRF protection shipped** — Domain whitelist added to `send-push-notification/index.ts` blocking malicious outbound scanning (BUG-004)
-- ✅ **16 compromised scripts deleted** — All hardcoded `service_role` and `anon` keys removed from codebase (9 on Apr 5, 7 on Apr 6)
-- ✅ **`.env` secured** — `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` removed; service role key now only in Edge Function Secrets
+- ✅ **BUG-007 Resolved: Admin Table Standardization** — Rewrote 10 Management tables in the Admin Portal to use robust sliding-window pagination, fixed entry count logic (RPC `get_count` integration), removed 100-user export limitations, and added multi-direction sorting logic (`useTableSort`).
+- ✅ **BUG-008 Escalated: Critical Email System Audit** — Conducted a full audit of all 20 email templates. Discovered an architectural routing failure where 18/20 templates are dead code. Escalated to Critical and created a 4-phase restoration plan (MOB-712).
+- ✅ **Sprint 11 Execution Plan created** — Anchored by the MOB-712 Email System Fix, Sprint 11 is now formally planned for April 21–27.
 - ✅ **Full JWT & API Key Rotation completed** — Migrated to new Supabase JWT Signing Keys (ECC P-256), explicitly revoked compromised Legacy HS256 JWT Secret, and rotated all Publishable and Secret API keys in local and production hosting environments to instantly terminate unauthorized sessions (BUG-004 mitigation).
-- ✅ **Admin Portal Data Standardization** — Standardized 10 Management Tables with robust sliding-window pagination, fixed entry counts, removed the 100-user export limit, and deployed uniform multi-direction sorting logic (BUG-007).
+- ✅ **Linter Cleanup** — Resolved unused import warnings in `AdvancedUserManagement.tsx`.
 
 ---
 
@@ -63,16 +55,15 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 | Metric | Week 4 Mar | Week 1 Apr | **Week 2 Apr** | Change | Target |
 |--------|------------|------------|----------------|--------|--------|
 | Build Errors | 0 | **0** | **0** | — | 0 |
-| Linter Warnings | 15 | **15** | **15** | — | <20 |
-| System Health | 84% | **85%** | **86%** | +1 (Admin Settings + Insurance SLA aligned) | 95% |
-| Production Readiness | 83% | **84%** | **86%** | +2 (Dynamic Pricing UI + Insurance SLA + security plan) | 95% |
+| Linter Warnings | 15 | **15** | **14** | -1 (AdvancedUserManagement fix) | <20 |
+| System Health | 84% | **85%** | **88%** | +3 (Admin Standardization + Email Audit) | 95% |
+| Production Readiness | 83% | **84%** | **88%** | +4 (Dynamic Pricing + Insurance SLA + Admin Tables) | 95% |
 | Test Coverage | 62% | **62%** | **62%** | — | 85% |
-| Security Vulnerabilities | 4 | **4** | **7** | +3 (9 found, 2 addressed: hardcoded keys + SSRF) | 0 |
-| Database Migrations | ~257 | **~257** | **~258** | +1 (insurance_packages SLA columns) | — |
+| Security Vulnerabilities | 4 | **4** | **7** | +3 (9 found, 2 addressed) | 0 |
+| Database Migrations | ~257 | **~257** | **~258** | +1 | — |
 | Edge Functions | 31 | **31** | **31** | — | — |
-| Known Bugs | ~2 | **~2** | **~5** | +3 (BUG-002 epic, BUG-003 new; BUG-004 resolved; BUG-005 resolved; BUG-006 new) | 0 |
-| Capacitor Packages | 3 | **3** | **3** | — | — |
-| UI Enhancements | — | **—** | **2** | +2 (MOB-711 Admin Detailed Views injected, BUG-007 Data Tables implemented) | — |
+| Known Bugs | ~2 | **~5** | **~6** | +1 (BUG-008 Critical) | 0 |
+| UI Enhancements | — | **—** | **2** | +2 (Detailed Views + Table Pagination) | — |
 
 ### Gap Analysis to Target (95%)
 
@@ -105,11 +96,12 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 | BUG-001 | Critical | ✅ Resolved (2026-03-28) | `create_handover_notification` return type conflict | [HOTFIX_DB_PULL_FIX_2026_03_28.md](../hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md) |
 | BUG-002 | Critical–Low (9 findings) | 🔴 Open | Security vulnerabilities: RLS, edge functions, credentials | [SECURITY_REMEDIATION_2026_04_04.md](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 | BUG-003 | Critical (blocks db pull) | 🔴 Open | `notification_type__old_version_to_be_dropped` dependency error | [HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md](../hotfixes/HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md) |
-| BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` (Supabase Security alert) | Inline fix — scripts deleted, whitelist added, full API & JWT key rotation executed to contain breach |
-| BUG-005 | Medium | ✅ Resolved (2026-04-06) | Excessive unauthenticated query spam & redundant polling (~309 req/min → ~50-80 req/min) | S10-023 |
-| BUG-006 | Medium (blocks build) | 🔴 Open | Supabase `RejectExcessProperties` strict type errors across 7 files (9 errors) | S10-024 (Tapologo) |
-| BUG-007 | Medium | ✅ Resolved (2026-04-10) | Admin Portal Data Inaccuracies (Export constraints, Pagination bugs, Sorting absent) | S10-027 (Modisa) |
-| FEATURE-001 | Low (Enhancement) | 🔴 Open | Missing detailed `<Eye />` view action icons on Bookings, Withdrawals, Messages tables | S10-025 / MOB-711 |
+| BUG-004 | Critical | ✅ Resolved (2026-04-06) | Outbound SSRF traffic via `send-push-notification` | Inline fix complete |
+| BUG-005 | Medium | ✅ Resolved (2026-04-06) | Excessive unauthenticated query spam | S10-023 |
+| BUG-006 | Medium (blocks build) | 🔴 Open | Supabase `RejectExcessProperties` strict type errors | S10-024 (Tapologo) |
+| BUG-007 | Medium (UX) | ✅ Resolved (2026-04-10) | Inaccurate Admin table counts + export limits | S10-027 (Modisa) |
+| BUG-008 | Critical | 🔴 Open | Email System failure (18/20 templates dead) | S11-001 / MOB-712 |
+| FEATURE-001 | Low (Enhancement) | 🔴 Open | Missing detailed `<Eye />` view action icons | S10-025 / MOB-711 |
 
 ---
 
@@ -164,10 +156,9 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 | BUG-003 root cause analysis + fix plan | 2026-04-04 | Modisa | MOB-801/802 plan ready for execution |
 | Documentation status sync (BUG-001, ADM-001/002) | 2026-04-04 | Modisa | All reports now reflect accurate completion status |
 | S9-001 through S9-004, S9-009–011, S9-015 | 2026-03-28 | Arnold | Sprint 9 infrastructure + compliance tickets |
-| SSRF endpoint whitelist in `send-push-notification` (MOB-710) | 2026-04-06 | Modisa | Blocks malicious outbound scanning via push endpoints |
-| 16 scripts with hardcoded keys deleted (MOB-701 partial) | 2026-04-06 | Modisa | Eliminates credential exposure from codebase |
-| `.env` service role key + access token removed | 2026-04-06 | Modisa | Prevents plaintext secrets in source control |
-| Standardize all 10 Admin Management Tables | 2026-04-10 | Modisa | Resolves BUG-007 data inaccuracies, pagination bugs, and missing sorting UI |
+| Admin Table Standardization (BUG-007) | 2026-04-10 | Modisa | Standardized pagination, entry counts, and exports across 10 admin tables |
+| Email System Audit & Escalation (BUG-008) | 2026-04-10 | Modisa | Identified 18/20 dead templates; created MOB-712 fix plan |
+| Linter Cleanup (AdvancedUserManagement.tsx) | 2026-04-10 | Modisa | Resolved unused import warning |
 
 ---
 
@@ -317,7 +308,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 
 ## 🏁 Conclusion
 
-Week 2 April delivered significant alignment work: Admin Settings now match the PRD (destination pricing) and Pay-U SLA v1.1 (insurance tiers), and the first comprehensive security audit established the MOB-700 remediation backlog. Arnold's Sprint 9 infrastructure tickets are all complete. A critical Supabase Security incident (BUG-004 — outbound SSRF traffic) was reported and resolved same-day with script deletion, `.env` cleanup, SSRF endpoint whitelisting, and a full cryptographic rotation of API and JWT signing keys (transitioning to ECC P-256 asymmetric keys and revoking the legacy shared secret) to guarantee complete lockout of unauthorized sessions. The focus for Sprint 10 shifts to completing **security remediation** (MOB-702–709), **BUG-003 fix** (db pull), Duma's service wiring carry-overs, and Tapologo's test coverage push.
+Week 2 April delivered significant alignment and stabilization work: Admin Settings were overhauled (Dynamic Pricing + Insurance SLA), and **all 10 Admin Management tables were standardized** (BUG-007) with accurate pagination and full data exports. A critical audit of the email system revealed a major architectural failure affecting 18/20 templates (BUG-008), leading to the creation of the MOB-712 restoration plan and Sprint 11 anchor. A critical Supabase Security incident (BUG-004) was successfully mitigated with script deletion, `.env` cleanup, and full cryptographic rotation of API/JWT keys. The focus shifts to **Sprint 10 security remediation** and **Sprint 11 email system restoration**.
 
 **Next:** Week 3 April 2026 Status Report (April 17, 2026)
 
