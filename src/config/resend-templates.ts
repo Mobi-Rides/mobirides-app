@@ -24,12 +24,19 @@ export type ResendTemplateKey =
   | 'password_reset'
   | 'email_confirmation'
   | 'system_notification'
-  | 'booking-confirmation'
   | 'owner-booking-notification'
   | 'insurance-claim-received'
   | 'insurance-claim-update'
   | 'insurance-policy-confirmation'
-  | 'insurance-host-claim-notification';
+  | 'insurance-host-claim-notification'
+  | 'verification-rejected'
+  | 'payout-confirmation'
+  | 'review-request'
+  | 'listing-status-update'
+  | 'booking-modification'
+  | 'early-return-notification'
+  | 'wallet-notification'
+  | 'promo-notification';
 
 export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
   booking_confirmation: {
@@ -137,26 +144,74 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
   'insurance-claim-received': {
     id: 'insurance-claim-received',
     name: 'Insurance Claim Received',
-    subject: '📋 Claim Received - {{claimNumber}}',
+    subject: '📋 Claim Received',
     description: 'Sent when a user submits a new insurance claim'
   },
   'insurance-claim-update': {
     id: 'insurance-claim-update',
     name: 'Insurance Claim Status Update',
-    subject: '🔔 Claim Status Update - {{claimNumber}}',
+    subject: '🔔 Claim Status Update',
     description: 'Sent when an admin updates claim status'
   },
   'insurance-policy-confirmation': {
     id: 'insurance-policy-confirmation',
     name: 'Insurance Policy Confirmation',
-    subject: '✅ Insurance Policy Issued - {{policyNumber}}',
+    subject: '✅ Insurance Policy Issued',
     description: 'Sent when an insurance policy is created'
   },
   'insurance-host-claim-notification': {
     id: 'insurance-host-claim-notification',
     name: 'Host Claim Notification',
-    subject: '⚠️ Insurance Claim Filed for {{carName}} - {{claimNumber}}',
+    subject: '⚠️ Insurance Claim Filed for Your Vehicle',
     description: 'Sent to car owners when a claim is filed on their vehicle'
+  },
+  'verification-rejected': {
+    id: 'verification-rejected',
+    name: 'Account Verification Rejected',
+    subject: '❌ Verification Update - Action Needed',
+    description: 'Sent when identity verification is rejected'
+  },
+  'payout-confirmation': {
+    id: 'payout-confirmation',
+    name: 'Payout Confirmed',
+    subject: '💰 Payout Successful - MobiRides',
+    description: 'Sent when a host payout is processed'
+  },
+  'review-request': {
+    id: 'review-request',
+    name: 'Review Request',
+    subject: '🌟 How was your trip? Leave a review',
+    description: 'Sent after a rental is completed'
+  },
+  'listing-status-update': {
+    id: 'listing-status-update',
+    name: 'Listing Status Update',
+    subject: '📋 Listing Update - MobiRides',
+    description: 'Sent when a car listing is approved or rejected'
+  },
+  'booking-modification': {
+    id: 'booking-modification',
+    name: 'Booking Modification',
+    subject: '🔔 Booking Modification - MobiRides',
+    description: 'Sent when a booking is modified by host or renter'
+  },
+  'early-return-notification': {
+    id: 'early-return-notification',
+    name: 'Early Return Notification',
+    subject: '🚗 Early Vehicle Return Registered',
+    description: 'Sent when a vehicle is returned earlier than scheduled'
+  },
+  'wallet-notification': {
+    id: 'wallet-notification',
+    name: 'Wallet Activity Notification',
+    subject: '💳 Wallet Update - MobiRides',
+    description: 'Sent for various wallet balance changes'
+  },
+  'promo-notification': {
+    id: 'promo-notification',
+    name: 'Promotional Offer',
+    subject: '🎁 Exclusive Offer Just For You!',
+    description: 'Sent for marketing and rewards'
   }
 };
 
