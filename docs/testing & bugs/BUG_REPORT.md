@@ -125,13 +125,34 @@ Supabase's updated TypeScript client enforces `RejectExcessProperties` on `.upda
 Admin Portal lacks explicit "View Details" capabilities on complex related tables. Instead of relying purely on inline aggregated fields or edit modes that shouldn't be exposed arbitrarily, tables need a read-only detailed inspection view attached to an `<Eye />` action icon.
 
 **Implementation Plan:**
-Follow `docs/Product Status/MOB_711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Create read-only dialogs like `BookingDetailsDialog`, `PayoutDetailsDialog`, etc., fetching joined related entities via `react-query`, and wire them up to the missing icons.
+Follow `docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Create read-only dialogs like `BookingDetailsDialog`, `PayoutDetailsDialog`, etc., fetching joined related entities via `react-query`, and wire them up to the missing icons.
 
 **Ticket:** S10-025 / MOB-711
+
+### BUG-008: Missing Email Notification Templates (MOB-712)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-10 |
+| **Severity** | Medium |
+| **Status** | 🔴 Open |
+| **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts` |
+| **Assigned To** | Modisa |
+
+**Description:**  
+Audit of the email notification infrastructure (`resend-service`) revealed several missing lifecycle templates that are standard in SaaS/MaaS platforms. Although `verification-complete` exists, `verification-rejected` is completely missing, which is a critical gap for user communication during onboarding. Additionally, other critical communications are absent: Host Payout Confirmation, Post-Trip Review Request, Host Listing Approval/Rejection, Booking Modification, and Security/Login Alerts. 
+
+**Implementation Plan:** 
+Follow `docs/plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md`
+
+**Ticket:** S10-028 / MOB-712
 
 ---
 
 ## Resolved Bugs
+
+### BUG-007 — Admin Portal Data Inaccuracies (Export/Pagination/Sorting)
+Resolved 2026-04-10. Standardized 10 Management tables with robust sliding-window pagination, fixed accurate entry counts, removed the 100-user export limit, and added multi-direction sorting logic (`useTableSort`).
 
 ### BUG-001 — `create_handover_notification` Return Type Conflict
 Resolved 2026-03-28. See `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`.

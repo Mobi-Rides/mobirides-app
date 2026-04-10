@@ -20,6 +20,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CarEditDialog } from "./CarEditDialog";
 import { Search, Eye, Edit, CheckCircle, XCircle, Download } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 
 interface Car {
@@ -63,6 +71,8 @@ export const CarManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: cars, isLoading, error, refetch } = useAdminCars();
 
@@ -74,6 +84,13 @@ export const CarManagementTable = () => {
   ) || [], [cars, searchTerm]);
 
   const { sortedData: sortedCars, sortKey, sortDirection, handleSort } = useTableSort<Car>(filteredCars);
+
+  const paginatedCars = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedCars.slice(start, start + itemsPerPage);
+  }, [sortedCars, currentPage]);
+
+  const totalPages = Math.ceil(sortedCars.length / itemsPerPage);
 
   const handleToggleAvailability = async (carId: string, currentStatus: boolean) => {
     try {
@@ -146,7 +163,10 @@ export const CarManagementTable = () => {
           <Input
             placeholder="Search cars..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-8"
           />
         </div>
@@ -183,8 +203,9 @@ export const CarManagementTable = () => {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
+            <>
+              <Table>
+                <TableHeader>
                 <TableRow>
                   <SortableTableHead sortKey="brand" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Vehicle</SortableTableHead>
                   <SortableTableHead sortKey="profiles.full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Owner</SortableTableHead>
@@ -196,7 +217,7 @@ export const CarManagementTable = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedCars.map((car) => (
+                {paginatedCars.map((car) => (
                   <TableRow key={car.id}>
                     <TableCell className="font-medium">
                       {car.brand} {car.model} ({car.year})
@@ -247,6 +268,61 @@ export const CarManagementTable = () => {
                 ))}
               </TableBody>
             </Table>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+              <div className="text-sm text-muted-foreground order-2 sm:order-1">
+                Showing {sortedCars.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{" "}
+                {Math.min(currentPage * itemsPerPage, sortedCars.length)} of {sortedCars.length}{" "}
+                entries
+              </div>
+              {totalPages > 1 && (
+                <div className="order-1 sm:order-2">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(pageNum)}
+                              isActive={currentPage === pageNum}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </div>
+            </>
           )}
         </CardContent>
       </Card>

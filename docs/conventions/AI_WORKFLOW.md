@@ -136,6 +136,12 @@ git push origin develop
 
 ## Rules
 
+- **Security — Credential Handling (Mandatory):**
+  - **NEVER** hardcode Supabase `service_role` keys, `anon` keys, JWT secrets, or any API credentials in source code, scripts, or configuration files committed to version control.
+  - **ALWAYS** use environment variables or secret management services for credentials.
+  - **NEVER** create administrative scripts that embed database credentials directly.
+  - If a task requires `service_role` access, it must be performed via Supabase Edge Functions with proper authentication guards — never from client-side code.
+  - Report any discovered hardcoded credentials immediately as a security incident.
 - **Never start a task without pulling latest develop first** — your colleague may have already fixed it
 - **Never push directly to develop** — not code, not docs, not anything
 - **All changes go through a PR** — create the PR, then wait for a human to merge
@@ -149,6 +155,19 @@ git push origin develop
   npm run gen:types
   ```
   Then commit the updated `src/integrations/supabase/types.ts` in the same PR as the migration.   This keeps TypeScript types in sync with the DB schema and prevents silent runtime errors from stale types.
+
+- **Documentation goes in the correct folder — never mix plan types:**
+
+  | Folder | What belongs here |
+  |--------|-------------------|
+  | `docs/plans/` | Implementation plans, feature plans, architectural decision records. Named `YYYYMMDD_DESCRIPTION.md` |
+  | `docs/Product Status/` | Weekly status reports, sprint execution trackers (JIRA-style), current-state analyses, epics. Named with descriptive ALLCAPS or period labels |
+  | `docs/hotfixes/` | Hotfix trackers and security remediation plans |
+  | `docs/conventions/` | Standards, protocols, and workflow rules (like this file) |
+  | `docs/testing/` | Test coverage reports and testing protocols |
+  | `docs/security/` | Security incident reports and audit findings |
+
+  **Rule:** If you are writing a *plan to do future work*, it goes in `docs/plans/`. If you are writing a *record of current or past state*, it goes in `docs/Product Status/`. When in doubt, ask before creating the file.
 
 > **Why:** Direct pushes to develop bypass code review, break the audit trail, and remove the human's ability to control what goes into the main branch. This is non-negotiable regardless of how trivial the change appears.
 

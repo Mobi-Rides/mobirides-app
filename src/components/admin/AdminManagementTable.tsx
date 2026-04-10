@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +11,22 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useTableSort } from "@/hooks/useTableSort";
+import { SortableTableHead } from "./SortableTableHead";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Search, Plus, Trash2, Shield, ShieldCheck, MoreHorizontal, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -81,15 +91,34 @@ const useNonAdminUsers = () => {
 
 export const AdminManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<Admin | null>(null);
+  
+  const itemsPerPage = 8;
 
   const queryClient = useQueryClient();
   const { data: admins, isLoading, error } = useAdmins();
   const { data: nonAdminUsers } = useNonAdminUsers();
   const { isSuperAdmin: currentUserIsSuperAdmin } = useIsAdmin();
+
+  const filteredAdmins = useMemo(() => {
+    return admins?.filter(admin =>
+      admin.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      admin.email.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+  }, [admins, searchTerm]);
+
+  const { sortedData: sortedAdmins, sortKey, sortDirection, handleSort } = useTableSort<Admin>(filteredAdmins);
+
+  const paginatedAdmins = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedAdmins.slice(start, start + itemsPerPage);
+  }, [sortedAdmins, currentPage]);
+
+  const totalPages = Math.ceil(sortedAdmins.length / itemsPerPage);
 
   const addAdminMutation = useMutation({
     mutationFn: async ({ userId, isSuperAdmin, userName }: { 
@@ -178,11 +207,6 @@ export const AdminManagementTable = () => {
     }
   };
 
-  const filteredAdmins = admins?.filter(admin =>
-    admin.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    admin.email.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-
   if (error) {
     return (
       <Card>
@@ -213,7 +237,10 @@ export const AdminManagementTable = () => {
                 <Input
                   placeholder="Search admins..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="pl-8"
                 />
               </div>
@@ -238,19 +265,20 @@ export const AdminManagementTable = () => {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
+            <>
+              <Table>
+                <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Admin Type</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead>Last Sign In</TableHead>
+                  <SortableTableHead sortKey="full_name" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Name</SortableTableHead>
+                  <SortableTableHead sortKey="email" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Email</SortableTableHead>
+                  <SortableTableHead sortKey="is_super_admin" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Admin Type</SortableTableHead>
+                  <SortableTableHead sortKey="created_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Added</SortableTableHead>
+                  <SortableTableHead sortKey="last_sign_in_at" currentSortKey={sortKey} currentDirection={sortDirection} onSort={handleSort}>Last Sign In</SortableTableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAdmins.map((admin) => (
+                {paginatedAdmins.map((admin) => (
                   <TableRow key={admin.id}>
                     <TableCell className="font-medium">
                       {admin.full_name || "No name"}
@@ -314,6 +342,61 @@ export const AdminManagementTable = () => {
                 ))}
               </TableBody>
             </Table>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+              <div className="text-sm text-muted-foreground order-2 sm:order-1">
+                Showing {sortedAdmins.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{" "}
+                {Math.min(currentPage * itemsPerPage, sortedAdmins.length)} of {sortedAdmins.length}{" "}
+                entries
+              </div>
+              {totalPages > 1 && (
+                <div className="order-1 sm:order-2">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(pageNum)}
+                              isActive={currentPage === pageNum}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </div>
+            </>
           )}
         </CardContent>
       </Card>
