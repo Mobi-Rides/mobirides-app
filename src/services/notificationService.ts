@@ -54,7 +54,7 @@ export class ResendEmailService {
   }
 
   /**
-   * Send email via API endpoint using Resend (same as password reset flow)
+   * Send email via Supabase Edge Function using Resend
    */
   public async sendEmail(
     to: string,
@@ -63,25 +63,16 @@ export class ResendEmailService {
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      const response = await fetch('/api/notifications/booking-confirmation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('resend-service', {
+        body: {
           to,
           templateId,
           bookingData: dynamicData,
           isHost: templateId === 'owner-booking-notification'
-        }),
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Error sending email:", data.error);
-        return { success: false, error: data.error || 'Failed to send email' };
-      }
+      if (error) throw error;
 
       if (!data.success) {
         console.error("Error from API:", data.error);
