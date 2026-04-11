@@ -165,112 +165,114 @@ export const MessageManagementTable = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search messages..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
+    <>
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search messages..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+          </div>
         </div>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Messages ({filteredMessages.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-[200px]" />
-                    <Skeleton className="h-4 w-[100px]" />
+        <Card>
+          <CardHeader>
+            <CardTitle>Messages ({filteredMessages.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-4">
+                    <Skeleton className="h-12 w-12" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-[200px]" />
+                      <Skeleton className="h-4 w-[100px]" />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>From</TableHead>
-                  <TableHead>To</TableHead>
-                  <TableHead>Message</TableHead>
-                  <TableHead>Related Car</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMessages.map((message) => (
-                  <TableRow key={message.id}>
-                    <TableCell className="font-medium">
-                      {message.sender?.full_name || "Unknown"}
-                    </TableCell>
-                    <TableCell>
-                      {getReceiverName(message)}
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="truncate">
-                        {message.content}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {message.cars ? 
-                        `${message.cars.brand} ${message.cars.model}` 
-                        : "N/A"
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getMessageTypeBadgeVariant(message.message_type)}>
-                        {message.message_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(message.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedConversationId(message.conversation_id)}
-                          title="View thread"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => flagMessage(message.id)}
-                          disabled={false}
-                        >
-                          <Flag className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteMessage(message.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
                 ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-    <MessageThreadViewer conversationId={selectedConversationId} onClose={() => setSelectedConversationId(null)} />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>From</TableHead>
+                    <TableHead>To</TableHead>
+                    <TableHead>Message</TableHead>
+                    <TableHead>Related Car</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredMessages.map((message) => (
+                    <TableRow key={message.id}>
+                      <TableCell className="font-medium">
+                        {message.sender?.full_name || "Unknown"}
+                      </TableCell>
+                      <TableCell>
+                        {getReceiverName(message)}
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <div className="truncate">
+                          {message.content}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {message.cars ? 
+                          `${message.cars.brand} ${message.cars.model}` 
+                          : "N/A"
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getMessageTypeBadgeVariant(message.message_type)}>
+                          {message.message_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(message.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedConversationId(message.conversation_id)}
+                            title="View thread"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => flagMessage(message.id)}
+                            disabled={false}
+                          >
+                            <Flag className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteMessage(message.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <MessageThreadViewer conversationId={selectedConversationId} onClose={() => setSelectedConversationId(null)} />
+    </>
   );
 };

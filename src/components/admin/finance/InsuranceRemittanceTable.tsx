@@ -61,7 +61,8 @@ export const InsuranceRemittanceTable = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       <Card className="bg-slate-50 border-slate-200">
         <CardContent className="p-6">
             <div className="flex justify-between items-center">
@@ -143,6 +144,7 @@ export const InsuranceRemittanceTable = () => {
         </CardContent>
       </Card>
     </div>
-    <InsuranceCoverageDialog policyId={selectedPolicyId} onClose={() => setSelectedPolicyId(null)} />
+      <InsuranceCoverageDialog policyId={selectedPolicyId} onClose={() => setSelectedPolicyId(null)} />
+    </>
   );
 };

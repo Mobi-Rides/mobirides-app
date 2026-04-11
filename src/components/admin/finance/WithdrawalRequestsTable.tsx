@@ -92,7 +92,8 @@ export const WithdrawalRequestsTable = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       <div className="flex items-center space-x-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -172,6 +173,7 @@ export const WithdrawalRequestsTable = () => {
         </CardContent>
       </Card>
     </div>
-    <PayoutDetailsDialog withdrawalId={selectedWithdrawalId} onClose={() => setSelectedWithdrawalId(null)} />
+      <PayoutDetailsDialog withdrawalId={selectedWithdrawalId} onClose={() => setSelectedWithdrawalId(null)} />
+    </>
   );
 };
