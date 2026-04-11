@@ -1,4 +1,8 @@
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "resend";
+
+export interface EmailTemplateData {
+  [key: string]: string | number | boolean | undefined | null;
+}
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") || "");
 
@@ -6,7 +10,7 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY") || "");
 const EMAIL_TEMPLATES = {
   'welcome-renter': {
     subject: '🚗 Welcome to MobiRides - Your car-sharing adventure begins!',
-    html: (data: any) => `
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -171,7 +175,7 @@ const EMAIL_TEMPLATES = {
   
   'welcome-host': {
     subject: '🏆 Welcome to MobiRides - Start earning with your car today!',
-    html: (data: any) => `
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -226,7 +230,7 @@ const EMAIL_TEMPLATES = {
   
   'password-reset': {
     subject: '🔐 Reset Your MobiRides Password',
-    html: (data: any) => `
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -304,9 +308,253 @@ const EMAIL_TEMPLATES = {
     `
   },
 
+  'welcome-email': {
+    subject: 'Welcome to MobiRides! 🚗',
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #6b46c1 0%, #4299e1 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #6b46c1 0%, #4299e1 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to MobiRides!</h1>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.name || 'there'},</p>
+                <p>${data.description || 'Welcome to the MobiRides platform. We are thrilled to have you here!'}</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.actionUrl || 'https://mobirides.com/dashboard'}" class="cta-button">Get Started</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
+
+  'verification-complete': {
+    subject: '✅ Verification Approved - Welcome to MobiRides!',
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Complete - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .success-notice { background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 20px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #48bb78; }
+        .success-notice h3 { color: #2f855a; margin: 0 0 10px 0; font-size: 16px; }
+        .success-notice p { color: #276749; margin: 0; font-size: 14px; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Account Verified!</h1>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.name || 'there'},</p>
+                <p>Great news! Your identity and documents have been successfully verified.</p>
+            </div>
+            
+            <div class="success-notice">
+                <h3>What this means:</h3>
+                <p>You can now book cars instantly and list your own vehicles on MobiRides.</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.dashboardUrl || 'https://mobirides.com/dashboard'}" class="cta-button">Go to Dashboard</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
+
+  'verification-rejected': {
+    subject: 'Action Required: Update Your MobiRides Verification',
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Update Needed - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .rejection-notice { background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%); padding: 20px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #f56565; }
+        .rejection-notice h3 { color: #c53030; margin: 0 0 10px 0; font-size: 16px; }
+        .rejection-notice p { color: #9b2c2c; margin: 0; font-size: 14px; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Action Required</h1>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.name || 'there'},</p>
+                <p>We reviewed your recent verification submission. Unfortunately, we need a bit more information or clearer documents to approve your account fully.</p>
+            </div>
+            
+            <div class="rejection-notice">
+                <h3>What needs attention:</h3>
+                <p>${data.rejectionReason || data.reason || 'Please review your uploaded documents and ensure they meet our clarity and validity requirements.'}</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.verificationUrl || 'https://mobirides.com/profile/verification'}" class="cta-button">Update Verification Documents</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
+
+  'wallet-notification': {
+    subject: 'MobiRides Wallet Update',
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Update - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .amount-highlight { font-size: 24px; font-weight: bold; color: #2b6cb0; text-align: center; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Wallet Notification</h1>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.name || 'there'},</p>
+                <p>There has been an update to your MobiRides wallet balance.</p>
+            </div>
+            
+            <div class="amount-highlight">
+                ${data.transactionType === 'credit' ? '+' : '-'} P${data.amount || '0.00'}
+            </div>
+            <p style="text-align: center; color: #718096;">${data.description || 'Wallet transaction'}</p>
+            <p style="text-align: center; color: #2d3748; font-weight: bold;">New Balance: P${data.newBalance || '0.00'}</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${data.walletUrl || 'https://mobirides.com/wallet'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Wallet</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
+
+  'early-return-notification': {
+    subject: 'Update: Vehicle Returned Early',
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Early Return - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .message { font-size: 18px; color: #2d3748; margin-bottom: 25px; line-height: 1.6; }
+        .details-box { background-color: #f7fafc; padding: 20px; border-radius: 12px; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Early Vehicle Return</h1>
+        </div>
+        <div class="content">
+            <div class="message">
+                <p>Hi ${data.name || 'there'},</p>
+                <p>The vehicle for your booking has been returned earlier than originally scheduled.</p>
+            </div>
+            
+            <div class="details-box">
+                <p><strong>Booking Ref:</strong> ${data.bookingReference || 'N/A'}</p>
+                <p><strong>Vehicle:</strong> ${data.carBrand || ''} ${data.carModel || ''}</p>
+                <p><strong>Return Time:</strong> ${data.returnTime || 'N/A'}</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
+
   'booking-confirmation': {
     subject: '🎉 Your MobiRides Booking is Confirmed!',
-    html: (data: any) => `
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -439,7 +687,7 @@ const EMAIL_TEMPLATES = {
   },
   'insurance-policy-confirmation': {
     subject: '✅ Your MobiRides Insurance Policy is Active',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f8fafc}.container{max-width:600px;margin:0 auto;background:white}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:40px 20px;text-align:center}.header h1{color:white;margin:0;font-size:26px}.header p{color:#e2e8f0;margin:8px 0 0}.content{padding:40px 30px}.policy-box{background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%);padding:25px;border-radius:12px;margin:25px 0;border-left:4px solid #667eea}.row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}.label{font-weight:600;color:#2d3748}.value{color:#4a5568}.btn{display:inline-block;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px}.footer{background:#2d3748;color:#a0aec0;padding:25px;text-align:center;font-size:13px}.footer a{color:#63b3ed;text-decoration:none}</style>
 </head><body><div class="container">
@@ -465,7 +713,7 @@ ${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${d
 
   'insurance-claim-received': {
     subject: '📋 Claim Received – We\'re On It',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f8fafc}.container{max-width:600px;margin:0 auto;background:white}.header{background:linear-gradient(135deg,#3182ce 0%,#2c5282 100%);padding:40px 20px;text-align:center}.header h1{color:white;margin:0;font-size:26px}.header p{color:#bee3f8;margin:8px 0 0}.content{padding:40px 30px}.claim-box{background:linear-gradient(135deg,#ebf8ff 0%,#bee3f8 100%);padding:25px;border-radius:12px;margin:25px 0;border-left:4px solid #3182ce}.row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}.label{font-weight:600;color:#2d3748}.value{color:#4a5568}.badge{display:inline-block;background:#3182ce;color:white;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600}.footer{background:#2d3748;color:#a0aec0;padding:25px;text-align:center;font-size:13px}.footer a{color:#63b3ed;text-decoration:none}</style>
 </head><body><div class="container">
@@ -490,7 +738,7 @@ ${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${d
 
   'insurance-claim-update': {
     subject: '🔔 Claim Status Update',
-    html: (data: any) => {
+    html: (data: EmailTemplateData) => {
       const statusColors: Record<string, string> = {
         approved: '#38a169', rejected: '#e53e3e', under_review: '#3182ce',
         more_info_needed: '#ed8936', paid: '#38a169', closed: '#718096'
@@ -518,7 +766,7 @@ ${data.notes ? `<div style="background:#fef5e7;padding:18px;border-radius:10px;b
 
   'insurance-host-claim-notification': {
     subject: '⚠️ Insurance Claim Filed for Your Vehicle',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f8fafc}.container{max-width:600px;margin:0 auto;background:white}.header{background:linear-gradient(135deg,#ed8936 0%,#c05621 100%);padding:40px 20px;text-align:center}.header h1{color:white;margin:0;font-size:26px}.header p{color:#feebc8;margin:8px 0 0}.content{padding:40px 30px}.claim-box{background:linear-gradient(135deg,#fffaf0 0%,#feebc8 100%);padding:25px;border-radius:12px;margin:25px 0;border-left:4px solid #ed8936}.row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}.label{font-weight:600;color:#2d3748}.value{color:#4a5568;text-transform:capitalize}.footer{background:#2d3748;color:#a0aec0;padding:25px;text-align:center;font-size:13px}.footer a{color:#63b3ed;text-decoration:none}</style>
 </head><body><div class="container">
@@ -544,7 +792,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'booking-request': {
     subject: '📋 New Booking Request - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -615,7 +863,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'system-notification': {
     subject: '🔔 System Notification - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -668,7 +916,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'email-confirmation': {
     subject: '📧 Confirm Your Email - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -722,7 +970,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'verification-complete': {
     subject: '✅ Account Verification Complete - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -787,7 +1035,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'return-reminder': {
     subject: '🔄 Return Reminder - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -853,7 +1101,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'rental-reminder': {
     subject: '⏰ Rental Starts Tomorrow - MobiRides Reminder',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -919,7 +1167,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'handover-ready': {
     subject: '🚗 Your Vehicle is Ready for Handover - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -985,7 +1233,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'wallet-topup': {
     subject: '💳 Wallet Top-up Successful - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1042,7 +1290,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'payment-failed': {
     subject: '⚠️ Payment Failed - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1107,7 +1355,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'booking-cancelled': {
     subject: '❌ Your MobiRides Booking Has Been Cancelled',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1173,7 +1421,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'payment-received': {
     subject: '💰 Payment Received - MobiRides',
-    html: (data: any) => `<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1230,7 +1478,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 
   'owner-booking-notification': {
     subject: '📋 New Booking Request - Action Required',
-    html: (data: any) => `
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1354,10 +1602,259 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>
     `
+  },
+
+  'verification-rejected': {
+    subject: '❌ Verification Update - MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Rejected - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #fed7d7; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .reason-box { background: #fff5f5; border: 1px solid #feb2b2; padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #e53e3e; }
+        .reason-title { font-weight: 600; color: #c53030; margin-bottom: 10px; }
+        .reason-text { color: #2d3748; line-height: 1.6; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+        .footer a { color: #63b3ed; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>❌ Verification Update</h1>
+            <p>Action needed to complete your verification</p>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; color: #2d3748;">Hi ${data.name || 'there'}!</p>
+            <p style="color: #4a5568; line-height: 1.6;">We've reviewed your verification documents. Unfortunately, we couldn't approve your account at this time for the following reason:</p>
+            
+            <div class="reason-box">
+                <div class="reason-title">Reason for rejection:</div>
+                <div class="reason-text">${data.reason || 'Provided documents were unclear or did not meet our requirements.'}</div>
+            </div>
+
+            <p style="color: #4a5568; line-height: 1.6;">Don't worry! You can easily fix this by re-uploading the correct documents in your profile.</p>
+            
+            <div style="text-align: center;">
+                <a href="${data.verification_url || 'https://mobirides.com/profile'}" class="cta-button">🔄 Re-submit Documents</a>
+            </div>
+
+            <p style="color: #718096; font-size: 14px; margin-top: 30px;">If you have any questions about this decision, please contact our support team.</p>
+        </div>
+        <div class="footer">
+            <p>📧 <a href="mailto:support@mobirides.com">support@mobirides.com</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">MobiRides, Gaborone, Botswana</p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'payout-confirmation': {
+    subject: '💰 Payout Confirmed - MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payout Confirmed - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #c6f6d5; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .payout-box { background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #38a169; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Payout Successful!</h1>
+            <p>Your earnings are on their way</p>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; color: #2d3748;">Hi ${data.name || 'there'}!</p>
+            <p style="color: #4a5568; line-height: 1.6;">Great news! Your payout has been processed successfully. Here are the details:</p>
+            
+            <div class="payout-box">
+                <div class="detail-row"><span class="detail-label">Amount:</span><span class="detail-value">P${data.amount || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Payout Date:</span><span class="detail-value">${data.payoutDate || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Payment Method:</span><span class="detail-value">${data.paymentMethod || 'N/A'}</span></div>
+                <div class="detail-row"><span class="detail-label">Transaction ID:</span><span class="detail-value">${data.transactionId || 'N/A'}</span></div>
+            </div>
+
+            <p style="color: #4a5568; line-height: 1.6;">Thank you for being an amazing host on MobiRides!</p>
+        </div>
+        <div class="footer">
+            <p>MobiRides Host Team | <a href="mailto:support@mobirides.com" style="color: #63b3ed; text-decoration: none;">support@mobirides.com</a></p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+
+  'review-request': {
+    subject: '🌟 How was your trip? Leave a review on MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Request - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; text-align: center; }
+        .review-box { background: #fdf2f2; padding: 30px; border-radius: 12px; margin: 30px 0; border: 2px dashed #f56565; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 Share Your Experience!</h1>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; color: #2d3748;">Hi ${data.name || 'there'}!</p>
+            <p style="color: #4a5568; line-height: 1.6;">We hope you enjoyed your recent trip with <strong>${data.carName || 'your rental'}</strong>. Every review helps our community grow stronger and safer.</p>
+            
+            <div class="review-box">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">How would you rate your trip?</h3>
+                <p style="font-size: 24px; margin: 0;">⭐⭐⭐⭐⭐</p>
+            </div>
+
+            <a href="${data.review_url || 'https://mobirides.com/reviews'}" class="cta-button">✍️ Leave a Review</a>
+            
+            <p style="color: #718096; font-size: 14px; margin-top: 30px;">Your feedback is greatly appreciated!</p>
+        </div>
+        <div class="footer">
+            <p>MobiRides Community | <a href="https://mobirides.com" style="color: #63b3ed; text-decoration: none;">www.mobirides.com</a></p>
+        </div>
+    </div>
+</body>
+</html>`
+  },
+  
+  'listing-status-update': {
+    subject: '📋 Listing Update - MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listing Status - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 14px; text-transform: uppercase; margin-bottom: 20px; }
+        .approved { background-color: #c6f6d5; color: #2f855a; }
+        .rejected { background-color: #fed7d7; color: #c53030; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head><body><div class="container"><div class="header"><h1>📋 Listing Update</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We've reviewed your listing for <strong>${data.carName || 'your vehicle'}</strong>.</p><div class="status-badge ${data.status === 'approved' ? 'approved' : 'rejected'}">${data.status || 'Updated'}</div><p>${data.message || ''}</p><div style="text-align: center; margin-top: 30px;"><a href="${data.listing_url || 'https://mobirides.com/host/dashboard'}" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Listing</a></div></div><div class="footer"><p>MobiRides Host Support</p></div></div></body></html>`
+  },
+
+  'booking-modification': {
+    subject: '🔔 Booking Modification - MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Modification - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .change-box { background: #fffaf0; border: 1px solid #feebc8; padding: 25px; border-radius: 12px; margin: 30px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head><body><div class="container"><div class="header"><h1>🔔 Booking Modified</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>A change has been made to your booking <strong>${data.bookingReference || ''}</strong>.</p><div class="change-box"><h3>What changed:</h3><p>${data.modificationDetails || 'The booking details have been updated.'}</p></div><div style="text-align: center; margin-top: 30px;"><a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: #ed8936; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Updated Booking</a></div></div><div class="footer"><p>MobiRides Team</p></div></div></body></html>`
+  },
+
+  'early-return-notification': {
+    subject: '🚗 Early Return Notification - MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Early Return - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head><body><div class="container"><div class="header"><h1>🚗 Early Vehicle Return</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We've registered an early return for your rental <strong>${data.carName}</strong>.</p><p>Return Date: ${data.actualReturnDate}</p><p>Our team will process any necessary adjustments to your booking.</p></div><div class="footer"><p>MobiRides Support</p></div></div></body></html>`
+  },
+
+  'wallet-notification': {
+    subject: '💳 Wallet Activity - MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Notification - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head><body><div class="container"><div class="header"><h1>💳 Wallet Update</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>${data.message || 'There has been activity in your MobiRides wallet.'}</p><div style="background: #f0fff4; padding: 20px; border-radius: 12px; margin: 20px 0;"><strong>New Balance: P${data.balance}</strong></div></div><div class="footer"><p>MobiRides Wallet Services</p></div></div></body></html>`
+  },
+
+  'promo-notification': {
+    subject: '🎁 Exclusive Offer Just For You! - MobiRides',
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promo Offer - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px 30px; text-align: center; }
+        .promo-code { display: inline-block; background: #fdf2f2; border: 2px dashed #f56565; padding: 15px 30px; border-radius: 8px; font-size: 24px; font-weight: 700; color: #c53030; margin: 25px 0; letter-spacing: 2px; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head><body><div class="container"><div class="header"><h1>🎁 Surprise Inside!</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We have a special treat for you! Use the code below on your next rental for <strong>${data.discount || 'a special discount'}</strong>.</p><div class="promo-code">${data.code || 'MOBI2026'}</div><p>Valid until: ${data.expiryDate || 'Limited time'}</p><div><a href="https://mobirides.com/cars" style="display: inline-block; background: #d53f8c; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px;">Book Now</a></div></div><div class="footer"><p>MobiRides Rewards Team</p></div></div></body></html>`
   }
 };
 
-function getEmailTemplate(templateId: string, data: any) {
+function getEmailTemplate(templateId: string, data: EmailTemplateData) {
   const template = EMAIL_TEMPLATES[templateId as keyof typeof EMAIL_TEMPLATES];
   if (!template) {
     throw new Error(`Template ${templateId} not found`);
@@ -1394,7 +1891,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { to, subject, templateId, dynamicData, html } = await req.json() as EmailRequest;
 
     // Construct email payload
-    const emailPayload: any = {
+    const emailPayload: { from: string; to: string[]; subject?: string; html?: string } = {
       from: "MobiRides <noreply@mobirides.com>",
       to: [to],
     };
@@ -1430,7 +1927,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ success: true, data: emailResponse }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (e) {
+    const error = e as Error;
     console.error("Error in resend-service function:", error);
     return new Response(
       JSON.stringify({ 

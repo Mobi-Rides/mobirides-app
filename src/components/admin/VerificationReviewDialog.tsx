@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { VerificationData } from "@/types/verification";
 import type { PersonalInfo } from "@/types/verification";
+import { ResendEmailService } from "@/services/notificationService";
 
 interface AdminVerificationData extends Pick<VerificationData,
   'id' | 'user_id' | 'overall_status' | 'current_step' | 'personal_info_completed' |
@@ -372,6 +373,30 @@ const AdminActions = ({
         });
         if (notifyError) {
           console.warn("[VerificationReviewDialog] Failed to create system notification:", notifyError);
+        }
+
+        // Send email
+        try {
+          const emailService = ResendEmailService.getInstance();
+          const emailResponse = await supabase.rpc('get_user_email_for_notification', { user_uuid: userId });
+          const profileResponse = await supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle();
+
+          if (emailResponse.data && emailResponse.data.length > 0) {
+            const templateKey = newStatus === 'completed' ? 'verification-complete' : 'verification-rejected';
+            await emailService.sendEmail(
+              emailResponse.data,
+              templateKey,
+              {
+                name: profileResponse.data?.full_name || 'User',
+                title,
+                description,
+                actionUrl: `${window.location.origin}/dashboard`
+              },
+              title
+            );
+          }
+        } catch (emailErr) {
+          console.warn("[VerificationReviewDialog] Failed to send email:", emailErr);
         }
       } catch (notifyErr) {
         console.warn("[VerificationReviewDialog] Notification RPC error:", notifyErr);
