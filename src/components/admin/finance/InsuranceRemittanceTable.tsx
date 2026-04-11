@@ -13,7 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Eye } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { InsuranceCoverageDialog } from "./InsuranceCoverageDialog";
 
 interface InsurancePolicy {
   id: string;
@@ -42,6 +45,7 @@ const usePendingRemittance = () => {
 };
 
 export const InsuranceRemittanceTable = () => {
+  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
   const { data: policies, isLoading, error } = usePendingRemittance();
 
   const totalPayUPending = policies?.reduce((sum, p) => sum + (p.payu_amount || 0), 0) || 0;
@@ -57,7 +61,8 @@ export const InsuranceRemittanceTable = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       <Card className="bg-slate-50 border-slate-200">
         <CardContent className="p-6">
             <div className="flex justify-between items-center">
@@ -95,6 +100,7 @@ export const InsuranceRemittanceTable = () => {
                   <TableHead>Commission (10%)</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -118,6 +124,11 @@ export const InsuranceRemittanceTable = () => {
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(policy.created_at).toLocaleDateString()}
                     </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedPolicyId(policy.id)} title="View coverage">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {!policies?.length && (
@@ -133,5 +144,7 @@ export const InsuranceRemittanceTable = () => {
         </CardContent>
       </Card>
     </div>
+      <InsuranceCoverageDialog policyId={selectedPolicyId} onClose={() => setSelectedPolicyId(null)} />
+    </>
   );
 };

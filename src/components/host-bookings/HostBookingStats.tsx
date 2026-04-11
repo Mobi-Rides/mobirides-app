@@ -8,20 +8,14 @@ import {
   CheckCircle, 
   Clock, 
   DollarSign,
-import { TrendingUp } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentCommissionRate } from "@/services/commission/commissionRates";
+  TrendingUp
+} from "lucide-react";
 
 interface HostBookingStatsProps {
   bookings: BookingWithRelations[] | undefined;
 }
 
 export const HostBookingStats = ({ bookings }: HostBookingStatsProps) => {
-  const { data: commissionRateData } = useQuery({
-    queryKey: ['commissionRate'],
-    queryFn: getCurrentCommissionRate,
-  });
-
   const stats = useMemo(() => {
     if (!bookings) return {
       totalBookings: 0,
@@ -33,7 +27,7 @@ export const HostBookingStats = ({ bookings }: HostBookingStatsProps) => {
     };
 
     const today = new Date();
-    const commissionRate = commissionRateData ?? 0.15;
+    const commissionRate = 0.15;
 
     const activeRentals = bookings.filter(b => 
       b.status === 'confirmed' && 
@@ -62,7 +56,7 @@ export const HostBookingStats = ({ bookings }: HostBookingStatsProps) => {
       totalRevenue,
       netRevenue
     };
-  }, [bookings, commissionRateData]);
+  }, [bookings]);
 
   const statCards = [
     {

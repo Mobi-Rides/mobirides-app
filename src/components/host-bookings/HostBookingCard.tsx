@@ -23,8 +23,6 @@ import { ReceiptModal } from "@/components/shared/ReceiptModal";
 import { useAuth } from "@/hooks/useAuth";
 import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { getCarImagePublicUrl } from "@/utils/carImageUtils";
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentCommissionRate } from "@/services/commission/commissionRates";
 
 interface HostBookingCardProps {
   booking: BookingWithRelations;
@@ -37,11 +35,6 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
   const navigate = useNavigate();
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
-
-  const { data: commissionRateData } = useQuery({
-    queryKey: ['commissionRate'],
-    queryFn: getCurrentCommissionRate,
-  });
 
   const handleAction = async (action: "approve" | "decline" | "cancel") => {
     setIsLoading(action);
@@ -83,7 +76,7 @@ export const HostBookingCard = ({ booking, isSelected, onSelect, onAction }: Hos
   };
 
   const duration = differenceInDays(new Date(booking.end_date), new Date(booking.start_date)) + 1;
-  const commissionRate = commissionRateData ?? 0.15; // 15% commission fallback
+  const commissionRate = 0.15; // 15% commission
   const netEarnings = booking.total_price * (1 - commissionRate);
 
   return (

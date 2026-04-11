@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { z } from "npm:zod@3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,14 +53,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { userId, isSuperAdmin, userName } = await req.json();
+    const bodySchema = z.object({
+      userId: z.string().uuid(),
+      isSuperAdmin: z.boolean().optional().default(false),
+      userName: z.string().optional(),
+    });
 
-    if (!userId) {
+    const parsed = bodySchema.safeParse(await req.json());
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: 'userId is required' }),
+        JSON.stringify({ error: 'Invalid request body', details: parsed.error.flatten() }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const { userId, isSuperAdmin, userName } = parsed.data;
 
     console.log(`[add-admin] Adding admin for user: ${userId}`);
 

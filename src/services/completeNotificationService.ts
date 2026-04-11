@@ -171,6 +171,9 @@ export class CompleteNotificationService {
         return 'pickup-location-shared';
       case 'return_location_shared':
         return 'return-location-shared';
+      case 'welcome_renter':
+      case 'welcome_host':
+        return 'welcome-email';
       case 'system_notification':
       default:
         return 'system-notification';

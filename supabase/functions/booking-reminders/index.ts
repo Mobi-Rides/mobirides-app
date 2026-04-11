@@ -18,10 +18,6 @@ Deno.serve(async (req) => {
     );
 
     const now = new Date();
-    const currentHourUTC = now.getUTCHours();
-    // 08:00 SAST is 06:00 UTC
-    const isMorningInSA = currentHourUTC === 6;
-
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
@@ -52,12 +48,6 @@ Deno.serve(async (req) => {
       .eq('start_date', tomorrow.toISOString().split('T')[0])
       .eq('preparation_reminder_sent', false);
 
-    // Only process 24-hour reminders at 08:00 SAST (06:00 UTC) hour window
-    let tomorrowBookingsFiltered = null;
-    if (isMorningInSA) {
-      tomorrowBookingsFiltered = tomorrowBookings;
-    }
-
     // Get confirmed bookings starting today for 2h and 30min reminders
     const { data: todayBookings } = await supabaseClient
       .from('bookings')
@@ -79,8 +69,8 @@ Deno.serve(async (req) => {
     let processedCount = 0;
 
     // Process 24-hour reminders
-    if (tomorrowBookingsFiltered) {
-      for (const booking of tomorrowBookingsFiltered) {
+    if (tomorrowBookings) {
+      for (const booking of tomorrowBookings) {
         const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
         
         // Notification for renter
@@ -121,8 +111,8 @@ Deno.serve(async (req) => {
 
         const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
 
-        // 2-hour reminder (window: 1.75h to 2.25h) so 15 min cron catches it
-        if (hoursUntilStart <= 2.25 && hoursUntilStart > 1.9) {
+        // 2-hour reminder
+        if (hoursUntilStart <= 2.1 && hoursUntilStart >= 1.9) {
           // Notification for renter
           await supabaseClient.from('notifications').insert({
             user_id: booking.renter_id,
@@ -144,8 +134,8 @@ Deno.serve(async (req) => {
           processedCount++;
         }
 
-        // 30-minute reminder (window: 20 to 40 mins) so 15 min cron catches it
-        if (minutesUntilStart <= 40 && minutesUntilStart > 25) {
+        // 30-minute reminder
+        if (minutesUntilStart <= 35 && minutesUntilStart >= 25) {
           // Notification for renter
           await supabaseClient.from('notifications').insert({
             user_id: booking.renter_id,
@@ -160,57 +150,6 @@ Deno.serve(async (req) => {
             user_id: booking.cars[0]?.owner_id,
             type: 'booking_reminder',
             content: `Your ${carTitle} handover is in 30 minutes! Please be ready at pickup location.`,
-            related_booking_id: booking.id,
-            related_car_id: booking.cars[0]?.id
-          });
-          
-          processedCount++;
-        }
-      }
-    }
-
-    // Get in_progress bookings returning today for 4h reminders
-    const { data: returnBookings } = await supabaseClient
-      .from('bookings')
-      .select(`
-        id,
-        end_date,
-        end_time,
-        renter_id,
-        cars (
-          id,
-          brand,
-          model,
-          owner_id
-        )
-      `)
-      .eq('status', 'in_progress')
-      .eq('end_date', now.toISOString().split('T')[0]);
-
-    if (returnBookings) {
-      for (const booking of returnBookings) {
-        const bookingEndTime = new Date(`${booking.end_date}T${booking.end_time || '17:00'}`);
-        const timeDiff = bookingEndTime.getTime() - now.getTime();
-        const hoursUntilEnd = timeDiff / (1000 * 60 * 60);
-
-        const carTitle = `${booking.cars[0]?.brand} ${booking.cars[0]?.model}`;
-
-        // 4-hour return reminder (window: 3.75h to 4.25h)
-        if (hoursUntilEnd <= 4.25 && hoursUntilEnd > 3.9) {
-          // Notification for renter
-          await supabaseClient.from('notifications').insert({
-            user_id: booking.renter_id,
-            type: 'booking_reminder',
-            content: `Your rental of ${carTitle} is scheduled to end in 4 hours. Please prepare for return!`,
-            related_booking_id: booking.id,
-            related_car_id: booking.cars[0]?.id
-          });
-
-          // Notification for host
-          await supabaseClient.from('notifications').insert({
-            user_id: booking.cars[0]?.owner_id,
-            type: 'booking_reminder',
-            content: `The rental for ${carTitle} is ending in 4 hours. Time to prep for the return handover!`,
             related_booking_id: booking.id,
             related_car_id: booking.cars[0]?.id
           });

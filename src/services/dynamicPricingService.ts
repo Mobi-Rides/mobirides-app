@@ -16,7 +16,7 @@ export class DynamicPricingService {
   /**
    * Calculate dynamic price for a booking request
    */
-  static async calculatePrice(request: PricingRequest, customRules?: PricingRule[]): Promise<PricingCalculation> {
+  static async calculatePrice(request: PricingRequest): Promise<PricingCalculation> {
     try {
       console.log("[DynamicPricing] Calculating price for request:", request);
 
@@ -46,40 +46,35 @@ export class DynamicPricingService {
         };
       }
 
-      let rules: PricingRule[] = [];
+      // Get hardcoded pricing rules as secondary fallback
+      let rules = this.getDefaultPricingRules();
 
-      if (customRules && customRules.length > 0) {
-        rules = customRules.filter(r => r.is_active);
-      } else {
-        // Attempt to load from DB
-        try {
-          const { data: dbRules, error } = await supabase
-            .from("dynamic_pricing_rules")
-            .select("*")
-            .eq("is_active", true);
+      // Attempt to load from DB
+      try {
+        const { data: dbRules, error } = await supabase
+          .from("dynamic_pricing_rules")
+          .select("*")
+          .eq("is_active", true);
 
-          if (!error && dbRules && dbRules.length > 0) {
-            // map db rows to PricingRule format
-            rules = dbRules.map((dbRule) => ({
-              id: dbRule.id,
-              name: dbRule.rule_name,
-              type: dbRule.condition_type as PricingRuleType,
-              is_active: dbRule.is_active,
-              multiplier: dbRule.multiplier,
-              conditions: dbRule.condition_value as unknown as PricingConditions,
-              priority: dbRule.priority || 0,
-              created_at: dbRule.created_at || new Date().toISOString(),
-              updated_at: dbRule.created_at || new Date().toISOString(),
-            }));
-          } else {
-            // Fallback to hardcoded defaults
-            rules = this.getDefaultPricingRules().filter(r => r.is_active);
-          }
-        } catch (err) {
-          console.error("[DynamicPricing] Failed to fetch dynamic rules from DB:", err);
-          // Fallback to hardcoded defaults
-          rules = this.getDefaultPricingRules().filter(r => r.is_active);
+        if (!error && dbRules && dbRules.length > 0) {
+          // map db rows to PricingRule format
+          rules = dbRules.map((dbRule) => ({
+            id: dbRule.id,
+            name: dbRule.rule_name,
+            type: dbRule.condition_type as PricingRuleType,
+            is_active: dbRule.is_active,
+            multiplier: dbRule.multiplier,
+            conditions: dbRule.condition_value as unknown as PricingConditions,
+            priority: dbRule.priority || 0,
+            created_at: dbRule.created_at || new Date().toISOString(),
+            updated_at: dbRule.created_at || new Date().toISOString(),
+          }));
+        } else {
+          rules = rules.filter(r => r.is_active);
         }
+      } catch (err) {
+        console.error("[DynamicPricing] Failed to fetch dynamic rules from DB:", err);
+        rules = rules.filter(r => r.is_active);
       }
 
       // Get user loyalty data if user is provided

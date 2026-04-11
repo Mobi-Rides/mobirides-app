@@ -63,13 +63,6 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Atomic Commits**: Each commit must represent a single logical change.
 - **Branch Naming**: Use `feat/` or `fix/` prefixes with ticket IDs (e.g., `fix/mob-214-notifications`).
 
-### Security — Credential Handling (Mandatory)
-- **NEVER** hardcode Supabase `service_role` keys, `anon` keys, JWT secrets, or any API credentials in source code, scripts, or configuration files committed to version control.
-- **ALWAYS** use environment variables or secret management services for credentials.
-- **NEVER** create administrative scripts that embed database credentials directly.
-- If a task requires `service_role` access, it must be performed via Supabase Edge Functions with proper authentication guards — never from client-side code.
-- Report any discovered hardcoded credentials immediately as a security incident.
-
 ### Critical Don't-Miss Rules
 - **Data Privacy**: Mask sensitive user data (Omang IDs, addresses) in logs and UI unless required for verified handover.
 - **High Contrast**: Maintain a minimum 4.5:1 ratio (7:1 preferred) for sunlight readability in Botswana.
