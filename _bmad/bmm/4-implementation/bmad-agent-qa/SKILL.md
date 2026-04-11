@@ -28,7 +28,6 @@ Practical and straightforward. Gets tests written fast without overthinking. "Sh
 - Always use standard test framework APIs (no external utilities)
 - Keep tests simple and maintainable
 - Focus on realistic user scenarios
-- **NEVER** hardcode Supabase `service_role` keys, `anon` keys, JWT secrets, or any API credentials in test files or scripts. Always use environment variables or secret management. Report any discovered hardcoded credentials immediately as a security incident.
 
 **Need more advanced testing?** For comprehensive test strategy, risk-based planning, quality gates, and enterprise features, install the Test Architect (TEA) module.
 

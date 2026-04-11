@@ -54,46 +54,63 @@ export class ResendEmailService {
   }
 
   /**
-   * Send email via Supabase Edge Function using Resend
+   * Send email via API endpoint using Resend (same as password reset flow)
    */
   public async sendEmail(
     to: string,
-    templateKey: string,
+    templateId: string,
     dynamicData: Record<string, unknown>,
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      // Get template configuration
-      const template = RESEND_TEMPLATES[templateKey as ResendTemplateKey] || DEFAULT_TEMPLATE;
-      const resolvedTemplateId = template.id;
-      const resolvedSubject = subject || template.subject;
-
-      console.log(`📤 Sending email to ${to} using template ${resolvedTemplateId}`);
-
-      const { data, error } = await supabase.functions.invoke('resend-service', {
-        body: {
+      const response = await fetch('/api/notifications/booking-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           to,
-          templateId: resolvedTemplateId,
-          dynamicData,
-          subject: resolvedSubject
-        }
+          templateId,
+          bookingData: dynamicData,
+          isHost: templateId === 'owner-booking-notification'
+        }),
       });
 
-      if (error) {
-        console.error("❌ Error from Edge Function:", error);
-        return { success: false, error: error.message };
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Error sending email:", data.error);
+        return { success: false, error: data.error || 'Failed to send email' };
       }
 
-      if (!data?.success) {
-        console.error("❌ Error from Resend service:", data?.error);
-        return { success: false, error: data?.error };
+      if (!data.success) {
+        console.error("Error from API:", data.error);
+        return { success: false, error: data.error };
       }
 
-      console.log(`✅ Email sent successfully: ${data?.data?.id}`);
-      return { success: true, messageId: data?.data?.id };
+      return { success: true, messageId: data.messageId };
     } catch (e) {
-      console.error("❌ Unhandled error in sendEmail:", e);
-      return { success: false, error: e instanceof Error ? e.message : "An unknown error occurred" };
+      console.error("Unhandled error in sendEmail:", e);
+      const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Get default subject based on template type
+   */
+  private getDefaultSubject(templateId: string): string {
+    switch (templateId) {
+      case 'booking-confirmation':
+        return 'Booking Confirmation - MobiRides';
+      case 'booking-request':
+        return 'New Booking Request - MobiRides';
+      case 'pickup-reminder':
+        return 'Pickup Reminder - MobiRides';
+      case 'return-reminder':
+        return 'Return Reminder - MobiRides';
+      default:
+        return 'Notification from MobiRides';
     }
   }
 
@@ -124,9 +141,12 @@ export class ResendEmailService {
       carImage: bookingData.carImage || ''
     };
 
-    const templateKey: ResendTemplateKey = isHost ? 'booking-request' : 'booking-confirmation';
-    
-    return this.sendEmail(recipient.email, templateKey, templateData);
+    const templateKey = isHost ? 'owner-booking-notification' : 'booking-confirmation';
+    const subject = isHost 
+      ? `New Booking Request - ${bookingData.carBrand} ${bookingData.carModel}`
+      : `Booking Confirmed - ${bookingData.carBrand} ${bookingData.carModel}`;
+
+    return this.sendEmail(recipient.email, templateKey, templateData, subject);
   }
 
   /**
@@ -153,7 +173,8 @@ export class ResendEmailService {
     return this.sendEmail(
       recipient.email,
       'rental-reminder',
-      templateData
+      templateData,
+      `Pickup Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
     );
   }
 
@@ -179,7 +200,8 @@ export class ResendEmailService {
     return this.sendEmail(
       recipient.email, 
       'return-reminder',
-      templateData
+      templateData,
+      `Return Reminder - ${bookingData.carBrand} ${bookingData.carModel}`
     );
   }
 
@@ -209,8 +231,9 @@ export class ResendEmailService {
 
     return this.sendEmail(
       recipient.email,
-      'promo-notification', 
-      templateData
+      'promo-notification', // Requires this template ID in Resend
+      templateData,
+      `Special Offer: ${promoData.discount} with code ${promoData.code}`
     );
   }
 }
@@ -496,7 +519,8 @@ export class TwilioNotificationService {
           originalEndDate: bookingData.pickupDate, // This should be end date in real implementation
           hostName: bookingData.hostName,
           totalAmount: bookingData.totalAmount
-        }
+        },
+        'Early Return Notification - Booking Completed'
       );
 
       results.email = emailResult;

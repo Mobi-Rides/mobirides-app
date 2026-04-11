@@ -3,8 +3,6 @@ import { Wallet, AlertCircle, TrendingUp } from "lucide-react";
 import { WalletBalanceIndicator } from "@/components/dashboard/WalletBalanceIndicator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentCommissionRate } from "@/services/commission/commissionRates";
 
 interface WalletCommissionSectionProps {
   bookingTotal: number;
@@ -15,12 +13,7 @@ export const WalletCommissionSection = ({
   bookingTotal, 
   canApproveBooking 
 }: WalletCommissionSectionProps) => {
-  const { data: commissionRateData } = useQuery({
-    queryKey: ['commissionRate'],
-    queryFn: getCurrentCommissionRate,
-  });
-
-  const commissionRate = commissionRateData ?? 0.15; // 15% fallback
+  const commissionRate = 0.15; // 15%
   const commissionAmount = bookingTotal * commissionRate;
 
   return (
@@ -47,7 +40,7 @@ export const WalletCommissionSection = ({
               </h3>
               <div className="space-y-1 text-sm text-blue-700 dark:text-blue-300">
                 <p>Total Booking: P{bookingTotal.toFixed(2)}</p>
-                <p>Platform Commission ({((commissionRate) * 100).toFixed(0)}%): P{commissionAmount.toFixed(2)}</p>
+                <p>Platform Commission (15%): P{commissionAmount.toFixed(2)}</p>
                 <p className="font-semibold text-blue-800 dark:text-blue-200">
                   Will be deducted from your wallet balance
                 </p>

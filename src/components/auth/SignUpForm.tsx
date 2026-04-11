@@ -119,7 +119,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
           password,
           fullName: fullName.trim(),
           phoneNumber: formattedPhoneNumber,
-          consents,
         }),
       });
 

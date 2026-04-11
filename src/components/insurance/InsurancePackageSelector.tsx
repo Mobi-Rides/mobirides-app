@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Check, Shield, AlertTriangle, Info, CheckCircle2, XCircle } from 'lucide-react';
 import { InsuranceService, PremiumCalculation } from '@/services/insuranceService';
 import { cn } from '@/lib/utils';
-import { usePlatformSettings } from '@/hooks/usePlatformSettings';
 
 interface InsurancePackageSelectorProps {
   dailyRentalAmount: number;
@@ -34,9 +33,6 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
   const [calculations, setCalculations] = useState<PremiumCalculation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const { getSetting } = usePlatformSettings();
-  const adminFee = getSetting('insurance_admin_fee', '150');
 
   useEffect(() => {
     loadInsuranceOptions();
@@ -120,7 +116,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
         <AlertDescription className="text-sm">
           <strong>Choose your protection level.</strong> All prices are based on{' '}
           {formatCurrency(dailyRentalAmount)}/day for {calculations[0]?.numberOfDays || 0} days.
-          Claims require a P {adminFee} admin fee.
+          Claims require a P 150 admin fee.
         </AlertDescription>
       </Alert>
 
@@ -307,7 +303,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
           </p>
           <ul className="list-disc list-inside mt-2 space-y-1">
             <li>Late returns covered for up to 2 hours with pre-approval (Premium only)</li>
-            <li>All claims require P {adminFee} administrative fee</li>
+            <li>All claims require P 150 administrative fee</li>
             <li>Police report required for theft, vandalism, fire, and third-party accidents</li>
             <li>Pre-existing damage must be documented during pickup inspection</li>
           </ul>

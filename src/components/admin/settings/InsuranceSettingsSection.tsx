@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Check, Loader2, AlertTriangle, Info } from 'lucide-react';
-import { usePlatformSettings } from '@/hooks/usePlatformSettings';
 
 interface InsurancePackage {
   id: string;
@@ -92,9 +91,6 @@ export const InsuranceSettingsSection = () => {
   const [loading, setLoading] = useState(true);
   const [insuranceEnabled, setInsuranceEnabled] = useState(true);
   const [packages, setPackages] = useState<InsurancePackage[]>(SLA_DEFAULTS);
-  
-  const { getSetting } = usePlatformSettings();
-  const adminFee = getSetting('insurance_admin_fee', '150');
 
   useEffect(() => {
     fetchPackages();
@@ -237,7 +233,7 @@ export const InsuranceSettingsSection = () => {
             </div>
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground">Admin Fee per Claim</p>
-              <p className="text-sm font-semibold">P{adminFee} BWP</p>
+              <p className="text-sm font-semibold">P150 BWP</p>
             </div>
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground">International Cap</p>

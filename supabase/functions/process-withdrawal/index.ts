@@ -1,5 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
+import { z } from "npm:zod@3"
+
+const bodySchema = z.object({
+  withdrawal_id: z.string().uuid(),
+  action: z.enum(['approve', 'reject']),
+  notes: z.string().optional(),
+})
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,7 +52,11 @@ serve(async (req: Request) => {
       if (!roleData) throw new Error('Unauthorized: Admin only')
     }
 
-    const { withdrawal_id, action, notes } = await req.json() // action: 'approve' | 'reject'
+    const parsed = bodySchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: 'Invalid request body', details: parsed.error.flatten() }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    const { withdrawal_id, action, notes } = parsed.data
 
     // 1. Get Withdrawal Request
     const { data: request, error: reqError } = await supabase
