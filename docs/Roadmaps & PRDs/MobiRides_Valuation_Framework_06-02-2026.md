@@ -42,7 +42,7 @@ All three approaches converge on a valuation range of **P6.0M – P12.5M**, esta
 | **Gross Margin** | 24.5% |
 | **Active Fleet** | 66 vehicles |
 | **Total Registered Users** | 247 |
-| **Revenue per Booking** | P168.75 (standardised) |
+| **Revenue per Booking** | P675 (standardised) |
 | **December 2025 Monthly Revenue** | P54,000 |
 | **Commission Rate** | 15% platform fee |
 | **Host LTV:CAC** | 60.75:1 |
