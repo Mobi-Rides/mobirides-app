@@ -163,8 +163,8 @@ The uploaded document (v1.9) contains your actual edits to Sections 0-8. Below i
 | SAM | P50M+ | P50M+ | ✅ Match |
 | SOM Year 1 | P2.5-4M | P2.5-4M | ✅ Match |
 | Revenue Target 2026 | **P1.5M** (60% SOM) | P2.43M | ✅ Using P1.368M |
-| Users | 154 registered | 154 | ✅ Match |
-| Fleet | 56 vehicles | 56 | ✅ Match |
+| Users | **247 registered** | 154 | ✅ Match |
+| Fleet | **66 vehicles** | 56 | ✅ Match |
 
 ---
 

@@ -53,7 +53,7 @@ Comprehensive slide content with bullet points for each agenda item, sourcing da
 **Product 1: P2P Car Sharing (LIVE)**
 - 15% commission on bookings
 - 10% Damage Protection commission (Pay-U partnership)
-- 154 users, 56 vehicles currently active
+- 247 users, 66 vehicles currently active
 
 **Product 2: Rent2Buy Marketplace (Q2 2026 Pilot)**
 - P5,000–10,000 down payment (20% retained)
@@ -101,7 +101,7 @@ Comprehensive slide content with bullet points for each agenda item, sourcing da
 - **Peak Month:** December 2025 (P54,000)
 
 **User Acquisition:**
-- 154 registered users
+- **247 registered users**
 - 115 host enquiries received
 - 39 active renters
 
@@ -123,7 +123,7 @@ Comprehensive slide content with bullet points for each agenda item, sourcing da
 ### SLIDE 9: Fleet Integration Update - Trillo Partnership
 
 **Current Fleet Status:**
-- **56 vehicles** currently listed on platform
+- **66 vehicles** currently listed on platform
 - **45 vehicles** from Trillo Rentals partnership (80%+ of fleet)
 - **11 individual host vehicles**
 

@@ -290,7 +290,7 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-012 | Modisa | ✅ Done | Commission → platform_settings (carry-over S10-009) |
 | S11-013 | Modisa | ✅ Done | Dynamic pricing → DB (carry-over S10-010) |
 | S11-014 | Modisa | ✅ Done | Insurance fee → platform_settings (carry-over S10-011) |
-| S11-015 | Modisa | ❌ Not Started | delete-user-with-transfer refactor (carry-over S10-012) |
+| S11-015 | Modisa | ✅ Done | delete-user-with-transfer refactor (carry-over S10-012) |
 | S11-016 | Modisa | ✅ Done | Consent on signup (carry-over S10-013) |
 | S11-017 | Modisa | ✅ Done | Rental-reminder cron (carry-over S10-014) |
 | S11-018 | Modisa | ✅ Done | Return-reminder cron (carry-over S10-015) |
@@ -312,8 +312,8 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 0 | 0 | 11 | 11 |
 | Tapologo | 0 | 0 | 6 | 6 |
-| Modisa | 6 | 0 | 7 | 13 |
-| **TOTAL** | **6** | **0** | **23** | **30** |
+| Modisa | 7 | 0 | 6 | 13 |
+| **TOTAL** | **7** | **0** | **23** | **30** |
 
 ---
 
