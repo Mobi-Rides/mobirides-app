@@ -276,17 +276,17 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 | Task ID | Member | Status | Notes |
 |---------|--------|--------|-------|
-| S11-001 | Arnold | ❌ Not Started | MOB-712 Phase 1: Fix email routing architecture |
-| S11-002 | Arnold | ❌ Not Started | MOB-712 Phase 2: Add 3 missing HTML templates |
-| S11-003 | Arnold | ❌ Not Started | MOB-712 Phase 3: Wire callers for verification + welcome emails |
-| S11-004 | Arnold | ❌ Not Started | MOB-712 Phase 4: Deprecate old API route |
+| S11-001 | Arnold | ✅ Done | MOB-712 Phase 1: Fix email routing architecture |
+| S11-002 | Arnold | ✅ Done | MOB-712 Phase 2: Add 3 missing HTML templates |
+| S11-003 | Arnold | ✅ Done | MOB-712 Phase 3: Wire callers for verification + welcome emails |
+| S11-004 | Arnold | ✅ Done | MOB-712 Phase 4: Deprecate old API route |
 | S11-005 | Arnold | ❌ Not Started | MOB-801: Drop enum-dependent functions (carry-over S10-001) |
 | S11-006 | Arnold | ❌ Not Started | MOB-802: Remove redundant enum block (carry-over S10-002) |
-| S11-007 | Arnold | ❌ Not Started | MOB-702: Auth-gate add-admin (carry-over S10-004) |
-| S11-008 | Arnold | ❌ Not Started | MOB-703: Notifications RLS (carry-over S10-005) |
-| S11-009 | Arnold | ❌ Not Started | MOB-704: Financial tables RLS (carry-over S10-006) |
+| S11-007 | Arnold | ✅ Done | MOB-702: Auth-gate add-admin (carry-over S10-004) |
+| S11-008 | Arnold | ✅ Done | MOB-703: Notifications RLS (carry-over S10-005) |
+| S11-009 | Arnold | ✅ Done | MOB-704: Financial tables RLS (carry-over S10-006) |
 | S11-010 | Arnold | ❌ Not Started | MOB-705: Edge function validation (carry-over S10-007) |
-| S11-011 | Arnold | ❌ Not Started | MOB-706: search_path fixes (carry-over S10-008) |
+| S11-011 | Arnold | ✅ Done | MOB-706: search_path fixes (carry-over S10-008) |
 | S11-012 | Modisa | ✅ Done | Commission → platform_settings (carry-over S10-009) |
 | S11-013 | Modisa | ✅ Done | Dynamic pricing → DB (carry-over S10-010) |
 | S11-014 | Modisa | ✅ Done | Insurance fee → platform_settings (carry-over S10-011) |
@@ -294,11 +294,11 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-016 | Modisa | ✅ Done | Consent on signup (carry-over S10-013) |
 | S11-017 | Modisa | ✅ Done | Rental-reminder cron (carry-over S10-014) |
 | S11-018 | Modisa | ✅ Done | Return-reminder cron (carry-over S10-015) |
-| S11-019 | Tapologo | ❌ Not Started | BUG-006: Fix RejectExcessProperties build errors (carry-over S10-024) |
-| S11-020 | Tapologo | ❌ Not Started | Handover lifecycle tests (carry-over S10-016) |
-| S11-021 | Tapologo | ❌ Not Started | Insurance claim tests (carry-over S10-017) |
-| S11-022 | Tapologo | ❌ Not Started | Admin portal tests (carry-over S10-018) |
-| S11-023 | Tapologo | ❌ Not Started | Booking extension tests (carry-over S10-019) |
+| S11-019 | Tapologo | ✅ Done | BUG-006: Fix RejectExcessProperties build errors (carry-over S10-024) |
+| S11-020 | Tapologo | ✅ Done | Handover lifecycle tests (carry-over S10-016) |
+| S11-021 | Tapologo | ✅ Done | Insurance claim tests (carry-over S10-017) |
+| S11-022 | Tapologo | ✅ Done | Admin portal tests (carry-over S10-018) |
+| S11-023 | Tapologo | ✅ Done | Booking extension tests (carry-over S10-019) |
 | S11-024 | Tapologo | ❌ Not Started | Android gradle verification (carry-over S10-020) |
 | S11-025 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
 | S11-026 | Modisa | ❌ Not Started | Beta pilot preparation |
