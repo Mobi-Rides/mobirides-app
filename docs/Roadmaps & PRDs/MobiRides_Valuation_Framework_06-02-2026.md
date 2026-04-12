@@ -40,8 +40,9 @@ All three approaches converge on a valuation range of **P6.0M – P12.5M**, esta
 | **Total Revenue** | P311,245.05 |
 | **Revenue Growth** | 305% YoY |
 | **Gross Margin** | 24.5% |
-| **Active Fleet** | 56 vehicles |
-| **Revenue per Booking** | P168.75 (standardised) |
+| **Active Fleet** | 66 vehicles |
+| **Total Registered Users** | 247 |
+| **Revenue per Booking** | P675 (standardised) |
 | **December 2025 Monthly Revenue** | P54,000 |
 | **Commission Rate** | 15% platform fee |
 | **Host LTV:CAC** | 60.75:1 |
@@ -97,7 +98,7 @@ The Berkus Method assigns value to five key risk-reduction categories in pre-rev
 | **2. Working Prototype (Technology Risk)** | 85% complete production platform; 47+ database tables; real-time messaging; Mapbox navigation; 7-step handover; insurance integration; mobile app in progress | **P1,200,000** |
 | **3. Quality Management Team (Execution Risk)** | Founder-led with domain expertise; operational in Botswana; strategic advisory board being formed; demonstrated ability to ship complex features | **P900,000** |
 | **4. Strategic Relationships (Market Risk)** | Trillo fleet partnership (anchor supply); Pay-U insurance integration; DPO/Paygate payment rails; CIPA trademark | **P1,200,000** |
-| **5. Product Rollout / Early Traction (Production Risk)** | P311K revenue (305% growth); 56 active vehicles; validated unit economics (60:1 Host LTV:CAC); proven demand in 4 Botswana locations | **P1,400,000** |
+| **5. Product Rollout / Early Traction (Production Risk)** | P311K revenue (305% growth); 66 active vehicles; validated unit economics (60:1 Host LTV:CAC); proven demand in 4 Botswana locations | **P1,400,000** |
 | | **TOTAL** | **P6,200,000** |
 
 ### 3.3 Berkus Method Conclusion
@@ -147,7 +148,7 @@ This approach calculates the replacement cost of recreating MobiRides' technolog
 |-------|-------|
 | 12+ months proprietary demand/pricing data | P300,000 |
 | First-mover brand recognition in Botswana P2P market | P200,000 |
-| Established host/renter network (56 vehicles, active users) | P200,000 |
+| Established host/renter network (66 vehicles, 247 users) | P200,000 |
 | **Subtotal: Data & Market Position** | **P700,000** |
 
 #### D. Expansion Optionality Premium
@@ -256,7 +257,7 @@ The following table demonstrates that MobiRides' P6.0M (≈$451K USD) pre-money 
 | **Revenue** | P311K ($23.4K) ✅ | Minimal | Pre-launch | Minimal | Pre-revenue |
 | **Revenue Growth** | 305% ✅ | N/A | N/A | N/A | N/A |
 | **Working Product** | 85% complete ✅ | MVP | Concept | MVP | MVP |
-| **Active Fleet** | 56 vehicles ✅ | N/A | 0 | N/A | N/A |
+| **Active Fleet** | 66 vehicles ✅ | N/A | 0 | N/A | N/A |
 | **Unit Economics** | Validated (60:1 LTV:CAC) ✅ | Unvalidated | Unvalidated | Unvalidated | Unvalidated |
 | **Markets** | 1 (expanding to 5+) | 2 | 1 | 2 | 1 |
 | **Implied Valuation** | **P6.0M ($451K)** | ~P66.5M ($5M) | ~P1.06B ($80M) | ~P199.5M ($15M) | ~P266M ($20M) |

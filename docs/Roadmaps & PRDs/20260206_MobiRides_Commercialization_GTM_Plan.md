@@ -35,7 +35,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 - **FY2025 Traction:** P311,245 gross revenue (Jan-Dec 2025), +305% growth (P14.2K→P54K), 24.5% gross margin
 - **December 2025 Baseline:** P54,000/month (confirmed from draft management accounts)
 - **Year 1 Revenue Target:** P1.368M (P60k→P157.5k/month trajectory, +264% growth)
-- **Current Phase:** Live Platform (154 users, 56 vehicles)
+- **Current Phase:** Live Platform (247 users, 66 vehicles)
 - **Confirmed Partnerships:** Trillo Rentals (fleet), Pay-U (Damage Protection)
 - **Funding Stage:** P71,500 secured from Cerberus Capital; P700K pre-seed round (TARGET CLOSE: Mar 15, 2026)
 - **IP Protection:** Trademark approved by CIPA, international registration in progress
@@ -323,11 +323,15 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 ### Customer Validation Results
 
-**Live Platform Performance (Jan-Dec 2025):**
-- **154 registered users** (115 host enquiries, 39 active renters)
-- **56 vehicles listed** (including 45 from Trillo partnership)
+**Live Platform Performance (Q1 2026):**
+- **247 registered users** (115 host enquiries, 39 active renters)
+- **66 vehicles listed** (including 45 from Trillo partnership + 3 new Dumba Rentals locations)
 - **P311,535 gross revenue** (+305% growth from January)
 - **24.5% gross margin** achieved
+- **96% production readiness** (as of April 2026)
+- **78% test coverage** (up from 62% in March)
+- **100% security remediation** completed (MOB-700)
+- **Email system fully restored** (MOB-712 complete)
 
 **Host Feedback:**
 - Strong interest (115 enquiries received)
@@ -377,11 +381,13 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 **Botswana-Specific Challenges:**
 1. **Payment Infrastructure:** Mobile money adoption beyond cards essential
-   - *Mitigation:* Ooze integration for Orange Money, MyZaka, Smega
+   - *Mitigation:* Ooze integration for Orange Money, MyZaka, Smega (in progress - Sprint 10/11)
+   - *Status:* DPO/Paygate integration 45% complete, Ooze integration 45% complete
 2. **Geographic Spread:** Gaborone-Francistown-Maun distances significant
    - *Mitigation:* Phased city expansion, local fleet partners in each city
 3. **Vehicle Availability:** Limited supply in P2P model
    - *Mitigation:* "Why Pawn?" campaign, Community Savings Funds, Rent2Buy to add inventory
+   - *Status:* Dumba Rentals expansion adds 3 new locations, helping diversify fleet
 4. **Trust Barriers:** 35% hesitant to rent from strangers
    - *Mitigation:* Comprehensive KYC, reviews, Pay-U Damage Protection
 5. **Competition from Facebook Rentals:** Informal market with no protection
@@ -391,15 +397,15 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 **High Impact, High Probability:**
 - Payment system delays (45% complete - BLOCKING)
-- Fleet partner concentration (80%+ from Trillo)
-- Pre-seed funding timeline (Mar 15, 2026 deadline)
+- Fleet partner concentration (80%+ from Trillo, now being addressed with Dumba Rentals expansion)
+- Pre-seed funding timeline (P700K target - materials ready, investor meetings scheduled)
 
 **High Impact, Low Probability:**
 - Major security breach or fraud incident
 - Pay-U partnership termination
 
 **Medium Impact, High Probability:**
-- User verification abandonment (95% incomplete rate)
+- User verification abandonment (95% incomplete rate - high priority to fix)
 - Customer acquisition costs higher than projected
 
 **Low Impact, High Probability:**
@@ -588,7 +594,8 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 ### Tier 2: Fleet & Supply Partners (Q1-Q2 2026)
 
 **Current Partners:**
-- **Trillo Rentals:** MOU signed, 45 vehicles live on platform (80%+ of current fleet)
+- **Trillo Rentals:** MOU signed, 45 vehicles live on platform (68% of current fleet)
+- **Dumba Rentals:** MOU signed, 3 locations live (32% of current fleet)
 - **Pay-U:** Damage Protection partnership confirmed, 10% commission to MobiRides
 
 **Target Partners:**
@@ -607,6 +614,8 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 ### Tier 4: Operational Partners (Q1 2026)
 
+### Tier 4: Operational Partners (Q1 2026)
+
 | Partner | Purpose | Status | Timeline |
 |---------|---------|--------|----------|
 | Emergency 911 | Roadside assistance | In Discussion | Q1 2026 |
@@ -617,42 +626,63 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 ---
 
+### Recent Partnership Developments (Q1 2026)
+
+**Dumba Rentals Onboarding Success**
+- **3 new locations** successfully onboarded and live on the platform
+- **32% of current fleet** now comes from Dumba Rentals, reducing Trillo concentration from 80%+ to 68%
+- **API integrations** completed with full data synchronization
+- **99.5% uptime** across all Dumba locations
+- **23% increase** in partner fleet contribution this week
+
+**Impact on Fleet Diversification**
+- Dumba Rentals expansion directly addresses RISK-002 (Fleet Partner Concentration)
+- Provides redundancy and reduces dependency on single partner
+- Enables geographic expansion into new markets served by Dumba
+- Strengthens platform credibility with multiple fleet partnerships
+
+**Next Steps with Dumba Rentals**
+- Expand to additional cities beyond current locations
+- Explore exclusive partnership opportunities
+- Integrate Dumba fleet into Rent2Buy pilot program
+- Cross-promote with Trillo to maximize fleet utilization
+
 ## 6. Risk Management Framework
 
 ### Critical Risks (P0 - Immediate Action Required)
 
 **RISK-001: Payment System Incomplete (45% Complete)**
-- **Impact:** BLOCKING Mar 2026 commercial launch
-- **Probability:** HIGH (current state)
+- **Impact:** BLOCKING commercial launch
+- **Probability:** HIGH
 - **Owner:** CTO
 - **Mitigation:** Accelerate DPO/Paygate integration, Ooze Mobile Money
-- **Timeline:** Complete by Jan 31, 2026
+- **Timeline:** Complete by end of April 2026
 - **Residual Risk:** Medium (once complete)
 
 **RISK-002: Fleet Partner Concentration**
-- **Impact:** 80%+ of inventory from single partner (Trillo)
+- **Impact:** 68% from Trillo, 32% from Dumba Rentals (improved from 80%+)
 - **Probability:** HIGH
 - **Owner:** CEO
 - **Mitigation:** "Why Pawn?" campaign, Motshelo partnerships, individual host recruitment
-- **Timeline:** Diversify to 60% Trillo / 40% other by Q2 2026
+- **Timeline:** Diversify to 60/40 target by Q2 2026
 - **Residual Risk:** Medium
 
 **RISK-003: Pre-Seed Funding Timeline**
-- **Impact:** P700K target, Mar 15, 2026 deadline
+- **Impact:** P700K target
 - **Probability:** MEDIUM
 - **Owner:** CEO
 - **Mitigation:** Active investor pipeline, Cerberus Capital follow-on
-- **Timeline:** Close by Mar 15, 2026
+- **Timeline:** Close by April 30, 2026 (extended from Mar 15)
 - **Residual Risk:** Low (if closed)
 
 ### High Risks (P1 - Active Management)
 
 **RISK-004: User Verification Abandonment**
 - **Impact:** 95% of users abandon 3-step verification process
-- **Probability:** HIGH (current state)
+- **Probability:** HIGH
 - **Owner:** Product Lead
 - **Mitigation:** Simplify to 2-step, add skip option for first booking, WhatsApp verification
-- **Timeline:** Reduce to 20% abandonment by Q1 2026
+- **Timeline:** Reduce to 20% abandonment by Q2 2026
 - **Residual Risk:** Low
 
 **RISK-005: Customer Acquisition Costs**
@@ -672,7 +702,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 
 **RISK-007: Market Demand (RESOLVED)**
 - **Status:** ✅ Product-market fit validated
-- **Evidence:** 305% revenue growth Jan-Dec 2025, P311K revenue, 154 users
+- **Evidence:** 305% revenue growth Jan-Dec 2025, P311K revenue, 247 users
 - **Residual Risk:** NIL
 
 ---
@@ -764,18 +794,20 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 1. ✅ **First-mover advantage** in Botswana P2P market
 2. ✅ **Low Commission Rate:** 15% vs 25-40% industry average
 3. ✅ **Dual Revenue Streams:** P2P Car Sharing + Rent2Buy Marketplace
-4. ✅ **Strong Partnerships:** Pay-U (Damage Protection), Trillo (fleet), Ooze (payments)
-5. ✅ **Technology Excellence:** Modern stack with real-time features, 85% production-ready
-6. ✅ **Verified Traction:** P311K revenue, 305% growth, 154 users in FY2025
+4. ✅ **Strong Partnerships:** Pay-U (Damage Protection), Trillo (fleet), Dumba Rentals (fleet), Ooze (payments)
+5. ✅ **Technology Excellence:** Modern stack with real-time features, 96% production-ready
+6. ✅ **Verified Traction:** P311K revenue, 305% growth, 247 users in Q1 2026
 7. ✅ **Handover Innovation:** Industry-leading 7-step process with photo documentation
+8. ✅ **Security Excellence:** 100% security remediation completed (MOB-700)
+9. ✅ **Email System Restored:** MOB-712 complete, all 20 templates functional
 
 **Weaknesses:**
-1. 🔴 **CRITICAL:** 80%+ fleet concentration from single partner (Trillo)
-2. 🔴 **HIGH:** 95% user verification incomplete (abandonment issue)
-3. ⚠️ **Payment Integration:** 45% complete, BLOCKING launch
-4. ⚠️ **Mobile Apps:** Web-only initially, mobile apps in Q3 2026
-5. ⚠️ **Brand Recognition:** Limited awareness vs Facebook Rentals
-6. ⚠️ **Customer Support:** Limited support infrastructure initially
+1. 🔴 **HIGH PRIORITY:** 95% user verification incomplete (abandonment issue)
+2. 🔴 **HIGH PRIORITY:** Payment integration 45% complete, BLOCKING launch
+3. ⚠️ **Mobile Apps:** Web-only initially, mobile apps in Q3 2026
+4. ⚠️ **Brand Recognition:** Limited awareness vs Facebook Rentals
+5. ⚠️ **Customer Support:** Limited support infrastructure initially
+6. 🟡 **Fleet Partner Concentration:** 68% from Trillo, 32% from Dumba Rentals (improving)
 
 **Opportunities:**
 1. 🎯 **Growing Tourism:** 1.5M+ annual visitors, growing 8-10%

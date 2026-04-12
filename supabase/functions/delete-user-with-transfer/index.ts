@@ -27,7 +27,9 @@ async function getUserCarIds(supabaseAdmin: any, userId: string): Promise<string
 async function getUserBookingIds(supabaseAdmin: any, userId: string): Promise<string[]> {
   const userCarIds = await getUserCarIds(supabaseAdmin, userId);
   const carIdsString = userCarIds.join(',');
-  const queryString = carIdsString ? `renter_id.eq.${userId},car_id.in.(${carIdsString})` : `renter_id.eq.${userId}`;
+  const queryString = userCarIds.length > 0 
+    ? `renter_id.eq.${userId},car_id.in.(${carIdsString})` 
+    : `renter_id.eq.${userId}`;
 
   const { data: bookings, error } = await supabaseAdmin
     .from("bookings")
@@ -42,57 +44,122 @@ async function getUserBookingIds(supabaseAdmin: any, userId: string): Promise<st
   return bookings?.map((booking: any) => booking.id) || [];
 }
 
-// Helper function to deeply check and clean all user references
-async function deepCleanUserReferences(supabaseAdmin: any, userId: string): Promise<string[]> {
+// Helper function to perform targeted cleanup based on data classification
+async function cleanupUserData(supabaseAdmin: any, userId: string): Promise<string[]> {
   const cleanupSteps: string[] = [];
-  
-  // Define all tables and their user ID columns
-  const tableConfigs = [
-    { table: 'profiles', column: 'id' },
-    { table: 'cars', column: 'owner_id' },
-    { table: 'bookings', column: 'renter_id' },
-    { table: 'reviews', column: 'reviewer_id' },
-    { table: 'reviews', column: 'reviewee_id' },
-    { table: 'notifications', column: 'user_id' },
-    { table: 'conversations', column: 'created_by' },
-    { table: 'conversation_messages', column: 'sender_id' },
-    { table: 'conversation_participants', column: 'user_id' },
-    { table: 'user_restrictions', column: 'user_id' },
-    { table: 'messages', column: 'sender_id' },
-    { table: 'messages', column: 'receiver_id' },
-  ];
-  
-  for (const config of tableConfigs) {
-    try {
-      const { count, error: countError } = await supabaseAdmin
-        .from(config.table)
-        .select('*', { count: 'exact', head: true })
-        .eq(config.column, userId);
+
+// 1. Hard-delete PII tables
+const piiTables = ['conversations', 'notifications', 'verifications', 'device_tokens'];
+for (const table of piiTables) {
+  try {
+    let query = supabaseAdmin.from(table).select('*', { count: 'exact' });
+    if (table === 'conversations') {
+      // For conversations, check both created_by and user_id (if exists)
+      query = query.or(`created_by.eq.${userId}`).or(`user_id.eq.${userId}`);
+    } else {
+      query = query.eq('user_id', userId);
+    }
+    const { count, error } = await query;
+    
+    if (!error && count && count > 0) {
+      let deleteQuery = supabaseAdmin.from(table).delete();
+      if (table === 'conversations') {
+        deleteQuery = deleteQuery.or(`created_by.eq.${userId}`).or(`user_id.eq.${userId}`);
+      } else {
+        deleteQuery = deleteQuery.eq('user_id', userId);
+      }
       
-      if (!countError && count && count > 0) {
-        console.log(`🧹 Found ${count} rows in ${config.table}.${config.column}`);
+      const { error: deleteError } = await deleteQuery;
+      
+      if (deleteError) {
+        cleanupSteps.push(`⚠️ Failed to delete from ${table}: ${deleteError.message}`);
+      } else {
+        cleanupSteps.push(`✅ Hard-deleted ${count} rows from ${table}`);
+      }
+    }
+  } catch (e) {
+    console.log(`ℹ️ Skipping ${table}: ${(e as Error).message}`);
+  }
+}
+
+    // 2. Soft-delete profiles: scrub PII, set is_deleted = true
+    try {
+      const { count, error } = await supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact' })
+        .eq('id', userId);
+      
+      if (!error && count && count > 0) {
+        // Update profile: scrub PII and mark as deleted
+        const { error: updateError } = await supabaseAdmin
+          .from('profiles')
+          .update({ full_name: '[removed]', phone_number: '[removed]', is_deleted: true })
+          .eq('id', userId);
         
-        const { error: deleteError } = await supabaseAdmin
-          .from(config.table)
-          .delete()
-          .eq(config.column, userId);
-        
-        if (deleteError) {
-          cleanupSteps.push(`⚠️ Failed to clean ${config.table}.${config.column}: ${deleteError.message}`);
+        if (updateError) {
+          cleanupSteps.push(`⚠️ Failed to soft-delete profile: ${updateError.message}`);
         } else {
-          cleanupSteps.push(`✅ Cleaned ${count} rows from ${config.table}.${config.column}`);
+          cleanupSteps.push(`✅ Soft-deleted profile with scrubbed PII`);
         }
       }
     } catch (e) {
-      // Table might not exist or column might not exist
-      console.log(`ℹ️ Skipping ${config.table}.${config.column}:`, (e as Error).message);
+      console.log(`ℹ️ Skipping profiles: ${(e as Error).message}`);
+    }
+
+// 3. Anonymize reviews: set text to '[removed]', keep ratings
+try {
+  const { count, error } = await supabaseAdmin
+    .from('reviews')
+    .select('*', { count: 'exact' })
+    .eq('reviewer_id', userId)
+    .or(`reviewee_id.eq.${userId}`);
+  
+  if (!error && count && count > 0) {
+    const { error: updateError } = await supabaseAdmin
+      .from('reviews')
+      .update({ text: '[removed]' })
+      .eq('reviewer_id', userId)
+      .or(`reviewee_id.eq.${userId}`);
+    
+    if (updateError) {
+      cleanupSteps.push(`⚠️ Failed to anonymize reviews: ${updateError.message}`);
+    } else {
+      cleanupSteps.push(`✅ Anonymized ${count} reviews`);
     }
   }
-  
-  return cleanupSteps;
+} catch (e) {
+  console.log(`ℹ️ Skipping reviews: ${(e as Error).message}`);
 }
 
-Deno.serve(async (req: Request) => {
+    // 4. Anonymize cars: set description/location to '[removed]'
+    try {
+      const { count, error } = await supabaseAdmin
+        .from('cars')
+        .select('*', { count: 'exact' })
+        .eq('owner_id', userId);
+      
+      if (!error && count && count > 0) {
+        const { error: updateError } = await supabaseAdmin
+          .from('cars')
+          .update({ description: '[removed]', location: '[removed]' })
+          .eq('owner_id', userId);
+        
+        if (updateError) {
+          cleanupSteps.push(`⚠️ Failed to anonymize cars: ${updateError.message}`);
+        } else {
+          cleanupSteps.push(`✅ Anonymized ${count} cars`);
+        }
+      }
+    } catch (e) {
+      console.log(`ℹ️ Skipping cars: ${(e as Error).message}`);
+    }
+
+    // 5. Preserve analytics tables (do nothing)
+
+    return cleanupSteps;
+  }
+
+  Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -364,70 +431,70 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Start deletion process
-    const deletionSteps = [];
+// Start deletion process
+  const deletionSteps = [];
 
-    try {
-      console.log("🔍 === STARTING COMPREHENSIVE CLEANUP ===");
+  try {
+    console.log("🔍 === STARTING COMPREHENSIVE CLEANUP ===");
+    
+    // STEP 1: Clean up user data according to classification
+    console.log("🧹 Step 1: Cleaning up user data...");
+    const cleanupSteps = await cleanupUserData(supabaseAdmin, userId);
+    deletionSteps.push(...cleanupSteps);
+    
+    console.log(`✅ Data cleanup complete. Completed ${cleanupSteps.length} steps.`);
+    
+    // STEP 2: Try to delete the auth user (LAST)
+    console.log("🗑️ Step 2: Attempting auth user deletion...");
+    
+    let authDeletionSuccess = false;
+    let authDeletionError: any = null;
+    
+    // Try multiple approaches to delete the auth user
+    for (let approach = 1; approach <= 2; approach++) {
+      console.log(`🔄 Deletion approach ${approach}/2...`);
       
-      // STEP 1: Deep clean all user references FIRST
-      console.log("🧹 Step 1: Deep cleaning all user references...");
-      const deepCleanSteps = await deepCleanUserReferences(supabaseAdmin, userId);
-      deletionSteps.push(...deepCleanSteps);
-      
-      console.log(`✅ Deep cleanup complete. Cleaned ${deepCleanSteps.length} references.`);
-      
-      // STEP 2: Try to delete the auth user
-      console.log("🗑️ Step 2: Attempting auth user deletion...");
-      
-      let authDeletionSuccess = false;
-      let authDeletionError: any = null;
-      
-      // Try multiple approaches to delete the auth user
-      for (let approach = 1; approach <= 2; approach++) {
-        console.log(`🔄 Deletion approach ${approach}/2...`);
+      try {
+        if (approach === 1) {
+          // Approach 1: Standard deletion
+          console.log("📋 Approach 1: Standard auth.admin.deleteUser");
+          const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+          if (error) throw error;
+          
+        } else if (approach === 2) {
+          // Approach 2: Disable then delete
+          console.log("📋 Approach 2: Disable user first, then delete");
+          
+          // First disable the user
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            email_confirm: false,
+            ban_duration: '876000h' // 100 years
+          });
+          
+          // Wait a moment
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Then try to delete
+          const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+          if (error) throw error;
+        }
         
-        try {
-          if (approach === 1) {
-            // Approach 1: Standard deletion
-            console.log("📋 Approach 1: Standard auth.admin.deleteUser");
-            const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-            if (error) throw error;
-            
-          } else if (approach === 2) {
-            // Approach 2: Disable then delete
-            console.log("📋 Approach 2: Disable user first, then delete");
-            
-            // First disable the user
-            await supabaseAdmin.auth.admin.updateUserById(userId, {
-              email_confirm: false,
-              ban_duration: '876000h' // 100 years
-            });
-            
-            // Wait a moment
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Then try to delete
-            const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-            if (error) throw error;
-          }
-          
-          // If we get here, deletion succeeded
-          authDeletionSuccess = true;
-          console.log(`✅ Auth user deleted successfully using approach ${approach}`);
-          deletionSteps.push(`Deleted auth user (approach ${approach})`);
-          break;
-          
-        } catch (error) {
-          authDeletionError = error;
-          console.error(`❌ Approach ${approach} failed:`, (error as Error).message);
-          
-          if (approach < 2) {
-            console.log("⏳ Waiting 2 seconds before next approach...");
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
+        // If we get here, deletion succeeded
+        authDeletionSuccess = true;
+        console.log(`✅ Auth user deleted successfully using approach ${approach}`);
+        deletionSteps.push(`Deleted auth user (approach ${approach})`);
+        break;
+        
+      } catch (error) {
+        authDeletionError = error;
+        console.error(`❌ Approach ${approach} failed:`, (error as Error).message);
+        
+        if (approach < 2) {
+          console.log("⏳ Waiting 2 seconds before next approach...");
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
+    }
       
       // Check if deletion succeeded
       if (!authDeletionSuccess) {
