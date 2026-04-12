@@ -261,6 +261,44 @@ Enforce `SET search_path TO 'public'` on all functions and re-enable RLS on the 
 
 ---
 
+### BUG-014: Persistent Migration Drift (http_request types)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-12 |
+| **Severity** | Critical (Blocks `db pull` & CI/CD) |
+| **Status** | 🔴 Analyzing |
+| **Affects** | `supabase/migrations/20260410143004_remote_schema.sql` |
+
+**Technical Breakdown:**
+- **Origin:** Migration `20260319212624` mistakenly contains manual `CREATE TYPE` blocks for `http_*` types (treating them as user types).
+- **Regression Mechanism:** Supabase CLI `db pull` detects that these types are now owned by the `http` extension on the live server. It generates a corrective `DROP TYPE` in the latest migration (`20260410143004`) to reconcile the local "drift."
+- **Failure:** The `DROP` fails during the Shadow DB sync because the `http` extension has an active dependency on these types (`SQLSTATE 2BP01`).
+
+**Final Resolution Strategy:**
+1. **Sanitize History:** Comment out the `CREATE TYPE` blocks in `20260319212624`.
+2. **Purge Regression:** Delete the `DROP TYPE` blocks in `20260410143004`.
+3. **Explicit Ownership:** Add a new migration to explicitly `CREATE EXTENSION IF NOT EXISTS "http"` to ensure the CLI recognizes extension ownership globally.
+
+---
+
+## Roadmap Audit Status (MOB-210..MOB-225)
+
+The following bugs from the March 2026 Testing Registry were audited against the April 10 Production Readiness Report and Git history.
+
+| ID | Issue | Status | Note |
+|---|---|---|---|
+| **MOB-210** | Signup flow broken | 🟡 Re-Opened | Logged as **BUG-010** due to persistent orphaned users (76 count). |
+| **MOB-211-212** | Handover/Payment Card | ✅ Resolved | Bundled into "MOB-200 Epic 100% Complete" (Apr 10). |
+| **MOB-213** | Transaction history | ✅ Resolved | Fixed in commit `4b1ae2b`. |
+| **MOB-214-216** | Notification delivery | ✅ Resolved | Fixed in commits `464218c`, `08b3527`, `981b716`. |
+| **MOB-217-218** | Notification Prefs | ✅ Resolved | Fixed in commit `7821179`. |
+| **MOB-219** | Audit logs | ✅ Resolved | Fixed in commit `85ee060`. |
+| **MOB-220-222** | Map & Centering | ✅ Resolved | Bundled into "MOB-220 Epic 100% Complete" (Apr 10). |
+| **MOB-223-225** | Claims & Filters | ✅ Resolved | Fixed in commits `31644ba`, `9923214`, `dbc0413`. |
+
+---
+
 ## Resolved Bugs
 
 ### BUG-007 — Admin Portal Data Inaccuracies (Export/Pagination/Sorting)
