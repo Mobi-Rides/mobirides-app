@@ -2,7 +2,7 @@
 ## MobiRides Application — Transition to Sprint 11
 
 **Prepared by:** Modisa Maphanyane  
-**Period:** April 11 – April 17, 2026  
+**Period:** April 13 – April 17, 2026  
 **Status:** 🟡 CAUTION (Email System Failure Identified)
 
 ---
@@ -88,7 +88,7 @@ However, a comprehensive audit triggered by missing verification emails revealed
 
 ---
 
-## 📌 Next Steps: Sprint 11 (April 21 – 30)
+## 📌 Next Steps: Sprint 11 (April 13 – 20)
 
 1. **Restore Email System**: Execution of MOB-712 Phases 1-3 (Arnold).
 2. **Technical Carry-overs**: Finalize `Anonymize-on-Delete` logic and DB Audit trails (Modisa).

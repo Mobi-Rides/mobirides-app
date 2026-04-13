@@ -1,5 +1,5 @@
 # Sprint 11 Jira-Style Execution Plan
-## MobiRides Application — April 21–27, 2026
+## MobiRides Application — April 13–20, 2026
 
 **Prepared by:** Modisa Maphanyane  
 **Sprint:** Sprint 11  
@@ -29,8 +29,8 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Sprint | Date | Focus | Review Link |
 |--------|------|-------|-------------|
 | Sprint 8 | Mar 24-31 | Bugfixes & Payment P0 | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
-| Sprint 9 | Apr 7-13 | Infrastructure & Compliance | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_9_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
-| Sprint 10 | Apr 14-20 | Security & Standardization | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+| Sprint 9 | Mar 30 - Apr 5 | Infrastructure & Compliance | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_9_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
+| Sprint 10 | Apr 6-12 | Security & Standardization | [View Review](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/Product%20Status/SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md#%F0%9F%8F%81-sprint-review) |
 
 
 ---
@@ -264,11 +264,11 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 | Day | Arnold | Tapologo | Modisa |
 |-----|--------|----------|--------|
-| Mon Apr 21 | S11-001 (routing fix) | S11-019 (BUG-006 type fixes) | S11-012, S11-028, Sprint kickoff |
-| Tue Apr 22 | S11-002 (missing templates) | S11-020 (handover tests) | S11-013, S11-026, Review PRs |
-| Wed Apr 23 | S11-003 (wire callers) | S11-021 (insurance tests) | S11-014, S11-015, S11-027 |
-| Thu Apr 24 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-022, S11-023 (admin + booking tests) | S11-016, S11-017, S11-029 |
-| Fri Apr 25 | S11-007–S11-011 (security) | S11-024 (Android CI) | S11-018, S11-025 (sign-off) |
+| Mon Apr 13 | S11-001 (routing fix) | S11-019 (BUG-006 type fixes) | S11-012, S11-028, Sprint kickoff |
+| Tue Apr 14 | S11-002 (missing templates) | S11-020 (handover tests) | S11-013, S11-026, Review PRs |
+| Wed Apr 15 | S11-003 (wire callers) | S11-021 (insurance tests) | S11-014, S11-015, S11-027 |
+| Thu Apr 16 | S11-004 (cleanup), S11-005/006 (BUG-003) | S11-022, S11-023 (admin + booking tests) | S11-016, S11-017, S11-029 |
+| Fri Apr 17 | S11-007–S11-011 (security) | S11-024 (Android CI) | S11-018, S11-025 (sign-off) |
 
 ---
 
