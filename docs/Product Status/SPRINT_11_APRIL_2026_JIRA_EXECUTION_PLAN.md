@@ -299,7 +299,7 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-021 | Tapologo | ✅ Done | Insurance claim tests (carry-over S10-017) |
 | S11-022 | Tapologo | ✅ Done | Admin portal tests (carry-over S10-018) |
 | S11-023 | Tapologo | ✅ Done | Booking extension tests (carry-over S10-019) |
-| S11-024 | Tapologo | ❌ Not Started | Android gradle verification (carry-over S10-020) |
+| S11-024 | Tapologo | ✅ Done | Android gradle verification (carry-over S10-020) |
 | S11-025 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
 | S11-026 | Modisa | ❌ Not Started | Beta pilot preparation |
 | S11-027 | Modisa | ❌ Not Started | Pre-seed funding materials |
@@ -311,9 +311,9 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 7 | 0 | 4 | 11 |
-| Tapologo | 5 | 0 | 1 | 6 |
+| Tapologo | 6 | 0 | 0 | 6 |
 | Modisa | 7 | 0 | 6 | 13 |
-| **TOTAL** | **19** | **0** | **11** | **30** |
+| **TOTAL** | **20** | **0** | **10** | **30** |
 
 ---
 
