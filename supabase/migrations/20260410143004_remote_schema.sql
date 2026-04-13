@@ -548,7 +548,8 @@ alter type "public"."notification_type" rename to "notification_type__old_versio
 
 create type "public"."notification_type" as enum ('booking_request_received', 'booking_request_sent', 'booking_confirmed_host', 'booking_confirmed_renter', 'booking_cancelled_host', 'booking_cancelled_renter', 'pickup_reminder_host', 'pickup_reminder_renter', 'return_reminder_host', 'return_reminder_renter', 'wallet_topup', 'wallet_deduction', 'message_received', 'handover_ready', 'payment_received', 'payment_failed', 'system_notification', 'navigation_started', 'pickup_location_shared', 'return_location_shared', 'arrival_notification', 'early_return_notification', 'pickup_reminder', 'return_reminder', 'claim_submitted', 'claim_status_updated');
 
-drop type "public"."notification_type__old_version_to_be_dropped";
+
+
 
 alter table "archive"."messages" alter column "status" set default 'sent'::public.message_status;
 
@@ -599,6 +600,9 @@ alter table "public"."notifications" alter column "role_target" set default 'sys
 alter table "public"."notifications" alter column "role_target" set data type public.notification_role using "role_target"::text::public.notification_role;
 
 alter table "public"."notifications" alter column "type" set data type public.notification_type using "type"::text::public.notification_type;
+
+drop type "public"."notification_type__old_version_to_be_dropped";
+
 
 alter table "public"."pending_confirmations" alter column "id" set default extensions.uuid_generate_v4();
 

@@ -158,25 +158,29 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
   'insurance-claim-received': {
     id: 'insurance-claim-received',
     name: 'Insurance Claim Received',
-    subject: '📋 Claim Received',
+    subject: '📋 Claim Received #{{claimNumber}}',
+
     description: 'Sent when a user submits a new insurance claim'
   },
   'insurance-claim-update': {
     id: 'insurance-claim-update',
     name: 'Insurance Claim Status Update',
-    subject: '🔔 Claim Status Update',
+    subject: '🔔 Claim Update #{{claimNumber}} - {{newStatus}}',
+
     description: 'Sent when an admin updates claim status'
   },
   'insurance-policy-confirmation': {
     id: 'insurance-policy-confirmation',
     name: 'Insurance Policy Confirmation',
-    subject: '✅ Insurance Policy Issued',
+    subject: '✅ Insurance Policy Issued #{{policyNumber}}',
+
     description: 'Sent when an insurance policy is created'
   },
   'insurance-host-claim-notification': {
     id: 'insurance-host-claim-notification',
     name: 'Host Claim Notification',
-    subject: '⚠️ Insurance Claim Filed for Your Vehicle',
+    subject: '⚠️ Claim Filed - {{carName}} #{{claimNumber}}',
+
     description: 'Sent to car owners when a claim is filed on their vehicle'
   }
 };
