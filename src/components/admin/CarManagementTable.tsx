@@ -217,6 +217,14 @@ export const CarManagementTable = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => navigate(`/car/${car.id}`)}
+                          title="View public listing"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEditCar(car)}
                           title="Quick edit (details & availability)"
                         >

@@ -11,10 +11,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, ArrowUpRight } from "lucide-react";
+import { Search, ArrowUpRight, Eye } from "lucide-react";
+import { PayoutDetailsDialog } from "./PayoutDetailsDialog";
 
 interface WithdrawalRequest {
   id: string;
@@ -61,6 +63,7 @@ const useWithdrawalRequests = () => {
 
 export const WithdrawalRequestsTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedWithdrawalId, setSelectedWithdrawalId] = useState<string | null>(null);
   const { data: requests, isLoading, error } = useWithdrawalRequests();
 
   const filteredRequests = requests?.filter(req =>
@@ -89,7 +92,8 @@ export const WithdrawalRequestsTable = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       <div className="flex items-center space-x-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -131,6 +135,7 @@ export const WithdrawalRequestsTable = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Date Requested</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -155,6 +160,11 @@ export const WithdrawalRequestsTable = () => {
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(req.created_at).toLocaleString()}
                     </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedWithdrawalId(req.id)} title="View details">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -163,5 +173,7 @@ export const WithdrawalRequestsTable = () => {
         </CardContent>
       </Card>
     </div>
+      <PayoutDetailsDialog withdrawalId={selectedWithdrawalId} onClose={() => setSelectedWithdrawalId(null)} />
+    </>
   );
 };

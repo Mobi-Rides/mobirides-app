@@ -51,7 +51,9 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | Sprint Sign-off & Reporting | 1 | — | — | — | 1 |
 | SSRF Endpoint Validation (MOB-710) | 1 | 1 | — | — | — |
 | Admin Detailed Views (MOB-711) | 1 | 1 | — | — | — |
-| **TOTAL** | **24** | **10** | **7** | **6** | **1** |
+| Contextual Loading Messages (S10-026) | 1 | — | — | 1 | — |
+| Admin Data Table Standardization (S10-027) | 1 | — | — | — | 1 |
+| **TOTAL** | **26** | **10** | **7** | **7** | **2** |
 
 ---
 
@@ -226,7 +228,7 @@ Sprint 10 focuses on **security remediation, BUG-003 resolution, Sprint 9 carry-
 | **Ticket** | S10-025 / MOB-711 |
 | **Owner** | Arnold |
 | **Priority** | P1 — Day 4 |
-| **Ref** | `docs/Product Status/MOB_711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md` |
+| **Ref** | `docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md` |
 | **Summary** | Add `<Eye />` view action icons to Bookings, Withdrawals, Messages, etc. to open read-only detailed inspection dialogs |
 
 **Tasks:**
@@ -569,6 +571,10 @@ A ticket is **Done** when:
 | S10-022 | Arnold | ✅ Done | MOB-710: SSRF endpoint validation in `send-push-notification` (2026-04-06) |
 | S10-023 | Modisa | ✅ Done | BUG-005: Query optimization — auth guards, cached useAuth(), reduced polling, staleTime (2026-04-06). ~85% request reduction. |
 | S10-024 | Tapologo | ❌ Not Started | BUG-006: Fix Supabase `RejectExcessProperties` build errors across 7 files — map alias fields, remove `user_role` from inserts, replace dynamic keys with typed explicit assignments |
+| S10-025 | Arnold | ❌ Not Started | MOB-711: Add `<Eye />` view action icons to 6 Admin Portal tables opening read-only detail dialogs |
+| S10-026 | Tapologo | ❌ Not Started | UX: Replace all bare `Loading...` text and silent skeletons with contextual per-screen loading messages — see `docs/plans/20260407_CONTEXTUAL_LOADING_MESSAGES_PLAN.md` |
+| S10-027 | Modisa | ✅ Done | BUG-007: Standardize all Admin Portal Management Tables (Pagination, Accurate Entry Counts, Export logic, Sorting) |
+| S10-028 | Modisa | ➡️ Moved to S11 | BUG-008 / MOB-712: Email notification system audit revealed 18/20 templates non-functional — escalated to Critical, moved to Sprint 11 as S11-001 |
 
 ### Summary
 
@@ -576,9 +582,35 @@ A ticket is **Done** when:
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 2 | 0 | 6 | 8 |
 | Duma | 0 | 0 | 7 | 7 |
-| Tapologo | 0 | 0 | 6 | 6 |
-| Modisa | 1 | 0 | 1 | 2 |
-| **TOTAL** | **3** | **0** | **21** | **24** |
+| Tapologo | 0 | 0 | 7 | 7 |
+| Modisa | 3 | 0 | 0 | 3 |
+| **TOTAL** | **5** | **0** | **20** | **25** |
+
+---
+
+---
+
+## 🏁 Sprint Review
+
+**Review Date:** April 20, 2026  
+**Status:** 🟡 INFRASTRUCTURE STABILIZED / SERVICE CARRY-OVER  
+
+### Key Accomplishments
+- **Security Hardening**: Completed critical **Secrets Rotation** (MOB-701) and **SSRF Mitigation** (MOB-710). Deployed ECC P-256 JWT keys.
+- **Admin Standardization**: Successfully standardized all 10 Admin Management tables with sliding-window pagination and accurate RPC-based entry counts (BUG-007).
+- **UX & Compliance**: Implemented **Contextual Loading States** across core screens and successfully wired the **`user_consents` table insertion** for new signups.
+- **Performance**: Optimized Auth guards and reduced polling redundancy, resulting in an ~85% reduction in frontend-to-backend requests (BUG-005).
+- **Critical Audit**: Identified a major architectural failure in the email notification system (BUG-008). Created a 4-phase restoration roadmap for Sprint 11.
+
+### Critical Blockers & Carry-Overs
+- **Logic & Wiring**: Duma's service wiring carry-overs from Sprint 9 remain unfinished due to higher priority infrastructure stabilization tasks.
+- **Testing Surface**: Test coverage remains a vulnerability as Tapologo's allocated unit testing tickets rolled again.
+- **Build Quality**: BUG-006 (Strict type checking errors) remains in the backlog, blocking clean builds in strict environments.
+
+### Metrics
+- **Tickets Completed**: 5
+- **Tickets Rolled**: 20 (CARRY → Sprint 11)
+- **Technical Debt**: Reduced via secrets cleanup; increased via email audit discovery.
 
 ---
 

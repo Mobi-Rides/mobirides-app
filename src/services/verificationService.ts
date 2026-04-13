@@ -6,6 +6,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { ResendEmailService } from "@/services/notificationService";
 import {
   VerificationData,
   VerificationStep,
@@ -637,6 +638,30 @@ export class VerificationService {
         console.error("[VerificationService] Failed to complete verification:", error);
         return false;
       }
+
+      // Automatically trigger the verification-complete email
+      try {
+        const emailService = ResendEmailService.getInstance();
+        const emailResponse = await supabase.rpc('get_user_email_for_notification', { user_uuid: userId });
+        const profileResponse = await supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle();
+
+        if (emailResponse.data && emailResponse.data.length > 0) {
+          await emailService.sendEmail(
+            emailResponse.data,
+            'verification-complete',
+            {
+              name: profileResponse.data?.full_name || 'User',
+              title: "Verification Approved",
+              description: "Your identity verification has been approved.",
+              actionUrl: window.location.origin + '/dashboard'
+            },
+            "Verification Approved"
+          );
+        }
+      } catch (emailErr) {
+        console.warn("[VerificationService] Failed to send complete email:", emailErr);
+      }
+
       return true;
     } catch (error) {
       console.error("[VerificationService] Failed to complete verification:", error);
