@@ -310,10 +310,10 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
-| Arnold | 0 | 0 | 11 | 11 |
-| Tapologo | 0 | 0 | 6 | 6 |
+| Arnold | 7 | 0 | 4 | 11 |
+| Tapologo | 5 | 0 | 1 | 6 |
 | Modisa | 7 | 0 | 6 | 13 |
-| **TOTAL** | **7** | **0** | **23** | **30** |
+| **TOTAL** | **19** | **0** | **11** | **30** |
 
 ---
 
