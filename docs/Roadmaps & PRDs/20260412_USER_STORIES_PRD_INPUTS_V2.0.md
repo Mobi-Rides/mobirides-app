@@ -50,6 +50,8 @@ MobiRides is a vertically integrated mobility platform serving the Southern Afri
 | **16** | **Rent2Buy** | ⚪ 10% | Strategic Q2 Pilot specs drafted. |
 | **17** | **Partner Portal** | ⚪ 0% | Planned Q2: Insurer/Financier UI. |
 | **18** | **Compliance** | 🟢 100% | GDPR Soft-delete (MOB-110) complete. |
+| **19** | **Rewards & Loyalty**| 🟡 40% | Pricing logic live; Referral UI pending. |
+| **20** | **Host Subscriptions**| ⚪ 10% | Fleet/Roadside specs defined. |
 
 ---
 
@@ -186,8 +188,31 @@ MobiRides is a vertically integrated mobility platform serving the Southern Afri
 ### 🔒 EPIC 18: COMPLIANCE & SECURITY
 **User Stories:**
 - **As a user**, I want to report security concerns and know my data is protected by RLS and GDPR.
+- **As an Admin**, I want to manually review pending referral credits to prevent "bonus farming" fraud.
 **Acceptance Criteria:**
 - **Protection**: **Fraud detection algorithms**; **Malware scanning** for file uploads; SQL scrubbers.
+- **Manual Audit**: Referral payouts held in "Pending" status until Admin sign-off (ref: Epic 19).
+
+### 🏆 EPIC 19: REWARDS, LOYALTY & REFERRALS
+**User Stories:**
+- **As a Renter**, I want to earn loyalty points and reach tiers (Bronze, Gold, Platinum) for lower service fees.
+- **As a user**, I want to **refer a friend** via a unique code and earn credits.
+- **As a repeat Renter**, I want an automated discount on my **5th booking**.
+**Acceptance Criteria:**
+- **Loyalty Rule**: Integration with `DynamicPricingService` rules (Tier-based multipliers).
+- **Referral Logic**: Manual Admin verification required before credit issuance.
+- **5th Booking**: 10% auto-credit applied to the 5th verified rental completion.
+
+### 💼 EPIC 20: HOST PREMIUM SERVICES & SUBSCRIPTIONS
+**User Stories:**
+- **As a Host**, I want to subscribe to **Fleet Management** tools to monitor multiple vehicles.
+- **As a Host**, I want real-time **GPS Tracking** and Geofence alerts for my assets.
+- **As a Host**, I want **Roadside Assistance** and **Maintenance Scheduling** tools via a premium subscription.
+- **As an Admin**, I want to **configure subscription pricing** for various "Pro Host" tiers in the portal.
+**Acceptance Criteria:**
+- **Admin Configuration**: Portal UI for managing monthly/per-vehicle subscription fees.
+- **Tracking**: Mapbox integration for live GPS breadcrumbs (Epic 12).
+- **Emergency**: Roadside assistance 1-click dispatch via Partner Portal (Epic 17).
 
 ---
 
@@ -201,4 +226,5 @@ MobiRides is a vertically integrated mobility platform serving the Southern Afri
 ---
 **Revision History**
 - v1.0: Legacy Draft (Archived)
-- v2.6: 2026-04-13 **Definitive Zero-Loss Sequential Master** (Current)
+- v2.6: 2026-04-13 **Definitive Zero-Loss Master**
+- v2.7: 2026-04-13 **Strategic Growth Expansion (20 Epics)**
