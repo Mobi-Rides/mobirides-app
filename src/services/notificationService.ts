@@ -63,32 +63,28 @@ export class ResendEmailService {
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      const response = await fetch('/api/notifications/booking-confirmation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      console.log(`📤 Invoking resend-service for template: ${templateId} to: ${to}`);
+      
+      const { data, error } = await supabase.functions.invoke('resend-service', {
+        body: {
           to,
           templateId,
-          bookingData: dynamicData,
-          isHost: templateId === 'owner-booking-notification'
-        }),
+          dynamicData,
+          subject
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Error sending email:", data.error);
-        return { success: false, error: data.error || 'Failed to send email' };
+      if (error) {
+        console.error("Error invoking resend-service:", error);
+        return { success: false, error: error.message || 'Failed to send email' };
       }
 
-      if (!data.success) {
-        console.error("Error from API:", data.error);
-        return { success: false, error: data.error };
+      if (!data?.success) {
+        console.error("Error response from resend-service:", data?.error);
+        return { success: false, error: data?.error || 'Unknown error' };
       }
 
-      return { success: true, messageId: data.messageId };
+      return { success: true, messageId: data.data?.id };
     } catch (e) {
       console.error("Unhandled error in sendEmail:", e);
       const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
@@ -104,11 +100,17 @@ export class ResendEmailService {
       case 'booking-confirmation':
         return 'Booking Confirmation - MobiRides';
       case 'booking-request':
-        return 'New Booking Request - MobiRides';
+        return 'New Booking Request - Action Required';
       case 'pickup-reminder':
-        return 'Pickup Reminder - MobiRides';
+        return 'Reminder: Your rental starts soon';
       case 'return-reminder':
-        return 'Return Reminder - MobiRides';
+        return 'Reminder: Vehicle return due';
+      case 'verification-complete':
+        return 'Account Verified - MobiRides';
+      case 'verification-rejected':
+        return 'Action Required: Verification Review';
+      case 'wallet-notification':
+        return 'Wallet Update - MobiRides';
       default:
         return 'Notification from MobiRides';
     }
