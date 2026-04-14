@@ -63,23 +63,28 @@ export class ResendEmailService {
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
+      console.log(`📤 Invoking resend-service for template: ${templateId} to: ${to}`);
+      
       const { data, error } = await supabase.functions.invoke('resend-service', {
         body: {
           to,
           templateId,
-          bookingData: dynamicData,
-          isHost: templateId === 'owner-booking-notification'
+          dynamicData,
+          subject
         }
       });
 
-      if (error) throw error;
-
-      if (!data.success) {
-        console.error("Error from API:", data.error);
-        return { success: false, error: data.error };
+      if (error) {
+        console.error("Error invoking resend-service:", error);
+        return { success: false, error: error.message || 'Failed to send email' };
       }
 
-      return { success: true, messageId: data.messageId };
+      if (!data?.success) {
+        console.error("Error response from resend-service:", data?.error);
+        return { success: false, error: data?.error || 'Unknown error' };
+      }
+
+      return { success: true, messageId: data.data?.id };
     } catch (e) {
       console.error("Unhandled error in sendEmail:", e);
       const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
@@ -95,14 +100,77 @@ export class ResendEmailService {
       case 'booking-confirmation':
         return 'Booking Confirmation - MobiRides';
       case 'booking-request':
-        return 'New Booking Request - MobiRides';
+        return 'New Booking Request - Action Required';
       case 'pickup-reminder':
-        return 'Pickup Reminder - MobiRides';
+        return 'Reminder: Your rental starts soon';
       case 'return-reminder':
-        return 'Return Reminder - MobiRides';
+        return 'Reminder: Vehicle return due';
+      case 'verification-complete':
+        return 'Account Verified - MobiRides';
+      case 'verification-rejected':
+        return 'Action Required: Verification Review';
+      case 'wallet-notification':
+        return 'Wallet Update - MobiRides';
+      case 'welcome-renter':
+        return 'Welcome to MobiRides!';
+      case 'welcome-host':
+        return 'Welcome to MobiRides - Host Edition';
       default:
         return 'Notification from MobiRides';
     }
+  }
+
+  /**
+   * Send welcome email to new renters
+   */
+  async sendWelcomeEmail(
+    recipient: NotificationRecipient
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      user_name: recipient.name,
+      first_name: recipient.name.split(' ')[0],
+      email: recipient.email,
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'welcome-renter',
+      templateData,
+      'Welcome to MobiRides! 🚗'
+    );
+  }
+
+  /**
+   * Send verification status update email
+   */
+  async sendVerificationStatusUpdate(
+    recipient: NotificationRecipient,
+    approved: boolean,
+    reason?: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateKey = approved ? 'verification-complete' : 'verification-rejected';
+    const subject = approved 
+      ? 'Account Verified - Welcome to MobiRides!'
+      : 'Action Required: Your Verification was not approved';
+
+    return this.sendEmail(
+      recipient.email,
+      templateKey,
+      {
+        name: recipient.name,
+        rejectionReason: reason,
+        actionUrl: `${window.location.host}/profile`
+      },
+      subject
+    );
   }
 
   /**

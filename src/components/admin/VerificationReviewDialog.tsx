@@ -383,16 +383,10 @@ const AdminActions = ({
 
           if (emailResponse.data && emailResponse.data.length > 0) {
             const templateKey = newStatus === 'completed' ? 'verification-complete' : 'verification-rejected';
-            await emailService.sendEmail(
-              emailResponse.data,
-              templateKey,
-              {
-                name: profileResponse.data?.full_name || 'User',
-                title,
-                description,
-                actionUrl: `${window.location.origin}/dashboard`
-              },
-              title
+            await emailService.sendVerificationStatusUpdate(
+              { id: userId, email: emailResponse.data, name: profileResponse.data?.full_name || 'User' },
+              newStatus === 'completed',
+              newStatus === 'rejected' ? reason : undefined
             );
           }
         } catch (emailErr) {

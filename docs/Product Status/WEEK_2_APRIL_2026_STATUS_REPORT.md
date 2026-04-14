@@ -1,7 +1,7 @@
 # 📊 MobiRides Week 2 April 2026 Status Report
 
-**Report Date:** April 10, 2026  
-**Report Period:** Week 2 (April 4 – April 10, 2026)  
+**Report Date:** April 12, 2026  
+**Report Period:** Week 2 (April 6 – April 12, 2026)  
 **Version:** v2.9.1  
 **Prepared by:** Modisa Maphanyane  
 **Reference:** JIRA Production Readiness Plan v1.3
@@ -23,7 +23,7 @@
 
 ## 📋 Executive Summary
 
-Week 2 of April was a high-impact infrastructure and alignment sprint. The team completed **Arnold's full Sprint 9 backlog** (9/9 tickets delivered 2026-03-28), shipped the **Admin Settings overhaul** (Dynamic Pricing + Insurance SLA v1.1 alignment), and completed a **full security audit** that produced the MOB-700 series remediation plan (9 findings). Two new bugs were formally registered: **BUG-002** (security vulnerabilities) and **BUG-003** (`notification_type` enum dependency error blocking `db pull`).
+Week 2 of April focused on Sprint 10 execution: security hardening, database standardization, and infrastructure stabilization. The team completed the **Admin Settings overhaul**, finalized the **Insurance SLA v1.1 alignment**, and performed the **BUG-008 Email System Audit**. A critical discovery was made: 18/20 email templates are currently non-functional due to architectural routing failures, which now anchors the Sprint 11 roadmap.
 
 The Admin Dynamic Pricing section was rewritten to support all 8 rule types including **DESTINATION** pricing. The Insurance Settings section was rebuilt to match **Pay-U SLA v1.1** exactly (daily rate model, excess percentages, coverage caps, target segments). A migration added 4 new columns to `insurance_packages`. Documentation was updated across all status reports and sprint trackers to reflect BUG-001 and `platform_settings` completion.
 
@@ -75,7 +75,7 @@ The Admin Dynamic Pricing section was rewritten to support all 8 rule types incl
 
 ---
 
-## 🧩 System Health Explanation (Apr 4 → Apr 10)
+## 🧩 System Health & Discovery (Apr 6 → Apr 12)
 
 - **Admin Settings overhauled** — Dynamic Pricing now supports DESTINATION rule type and all 8 pricing rules. Insurance Settings rebuilt to Pay-U SLA v1.1 spec with daily rate model, excess percentages per tier, coverage caps, and international caps.
 - **Security audit completed** — First comprehensive security scan performed; 9 findings documented with acceptance criteria and migration SQL. Increases known vulnerability count but establishes remediation path.
@@ -107,7 +107,7 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 
 ## 🗓️ Sprint Overview
 
-### Sprint 9 Status (April 7–13) — IN PROGRESS
+### Sprint 9 Retrospective (Mar 30 – Apr 5) — COMPLETED
 
 **Theme:** Infrastructure Stability + Compliance + Test Coverage  
 **Progress:**
@@ -137,7 +137,7 @@ Active bugs are tracked in [`docs/BUG_REPORT.md`](../BUG_REPORT.md).
 **Not started (Duma):** S9-008, S9-012, S9-013, S9-014  
 **Not started (Tapologo):** S9-016, S9-017, S9-018, S9-019, S9-020
 
-### Sprint 10 Plan (April 14–20) — UPCOMING
+### Sprint 10 Conclusion (April 6 – 12) — COMPLETED
 
 **Theme:** Security Remediation + Service Wiring Completion + Test Coverage  
 See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md)

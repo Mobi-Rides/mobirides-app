@@ -1,5 +1,5 @@
 # Sprint 9 Jira-Style Execution Plan
-## MobiRides Application — April 7–13, 2026
+## MobiRides Application — March 30 – April 5, 2026
 
 **Prepared by:** Modisa Maphanyane  
 **Sprint:** Sprint 9  
@@ -507,17 +507,17 @@ A ticket is **Done** when:
 
 | Day | Arnold | Duma | Tapologo |
 |-----|--------|------|----------|
-| Mon Apr 7 | S9-001 (BUG-001), S9-002 (platform_settings) | Review S9-001/002 PRs, prep S9-005 | S9-020 (Android verify) |
-| Tue Apr 8 | S9-003 (dynamic_pricing_rules), S9-004 (soft-delete cols) | S9-005 (commission wiring), S9-007 (insurance fee) | S9-016 (handover tests) |
-| Wed Apr 9 | S9-009 (bulk-delete refactor), S9-010 (admin UI guard) | S9-006 (dynamic pricing wiring), S9-008 (delete-user refactor) | S9-017 (insurance tests) |
-| Thu Apr 10 | S9-011 (user_consents table), S9-015 (unverified reminder) | S9-012 (consent on signup), S9-013 (rental reminder cron) | S9-018 (admin portal tests) |
-| Fri Apr 11 | Review + buffer | S9-014 (return reminder cron) | S9-019 (extension tests), review |
+| Mon Mar 30 | S9-001 (BUG-001), S9-002 (platform_settings) | Review S9-001/002 PRs, prep S9-005 | S9-020 (Android verify) |
+| Tue Mar 31 | S9-003 (dynamic_pricing_rules), S9-004 (soft-delete cols) | S9-005 (commission wiring), S9-007 (insurance fee) | S9-016 (handover tests) |
+| Wed Apr 1 | S9-009 (bulk-delete refactor), S9-010 (admin UI guard) | S9-006 (dynamic pricing wiring), S9-008 (delete-user refactor) | S9-017 (insurance tests) |
+| Thu Apr 2 | S9-011 (user_consents table), S9-015 (unverified reminder) | S9-012 (consent on signup), S9-013 (rental reminder cron) | S9-018 (admin portal tests) |
+| Fri Apr 3 | Review + buffer | S9-014 (return reminder cron) | S9-019 (extension tests), review |
 
 ---
 
 ## 🏁 Sprint Review
 
-**Review Date:** April 13, 2026  
+**Review Date:** April 5, 2026  
 **Status:** 🟡 PARTIAL COMPLETION  
 
 ### Key Accomplishments

@@ -1,5 +1,5 @@
 # Sprint 10 Jira-Style Execution Plan
-## MobiRides Application — April 14–20, 2026
+## MobiRides Application — April 6–12, 2026
 
 **Prepared by:** Modisa Maphanyane  
 **Sprint:** Sprint 10  
@@ -535,11 +535,13 @@ A ticket is **Done** when:
 
 | Day | Arnold | Duma | Tapologo | Modisa |
 |-----|--------|------|----------|--------|
-| Mon Apr 14 | S10-001/002 (BUG-003), S10-003 (secrets) | S10-009 (commission), S10-010 (pricing), S10-011 (insurance fee) | S10-020 (Android), S10-016 (handover tests) | Review PRs |
-| Tue Apr 15 | S10-004 (add-admin auth), S10-005 (notifications RLS) | S10-012 (delete-user refactor) | S10-016 cont., S10-017 (insurance tests) | Review PRs |
-| Wed Apr 16 | S10-006 (financial RLS), S10-007 (edge fn validation) | S10-013 (consent on signup), S10-014 (rental cron) | S10-017 cont., S10-018 (admin tests) | Review PRs |
-| Thu Apr 17 | S10-008 (search_path) | S10-015 (return cron) | S10-018 cont., S10-019 (extension tests) | Review PRs |
-| Fri Apr 18 | Buffer + review | Buffer + review | S10-019 cont. | S10-021 (sign-off + reporting) |
+| Mon Apr 6 | S10-001/002 (BUG-003), S10-003 (secrets) | S10-009 (commission), S10-010 (pricing), S10-011 (insurance fee) | S10-020 (Android), S10-016 (handover tests) | Review PRs |
+| Tue Apr 7 | S10-004 (add-admin auth), S10-005 (notifications RLS) | S10-012 (delete-user refactor) | S10-016 cont., S10-017 (insurance tests) | Review PRs |
+| Wed Apr 8 | S10-006 (financial RLS), S10-007 (edge fn validation) | S10-013 (consent on signup), S10-014 (rental cron) | S10-017 cont., S10-018 (admin tests) | Review PRs |
+| Thu Apr 9 | S10-008 (search_path) | S10-015 (return cron) | S10-018 cont., S10-019 (extension tests) | Review PRs |
+| Fri Apr 10 | Buffer + review | Buffer + review | S10-019 cont. | S10-021 (sign-off + reporting) |
+| Sat Apr 11 | Review + Release Preparation | — | — | — |
+| Sun Apr 12 | Sprint Review | — | — | — |
 
 ---
 
@@ -592,7 +594,7 @@ A ticket is **Done** when:
 
 ## 🏁 Sprint Review
 
-**Review Date:** April 20, 2026  
+**Review Date:** April 12, 2026  
 **Status:** 🟡 INFRASTRUCTURE STABILIZED / SERVICE CARRY-OVER  
 
 ### Key Accomplishments
