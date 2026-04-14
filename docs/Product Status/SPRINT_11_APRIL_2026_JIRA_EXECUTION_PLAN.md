@@ -4,7 +4,7 @@
 **Prepared by:** Modisa Maphanyane  
 **Sprint:** Sprint 11  
 **Date:** April 10, 2026  
-**Status:** PLANNED
+**Status:** ✅ COMPLETE
 
 ---
 
@@ -280,8 +280,8 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-002 | Arnold | ✅ Done | MOB-712 Phase 2: Add 3 missing HTML templates |
 | S11-003 | Arnold | ✅ Done | MOB-712 Phase 3: Wire callers for verification + welcome emails |
 | S11-004 | Arnold | ✅ Done | MOB-712 Phase 4: Deprecate old API route |
-| S11-005 | Arnold | ❌ Not Started | MOB-801: Drop enum-dependent functions (carry-over S10-001) |
-| S11-006 | Arnold | ❌ Not Started | MOB-802: Remove redundant enum block (carry-over S10-002) |
+| S11-005 | Arnold | ✅ Done | MOB-801: Drop enum-dependent functions (carry-over S10-001) |
+| S11-006 | Arnold | ✅ Done | MOB-802: Remove redundant enum block (carry-over S10-002) |
 | S11-007 | Arnold | ✅ Done | MOB-702: Auth-gate add-admin (carry-over S10-004) |
 | S11-008 | Arnold | ✅ Done | MOB-703: Notifications RLS (carry-over S10-005) |
 | S11-009 | Arnold | ✅ Done | MOB-704: Financial tables RLS (carry-over S10-006) |
@@ -300,20 +300,20 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-022 | Tapologo | ✅ Done | Admin portal tests (carry-over S10-018) |
 | S11-023 | Tapologo | ✅ Done | Booking extension tests (carry-over S10-019) |
 | S11-024 | Tapologo | ✅ Done | Android gradle verification (carry-over S10-020) |
-| S11-025 | Modisa | ❌ Not Started | Sprint sign-off + reporting |
-| S11-026 | Modisa | ❌ Not Started | Beta pilot preparation |
-| S11-027 | Modisa | ❌ Not Started | Pre-seed funding materials |
-| S11-028 | Modisa | ❌ Not Started | Partner onboarding: Dumba Rentals / Trillo rentals traction metrics |
-| S11-029 | Modisa | ❌ Not Started | PRD Audit: Onboarding & Consent |
+| S11-025 | Modisa | ✅ Done | Sprint sign-off + reporting |
+| S11-026 | Modisa | ✅ Done | Beta pilot preparation |
+| S11-027 | Modisa | ✅ Done | Pre-seed funding materials |
+| S11-028 | Modisa | ✅ Done | Partner onboarding: Dumba Rentals / Trillo rentals traction metrics |
+| S11-029 | Modisa | ✅ Done | PRD Audit: Onboarding & Consent |
 
 ### Summary
 
 | Member | Completed | In Progress | Not Started | Total |
 |--------|-----------|-------------|-------------|-------|
-| Arnold | 7 | 0 | 4 | 11 |
+| Arnold | 9 | 0 | 2 | 11 |
 | Tapologo | 6 | 0 | 0 | 6 |
-| Modisa | 7 | 0 | 6 | 13 |
-| **TOTAL** | **20** | **0** | **10** | **30** |
+| Modisa | 12 | 0 | 0 | 12 |
+| **TOTAL** | **27** | **0** | **2** | **29** |
 
 ---
 
