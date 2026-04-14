@@ -111,9 +111,66 @@ export class ResendEmailService {
         return 'Action Required: Verification Review';
       case 'wallet-notification':
         return 'Wallet Update - MobiRides';
+      case 'welcome-renter':
+        return 'Welcome to MobiRides!';
+      case 'welcome-host':
+        return 'Welcome to MobiRides - Host Edition';
       default:
         return 'Notification from MobiRides';
     }
+  }
+
+  /**
+   * Send welcome email to new renters
+   */
+  async sendWelcomeEmail(
+    recipient: NotificationRecipient
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      user_name: recipient.name,
+      first_name: recipient.name.split(' ')[0],
+      email: recipient.email,
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'welcome-renter',
+      templateData,
+      'Welcome to MobiRides! 🚗'
+    );
+  }
+
+  /**
+   * Send verification status update email
+   */
+  async sendVerificationStatusUpdate(
+    recipient: NotificationRecipient,
+    approved: boolean,
+    reason?: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateKey = approved ? 'verification-complete' : 'verification-rejected';
+    const subject = approved 
+      ? 'Account Verified - Welcome to MobiRides!'
+      : 'Action Required: Your Verification was not approved';
+
+    return this.sendEmail(
+      recipient.email,
+      templateKey,
+      {
+        name: recipient.name,
+        rejectionReason: reason,
+        actionUrl: `${window.location.host}/profile`
+      },
+      subject
+    );
   }
 
   /**
