@@ -305,6 +305,7 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 | S11-027 | Modisa | ✅ Done | Pre-seed funding materials |
 | S11-028 | Modisa | ✅ Done | Partner onboarding: Dumba Rentals / Trillo rentals traction metrics |
 | S11-029 | Modisa | ✅ Done | PRD Audit: Onboarding & Consent |
+| S11-030 | Modisa | 🔴 Not Started | MOB-811: Admin bulk notification broadcast UI — `system_notification` template + Admin UI + rate limiting |
 
 ### Summary
 
@@ -312,8 +313,8 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 |--------|-----------|-------------|-------------|-------|
 | Arnold | 9 | 0 | 2 | 11 |
 | Tapologo | 6 | 0 | 0 | 6 |
-| Modisa | 12 | 0 | 0 | 12 |
-| **TOTAL** | **27** | **0** | **2** | **29** |
+| Modisa | 12 | 0 | 1 | 13 |
+| **TOTAL** | **27** | **0** | **3** | **30** |
 
 ---
 

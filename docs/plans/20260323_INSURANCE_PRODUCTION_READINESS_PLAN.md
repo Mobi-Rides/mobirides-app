@@ -1,9 +1,25 @@
 # Insurance Module — Production Readiness Implementation Plan
 
 **Date:** 23 March 2026  
-**Sprint:** Sprint 8 Candidate (March 24–30, 2026)  
-**Status:** DRAFT — Awaiting Review  
+**Last Updated:** April 15, 2026  
+**Sprint:** Sprint 8 Candidate → Delivered Sprint 8–11 (partial)  
+**Status:** 🟡 Partially Live — Phase 1 (schema alignment: `daily_rate`, `excess_percentage`, `target_segment`, `international_cap_usd` columns) shipped in Sprint 8/9. Outstanding: G4 (real excess payment), G5 (`InsuranceComparison` stub), G6 (`PolicyDetailsCard` stub), G8 (4 email templates undeployed).  
 **Objective:** Close all remaining gaps to bring the Damage Protection module to production-ready status.
+
+### Status Summary (as of April 15, 2026)
+
+| Gap | Description | Status |
+|-----|-------------|--------|
+| G1 — Pricing model | SLA flat daily rates aligned (`daily_premium_amount`) | ✅ Done (Sprint 8) |
+| G2 — Excess model | `excess_percentage` column added | ✅ Done (Sprint 8) |
+| G3 — Missing DB tables | `insurance_commission_rates`, `premium_remittance_batches` | ✅ Done (Sprint 8) |
+| G4 — Excess payment | `ExcessPaymentModal` still uses `setTimeout` simulation | 🔴 Outstanding |
+| G5 — `InsuranceComparison` stub | 19-line placeholder | 🔴 Outstanding |
+| G6 — `PolicyDetailsCard` stub | 19-line placeholder | 🔴 Outstanding |
+| G7 — Notification type | Workaround enum in place | 🟡 Acceptable for now |
+| G8 — Email templates | 4 Resend templates not created in dashboard | 🔴 Outstanding |
+| G9 — pg_cron verification | Not confirmed in production | 🟡 Needs verification |
+| G10 — E2E tests | `insuranceClaims.test.tsx` does not exist | 🔴 Outstanding |
 
 ---
 

@@ -1,9 +1,21 @@
 # Anonymize-on-Delete Implementation Plan
 
 **Created:** 2026-03-02  
-**Status:** Planning  
+**Last Updated:** April 15, 2026  
+**Status:** 🟡 Partially Live — Phases 1–2 shipped (Sprint 9 + S11-015). Phases 3–6 (admin table guards, RLS updates, testing, docs) outstanding and unverified.  
 **Priority:** P1 — Data Integrity / Business Analytics Preservation  
-**Owner:** Engineering  
+**Owner:** Engineering
+
+### Status Summary (as of April 15, 2026)
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 — DB Migration | `is_deleted`, `deleted_at`, `deleted_by` columns on `profiles` | ✅ Done (S9-004) |
+| Phase 2 — Edge Functions | `delete-user-with-transfer` + `bulk-delete-users` refactored | ✅ Done (S9-009, S11-015) |
+| Phase 3 — Frontend Guards | Admin table filter for soft-deleted users | 🔴 Needs verification |
+| Phase 4 — RLS Policies | `is_deleted = false` filter on `profiles` SELECT policies | 🔴 Needs verification |
+| Phase 5 — Testing | E2E test cases (MOB-137) | 🔴 Not Started |
+| Phase 6 — Documentation | Update `INSURANCE_README.md`, knowledge base | 🔴 Not Started |  
 
 ---
 

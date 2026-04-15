@@ -205,6 +205,7 @@ See: [SPRINT_11_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_11_APRIL_2026_JIRA_EXE
 | S11-026: Beta pilot criteria formalization | Modisa | Apr 18 | P1 |
 | S11-028: Partner onboarding traction assessment | Modisa | Apr 18 | P2 |
 | S11-029: PRD audit artifact creation | Modisa | Apr 18 | P1 |
+| **S11-030: MOB-811 — Admin bulk notification broadcast UI** | **Modisa** | **Apr 20** | **P2** |
 | MOB-712 end-to-end delivery verification | Arnold | Apr 17 | P0 |
 
 ---
@@ -313,7 +314,8 @@ See: [SPRINT_11_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_11_APRIL_2026_JIRA_EXE
 ### Active Plans
 - [Insurance Production Readiness Plan](../20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md)
 - [Admin Settings Implementation Plan](../20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md)
-- [Email Notification Enhancement Plan](../plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md)
+- [Email & Notification System Enhancement Plan](../plans/20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md) — 🟡 Partially Live: Phases 0–3 delivered in Sprint 11. **Phase 4 (MOB-811: Admin bulk broadcasts) assigned to Modisa (S11-030), due Apr 20.**
+- [Email Notification Architecture Fix Plan](../plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md) — ✅ Phases 1–3 complete; Phase 4 cleanup in progress (S11-004)
 - [Anonymize-on-Delete Plan](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)
 - [Damage Protection SLA v1.1](Damage%20Protection%20Service%20Level%20Agreement.md)
 - [Security Remediation Plan](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md)
