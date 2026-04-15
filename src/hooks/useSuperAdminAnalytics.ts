@@ -250,9 +250,50 @@ export const useSuperAdminAnalytics = () => {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'cancelled');
 
-      // Get revenue data (this would need a payments table)
-      // For now, we'll use a placeholder
-      const revenue = 0;
+      // Get revenue data from completed bookings and wallet transactions
+      let revenue = 0;
+
+      // Source 1: Sum total_price from completed bookings
+      try {
+        const { data: completedBookingsData } = await supabase
+          .from('bookings')
+          .select('total_price')
+          .eq('status', 'completed');
+
+        revenue = completedBookingsData?.reduce((sum, b) => sum + (b.total_price || 0), 0) || 0;
+      } catch (error) {
+        console.warn('Could not fetch completed bookings revenue:', error);
+      }
+
+      // Source 2: Fallback to payment_transactions if no completed bookings revenue
+      if (revenue === 0) {
+        try {
+          const { data: paymentData } = await supabase
+            .from('payment_transactions')
+            .select('amount')
+            .eq('status', 'completed');
+
+          revenue = paymentData?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+        } catch (error) {
+          console.warn('Could not fetch payment_transactions revenue:', error);
+        }
+      }
+
+      // Source 3: Fallback to wallet_transactions rental earnings
+      if (revenue === 0) {
+        try {
+          const { data: walletData } = await supabase
+            .from('wallet_transactions')
+            .select('amount')
+            .eq('status', 'completed')
+            .in('transaction_type', ['rental_earnings', 'credit']);
+
+          revenue = walletData?.reduce((sum, t) => sum + (t.amount > 0 ? t.amount : 0), 0) || 0;
+        } catch (error) {
+          console.warn('Could not fetch wallet_transactions revenue:', error);
+        }
+      }
+
       const averageBookingValue = totalBookings ? revenue / totalBookings : 0;
 
       setSystemMetrics({
