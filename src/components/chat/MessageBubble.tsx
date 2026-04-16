@@ -23,6 +23,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MessageBubbleProps {
   message: Message;
@@ -53,10 +54,28 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const [showActions, setShowActions] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMarkingRead, setIsMarkingRead] = useState(false);
   const isOwnMessage = message.senderId === currentUser.id;
 
   const handleCopyMessage = () => {
     navigator.clipboard.writeText(message.content);
+  };
+
+  const handleMarkAsRead = async () => {
+    setIsMarkingRead(true);
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('messages')
+        .update({ read_at: now, delivery_status: 'read' })
+        .eq('id', message.id);
+      if (!error) {
+        message.read_at = now;
+        message.delivery_status = 'read';
+      }
+    } finally {
+      setIsMarkingRead(false);
+    }
   };
 
   const commonReactions = ['👍', '❤️', '😂', '😮', '😢', '👏'];
@@ -349,6 +368,14 @@ export function MessageBubble({
                       </div>
                     </DropdownMenuItem>
 
+                    {/* Manual Mark as Read for recipient only, if not already read */}
+                    {!isOwnMessage && !message.read_at && (
+                      <DropdownMenuItem onClick={handleMarkAsRead} disabled={isMarkingRead}>
+                        <Check className="w-4 h-4 mr-2" />
+                        {isMarkingRead ? 'Marking...' : 'Mark as Read'}
+                      </DropdownMenuItem>
+                    )}
+
                     {isOwnMessage && (
                       <>
                         <DropdownMenuItem
@@ -373,15 +400,16 @@ export function MessageBubble({
             "flex items-center gap-1 mt-1",
             isOwnMessage ? "justify-end" : "justify-start"
           )}>
-            {message.status === 'sent' && (
+            {/* Tick marks based on delivery_status and read_at */}
+            {message.delivery_status === 'sent' && (
               <Check className="w-3 h-3 text-muted-foreground" />
             )}
-            {message.status === 'delivered' && (
+            {message.delivery_status === 'delivered' && (
               <CheckCheck className="w-3 h-3 text-muted-foreground" />
             )}
-            {message.status === 'read' && (
+            {message.delivery_status === 'read' || message.read_at ? (
               <CheckCheck className="w-3 h-3 text-primary" />
-            )}
+            ) : null}
             <p className="text-xs text-muted-foreground">
               {format(message.timestamp, 'HH:mm')}
               {message.edited && (
