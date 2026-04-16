@@ -35,6 +35,8 @@ export interface Message {
       name: string;
     };
   };
+  read_at?: string | null;
+  delivery_status?: 'sent' | 'delivered' | 'read';
 }
 
 export interface MessageReaction {
