@@ -37,12 +37,18 @@ export class NotificationService {
       const userEmail = user?.email;
       if (userEmail) {
         const emailService = ResendEmailService.getInstance();
+        const templateId = type === 'topup' ? 'wallet-topup' : 'wallet-notification';
+        
         await emailService.sendEmail(
           userEmail,
-          'wallet-notification',
+          templateId,
           {
-            type: type,
+            name: user.user_metadata?.full_name || 'User',
             amount: amount.toFixed(2),
+            newBalance: amount.toFixed(2), // This should ideally be the real balance
+            paymentMethod: 'Wallet Payment',
+            transactionId: 'W-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+            type: type,
             description: description || `Wallet ${type} of P${amount.toFixed(2)}`
           },
           `Wallet ${type.charAt(0).toUpperCase() + type.slice(1)} - MobiRides`
