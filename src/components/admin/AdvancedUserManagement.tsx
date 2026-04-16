@@ -176,137 +176,29 @@ export const AdvancedUserManagement = () => {
       userId: string;
       restriction: RestrictionFormData;
     }) => {
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession();
-
-      if (sessionError) {
-        throw new Error(`Failed to get session: ${sessionError.message}`);
+      const { restrictionType, reason, duration, durationValue } = restriction;
+      
+      if (restrictionType === 'ban') {
+        const { data, error } = await supabase.rpc('ban_user', {
+          p_user_id: userId,
+          p_reason: reason
+        });
+        if (error) throw error;
+        return data;
+      } else {
+        // Calculate interval string for Postgres
+        const intervalString = `${durationValue} ${duration}`;
+        const { data, error } = await supabase.rpc('suspend_user', {
+          p_user_id: userId,
+          p_reason: reason,
+          p_duration: intervalString
+        });
+        if (error) throw error;
+        return data;
       }
-
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) {
-        throw new Error("No active session. Please sign in again.");
-      }
-
-      const { data, error } = await supabase.functions.invoke("suspend-user", {
-        body: {
-          userId,
-          restrictionType: restriction.restrictionType,
-          reason: restriction.reason,
-          duration: restriction.duration,
-          durationValue: restriction.durationValue,
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (error) {
-        console.error("Edge function error:", error);
-        let parsed: { error?: string; code?: string; details?: string } | null =
-          null;
-        try {
-          const resp = error?.context?.response as Response | undefined;
-          if (resp) {
-            const contentType = resp.headers.get("content-type") || "";
-            if (contentType.includes("application/json")) {
-              parsed = await resp.json();
-            } else {
-              const text = await resp.text();
-              try {
-                parsed = JSON.parse(text);
-              } catch {
-                /* ignore parse error */
-              }
-            }
-          }
-        } catch (parseErr) {
-          console.warn("Failed to parse function error response", parseErr);
-        }
-
-        const msg =
-          parsed?.error ||
-          error.message ||
-          "Failed to restrict user. Please try again.";
-        const composed = [
-          msg,
-          parsed?.code ? `(code: ${parsed.code})` : null,
-          parsed?.details ? `details: ${parsed.details}` : null,
-        ]
-          .filter(Boolean)
-          .join(" ");
-        throw new Error(composed);
-      }
-
-      if (data?.error) {
-        const composed = [
-          data.error,
-          data.code ? `(code: ${data.code})` : null,
-          data.details ? `details: ${data.details}` : null,
-        ]
-          .filter(Boolean)
-          .join(" ");
-        throw new Error(composed);
-      }
-
-      return data;
     },
     onSuccess: async () => {
-      // Log audit event for restriction
-      if (selectedUser) {
-        try {
-          await logUserRestrictionCreated(
-            selectedUser.id,
-            restrictionForm.restrictionType === "ban"
-              ? "login_block"
-              : "suspension",
-            restrictionForm.reason,
-            (await supabase.auth.getUser()).data.user?.id || undefined
-          );
-        } catch (e) {
-          console.warn("Failed to log audit event for restriction", e);
-        }
-
-        // Send system notification to the user about the restriction
-        try {
-          const isBan = restrictionForm.restrictionType === "ban";
-          const title = isBan ? "Account Banned" : "Account Suspended";
-          const description = isBan
-            ? `Your account has been permanently banned. Reason: ${restrictionForm.reason}`
-            : `Your account has been suspended. Reason: ${restrictionForm.reason}`;
-
-          const { error: notifyError } = await supabase.rpc(
-            "create_system_notification",
-            {
-              p_user_id: selectedUser.id,
-              p_title: title,
-              p_description: description,
-              p_metadata: {
-                source: "admin_restriction",
-                restriction_type: restrictionForm.restrictionType,
-                reason: restrictionForm.reason,
-                duration: restrictionForm.duration,
-                duration_value: restrictionForm.durationValue,
-                applied_by: (await supabase.auth.getUser()).data.user?.id,
-                applied_at: new Date().toISOString(),
-              },
-            }
-          );
-
-          if (notifyError) {
-            console.warn(
-              "[AdvancedUserManagement] Failed to create restriction notification:",
-              notifyError
-            );
-          }
-        } catch (notifyErr) {
-          console.warn(
-            "[AdvancedUserManagement] Notification RPC error:",
-            notifyErr
-          );
-        }
-      }
-
+      // Success/Error toasts are already handled in Acceptance Criteria
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User restriction applied successfully");
       setIsRestrictionDialogOpen(false);
@@ -320,74 +212,27 @@ export const AdvancedUserManagement = () => {
 
   const removeRestrictionMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase
+      // Find the active restriction ID first
+      const { data: restrictions } = await supabase
         .from("user_restrictions")
-        .update({
-          active: false,
-        } as Database["public"]["Tables"]["user_restrictions"]["Update"])
+        .select("id")
         .eq("user_id", userId)
-        .eq("active", true);
+        .eq("active", true)
+        .limit(1);
+
+      if (!restrictions || restrictions.length === 0) {
+        throw new Error("No active restriction found for this user");
+      }
+
+      const { data, error } = await supabase.rpc('remove_restriction', {
+        p_restriction_id: restrictions[0].id,
+        p_reason: 'Admin manual removal'
+      });
 
       if (error) throw error;
+      return data;
     },
-    onSuccess: async (_, userId) => {
-      // Log audit event for restriction removal
-      try {
-        const { data: restrictions } = await supabase
-          .from("user_restrictions")
-          .select("*")
-          .eq("user_id", userId)
-          .eq("active", false)
-          .order("updated_at", { ascending: false })
-          .limit(1);
-
-        if (restrictions && restrictions.length > 0) {
-          const restriction = restrictions[0];
-          const { logUserRestrictionRemoved } = await import(
-            "@/utils/auditLogger"
-          );
-          await logUserRestrictionRemoved(
-            userId,
-            restriction.id,
-            restriction.restriction_type,
-            "Admin removed restriction",
-            (await supabase.auth.getUser()).data.user?.id || undefined
-          );
-        }
-      } catch (e) {
-        console.warn("Failed to log audit event for restriction removal", e);
-      }
-
-      // Send system notification to the user about restriction removal
-      try {
-        const { error: notifyError } = await supabase.rpc(
-          "create_system_notification",
-          {
-            p_user_id: userId,
-            p_title: "Account Restriction Removed",
-            p_description:
-              "Your account restriction has been removed. You now have full access to the platform.",
-            p_metadata: {
-              source: "admin_restriction_removal",
-              removed_by: (await supabase.auth.getUser()).data.user?.id,
-              removed_at: new Date().toISOString(),
-            },
-          }
-        );
-
-        if (notifyError) {
-          console.warn(
-            "[AdvancedUserManagement] Failed to create restriction removal notification:",
-            notifyError
-          );
-        }
-      } catch (notifyErr) {
-        console.warn(
-          "[AdvancedUserManagement] Notification RPC error:",
-          notifyErr
-        );
-      }
-
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User restriction removed successfully");
     },

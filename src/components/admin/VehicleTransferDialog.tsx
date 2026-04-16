@@ -117,14 +117,28 @@ export const VehicleTransferDialog: React.FC<VehicleTransferDialogProps> = ({
 
     setIsValidating(true);
     try {
-      // Mock validation since RPC function doesn't exist
-      const mockValidation: TransferValidation = {
-        valid: true,
-        warnings: [],
-        errors: []
-      };
-      setValidationResult(mockValidation);
-      toast.success("Transfer validated successfully");
+      const { data, error } = await supabase.rpc('validate_vehicle_transfer', {
+        p_vehicle_id: vehicleId,
+        p_from_owner_id: fromOwnerId,
+        p_to_owner_id: toUserId
+      });
+
+      if (error) throw error;
+
+      // Handle the composite type return value correctly
+      // Supabase JS might return it as an object
+      const result = data as any;
+      setValidationResult({
+        valid: result.valid,
+        warnings: result.warnings || [],
+        errors: result.errors || []
+      });
+
+      if (result.valid && (!result.errors || result.errors.length === 0)) {
+        toast.success("Transfer validated successfully");
+      } else if (result.errors && result.errors.length > 0) {
+        toast.error("Transfer validation failed");
+      }
     } catch (error) {
       console.error("Validation error:", error);
       toast.error("Failed to validate transfer");
@@ -140,9 +154,16 @@ export const VehicleTransferDialog: React.FC<VehicleTransferDialogProps> = ({
         throw new Error("All fields are required");
       }
 
-      // Mock transfer since RPC function doesn't exist
-      toast.info("Vehicle transfer functionality requires database RPC functions to be implemented");
-      throw new Error("Vehicle transfer RPC function not implemented yet");
+      const { data, error } = await supabase.rpc('transfer_vehicle', {
+        p_vehicle_id: vehicleId,
+        p_from_owner_id: fromOwnerId,
+        p_to_owner_id: selectedUser.id,
+        p_reason: transferReason,
+        p_notes: 'Initiated from Admin Portal'
+      });
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success("Vehicle transferred successfully");
