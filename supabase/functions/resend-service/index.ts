@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { z } from "https://deno.land/x/zod/mod.ts";
 
 export interface EmailTemplateData {
   [key: string]: string | number | boolean | undefined | null;
@@ -1876,15 +1877,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface EmailRequest {
-  to: string;
-  subject?: string;
-  html?: string;
-  templateId?: string;
-  dynamicData?: Record<string, unknown>;
-  type?: string;
-  user_name?: string;
-}
+const EmailRequestSchema = z.object({
+  to: z.string().email(),
+  subject: z.string().optional(),
+  html: z.string().optional(),
+  templateId: z.string().optional(),
+  dynamicData: z.record(z.unknown()).optional(),
+  type: z.string().optional(),
+  user_name: z.string().optional(),
+}).refine(data => data.templateId || data.html, {
+  message: "Either templateId or html content must be provided",
+  path: ["templateId", "html"]
+});
+
+type EmailRequest = z.infer<typeof EmailRequestSchema>;
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -1893,7 +1899,20 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, subject, templateId, dynamicData, html } = await req.json() as EmailRequest;
+    const body = await req.json();
+    const result = EmailRequestSchema.safeParse(body);
+
+    if (!result.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request payload", 
+          details: result.error.format() 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { to, subject, templateId, dynamicData, html } = result.data;
 
     // Construct email payload
     const emailPayload: { from: string; to: string[]; subject?: string; html?: string } = {
