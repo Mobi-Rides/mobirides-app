@@ -84,37 +84,35 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
       toast.error(`Failed to assign role: ${error.message}`);
     },
   });
-
-  const suspendMutation = useMutation({
-    mutationFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) throw new Error("No active session");
-
-      const { data, error } = await supabase.functions.invoke("suspend-user", {
-        body: {
-          userId: user.id,
-          restrictionType: suspendType,
-          reason: suspendReason,
-          duration: suspendType === "ban" ? "permanent" : "days",
-          durationValue: 7,
-        },
-        headers: { Authorization: `Bearer ${accessToken}` },
+const suspendMutation = useMutation({
+  mutationFn: async () => {
+    if (suspendType === 'ban') {
+      const { data, error } = await supabase.rpc('ban_user', {
+        p_user_id: userId,
+        p_reason: suspendReason
       });
-
-      if (error) throw new Error(error.message);
+      if (error) throw error;
       return data;
-    },
-    onSuccess: () => {
-      toast.success(suspendType === "ban" ? "User banned" : "User suspended");
-      setIsSuspendDialogOpen(false);
-      setSuspendReason("");
-      queryClient.invalidateQueries({ queryKey: ["admin-users-complete"] });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to ${suspendType} user: ${error.message}`);
-    },
-  });
+    } else {
+      const { data, error } = await supabase.rpc('suspend_user', {
+        p_user_id: userId,
+        p_reason: suspendReason,
+        p_duration: '7 days'
+      });
+      if (error) throw error;
+      return data;
+    }
+  },
+  onSuccess: () => {
+    toast.success(suspendType === "ban" ? "User banned" : "User suspended");
+    setIsSuspendDialogOpen(false);
+    setSuspendReason("");
+    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+  },
+  onError: (error: Error) => {
+    toast.error(`Failed to ${suspendType} user: ${error.message}`);
+  },
+});
 
   const removeRestrictionMutation = useMutation({
     mutationFn: async () => {
