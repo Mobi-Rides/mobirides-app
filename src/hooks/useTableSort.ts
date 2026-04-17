@@ -26,7 +26,7 @@ export function useTableSort<T>(data: T[]) {
   };
 
   const sortedData = useMemo(() => {
-    if (!sortKey) return data;
+    if (!sortKey) return [...data]; // Always return a new array to preserve order
     return [...data].sort((a, b) => {
       const aVal = getNestedValue(a, sortKey);
       const bVal = getNestedValue(b, sortKey);
