@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, CheckCircle, XCircle, Eye, Pencil, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { ResendEmailService } from "@/services/notificationService";
 
 interface PendingCar {
   id: string;
@@ -74,7 +75,7 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
 
   const displayCars = isPreview ? filteredCars.slice(0, maxItems) : filteredCars;
 
-  const handleApproveCar = async (carId: string) => {
+  const handleApproveCar = async (carId: string, ownerId: string, carName: string) => {
     try {
       const { error } = await supabase
         .from("cars")
@@ -83,6 +84,26 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
 
       if (error) throw error;
       
+      // Send notification
+      try {
+        const emailService = ResendEmailService.getInstance();
+        const { data: emailData } = await supabase.rpc('get_user_email_for_notification', { user_uuid: ownerId });
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', ownerId).maybeSingle();
+
+        if (emailData && emailData.length > 0) {
+          await emailService.sendListingStatusUpdate(
+            { id: ownerId, email: emailData, name: profile?.full_name || 'Owner' },
+            { 
+              carName, 
+              status: 'approved', 
+              listingUrl: `${window.location.origin}/cars/${carId}` 
+            }
+          );
+        }
+      } catch (notifyErr) {
+        console.warn("Failed to send car approval notification:", notifyErr);
+      }
+
       refetch();
       toast.success("Car approved successfully");
     } catch (error) {
@@ -91,7 +112,7 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
     }
   };
 
-  const handleRejectCar = async (carId: string) => {
+  const handleRejectCar = async (carId: string, ownerId: string, carName: string) => {
     try {
       const { error } = await supabase
         .from("cars")
@@ -100,6 +121,26 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
 
       if (error) throw error;
       
+      // Send notification
+      try {
+        const emailService = ResendEmailService.getInstance();
+        const { data: emailData } = await supabase.rpc('get_user_email_for_notification', { user_uuid: ownerId });
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', ownerId).maybeSingle();
+
+        if (emailData && emailData.length > 0) {
+          await emailService.sendListingStatusUpdate(
+            { id: ownerId, email: emailData, name: profile?.full_name || 'Owner' },
+            { 
+              carName, 
+              status: 'rejected', 
+              listingUrl: `${window.location.origin}/dashboard` 
+            }
+          );
+        }
+      } catch (notifyErr) {
+        console.warn("Failed to send car rejection notification:", notifyErr);
+      }
+
       refetch();
       toast.success("Car listing rejected");
     } catch (error) {
@@ -111,6 +152,7 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
   const renderCarRow = (car: PendingCar) => {
     const daysPending = Math.floor((Date.now() - new Date(car.created_at).getTime()) / (1000 * 60 * 60 * 24));
     const isStale = daysPending > 30;
+    const carName = `${car.brand} ${car.model}`;
     
     return (
     <TableRow key={car.id}>
@@ -144,14 +186,14 @@ export const CarVerificationTable: React.FC<CarVerificationTableProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleApproveCar(car.id)}
+            onClick={() => handleApproveCar(car.id, car.owner_id, carName)}
           >
             <CheckCircle className="h-4 w-4 text-green-600" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleRejectCar(car.id)}
+            onClick={() => handleRejectCar(car.id, car.owner_id, carName)}
           >
             <XCircle className="h-4 w-4 text-destructive" />
           </Button>
