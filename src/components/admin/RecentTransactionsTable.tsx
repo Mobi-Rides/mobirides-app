@@ -16,8 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, TrendingUp, TrendingDown, Download } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Download, Eye } from "lucide-react";
 import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
+import { TransactionJourneyDialog } from "./finance/TransactionJourneyDialog";
 
 interface Transaction {
   id: string;
@@ -27,6 +28,7 @@ interface Transaction {
   created_at: string;
   status: string;
   wallet_id: string;
+  booking_id?: string;
   host_wallets?: {
     host_id: string;
     profiles?: {
@@ -67,6 +69,7 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
   maxItems = 5 
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [journeyBookingId, setJourneyBookingId] = useState<string | null>(null);
   const { data: transactions, isLoading, error } = useRecentTransactions();
 
   const filteredTransactions = useMemo(() => transactions?.filter(transaction =>
@@ -143,6 +146,13 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
           {transaction.transaction_type === "commission_deduction" ? "-" : "+"}
           P{Math.abs(transaction.amount).toFixed(2)}
         </span>
+      </TableCell>
+      <TableCell>
+        {transaction.booking_id && (
+          <Button variant="ghost" size="sm" onClick={() => setJourneyBookingId(transaction.booking_id)} title="View journey">
+            <Eye className="h-4 w-4" />
+          </Button>
+        )}
       </TableCell>
     </TableRow>
   );

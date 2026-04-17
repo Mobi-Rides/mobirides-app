@@ -20,6 +20,7 @@ import { Search, Download, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 import { BookingDetailsDialog } from "./BookingDetailsDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Booking {
   id: string;
