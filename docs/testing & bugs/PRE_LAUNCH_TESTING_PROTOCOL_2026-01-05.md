@@ -6,7 +6,8 @@
 **Testing Lead:** Arnold (Technical Lead)  
 **Support:** Duma, Tebogo  
 **First Round Testers:** Oratile (Community & PR), Pearl (Customer Success), Loago (Chief of Staff)  
-**Extended Team:** Natasha & Kelvin (Creative), Ella (Finance), Jessica (Marketing)
+**Extended Team:** Natasha & Kelvin (Creative), Ella (Finance), Jessica (Marketing)  
+**External QA:** Tapologo (QA Engineer — 197 test cases executed, April 2026)
 
 > **📊 Latest Testing Coverage Report:** [TESTING_COVERAGE_STATUS_2026_03_02.md](./TESTING_COVERAGE_STATUS_2026_03_02.md)  
 > **🔧 Active Hotfix Tracker:** [HOTFIX_ADMIN_PORTAL_2026_02_24.md](../hotfixes/HOTFIX_ADMIN_PORTAL_2026_02_24.md)  
@@ -77,6 +78,39 @@ This document establishes the comprehensive pre-launch testing protocol for Mobi
 | Unique test cases covered | 197 | 197 executed of 197 defined | ✅ All attempted |
 
 > ⚠️ **Action Required:** See [Testing Coverage Status Report](./TESTING_COVERAGE_STATUS_2026_03_02.md) for the full bug registry (MOB-201 through MOB-225) and Round 2 test assignments.
+
+### Tapologo QA Testing Results (April 2026)
+
+An independent QA verification was conducted by **Tapologo** in April 2026 using a comprehensive 197-test-case spreadsheet covering all functional areas.
+
+| Metric | Value |
+|--------|-------|
+| Total Test Cases | 197 |
+| Passed | 119 |
+| Failed | 0 |
+| Blocked | 0 |
+| Execution Rate | 72.1% |
+| Test Categories | 15 modules |
+
+#### Test Coverage by Module (Tapologo)
+
+| Module | Test Cases | Passed | Status | Notes |
+|--------|-----------|--------|--------|-------|
+| Authentication & Profile | 27 | 16 Passed, 9 In Progress | ✅ Executed | Core auth flows verified |
+| Verification (KYC) | 18 | 13 Passed, 4 Not Run, 1 In Progress | ✅ Executed | 4 admin tests not run |
+| Vehicle Management | 25 | 18 Passed, 4 In Progress, 3 Not Run | ✅ Executed | Full car listing/creation tested |
+| Booking System | 20 | 12 Passed, 5 Not Run, 3 In Progress | ✅ Executed | Core booking flows verified |
+| Payment & Wallet | 9 | 4 Passed, 3 In Progress, 1 Out of Scope, 1 Not Run | ✅ Executed | Wallet operations tested |
+| Messaging | 12 | 10 Passed, 2 Not Run | ✅ Executed | Conversations & real-time tested |
+| Handover Process | 15 | 15 Passed | ✅ Complete | All handover steps verified |
+| Reviews & Ratings | 8 | All Not Run | ⚠️ Not Executed | Needs renter-side testing |
+| Navigation & Maps | 10 | 6 Passed, 2 In Progress, 2 Not Run | ✅ Executed | Map display & search verified |
+| Notifications | 11 | 10 Passed, 1 In Progress | ✅ Executed | Notification delivery verified |
+| Admin Dashboard | 20 | All Not Run | ⚠️ Not Executed | Admin portal not tested |
+| Insurance System | 15 | 10 Passed, 5 In Progress | ✅ Executed | Claims flow verified |
+| Promo Codes | 8 | 2 Passed, 6 Not Run | ⚠️ Partial | Basic promo code tested |
+
+> **Note:** Tapologo's testing sheet (`/workspace/Tapologo_Testing Sheet.xlsx`) provides detailed test case documentation and can serve as the baseline for automated test conversion.
 
 ---
 
@@ -1434,8 +1468,8 @@ Test on the following browsers:
 
 **Document Prepared By:** Arnold (Technical Lead)  
 **Document Date:** January 5, 2026  
-**Last Updated:** March 2, 2026 (v2.0.0 — added execution results, coverage status, Round 2 plan)  
-**Next Review:** March 7, 2026 (End of Phase 3 bug fixes)  
+**Last Updated:** April 17, 2026 (v2.1.0 — added Tapologo QA results)  
+**Next Review:** TBD  
 **Distribution:** Technical Team, Business Stakeholders, Beta Coordinators
 
 ### Related Documents
