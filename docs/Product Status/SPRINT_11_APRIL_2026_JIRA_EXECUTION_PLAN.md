@@ -313,22 +313,25 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 - **Owner Mismatch (S11-010)**: Document lists Arnold, Linear shows Modisa (Status: Done).
 - **Owner Mismatch (S11-024)**: Document lists Tapologo, Linear shows Modisa (Status: In Progress).
-- **In Review Tasks**: Arnold has `MOB-21` (Missing RPCs) marked as "In Review" in Linear.
-- **Untracked Done Tasks**: The following were completed by Tapologo but aren't in the main S11-XXX sequence above:
-    - **MOB-14**: Return Handover Status Edge Cases
-    - **MOB-34**: Admin Portal Detailed Views
-    - **MOB-36**: Anonymize-on-Delete
-    - **MOB-13**: Chat Hub Read Receipts
-    - **MOB-17**: Revenue Analytics
+- **In Review Tasks**: None (MOB-21 and MOB-15 verified Done).
+- **Untracked Done Tasks**: 
+    - **By Tapologo**: 
+        - **MOB-14**: Return Handover Status Edge Cases
+        - **MOB-34**: Admin Portal Detailed Views
+        - **MOB-36**: Anonymize-on-Delete
+        - **MOB-13**: Chat Hub Read Receipts
+        - **MOB-17**: Revenue Analytics
+    - **By Arnold**:
+        - **MOB-21**: Missing SuperAdmin RPCs (Suspend/Ban)
 
 ### Summary
 
 | Member | Completed | In Progress | Not Started / Reverted | Total |
 |--------|-----------|-------------|-------------------------|-------|
-| Arnold | 9 | 3 | 0 | 12 |
+| Arnold | 11 | 1 | 0 | 12 |
 | Tapologo | 10 | 0 | 0 | 10 |
 | Modisa | 14 | 1 | 1 | 16 |
-| **TOTAL** | **34** | **3** | **1** | **38** |
+| **TOTAL** | **35** | **2** | **1** | **38** |
 
 ---
 
