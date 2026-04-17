@@ -252,7 +252,6 @@ export const useSuperAdminAnalytics = () => {
 
       // Get revenue data from completed bookings and wallet transactions
       let revenue = 0;
-      let platformCommission = 0;
 
       // Source 1: Sum total_price from completed bookings
       try {
@@ -275,7 +274,6 @@ export const useSuperAdminAnalytics = () => {
             .eq('status', 'completed');
 
           revenue = paymentData?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-          platformCommission = paymentData?.reduce((sum, p) => sum + (p.platform_commission || 0), 0) || 0;
         } catch (error) {
           console.warn('Could not fetch payment_transactions revenue:', error);
         }
