@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { format, subDays } from "date-fns";
 import { analyticsService } from "@/services/analyticsService";
 import { useSuperAdminRoles } from "./useSuperAdminRoles";
 
