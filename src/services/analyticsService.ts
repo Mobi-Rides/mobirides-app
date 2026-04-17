@@ -96,8 +96,6 @@ export const analyticsService = {
 
   // Get user activity metrics with role integration
   async getUserMetrics(dateRange?: { start: string; end: string }) {
-    const metrics: any = {};
-
     // Get total users
     const { count: totalUsers } = await supabase
       .from('profiles')
