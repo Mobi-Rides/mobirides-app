@@ -1,7 +1,65 @@
 # MobiRides Bug Report
 
 **Last Updated:** April 17, 2026  
-**Reference:** Week 3 April Status Report, Sprint 11 Execution Plan
+**Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
+
+---
+
+## 📊 Tapologo QA Testing Results (April 2026)
+
+An independent QA verification was conducted by **Tapologo** in April 2026 using a comprehensive 197-test-case spreadsheet covering all functional areas.
+
+### Test Results Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Test Cases | 197 |
+| Passed | 119 |
+| Failed | 0 |
+| Blocked | 0 |
+| Execution Rate | 72.1% |
+
+### Key Findings
+
+1. **Zero functional bugs identified** — All executed tests passed, indicating core functionality is working
+2. **Handover Process achieved 100% execution** — All 15 test cases passed
+3. **Execution rate of 72.1%** — Higher than the internal team's ~62% average
+4. **Coverage gaps identified** — Admin Dashboard (20 tests) and Reviews & Ratings (8 tests) not executed
+
+### In Progress Tests (24 tests)
+
+These tests were started but not completed during the testing session:
+
+| Module | Test Cases |
+|--------|-----------|
+| Authentication & Profile | Signup, Logout, Session persistence, Profile view/edit, Avatar upload |
+| Verification (KYC) | Phone verification step |
+| Vehicle Management | Car creation Step 2, Edit car, Delete image, Block dates |
+| Booking System | Date conflict, Price breakdown, Pickup location |
+| Payment & Wallet | Commission display, Earnings breakdown, Top-up |
+| Navigation & Maps | Off-route detection, Traffic layer |
+| Notifications | Notification preferences |
+
+### Coverage Gaps (54 tests not run)
+
+| Module | Tests Not Run | Priority |
+|--------|---------------|-----------|
+| Admin Dashboard | 20 | High — Admin functionality untested |
+| Reviews & Ratings | 8 | High — User feedback loop untested |
+| Promo Codes | 6 | Medium — Discount system untested |
+| Verification (KYC) | 4 | Low — Admin verification tests |
+| Vehicle Management | 3 | Low |
+| Booking System | 5 | Low |
+| Messaging | 2 | Low |
+| Insurance System | 5 | Low |
+
+### Action Items from Tapologo Testing
+
+1. **Complete In Progress tests** — Finish the 24 started tests
+2. **Execute Not Run tests** — Especially Admin Dashboard and Reviews
+3. **Add unit test coverage** — Vehicle Management, Reviews & Ratings, Promo Codes (added to Sprint 12 as S12-026/027/028)
+
+> **Reference:** [Testing Coverage Status Report](./TESTING_COVERAGE_STATUS_2026_03_02.md) — Updated April 17, 2026 with Tapologo results
 
 ---
 
