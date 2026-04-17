@@ -28,7 +28,7 @@ Sprint 12 transitions the project from **stabilization** into **commercial launc
 - Test coverage ≥80%
 - Production readiness ≥93%
 
-Sprint 12 is the **last full sprint before May** and must set up these targets by: fixing the 5 documented mock payment flow bugs (Phase 0), closing out the remaining 4 MOB-700 security tickets, completing Email Enhancement Phase 4, and harmonizing launch documentation.
+Sprint 12 is the **last full sprint before May** and must set up these targets by: fixing the 5 documented mock payment flow bugs (Phase 0), closing out the remaining 4 MOB-700 security tickets, completing Email Enhancement Phase 4, harmonizing launch documentation, and implementing the new core Booking UX and Duration Discounts engine elements.
 
 ### Sprint Entry State
 
@@ -70,6 +70,8 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 4. **Email Enhancement Phase 4**: Complete MOB-811 (Admin Bulk Broadcasts) — the last outstanding item from the Email Enhancement Plan.
 5. **Insurance UI Gap Closure**: Replace InsuranceComparison and PolicyDetailsCard stubs (G5, G6).
 6. **Linear Board Hygiene**: Reconcile Linear statuses with Sprint 11 verified outcomes.
+7. **Booking UX Redesign ("Build Your Plan")**: Flatten booking steps into a single intuitive configuration card to drive better conversion.
+8. **Duration Discounts Integration**: Introduce weekly and monthly duration pricing limits to encourage long-term rentals natively via the pricing engine.
 
 ---
 
@@ -211,6 +213,29 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 
 ---
 
+### Category 13: Booking UX Redesign ("Build Your Plan") (P1)
+**Source:** [Booking Screen UX Redesign Plan](../Roadmaps%20&%20PRDs/20260417_BOOKING_SCREEN_UX_PLAN.md)
+
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **S12-029** | Tapologo | P1 | 5 | 🔴 To Do | Extract existing wizard stages 1 & 2 into `PlanBookingStep.tsx`. |
+| **S12-030** | Tapologo | P1 | 5 | 🔴 To Do | Implement Duration Slider with unit toggle (Days/Weeks/Months) and compute dynamic `endDate`. |
+| **S12-031** | Tapologo | P2 | 3 | 🔴 To Do | Migrate Trip Type & Collection Location to `<Select>` dropdowns within the new layout. |
+| **S12-032** | Tapologo | P1 | 3 | 🔴 To Do | Implement 500ms debounce on the derived `endDate` before availability and pricing hooks. |
+
+---
+
+### Category 14: Duration Discounts Integration (P1)
+**Source:** [Duration Discounts Implementation Plan](../Roadmaps%20&%20PRDs/20260417_DURATION_DISCOUNTS_PLAN.md)
+
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **S12-033** | Modisa | P1 | 2 | 🔴 To Do | Update `pricing.ts` types with `PricingRuleType.DURATION` and duration conditions fields. |
+| **S12-034** | Modisa | P1 | 5 | 🔴 To Do | Implement `evaluateDurationRule()` within `DynamicPricingService` handling weekly (7+) and monthly (28+) default rules. |
+| **S12-035** | Modisa | P2 | 3 | 🔴 To Do | Update Admin UI (`DynamicPricingRulesSection`, `PricingRuleConditionFields`) to surface the Duration Rule configuration. |
+
+---
+
 ## 🎯 Sprint Backlog Summary
 
 | Category | Total Tickets | Arnold | Tapologo | Modisa |
@@ -226,17 +251,29 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | Linear Hygiene | 4 | — | — | 4 |
 | UX Polish (MOB-37) | 1 | — | 1 | — |
 | BUG-006 Fix | 1 | — | 1 | — |
-| **Test Coverage Gaps (S12-026/027/028)** | 3 | — | 3 | — |
-| **TOTAL** | **28** | **10** | **7** | **11** |
+| Test Coverage Gaps (S12-026/027/028) | 3 | — | 3 | — |
+| Booking UX Redesign | 4 | — | 4 | — |
+| Duration Discounts | 3 | — | — | 3 |
+| **TOTAL** | **35** | **10** | **11** | **14** |
 
 ### Velocity
 
 | Metric | Value |
 |--------|-------|
-| **Total Story Points** | ~73 SP |
+| **Total Story Points** | ~100 SP |
 | **Arnold** | ~33 SP (Payment P0 + Security + Native) |
-| **Tapologo** | ~18 SP (Insurance stubs + BUG-006 + UX polish + Test Coverage) |
-| **Modisa** | ~23 SP (Strategy docs + Email P4 + Promo + Admin tasks) |
+| **Tapologo** | ~34 SP (Insurance stubs + BUG-006 + UX polish + Test Coverage + Booking UX) |
+| **Modisa** | ~33 SP (Strategy docs + Email P4 + Promo + Admin tasks + Duration Discounts) |
+
+### Historical Sprint Velocity
+
+| Sprint | Month | Points Completed | Completion Rate |
+|--------|-------|------------------|-----------------|
+| Sprint 8 | March | 84 SP | 92% |
+| Sprint 9 | April | 95 SP | 88% |
+| Sprint 10 | April | 18 SP | 20% (Disrupted by API/Infra pivots) |
+| Sprint 11 | April | 102 SP | 97% |
+| Sprint 12 | April | *Target: 100 SP*| *Target: 100%* |
 
 ---
 
@@ -280,6 +317,13 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-026 | Tapologo | 🔴 To Do | Vehicle Management unit tests (CAR-001 to CAR-025) |
 | S12-027 | Tapologo | 🔴 To Do | Reviews & Ratings unit tests (REV-001 to REV-008) |
 | S12-028 | Tapologo | 🔴 To Do | Promo Codes unit tests (PROMO-001 to PROMO-008) |
+| S12-029 | Tapologo | 🔴 To Do | Booking UX: Extract PlanBookingStep |
+| S12-030 | Tapologo | 🔴 To Do | Booking UX: Duration slider & unit toggle |
+| S12-031 | Tapologo | 🔴 To Do | Booking UX: Select dropdowns for options |
+| S12-032 | Tapologo | 🔴 To Do | Booking UX: Debounce derive end date |
+| S12-033 | Modisa | 🔴 To Do | Duration Discounts: Update pricing.ts |
+| S12-034 | Modisa | 🔴 To Do | Duration Discounts: evaluateDurationRule engine |
+| S12-035 | Modisa | 🔴 To Do | Duration Discounts: Admin UI controls |
 
 ---
 
@@ -297,6 +341,8 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | 8 | BUG-010, BUG-011, BUG-014 have Linear tickets | Ticket IDs confirmed |
 | 9 | BUG-006 resolved (0 RejectExcessProperties errors) | `npx tsc --noEmit` clean |
 | 10 | Test coverage gap closure: 3 modules | Vehicle Management, Reviews & Ratings, Promo Codes unit tests created |
+| 11 | Build Your Plan UX implemented | Single step config with Duration Slider & Selects |
+| 12 | Duration Discounts evaluated natively | `evaluateDurationRule` returns weekly/monthly limits |
 
 ---
 
@@ -322,6 +368,8 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 - [Google Native Integration Plan](../plans/20260417_GOOGLE_NATIVE_INTEGRATION_PLAN.md) — MOB-13
 - [Host-Linked Promo Codes Plan](../plans/20260225_HOST_LINKED_PROMO_CODES.md) — MOB-38
 - [Security Remediation Plan](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) — MOB-700 series
+- [Booking Screen UX Redesign Plan](../Roadmaps%20&%20PRDs/20260417_BOOKING_SCREEN_UX_PLAN.md) — Build Your Plan
+- [Duration Discounts Implementation Plan](../Roadmaps%20&%20PRDs/20260417_DURATION_DISCOUNTS_PLAN.md) — Pricing rules
 
 ### Strategic Documents
 - [H1 2026 Roadmap](../Roadmaps%20&%20PRDs/20260410_Roadmap_2026_H1.md) — May/June exit criteria

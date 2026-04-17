@@ -25,7 +25,7 @@
 
 Week 4 of April marks the **start of Sprint 12** following a significantly high-velocity clean-up phase in Sprint 11. Sprint 11 completion underwent a rigorous commit-level audit, resolving merge conflicts and ensuring absolute synchronization between codebase reality and Linear tracking. This led to the closure of multiple critical bugs (BUG-006, BUG-009, BUG-010, BUG-011, BUG-014), the completion of major feature suites including Admin Broadcasting, and widespread test coverage expansion. 
 
-Additionally, the team has integrated **Tapologo's QA testing results** into the testing documentation (verifying 197 test cases with zero functional bugs identified) and finalised massive strategic UI and commercial updates (Booking UX Redesign and Duration Discounts).
+Additionally, the team has integrated **Tapologo's QA testing results** into the testing documentation (verifying 197 test cases with zero functional bugs identified) and finalised massive strategic UI and commercial updates. Sprint 12 is now fully scoped at **100 Story Points**, incorporating the core **Booking UX Redesign ("Build Your Plan")** and the **Duration Discounts** pricing engine elements.
 
 **Key developments this period:**
 - Huge technical debt reduction: 7+ lingering bugs and IDE build errors resolved during Sprint 11 closeout.
@@ -94,13 +94,13 @@ Additionally, the team has integrated **Tapologo's QA testing results** into the
 | Production Readiness | 88% | **89%** | **92%** | +3% | 95% |
 | Test Coverage | 62% | **62%** | **70%+** (Est) | +8% | 85% |
 | Security Vulnerabilities | 7 | **6** | **4** | -2 | 0 |
-| Database Migrations | ~258 | **~271** | **~272** | — | — |
-| Known Bugs | ~6 | **~8** | **<4** | -4 | 0 |
+| **Sprint Velocity** | 95 SP | **18 SP** | **102 SP** | +84 SP | 100 SP |
 
 ---
 
-## 🧩 System Health Explanation (Apr 20 → Apr 26)
+## 🧩 System Health & Velocity Explanation (Apr 20 → Apr 26)
 
+- **Velocity Rebound** — Following the Sprint 10 disruption (20% completion), Sprint 11 achieved a massive **97% completion rate** (102 SP), restoring momentum.
 - **System Health Spike** — The resolution of orphaned users data corruption (BUG-010), migration drift (BUG-014), and Admin RPC core logic additions (BUG-011) significantly stabilized the health of our infrastructure.
 - **Sprint 11 Testing Success** — Massive gaps mapped in mid-April have been covered, verifying Admin Portals, Booking Extensions, Insurances, and Lifecycle Handovers natively.
 - **Commercial Strategy Rebooted** — The newly drafted Booking UX flow and dynamic duration pricing logic perfectly position the upcoming user beta with premium features expected matching global rental standards.
@@ -135,15 +135,17 @@ Active bugs are tracked in [`docs/testing & bugs/BUG_REPORT.md`](../testing%20%2
 
 ## 🎯 Sprint 12 Execution Summary
 
-Sprint 12 launched April 18, 2026 targeting our absolute blockers to commercial readiness. 
+Sprint 12 launched April 18, 2026 targeting our absolute blockers to commercial readiness. Current scope is **35 tickets** (~100 SP).
 
 | Category | Tickets | Owner | Progress |
 |----------|---------|-------|----------|
 | Payment Phase 0 (Mock Removals) | 5 | Arnold | 🔴 To Do |
-| Security MOB-700 Continuation | ~4 | Arnold | 🔴 To Do |
-| Booking UX & Pricing Integration | 2+ | Modisa | 🔴 To Do |
+| Security MOB-700 Continuation | 4 | Arnold | 🔴 To Do |
+| **Booking UX Redesign** | 4 | Tapologo | 🔴 To Do |
+| **Duration Discounts Integration** | 3 | Modisa | 🔴 To Do |
 | Launch Harmonization | 2 | Modisa | 🔴 To Do |
-| Test Coverage Follow-ups | 3 | Tapologo | 🔴 To Do |
+| Test Coverage Extensions | 3 | Tapologo | 🔴 To Do |
+| Linear Hygiene & Triage | 7 | Modisa | 🔴 To Do |
 
 ---
 
@@ -166,8 +168,8 @@ Sprint 12 launched April 18, 2026 targeting our absolute blockers to commercial 
 |---|--------|-------|----------|--------|-----|
 | 1 | Complete S12-001–005: Payment Mock Breakages | Arnold | P0 | 🔴 To Do | Apr 24 |
 | 2 | Finalize Security MOB-700 fixes | Arnold | P0 | 🔴 To Do | Apr 24 |
-| 3 | Execute new Booking Screen UX Plan implementation | TBD | P1 | 🔴 To Do | Apr 28 |
-| 4 | Execute Duration Pricing Setup in backend | TBD | P1 | 🔴 To Do | Apr 28 |
+| 3 | **Booking UX**: Implement `PlanBookingStep.tsx` & Slider | Tapologo | P1 | 🔴 To Do | Apr 28 |
+| 4 | **Duration Pricing**: Implement `evaluateDurationRule` | Modisa | P1 | 🔴 To Do | Apr 28 |
 | 5 | Complete Email Phase 4 broadcast remnants | Modisa | P1 | 🔴 To Do | Apr 24 |
 
 ---
