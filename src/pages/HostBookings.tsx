@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -139,9 +138,10 @@ export const HostBookings = () => {
 
   const handleBookingAction = useCallback(async (bookingId: string, action: "approve" | "decline" | "cancel") => {
     try {
-      const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : action === "decline" ? BookingStatus.CANCELLED : BookingStatus.CANCELLED;
-      
-      const updateData: Record<string, unknown> = { status: newStatus };
+      // Only allow DB columns in update
+      const updateData: Partial<Pick<BookingWithRelations, 'status' | 'payment_status' | 'payment_deadline'>> = {
+        status: action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED
+      };
       if (action === "approve") {
         updateData.payment_status = "unpaid";
         updateData.payment_deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -155,7 +155,6 @@ export const HostBookings = () => {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
-      
       toast({
         title: "Success",
         description: `Booking ${action}d successfully`,
@@ -184,55 +183,34 @@ export const HostBookings = () => {
 
   const handleBulkAction = useCallback(async (action: "approve" | "decline") => {
     if (selectedBookings.length === 0) return;
-
     try {
-      // FIX: Set to awaiting_payment instead of confirmed for bulk approval
       const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED;
-      
+      // Only allow DB columns in update
+      const updateData: Partial<Pick<BookingWithRelations, 'status' | 'payment_status' | 'payment_deadline'>> = {
+        status: newStatus
+      };
+      if (action === "approve") {
+        updateData.payment_status = "unpaid";
+        updateData.payment_deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      }
       const { error } = await supabase
         .from("bookings")
-        .update({ 
-          status: newStatus,
-          // Add payment deadline for approved bookings
-          ...(action === "approve" ? {
-            payment_status: "unpaid",
-            payment_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-          } : {})
-        })
+        .update(updateData)
         .in("id", selectedBookings);
-
       if (error) throw error;
-
       await queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
-      setSelectedBookings([]);
-      
       toast({
         title: "Success",
-        description: `${selectedBookings.length} bookings ${action}d successfully`,
+        description: `Bookings ${action}d successfully`,
       });
-
-      // Send notifications for all approved bookings
-      if (action === "approve") {
-        selectedBookings.forEach(id => {
-          const booking = bookings?.find(b => b.id === id);
-          if (booking && booking.renter?.id) {
-            pushNotificationService.sendBookingNotification(booking.renter.id, {
-              type: 'awaiting_payment',
-              carBrand: booking.cars.brand,
-              carModel: booking.cars.model,
-              bookingReference: booking.id
-            }).catch(err => console.error("Failed to send notification for bulk approval:", err));
-          }
-        });
-      }
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to ${action} selected bookings`,
+        description: `Failed to ${action} bookings`,
         variant: "destructive",
       });
     }
-  }, [queryClient, toast]);
+  }, [queryClient, toast, selectedBookings]);
 
   const exportData = useCallback((format: "csv" | "pdf") => {
     // Export functionality implementation
