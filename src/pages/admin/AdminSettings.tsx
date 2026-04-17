@@ -6,6 +6,7 @@ import { PlatformSettingsSection } from "@/components/admin/settings/PlatformSet
 import { CommissionSettingsSection } from "@/components/admin/settings/CommissionSettingsSection";
 import { DynamicPricingRulesSection } from "@/components/admin/settings/DynamicPricingRulesSection";
 import { InsuranceSettingsSection } from "@/components/admin/settings/InsuranceSettingsSection";
+import { BroadcastNotificationSection } from "@/components/admin/settings/BroadcastNotificationSection";
 
 const AdminSettings = () => {
   return (
@@ -25,6 +26,7 @@ const AdminSettings = () => {
               <TabsTrigger value="commission">Commission</TabsTrigger>
               <TabsTrigger value="pricing">Dynamic Pricing</TabsTrigger>
               <TabsTrigger value="insurance">Insurance Packages</TabsTrigger>
+              <TabsTrigger value="notifications">Notifications</TabsTrigger>
             </TabsList>
             
             <TabsContent value="platform">
@@ -41,6 +43,10 @@ const AdminSettings = () => {
             
             <TabsContent value="insurance">
               <InsuranceSettingsSection />
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <BroadcastNotificationSection />
             </TabsContent>
           </Tabs>
         </div>

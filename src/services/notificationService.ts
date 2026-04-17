@@ -297,6 +297,66 @@ export class ResendEmailService {
   }
 
   /**
+   * Send or schedule a system-wide admin broadcast.
+   * Delegates to broadcast-service Edge Function (handles batching,
+   * audience segmentation, rate limiting, scheduling, and audit logging).
+   */
+  async sendSystemBroadcast(params: {
+    audience: 'all' | 'renters' | 'hosts' | 'verified' | 'active_30d';
+    channel: 'email' | 'push' | 'both';
+    subject: string;
+    message: string;
+    cta_text?: string;
+    cta_url?: string;
+    scheduled_at?: string;
+  }): Promise<{
+    success: boolean;
+    broadcastId?: string;
+    recipientCount?: number;
+    deliveryCount?: number;
+    failureCount?: number;
+    scheduledAt?: string;
+    rateLimited?: boolean;
+    error?: string;
+  }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('broadcast-service', {
+        body: { action: 'send', ...params },
+      });
+      if (error) return { success: false, error: error.message };
+      return {
+        success: data?.success ?? false,
+        broadcastId: data?.broadcast_id,
+        recipientCount: data?.recipient_count,
+        deliveryCount: data?.delivery_count,
+        failureCount: data?.failure_count,
+        scheduledAt: data?.scheduled_at,
+        rateLimited: data?.rateLimited,
+        error: data?.error,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      console.error('sendSystemBroadcast error:', msg);
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
+   * Cancel a pending or scheduled broadcast by ID.
+   */
+  async cancelBroadcast(broadcastId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('broadcast-service', {
+        body: { action: 'cancel', broadcast_id: broadcastId },
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: data?.success ?? false, error: data?.error };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
+    }
+  }
+
+  /**
    * Send payout confirmation email to host
    */
   async sendPayoutConfirmation(

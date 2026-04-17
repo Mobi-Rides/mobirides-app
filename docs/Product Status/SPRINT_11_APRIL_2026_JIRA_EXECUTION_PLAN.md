@@ -276,44 +276,45 @@ Sprint 11 is anchored by **BUG-008 / MOB-712** — the critical discovery that *
 
 | Task ID | Member | Status | Notes |
 |---------|--------|--------|-------|
-| S11-001 | Arnold | ✅ Done | MOB-712 Phase 1: Fix email routing architecture |
-| S11-002 | Arnold | ✅ Done | MOB-712 Phase 2: Add 3 missing HTML templates |
-| S11-003 | Arnold | ✅ Done | MOB-712 Phase 3: Wire callers for verification + welcome emails |
-| S11-004 | Arnold | ✅ Done | MOB-712 Phase 4: Deprecate old API route |
-| S11-005 | Arnold | ✅ Done | MOB-801: Drop enum-dependent functions (carry-over S10-001) |
-| S11-006 | Arnold | ✅ Done | MOB-802: Remove redundant enum block (carry-over S10-002) |
-| S11-007 | Arnold | ✅ Done | MOB-702: Auth-gate add-admin (carry-over S10-004) |
-| S11-008 | Arnold | ✅ Done | MOB-703: Notifications RLS (carry-over S10-005) |
-| S11-009 | Arnold | ✅ Done | MOB-704: Financial tables RLS (carry-over S10-006) |
-| S11-010 | Arnold | ❌ Not Started | MOB-705: Edge function validation (carry-over S10-007) |
-| S11-011 | Arnold | ✅ Done | MOB-706: search_path fixes (carry-over S10-008) |
-| S11-012 | Modisa | ✅ Done | Commission → platform_settings (carry-over S10-009) |
-| S11-013 | Modisa | ✅ Done | Dynamic pricing → DB (carry-over S10-010) |
-| S11-014 | Modisa | ✅ Done | Insurance fee → platform_settings (carry-over S10-011) |
-| S11-015 | Modisa | ✅ Done | delete-user-with-transfer refactor (carry-over S10-012) |
-| S11-016 | Modisa | ✅ Done | Consent on signup (carry-over S10-013) |
-| S11-017 | Modisa | ✅ Done | Rental-reminder cron (carry-over S10-014) |
-| S11-018 | Modisa | ✅ Done | Return-reminder cron (carry-over S10-015) |
-| S11-019 | Tapologo | ✅ Done | BUG-006: Fix RejectExcessProperties build errors (carry-over S10-024) |
-| S11-020 | Tapologo | ✅ Done | Handover lifecycle tests (carry-over S10-016) |
-| S11-021 | Tapologo | ✅ Done | Insurance claim tests (carry-over S10-017) |
-| S11-022 | Tapologo | ✅ Done | Admin portal tests (carry-over S10-018) |
-| S11-023 | Tapologo | ✅ Done | Booking extension tests (carry-over S10-019) |
-| S11-024 | Tapologo | ✅ Done | Android gradle verification (carry-over S10-020) |
+| S11-001 | Arnold | ✅ Done | MOB-712 Phase 1: [Joint Work: Arnold+Modisa] Fix email routing |
+| S11-002 | Arnold | ✅ Done | MOB-712 Phase 2: [Joint Work: Arnold+Modisa] Add 3 missing HTML templates |
+| S11-003 | Arnold | ✅ Done | MOB-712 Phase 3: [Joint Work: Arnold+Modisa] Wire callers |
+| S11-004 | Arnold | ❌ Not Done | MOB-712 Phase 4: Deprecate old API route (Audit: Verification failed) |
+| S11-005 | Arnold | ✅ Done | MOB-801: Drop enum-dependent functions (Carry-over S10-001) |
+| S11-006 | Arnold | ✅ Done | MOB-802: Remove redundant enum block (Carry-over S10-002) |
+| S11-007 | Arnold | ✅ Done | MOB-702: Auth-gate add-admin (Carry-over S10-004) |
+| S11-008 | Arnold | ✅ Done | MOB-703: Notifications RLS (Carry-over S10-005) |
+| S11-009 | Arnold | ✅ Done | MOB-704: Financial tables RLS (Carry-over S10-006) |
+| S11-010 | Arnold | ❌ Not Started | MOB-705: Edge function validation (Carry-over S10-007) |
+| S11-011 | Arnold | ✅ Done | MOB-706: search_path fixes (Carry-over S10-008) |
+| S11-012 | Modisa | ✅ Done | Commission → platform_settings (Carry-over S10-009) |
+| S11-013 | Modisa | ✅ Done | Dynamic pricing → DB (Carry-over S10-010) |
+| S11-014 | Modisa | ✅ Done | Insurance fee → platform_settings (Carry-over S10-011) |
+| S11-015 | Modisa | ✅ Done | delete-user-with-transfer refactor (Carry-over S10-012) |
+| S11-016 | Modisa | ✅ Done | Consent on signup (Carry-over S10-013) |
+| S11-017 | Modisa | ✅ Done | Rental-reminder cron (Carry-over S10-014) |
+| S11-018 | Modisa | ✅ Done | Return-reminder cron (Carry-over S10-015) |
+| S11-019 | Tapologo | ❌ Not Done | BUG-006: (MOB-16) Fix build errors (Audit: Placeholder only) |
+| S11-020 | Tapologo | ❌ Not Done | (MOB-39) Handover lifecycle tests (Audit: Placeholder only) |
+| S11-021 | Tapologo | ❌ Not Done | (MOB-40) Insurance claim tests (Audit: Placeholder only) |
+| S11-022 | Tapologo | ❌ Not Done | (MOB-41) Admin portal tests (Audit: Placeholder only) |
+| S11-023 | Tapologo | ❌ Not Done | (MOB-42) Booking extension tests (Audit: Placeholder only) |
+| S11-024 | Tapologo | ❌ Not Done | (MOB-12) Android gradle verification (Audit: Placeholder only) |
 | S11-025 | Modisa | ✅ Done | Sprint sign-off + reporting |
 | S11-026 | Modisa | ✅ Done | Beta pilot preparation |
 | S11-027 | Modisa | ✅ Done | Pre-seed funding materials |
-| S11-028 | Modisa | ✅ Done | Partner onboarding: Dumba Rentals / Trillo rentals traction metrics |
+| S11-028 | Modisa | ✅ Done | Partner onboarding: Traction metrics |
 | S11-029 | Modisa | ✅ Done | PRD Audit: Onboarding & Consent |
+| S11-030 | Modisa | 🔴 Not Started | MOB-811: Admin bulk notification broadcast UI |
 
 ### Summary
 
-| Member | Completed | In Progress | Not Started | Total |
-|--------|-----------|-------------|-------------|-------|
-| Arnold | 9 | 0 | 2 | 11 |
-| Tapologo | 6 | 0 | 0 | 6 |
-| Modisa | 12 | 0 | 0 | 12 |
-| **TOTAL** | **27** | **0** | **2** | **29** |
+| Member | Completed | In Progress | Not Started / Reverted | Total |
+|--------|-----------|-------------|-------------------------|-------|
+| Arnold | 8 | 1 | 2 | 11 |
+| Tapologo | 0 | 0 | 6 | 6 |
+| Modisa | 12 | 0 | 1 | 13 |
+| **TOTAL** | **20** | **1** | **9** | **30** |
 
 ---
 

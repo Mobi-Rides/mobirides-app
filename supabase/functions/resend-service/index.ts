@@ -1,10 +1,17 @@
 import { Resend } from "resend";
+import { z } from "https://deno.land/x/zod/mod.ts";
+
+export interface EmailTemplateData {
+  [key: string]: string | number | boolean | undefined | null;
+}
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") || "");
+
 // Enhanced email templates with rich HTML content
 const EMAIL_TEMPLATES = {
   'welcome-renter': {
     subject: '🚗 Welcome to MobiRides - Your car-sharing adventure begins!',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -166,9 +173,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+  
   'welcome-host': {
     subject: '🏆 Welcome to MobiRides - Start earning with your car today!',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -220,9 +228,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+  
   'password-reset': {
     subject: '🔐 Reset Your MobiRides Password',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -299,9 +308,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+
   'welcome-email': {
     subject: 'Welcome to MobiRides! 🚗',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -342,9 +352,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+
   'verification-complete': {
     subject: '✅ Verification Approved - Welcome to MobiRides!',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -393,9 +404,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+
   'verification-rejected': {
     subject: 'Action Required: Update Your MobiRides Verification',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -444,9 +456,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+
   'wallet-notification': {
     subject: 'MobiRides Wallet Update',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -493,9 +506,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+
   'early-return-notification': {
     subject: 'Update: Vehicle Returned Early',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -538,9 +552,10 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+
   'booking-confirmation': {
     subject: '🎉 Your MobiRides Booking is Confirmed!',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -672,8 +687,9 @@ const EMAIL_TEMPLATES = {
     `
   },
   'insurance-policy-confirmation': {
-    subject: (data)=>`✅ Insurance Policy Issued #${data.policyNumber || ''}`,
-    html: (data)=>`<!DOCTYPE html>
+    subject: (data: EmailTemplateData) => `✅ Insurance Policy Issued #${data.policyNumber || ''}`,
+
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f8fafc}.container{max-width:600px;margin:0 auto;background:white}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:40px 20px;text-align:center}.header h1{color:white;margin:0;font-size:26px}.header p{color:#e2e8f0;margin:8px 0 0}.content{padding:40px 30px}.policy-box{background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%);padding:25px;border-radius:12px;margin:25px 0;border-left:4px solid #667eea}.row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}.label{font-weight:600;color:#2d3748}.value{color:#4a5568}.btn{display:inline-block;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px}.footer{background:#2d3748;color:#a0aec0;padding:25px;text-align:center;font-size:13px}.footer a{color:#63b3ed;text-decoration:none}</style>
 </head><body><div class="container">
@@ -696,9 +712,11 @@ ${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${d
 <div class="footer"><p>MobiRides Damage Protection | <a href="mailto:support@mobirides.com">support@mobirides.com</a></p></div>
 </div></body></html>`
   },
+
   'insurance-claim-received': {
-    subject: (data)=>`📋 Claim Received #${data.claimNumber || ''}`,
-    html: (data)=>`<!DOCTYPE html>
+    subject: (data: EmailTemplateData) => `📋 Claim Received #${data.claimNumber || ''}`,
+
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f8fafc}.container{max-width:600px;margin:0 auto;background:white}.header{background:linear-gradient(135deg,#3182ce 0%,#2c5282 100%);padding:40px 20px;text-align:center}.header h1{color:white;margin:0;font-size:26px}.header p{color:#bee3f8;margin:8px 0 0}.content{padding:40px 30px}.claim-box{background:linear-gradient(135deg,#ebf8ff 0%,#bee3f8 100%);padding:25px;border-radius:12px;margin:25px 0;border-left:4px solid #3182ce}.row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}.label{font-weight:600;color:#2d3748}.value{color:#4a5568}.badge{display:inline-block;background:#3182ce;color:white;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600}.footer{background:#2d3748;color:#a0aec0;padding:25px;text-align:center;font-size:13px}.footer a{color:#63b3ed;text-decoration:none}</style>
 </head><body><div class="container">
@@ -720,16 +738,14 @@ ${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${d
 <div class="footer"><p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p></div>
 </div></body></html>`
   },
+
   'insurance-claim-update': {
-    subject: (data)=>`🔔 Claim Update #${data.claimNumber || ''} - ${(data.newStatus || '').replace(/_/g, ' ').toUpperCase()}`,
-    html: (data)=>{
-      const statusColors = {
-        approved: '#38a169',
-        rejected: '#e53e3e',
-        under_review: '#3182ce',
-        more_info_needed: '#ed8936',
-        paid: '#38a169',
-        closed: '#718096'
+    subject: (data: EmailTemplateData) => `🔔 Claim Update #${data.claimNumber || ''} - ${(data.newStatus || '').replace(/_/g, ' ').toUpperCase()}`,
+
+    html: (data: EmailTemplateData) => {
+      const statusColors: Record<string, string> = {
+        approved: '#38a169', rejected: '#e53e3e', under_review: '#3182ce',
+        more_info_needed: '#ed8936', paid: '#38a169', closed: '#718096'
       };
       const color = statusColors[data.newStatus] || '#3182ce';
       return `<!DOCTYPE html>
@@ -751,9 +767,11 @@ ${data.notes ? `<div style="background:#fef5e7;padding:18px;border-radius:10px;b
 </div></body></html>`;
     }
   },
+
   'insurance-host-claim-notification': {
-    subject: (data)=>`⚠️ Claim Filed - ${data.carName || ''} #${data.claimNumber || ''}`,
-    html: (data)=>`<!DOCTYPE html>
+    subject: (data: EmailTemplateData) => `⚠️ Claim Filed - ${data.carName || ''} #${data.claimNumber || ''}`,
+
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:0;background:#f8fafc}.container{max-width:600px;margin:0 auto;background:white}.header{background:linear-gradient(135deg,#ed8936 0%,#c05621 100%);padding:40px 20px;text-align:center}.header h1{color:white;margin:0;font-size:26px}.header p{color:#feebc8;margin:8px 0 0}.content{padding:40px 30px}.claim-box{background:linear-gradient(135deg,#fffaf0 0%,#feebc8 100%);padding:25px;border-radius:12px;margin:25px 0;border-left:4px solid #ed8936}.row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px}.label{font-weight:600;color:#2d3748}.value{color:#4a5568;text-transform:capitalize}.footer{background:#2d3748;color:#a0aec0;padding:25px;text-align:center;font-size:13px}.footer a{color:#63b3ed;text-decoration:none}</style>
 </head><body><div class="container">
@@ -776,9 +794,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 <div class="footer"><p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p></div>
 </div></body></html>`
   },
+
   'booking-request': {
     subject: '📋 New Booking Request - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -846,9 +865,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'system-notification': {
     subject: '🔔 System Notification - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -898,9 +918,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'email-confirmation': {
     subject: '📧 Confirm Your Email - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -951,9 +972,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'verification-complete': {
     subject: '✅ Account Verification Complete - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1015,9 +1037,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'return-reminder': {
     subject: '🔄 Return Reminder - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1080,9 +1103,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'rental-reminder': {
     subject: '⏰ Rental Starts Tomorrow - MobiRides Reminder',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1145,9 +1169,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'handover-ready': {
     subject: '🚗 Your Vehicle is Ready for Handover - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1210,9 +1235,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'wallet-topup': {
     subject: '💳 Wallet Top-up Successful - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1266,9 +1292,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'payment-failed': {
     subject: '⚠️ Payment Failed - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1330,9 +1357,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'booking-cancelled': {
     subject: '❌ Your MobiRides Booking Has Been Cancelled',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1395,9 +1423,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'payment-received': {
     subject: '💰 Payment Received - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1451,9 +1480,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'owner-booking-notification': {
     subject: '📋 New Booking Request - Action Required',
-    html: (data)=>`
+    html: (data: EmailTemplateData) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1578,9 +1608,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </html>
     `
   },
+
   'verification-rejected': {
     subject: '❌ Verification Update - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1632,9 +1663,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'payout-confirmation': {
     subject: '💰 Payout Confirmed - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1680,9 +1712,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+
   'review-request': {
     subject: '🌟 How was your trip? Leave a review on MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1724,9 +1757,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
 </body>
 </html>`
   },
+  
   'listing-status-update': {
     subject: '📋 Listing Update - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1745,9 +1779,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
     </style>
 </head><body><div class="container"><div class="header"><h1>📋 Listing Update</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We've reviewed your listing for <strong>${data.carName || 'your vehicle'}</strong>.</p><div class="status-badge ${data.status === 'approved' ? 'approved' : 'rejected'}">${data.status || 'Updated'}</div><p>${data.message || ''}</p><div style="text-align: center; margin-top: 30px;"><a href="${data.listing_url || 'https://mobirides.com/host/dashboard'}" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Listing</a></div></div><div class="footer"><p>MobiRides Host Support</p></div></div></body></html>`
   },
+
   'booking-modification': {
     subject: '🔔 Booking Modification - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1764,9 +1799,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
     </style>
 </head><body><div class="container"><div class="header"><h1>🔔 Booking Modified</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>A change has been made to your booking <strong>${data.bookingReference || ''}</strong>.</p><div class="change-box"><h3>What changed:</h3><p>${data.modificationDetails || 'The booking details have been updated.'}</p></div><div style="text-align: center; margin-top: 30px;"><a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: #ed8936; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Updated Booking</a></div></div><div class="footer"><p>MobiRides Team</p></div></div></body></html>`
   },
+
   'early-return-notification': {
     subject: '🚗 Early Return Notification - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1782,9 +1818,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
     </style>
 </head><body><div class="container"><div class="header"><h1>🚗 Early Vehicle Return</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We've registered an early return for your rental <strong>${data.carName}</strong>.</p><p>Return Date: ${data.actualReturnDate}</p><p>Our team will process any necessary adjustments to your booking.</p></div><div class="footer"><p>MobiRides Support</p></div></div></body></html>`
   },
+
   'wallet-notification': {
     subject: '💳 Wallet Activity - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1800,9 +1837,10 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
     </style>
 </head><body><div class="container"><div class="header"><h1>💳 Wallet Update</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>${data.message || 'There has been activity in your MobiRides wallet.'}</p><div style="background: #f0fff4; padding: 20px; border-radius: 12px; margin: 20px 0;"><strong>New Balance: P${data.balance}</strong></div></div><div class="footer"><p>MobiRides Wallet Services</p></div></div></body></html>`
   },
+
   'promo-notification': {
     subject: '🎁 Exclusive Offer Just For You! - MobiRides',
-    html: (data)=>`<!DOCTYPE html>
+    html: (data: EmailTemplateData) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1818,38 +1856,76 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
         .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
     </style>
 </head><body><div class="container"><div class="header"><h1>🎁 Surprise Inside!</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We have a special treat for you! Use the code below on your next rental for <strong>${data.discount || 'a special discount'}</strong>.</p><div class="promo-code">${data.code || 'MOBI2026'}</div><p>Valid until: ${data.expiryDate || 'Limited time'}</p><div><a href="https://mobirides.com/cars" style="display: inline-block; background: #d53f8c; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px;">Book Now</a></div></div><div class="footer"><p>MobiRides Rewards Team</p></div></div></body></html>`
+  },
+
+  'system-notification': {
+    subject: (data: EmailTemplateData) => String(data.subject || '📢 Important Update from MobiRides'),
+    html: (data: EmailTemplateData) => `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.subject || 'MobiRides Notification'}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;background-color:#f8fafc}.container{max-width:600px;margin:0 auto;background-color:white}.header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-bottom:4px solid #E2EE0D;padding:40px 20px;text-align:center}.header h1{color:white;margin:0 0 8px 0;font-size:26px;font-weight:700}.badge{display:inline-block;background:#E2EE0D;color:#1a1a2e;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}.content{padding:40px 30px}.message-body{font-size:16px;color:#2d3748;line-height:1.8;white-space:pre-line}.cta-section{text-align:center;margin:35px 0}.cta-button{display:inline-block;background:#E2EE0D;color:#1a1a2e;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:700;font-size:15px}.footer{background-color:#2d3748;color:#a0aec0;padding:25px 30px;text-align:center;font-size:13px}.footer a{color:#E2EE0D;text-decoration:none}.divider{height:1px;background:#e2e8f0;margin:30px 0}</style></head><body><div class="container"><div class="header"><div class="badge">📢 System Announcement</div><h1>${data.subject || 'Important Update'}</h1></div><div class="content"><div class="message-body">${data.message || ''}</div>${data.cta_url ? `<div class="cta-section"><a href="${data.cta_url}" class="cta-button">${data.cta_text || 'Learn More'}</a></div>` : ''}<div class="divider"></div><p style="color:#718096;font-size:13px;text-align:center;">You're receiving this because you're a valued MobiRides member.</p></div><div class="footer"><p>MobiRides | <a href="https://mobirides.com">www.mobirides.com</a></p><p style="margin:5px 0 0"><a href="https://mobirides.com/settings/notifications">Manage Notifications</a></p></div></div></body></html>`
   }
 };
-function getEmailTemplate(templateId, data) {
-  const template = EMAIL_TEMPLATES[templateId];
+
+
+function getEmailTemplate(templateId: string, data: EmailTemplateData) {
+  const template = EMAIL_TEMPLATES[templateId as keyof typeof EMAIL_TEMPLATES];
   if (!template) {
     throw new Error(`Template ${templateId} not found`);
   }
+  
   return {
     subject: typeof template.subject === 'function' ? template.subject(data) : template.subject,
     html: template.html(data)
   };
 }
+
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-const handler = async (req)=>{
+
+const EmailRequestSchema = z.object({
+  to: z.string().email(),
+  subject: z.string().optional(),
+  html: z.string().optional(),
+  templateId: z.string().optional(),
+  dynamicData: z.record(z.unknown()).optional(),
+  type: z.string().optional(),
+  user_name: z.string().optional(),
+}).refine(data => data.templateId || data.html, {
+  message: "Either templateId or html content must be provided",
+  path: ["templateId", "html"]
+});
+
+type EmailRequest = z.infer<typeof EmailRequestSchema>;
+
+const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders
-    });
+    return new Response(null, { headers: corsHeaders });
   }
+
   try {
-    const { to, subject, templateId, dynamicData, html } = await req.json();
+    const body = await req.json();
+    const result = EmailRequestSchema.safeParse(body);
+
+    if (!result.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request payload", 
+          details: result.error.format() 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { to, subject, templateId, dynamicData, html } = result.data;
+
     // Construct email payload
-    const emailPayload = {
+    const emailPayload: { from: string; to: string[]; subject?: string; html?: string } = {
       from: "MobiRides <noreply@mobirides.com>",
-      to: [
-        to
-      ]
+      to: [to],
     };
+
     // Use rich HTML templates if templateId is provided
     if (templateId) {
       try {
@@ -1857,56 +1933,44 @@ const handler = async (req)=>{
         emailPayload.subject = template.subject;
         emailPayload.html = template.html;
       } catch (error) {
-        return new Response(JSON.stringify({
-          error: `Template error: ${error instanceof Error ? error.message : 'Unknown error'}`
-        }), {
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        });
+      return new Response(
+        JSON.stringify({ error: `Template error: ${error instanceof Error ? error.message : 'Unknown error'}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     } else if (html) {
       // Fallback to custom HTML
       emailPayload.subject = subject || "Welcome to MobiRides";
       emailPayload.html = html;
     } else {
-      return new Response(JSON.stringify({
-        error: "Either templateId with dynamicData or html content must be provided"
-      }), {
-        status: 400,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      });
+      return new Response(
+        JSON.stringify({ error: "Either templateId with dynamicData or html content must be provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
     const emailResponse = await resend.emails.send(emailPayload);
+
     console.log("Email sent successfully:", emailResponse);
-    return new Response(JSON.stringify({
-      success: true,
-      data: emailResponse
-    }), {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
-    });
+
+    return new Response(
+      JSON.stringify({ success: true, data: emailResponse }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (e) {
-    const error = e;
+    const error = e as Error;
     console.error("Error in resend-service function:", error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
-    }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders
+    return new Response(
+      JSON.stringify({ 
+        success: false,
+        error: error.message 
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
-    });
+    );
   }
 };
+
 Deno.serve(handler);

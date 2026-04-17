@@ -287,7 +287,7 @@ See: [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](SPRINT_10_APRIL_2026_JIRA_EXE
 ### Active Plans
 - [Insurance Production Readiness Plan](../20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md)
 - [Admin Settings Implementation Plan](../20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md)
-- [Email Notification Enhancement Plan](../20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md)
+- [Email & Notification System Enhancement Plan](../plans/20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md) — 🟡 Partially Live: Phases 0–3 delivered in Sprint 11. Phase 4 (MOB-811: Admin bulk broadcasts) assigned to Modisa (S11-030).
 - [Anonymize-on-Delete Plan](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)
 - [Damage Protection SLA v1.1](Damage%20Protection%20Service%20Level%20Agreement.md)
 - [Security Remediation Plan](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md)
