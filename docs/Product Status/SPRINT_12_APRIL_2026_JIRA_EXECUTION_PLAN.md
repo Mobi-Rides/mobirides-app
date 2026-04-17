@@ -197,6 +197,20 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 
 ---
 
+### Category 12: Test Coverage Gap Closure (P1)
+**Source:** Tapologo QA Testing Results (April 2026) — Identified 3 modules with no unit test coverage  
+**H1 Requirement:** Test coverage ≥80% by May
+
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **S12-026** | Tapologo | P1 | 5 | 🔴 To Do | Vehicle Management Tests: Create unit tests for car listing, filtering (brand/location/price/type), car details view, wishlist add/remove, host car creation flow. Reference: Tapologo test sheet CAR-001 through CAR-025. |
+| **S12-027** | Tapologo | P1 | 3 | 🔴 To Do | Reviews & Ratings Tests: Create unit tests for review submission, category ratings, host response, average rating display. Reference: Tapologo test sheet REV-001 through REV-008. |
+| **S12-028** | Tapologo | P1 | 2 | 🔴 To Do | Promo Codes Tests: Create unit tests for valid/invalid/expired code application, code usage tracking. Reference: Tapologo test sheet PROMO-001 through PROMO-008. |
+
+> **Rationale:** Tapologo's QA testing identified 3 functional areas with zero unit test coverage despite having 41 test cases in the manual test spreadsheet. Closing these gaps contributes to the May exit criterion of ≥80% test coverage.
+
+---
+
 ## 🎯 Sprint Backlog Summary
 
 | Category | Total Tickets | Arnold | Tapologo | Modisa |
@@ -212,15 +226,16 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | Linear Hygiene | 4 | — | — | 4 |
 | UX Polish (MOB-37) | 1 | — | 1 | — |
 | BUG-006 Fix | 1 | — | 1 | — |
-| **TOTAL** | **25** | **10** | **4** | **11** |
+| **Test Coverage Gaps (S12-026/027/028)** | 3 | — | 3 | — |
+| **TOTAL** | **28** | **10** | **7** | **11** |
 
 ### Velocity
 
 | Metric | Value |
 |--------|-------|
-| **Total Story Points** | ~68 SP |
+| **Total Story Points** | ~73 SP |
 | **Arnold** | ~33 SP (Payment P0 + Security + Native) |
-| **Tapologo** | ~12 SP (Insurance stubs + BUG-006 + UX polish) |
+| **Tapologo** | ~18 SP (Insurance stubs + BUG-006 + UX polish + Test Coverage) |
 | **Modisa** | ~23 SP (Strategy docs + Email P4 + Promo + Admin tasks) |
 
 ---
@@ -262,6 +277,9 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-023 | Modisa | 🔴 To Do | Linear: Sync Sprint 11 statuses |
 | S12-024 | Tapologo | 🔴 To Do | MOB-37: Contextual loading messages |
 | S12-025 | Tapologo | 🔴 To Do | BUG-006: RejectExcessProperties fix |
+| S12-026 | Tapologo | 🔴 To Do | Vehicle Management unit tests (CAR-001 to CAR-025) |
+| S12-027 | Tapologo | 🔴 To Do | Reviews & Ratings unit tests (REV-001 to REV-008) |
+| S12-028 | Tapologo | 🔴 To Do | Promo Codes unit tests (PROMO-001 to PROMO-008) |
 
 ---
 
@@ -278,6 +296,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | 7 | Linear board accurately reflects verified project state | Board audit |
 | 8 | BUG-010, BUG-011, BUG-014 have Linear tickets | Ticket IDs confirmed |
 | 9 | BUG-006 resolved (0 RejectExcessProperties errors) | `npx tsc --noEmit` clean |
+| 10 | Test coverage gap closure: 3 modules | Vehicle Management, Reviews & Ratings, Promo Codes unit tests created |
 
 ---
 
@@ -314,6 +333,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 - [Week 3 April Status Report](WEEK_3_APRIL_2026_STATUS_REPORT.md) — Sprint entry baseline
 - [Sprint 11 Execution Plan](SPRINT_11_APRIL_2026_JIRA_EXECUTION_PLAN.md) — Carry-overs and verified completions
 - [Bug Report](../testing%20&%20bugs/BUG_REPORT.md) — Active bug registry
+- [Testing Coverage Status](../testing%20&%20bugs/TESTING_COVERAGE_STATUS_2026_03_02.md) — Tapologo QA results with gap analysis
 
 ### Conventions & Workflow
 - [AI Development Workflow](../conventions/AI_WORKFLOW.md)
