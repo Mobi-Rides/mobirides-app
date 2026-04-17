@@ -794,13 +794,24 @@ is missing the following properties from type 'PricingCalculation': base_price, 
 
 ---
 
-### Section G: Anonymize-on-Delete (Analytics Preservation)
+### Section G: Anonymize-on-Delete (MOB-130 to MOB-138)
 
-> **Full Implementation Plan:** [docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md)
+**Context:**
+The Anonymize-on-Delete feature implements a soft-delete and anonymization process for user accounts, preserving analytics while removing PII. This includes:
+- Soft-delete columns (`is_deleted`, `deleted_at`, `deleted_by`) on `profiles`
+- Edge function refactors to anonymize or delete PII from related tables
+- Admin portal UI guards to hide deleted users by default, with a toggle to show them
+- RLS policy updates to exclude soft-deleted users from non-admin queries
+- End-to-end tests for all deletion scenarios
 
-**Context:** The current hard-delete approach in both `delete-user-with-transfer` and `bulk-delete-users` destroys historical booking, revenue, commission, and review data needed for business analytics. The linked plan details a soft-delete + anonymization strategy that preserves all analytics while removing PII.
+**Acceptance Criteria:**
+- Admin user table hides soft-deleted users by default
+- Toggle to show deleted users with `[Deleted]` badge
+- RLS SELECT policies exclude `is_deleted = true` for non-admin roles
+- At least 5 deletion test cases verified
+- Plan document marked complete
 
-**Tickets:** MOB-130 through MOB-138 (9 tickets across 5 phases, targeting 2026-03-03 – 2026-03-07)
+See [ANONYMIZE_ON_DELETE_2026_03_02.md](../plans/ANONYMIZE_ON_DELETE_2026_03_02.md) for full implementation details.
 
 ---
 
