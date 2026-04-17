@@ -355,6 +355,146 @@ export class ResendEmailService {
       return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
     }
   }
+
+  /**
+   * Send payout confirmation email to host
+   */
+  async sendPayoutConfirmation(
+    recipient: NotificationRecipient,
+    payoutData: {
+      amount: number;
+      payoutDate: string;
+      paymentMethod: string;
+      transactionId: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      amount: payoutData.amount.toFixed(2),
+      payoutDate: payoutData.payoutDate,
+      paymentMethod: payoutData.paymentMethod,
+      transactionId: payoutData.transactionId
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'payout-confirmation',
+      templateData,
+      '💰 Payout Confirmed - MobiRides'
+    );
+  }
+
+  /**
+   * Send review request email after trip completion
+   */
+  async sendReviewRequest(
+    recipient: NotificationRecipient,
+    carName: string,
+    reviewUrl: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'review-request',
+      {
+        name: recipient.name,
+        carName,
+        review_url: reviewUrl
+      },
+      `🌟 How was your trip? Leave a review on MobiRides`
+    );
+  }
+
+  /**
+   * Send listing status update email (approval/rejection)
+   */
+  async sendListingStatusUpdate(
+    recipient: NotificationRecipient,
+    listingData: {
+      carName: string;
+      status: 'approved' | 'rejected';
+      message?: string;
+      listingUrl: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'listing-status-update',
+      {
+        name: recipient.name,
+        carName: listingData.carName,
+        status: listingData.status,
+        message: listingData.message || (listingData.status === 'approved' ? 'Your vehicle is now live!' : 'Your listing needs some updates.'),
+        listing_url: listingData.listingUrl
+      },
+      `📋 Listing Update: ${listingData.carName} is ${listingData.status}`
+    );
+  }
+
+  /**
+   * Send booking modification notification
+   */
+  async sendBookingModification(
+    recipient: NotificationRecipient,
+    modificationData: {
+      bookingReference: string;
+      modificationDetails: string;
+      bookingUrl: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'booking-modification',
+      {
+        name: recipient.name,
+        bookingReference: modificationData.bookingReference,
+        modificationDetails: modificationData.modificationDetails,
+        booking_url: modificationData.bookingUrl
+      },
+      '🔔 Booking Modification - MobiRides'
+    );
+  }
+
+  /**
+   * Send wallet activity notification
+   */
+  async sendWalletNotification(
+    recipient: NotificationRecipient,
+    walletData: {
+      message: string;
+      balance: number;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'wallet-notification',
+      {
+        name: recipient.name,
+        message: walletData.message,
+        balance: walletData.balance.toFixed(2)
+      },
+      '💳 Wallet Activity - MobiRides'
+    );
+  }
 }
 
 // Twilio WhatsApp Service Class
