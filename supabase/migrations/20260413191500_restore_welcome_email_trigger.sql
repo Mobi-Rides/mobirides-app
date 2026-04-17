@@ -2,15 +2,9 @@
 -- Dependency: pg_net, supabase_vault
 -- Description: Sets up the handle_new_user trigger to send a welcome email via Edge Functions.
 
--- 1. Store the secret key in platform_settings
--- Using the key provided by the user: sb_secret_lYdCqHkAJtAmGX6PYSN1nw_K5e_gbz8
-INSERT INTO public.platform_settings (setting_key, setting_value, description)
-VALUES (
-    'supabase_service_role_key', 
-    'sb_secret_lYdCqHkAJtAmGX6PYSN1nw_K5e_gbz8', 
-    'Supabase service role key for Edge Function authentication (Encrypted storage recommended)'
-)
-ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value;
+-- 1. Secret storage relocated
+-- Note: The service role key is now retrieved securely from vault.secrets.
+-- Do not store keys in this migration.
 
 -- 2. Create or replace the trigger function
 CREATE OR REPLACE FUNCTION public.handle_new_user_welcome_email()
