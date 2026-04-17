@@ -84,30 +84,30 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
       toast.error(`Failed to assign role: ${error.message}`);
     },
   });
-const suspendMutation = useMutation({
-  mutationFn: async () => {
-    if (suspendType === 'ban') {
-      const { data, error } = await supabase.rpc('ban_user', {
-        p_user_id: userId,
-        p_reason: suspendReason
-      });
-      if (error) throw error;
-      return data;
-    } else {
-      const { data, error } = await supabase.rpc('suspend_user', {
-        p_user_id: userId,
-        p_reason: suspendReason,
-        p_duration: '7 days'
-      });
-      if (error) throw error;
-      return data;
-    }
-  },
+  const suspendMutation = useMutation({
+    mutationFn: async () => {
+      if (suspendType === 'ban') {
+        const { data, error } = await supabase.rpc('ban_user', {
+          p_user_id: user.id,
+          p_reason: suspendReason
+        });
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase.rpc('suspend_user', {
+          p_user_id: user.id,
+          p_reason: suspendReason,
+          p_duration: '7 days'
+        });
+        if (error) throw error;
+        return data;
+      }
+    },
   onSuccess: () => {
     toast.success(suspendType === "ban" ? "User banned" : "User suspended");
     setIsSuspendDialogOpen(false);
     setSuspendReason("");
-    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-complete"] });
   },
   onError: (error: Error) => {
     toast.error(`Failed to ${suspendType} user: ${error.message}`);
