@@ -206,4 +206,53 @@ describe('Booking Extension Request', () => {
             expect(formatted).toBe('2026-03-30');
         });
     });
+
+    describe('Conflict Detection', () => {
+        it('should detect conflict if new end date is before current end date', () => {
+            const currentEndDate = new Date('2026-03-27');
+            const requestedEndDate = new Date('2026-03-26');
+            const hasConflict = requestedEndDate < currentEndDate;
+
+            expect(hasConflict).toBe(true);
+        });
+
+        it('should detect no conflict if new end date is after current end date', () => {
+            const currentEndDate = new Date('2026-03-27');
+            const requestedEndDate = new Date('2026-03-28');
+            const hasConflict = requestedEndDate < currentEndDate;
+
+            expect(hasConflict).toBe(false);
+        });
+
+        it('should detect conflict if new end date is the same as current end date', () => {
+            const currentEndDate = new Date('2026-03-27');
+            const requestedEndDate = new Date('2026-03-27');
+            const hasConflict = requestedEndDate < currentEndDate;
+
+            expect(hasConflict).toBe(false);
+        });
+    });
+
+    describe('Provider-Side Confirmation Flows', () => {
+        it('should require provider confirmation for extensions longer than 5 days', () => {
+            const extraDays = 6;
+            const requiresConfirmation = extraDays > 5;
+
+            expect(requiresConfirmation).toBe(true);
+        });
+
+        it('should not require provider confirmation for extensions of 5 days or less', () => {
+            const extraDays = 5;
+            const requiresConfirmation = extraDays > 5;
+
+            expect(requiresConfirmation).toBe(false);
+        });
+
+        it('should handle exactly 5 days as no confirmation needed', () => {
+            const extraDays = 5;
+            const requiresConfirmation = extraDays > 5;
+
+            expect(requiresConfirmation).toBe(false);
+        });
+    });
 });

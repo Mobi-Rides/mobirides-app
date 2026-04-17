@@ -150,30 +150,152 @@ Follow `docs/plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md`
 ---
 
 ### BUG-008: Email Notification System Non-Functional — 18/20 Templates Dead (MOB-712)
+...
+**Ticket:** S11-001 / MOB-712
+
+---
+
+### BUG-009: Phased Build Action Failure (Gradle Initialization Script)
 
 | Field | Detail |
 |-------|--------|
-| **Date Reported** | 2026-04-10 |
-| **Severity** | Critical |
+| **Date Reported** | 2026-04-11 |
+| **Severity** | High (Blocks IDE build diagnostics) |
 | **Status** | 🔴 Open |
-| **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts`, `api/notifications/booking-confirmation.js`, `src/services/completeNotificationService.ts`, `src/services/bookingLifecycle.ts`, `src/services/wallet/insuranceNotificationService.ts`, `src/services/wallet/notificationService.ts` |
-| **Assigned To** | Arnold |
+| **Affects** | `android/build.gradle`, Java Language Server |
+| **Assigned To** | Modisa |
+| **Plan** | [`docs/plans/20260411_BUG009_GRADLE_BUILD_FIX.md`](../../docs/plans/20260411_BUG009_GRADLE_BUILD_FIX.md) |
 
 **Description:**  
-A comprehensive audit revealed that **18 of 20 email templates** in the `resend-service` Edge Function are **non-functional**. The root cause is an **architectural routing failure**: `ResendEmailService.sendEmail()` hardcodes ALL email sends to `POST /api/notifications/booking-confirmation`, a handler that only resolves 2 template IDs (`booking-confirmation` and `owner-booking-notification`). Every other template ID is silently discarded.
+The IDE (Cursor/VS Code) fails to run Gradle phased build actions because the RedHat Java extension is searching for a `53/0/.cp/gradle/init/init.gradle` initialization script in an outdated version folder (`1.12.0`) instead of the currently installed version (`1.53.0`).
 
-**Impact Breakdown:**
-- **Working (2):** `booking-confirmation`, `owner-booking-notification`
-- **Dead — route mismatch (13):** Have callers in code, but emails never deliver (`booking-cancelled`, `booking-request`, `handover-ready`, `rental-reminder`, `return-reminder`, `payment-received`, `payment-failed`, `wallet-topup`, `system-notification`, + 4 insurance templates)
-- **Dead — zero callers (3):** `verification-complete`, `welcome-renter`, `welcome-host` — full HTML exists, nobody calls them
-- **Orphaned (2):** `password-reset`, `email-confirmation` — handled natively by Supabase Auth
-- **Ghost references (3):** `wallet-notification`, `early-return-notification`, `promo-notification` — called in code but no HTML template exists
-- **Missing entirely (1):** `verification-rejected` — not defined anywhere
+**Action Required:**  
+Terminate locking Java processes and clear the project's `workspaceStorage` cache to force the extension to recalculate its internal paths. Deferred to next sprint kickoff per user request.
 
-**Implementation Plan:**  
-Follow `docs/plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md`
+**Ticket:** MOB-6
 
-**Ticket:** S11-001 / MOB-712
+### FEATURE-002: Consolidate Admin User Management Components
+
+| Field | Detail |
+|-------|--------|
+| **Date Requested** | 2026-04-12 |
+| **Severity** | Low (Internal refactoring) |
+| **Status** | 🔴 Open |
+| **Affects** | `UnifiedUserTable`, `UserManagementTable`, `AdvancedUserManagement` |
+
+**Description:**  
+There are currently three redundant user table implementations (`UnifiedUserTable`, `UserManagementTable`, and `AdvancedUserManagement`). While `UnifiedUserTable` (used in the main Users page) has the full feature set including CSV export and standardized sorting, the older variants used in the Dashboard and maintenance views are inconsistent or missing these capabilities.
+
+**Action Required:**  
+Refactor the Admin Dashboard and maintenance workflows to use a single, unified component (likely `UnifiedUserTable` supporting different display modes). This will ensure feature parity and simplify future maintenance.
+
+**Note:** The Dashboard summary view's requirement for CSV export should be specifically assessed; it may be preferable to direct users to the main management page for full data exports.
+
+---
+
+### BUG-010: Persistent Data Integrity Issues (Orphaned Users/Profiles)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-12 |
+| **Severity** | High (Revenue/User Block) |
+| **Status** | 🔴 Open |
+| **Affects** | `auth.users`, `public.profiles` |
+
+**Description:**  
+Roadmap audit (Epic 1.2) identifies a significant regression: 323 auth users vs 247 profiles. There are currently **76 orphaned users** and 13 profiles with null/empty `full_name`. Previous fix on Dec 15 (Arnold) has regressed or was incomplete.
+
+**Action Required:**  
+Execute backfill for 76 profiles and identify why the `handle_new_user` trigger is failing to catch all signups.
+
+---
+
+### BUG-011: Missing SuperAdmin Core Logic Functions
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-12 |
+| **Severity** | Medium |
+| **Status** | 🔴 Open |
+| **Affects** | SuperAdmin Portal, PostgreSQL RPCs |
+
+**Description:**  
+While database tables (`user_restrictions`, `vehicle_transfers`, etc.) exist, the corresponding PostgreSQL functions required for the UI are missing: `suspend_user`, `ban_user`, `transfer_vehicle`, `remove_restriction`, and `log_admin_action`.
+
+**Action Required:**  
+Implement missing RPC functions with proper `search_path` security and link them to the Admin Portal.
+
+---
+
+### BUG-012: Payment System Mock Implementation in Production
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-12 |
+| **Severity** | Critical (Epic 2.1 Failure) |
+| **Status** | 🔴 Open |
+| **Affects** | `useBookingPayment.ts`, `services/mockBookingPaymentService.ts` |
+
+**Description:**  
+The application is still using `mockBookingPaymentService` for both Card and Orange Money payments. No live integration with PayU, Stripe Connect, or Orange Money APIs exists in the current service layer.
+
+**Action Required:**  
+Replace mock service with real API integrations for Botswana local providers and Stripe.
+
+---
+
+### BUG-013: Security Search Path Management (BUG-002 Overflow)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-12 |
+| **Severity** | High |
+| **Status** | 🔴 Open |
+| **Affects** | All public schema SQL functions |
+
+**Description:**  
+Systematic audit of SQL functions reveals inconsistent `search_path` settings. While `is_admin` is secured, many secondary functions are vulnerable to search-path-injection attacks (MOB-15). Additionally, `conversations` RLS is currently disabled for "testing" in production.
+
+**Action Required:**  
+Enforce `SET search_path TO 'public'` on all functions and re-enable RLS on the messaging system.
+
+---
+
+### BUG-014: Persistent Migration Drift (http_request types)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-12 |
+| **Severity** | Critical (Blocks `db pull` & CI/CD) |
+| **Status** | 🔴 Analyzing |
+| **Affects** | `supabase/migrations/20260410143004_remote_schema.sql` |
+
+**Technical Breakdown:**
+- **Origin:** Migration `20260319212624` mistakenly contains manual `CREATE TYPE` blocks for `http_*` types (treating them as user types).
+- **Regression Mechanism:** Supabase CLI `db pull` detects that these types are now owned by the `http` extension on the live server. It generates a corrective `DROP TYPE` in the latest migration (`20260410143004`) to reconcile the local "drift."
+- **Failure:** The `DROP` fails during the Shadow DB sync because the `http` extension has an active dependency on these types (`SQLSTATE 2BP01`).
+
+**Final Resolution Strategy:**
+1. **Sanitize History:** Comment out the `CREATE TYPE` blocks in `20260319212624`.
+2. **Purge Regression:** Delete the `DROP TYPE` blocks in `20260410143004`.
+3. **Explicit Ownership:** Add a new migration to explicitly `CREATE EXTENSION IF NOT EXISTS "http"` to ensure the CLI recognizes extension ownership globally.
+
+---
+
+## Roadmap Audit Status (MOB-210..MOB-225)
+
+The following bugs from the March 2026 Testing Registry were audited against the April 10 Production Readiness Report and Git history.
+
+| ID | Issue | Status | Note |
+|---|---|---|---|
+| **MOB-210** | Signup flow broken | 🟡 Re-Opened | Logged as **BUG-010** due to persistent orphaned users (76 count). |
+| **MOB-211-212** | Handover/Payment Card | ✅ Resolved | Bundled into "MOB-200 Epic 100% Complete" (Apr 10). |
+| **MOB-213** | Transaction history | ✅ Resolved | Fixed in commit `4b1ae2b`. |
+| **MOB-214-216** | Notification delivery | ✅ Resolved | Fixed in commits `464218c`, `08b3527`, `981b716`. |
+| **MOB-217-218** | Notification Prefs | ✅ Resolved | Fixed in commit `7821179`. |
+| **MOB-219** | Audit logs | ✅ Resolved | Fixed in commit `85ee060`. |
+| **MOB-220-222** | Map & Centering | ✅ Resolved | Bundled into "MOB-220 Epic 100% Complete" (Apr 10). |
+| **MOB-223-225** | Claims & Filters | ✅ Resolved | Fixed in commits `31644ba`, `9923214`, `dbc0413`. |
 
 ---
 

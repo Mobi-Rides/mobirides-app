@@ -542,15 +542,14 @@ drop function if exists "public"."get_admin_users"();
 
 drop function if exists "public"."get_user_notifications"(p_page integer, p_page_size integer, p_only_unread boolean);
 
-drop type "public"."http_request";
 
-drop type "public"."http_response";
 
 alter type "public"."notification_type" rename to "notification_type__old_version_to_be_dropped";
 
 create type "public"."notification_type" as enum ('booking_request_received', 'booking_request_sent', 'booking_confirmed_host', 'booking_confirmed_renter', 'booking_cancelled_host', 'booking_cancelled_renter', 'pickup_reminder_host', 'pickup_reminder_renter', 'return_reminder_host', 'return_reminder_renter', 'wallet_topup', 'wallet_deduction', 'message_received', 'handover_ready', 'payment_received', 'payment_failed', 'system_notification', 'navigation_started', 'pickup_location_shared', 'return_location_shared', 'arrival_notification', 'early_return_notification', 'pickup_reminder', 'return_reminder', 'claim_submitted', 'claim_status_updated');
 
-drop type "public"."notification_type__old_version_to_be_dropped";
+
+
 
 alter table "archive"."messages" alter column "status" set default 'sent'::public.message_status;
 
@@ -601,6 +600,9 @@ alter table "public"."notifications" alter column "role_target" set default 'sys
 alter table "public"."notifications" alter column "role_target" set data type public.notification_role using "role_target"::text::public.notification_role;
 
 alter table "public"."notifications" alter column "type" set data type public.notification_type using "type"::text::public.notification_type;
+
+drop type "public"."notification_type__old_version_to_be_dropped";
+
 
 alter table "public"."pending_confirmations" alter column "id" set default extensions.uuid_generate_v4();
 
@@ -3563,9 +3565,7 @@ END;
 $function$
 ;
 
-create type "public"."http_request" as ("method" public.http_method, "uri" character varying, "headers" public.http_header[], "content_type" character varying, "content" character varying);
 
-create type "public"."http_response" as ("status" integer, "content_type" character varying, "headers" public.http_header[], "content" character varying);
 
 CREATE OR REPLACE FUNCTION public.increment_car_view_count(car_id uuid)
  RETURNS void

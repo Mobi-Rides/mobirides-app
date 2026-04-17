@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 
 export interface AnalyticsFilters {
   startDate?: string;
@@ -97,8 +96,6 @@ export const analyticsService = {
 
   // Get user activity metrics with role integration
   async getUserMetrics(dateRange?: { start: string; end: string }) {
-    const metrics: any = {};
-
     // Get total users
     const { count: totalUsers } = await supabase
       .from('profiles')
@@ -200,17 +197,52 @@ export const analyticsService = {
       return acc;
     }, {} as Record<string, number>) || {};
 
-    // Get revenue data (if payments table exists)
+    // Get revenue data from multiple sources
     let revenue = 0;
+    let platformCommission = 0;
+
+    // Source 1: Sum total_price from completed bookings
     try {
-      const { data: paymentData } = await supabase
-        .from('payments')
-        .select('amount, currency')
+      const { data: completedBookingsData } = await supabase
+        .from('bookings')
+        .select('total_price')
         .eq('status', 'completed');
 
-      revenue = paymentData?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+      revenue = completedBookingsData?.reduce((sum, b) => sum + (b.total_price || 0), 0) || 0;
     } catch (error) {
-      console.warn('Payments table not available, revenue set to 0');
+      console.warn('Could not fetch completed bookings revenue:', error);
+    }
+
+    // Source 2: If no completed bookings revenue, fallback to payment_transactions
+    if (revenue === 0) {
+      try {
+        const { data: paymentData } = await supabase
+          .from('payment_transactions')
+          .select('amount, host_earnings, platform_commission')
+          .eq('status', 'completed');
+
+        revenue = paymentData?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+        platformCommission = paymentData?.reduce((sum, p) => sum + (p.platform_commission || 0), 0) || 0;
+      } catch (error) {
+        console.warn('Could not fetch payment_transactions revenue:', error);
+      }
+    }
+
+    // Source 3: Also sum wallet_transactions with credit types as supplementary data
+    try {
+      const { data: walletData } = await supabase
+        .from('wallet_transactions')
+        .select('amount, transaction_type')
+        .eq('status', 'completed')
+        .in('transaction_type', ['rental_earnings', 'credit']);
+
+      const walletRevenue = walletData?.reduce((sum, t) => sum + (t.amount > 0 ? t.amount : 0), 0) || 0;
+      // Use wallet revenue if it's higher (more complete data)
+      if (walletRevenue > revenue) {
+        revenue = walletRevenue;
+      }
+    } catch (error) {
+      console.warn('Could not fetch wallet_transactions revenue:', error);
     }
 
     const averageBookingValue = totalBookings ? revenue / totalBookings : 0;
@@ -221,6 +253,7 @@ export const analyticsService = {
       cancelled_bookings: bookingStats.cancelled || 0,
       pending_bookings: bookingStats.pending || 0,
       revenue: revenue,
+      platform_commission: platformCommission,
       average_booking_value: averageBookingValue,
       booking_stats: bookingStats
     };

@@ -1,8 +1,9 @@
 # Admin Settings & Business Logic Configuration — Implementation Plan
 
 **Date:** 22 March 2026  
-**Sprint:** Week 4, March 2026  
-**Status:** DRAFT — Awaiting Review
+**Last Updated:** April 15, 2026  
+**Sprint:** Week 4, March 2026 → Delivered Sprint 9–11  
+**Status:** ✅ Complete — All phases shipped. `platform_settings` table live; commission, dynamic pricing, and insurance settings fully wired and UI-complete.
 
 ---
 

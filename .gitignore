@@ -49,3 +49,5 @@ node_test.js
 *.test.js
 !src/**/*.test.js
 !test/**/*.test.js
+
+esbuild/

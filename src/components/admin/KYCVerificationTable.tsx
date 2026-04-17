@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { PersonalInfo } from "@/types/verification";
+import { ResendEmailService } from "@/services/notificationService";
 
 interface PendingVerification {
   id: string;
@@ -70,7 +71,7 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
 
   const displayVerifications = isPreview ? filteredVerifications.slice(0, maxItems) : filteredVerifications;
 
-  const handleApproveVerification = async (verificationId: string) => {
+  const handleApproveVerification = async (verificationId: string, userId: string, fullName: string) => {
     try {
       const { error } = await supabase
         .from("user_verifications")
@@ -82,6 +83,21 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
 
       if (error) throw error;
 
+      // Send notification
+      try {
+        const emailService = ResendEmailService.getInstance();
+        const { data: emailData } = await supabase.rpc('get_user_email_for_notification', { user_uuid: userId });
+        
+        if (emailData && emailData.length > 0) {
+          await emailService.sendVerificationStatusUpdate(
+            { id: userId, email: emailData, name: fullName || 'User' },
+            true
+          );
+        }
+      } catch (notifyErr) {
+        console.warn("Failed to send verification approval email:", notifyErr);
+      }
+
       refetch();
       toast.success("Verification approved successfully");
     } catch (error) {
@@ -90,17 +106,34 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
     }
   };
 
-  const handleRejectVerification = async (verificationId: string) => {
+  const handleRejectVerification = async (verificationId: string, userId: string, fullName: string) => {
     try {
+      const reason = "Manual review rejection";
       const { error } = await supabase
         .from("user_verifications")
         .update({
           overall_status: "rejected",
-          rejection_reasons: ["Manual review rejection"]
+          rejection_reasons: [reason]
         })
         .eq("id", verificationId);
 
       if (error) throw error;
+
+      // Send notification
+      try {
+        const emailService = ResendEmailService.getInstance();
+        const { data: emailData } = await supabase.rpc('get_user_email_for_notification', { user_uuid: userId });
+        
+        if (emailData && emailData.length > 0) {
+          await emailService.sendVerificationStatusUpdate(
+            { id: userId, email: emailData, name: fullName || 'User' },
+            false,
+            reason
+          );
+        }
+      } catch (notifyErr) {
+        console.warn("Failed to send verification rejection email:", notifyErr);
+      }
 
       refetch();
       toast.success("Verification rejected");
@@ -122,10 +155,13 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
     }
   };
 
-  const renderVerificationRow = (verification: PendingVerification) => (
+  const renderVerificationRow = (verification: PendingVerification) => {
+    const fullName = verification.profiles?.full_name || "Unknown";
+    
+    return (
     <TableRow key={verification.id}>
       <TableCell className="font-medium">
-        {verification.profiles?.full_name || "Unknown"}
+        {fullName}
       </TableCell>
       <TableCell>{verification.profiles?.phone_number || "N/A"}</TableCell>
       <TableCell>
@@ -145,21 +181,22 @@ export const KYCVerificationTable: React.FC<KYCVerificationTableProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleApproveVerification(verification.id)}
+            onClick={() => handleApproveVerification(verification.id, verification.user_id, fullName)}
           >
             <CheckCircle className="h-4 w-4 text-green-600" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleRejectVerification(verification.id)}
+            onClick={() => handleRejectVerification(verification.id, verification.user_id, fullName)}
           >
             <XCircle className="h-4 w-4 text-destructive" />
           </Button>
         </div>
       </TableCell>
     </TableRow>
-  );
+    );
+  };
 
   if (error) {
     return (

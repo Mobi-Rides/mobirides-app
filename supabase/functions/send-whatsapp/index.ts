@@ -1,7 +1,15 @@
+import { z } from "https://deno.land/x/zod/mod.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const WhatsAppRequestSchema = z.object({
+  to: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format. Must include country code, e.g. +267..."),
+  templateSid: z.string(),
+  variables: z.record(z.string()).optional(),
+});
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -10,7 +18,20 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { to, templateSid, variables } = await req.json()
+    const body = await req.json();
+    const validation = WhatsAppRequestSchema.safeParse(body);
+
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request payload", 
+          details: validation.error.format() 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { to, templateSid, variables } = validation.data;
 
     // Initialize Twilio client
     const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID')

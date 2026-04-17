@@ -58,7 +58,7 @@ export class CompleteNotificationService {
       this.sendPushNotification(data.userId, data.title, data.description);
 
       // 3. Send email notification (non-blocking)
-      this.sendEmailNotification(data.userId, data.title, data.description, data.type);
+      this.sendEmailNotification(data.userId, data.title, data.description, data.type, data.metadata);
 
       return { success: true };
     } catch (error) {
@@ -90,7 +90,8 @@ export class CompleteNotificationService {
     userId: string, 
     title: string, 
     description: string, 
-    type: NotificationType
+    type: NotificationType,
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     try {
       // Get user email and profile data
@@ -106,18 +107,30 @@ export class CompleteNotificationService {
       if (emailResponse.data && emailResponse.data.length > 0) {
         const emailService = ResendEmailService.getInstance();
         const templateKey = this.getEmailTemplateKey(type);
+        const name = profileResponse.data?.full_name || 'User';
         
+        // Prepare template-specific data
+        const templateData: Record<string, any> = {
+          name,
+          title,
+          description,
+          type,
+          timestamp: new Date().toLocaleDateString(),
+          actionUrl: `${window.location.origin}/notifications`,
+          ...metadata
+        };
+
+        // Add specific data mappings for known templates
+        if (templateKey === 'booking-confirmation') {
+          templateData.customerName = name;
+        } else if (templateKey === 'booking-request') {
+          templateData.hostName = name;
+        }
+
         await emailService.sendEmail(
           emailResponse.data,
           templateKey,
-          {
-            name: profileResponse.data?.full_name || 'User',
-            title,
-            description,
-            type,
-            timestamp: new Date().toLocaleDateString(),
-            actionUrl: `${window.location.origin}/notifications`
-          },
+          templateData,
           title
         );
       }
@@ -132,9 +145,11 @@ export class CompleteNotificationService {
   private getEmailTemplateKey(type: NotificationType): string {
     switch (type) {
       case 'booking_request_received':
+        return 'booking-request';
       case 'booking_request_sent':
         return 'booking-request';
       case 'booking_confirmed_host':
+        return 'owner-booking-notification';
       case 'booking_confirmed_renter':
         return 'booking-confirmation';
       case 'booking_cancelled_host':
@@ -144,7 +159,10 @@ export class CompleteNotificationService {
         return 'payment-received';
       case 'payment_failed':
         return 'payment-failed';
+      case 'payout_processed':
+        return 'payout-confirmation';
       case 'wallet_topup':
+        return 'wallet-topup';
       case 'wallet_deduction':
         return 'wallet-notification';
       case 'handover_ready':
@@ -165,15 +183,21 @@ export class CompleteNotificationService {
         return 'insurance-claim-received';
       case 'claim_status_updated':
         return 'insurance-claim-update';
-      case 'arrival_notification':
-        return 'arrival-notification';
-      case 'pickup_location_shared':
-        return 'pickup-location-shared';
-      case 'return_location_shared':
-        return 'return-location-shared';
+      case 'review_request':
+        return 'review-request';
+      case 'listing_approved':
+      case 'listing_rejected':
+        return 'listing-status-update';
+      case 'booking_modified':
+        return 'booking-modification';
       case 'welcome_renter':
+        return 'welcome-renter';
       case 'welcome_host':
-        return 'welcome-email';
+        return 'welcome-host';
+      case 'verification_approved':
+        return 'verification-complete';
+      case 'verification_rejected':
+        return 'verification-rejected';
       case 'system_notification':
       default:
         return 'system-notification';

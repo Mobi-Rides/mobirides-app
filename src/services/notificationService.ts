@@ -54,7 +54,7 @@ export class ResendEmailService {
   }
 
   /**
-   * Send email via API endpoint using Resend (same as password reset flow)
+   * Send email via Supabase Edge Function using Resend
    */
   public async sendEmail(
     to: string,
@@ -63,32 +63,28 @@ export class ResendEmailService {
     subject?: string
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      const response = await fetch('/api/notifications/booking-confirmation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      console.log(`📤 Invoking resend-service for template: ${templateId} to: ${to}`);
+      
+      const { data, error } = await supabase.functions.invoke('resend-service', {
+        body: {
           to,
           templateId,
-          bookingData: dynamicData,
-          isHost: templateId === 'owner-booking-notification'
-        }),
+          dynamicData,
+          subject
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Error sending email:", data.error);
-        return { success: false, error: data.error || 'Failed to send email' };
+      if (error) {
+        console.error("Error invoking resend-service:", error);
+        return { success: false, error: error.message || 'Failed to send email' };
       }
 
-      if (!data.success) {
-        console.error("Error from API:", data.error);
-        return { success: false, error: data.error };
+      if (!data?.success) {
+        console.error("Error response from resend-service:", data?.error);
+        return { success: false, error: data?.error || 'Unknown error' };
       }
 
-      return { success: true, messageId: data.messageId };
+      return { success: true, messageId: data.data?.id };
     } catch (e) {
       console.error("Unhandled error in sendEmail:", e);
       const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
@@ -104,14 +100,77 @@ export class ResendEmailService {
       case 'booking-confirmation':
         return 'Booking Confirmation - MobiRides';
       case 'booking-request':
-        return 'New Booking Request - MobiRides';
+        return 'New Booking Request - Action Required';
       case 'pickup-reminder':
-        return 'Pickup Reminder - MobiRides';
+        return 'Reminder: Your rental starts soon';
       case 'return-reminder':
-        return 'Return Reminder - MobiRides';
+        return 'Reminder: Vehicle return due';
+      case 'verification-complete':
+        return 'Account Verified - MobiRides';
+      case 'verification-rejected':
+        return 'Action Required: Verification Review';
+      case 'wallet-notification':
+        return 'Wallet Update - MobiRides';
+      case 'welcome-renter':
+        return 'Welcome to MobiRides!';
+      case 'welcome-host':
+        return 'Welcome to MobiRides - Host Edition';
       default:
         return 'Notification from MobiRides';
     }
+  }
+
+  /**
+   * Send welcome email to new renters
+   */
+  async sendWelcomeEmail(
+    recipient: NotificationRecipient
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      user_name: recipient.name,
+      first_name: recipient.name.split(' ')[0],
+      email: recipient.email,
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'welcome-renter',
+      templateData,
+      'Welcome to MobiRides! 🚗'
+    );
+  }
+
+  /**
+   * Send verification status update email
+   */
+  async sendVerificationStatusUpdate(
+    recipient: NotificationRecipient,
+    approved: boolean,
+    reason?: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateKey = approved ? 'verification-complete' : 'verification-rejected';
+    const subject = approved 
+      ? 'Account Verified - Welcome to MobiRides!'
+      : 'Action Required: Your Verification was not approved';
+
+    return this.sendEmail(
+      recipient.email,
+      templateKey,
+      {
+        name: recipient.name,
+        rejectionReason: reason,
+        actionUrl: `${window.location.host}/profile`
+      },
+      subject
+    );
   }
 
   /**
@@ -234,6 +293,206 @@ export class ResendEmailService {
       'promo-notification', // Requires this template ID in Resend
       templateData,
       `Special Offer: ${promoData.discount} with code ${promoData.code}`
+    );
+  }
+
+  /**
+   * Send or schedule a system-wide admin broadcast.
+   * Delegates to broadcast-service Edge Function (handles batching,
+   * audience segmentation, rate limiting, scheduling, and audit logging).
+   */
+  async sendSystemBroadcast(params: {
+    audience: 'all' | 'renters' | 'hosts' | 'verified' | 'active_30d';
+    channel: 'email' | 'push' | 'both';
+    subject: string;
+    message: string;
+    cta_text?: string;
+    cta_url?: string;
+    scheduled_at?: string;
+  }): Promise<{
+    success: boolean;
+    broadcastId?: string;
+    recipientCount?: number;
+    deliveryCount?: number;
+    failureCount?: number;
+    scheduledAt?: string;
+    rateLimited?: boolean;
+    error?: string;
+  }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('broadcast-service', {
+        body: { action: 'send', ...params },
+      });
+      if (error) return { success: false, error: error.message };
+      return {
+        success: data?.success ?? false,
+        broadcastId: data?.broadcast_id,
+        recipientCount: data?.recipient_count,
+        deliveryCount: data?.delivery_count,
+        failureCount: data?.failure_count,
+        scheduledAt: data?.scheduled_at,
+        rateLimited: data?.rateLimited,
+        error: data?.error,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      console.error('sendSystemBroadcast error:', msg);
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
+   * Cancel a pending or scheduled broadcast by ID.
+   */
+  async cancelBroadcast(broadcastId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('broadcast-service', {
+        body: { action: 'cancel', broadcast_id: broadcastId },
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: data?.success ?? false, error: data?.error };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
+    }
+  }
+
+  /**
+   * Send payout confirmation email to host
+   */
+  async sendPayoutConfirmation(
+    recipient: NotificationRecipient,
+    payoutData: {
+      amount: number;
+      payoutDate: string;
+      paymentMethod: string;
+      transactionId: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      amount: payoutData.amount.toFixed(2),
+      payoutDate: payoutData.payoutDate,
+      paymentMethod: payoutData.paymentMethod,
+      transactionId: payoutData.transactionId
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'payout-confirmation',
+      templateData,
+      '💰 Payout Confirmed - MobiRides'
+    );
+  }
+
+  /**
+   * Send review request email after trip completion
+   */
+  async sendReviewRequest(
+    recipient: NotificationRecipient,
+    carName: string,
+    reviewUrl: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'review-request',
+      {
+        name: recipient.name,
+        carName,
+        review_url: reviewUrl
+      },
+      `🌟 How was your trip? Leave a review on MobiRides`
+    );
+  }
+
+  /**
+   * Send listing status update email (approval/rejection)
+   */
+  async sendListingStatusUpdate(
+    recipient: NotificationRecipient,
+    listingData: {
+      carName: string;
+      status: 'approved' | 'rejected';
+      message?: string;
+      listingUrl: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'listing-status-update',
+      {
+        name: recipient.name,
+        carName: listingData.carName,
+        status: listingData.status,
+        message: listingData.message || (listingData.status === 'approved' ? 'Your vehicle is now live!' : 'Your listing needs some updates.'),
+        listing_url: listingData.listingUrl
+      },
+      `📋 Listing Update: ${listingData.carName} is ${listingData.status}`
+    );
+  }
+
+  /**
+   * Send booking modification notification
+   */
+  async sendBookingModification(
+    recipient: NotificationRecipient,
+    modificationData: {
+      bookingReference: string;
+      modificationDetails: string;
+      bookingUrl: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'booking-modification',
+      {
+        name: recipient.name,
+        bookingReference: modificationData.bookingReference,
+        modificationDetails: modificationData.modificationDetails,
+        booking_url: modificationData.bookingUrl
+      },
+      '🔔 Booking Modification - MobiRides'
+    );
+  }
+
+  /**
+   * Send wallet activity notification
+   */
+  async sendWalletNotification(
+    recipient: NotificationRecipient,
+    walletData: {
+      message: string;
+      balance: number;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    return this.sendEmail(
+      recipient.email,
+      'wallet-notification',
+      {
+        name: recipient.name,
+        message: walletData.message,
+        balance: walletData.balance.toFixed(2)
+      },
+      '💳 Wallet Activity - MobiRides'
     );
   }
 }
