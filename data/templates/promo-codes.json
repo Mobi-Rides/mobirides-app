@@ -1,0 +1,18 @@
+[
+  {
+    "code": "WELCOME100",
+    "discount_type": "fixed",
+    "discount_value": 100,
+    "min_booking_amount": 500,
+    "max_uses": 1000,
+    "expires_at": "2026-12-31"
+  },
+  {
+    "code": "SUMMER20",
+    "discount_type": "percentage",
+    "discount_value": 20,
+    "min_booking_amount": 0,
+    "max_uses": 500,
+    "expires_at": "2026-12-31"
+  }
+]
