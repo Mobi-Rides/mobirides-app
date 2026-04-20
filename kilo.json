@@ -6,6 +6,5 @@
         "apiKey": "YOUR_LINEAR_API_KEY"
       }
     }
-  },
-  "enabled_providers": ["linear"]
+  }
 }
