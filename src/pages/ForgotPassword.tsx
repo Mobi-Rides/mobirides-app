@@ -24,8 +24,9 @@ const ForgotPassword: React.FC = () => {
 
     console.log('[ForgotPassword] Sending request to /api/auth/forgot-password for:', email);
 
+    const apiBaseUrl = import.meta.env.VITE_FRONTEND_URL || '';
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch(`${apiBaseUrl}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
