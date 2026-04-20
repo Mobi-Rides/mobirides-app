@@ -111,7 +111,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
     try {
       const formattedPhoneNumber = formatPhoneNumber(`${countryCode}${phoneNumber}`);
 
-      const response = await fetch('/api/auth/signup', {
+      const apiBaseUrl = import.meta.env.VITE_FRONTEND_URL || '';
+      const response = await fetch(`${apiBaseUrl}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
