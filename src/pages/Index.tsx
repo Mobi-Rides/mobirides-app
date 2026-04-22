@@ -43,7 +43,7 @@ const Index = () => {
       />
       <main className="container mx-auto px-4 py-8">
         {isLoadingRole ? (
-          <LoadingView />
+          <LoadingView message="Detecting your role..." />
         ) : !isAuthenticated ? (
           <Navigate to="/login" replace />
         ) : userRole === "host" ? (

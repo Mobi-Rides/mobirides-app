@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -135,35 +134,11 @@ const Bookings = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container py-4 space-y-4">
-          <div className="px-4 py-4 mb-4 flex items-center gap-4">
-            <Button variant="ghost" size="icon" disabled>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-xl md:text-2xl text-left font-semibold">
-              My Booking
-            </h1>
-          </div>
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-        <Navigation />
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-muted-foreground mb-4">Loading your bookings...</p>
+        <Skeleton className="h-32 w-full mb-4" />
+        <Skeleton className="h-32 w-full mb-4" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }
