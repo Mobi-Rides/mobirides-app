@@ -31,12 +31,16 @@
 | Cap Table | ⚠️ Review | Critical | Update with current equity allocations |
 | Board Meeting Minutes | ❌ Missing | Important | Historical records needed |
 | IP Assignment Agreements | ❌ Missing | Important | Founder IP transfer docs |
+| ESOP (Employee Stock Option Plan) | ❌ Missing | Critical | Stock option pool and terms |
+| Vesting Schedule | ❌ Missing | Critical | 4-year vesting with 1-year cliff |
 
 **Action Items:**
 - [ ] Obtain company registration certificate
 - [ ] Draft/update shareholder agreement
 - [ ] Finalize cap table
 - [ ] Compile founder resumes
+- [ ] Create ESOP with option pool (10-15%)
+- [ ] Define vesting schedule (4-year, 1-year cliff)
 
 ---
 
@@ -142,14 +146,14 @@
 
 | Category | Complete | Review | Missing |
 |----------|----------|--------|---------|
-| Corporate & Legal | 0 | 4 | 4 |
+| Corporate & Legal | 0 | 4 | 6 |
 | Investment | 0 | 1 | 8 |
 | Financials | 0 | 3 | 6 |
 | Business | 5 | 3 | 0 |
 | Traction | 0 | 4 | 4 |
 | Legal & Contracts | 2 | 3 | 1 |
 | Due Diligence | 0 | 2 | 4 |
-| **TOTAL** | **7** | **20** | **27** |
+| **TOTAL** | **7** | **20** | **29** |
 
 ---
 
