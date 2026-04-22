@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -68,7 +68,19 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     );
   }, [users, searchTerm]);
 
-  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort } = useTableSort<AdminUserComplete>(filteredUsers);
+  const [sortJustChanged, setSortJustChanged] = useState(false);
+  const { sortedData: sortedUsers, sortKey, sortDirection, handleSort: baseHandleSort } = useTableSort<AdminUserComplete>(filteredUsers);
+
+  const handleSort = useCallback((key: string) => {
+    setSortJustChanged(true);
+    baseHandleSort(key);
+  }, [baseHandleSort]);
+
+  useEffect(() => {
+    if (sortJustChanged) {
+      setSortJustChanged(false);
+    }
+  }, [sortedUsers, sortJustChanged]);
 
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -134,8 +146,28 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     setSelectedUser(null);
   };
 
+  const sortedUsersRef = useRef(sortedUsers);
+  sortedUsersRef.current = sortedUsers;
+
   const handleExport = useCallback(() => {
-    const rows = sortedUsers.map((u) => ({
+    let exportRows = [...filteredUsers];
+    if (sortKey) {
+      exportRows.sort((a, b) => {
+        const aVal = (a as any)[sortKey];
+        const bVal = (b as any)[sortKey];
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          return sortDirection === "desc" ? bVal - aVal : aVal - bVal;
+        }
+        const aStr = String(aVal).toLowerCase();
+        const bStr = String(bVal).toLowerCase();
+        const cmp = aStr.localeCompare(bStr);
+        return sortDirection === "desc" ? -cmp : cmp;
+      });
+    }
+    const rows = exportRows.map((u) => ({
       name: u.full_name ?? "",
       email: u.email ?? "",
       role: u.role ?? "",
@@ -158,7 +190,7 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
       { key: "joined", label: "Joined" },
     ];
     exportToCSV(rows, buildExportFilename("users"), columns);
-  }, [sortedUsers]);
+  }, [filteredUsers, sortKey, sortDirection]);
 
   if (error) {
     return (
@@ -203,6 +235,7 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
                 size="sm"
                 onClick={handleExport}
                 className="gap-2 shrink-0"
+                disabled={sortJustChanged}
               >
                 <Download className="h-4 w-4" />
                 Export CSV

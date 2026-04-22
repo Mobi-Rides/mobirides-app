@@ -1,0 +1,10 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "provider": {
+    "linear": {
+      "options": {
+        "apiKey": "YOUR_LINEAR_API_KEY"
+      }
+    }
+  }
+}

@@ -1,5 +1,68 @@
 # MobiRides Bug Report
 
+**Last Updated:** April 17, 2026  
+**Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
+
+---
+
+## 📊 Tapologo QA Testing Results (April 2026)
+
+An independent QA verification was conducted by **Tapologo** in April 2026 using a comprehensive 197-test-case spreadsheet covering all functional areas.
+
+### Test Results Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Test Cases | 197 |
+| Passed | 119 |
+| Failed | 0 |
+| Blocked | 0 |
+| Execution Rate | 72.1% |
+
+### Key Findings
+
+1. **Zero functional bugs identified** — All executed tests passed, indicating core functionality is working
+2. **Handover Process achieved 100% execution** — All 15 test cases passed
+3. **Execution rate of 72.1%** — Higher than the internal team's ~62% average
+4. **Coverage gaps identified** — Admin Dashboard (20 tests) and Reviews & Ratings (8 tests) not executed
+
+### In Progress Tests (24 tests)
+
+These tests were started but not completed during the testing session:
+
+| Module | Test Cases |
+|--------|-----------|
+| Authentication & Profile | Signup, Logout, Session persistence, Profile view/edit, Avatar upload |
+| Verification (KYC) | Phone verification step |
+| Vehicle Management | Car creation Step 2, Edit car, Delete image, Block dates |
+| Booking System | Date conflict, Price breakdown, Pickup location |
+| Payment & Wallet | Commission display, Earnings breakdown, Top-up |
+| Navigation & Maps | Off-route detection, Traffic layer |
+| Notifications | Notification preferences |
+
+### Coverage Gaps (54 tests not run)
+
+| Module | Tests Not Run | Priority |
+|--------|---------------|-----------|
+| Admin Dashboard | 20 | High — Admin functionality untested |
+| Reviews & Ratings | 8 | High — User feedback loop untested |
+| Promo Codes | 6 | Medium — Discount system untested |
+| Verification (KYC) | 4 | Low — Admin verification tests |
+| Vehicle Management | 3 | Low |
+| Booking System | 5 | Low |
+| Messaging | 2 | Low |
+| Insurance System | 5 | Low |
+
+### Action Items from Tapologo Testing
+
+1. **Complete In Progress tests** — Finish the 24 started tests
+2. **Execute Not Run tests** — Especially Admin Dashboard and Reviews
+3. **Add unit test coverage** — Vehicle Management, Reviews & Ratings, Promo Codes (added to Sprint 12 as S12-026/027/028)
+
+> **Reference:** [Testing Coverage Status Report](./TESTING_COVERAGE_STATUS_2026_03_02.md) — Updated April 17, 2026 with Tapologo results
+
+---
+
 ## Active Bugs
 
 ### BUG-002: Security Vulnerabilities — MOB-700 Series
@@ -8,83 +71,26 @@
 |-------|--------|
 | **Date Reported** | 2026-04-04 |
 | **Severity** | Critical / High / Medium / Low (9 findings) |
-| **Status** | 🟡 In Progress |
-| **Affects** | RLS policies, edge functions, credentials, password storage |
-| **Plan** | [`docs/hotfixes/SECURITY_REMEDIATION_2026_04_04.md`](./hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
+| **Status** | 🟡 In Progress (5/9 shipped) |
+| **Affects** | Edge functions, password storage, author emails |
+| **Plan** | [`docs/hotfixes/SECURITY_REMEDIATION_2026_04_04.md`](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
 
 **Description:**  
-Security scan identified 9 actionable findings: hardcoded secrets in scripts, unauthenticated admin creation endpoint, blanket notification access, missing RLS on financial tables, no input validation on edge functions, mutable search_path on 11 functions, plaintext password storage, exposed author emails, and missing leaked-password protection.
+Security scan identified 9 actionable findings. Sprint 10–11 shipped 5 of 9:
 
-**Tickets:** MOB-701 through MOB-709. See linked plan for full breakdown with acceptance criteria, consumer searches, migration SQL, and phased execution order.
+| Ticket | Finding | Status |
+|--------|---------|--------|
+| MOB-701 | Hardcoded secrets in scripts | ✅ Done (Sprint 10) |
+| MOB-702 | Unauthenticated `add-admin` endpoint | ✅ Done (Sprint 11) |
+| MOB-703 | Blanket notification access RLS | ✅ Done (Sprint 11) |
+| MOB-704 | Missing RLS on financial tables | ✅ Done (Sprint 11) |
+| MOB-706 | Mutable `search_path` on functions | ✅ Done (Sprint 11) |
+| MOB-705 | No input validation on edge functions | 🔴 Open — Sprint 12 (S12-006) |
+| MOB-707 | Plaintext/weak password storage | 🔴 Open — Sprint 12 (S12-007) |
+| MOB-708 | Exposed author emails | 🔴 Open — Sprint 12 (S12-008) |
+| MOB-709 | Missing leaked-password protection | 🔴 Open — Sprint 12 (S12-009) |
 
----
-
-### BUG-003: `notification_type__old_version_to_be_dropped` Dependency Error
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-04 |
-| **Severity** | Critical (blocks `supabase db pull`) |
-| **Status** | 🔴 Open |
-| **Affects** | Shadow DB replay — `20260319212624_remote_schema.sql`, `20260328135949_remote_schema.sql` |
-| **Plan** | [`docs/hotfixes/HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md`](./hotfixes/HOTFIX_DB_PULL_NOTIFICATION_TYPE_2026_04_04.md) |
-
-**Description:**  
-`supabase db pull` fails with `SQLSTATE 2BP01` — 7 functions still reference the old `notification_type` enum via their parameter signatures, blocking the `DROP TYPE` statement. A redundant enum rename block in the second `remote_schema.sql` compounds the issue.
-
-**Tickets:** MOB-801, MOB-802. See linked plan for SQL fixes, impact assessment, and execution order.
-
----
-
-### BUG-004: Outbound SSRF Traffic via `send-push-notification`
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-06 |
-| **Severity** | Critical |
-| **Status** | ✅ Resolved |
-| **Affects** | `supabase/functions/send-push-notification/index.ts`, `.env`, 16 scripts with hardcoded keys |
-| **Reported By** | Supabase Security (Matthias Luft) |
-
-**Description:**  
-Supabase Security flagged suspicious outbound scanning traffic to `vip.66591.vip/.env.test` originating from the application. Root cause: attacker used the previously leaked `service_role` key to invoke the `send-push-notification` edge function with a malicious `subscription.endpoint`, triggering SSRF to scan external targets for environment files.
-
-**Fix Applied:**
-1. Deleted 16 scripts containing hardcoded `service_role` and `anon` keys (9 on Apr 5, 7 on Apr 6)
-2. Removed `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ACCESS_TOKEN` from `.env`
-3. Added SSRF domain whitelist to `send-push-notification/index.ts` — only `fcm.googleapis.com`, `*.push.services.mozilla.com`, `*.notify.windows.com`, `*.wns.windows.com`, `web.push.apple.com` allowed
-4. Full API and JWT Key Rotation (2026-04-07): Upgraded JWT Signing Keys to ECC P-256 and explicitly revoked compromised Legacy HS256 JWT Secret to invalidate active attacker sessions. Rotated publishable and secret API keys in local and production hosting environments.
-
-**Redeployment Verified:**
-Edge function force-redeployed to Supabase runtime. Test request to `https://evil.example.com/.env` returned `403 — Push endpoint domain not allowed`. Log entry confirmed: `Blocked push to disallowed endpoint: https://evil.example.com/.env`. SSRF whitelist is **live in production**.
-
-**Tickets:** MOB-710 (SSRF endpoint validation), MOB-701 (hardcoded secrets — now in progress).
-
----
-
-### BUG-005: Excessive Unauthenticated Query Spam & Redundant Polling
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-06 |
-| **Severity** | Medium |
-| **Status** | ✅ Resolved |
-| **Affects** | `Navigation.tsx`, `RenterStats.tsx`, `HostStats.tsx`, `Wallet.tsx`, `AuditLogViewer.tsx`, `MessagingInterface.tsx`, + 6 more |
-
-**Description:**  
-With a single authenticated user, the app generated ~309 requests/minute to Supabase due to: (1) `useQuery` hooks firing without `enabled: !!user` guards — causing 401 errors on the login page, (2) redundant `supabase.auth.getUser()` network calls inside every `queryFn` instead of using cached `useAuth().user`, (3) aggressive polling intervals (5s–30s) duplicating data already covered by realtime subscriptions, and (4) missing `staleTime` causing refetches on every mount/focus.
-
-**Fix Applied (2026-04-06):**
-1. Added `enabled: !!user` guards to all queries requiring authentication — eliminates 401 spam on login page
-2. Replaced inline `supabase.auth.getUser()` calls with cached `useAuth().user` in high-traffic components (Navigation, RenterStats, HostStats, MessagingInterface)
-3. Reduced polling intervals: notifications 5s→60s, messages 10s→60s, stats 30s→120s, audit logs 30s→60s
-4. Added `staleTime` (10s–120s) to prevent unnecessary refetches on mount/focus
-5. Removed duplicate realtime subscription in `NotificationsSection.tsx`
-6. Removed redundant notification count polling in `Header.tsx`
-
-**Impact:** ~309 req/min → ~50-80 req/min (85% reduction). Auth requests reduced from ~26/min to ~2/min.
-
-**Ticket:** S10-023 (query optimization).
+**Target:** 100% remediation by end of Sprint 12 (May exit criterion).
 
 ---
 
@@ -93,65 +99,36 @@ With a single authenticated user, the app generated ~309 requests/minute to Supa
 | Field | Detail |
 |-------|--------|
 | **Date Reported** | 2026-04-07 |
-| **Severity** | Medium (blocks build) |
+| **Severity** | Medium (blocks strict build) |
 | **Status** | 🔴 Open |
 | **Affects** | `AdminClaimsDashboard.tsx`, `AddressSection.tsx`, `EmergencyContactSection.tsx`, `PersonalInfoSection.tsx`, `HostBookings.tsx`, `enhancedHandoverService.ts`, `handoverService.ts` |
 | **Assigned To** | Tapologo |
+| **Sprint 12** | S12-025 |
 
 **Description:**  
-Supabase's updated TypeScript client enforces `RejectExcessProperties` on `.update()` and `.insert()` calls. 9 build errors across 7 files caused by three patterns: (1) UI alias properties (`estimated_repair_cost`, `renter`, `supporting_documents`) passed to DB operations that don't match schema columns, (2) non-existent `user_role` property included in `user_verifications` inserts, (3) dynamic computed keys (`{ [field]: value }`) producing index-signature types incompatible with strict column typing.
+9 build errors across 7 files caused by: (1) UI alias properties passed to DB operations, (2) non-existent `user_role` property in `user_verifications` inserts, (3) dynamic computed keys producing index-signature types incompatible with strict column typing.
 
 **Remediation Plan:**
-1. **Map alias fields** — In `AdminClaimsDashboard.tsx`, build update objects using real DB column names (`estimated_damage_cost`, `location`, `excess_amount_due`, `evidence_urls`) instead of UI aliases
-2. **Remove `user_role`** — Delete `user_role: profile.role` from `.insert()` calls in `AddressSection.tsx`, `EmergencyContactSection.tsx`, `PersonalInfoSection.tsx` (column doesn't exist on `user_verifications`)
-3. **Replace dynamic keys** — Use explicit conditional assignments typed with `Tables<'table_name'>['Update']` instead of `{ [field]: value }` in `PersonalInfoSection.tsx`, `HostBookings.tsx`, `handoverService.ts`, `enhancedHandoverService.ts`
-4. **No `as any` casts** — All fixes use Supabase's generated types for proper type alignment
-
-**Ticket:** S10-024
+1. Map alias fields to real DB column names in `AdminClaimsDashboard.tsx`
+2. Remove `user_role` from `.insert()` calls in verification sections
+3. Replace dynamic keys with explicit typed assignments
+4. No `as any` casts — use Supabase generated types
 
 ---
 
-### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
-
-| Field | Detail |
-|-------|--------|
-| **Date Requested** | 2026-04-07 |
-| **Severity** | Low (Enhancement) |
-| **Status** | 🔴 Open |
-| **Affects** | `BookingManagementTable`, `WithdrawalRequestsTable`, `MessageManagementTable`, `InsuranceRemittanceTable`, `CarManagementTable`, `TransactionLedgerTable` |
-| **Assigned To** | Arnold |
-
-**Description:**  
-Admin Portal lacks explicit "View Details" capabilities on complex related tables. Instead of relying purely on inline aggregated fields or edit modes that shouldn't be exposed arbitrarily, tables need a read-only detailed inspection view attached to an `<Eye />` action icon.
-
-**Implementation Plan:**
-Follow `docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`. Create read-only dialogs like `BookingDetailsDialog`, `PayoutDetailsDialog`, etc., fetching joined related entities via `react-query`, and wire them up to the missing icons.
-
-**Ticket:** S10-025 / MOB-711
-
-### BUG-008: Missing Email Notification Templates (MOB-712)
+### BUG-008: Email Notification System — Phase 4 Outstanding (MOB-811)
 
 | Field | Detail |
 |-------|--------|
 | **Date Reported** | 2026-04-10 |
 | **Severity** | Medium |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 Partially Resolved |
 | **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts` |
 | **Assigned To** | Modisa |
+| **Sprint 12** | S12-012 |
 
 **Description:**  
-Audit of the email notification infrastructure (`resend-service`) revealed several missing lifecycle templates that are standard in SaaS/MaaS platforms. Although `verification-complete` exists, `verification-rejected` is completely missing, which is a critical gap for user communication during onboarding. Additionally, other critical communications are absent: Host Payout Confirmation, Post-Trip Review Request, Host Listing Approval/Rejection, Booking Modification, and Security/Login Alerts. 
-
-**Implementation Plan:** 
-Follow `docs/plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md`
-
-**Ticket:** S10-028 / MOB-712
-
----
-
-### BUG-008: Email Notification System Non-Functional — 18/20 Templates Dead (MOB-712)
-...
-**Ticket:** S11-001 / MOB-712
+Sprint 11 successfully restored 18/20 email templates (Phases 1–3 of MOB-712). Remaining work: Phase 4 — Admin Bulk Notification Broadcast system (MOB-811), including system notification template, admin broadcast form, and rate limiting.
 
 ---
 
@@ -160,36 +137,15 @@ Follow `docs/plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md`
 | Field | Detail |
 |-------|--------|
 | **Date Reported** | 2026-04-11 |
-| **Severity** | High (Blocks IDE build diagnostics) |
-| **Status** | 🔴 Open |
+| **Severity** | Low (IDE-specific, not blocking builds) |
+| **Status** | 🟡 Workaround Applied |
 | **Affects** | `android/build.gradle`, Java Language Server |
-| **Assigned To** | Modisa |
-| **Plan** | [`docs/plans/20260411_BUG009_GRADLE_BUILD_FIX.md`](../../docs/plans/20260411_BUG009_GRADLE_BUILD_FIX.md) |
+| **Plan** | [`docs/plans/20260411_BUG009_GRADLE_BUILD_FIX.md`](../plans/20260411_BUG009_GRADLE_BUILD_FIX.md) |
 
 **Description:**  
-The IDE (Cursor/VS Code) fails to run Gradle phased build actions because the RedHat Java extension is searching for a `53/0/.cp/gradle/init/init.gradle` initialization script in an outdated version folder (`1.12.0`) instead of the currently installed version (`1.53.0`).
-
-**Action Required:**  
-Terminate locking Java processes and clear the project's `workspaceStorage` cache to force the extension to recalculate its internal paths. Deferred to next sprint kickoff per user request.
+IDE Gradle initialization script path mismatch in RedHat Java extension. Sprint 11 resolved the actual build environment; the IDE cache issue is a cosmetic annoyance with a documented workaround (clear `workspaceStorage`). `app:assembleDebug` verified working via script.
 
 **Ticket:** MOB-6
-
-### FEATURE-002: Consolidate Admin User Management Components
-
-| Field | Detail |
-|-------|--------|
-| **Date Requested** | 2026-04-12 |
-| **Severity** | Low (Internal refactoring) |
-| **Status** | 🔴 Open |
-| **Affects** | `UnifiedUserTable`, `UserManagementTable`, `AdvancedUserManagement` |
-
-**Description:**  
-There are currently three redundant user table implementations (`UnifiedUserTable`, `UserManagementTable`, and `AdvancedUserManagement`). While `UnifiedUserTable` (used in the main Users page) has the full feature set including CSV export and standardized sorting, the older variants used in the Dashboard and maintenance views are inconsistent or missing these capabilities.
-
-**Action Required:**  
-Refactor the Admin Dashboard and maintenance workflows to use a single, unified component (likely `UnifiedUserTable` supporting different display modes). This will ensure feature parity and simplify future maintenance.
-
-**Note:** The Dashboard summary view's requirement for CSV export should be specifically assessed; it may be preferable to direct users to the main management page for full data exports.
 
 ---
 
@@ -201,12 +157,10 @@ Refactor the Admin Dashboard and maintenance workflows to use a single, unified 
 | **Severity** | High (Revenue/User Block) |
 | **Status** | 🔴 Open |
 | **Affects** | `auth.users`, `public.profiles` |
+| **Linear** | ❌ No ticket — to be created Sprint 12 (S12-017) |
 
 **Description:**  
-Roadmap audit (Epic 1.2) identifies a significant regression: 323 auth users vs 247 profiles. There are currently **76 orphaned users** and 13 profiles with null/empty `full_name`. Previous fix on Dec 15 (Arnold) has regressed or was incomplete.
-
-**Action Required:**  
-Execute backfill for 76 profiles and identify why the `handle_new_user` trigger is failing to catch all signups.
+323 auth users vs 247 profiles = **76 orphaned users**. The `handle_new_user` trigger is failing to catch all signups. Requires profile backfill and trigger audit.
 
 ---
 
@@ -216,14 +170,12 @@ Execute backfill for 76 profiles and identify why the `handle_new_user` trigger 
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | Medium |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 Partially Addressed |
 | **Affects** | SuperAdmin Portal, PostgreSQL RPCs |
+| **Linear** | ❌ No ticket — to be created Sprint 12 (S12-018) |
 
 **Description:**  
-While database tables (`user_restrictions`, `vehicle_transfers`, etc.) exist, the corresponding PostgreSQL functions required for the UI are missing: `suspend_user`, `ban_user`, `transfer_vehicle`, `remove_restriction`, and `log_admin_action`.
-
-**Action Required:**  
-Implement missing RPC functions with proper `search_path` security and link them to the Admin Portal.
+Sprint 11 delivered `suspend_user` and `ban_user` RPCs (MOB-21, verified by Arnold). Still missing: `transfer_vehicle`, `remove_restriction`, and `log_admin_action` functions.
 
 ---
 
@@ -232,32 +184,37 @@ Implement missing RPC functions with proper `search_path` security and link them
 | Field | Detail |
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
-| **Severity** | Critical (Epic 2.1 Failure) |
+| **Severity** | Critical (blocks revenue) |
 | **Status** | 🔴 Open |
-| **Affects** | `useBookingPayment.ts`, `services/mockBookingPaymentService.ts` |
+| **Affects** | `useBookingPayment.ts`, `mockBookingPaymentService.ts`, `useHostPayouts.ts`, `BookingRequestDetails.tsx` |
+| **Linear** | MOB-22 |
+| **Sprint 12** | S12-001 through S12-005 (Phase 0 fixes) |
 
 **Description:**  
-The application is still using `mockBookingPaymentService` for both Card and Orange Money payments. No live integration with PayU, Stripe Connect, or Orange Money APIs exists in the current service layer.
+The application uses `mockBookingPaymentService` with `setTimeout` simulations for all payment flows. The [Payment Production Readiness Plan](../plans/20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md) documents 5 critical mock-flow bugs:
 
-**Action Required:**  
-Replace mock service with real API integrations for Botswana local providers and Stripe.
+1. **Double commission** — Host approval deducts 15% commission before renter pays; webhook would also deduct.
+2. **Webhook bypass** — Mock flow calls `bookingLifecycle.updateStatus('confirmed')` directly, skipping the webhook entirely.
+3. **No transaction records** — No `payment_transaction` DB records created; `credit_pending_earnings()` never called.
+4. **Mock payout** — `useHostPayouts.ts` returns fake API responses with `setTimeout(2000)`.
+5. **No refund path** — Cancellation has no refund flow.
+
+Sprint 12 targets Phase 0 (fix mock-flow bugs). Phase 1 (real provider integration) deferred to Sprint 13+ pending DPO/Ooze credentials.
 
 ---
 
-### BUG-013: Security Search Path Management (BUG-002 Overflow)
+### BUG-013: Security Search Path Management
 
 | Field | Detail |
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | High |
-| **Status** | 🔴 Open |
-| **Affects** | All public schema SQL functions |
+| **Status** | 🟡 Partially Resolved |
+| **Affects** | SQL functions, `conversations` table RLS |
+| **Linear** | MOB-23 (In Progress — status needs update) |
 
 **Description:**  
-Systematic audit of SQL functions reveals inconsistent `search_path` settings. While `is_admin` is secured, many secondary functions are vulnerable to search-path-injection attacks (MOB-15). Additionally, `conversations` RLS is currently disabled for "testing" in production.
-
-**Action Required:**  
-Enforce `SET search_path TO 'public'` on all functions and re-enable RLS on the messaging system.
+Sprint 11 shipped MOB-706 (S11-011) which applied `SET search_path = public` to all `SECURITY DEFINER` functions. The residual item is that `conversations` table RLS is reportedly still disabled for "testing" in production — this needs verification and re-enablement.
 
 ---
 
@@ -267,42 +224,70 @@ Enforce `SET search_path TO 'public'` on all functions and re-enable RLS on the 
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | Critical (Blocks `db pull` & CI/CD) |
-| **Status** | 🔴 Analyzing |
-| **Affects** | `supabase/migrations/20260410143004_remote_schema.sql` |
+| **Status** | 🔴 Open |
+| **Affects** | `supabase/migrations/20260319212624_remote_schema.sql`, `20260410143004_remote_schema.sql` |
+| **Linear** | ❌ No ticket — to be created Sprint 12 (S12-019) |
 
-**Technical Breakdown:**
-- **Origin:** Migration `20260319212624` mistakenly contains manual `CREATE TYPE` blocks for `http_*` types (treating them as user types).
-- **Regression Mechanism:** Supabase CLI `db pull` detects that these types are now owned by the `http` extension on the live server. It generates a corrective `DROP TYPE` in the latest migration (`20260410143004`) to reconcile the local "drift."
-- **Failure:** The `DROP` fails during the Shadow DB sync because the `http` extension has an active dependency on these types (`SQLSTATE 2BP01`).
+**Description:**  
+Migration `20260319212624` contains manual `CREATE TYPE` blocks for `http_*` types that should be extension-owned. The CLI generates corrective `DROP TYPE` statements that fail during Shadow DB sync (`SQLSTATE 2BP01`).
 
-**Final Resolution Strategy:**
-1. **Sanitize History:** Comment out the `CREATE TYPE` blocks in `20260319212624`.
-2. **Purge Regression:** Delete the `DROP TYPE` blocks in `20260410143004`.
-3. **Explicit Ownership:** Add a new migration to explicitly `CREATE EXTENSION IF NOT EXISTS "http"` to ensure the CLI recognizes extension ownership globally.
+**Resolution Strategy:**
+1. Comment out `CREATE TYPE` blocks in `20260319212624`
+2. Delete `DROP TYPE` blocks in `20260410143004`
+3. Add explicit `CREATE EXTENSION IF NOT EXISTS "http"` migration
 
 ---
 
-## Roadmap Audit Status (MOB-210..MOB-225)
+### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
-The following bugs from the March 2026 Testing Registry were audited against the April 10 Production Readiness Report and Git history.
+| Field | Detail |
+|-------|--------|
+| **Date Requested** | 2026-04-07 |
+| **Severity** | Low (Enhancement) |
+| **Status** | 🔴 Open |
+| **Affects** | 6 Admin Management tables |
+| **Plan** | [`docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`](../plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md) |
 
-| ID | Issue | Status | Note |
-|---|---|---|---|
-| **MOB-210** | Signup flow broken | 🟡 Re-Opened | Logged as **BUG-010** due to persistent orphaned users (76 count). |
-| **MOB-211-212** | Handover/Payment Card | ✅ Resolved | Bundled into "MOB-200 Epic 100% Complete" (Apr 10). |
-| **MOB-213** | Transaction history | ✅ Resolved | Fixed in commit `4b1ae2b`. |
-| **MOB-214-216** | Notification delivery | ✅ Resolved | Fixed in commits `464218c`, `08b3527`, `981b716`. |
-| **MOB-217-218** | Notification Prefs | ✅ Resolved | Fixed in commit `7821179`. |
-| **MOB-219** | Audit logs | ✅ Resolved | Fixed in commit `85ee060`. |
-| **MOB-220-222** | Map & Centering | ✅ Resolved | Bundled into "MOB-220 Epic 100% Complete" (Apr 10). |
-| **MOB-223-225** | Claims & Filters | ✅ Resolved | Fixed in commits `31644ba`, `9923214`, `dbc0413`. |
+**Description:**  
+Admin Portal lacks explicit "View Details" `<Eye />` action icons on complex tables. Implementation plan exists for read-only detail dialogs.
+
+**Ticket:** S10-025 / MOB-711
+
+---
+
+### FEATURE-002: Consolidate Admin User Management Components
+
+| Field | Detail |
+|-------|--------|
+| **Date Requested** | 2026-04-12 |
+| **Severity** | Low (Internal refactoring) |
+| **Status** | 🔴 Open |
+| **Affects** | `UnifiedUserTable`, `UserManagementTable`, `AdvancedUserManagement` |
+
+**Description:**  
+Three redundant user table implementations exist. Refactor to single unified component supporting different display modes.
 
 ---
 
 ## Resolved Bugs
 
-### BUG-007 — Admin Portal Data Inaccuracies (Export/Pagination/Sorting)
-Resolved 2026-04-10. Standardized 10 Management tables with robust sliding-window pagination, fixed accurate entry counts, removed the 100-user export limit, and added multi-direction sorting logic (`useTableSort`).
+| ID | Resolution Date | Summary |
+|----|----------------|---------|
+| **BUG-001** | 2026-03-28 | `create_handover_notification` return type conflict — dropped legacy function overload. |
+| **BUG-003** | 2026-04-14 | `notification_type` enum dependency error — MOB-801/802 shipped (S11-005/S11-006). |
+| **BUG-004** | 2026-04-06 | Outbound SSRF via `send-push-notification` — SSRF whitelist deployed, keys rotated. |
+| **BUG-005** | 2026-04-06 | Excessive unauthenticated query spam — 85% request reduction (309→50-80 req/min). |
+| **BUG-007** | 2026-04-10 | Admin table data inaccuracies — 10 tables standardized with accurate pagination/exports. |
 
-### BUG-001 — `create_handover_notification` Return Type Conflict
-Resolved 2026-03-28. See `docs/hotfixes/HOTFIX_DB_PULL_FIX_2026_03_28.md`.
+---
+
+## Roadmap Audit Status (MOB-210..MOB-225)
+
+| ID | Issue | Status |
+|---|---|---|
+| **MOB-210** | Signup flow broken | 🟡 Re-Opened as **BUG-010** (76 orphaned users) |
+| **MOB-211-225** | Handover, Payment, Notifications, Map, Claims | ✅ All Resolved |
+
+---
+
+*Updated by: Modisa Maphanyane — April 17, 2026*

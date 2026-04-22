@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, DollarSign, ArrowUpRight, ArrowDownLeft, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransactionJourneyDialog } from "./finance/TransactionJourneyDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Transaction {
   id: string;

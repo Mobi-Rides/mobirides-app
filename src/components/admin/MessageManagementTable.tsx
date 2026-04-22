@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Eye, Flag, Trash2 } from "lucide-react";
 import { MessageThreadViewer } from "./MessageThreadViewer";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Message {
   id: string;

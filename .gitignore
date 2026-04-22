@@ -51,3 +51,8 @@ node_test.js
 !test/**/*.test.js
 
 esbuild/
+
+# Google Drive Sync Files
+.tmp.driveupload/
+.tmp.drivedownload/
+desktop.ini

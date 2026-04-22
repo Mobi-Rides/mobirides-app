@@ -18,11 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CarEditDialog } from "./CarEditDialog";
+import { CarPreviewDialog } from "./CarPreviewDialog";
 import { Search, Eye, Edit, CheckCircle, XCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-interface Car {
+export type Car = {
   id: string;
   brand: string;
   model: string;
@@ -37,7 +39,7 @@ interface Car {
   profiles?: {
     full_name: string | null;
   } | null;
-}
+};
 
 const useAdminCars = () => {
   return useQuery({
@@ -62,6 +64,7 @@ export const CarManagementTable = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [previewCar, setPreviewCar] = useState<Car | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const { data: cars, isLoading, error, refetch } = useAdminCars();
@@ -217,8 +220,8 @@ export const CarManagementTable = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => navigate(`/car/${car.id}`)}
-                          title="View public listing"
+                          onClick={() => setPreviewCar(car)}
+                          title="Preview listing"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -267,6 +270,9 @@ export const CarManagementTable = () => {
           onSuccess={handleUpdateSuccess}
         />
       )}
+      <CarPreviewDialog car={previewCar} onClose={() => setPreviewCar(null)} />
     </div>
   );
 };
+
+export type { Car };

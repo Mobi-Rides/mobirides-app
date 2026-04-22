@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,7 +143,10 @@ export const InsuranceRemittanceTable = () => {
         </CardContent>
       </Card>
     </div>
-      <InsuranceCoverageDialog policyId={selectedPolicyId} onClose={() => setSelectedPolicyId(null)} />
+      <InsuranceCoverageDialog 
+        policyId={selectedPolicyId}
+        onClose={() => setSelectedPolicyId(null)}
+      />
     </>
   );
 };

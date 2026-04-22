@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,7 +172,10 @@ export const WithdrawalRequestsTable = () => {
         </CardContent>
       </Card>
     </div>
-      <PayoutDetailsDialog withdrawalId={selectedWithdrawalId} onClose={() => setSelectedWithdrawalId(null)} />
+      <PayoutDetailsDialog 
+        withdrawalId={selectedWithdrawalId}
+        onClose={() => setSelectedWithdrawalId(null)}
+      />
     </>
   );
 };

@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.widget.Toolbar;
 
 import com.getcapacitor.BridgeActivity;
@@ -14,6 +14,19 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                WebView webView = getBridge().getWebView();
+                if (webView != null && webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
 
     @Override
@@ -43,16 +56,5 @@ public class MainActivity extends BridgeActivity {
                 finish();
             }
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        // Try to go back in webview first
-        WebView webView = getBridge().getWebView();
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
     }
 }
