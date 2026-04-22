@@ -24,8 +24,8 @@ Thank you for your interest in MobiRides. We are pleased to offer you the opport
 |------|---------|
 | **Investment Amount** | P[AMOUNT] |
 | **Securities** | SAFE |
-| **Valuation Cap** | P10,000,000 |
-| **Pre-Money Valuation** | P7,000,000 |
+| **Valuation Cap** | P9,000,000 |
+| **Pre-Money Valuation** | P6,000,000 |
 
 ---
 

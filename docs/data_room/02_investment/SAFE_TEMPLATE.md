@@ -17,7 +17,7 @@
 | Field | Details |
 |-------|--------|
 | Investment Amount | P[AMOUNT] |
-| Valuation Cap | P10,000,000 |
+| Valuation Cap | P9,000,000 |
 | Discount | N/A (Valuation Cap applies) |
 | Pro-Rata Rights | Yes |
 

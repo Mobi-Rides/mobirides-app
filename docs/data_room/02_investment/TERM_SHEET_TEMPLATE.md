@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Date:** [DATE]  
 **Company:** MobiRides (Pty) Ltd  
-**PRE-MONEY VALUATION:** P7,000,000 (Seven Pula)
+**PRE-MONEY VALUATION:** P6,000,000 (Six Pula) - *Depleted Runway Discount*
 
 ---
 
@@ -13,9 +13,9 @@
 |------|-------|
 | **Investment Amount** | P[AMOUNT] |
 | **Security** | SAFE (Simple Agreement for Future Equity) |
-| **Pre-Money Valuation** | P7,000,000 |
-| **Post-Money Valuation** | P7,000,000 + Investment |
-| **Option Pool** | 15% (included in pre-money) |
+| **Pre-Money Valuation** | P6,000,000 |
+| **Post-Money Valuation** | P6,000,000 + Investment |
+| **Option Pool** | 10% (included in pre-money) |
 
 ---
 

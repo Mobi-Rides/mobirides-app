@@ -31,7 +31,7 @@
 | Cap Table | ⚠️ Review | Critical | Update with current equity allocations |
 | Board Meeting Minutes | ❌ Missing | Important | Historical records needed |
 | IP Assignment Agreements | ❌ Missing | Important | Founder IP transfer docs |
-| ESOP (Employee Stock Option Plan) | ❌ Missing | Critical | Stock option pool and terms |
+| ESOP (Employee Stock Option Plan) | ❌ Missing | Critical | Stock option pool - 10% of company |
 | Vesting Schedule | ❌ Missing | Critical | 4-year vesting with 1-year cliff |
 
 **Action Items:**
@@ -39,7 +39,7 @@
 - [ ] Draft/update shareholder agreement
 - [ ] Finalize cap table
 - [ ] Compile founder resumes
-- [ ] Create ESOP with option pool (10-15%)
+- [ ] Create ESOP with option pool (10%)
 - [ ] Define vesting schedule (4-year, 1-year cliff)
 
 ---
@@ -58,7 +58,7 @@
 **Action Items:**
 - [ ] Create term sheet template
 - [ ] Prepare SAFE documents
-- [ ] Define valuation: P7M pre-money
+- [ ] Define valuation: P6M pre-money (depleted runway discount)
 
 ---
 

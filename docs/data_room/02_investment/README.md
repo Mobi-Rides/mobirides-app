@@ -16,9 +16,9 @@ Templates for MobiRides pre-seed investment round.
 | Parameter | Value |
 |-----------|-------|
 | Raise Amount | P700,000 |
-| Pre-Money Valuation | P7,000,000 |
-| Valuation Cap | P10,000,000 |
-| Option Pool | 15% |
+| Pre-Money Valuation | P6,000,000 |
+| Valuation Cap | P9,000,000 |
+| Option Pool | 10% |
 
 ## Usage
 
