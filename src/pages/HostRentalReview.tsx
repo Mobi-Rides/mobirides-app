@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { CategoryRatingInput } from "@/components/reviews/CategoryRatingInput";
+import { Loader2 } from "lucide-react";
 
 const HOST_CATEGORIES = [
   { key: "punctuality", label: "Punctuality" },
@@ -98,7 +99,10 @@ export const HostRentalReview = () => {
   };
 
   if (isLoading || isCheckingExisting) {
-    return <div className="container max-w-2xl py-8 flex items-center justify-center min-h-[50vh]">Loading...</div>;
+    return <div className="container max-w-2xl py-8 flex flex-col items-center justify-center min-h-[50vh]">
+      <Loader2 className="animate-spin mb-2 h-6 w-6 text-muted-foreground" />
+      <span className="text-muted-foreground">Loading review details...</span>
+    </div>;
   }
 
   if (!booking) {

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { LoadingView } from "@/components/home/LoadingView";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -27,7 +28,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Loading...
+        <LoadingView message="Checking authentication..." />
       </div>
     );
   }

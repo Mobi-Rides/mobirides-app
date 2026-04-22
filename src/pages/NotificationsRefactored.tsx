@@ -148,20 +148,11 @@ const NotificationsRefactored: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-8 w-8 rounded-full" />
-          </div>
-          <Skeleton className="h-10 w-full" />
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
-            ))}
-          </div>
-        </div>
-        <Navigation />
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[50vh]">
+        <span className="text-muted-foreground mb-2">Loading notifications...</span>
+        <Skeleton className="h-24 w-full mb-4" />
+        <Skeleton className="h-24 w-full mb-4" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
