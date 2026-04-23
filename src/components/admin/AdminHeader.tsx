@@ -15,6 +15,7 @@ const routeTitles: Record<string, string> = {
   "/admin/verifications": "Verification Management",
   "/admin/messages": "Message Management",
   "/admin/settings": "Admin Settings",
+  "/admin/campaigns": "Campaign Management",
 };
 
 export const AdminHeader = () => {

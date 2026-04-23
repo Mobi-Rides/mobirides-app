@@ -224,9 +224,9 @@ Sprint 11 shipped MOB-706 (S11-011) which applied `SET search_path = public` to 
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | Critical (Blocks `db pull` & CI/CD) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Review |
 | **Affects** | `supabase/migrations/20260319212624_remote_schema.sql`, `20260410143004_remote_schema.sql` |
-| **Linear** | ❌ No ticket — to be created Sprint 12 (S12-019) |
+| **Linear** | MOB-63 (In Review) |
 
 **Description:**  
 Migration `20260319212624` contains manual `CREATE TYPE` blocks for `http_*` types that should be extension-owned. The CLI generates corrective `DROP TYPE` statements that fail during Shadow DB sync (`SQLSTATE 2BP01`).

@@ -13,6 +13,7 @@ interface PromoCodeInputProps {
   appliedPromo?: PromoCode | null;
   className?: string;
   disabled?: boolean;
+  carId?: string;
 }
 
 export const PromoCodeInput = ({
@@ -22,7 +23,8 @@ export const PromoCodeInput = ({
   onRemove,
   appliedPromo,
   className,
-  disabled = false
+  disabled = false,
+  carId
 }: PromoCodeInputProps) => {
   const [inputCode, setInputCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +38,7 @@ export const PromoCodeInput = ({
     setError(null);
 
     try {
-      const validation = await validatePromoCode(inputCode, userId, bookingAmount);
+      const validation = await validatePromoCode(inputCode, userId, bookingAmount, carId);
       
       if (validation.valid && validation.promoCode) {
         onApply(validation.promoCode);

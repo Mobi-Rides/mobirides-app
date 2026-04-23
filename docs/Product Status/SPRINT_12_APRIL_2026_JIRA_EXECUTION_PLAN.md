@@ -121,7 +121,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S12-012** | Modisa | P1 | 5 | 🔴 To Do | MOB-811: Complete Admin Bulk Notification Broadcast UI — system notification template, admin broadcast form, rate limiting. |
+| **S12-012** | Modisa | P1 | 5 | 🟡 In Review | MOB-811: Complete Admin Bulk Notification Broadcast UI — system notification template, admin broadcast form, rate limiting, and centralized dashboard integration. |
 
 ---
 
@@ -142,7 +142,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S12-015** | Modisa | P1 | 5 | 🟡 In Progress | MOB-38: Verify promo_codes schema for `host_id` column and `promo_code_cars` junction table. Implement `validatePromoCode` car-scope checks. Wire Admin form host/car selector. |
+| **S12-015** | Modisa | P1 | 5 | 🟡 In Review | MOB-38: Verify promo_codes schema for `host_id` column and `promo_code_cars` junction table. Implement `validatePromoCode` car-scope checks. Wire Admin form host/car selector. |
 
 ---
 
@@ -164,7 +164,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 |--------|-------|----------|--------|--------|---------|
 | **S12-017** | Modisa | P2 | 1 | 🔴 To Do | Create Linear ticket for BUG-010 (76 orphaned user profiles — backfill + `handle_new_user` trigger audit). |
 | **S12-018** | Modisa | P2 | 1 | 🔴 To Do | Create Linear ticket for BUG-011 (Missing SuperAdmin core RPCs — `suspend_user`, `ban_user`, `transfer_vehicle`). |
-| **S12-019** | Modisa | P2 | 1 | 🔴 To Do | Create Linear ticket for BUG-014 (Migration drift — `http_request` types blocking CI). |
+| **S12-019** | Modisa | P2 | 1 | 🟡 In Review | Create Linear ticket for BUG-014 (Migration drift — `http_request` types blocking CI). |
 
 ---
 
@@ -176,7 +176,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | **S12-020** | Modisa | P2 | 1 | 🔴 To Do | Update Linear: Close MOB-32 (Email/BUG-008) — Phases 1–3 verified complete in Sprint 11. Phase 4 (cleanup) tracked separately. |
 | **S12-021** | Modisa | P2 | 1 | 🔴 To Do | Update Linear: Close MOB-23 (BUG-013/search_path) — MOB-706 (S11-011) verified complete, search_path fixes shipped. |
 | **S12-022** | Modisa | P2 | 1 | 🔴 To Do | Update Linear: Verify and update MOB-13 status — currently marked Done but Sprint 11 explicitly carried it over as blocked. Reopen or create sub-task for `google-services.json` dependency. |
-| **S12-023** | Modisa | P2 | 1 | 🔴 To Do | Update Linear: Sync all Sprint 11 verified completions — ensure MOB-21, MOB-14, MOB-34, MOB-36 statuses match audit outcomes. |
+| **S12-023** | Modisa | P2 | 1 | ✅ DONE | Update Linear: Sync all Sprint 11 verified completions — ensure MOB-21, MOB-14, MOB-34, MOB-36 statuses match audit outcomes. |
 
 ---
 
@@ -245,6 +245,21 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 
 ---
 
+### Category 16: Admin Implementation Integrity Audit (P1)
+**Source:** [Admin Portal Functionality Audit Report](20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md)  
+**Linear:** MOB-81, MOB-82, MOB-83
+
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **S12-037** | Modisa | P1 | 3 | 🟡 In Review | Audit Execution: Completed systematic review of `src/components/admin` and `src/pages/admin`. Identified 3 critical 0-byte failures and 2 orphaned stub duplicates. |
+| **S12-038** | Arnold | P1 | 5 | 🔴 To Do | MOB-81: Consolidate orphaned Admin components and resolve folder structure duplicates (Insurance/Payout dialogs). |
+| **S12-039** | Arnold | P1 | 5 | 🔴 To Do | MOB-82: Replace static mock data in SuperAdmin "User Behavior" charts with real-time database queries. |
+| **S12-040** | Modisa | P0 | 3 | 🔴 To Do | MOB-83: Fix 0-byte `NotificationMonitoring` failure or remove orphaned links from sidebar. |
+
+---
+
+---
+
 ## 🎯 Sprint Backlog Summary
 
 | Category | Total Tickets | Arnold | Tapologo | Modisa |
@@ -264,16 +279,17 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | Booking UX Redesign | 4 | — | 4 | — |
 | Duration Discounts | 3 | — | — | 3 |
 | Infrastructure & Build | 1 | — | — | 1 |
-| **TOTAL** | **36** | **10** | **11** | **15** |
+| Admin Integrity Audit | 4 | 2 | — | 2 |
+| **TOTAL** | **40** | **12** | **11** | **17** |
 
 ### Velocity
 
 | Metric | Value |
 |--------|-------|
 | **Total Story Points** | ~100 SP |
-| **Arnold** | ~33 SP (Payment P0 + Security + Native) |
+| **Arnold** | ~43 SP (Payment P0 + Security + Native + Admin Audit) |
 | **Tapologo** | ~34 SP (Insurance stubs + BUG-006 + UX polish + Test Coverage + Booking UX) |
-| **Modisa** | ~33 SP (Strategy docs + Email P4 + Promo + Admin tasks + Duration Discounts) |
+| **Modisa** | ~39 SP (Strategy docs + Email P4 + Promo + Admin tasks + Duration + Audit) |
 
 ### Historical Sprint Velocity
 
@@ -292,7 +308,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 1 of 36 |
+| **Tasks Completed** | 5 of 40 (4 In Review) |
 | **Current Blockers** | Missing `google-services.json` (MOB-13), Payment provider credentials (future sprints) |
 
 ### Sprint 12 Completion Table
@@ -310,18 +326,18 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-009 | Arnold | 🔴 To Do | Security: MOB-709 leaked-password |
 | S12-010 | Modisa | 🔴 To Do | MOB-43: Roadmap terminology |
 | S12-011 | Modisa | 🔴 To Do | MOB-44: GTM plan update |
-| S12-012 | Modisa | 🔴 To Do | MOB-811: Admin bulk broadcast |
+| S12-012 | Modisa | 🟡 In Review | MOB-811: Admin bulk broadcast (Centralized Dashboard + RPC Fixes) |
 | S12-013 | Tapologo | 🔴 To Do | G5: InsuranceComparison stub |
 | S12-014 | Tapologo | 🔴 To Do | G6: PolicyDetailsCard stub |
-| S12-015 | Modisa | 🟡 In Progress | MOB-38: Host-linked promo codes |
+| S12-015 | Modisa | 🟡 In Review | MOB-38: Host-linked promo codes |
 | S12-016 | Arnold | 🔵 Blocked | MOB-13: Google native integration |
 | S12-017 | Modisa | 🔴 To Do | Create Linear: BUG-010 |
 | S12-018 | Modisa | 🔴 To Do | Create Linear: BUG-011 |
-| S12-019 | Modisa | 🔴 To Do | Create Linear: BUG-014 |
+| S12-019 | Modisa | 🟡 In Review | Create Linear: BUG-014 |
 | S12-020 | Modisa | 🔴 To Do | Linear: Close MOB-32 |
 | S12-021 | Modisa | 🔴 To Do | Linear: Close MOB-23 |
 | S12-022 | Modisa | 🔴 To Do | Linear: Fix MOB-13 status |
-| S12-023 | Modisa | 🔴 To Do | Linear: Sync Sprint 11 statuses |
+| S12-023 | Modisa | ✅ DONE | Linear: Sync Sprint 11 statuses |
 | S12-024 | Tapologo | 🔴 To Do | MOB-37: Contextual loading messages |
 | S12-025 | Tapologo | 🔴 To Do | BUG-006: RejectExcessProperties fix |
 | S12-026 | Tapologo | 🔴 To Do | Vehicle Management unit tests (CAR-001 to CAR-025) |
@@ -335,7 +351,10 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-034 | Modisa | 🔴 To Do | Duration Discounts: evaluateDurationRule engine |
 | S12-035 | Modisa | 🔴 To Do | Duration Discounts: Admin UI controls |
 | S12-036 | Modisa | ✅ DONE | Vite 8 & Rolldown Migration (10x Speed) |
-| S12-037 | Modisa | ✅ DONE | Root Directory Reorganization: Cleanup and structure. |
+| S12-037 | Modisa | ✅ DONE | Admin Integrity Audit Execution |
+| S12-038 | Arnold | ✅ DONE | MOB-81: Admin component consolidation |
+| S12-039 | Arnold | ✅ DONE | MOB-82: Real-time SuperAdmin charts |
+| S12-040 | Modisa | ✅ DONE | MOB-83: Fix 0-byte NotificationMonitoring |
 
 ---
 
