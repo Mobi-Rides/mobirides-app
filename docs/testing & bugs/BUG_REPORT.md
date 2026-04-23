@@ -1,6 +1,6 @@
 # MobiRides Bug Report
 
-**Last Updated:** April 17, 2026  
+**Last Updated:** April 22, 2026  
 **Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
@@ -238,6 +238,42 @@ Migration `20260319212624` contains manual `CREATE TYPE` blocks for `http_*` typ
 
 ---
 
+### BUG-015: Admin Analytics Dashboard — Empty Chart Data
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-22 |
+| **Severity** | Medium (Reporting broken) |
+| **Status** | 🔴 Open |
+| **Affects** | `SuperAdminAnalytics.tsx`, `useSuperAdminAnalytics.ts`, `analyticsService.ts` |
+| **Plan** | [`docs/plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md`](../plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) |
+
+**Description:**  
+The "User Growth Trend" and "Booking Trends" charts on the Super Admin Analytics Overview tab render as empty. Root cause: `MobileOptimizedChart` components are hardcoded with `data={[]}` (lines 472 & 480 of `SuperAdminAnalytics.tsx`). The `getUserGrowthData()` method in `useSuperAdminAnalytics.ts` returns an empty array with a TODO comment. No service methods exist in `analyticsService.ts` to aggregate user registrations or bookings by month.
+
+**Database Context:**
+- 317 total profiles (295 renters, 20 hosts, 2 super_admin)
+- 37 test/dummy accounts (filterable by `full_name`)
+- 278 real users after filtering
+- 163 bookings available for trend aggregation
+
+---
+
+### BUG-016: CSV Export — "Export Selected" Exports Only User IDs
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-22 |
+| **Severity** | Medium (Blocks audit workflows) |
+| **Status** | 🔴 Open |
+| **Affects** | `BulkActionBar.tsx`, `UnifiedUserTable.tsx` |
+| **Plan** | [`docs/plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md`](../plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) |
+
+**Description:**  
+The "Export Selected" button in the `BulkActionBar` (line 200–217) only exports a single `user_id` column per selected user, making the CSV output useless for database auditing. It should export full user records (name, email, role, KYC status, account status, vehicles, bookings, joined date) — the same columns as the "Export CSV" button in `UnifiedUserTable`. Additionally, the `UnifiedUserTable` "Export CSV" button uses `filteredUsers` (all rows in memory), which is correct but needs browser verification to confirm the user isn't seeing a stale cached version.
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -290,4 +326,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — April 17, 2026*
+*Updated by: Modisa Maphanyane — April 22, 2026*
