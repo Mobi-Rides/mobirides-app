@@ -2,8 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { nodeModulesPolyfillPlugin } from 'esbuild-plugins-node-modules-polyfill';
-import rollupNodePolyfills from 'rollup-plugin-node-polyfills';
+import nodePolyfills from '@rolldown/plugin-node-polyfills';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -44,29 +43,45 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
-    esbuildOptions: {
+    rolldownOptions: {
       plugins: [
-        nodeModulesPolyfillPlugin()
+        nodePolyfills()
       ]
     }
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       plugins: [
-        rollupNodePolyfills()
+        nodePolyfills()
       ],
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'query-vendor': ['@tanstack/react-query'],
-          'mapbox-vendor': ['mapbox-gl'],
-          'form-vendor': ['react-hook-form', 'zod'],
-          'date-vendor': ['date-fns'],
-          'supabase-vendor': ['@supabase/supabase-js']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) {
+              return 'react-vendor';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'query-vendor';
+            }
+            if (id.includes('mapbox-gl')) {
+              return 'mapbox-vendor';
+            }
+            if (id.includes('react-hook-form') || id.includes('zod')) {
+              return 'form-vendor';
+            }
+            if (id.includes('date-fns')) {
+              return 'date-vendor';
+            }
+            if (id.includes('@supabase/supabase-js')) {
+              return 'supabase-vendor';
+            }
+          }
         }
       }
     },
     chunkSizeWarningLimit: 1000,
   }
 }));
+
+
 
