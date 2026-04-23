@@ -22,7 +22,6 @@ USING (
     id != auth.uid() -- Can see other users' basic info
     OR id = auth.uid() -- Can always see own profile
   )
-  AND (is_deleted = false OR is_deleted IS NULL)
 );
 
 -- Allow public (guest) access to see car owner ratings only for cars
@@ -38,7 +37,6 @@ USING (
     WHERE cars.owner_id = profiles.id 
     AND cars.is_available = true
   )
-  AND (is_deleted = false OR is_deleted IS NULL)
 );
 
 -- Ensure existing own-profile policies remain intact by recreating them if needed
@@ -47,7 +45,7 @@ CREATE POLICY "profiles_own_select"
 ON profiles 
 FOR SELECT 
 TO authenticated
-USING (id = auth.uid() AND (is_deleted = false OR is_deleted IS NULL));
+USING (id = auth.uid());
 
 -- Users can update their own profiles  
 CREATE POLICY "profiles_own_update" 
