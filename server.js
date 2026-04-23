@@ -65,14 +65,21 @@ app.use('/api', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log('='.repeat(50));
-  console.log(`🚀 API Server running on port ${port}`);
-  console.log('='.repeat(50));
-  console.log('Available routes:');
-  console.log('  - POST /api/auth/login');
-  console.log('  - POST /api/auth/signup');
-  console.log('  - POST /api/auth/forgot-password');
-  console.log('  - POST /api/auth/reset-password');
-  console.log('='.repeat(50));
-});
+// Only start a persistent server in local development.
+// On Vercel, @vercel/node invokes the exported handler directly.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log('='.repeat(50));
+    console.log(`🚀 API Server running on port ${port}`);
+    console.log('='.repeat(50));
+    console.log('Available routes:');
+    console.log('  - POST /api/auth/login');
+    console.log('  - POST /api/auth/signup');
+    console.log('  - POST /api/auth/forgot-password');
+    console.log('  - POST /api/auth/reset-password');
+    console.log('='.repeat(50));
+  });
+}
+
+// Default export required by @vercel/node serverless runtime.
+export default app;
