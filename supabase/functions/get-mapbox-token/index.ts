@@ -4,11 +4,8 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  console.log('get-mapbox-token function called with method:', req.method);
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
     return new Response(null, { 
       status: 204,
       headers: corsHeaders 
@@ -16,15 +13,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Attempting to retrieve Mapbox token from environment');
     const token = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
     
     if (!token) {
-      console.error('No Mapbox token found in environment variables');
+      console.error('MAPBOX_PUBLIC_TOKEN is not configured');
       return new Response(
         JSON.stringify({ 
-          error: 'Mapbox token not configured',
-          message: 'The Mapbox token is not set in the environment variables'
+          error: 'Mapbox token not configured'
         }),
         { 
           status: 404,
@@ -36,11 +31,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Successfully retrieved Mapbox token');
     return new Response(
       JSON.stringify({ 
-        token,
-        message: 'Token retrieved successfully'
+        token
       }),
       { 
         status: 200,
@@ -51,11 +44,10 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in get-mapbox-token function:', error);
+    console.error('Unhandled error in get-mapbox-token');
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        message: 'Internal server error while retrieving Mapbox token'
+        error: 'Internal server error while retrieving Mapbox token'
       }),
       { 
         status: 500,
