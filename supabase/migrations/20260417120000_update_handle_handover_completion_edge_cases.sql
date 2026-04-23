@@ -2,7 +2,7 @@
 -- This migration updates the trigger function to skip completion if the booking is cancelled or if a dispute is flagged on the handover session or booking.
 
 -- Drop the old function if it exists
-DROP FUNCTION IF EXISTS public.handle_handover_completion();
+-- Drop removed to avoid dependency errors with triggers; CREATE OR REPLACE is used below.
 
 CREATE OR REPLACE FUNCTION public.handle_handover_completion()
 RETURNS trigger
