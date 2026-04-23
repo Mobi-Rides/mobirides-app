@@ -234,6 +234,15 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | **S12-034** | Modisa | P1 | 5 | 🔴 To Do | Implement `evaluateDurationRule()` within `DynamicPricingService` handling weekly (7+) and monthly (28+) default rules. |
 | **S12-035** | Modisa | P2 | 3 | 🔴 To Do | Update Admin UI (`DynamicPricingRulesSection`, `PricingRuleConditionFields`) to surface the Duration Rule configuration. |
 
+--- 
+
+### Category 15: Infrastructure & Build Stabilization (P0)
+**Source:** Deployment audit & polyfill instability analysis
+
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **S12-036** | Modisa | P0 | 8 | ✅ DONE | **Vite 8 & Rolldown Migration**: Stabilized build pipeline by replacing unstable `vite-plugin-node-polyfills` with modern Rolldown-native stack. Achieved 10x reduction in build time (9.28s) and resolved Vercel ERESOLVE deployment blockers. |
+
 ---
 
 ## 🎯 Sprint Backlog Summary
@@ -254,7 +263,8 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | Test Coverage Gaps (S12-026/027/028) | 3 | — | 3 | — |
 | Booking UX Redesign | 4 | — | 4 | — |
 | Duration Discounts | 3 | — | — | 3 |
-| **TOTAL** | **35** | **10** | **11** | **14** |
+| Infrastructure & Build | 1 | — | — | 1 |
+| **TOTAL** | **36** | **10** | **11** | **15** |
 
 ### Velocity
 
@@ -282,7 +292,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 0 of 25 |
+| **Tasks Completed** | 1 of 36 |
 | **Current Blockers** | Missing `google-services.json` (MOB-13), Payment provider credentials (future sprints) |
 
 ### Sprint 12 Completion Table
@@ -324,6 +334,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-033 | Modisa | 🔴 To Do | Duration Discounts: Update pricing.ts |
 | S12-034 | Modisa | 🔴 To Do | Duration Discounts: evaluateDurationRule engine |
 | S12-035 | Modisa | 🔴 To Do | Duration Discounts: Admin UI controls |
+| S12-036 | Modisa | ✅ DONE | Vite 8 & Rolldown Migration (10x Speed) |
 
 ---
 
