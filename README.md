@@ -103,19 +103,17 @@ See [capacitor.config.ts](./capacitor.config.ts) for configuration.
 ```
 mobirides-app/
 ├── src/                    # Main source code
-│   ├── components/         # React components
-│   ├── pages/              # Page components
-│   ├── services/           # Business logic
-│   ├── integrations/        # Supabase integration
-│   ├── hooks/              # Custom React hooks
-│   ├── utils/              # Utility functions
-│   ├── types/              # TypeScript types
-│   └── config/             # App configuration
-├── docs/                   # Documentation
-├── supabase/               # Supabase config & migrations
-├── android/                # Android native project
+├── docs/                   # Documentation (Roadmaps, PRDs, Plans)
+├── logs/                   # Build, lint, and runtime logs (Ignored by Git)
 ├── scripts/                # Build & utility scripts
-└── __tests__/              # Test files
+│   └── tests/              # Ad-hoc test scripts
+├── supabase/               # Supabase config & migrations
+│   └── dumps/              # Database schema and data backups
+├── scratch/                # Temporary artifacts and backups (Ignored by Git)
+├── android/                # Android native project project
+├── api/                    # Express backend (Serverless/API)
+├── public/                 # Static assets
+└── __tests__/              # Core test files
 ```
 
 ## Available Scripts
@@ -133,10 +131,10 @@ mobirides-app/
 
 ## Documentation
 
-- [Authentication](./auth.md)
+- [Project Overview](./docs/README.md)
+- [Authentication](./docs/security/auth.md)
 - [Supabase Setup](./supabase/MIGRATION_GUIDE.md)
-- [API Documentation](./docs/)
-- [Component Library](./src/components/)
+- [Sprint Planning](./docs/Product%20Status/SPRINT_12_APRIL_2026_JIRA_EXECUTION_PLAN.md)
 
 ## License
 

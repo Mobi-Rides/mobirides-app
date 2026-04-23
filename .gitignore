@@ -56,3 +56,6 @@ esbuild/
 .tmp.driveupload/
 .tmp.drivedownload/
 desktop.ini
+
+# Temporary artifacts
+scratch/
