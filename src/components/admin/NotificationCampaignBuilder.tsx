@@ -106,9 +106,9 @@ export const NotificationCampaignBuilder: React.FC<NotificationCampaignBuilderPr
 
       if (error) throw error;
 
-      const result = data as { valid: boolean; warnings: string[]; errors: string[]; estimated_recipients: number };
+      const result = data as { is_valid: boolean; warnings: string[]; errors?: string[]; estimated_recipients: number };
       const validation: CampaignValidation = {
-        valid: result.valid,
+        valid: result.is_valid,
         warnings: result.warnings || [],
         errors: result.errors || [],
         estimated_recipients: result.estimated_recipients || 0
@@ -132,25 +132,27 @@ export const NotificationCampaignBuilder: React.FC<NotificationCampaignBuilderPr
       }
 
       const { data, error } = await supabase.rpc('create_notification_campaign' as any, {
-        p_campaign_name: campaign.name,
-        p_campaign_description: campaign.description,
-        p_user_roles: campaign.target_audience.user_roles,
-        p_title: campaign.content.title,
-        p_message: campaign.content.message,
-        p_action_url: campaign.content.action_url || null,
-        p_action_text: campaign.content.action_text || null,
-        p_priority: campaign.settings.priority,
-        p_send_immediately: campaign.schedule.send_immediately,
-        p_scheduled_date: campaign.schedule.scheduled_date || null,
-        p_registration_start: campaign.target_audience.registration_date_range?.start || null,
-        p_registration_end: campaign.target_audience.registration_date_range?.end || null,
-        p_last_login_days: campaign.target_audience.activity_filters?.last_login_days || null,
-        p_booking_count_min: campaign.target_audience.activity_filters?.booking_count_min || null,
-        p_metadata: {
-          allow_unsubscribe: campaign.settings.allow_unsubscribe,
-          track_opens: campaign.settings.track_opens,
-          track_clicks: campaign.settings.track_clicks,
-        },
+        p_campaign_data: {
+          name: campaign.name,
+          description: campaign.description,
+          user_roles: campaign.target_audience.user_roles,
+          title: campaign.content.title,
+          message: campaign.content.message,
+          action_url: campaign.content.action_url || null,
+          action_text: campaign.content.action_text || null,
+          priority: campaign.settings.priority,
+          send_immediately: campaign.schedule.send_immediately,
+          scheduled_date: campaign.schedule.scheduled_date || null,
+          registration_start: campaign.target_audience.registration_date_range?.start || null,
+          registration_end: campaign.target_audience.registration_date_range?.end || null,
+          last_login_days: campaign.target_audience.activity_filters?.last_login_days || null,
+          booking_count_min: campaign.target_audience.activity_filters?.booking_count_min || null,
+          metadata: {
+            allow_unsubscribe: campaign.settings.allow_unsubscribe,
+            track_opens: campaign.settings.track_opens,
+            track_clicks: campaign.settings.track_clicks,
+          }
+        }
       });
 
       if (error) throw error;

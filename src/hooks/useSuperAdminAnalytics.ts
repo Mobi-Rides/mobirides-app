@@ -29,7 +29,9 @@ export interface AnalyticsData {
 export interface UserActivityMetrics {
   total_users: number;
   active_users: number;
+  active_today: number;
   new_users: number;
+  new_users_today: number;
   suspended_users: number;
   role_distribution: Record<string, number>;
   role_users?: Record<string, string[]>;
@@ -190,7 +192,7 @@ export const useSuperAdminAnalytics = () => {
       const { count: activeUsers } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .gte('last_sign_in_at', thirtyDaysAgo.toISOString());
+        .gte('last_login_attempt', thirtyDaysAgo.toISOString());
 
       // Get new users (last 7 days)
       const sevenDaysAgo = subDays(new Date(), 7);
@@ -207,13 +209,21 @@ export const useSuperAdminAnalytics = () => {
 
       // Get role distribution
       const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role, count: user_id.count()');
+        .from('profiles')
+        .select('role, id, created_at, last_login_attempt');
 
       const roleDistribution = roleData?.reduce((acc, item) => {
-        acc[item.role] = Number(item.count);
+        const role = item.role || 'renter';
+        acc[role] = (acc[role] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
+
+      // Get today's metrics for fallback
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayIso = today.toISOString();
+      const activeToday = roleData?.filter(p => p.last_login_attempt && p.last_login_attempt >= todayIso).length || 0;
+      const newUsersToday = roleData?.filter(p => p.created_at && p.created_at >= todayIso).length || 0;
 
       // Include admin users data if available
       const adminUsersCount = adminUsers?.length || 0;
@@ -221,7 +231,9 @@ export const useSuperAdminAnalytics = () => {
       setUserMetrics({
         total_users: totalUsers || 0,
         active_users: activeUsers || 0,
+        active_today: activeToday,
         new_users: newUsers || 0,
+        new_users_today: newUsersToday,
         suspended_users: suspendedUsers || 0,
         role_distribution: roleDistribution,
         admin_users: adminUsersCount,
