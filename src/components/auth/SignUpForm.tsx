@@ -148,7 +148,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
       }
 
       toast.success('🎉 Account created successfully!', {
-        description: result.message || 'Welcome to MobiRides!'
+        description: 'You can now sign in with your credentials. Welcome to MobiRides!'
       });
 
       setEmail("");
