@@ -33,6 +33,26 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ResendEmailService } from "@/services/notificationService";
+import { toast } from "sonner";
+import { Plus, Tag, Loader2, Send, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+
+interface PromoCode {
+  id: string;
+  code: string;
+  discount_amount: number;
+  discount_type: 'fixed' | 'percentage';
+  max_uses: number | null;
+  current_uses: number;
+  min_booking_amount: number | null;
+  description: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  host_id: string | null;
+  created_at: string;
+}
 
 export default function AdminPromoCodes() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -54,6 +74,7 @@ export default function AdminPromoCodes() {
   });
 
   // Create Promo Code Mutation
+  const createMutation = useMutation({
     mutationFn: async (payload: { promo: Partial<PromoCode>; carIds?: string[] }) => {
       const { promo: newPromo, carIds } = payload;
       if (!newPromo.code || !newPromo.discount_amount) {
