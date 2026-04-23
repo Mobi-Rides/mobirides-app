@@ -28,16 +28,16 @@ app.use('/api', async (req, res) => {
     // Map paths to files
     if (apiPath === 'auth/login') {
       console.log('[Server] Routing to auth/login.js');
-      handler = await import('./api/auth/login.js');
+      handler = await import('./auth/login.js');
     } else if (apiPath === 'auth/signup') {
       console.log('[Server] Routing to auth/signup.js');
-      handler = await import('./api/auth/signup.js');
+      handler = await import('./auth/signup.js');
     } else if (apiPath === 'auth/forgot-password') {
       console.log('[Server] Routing to auth/forgot-password.js');
-      handler = await import('./api/auth/forgot-password.js');
+      handler = await import('./auth/forgot-password.js');
     } else if (apiPath === 'auth/reset-password') {
       console.log('[Server] Routing to auth/reset-password.js');
-      handler = await import('./api/auth/reset-password.js');
+      handler = await import('./auth/reset-password.js');
     } else if (apiPath && typeof apiPath === 'string' && apiPath.startsWith('admin/')) {
       // Admin routes temporarily disabled due to missing files/merge conflict
       console.warn(`[Server] Admin route ${apiPath} requested but admin handlers are missing.`);

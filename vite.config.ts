@@ -2,8 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { nodeModulesPolyfillPlugin } from 'esbuild-plugins-node-modules-polyfill';
+import rollupNodePolyfills from 'rollup-plugin-node-polyfills';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -25,26 +25,38 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    nodePolyfills({ exclude: ['string_decoder'] }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Standard aliases for browser-compatible versions of Node modules
+      "util": "util",
+      "stream": "stream-browserify",
+      "buffer": "buffer",
+      "process": "process/browser",
     },
   },
   define: {
     'process.env': {},
+    'global': 'globalThis',
   },
   optimizeDeps: {
-    exclude: ['lucide-react'], // Exclude lucide-react from pre-bundling to avoid entry resolution issues
+    exclude: ['lucide-react'],
+    esbuildOptions: {
+      plugins: [
+        nodeModulesPolyfillPlugin()
+      ]
+    }
   },
   build: {
     rollupOptions: {
+      plugins: [
+        rollupNodePolyfills()
+      ],
       output: {
         manualChunks: {
-          // Vendor chunks for large libraries
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'query-vendor': ['@tanstack/react-query'],
           'mapbox-vendor': ['mapbox-gl'],
@@ -54,7 +66,7 @@ export default defineConfig(({ mode }) => ({
         }
       }
     },
-    // Increase chunk size warning limit to 1000kb to reduce warnings
     chunkSizeWarningLimit: 1000,
   }
 }));
+
