@@ -7,27 +7,11 @@ if (!process.env.SUPABASE_URL) {
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
 }
-if (!process.env.SUPABASE_ANON_KEY) {
-  throw new Error('SUPABASE_ANON_KEY environment variable is required');
-}
 
 // Create Supabase client with service role for admin operations
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
-// Sign-up should flow through GoTrue's standard password handling so hashing
-// stays fully managed by Supabase Auth defaults rather than app code.
-const supabaseAuth = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
   {
     auth: {
       autoRefreshToken: false,
@@ -94,16 +78,14 @@ export async function signupUser(req, res) {
       });
     }
 
-    // Create user through Supabase Auth's standard sign-up flow so password
-    // hashing is handled entirely by GoTrue.
-    const { data, error } = await supabaseAuth.auth.signUp({
+    // Create user with service role (bypass email confirmation for development)
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email: sanitizedEmail,
       password,
-      options: {
-        data: {
-          full_name: sanitizedFullName,
-          phone_number: formattedPhoneNumber
-        }
+      email_confirm: true,
+      user_metadata: {
+        full_name: sanitizedFullName,
+        phone_number: formattedPhoneNumber
       }
     });
 
@@ -170,6 +152,8 @@ export async function signupUser(req, res) {
             role: 'renter',
             full_name: sanitizedFullName,
             phone_number: formattedPhoneNumber,
+            email_confirmed: true,
+            email_confirmed_at: new Date().toISOString(),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -231,13 +215,11 @@ export async function signupUser(req, res) {
       user: {
         id: data.user.id,
         email: data.user.email,
-        emailConfirmed: data.user.email_confirmed_at !== null,
+        emailConfirmed: true,
         fullName: sanitizedFullName,
         phoneNumber: formattedPhoneNumber
       },
-      message: data.session
-        ? 'Account created successfully! You can now sign in with your credentials.'
-        : 'Account created successfully! Please check your email to finish verifying your account.'
+      message: 'Account created successfully! You can now sign in with your credentials.'
     });
 
   } catch (error) {
