@@ -25,6 +25,14 @@ function isAllowedPushEndpoint(endpoint: string): boolean {
   }
 }
 
+function getPushEndpointHost(endpoint: string): string {
+  try {
+    return new URL(endpoint).hostname;
+  } catch {
+    return "invalid-endpoint";
+  }
+}
+
 interface PushNotificationRequest {
   subscription: {
     endpoint: string;
@@ -53,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
     // SSRF protection: reject endpoints not on known push service domains
     if (!isAllowedPushEndpoint(subscription.endpoint)) {
       console.error(
-        `Blocked push to disallowed endpoint: ${subscription.endpoint}`
+        `Blocked push to disallowed endpoint host: ${getPushEndpointHost(subscription.endpoint)}`
       );
       return new Response(
         JSON.stringify({
@@ -75,9 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("VAPID keys not configured");
     }
 
-    console.log(
-      `Sending push notification: ${payload.title} to ${subscription.endpoint}`
-    );
+    console.log(`Sending push notification to ${getPushEndpointHost(subscription.endpoint)}`);
 
     const result = await sendWebPushNotification(
       subscription,

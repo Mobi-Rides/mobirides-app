@@ -22,8 +22,6 @@ const ForgotPassword: React.FC = () => {
     setIsSending(true);
     setError("");
 
-    console.log('[ForgotPassword] Sending request to /api/auth/forgot-password for:', email);
-
     const apiBaseUrl = import.meta.env.VITE_FRONTEND_URL || '';
     try {
       const response = await fetch(`${apiBaseUrl}/api/auth/forgot-password`, {
@@ -34,20 +32,16 @@ const ForgotPassword: React.FC = () => {
         body: JSON.stringify({ email }),
       });
 
-      console.log('[ForgotPassword] Response status:', response.status);
-
       let result;
       try {
         result = await response.json();
-        console.log('[ForgotPassword] Response data:', result);
       } catch (parseError) {
-        console.error('[ForgotPassword] Error parsing response:', parseError);
+        console.error('[ForgotPassword] Invalid API response');
         setError('Server returned an invalid response. Please try again.');
         return;
       }
 
       if (!response.ok) {
-        console.error('[ForgotPassword] Request failed:', result);
         setError(result.error || result.details || `Server error (${response.status}): Failed to send reset email`);
         return;
       }
@@ -55,8 +49,7 @@ const ForgotPassword: React.FC = () => {
       toast.success("Password reset email sent! Check your inbox for instructions.");
       navigate("/password-reset-sent");
     } catch (error) {
-      console.error('[ForgotPassword] Network or fetch error:', error);
-      console.error('[ForgotPassword] Error details:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('[ForgotPassword] Network request failed');
 
       // Provide more specific error messages based on error type
       if (error instanceof TypeError && error.message.includes('fetch')) {

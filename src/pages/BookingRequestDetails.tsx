@@ -25,6 +25,7 @@ import { BookingActions } from "@/components/booking-request/BookingActions";
 import { PostConfirmationGuidance } from "@/components/booking/PostConfirmationGuidance";
 import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
 import { bookingLifecycle } from "@/services/bookingLifecycle";
+import { LoadingView } from "@/components/home/LoadingView";
 
 const BookingRequestDetails = () => {
   const { id } = useParams();
@@ -180,17 +181,7 @@ const BookingRequestDetails = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <MobileHeader title="Booking Request" showBackButton backTo="/host-bookings" />
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingView message="Loading booking request..." />;
   }
 
   if (!booking) {

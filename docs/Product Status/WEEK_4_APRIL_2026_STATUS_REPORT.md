@@ -40,7 +40,7 @@ Additionally, the team has integrated **Tapologo's QA testing results** into the
 - BUG-010 (76 Orphaned Users): ✅ **Resolved** (MOB-20)
 - BUG-011 (Missing SuperAdmin Core Logic): ✅ **Resolved** (MOB-21)
 - BUG-014 (Migration Drift): ✅ **Resolved** (MOB-24)
-- MOB-712 Phase 4: Email system cleanup 🟡 **In Progress**
+- MOB-712 Phase 4: Email system cleanup ✅ **Resolved** (MOB-32)
 - MOB-700 Security: search_path enforcement and edge payload validation shipped.
 
 ---
@@ -62,7 +62,7 @@ Additionally, the team has integrated **Tapologo's QA testing results** into the
 
 | Item | Week 3 Status | Week 4 Status | Notes |
 |------|---------------|---------------|-------|
-| MOB-712 Email System | Phase 3 complete, 75% | 🟡 In Progress | Phase 4 cleanup pending (MOB-32); S12-012 |
+| MOB-712 Email System | Phase 3 complete, 75% | ✅ Resolved | Phase 4 cleanup complete; S12-012 closed |
 | Test Coverage | 62%, unverifiable | ✅ Verified & Expanded | Tapologo results integrated; 4 new suites shipped in S11 |
 | BUG-006 (RejectExcessProperties) | Open | ✅ Resolved | MOB-16 closed. Type aliases mapped. |
 | MOB-700 Security | 70% (5/9 done) | ✅ Partial / 🔴 In Sprint 12 | MOB-15 and MOB-9 shipped. Remaining carried to S12. |
@@ -122,7 +122,7 @@ Active bugs are tracked in [`docs/testing & bugs/BUG_REPORT.md`](../testing%20%2
 | BUG-005 | Medium | ✅ Resolved | Excessive unauthenticated query spam | S10-023 |
 | BUG-006 | Medium | ✅ Resolved | Supabase `RejectExcessProperties` strict type errors | MOB-16 closed |
 | BUG-007 | Medium (UX) | ✅ Resolved | Inaccurate Admin table counts + export limits | S10-027 |
-| BUG-008 | Critical | 🟡 In Progress | Email System failure — Phase 4 cleanup pending | MOB-32 |
+| BUG-008 | Critical | ✅ Resolved | Email System failure — All Phases verified complete | MOB-32 closed |
 | BUG-009 | High | ✅ Resolved | Gradle phased build initialization error | MOB-6 closed |
 | BUG-010 | High | ✅ Resolved | 76 orphaned users / auth vs profile drift | MOB-20 closed |
 | BUG-011 | Medium | ✅ Resolved | Missing SuperAdmin core logic RPCs | MOB-21 closed |
@@ -170,7 +170,7 @@ Sprint 12 launched April 18, 2026 targeting our absolute blockers to commercial 
 | 2 | Finalize Security MOB-700 fixes | Arnold | P0 | 🔴 To Do | Apr 24 |
 | 3 | **Booking UX**: Implement `PlanBookingStep.tsx` & Slider | Tapologo | P1 | 🔴 To Do | Apr 28 |
 | 4 | **Duration Pricing**: Implement `evaluateDurationRule` | Modisa | P1 | 🔴 To Do | Apr 28 |
-| 5 | Complete Email Phase 4 broadcast remnants | Modisa | P1 | 🔴 To Do | Apr 24 |
+| 5 | Complete Email Phase 4 broadcast remnants | Modisa | P1 | ✅ Done | Apr 24 |
 
 ---
 

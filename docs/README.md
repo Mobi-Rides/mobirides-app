@@ -2,7 +2,7 @@
 
 *Comprehensive index of all documentation files in the docs folder*
 
-**Total: 182 markdown files**
+**Total: 186 markdown files**
 
 
 ## Product Status (Status Report)
@@ -85,6 +85,7 @@
 | [20260319_DAMAGE_PROTECTION_SLA_PAYU.md](Roadmaps & PRDs/20260319_DAMAGE_PROTECTION_SLA_PAYU.md) | Unknown | Active | --- |
 | [20260410_Roadmap_2026_H1.md](Roadmaps & PRDs/20260410_Roadmap_2026_H1.md) | April 10, 2026 | Active | --- |
 | [20260412_USER_STORIES_PRD_INPUTS_V2.0.md](Roadmaps & PRDs/20260412_USER_STORIES_PRD_INPUTS_V2.0.md) | Unknown | Active | --- |
+| [20260417_BOOKING_SCREEN_UX_PLAN.md](Roadmaps & PRDs/20260417_BOOKING_SCREEN_UX_PLAN.md) | April 17, 2026 | Active | Booking screen UX improvement plan — Sprint 12 |
 | [MobiRides_Valuation_Framework_06-02-2026.md](Roadmaps & PRDs/MobiRides_Valuation_Framework_06-02-2026.md) | February 6, 2026 | Active | --- |
 | [ROADMAP-NOV-DEC-2025.md](Roadmaps & PRDs/ROADMAP-NOV-DEC-2025.md) | Unknown | Active | --- |
 | [ROADMAP.md](Roadmaps & PRDs/ROADMAP.md) | Unknown | Active | *Based on comprehensive system analysis - December... |
@@ -178,6 +179,8 @@
 | [20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md](plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md) | 2026-04-07 | TODO | --- |
 | [20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md](plans/20260410_S10_028_EMAIL_NOTIFICATION_SYSTEM_EXPANSION.md) | Unknown | Active | Fix the broken email notification routing architec... |
 | [20260411_BUG009_GRADLE_BUILD_FIX.md](plans/20260411_BUG009_GRADLE_BUILD_FIX.md) | Unknown | Active | The IDE reports a critical error during Gradle pha... |
+| [20260417_GOOGLE_NATIVE_INTEGRATION_PLAN.md](plans/20260417_GOOGLE_NATIVE_INTEGRATION_PLAN.md) | April 17, 2026 | Active | --- |
+| [20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md](plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) | April 22, 2026 | Open | Jira-style fix plan for BUG-015 (empty analytics charts) and BUG-016 (CSV export only exports user IDs) |
 | [ANONYMIZE_ON_DELETE_2026_03_02.md](plans/ANONYMIZE_ON_DELETE_2026_03_02.md) | Unknown | Active | | Phase | Description | Status | |
 | [IMMEDIATE_ACTION_PLAN.md](plans/IMMEDIATE_ACTION_PLAN.md) | November 24, 2025 | Active | --- |
 | [INSURANCE_README.md](plans/INSURANCE_README.md) | Unknown | Active | The MobiRides insurance system is a comprehensive,... |

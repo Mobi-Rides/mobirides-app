@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getRequiredSecret, isMissingSecretError } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,14 +13,22 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    let SUPABASE_URL: string;
+    let SUPABASE_SERVICE_ROLE_KEY: string;
+    let SUPABASE_ANON_KEY: string;
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("Missing Supabase environment variables", { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: !!SUPABASE_SERVICE_ROLE_KEY });
+    try {
+      SUPABASE_URL = getRequiredSecret("SUPABASE_URL");
+      SUPABASE_SERVICE_ROLE_KEY = getRequiredSecret("SUPABASE_SERVICE_ROLE_KEY");
+      SUPABASE_ANON_KEY = getRequiredSecret("SUPABASE_ANON_KEY");
+    } catch (error) {
+      if (!isMissingSecretError(error)) {
+        throw error;
+      }
+
+      console.error("Missing required Supabase secret for suspend-user");
       return new Response(
-        JSON.stringify({ error: "Server misconfiguration: Supabase env missing", code: "ENV_MISSING" }),
+        JSON.stringify({ error: "Server misconfiguration", code: "ENV_MISSING" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -32,7 +41,7 @@ Deno.serve(async (req) => {
 
     // Create user-scoped client for authentication
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", code: "NO_AUTH_HEADER" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -64,7 +73,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     
     if (authError || !user) {
-      console.error("Authentication failed:", authError);
+      console.error("Authentication failed in suspend-user");
       return new Response(
         JSON.stringify({ error: "Authentication failed", code: "AUTH_FAILED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -75,14 +84,10 @@ Deno.serve(async (req) => {
     let isAdmin = false;
     let adminCheckError: any = null;
 
-    console.log("DEBUG: Starting admin verification for user:", user.id);
-
     // Prefer parameterized RPC with end-user auth context
     const adminRpc = await supabaseUser.rpc('is_admin', { user_uuid: user.id });
     const isAdminRaw: unknown = adminRpc.data;
     adminCheckError = adminRpc.error;
-    
-    console.log("DEBUG: Admin RPC result:", { data: isAdminRaw, error: adminCheckError?.message });
 
     // Normalize RPC result defensively
     try {
@@ -100,17 +105,13 @@ Deno.serve(async (req) => {
       } else {
         isAdmin = !!isAdminRaw;
       }
-      console.log("DEBUG: Normalized admin result:", isAdmin);
     } catch (e) {
-      // If normalization fails, continue to fallback checks
-      console.log("DEBUG: Admin normalization failed:", e);
       adminCheckError = adminCheckError || e;
       isAdmin = false;
     }
 
     // Fallback to service-role direct checks if RPC failed or returned false
     if (!isAdmin) {
-      console.log("DEBUG: Admin RPC returned false, trying fallback checks");
       try {
         const { data: profile } = await supabaseAdmin
           .from('profiles')
@@ -124,24 +125,20 @@ Deno.serve(async (req) => {
           .eq('id', user.id)
           .maybeSingle();
 
-        console.log("DEBUG: Fallback check results:", { profile: profile?.role, adminRow: !!adminRow });
-
         isAdmin = !!(
           (profile && (profile.role === 'admin' || profile.role === 'super_admin')) ||
           adminRow
         );
-        
-        console.log("DEBUG: Final admin status after fallback:", isAdmin);
       } catch (e) {
-        console.log("DEBUG: Fallback admin check failed:", e);
+        console.error("Fallback admin check failed in suspend-user");
         adminCheckError = e;
       }
     }
 
     if (adminCheckError && !isAdmin) {
-      console.error('Admin check failed:', adminCheckError);
+      console.error('Admin check failed in suspend-user');
       return new Response(
-        JSON.stringify({ error: 'Admin check failed', code: 'ADMIN_CHECK_FAILED', details: adminCheckError?.message ?? String(adminCheckError) }),
+        JSON.stringify({ error: 'Admin check failed', code: 'ADMIN_CHECK_FAILED' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -199,9 +196,9 @@ Deno.serve(async (req) => {
     });
 
     if (banError) {
-      console.error("Error banning user:", banError);
+      console.error("Failed to update auth restriction in suspend-user");
       return new Response(
-        JSON.stringify({ error: `Failed to ${restrictionType} user`, code: "AUTH_ADMIN_UPDATE_FAILED", details: banError.message }),
+        JSON.stringify({ error: `Failed to ${restrictionType} user`, code: "AUTH_ADMIN_UPDATE_FAILED" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -246,7 +243,7 @@ Deno.serve(async (req) => {
       });
 
     if (restrictionError) {
-      console.error("Error creating restriction record:", restrictionError);
+      console.error("Failed to create restriction record in suspend-user");
       // Don't fail the whole operation if just the record creation fails
       // The user is already banned in Auth
     }
