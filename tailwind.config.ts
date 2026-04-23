@@ -163,7 +163,7 @@ export default {
           'padding-top': 'env(safe-area-inset-top, 0px)',
         },
         // Active touch feedback
-        '.active\:scale-98:active': {
+        '.active\\:scale-98:active': {
           transform: 'scale(0.98)',
         },
         // Line clamp utilities
