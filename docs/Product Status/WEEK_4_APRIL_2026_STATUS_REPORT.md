@@ -39,7 +39,8 @@ Additionally, the team has integrated **Tapologo's QA testing results** into the
 - BUG-009 (Gradle Build Error): ✅ **Resolved** (MOB-6)
 - BUG-010 (76 Orphaned Users): ✅ **Resolved** (MOB-20)
 - BUG-011 (Missing SuperAdmin Core Logic): ✅ **Resolved** (MOB-21)
-- BUG-014 (Migration Drift): ✅ **Resolved** (MOB-24)
+- BUG-014 (Migration Drift): 🟡 In Review (MOB-63)
+- MOB-38 (Host-Linked Promo Codes): 🟡 In Review
 - MOB-712 Phase 4: Email system cleanup ✅ **Resolved** (MOB-32)
 - MOB-700 Security: search_path enforcement and edge payload validation shipped.
 
@@ -53,6 +54,7 @@ Additionally, the team has integrated **Tapologo's QA testing results** into the
 - ✅ **Anonymize-on-Delete Complete** — Phases 3-6 of the privacy rollout shipped and verified (MOB-36).
 - ✅ **Test Coverage Exploded** — Tapologo closed major test gap suites across Handover Lifecycles, Insurance Claims, Admin Portal, and Booking Extensions.
 - ✅ **Booking UX & Pricing Economics Refreshed** — Created `20260417_BOOKING_SCREEN_UX_PLAN.md` to shift from an outdated multi-step wizard to a unified card, and `20260417_DURATION_DISCOUNTS_PLAN.md` incorporating standard 7-day/28-day logic to the pricing engine.
+- ✅ **Host-Linked Promo Codes (MOB-38)** — Implemented multi-level scoping (Platform, Host, and Vehicle) with a new campaign builder in the Admin Dashboard.
 - ✅ **Google Native Integration Plan** — Created (`20260417_GOOGLE_NATIVE_INTEGRATION_PLAN.md`) for MOB-13.
 - ✅ **H1 2026 Roadmap Updated** — [20260410_Roadmap_2026_H1.md](../Roadmaps%20&%20PRDs/20260410_Roadmap_2026_H1.md) created with May/June exit criteria.
 
@@ -69,7 +71,8 @@ Additionally, the team has integrated **Tapologo's QA testing results** into the
 | BUG-010 (Orphaned Users) | 76 count, open | ✅ Resolved | MOB-20 closed. |
 | BUG-011 (Admin Core Logic) | Open | ✅ Resolved | MOB-21 closed. RPCs shipped. |
 | BUG-012 (Mock Payments) | In production | 🔴 In Sprint 12 | S12-001–005 cover Phase 0 fixes |
-| BUG-014 (Migration drift) | Open | ✅ Resolved | MOB-24 closed. Dep loops snapped. |
+| BUG-014 (Migration drift) | Open | 🟡 In Review | MOB-63 In Review. Dep loops snapped. |
+| MOB-38 (Promo Codes) | Open | 🟡 In Review | Scoped validation & Admin UI shipped. |
 
 ---
 
@@ -128,7 +131,7 @@ Active bugs are tracked in [`docs/testing & bugs/BUG_REPORT.md`](../testing%20%2
 | BUG-011 | Medium | ✅ Resolved | Missing SuperAdmin core logic RPCs | MOB-21 closed |
 | BUG-012 | Critical | 🔴 In Sprint 12 | Payment system mock in production | S12-001–005 |
 | BUG-013 | High | 🟡 In Progress | Security Search Path Management & Messaging RLS | MOB-23 |
-| BUG-014 | Critical | ✅ Resolved | Persistent migration drift (http_request types) | MOB-24 closed |
+| BUG-014 | Critical | 🟡 In Review | Persistent migration drift (http_request types) | MOB-63 In Review |
 | FEATURE-001 | Low | ✅ Resolved | Missing detailed `<Eye />` view icons in Admin | MOB-34 closed |
 
 ---

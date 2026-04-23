@@ -142,7 +142,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S12-015** | Modisa | P1 | 5 | 🟡 In Progress | MOB-38: Verify promo_codes schema for `host_id` column and `promo_code_cars` junction table. Implement `validatePromoCode` car-scope checks. Wire Admin form host/car selector. |
+| **S12-015** | Modisa | P1 | 5 | 🟡 In Review | MOB-38: Verify promo_codes schema for `host_id` column and `promo_code_cars` junction table. Implement `validatePromoCode` car-scope checks. Wire Admin form host/car selector. |
 
 ---
 
@@ -164,7 +164,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 |--------|-------|----------|--------|--------|---------|
 | **S12-017** | Modisa | P2 | 1 | 🔴 To Do | Create Linear ticket for BUG-010 (76 orphaned user profiles — backfill + `handle_new_user` trigger audit). |
 | **S12-018** | Modisa | P2 | 1 | 🔴 To Do | Create Linear ticket for BUG-011 (Missing SuperAdmin core RPCs — `suspend_user`, `ban_user`, `transfer_vehicle`). |
-| **S12-019** | Modisa | P2 | 1 | 🔴 To Do | Create Linear ticket for BUG-014 (Migration drift — `http_request` types blocking CI). |
+| **S12-019** | Modisa | P2 | 1 | 🟡 In Review | Create Linear ticket for BUG-014 (Migration drift — `http_request` types blocking CI). |
 
 ---
 
@@ -292,7 +292,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 1 of 36 |
+| **Tasks Completed** | 2 of 36 (2 In Review) |
 | **Current Blockers** | Missing `google-services.json` (MOB-13), Payment provider credentials (future sprints) |
 
 ### Sprint 12 Completion Table
@@ -313,11 +313,11 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-012 | Modisa | 🔴 To Do | MOB-811: Admin bulk broadcast |
 | S12-013 | Tapologo | 🔴 To Do | G5: InsuranceComparison stub |
 | S12-014 | Tapologo | 🔴 To Do | G6: PolicyDetailsCard stub |
-| S12-015 | Modisa | 🟡 In Progress | MOB-38: Host-linked promo codes |
+| S12-015 | Modisa | 🟡 In Review | MOB-38: Host-linked promo codes |
 | S12-016 | Arnold | 🔵 Blocked | MOB-13: Google native integration |
 | S12-017 | Modisa | 🔴 To Do | Create Linear: BUG-010 |
 | S12-018 | Modisa | 🔴 To Do | Create Linear: BUG-011 |
-| S12-019 | Modisa | 🔴 To Do | Create Linear: BUG-014 |
+| S12-019 | Modisa | 🟡 In Review | Create Linear: BUG-014 |
 | S12-020 | Modisa | 🔴 To Do | Linear: Close MOB-32 |
 | S12-021 | Modisa | 🔴 To Do | Linear: Close MOB-23 |
 | S12-022 | Modisa | 🔴 To Do | Linear: Fix MOB-13 status |

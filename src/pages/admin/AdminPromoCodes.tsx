@@ -29,13 +29,9 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Tag, CalendarIcon, Send } from "lucide-react";
-import { format } from "date-fns";
-import { toast } from "sonner";
-import { PromoCode } from "@/services/promoCodeService";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ResendEmailService } from "@/services/notificationService";
 
 export default function AdminPromoCodes() {
@@ -58,12 +54,14 @@ export default function AdminPromoCodes() {
   });
 
   // Create Promo Code Mutation
-  const createMutation = useMutation({
-    mutationFn: async (newPromo: Partial<PromoCode>) => {
+    mutationFn: async (payload: { promo: Partial<PromoCode>; carIds?: string[] }) => {
+      const { promo: newPromo, carIds } = payload;
       if (!newPromo.code || !newPromo.discount_amount) {
         throw new Error('Code and discount amount are required');
       }
-      const { data, error } = await supabase
+
+      // 1. Insert Promo Code
+      const { data: promoData, error: promoError } = await supabase
         .from("promo_codes")
         .insert([{
           code: newPromo.code,
@@ -73,13 +71,29 @@ export default function AdminPromoCodes() {
           min_booking_amount: newPromo.min_booking_amount,
           description: newPromo.description,
           valid_until: newPromo.valid_until,
-          is_active: newPromo.is_active ?? true
+          is_active: newPromo.is_active ?? true,
+          host_id: newPromo.host_id
         }])
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (promoError) throw promoError;
+
+      // 2. Insert Car Scoping if any
+      if (carIds && carIds.length > 0) {
+        const carLinks = carIds.map(carId => ({
+          promo_code_id: promoData.id,
+          car_id: carId
+        }));
+
+        const { error: carError } = await supabase
+          .from("promo_code_cars")
+          .insert(carLinks);
+
+        if (carError) throw carError;
+      }
+
+      return promoData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-promo-codes"] });
@@ -203,7 +217,7 @@ export default function AdminPromoCodes() {
             <DialogHeader>
               <DialogTitle>Create New Promo Code</DialogTitle>
             </DialogHeader>
-            <CreatePromoForm onSubmit={(data) => createMutation.mutate(data)} isLoading={createMutation.isPending} />
+            <CreatePromoForm onSubmit={(data, carIds) => createMutation.mutate({ promo: data, carIds })} isLoading={createMutation.isPending} />
           </DialogContent>
         </Dialog>
       </div>
@@ -336,7 +350,7 @@ function CreatePromoForm({
   onSubmit,
   isLoading,
 }: {
-  onSubmit: (data: Partial<PromoCode>) => void;
+  onSubmit: (data: Partial<PromoCode>, carIds?: string[]) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
@@ -347,6 +361,36 @@ function CreatePromoForm({
     min_booking_amount: "",
     description: "",
     valid_until: undefined as Date | undefined,
+    scope: "platform" as "platform" | "host",
+    host_id: "all",
+    selectedCarIds: [] as string[],
+  });
+
+  // Fetch hosts
+  const { data: hosts } = useQuery({
+    queryKey: ["admin-hosts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .order("full_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch cars for selected host
+  const { data: cars } = useQuery({
+    queryKey: ["admin-cars", formData.host_id],
+    queryFn: async () => {
+      let query = supabase.from("cars").select("id, brand, model, license_plate, owner_id");
+      if (formData.host_id !== "all") {
+        query = query.eq("owner_id", formData.host_id);
+      }
+      const { data, error } = await query.order("brand");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -361,8 +405,18 @@ function CreatePromoForm({
         : null,
       description: formData.description,
       valid_until: formData.valid_until ? formData.valid_until.toISOString() : null,
+      host_id: formData.scope === "host" && formData.host_id !== "all" ? formData.host_id : null,
       is_active: true,
-    });
+    }, formData.selectedCarIds);
+  };
+
+  const toggleCar = (carId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedCarIds: prev.selectedCarIds.includes(carId)
+        ? prev.selectedCarIds.filter(id => id !== carId)
+        : [...prev.selectedCarIds, carId]
+    }));
   };
 
   return (
@@ -451,14 +505,75 @@ function CreatePromoForm({
         </Popover>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Input
-          id="description"
-          placeholder="Internal note or user-facing description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
+      <div className="space-y-4 pt-4 border-t">
+        <div className="space-y-2">
+          <Label>Campaign Scope</Label>
+          <Select
+            value={formData.scope}
+            onValueChange={(val: "platform" | "host") =>
+              setFormData({ ...formData, scope: val, selectedCarIds: [] })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="platform">Platform-wide</SelectItem>
+              <SelectItem value="host">Host-specific</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.scope === "host" && (
+          <div className="space-y-2">
+            <Label htmlFor="host">Select Host</Label>
+            <Select
+              value={formData.host_id}
+              onValueChange={(val) => setFormData({ ...formData, host_id: val, selectedCarIds: [] })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Hosts" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Hosts</SelectItem>
+                {hosts?.map((host) => (
+                  <SelectItem key={host.id} value={host.id}>
+                    {host.full_name || "Unnamed Host"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label>Specific Cars (Optional)</Label>
+          <div className="border rounded-md p-2">
+            <ScrollArea className="h-32">
+              <div className="space-y-2">
+                {cars?.map((car) => (
+                  <div key={car.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`car-${car.id}`}
+                      checked={formData.selectedCarIds.includes(car.id)}
+                      onCheckedChange={() => toggleCar(car.id)}
+                    />
+                    <label
+                      htmlFor={`car-${car.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {car.brand} {car.model} ({car.license_plate})
+                    </label>
+                  </div>
+                ))}
+                {(!cars || cars.length === 0) && (
+                  <p className="text-xs text-muted-foreground p-2">No cars found for this selection.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+          <p className="text-[10px] text-muted-foreground">If none selected, code applies to all cars in the chosen scope.</p>
+        </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>

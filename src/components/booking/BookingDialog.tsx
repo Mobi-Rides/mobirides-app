@@ -902,6 +902,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
                     onApply={handlePromoApplied}
                     onRemove={handlePromoRemoved}
                     appliedPromo={appliedPromo}
+                    carId={car.id}
                   />
                 </div>
 

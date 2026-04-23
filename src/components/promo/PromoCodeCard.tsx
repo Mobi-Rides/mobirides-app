@@ -60,6 +60,14 @@ export const PromoCodeCard = ({ promoCode, usage, status }: PromoCodeCardProps) 
                 ? `P${promoCode.discount_amount} OFF` 
                 : `${promoCode.discount_amount}% OFF`}
             </p>
+            <div className="flex gap-1 flex-wrap">
+              {promoCode.host_id && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 leading-none">Host Specific</Badge>
+              )}
+              {promoCode.promo_code_cars && promoCode.promo_code_cars.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 leading-none">Car Specific</Badge>
+              )}
+            </div>
           </div>
           <Badge variant="outline" className={`${getStatusColor()} flex items-center`}>
             {getStatusIcon()}
