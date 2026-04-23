@@ -18,13 +18,11 @@ require('dotenv').config();
 
 log('Checking environment variables...');
 if (!process.env.VITE_SUPABASE_URL) log('❌ Missing VITE_SUPABASE_URL');
-if (!process.env.VITE_SUPABASE_ANON_KEY) log('❌ Missing VITE_SUPABASE_ANON_KEY');
-if (process.env.SUPABASE_SERVICE_ROLE_KEY) log('✅ Found SUPABASE_SERVICE_ROLE_KEY');
-else log('⚠️ Missing SUPABASE_SERVICE_ROLE_KEY (Limited permissions)');
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) log('❌ Missing SUPABASE_SERVICE_ROLE_KEY');
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL || 'MISSING_URL',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'MISSING_KEY'
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'MISSING_KEY'
 );
 
 async function testInteractiveHandover() {

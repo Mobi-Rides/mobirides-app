@@ -25,8 +25,6 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
-
-    console.log('Successfully retrieved VAPID public key');
     
     return new Response(
       JSON.stringify({ 
@@ -40,13 +38,10 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error('Error retrieving VAPID key:', error);
+    console.error('Unhandled error in get-vapid-key');
     
     return new Response(
-      JSON.stringify({ 
-        error: 'Failed to retrieve VAPID configuration',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }),
+      JSON.stringify({ error: 'Failed to retrieve VAPID configuration' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

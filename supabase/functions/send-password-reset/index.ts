@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getRequiredSecret, isMissingSecretError } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,17 +13,22 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    let SUPABASE_URL: string;
+    let SUPABASE_SERVICE_ROLE_KEY: string;
+    let SUPABASE_ANON_KEY: string;
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("Missing Supabase environment variables", { 
-        SUPABASE_URL: !!SUPABASE_URL, 
-        SUPABASE_SERVICE_ROLE_KEY: !!SUPABASE_SERVICE_ROLE_KEY 
-      });
+    try {
+      SUPABASE_URL = getRequiredSecret("SUPABASE_URL");
+      SUPABASE_SERVICE_ROLE_KEY = getRequiredSecret("SUPABASE_SERVICE_ROLE_KEY");
+      SUPABASE_ANON_KEY = getRequiredSecret("SUPABASE_ANON_KEY");
+    } catch (error) {
+      if (!isMissingSecretError(error)) {
+        throw error;
+      }
+
+      console.error("Missing required Supabase secret for send-password-reset");
       return new Response(
-        JSON.stringify({ error: "Server misconfiguration: Supabase env missing", code: "ENV_MISSING" }),
+        JSON.stringify({ error: "Server misconfiguration", code: "ENV_MISSING" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -35,7 +41,7 @@ Deno.serve(async (req) => {
 
     // Create user-scoped client for authentication
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", code: "NO_AUTH_HEADER" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -67,7 +73,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
 
     if (authError || !user) {
-      console.error("Authentication failed:", authError);
+      console.error("Authentication failed in send-password-reset");
       return new Response(
         JSON.stringify({ error: "Authentication failed", code: "AUTH_FAILED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -79,14 +85,10 @@ Deno.serve(async (req) => {
     let isSuperAdmin = false;
     let adminCheckError: any = null;
 
-    console.log("DEBUG: Starting admin verification for user:", user.id);
-
     // Prefer parameterized RPC with end-user auth context
     const adminRpc = await supabaseUser.rpc('is_admin', { user_uuid: user.id });
     const isAdminRaw: unknown = adminRpc.data;
     adminCheckError = adminRpc.error;
-
-    console.log("DEBUG: Admin RPC result:", { data: isAdminRaw, error: adminCheckError?.message });
 
     // Normalize RPC result defensively
     try {
@@ -104,17 +106,13 @@ Deno.serve(async (req) => {
       } else {
         isAdmin = !!isAdminRaw;
       }
-      console.log("DEBUG: Normalized admin result:", isAdmin);
     } catch (e) {
-      // If normalization fails, continue to fallback checks
-      console.log("DEBUG: Admin normalization failed:", e);
       adminCheckError = adminCheckError || e;
       isAdmin = false;
     }
 
     // Fallback to service-role direct checks if RPC failed or returned false
     if (isAdmin) {
-      console.log("DEBUG: Admin RPC returned true, checking for super admin");
       try {
         const { data: adminRow } = await supabaseAdmin
           .from('admins')
@@ -122,16 +120,12 @@ Deno.serve(async (req) => {
           .eq('id', user.id)
           .maybeSingle();
 
-        console.log("DEBUG: Super admin check result:", adminRow?.is_super_admin);
-
         isSuperAdmin = !!(adminRow?.is_super_admin);
-        console.log("DEBUG: Final super admin status:", isSuperAdmin);
       } catch (e) {
-        console.log("DEBUG: Super admin check failed:", e);
+        console.error("Super admin check failed in send-password-reset");
         isSuperAdmin = false;
       }
     } else {
-      console.log("DEBUG: Admin RPC returned false, trying fallback checks");
       try {
         const { data: profile } = await supabaseAdmin
           .from('profiles')
@@ -145,30 +139,22 @@ Deno.serve(async (req) => {
           .eq('id', user.id)
           .maybeSingle();
 
-        console.log("DEBUG: Fallback check results:", { profile: profile?.role, adminRow: !!adminRow });
-
         isAdmin = !!(
           (profile && (profile.role === 'admin' || profile.role === 'super_admin')) ||
           adminRow
         );
 
         isSuperAdmin = !!(adminRow?.is_super_admin);
-
-        console.log("DEBUG: Final admin status after fallback:", { isAdmin, isSuperAdmin });
       } catch (e) {
-        console.log("DEBUG: Fallback admin check failed:", e);
+        console.error("Fallback admin check failed in send-password-reset");
         adminCheckError = e;
       }
     }
 
     if (adminCheckError && !isAdmin) {
-      console.error('Admin check failed:', adminCheckError);
+      console.error('Admin check failed in send-password-reset');
       return new Response(
-        JSON.stringify({ 
-          error: 'Admin check failed', 
-          code: 'ADMIN_CHECK_FAILED', 
-          details: adminCheckError?.message ?? String(adminCheckError) 
-        }),
+        JSON.stringify({ error: 'Admin check failed', code: 'ADMIN_CHECK_FAILED' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -187,7 +173,7 @@ Deno.serve(async (req) => {
     const { data: authUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
 
     if (getUserError || !authUserData.user) {
-      console.error("Error getting user data:", getUserError);
+      console.error("Failed to retrieve target user in send-password-reset");
       return new Response(
         JSON.stringify({ error: "Failed to get user data", code: "USER_NOT_FOUND" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -204,8 +190,6 @@ Deno.serve(async (req) => {
 
     // Generate password reset token first
     const appUrl = Deno.env.get('VITE_FRONTEND_URL') || Deno.env.get('APP_URL') || 'http://localhost:8080';
-    
-    console.log("Generating password reset token for:", userEmail);
 
     // Generate password reset link using Supabase admin
     const { data: linkData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
@@ -217,12 +201,11 @@ Deno.serve(async (req) => {
     });
 
     if (resetError || !linkData) {
-      console.error('Supabase token generation error:', resetError);
+      console.error('Password reset token generation failed in send-password-reset');
       return new Response(
         JSON.stringify({
           error: "Failed to generate password reset token",
-          code: "TOKEN_GENERATION_FAILED",
-          details: resetError?.message
+          code: "TOKEN_GENERATION_FAILED"
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -233,7 +216,7 @@ Deno.serve(async (req) => {
     const token = actionLinkUrl.searchParams.get('token');
     
     if (!token) {
-      console.error('Failed to extract token from action link');
+      console.error('Failed to extract token in send-password-reset');
       return new Response(
         JSON.stringify({
           error: "Failed to extract reset token",
@@ -245,15 +228,14 @@ Deno.serve(async (req) => {
 
     // Construct the reset URL with the token
     const resetUrl = `${appUrl}/reset-password?token=${token}&redirectedFromEmail=true`;
-    
-    console.log("Sending branded password reset email via resend-service for:", userEmail);
 
     // Call the resend-service function to send branded email
     const resendResponse = await fetch(`${SUPABASE_URL}/functions/v1/resend-service`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'Authorization': authHeader,
+        'apikey': SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({
         to: userEmail,
@@ -268,40 +250,29 @@ Deno.serve(async (req) => {
     });
 
     if (!resendResponse.ok) {
-      const errorText = await resendResponse.text();
-      console.error('Resend service error:', errorText);
+      console.error('resend-service returned a non-success response');
       return new Response(
         JSON.stringify({
           error: "Failed to send password reset email",
-          code: "RESEND_FAILED",
-          details: errorText
+          code: "RESEND_FAILED"
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const resendResult = await resendResponse.json();
-    console.log('Branded email sent via resend-service:', resendResult);
-
-    // Log the password reset action
-    console.log(`Password reset email sent by super admin ${user.id} for user ${userId} (${userEmail})`);
+    console.log(`Password reset email dispatched for user ${userId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Password reset email sent successfully",
-        email: userEmail
+        message: "Password reset email sent successfully"
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in send-password-reset function:", error);
+    console.error("Unhandled error in send-password-reset");
     return new Response(
-      JSON.stringify({ 
-        error: "Unhandled error", 
-        code: "UNHANDLED_ERROR", 
-        details: (error as Error).message 
-      }),
+      JSON.stringify({ error: "Unhandled error", code: "UNHANDLED_ERROR" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
