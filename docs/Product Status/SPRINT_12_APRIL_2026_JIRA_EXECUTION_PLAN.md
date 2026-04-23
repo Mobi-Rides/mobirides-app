@@ -335,6 +335,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-034 | Modisa | 🔴 To Do | Duration Discounts: evaluateDurationRule engine |
 | S12-035 | Modisa | 🔴 To Do | Duration Discounts: Admin UI controls |
 | S12-036 | Modisa | ✅ DONE | Vite 8 & Rolldown Migration (10x Speed) |
+| S12-037 | Modisa | ✅ DONE | Root Directory Reorganization: Cleanup and structure. |
 
 ---
 

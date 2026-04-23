@@ -41,6 +41,7 @@
 | [SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md](Product Status/SPRINT_10_APRIL_2026_JIRA_EXECUTION_PLAN.md) | April 10, 2026 | PLANNED | --- |
 | [SPRINT_11_APRIL_2026_JIRA_EXECUTION_PLAN.md](Product Status/SPRINT_11_APRIL_2026_JIRA_EXECUTION_PLAN.md) | April 10, 2026 | Active | --- |
 | [SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md](Product Status/SPRINT_8_MARCH_2026_JIRA_EXECUTION_PLAN.md) | March 24, 2026 | COMPLETED | --- |
+| [IMPLEMENTATION_SUMMARY.md](Product Status/IMPLEMENTATION_SUMMARY.md) | Unknown | Active | Summary of recent implementation achievements. |
 | [SPRINT_9_APRIL_2026_JIRA_EXECUTION_PLAN.md](Product Status/SPRINT_9_APRIL_2026_JIRA_EXECUTION_PLAN.md) | April 4, 2026 | IN | --- |
 | [SYSTEM_AUDIT_REPORT.md](Product Status/SYSTEM_AUDIT_REPORT.md) | December 2024 | Active | MobiRides is a car-sharing platform built with Rea... |
 | [SuperAdmin Action Plan Impact Assessment Report.md](Product Status/SuperAdmin Action Plan Impact Assessment Report.md) | Unknown | Active | This comprehensive impact assessment evaluates the... |
@@ -181,6 +182,7 @@
 | [20260411_BUG009_GRADLE_BUILD_FIX.md](plans/20260411_BUG009_GRADLE_BUILD_FIX.md) | Unknown | Active | The IDE reports a critical error during Gradle pha... |
 | [20260417_GOOGLE_NATIVE_INTEGRATION_PLAN.md](plans/20260417_GOOGLE_NATIVE_INTEGRATION_PLAN.md) | April 17, 2026 | Active | --- |
 | [20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md](plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) | April 22, 2026 | Open | Jira-style fix plan for BUG-015 (empty analytics charts) and BUG-016 (CSV export only exports user IDs) |
+| [BETA_PILOT_LAUNCH_PLAN.md](plans/BETA_PILOT_LAUNCH_PLAN.md) | Unknown | Active | Strategic plan for the Beta Pilot launch. |
 | [ANONYMIZE_ON_DELETE_2026_03_02.md](plans/ANONYMIZE_ON_DELETE_2026_03_02.md) | Unknown | Active | | Phase | Description | Status | |
 | [IMMEDIATE_ACTION_PLAN.md](plans/IMMEDIATE_ACTION_PLAN.md) | November 24, 2025 | Active | --- |
 | [INSURANCE_README.md](plans/INSURANCE_README.md) | Unknown | Active | The MobiRides insurance system is a comprehensive,... |
@@ -222,6 +224,7 @@
 | [BOTSWANA_DPA_BREACH_NOTIFICATION_DRAFT.md](security/BOTSWANA_DPA_BREACH_NOTIFICATION_DRAFT.md) | [INSERT DATE] | Active | > **IMPORTANT**: This is a draft notification temp... |
 | [SECURITY_INCIDENT_REPORT_BUG004.md](security/SECURITY_INCIDENT_REPORT_BUG004.md) | Unknown | Active | | Field | Detail | |
 | [USER_BREACH_NOTIFICATION_EMAIL.md](security/USER_BREACH_NOTIFICATION_EMAIL.md) | 7 April 2026 | DRAFT | --- |
+| [auth.md](security/auth.md) | Unknown | Active | Comprehensive authentication and authorization overview. |
 
 ## sop (SOP)
 
