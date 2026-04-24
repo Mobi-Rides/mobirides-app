@@ -174,7 +174,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
 | **S12-020** | Modisa | P2 | 1 | 🔴 To Do | Update Linear: Close MOB-32 (Email/BUG-008) — Phases 1–3 verified complete in Sprint 11. Phase 4 (cleanup) tracked separately. |
-| **S12-021** | Modisa | P2 | 1 | 🔴 To Do | Update Linear: Close MOB-23 (BUG-013/search_path) — MOB-706 (S11-011) verified complete, search_path fixes shipped. |
+| **S12-021** | Modisa | P2 | 1 | ✅ DONE | Update Linear: Close MOB-23 (BUG-013/search_path) — Security hardening, user_roles migration, and messaging RLS fixed. |
 | **S12-022** | Modisa | P2 | 1 | 🔴 To Do | Update Linear: Verify and update MOB-13 status — currently marked Done but Sprint 11 explicitly carried it over as blocked. Reopen or create sub-task for `google-services.json` dependency. |
 | **S12-023** | Modisa | P2 | 1 | ✅ DONE | Update Linear: Sync all Sprint 11 verified completions — ensure MOB-21, MOB-14, MOB-34, MOB-36 statuses match audit outcomes. |
 
@@ -308,7 +308,7 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 5 of 40 (4 In Review) |
+| **Tasks Completed** | 6 of 40 (4 In Review) |
 | **Current Blockers** | Missing `google-services.json` (MOB-13), Payment provider credentials (future sprints) |
 
 ### Sprint 12 Completion Table
