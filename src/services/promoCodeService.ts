@@ -13,6 +13,8 @@ export interface PromoCode {
   description: string | null;
   terms_conditions: string | null;
   min_booking_amount: number | null;
+  host_id: string | null;
+  promo_code_cars?: { car_id: string }[];
 }
 
 export interface PromoCodeUsage {
@@ -35,13 +37,14 @@ export interface PromoCodeValidation {
 export async function validatePromoCode(
   code: string, 
   userId: string, 
-  bookingAmount: number
+  bookingAmount: number,
+  carId?: string
 ): Promise<PromoCodeValidation> {
   try {
     // 1. Fetch promo code
     const { data: promoCode, error } = await supabase
       .from('promo_codes')
-      .select('*')
+      .select('*, promo_code_cars(car_id)')
       .eq('code', code)
       .single();
 
@@ -73,7 +76,37 @@ export async function validatePromoCode(
       return { valid: false, error: `Minimum booking amount of P${promoCode.min_booking_amount} required` };
     }
 
-    // 5. Check if user already used it
+    // 5. Check scoping (Host-linked or Car-specific)
+    if (promoCode.host_id || (promoCode.promo_code_cars && promoCode.promo_code_cars.length > 0)) {
+      if (!carId) {
+        return { valid: false, error: 'This promo code is restricted to specific cars' };
+      }
+
+      // 5a. Check specific car scoping
+      if (promoCode.promo_code_cars && promoCode.promo_code_cars.length > 0) {
+        const isCarAllowed = (promoCode.promo_code_cars as any[]).some(
+          (pcc) => pcc.car_id === carId
+        );
+        if (!isCarAllowed) {
+          return { valid: false, error: 'This promo code is not valid for this vehicle' };
+        }
+      }
+
+      // 5b. Check host-level scoping
+      if (promoCode.host_id) {
+        const { data: car } = await supabase
+          .from('cars')
+          .select('owner_id')
+          .eq('id', carId)
+          .single();
+
+        if (!car || car.owner_id !== promoCode.host_id) {
+          return { valid: false, error: 'This promo code is only valid for cars from a specific host' };
+        }
+      }
+    }
+
+    // 6. Check if user already used it
     const { data: existingUsage } = await supabase
       .from('promo_code_usage')
       .select('id')
@@ -85,7 +118,7 @@ export async function validatePromoCode(
       return { valid: false, error: 'You have already used this promo code' };
     }
 
-    // 6. Calculate discount
+    // 7. Calculate discount
     const discount = calculateDiscount(promoCode as unknown as PromoCode, bookingAmount);
 
     return { 

@@ -107,11 +107,11 @@ export const analyticsService = {
       .select('*', { count: 'exact', head: true });
 
     if (dateRange) {
-      activeQuery = activeQuery.gte('last_sign_in_at', dateRange.start);
+      activeQuery = activeQuery.gte('last_login_attempt', dateRange.start);
     } else {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      activeQuery = activeQuery.gte('last_sign_in_at', thirtyDaysAgo.toISOString());
+      activeQuery = activeQuery.gte('last_login_attempt', thirtyDaysAgo.toISOString());
     }
 
     const { count: activeUsers } = await activeQuery;
@@ -140,8 +140,17 @@ export const analyticsService = {
     // Get role distribution from profiles
     const { data: roleData } = await supabase
       .from('profiles')
-      .select('role, id')
+      .select('role, id, created_at, last_login_attempt')
       .order('role');
+
+    // Get today's metrics
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayIso = today.toISOString();
+
+    const activeToday = roleData?.filter(p => p.last_login_attempt && p.last_login_attempt >= todayIso).length || 0;
+    const newUsersToday = roleData?.filter(p => p.created_at && p.created_at >= todayIso).length || 0;
+
 
     const roleDistribution: Record<string, number> = {};
     const roleUsers: Record<string, string[]> = {};
@@ -165,7 +174,9 @@ export const analyticsService = {
     return {
       total_users: totalUsers || 0,
       active_users: activeUsers || 0,
+      active_today: activeToday,
       new_users: newUsers || 0,
+      new_users_today: newUsersToday,
       suspended_users: suspendedUsers || 0,
       role_distribution: roleDistribution,
       role_users: roleUsers,

@@ -15,7 +15,8 @@ import {
   Tag,
   FileText,
   Star,
-  DollarSign
+  DollarSign,
+  Megaphone
 } from "lucide-react";
 import {
   Sidebar,
@@ -40,6 +41,7 @@ const adminMenuItems = [
   { title: "Reviews", url: "/admin/reviews", icon: Star },
   { title: "Promo Codes", url: "/admin/promo-codes", icon: Tag },
   { title: "Verifications", url: "/admin/verifications", icon: ClipboardCheck },
+  { title: "Campaigns", url: "/admin/campaigns", icon: Megaphone },
   { title: "Insurance Claims", url: "/admin/claims", icon: FileText },
   { title: "Remittances", url: "/admin/remittances", icon: DollarSign },
   { title: "Messages", url: "/admin/messages", icon: MessageSquare },

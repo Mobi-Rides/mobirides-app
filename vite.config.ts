@@ -50,6 +50,10 @@ export default defineConfig(({ mode }) => ({
     }
   },
   build: {
+    target: 'esnext',
+    minify: 'oxc',
+    cssMinify: true,
+    sourcemap: false,
     rolldownOptions: {
       plugins: [
         nodePolyfills()
