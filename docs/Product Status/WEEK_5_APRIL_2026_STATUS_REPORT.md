@@ -15,81 +15,88 @@
 > **🐛 Active Bug Report:** [BUG_REPORT.md](../testing%20%26%20bugs/BUG_REPORT.md)  
 > **🔧 AI Development Workflow:** [AI_WORKFLOW.md](../conventions/AI_WORKFLOW.md)
 
----
-
-## 📋 Executive Summary
-
 Week 5 of April marks the transition into the critical **Sprint 13**. Following the high-velocity infrastructure and administration fixes completed in Sprint 12—which successfully addressed Vercel build Out-Of-Memory (OOM) failures, SuperAdmin logic gaps, and Supabase migration conflicts—the focus now shifts entirely to the May exit criteria. 
 
-The primary objectives for this week include finalizing the Payment Phase 0 mock bug fixes, establishing the new Booking UX logic ("Build Your Plan"), filling remaining test coverage gaps, and resolving the recently mapped navigation and routing issues (`ROUTE_CONSOLIDATION_PLAN`).
+This period covers the final audit of Sprint 12 and the initiation of core commercial features, including the **Payment Phase 0** (mock removal), the **Booking UX Redesign**, and the modernization of our **Map Navigation** stack.
 
-**Key Focus Areas for Week 5:**
-- **Sprint 13 Execution:** Clearing out the technical carry-overs from Sprint 12 (Payments, Booking UX).
-- **Navigation & Routing:** Remediating map navigation and route consolidation as outlined in the new April 28 remediation plans.
-- **Security Finalization:** Closing out the final items from the MOB-700 series (MOB-705, MOB-707, MOB-708, MOB-709).
-- **Analytics & Export Fixes:** Addressing BUG-015/016 regarding Admin Analytics export data logic.
+**Key developments this period:**
+- **Sprint 12 Audit Finalized**: Reconciled all 40 tickets; verified 20 as ✅ DONE, including critical security remediation (MOB-705, 707, 709) and host-linked promo codes (MOB-38).
+- **Sprint 13 Kick-off**: Launched Sprint 13 with 100+ story points focused on feature execution and technical debt consolidation.
+- **Architectural Consolidation**: Created the `ROUTE_CONSOLIDATION_PLAN` to eliminate duplicate booking views and fix stale status logic.
+- **Map Stack Modernization**: Created the `MAP_NAVIGATION_REMEDIATION_PLAN` to shift to a modular, hook-based architecture with mobile-first bottom sheets.
+- **SuperAdmin Remediation**: Scoped and planned the next wave of admin logic (Session Anomalies, OCR, Audit Logs).
+
+---
+
+### Key Achievements This Period
+
+- ✅ **Sprint 12 Reconciliation Complete** — Verified codebase vs Linear; marked 20 items DONE, including contextual loading (MOB-37) and bulk broadcast fixes (MOB-811).
+- ✅ **Security Risk Reduction** — Reduced the MOB-700 open backlog from 4 items to just 1 (MOB-708) by verifying the implementation of edge function validation and password hashing.
+- ✅ **Bug Tracker Alignment** — Synchronized the `BUG_REPORT.md` with current repository reality, moving 5 major issues to "Resolved".
+- ✅ **Route Consolidation Plan Shipped** — Mapped out the deletion of orphaned routes to improve maintainability and user routing consistency.
+- ✅ **Map Remediation Plan Shipped** — Defined the transition to center-pin selection and extracted modular map hooks.
+
+---
+
+### Sprint 13 Priorities (Current Status)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Payment Phase 0 (S13-001–005) | 🔴 To Do | Addressing double-commission and webhook bypass bugs. |
+| Booking UX (S13-010–013) | 🔴 To Do | Implementing unified configuration card and duration slider. |
+| Map Navigation (S13-017–021) | 🔴 To Do | Extracting hooks and implementing bottom sheets. |
+| Route Consolidation (S13-022) | 🔴 To Do | Removing `/bookings/:id` in favor of `/rental-details/:id`. |
+| Admin Analytics (S13-023–024) | 🔴 To Do | Resolving empty chart data and export consistency (BUG-015/016). |
+| Strategy Harmonization | 🔴 To Do | Updating Roadmap/GTM terminology (MOB-43/44). |
+
+---
+
+### New Planning Documents Referenced
+
+| Document | Purpose |
+|----------|---------|
+| [20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md](../plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md) | Modernizes the Mapbox implementation with modular hooks and mobile-friendly UI patterns. |
+| [20260428_ROUTE_CONSOLIDATION_PLAN.md](../plans/20260428_ROUTE_CONSOLIDATION_PLAN.md) | Eliminates duplicate routes and stale "Approved" status checks. |
+| [20260423_SUPERADMIN_CORE_LOGIC_REMEDIATION_PLAN.md](../plans/20260423_SUPERADMIN_CORE_LOGIC_REMEDIATION_PLAN.md) | Plans the next 16 steps for SuperAdmin feature parity. |
 
 ---
 
 ## 📈 Production Readiness Metrics
 
-| Metric | Week 4 Apr | **Week 5 Apr** | Target |
-|--------|------------|----------------|--------|
-| Build Errors | **0** | **0** | 0 |
-| Linter Warnings | **14** | **14** | <20 |
-| System Health | **93%** | **94%** | 95% |
-| Production Readiness | **92%** | **93%** | 95% |
-| Test Coverage | **70%+** (Est) | **TBD** | 85% |
-| Security Vulnerabilities | **4** | **4** | 0 |
+| Metric | Week 3 Apr | Week 4 Apr | **Week 5 Apr** | Change | Target |
+|--------|------------|------------|----------------|--------|--------|
+| Build Errors | 0 | 0 | **0** | — | 0 |
+| Linter Warnings | 14 | 14 | **12** | -2 | <20 |
+| System Health | 89% | 93% | **94%** | +1% | 95% |
+| Production Readiness | 89% | 92% | **93%** | +1% | 95% |
+| Test Coverage | 62% | 70%+ | **72%+** | +2% | 85% |
+| Security Vulnerabilities | 6 | 4 | **1** | -3 | 0 |
 
 ---
 
-## 🧩 System Health & Velocity Explanation (Apr 27 → May 3)
-
-- **Infrastructure Stability** — Sprint 12 successfully resolved major environmental blockers (Vite polyfills/Rolldown migration, DB migration drift), providing a clean slate for Sprint 13 feature development.
-- **Admin Readiness** — The completion of the SuperAdmin logic audit and host-linked promo codes means the administrative suite is now fully capable of managing the platform post-launch.
-- **Strategic Pivot** — With infrastructure stable, all engineering velocity is now directed toward user-facing features: the booking flow overhaul, duration discounts, and map navigation fixes.
-
----
-
-## 🐛 Known Bugs & Bugfix Implementation Plan
-
-Active bugs are tracked in [`docs/testing & bugs/BUG_REPORT.md`](../testing%20%26%20bugs/BUG_REPORT.md).
+## 🐛 Active Bug Tracker (Sprint 13 Focus)
 
 | ID | Severity | Status | Description | Plan |
 |----|----------|--------|-------------|------|
-| BUG-002 | Medium | 🟡 In Progress | Remaining security vulnerabilities | Sprint 13 (S13-006–009) |
-| BUG-012 | Critical | 🔴 To Do | Payment system mock in production | Sprint 13 (S13-001–005) |
-| BUG-015 | Medium | 🔴 To Do | Admin Analytics Export Fix | Sprint 13 |
-| BUG-016 | Medium | 🔴 To Do | Admin Analytics Data Consistency | Sprint 13 |
-
----
-
-## 🎯 Sprint 13 Execution Summary
-
-Sprint 13 launches this week, prioritizing the carry-overs from Sprint 12 along with the new map navigation and route consolidation plans.
-
-| Category | Tickets | Owner | Progress |
-|----------|---------|-------|----------|
-| Payment Phase 0 (Mock Removals) | 5 | Arnold | 🔴 To Do |
-| Security MOB-700 Continuation | 4 | Arnold | 🔴 To Do |
-| Booking UX Redesign | 4 | Tapologo | 🔴 To Do |
-| Duration Discounts Integration | 3 | Modisa | 🔴 To Do |
-| Test Coverage Extensions | 3 | Tapologo | 🔴 To Do |
-| Map Navigation & Route Consolidation | TBD | Modisa | 🔴 To Do |
-| Admin Analytics Fixes (BUG-015/016) | 2 | Arnold | 🔴 To Do |
+| BUG-012 | Critical | 🔴 Open | Payment system mock in production | S13-001–005 |
+| BUG-015 | Medium | 🔴 Open | Admin Analytics charts empty | S13-023 |
+| BUG-016 | Medium | 🔴 Open | CSV Export inconsistency | S13-024 |
+| BUG-019 | Medium | 🔴 Open | Orphaned Booking routes | S13-022 |
+| BUG-021 | High | 🔴 Open | Clumsy Map & Navigation architecture | S13-017 |
+| MOB-708 | Medium | 🔴 Open | Exposed author emails in public APIs | S13-006 |
 
 ---
 
 ## ✅ Action Items
 
-| # | Action | Owner | Priority | Due |
-|---|--------|-------|----------|-----|
-| 1 | Execute Payment Mock Breakage fixes | Arnold | P0 | May 5 |
-| 2 | Deliver new Booking UX (`PlanBookingStep.tsx`) | Tapologo | P1 | May 5 |
-| 3 | Finalize Map Navigation Remediation | Modisa | P1 | May 5 |
+| # | Action | Owner | Priority | Status | Due |
+|---|--------|-------|----------|--------|-----|
+| 1 | Complete Route Consolidation (S13-022) | Tapologo | P1 | 🔴 To Do | May 1 |
+| 2 | Implement Payment P0 Mock Fixes | Arnold | P0 | 🔴 To Do | May 2 |
+| 3 | Modularize Mapbox Hooks | Modisa | P1 | 🔴 To Do | May 1 |
+| 4 | Fix Analytics Chart Empty Data | Arnold | P2 | 🔴 To Do | May 3 |
 
 ---
 
 *Document prepared: April 28, 2026*  
-*Next report: Week 2 May 2026 (May 4 – May 10)*
+*Next report: Week 1 May 2026 (May 3)*

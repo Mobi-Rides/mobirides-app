@@ -85,12 +85,12 @@ Security scan identified 9 actionable findings. Sprint 10–11 shipped 5 of 9:
 | MOB-703 | Blanket notification access RLS | ✅ Done (Sprint 11) |
 | MOB-704 | Missing RLS on financial tables | ✅ Done (Sprint 11) |
 | MOB-706 | Mutable `search_path` on functions | ✅ Done (Sprint 11) |
-| MOB-705 | No input validation on edge functions | 🔴 Open — Sprint 12 (S12-006) |
-| MOB-707 | Plaintext/weak password storage | 🔴 Open — Sprint 12 (S12-007) |
-| MOB-708 | Exposed author emails | 🔴 Open — Sprint 12 (S12-008) |
-| MOB-709 | Missing leaked-password protection | 🔴 Open — Sprint 12 (S12-009) |
+| MOB-705 | No input validation on edge functions | ✅ Done (Sprint 12) |
+| MOB-707 | Plaintext/weak password storage | ✅ Done (Sprint 12) |
+| MOB-708 | Exposed author emails | 🔴 Open — Sprint 13 (S13-006) |
+| MOB-709 | Missing leaked-password protection | ✅ Done (Sprint 12) |
 
-**Target:** 100% remediation by end of Sprint 12 (May exit criterion).
+**Target:** 100% remediation by end of Sprint 13 (May exit criterion).
 
 ---
 
@@ -304,7 +304,7 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 |-------|--------|
 | **Date Reported** | 2026-04-28 |
 | **Severity** | Medium |
-| **Status** | 🔴 Open |
+| **Status** | 🔴 Open — Sprint 13 (S13-022) |
 | **Affects** | `App.tsx`, `BookingDetails.tsx`, `NotificationDetails.tsx` |
 | **Plan** | [`docs/plans/20260428_ROUTE_CONSOLIDATION_PLAN.md`](../plans/20260428_ROUTE_CONSOLIDATION_PLAN.md) |
 
@@ -316,9 +316,9 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 |-------|--------|
 | **Date Reported** | 2026-04-28 |
 | **Severity** | Medium |
-| **Status** | 🔴 Open |
+| **Status** | 🔴 Open — Sprint 13 (S13-022) |
 | **Affects** | `RenterBookingCard.tsx` |
-| **Description** | Hardcoded check for `status === "approved"` which does not exist in the `BookingStatus` enum. |
+| **Description** | Hardcoded check for `status === "approved"` which does not exist in the `BookingStatus` enum. Fixed during route consolidation. |
 
 ---
 
@@ -328,7 +328,7 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 |-------|--------|
 | **Date Reported** | 2026-04-28 |
 | **Severity** | High |
-| **Status** | 🔴 Open |
+| **Status** | 🔴 Open — Sprint 13 (S13-017–021) |
 | **Affects** | `CustomMapbox.tsx`, `NavigationService.ts`, `MapMarkers.tsx` |
 | **Plan** | [`docs/plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md`](../plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md) |
 
@@ -374,6 +374,9 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-004** | 2026-04-06 | Outbound SSRF via `send-push-notification` — SSRF whitelist deployed, keys rotated. |
 | **BUG-005** | 2026-04-06 | Excessive unauthenticated query spam — 85% request reduction (309→50-80 req/min). |
 | **BUG-007** | 2026-04-10 | Admin table data inaccuracies — 10 tables standardized with accurate pagination/exports. |
+| **BUG-010** | 2026-04-28 | 76 orphaned users / auth vs profile drift — Backfilled & triggers audited. |
+| **BUG-013** | 2026-04-28 | Security Search Path Management — Universal enforcement on all functions. |
+| **BUG-014** | 2026-04-28 | Persistent Migration Drift — Cleaned up http extension conflicts. |
 | **BUG-017** | 2026-04-28 | Admin Security Privilege Escalation Risk — Migrated to `user_roles`. |
 | **BUG-018** | 2026-04-28 | Admin Promo Codes Schema Mismatch — Fixed `created_by` mapping. |
 

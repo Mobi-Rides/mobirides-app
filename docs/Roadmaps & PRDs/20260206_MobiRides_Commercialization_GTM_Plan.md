@@ -1,7 +1,7 @@
 # MobiRides Go-to-Market Strategy & Commercialization Plan
 **Date:** February 6, 2026  
-**Version:** 2.3  
-**Status:** Updated with Human-Reviewed Descriptive Content & Localized Strategy
+**Version:** 2.4  
+**Status:** Updated for V1.0 Official Commercial Launch Alignment
 **Currency:** All figures in BWP (Botswana Pula) unless otherwise noted
 
 ---
@@ -30,17 +30,17 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 **Market Size:** P250M+ TAM in Botswana car rental market, growing at 15% CAGR
 
 ### Key Highlights
-- **Product Status:** 85% production-ready with core features deployed
+- **Product Status:** 93% production-ready with core features deployed
 - **Revenue Model:** 15% commission on bookings + 10% Damage Protection package commission
 - **FY2025 Traction:** P311,245 gross revenue (Jan-Dec 2025), +305% growth (P14.2K→P54K), 24.5% gross margin
 - **December 2025 Baseline:** P54,000/month (confirmed from draft management accounts)
 - **Year 1 Revenue Target:** P1.368M (P60k→P157.5k/month trajectory, +264% growth)
-- **Current Phase:** Live Platform (247 users, 66 vehicles)
+- **Current Phase:** V1.0 Pre-Launch (317 users, 66 vehicles)
 - **Confirmed Partnerships:** Trillo Rentals (fleet), Pay-U (Damage Protection)
 - **Funding Stage:** P71,500 secured from Cerberus Capital; P700K pre-seed round (TARGET CLOSE: Mar 15, 2026)
 - **IP Protection:** Trademark approved by CIPA, international registration in progress
 - **Two-Product Strategy:** P2P Car Sharing (live) + Rent2Buy Marketplace (Q2 2026 pilot with 3 vehicles)
-- **Launch Timeline:** Q1 2026 full commercial launch following payment infrastructure completion
+- **Launch Timeline:** Q2 2026 V1.0 Official Commercial Launch following payment infrastructure completion
 
 ---
 
@@ -124,7 +124,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 ## 2. Product Readiness & Development Overview
 
 ### Product Development Status
-**Overall Completion:** 85% production-ready
+**Overall Completion:** 93% production-ready
 
 **Completed Components (100%):**
 - ✅ User authentication & role-based access control
@@ -324,11 +324,11 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 ### Customer Validation Results
 
 **Live Platform Performance (Q1 2026):**
-- **247 registered users** (115 host enquiries, 39 active renters)
+- **317 registered users** (154 host enquiries, 52 active renters)
 - **66 vehicles listed** (including 45 from Trillo partnership + 3 new Dumba Rentals locations)
 - **P311,535 gross revenue** (+305% growth from January)
 - **24.5% gross margin** achieved
-- **96% production readiness** (as of April 2026)
+- **93% production readiness** (as of April 2026)
 - **78% test coverage** (up from 62% in March)
 - **100% security remediation** completed (MOB-700)
 - **Email system fully restored** (MOB-712 complete)
@@ -656,7 +656,7 @@ MobiRides offers a comprehensive P2P car rental and ownership solution that comb
 - **Probability:** HIGH
 - **Owner:** CTO
 - **Mitigation:** Accelerate DPO/Paygate integration, Ooze Mobile Money
-- **Timeline:** Complete by end of April 2026
+- **Timeline:** Complete by mid-May 2026
 - **Residual Risk:** Medium (once complete)
 
 **RISK-002: Fleet Partner Concentration**
