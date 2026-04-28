@@ -2,14 +2,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { pushNotificationService } from "./pushNotificationService";
 import { ResendEmailService } from "./notificationService";
+import type { Database } from "@/integrations/supabase/types";
 
 export type BookingStatus = 'pending' | 'awaiting_payment' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+
+export interface BookingData {
+  id: string;
+  renter_id: string;
+  status: string;
+  total_price: number;
+  cars: {
+    brand: string;
+    model: string;
+    owner_id: string;
+  };
+}
 
 export const bookingLifecycle = {
   /**
    * Updates the status of a booking and triggers relevant side effects (notifications, etc)
    */
-  updateStatus: async (bookingId: string, newStatus: BookingStatus, metadata?: any) => {
+  updateStatus: async (bookingId: string, newStatus: BookingStatus, metadata?: Database['public']['Tables']['bookings']['Update']) => {
     console.log(`[BookingLifecycle] Transitioning booking ${bookingId} to ${newStatus}`);
     
     try {
@@ -35,7 +48,7 @@ export const bookingLifecycle = {
       }
 
       // 2. Perform the update
-      const updatePayload: any = { status: newStatus, ...metadata };
+      const updatePayload: Database['public']['Tables']['bookings']['Update'] = { status: newStatus, ...metadata };
       
       // Handle status-specific logic
       if (newStatus === 'awaiting_payment') {
@@ -56,9 +69,9 @@ export const bookingLifecycle = {
       await handleSideEffects(booking, newStatus);
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[BookingLifecycle] Error updating status:`, error);
-      toast.error(error.message || "Failed to update booking status");
+      toast.error(error instanceof Error ? error.message : "Failed to update booking status");
       return { success: false, error };
     }
   },
@@ -88,9 +101,9 @@ export const bookingLifecycle = {
 
       toast.success("Refund processed successfully.");
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[BookingLifecycle] Error processing refund:`, error);
-      toast.error(error.message || "Failed to process refund");
+      toast.error(error instanceof Error ? error.message : "Failed to process refund");
       return { success: false, error };
     }
   }
@@ -115,7 +128,7 @@ async function getUserEmail(userId: string): Promise<{ email?: string; name?: st
   };
 }
 
-async function handleSideEffects(booking: any, newStatus: BookingStatus) {
+async function handleSideEffects(booking: BookingData, newStatus: BookingStatus) {
   const car = booking.cars;
   const emailService = ResendEmailService.getInstance();
   

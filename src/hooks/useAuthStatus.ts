@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type UserRole = "host" | "renter" | null;
+type UserRole = "host" | "renter" | "admin" | "super_admin" | null;
 
 export const useAuthStatus = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -71,64 +71,62 @@ export const useAuthStatus = () => {
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
-        // Don't fetch role until auth check is complete
-        if (isCheckingAuth) {
-          return;
-        }
+        if (isCheckingAuth) return;
 
         if (!isAuthenticated) {
-          console.log("Not authenticated, skipping role fetch");
           setIsLoadingRole(false);
           return;
         }
 
         setIsLoadingRole(true);
-        console.log("Fetching user role...");
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (sessionError) {
-          console.error("Session error in fetchUserRole:", sessionError);
-          toast.error(
-            "Failed to fetch user session. Please try refreshing the page.",
-          );
+        if (!user) {
           setUserRole(null);
           setIsLoadingRole(false);
           return;
         }
 
-        if (!session?.user) {
-          console.log("No active session or user");
-          setUserRole(null);
-          setIsLoadingRole(false);
-          return;
-        }
-
-        console.log("Fetching role for user ID:", session.user.id);
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
+        console.log("Fetching roles for user ID:", user.id);
+        
+        // Fetch from user_roles table (the new source of truth)
+        // Note: A user can have multiple roles, but we'll prioritize the highest one
+        const { data: roles, error: rolesError } = await supabase
+          .from("user_roles")
           .select("role")
-          .eq("id", session.user.id)
-          .single();
+          .eq("user_id", user.id);
 
-        if (profileError) {
-          console.error("Profile error:", profileError);
-          const errorMessage =
-            profileError.message ||
-            "Failed to fetch user profile. Please try refreshing the page.";
-          toast.error(errorMessage);
-          setUserRole(null);
-        } else if (profile) {
-          console.log("User role fetched:", profile.role);
-          setUserRole(profile.role as UserRole);
+        if (rolesError) {
+          console.error("Error fetching user roles:", rolesError);
+          
+          // Fallback to profiles.role if user_roles fetch fails (e.g. table doesn't exist yet in local env)
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+            
+          if (profile) {
+            setUserRole(profile.role as UserRole);
+          }
+        } else if (roles && roles.length > 0) {
+          // Priority logic: super_admin > admin > host > renter
+          const roleList = roles.map(r => r.role);
+          if (roleList.includes('super_admin')) setUserRole('super_admin');
+          else if (roleList.includes('admin')) setUserRole('admin');
+          else if (roleList.includes('host')) setUserRole('host');
+          else if (roleList.includes('renter')) setUserRole('renter');
+        } else {
+          // Final fallback to profiles if no user_roles records found
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          if (profile) setUserRole(profile.role as UserRole);
         }
       } catch (error) {
-        console.error("Error fetching user role:", error);
-        toast.error(
-          "An unexpected error occurred. Please try refreshing the page.",
-        );
+        console.error("Error in fetchUserRole:", error);
       } finally {
         setIsLoadingRole(false);
       }
@@ -137,6 +135,5 @@ export const useAuthStatus = () => {
     fetchUserRole();
   }, [isAuthenticated, isCheckingAuth]);
 
-  // isLoadingRole covers both phases: auth check + role fetch
   return { isAuthenticated, userRole, isLoadingRole: isCheckingAuth || isLoadingRole, userId };
 };

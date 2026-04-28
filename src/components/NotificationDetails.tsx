@@ -129,7 +129,7 @@ export const NotificationDetails: React.FC = () => {
 
   const handleRelatedAction = (notification: NormalizedNotification) => {
     if (notification.related_booking_id) {
-      navigate(`/bookings/${notification.related_booking_id}`);
+      navigate(`/rental-details/${notification.related_booking_id}`);
     } else if (NotificationClassifier.isPaymentNotification(notification)) {
       navigate('/wallet');
     } else if (NotificationClassifier.isActiveRentalNotification(notification)) {

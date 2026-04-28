@@ -113,11 +113,11 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-017** | Modisa | P0 | 5 | 🔴 To Do | Modularize `CustomMapbox.tsx` & extract hooks (`useMapMarkers`, `useMapRouting`). |
-| **S13-018** | Modisa | P1 | 3 | 🔴 To Do | Implement Center-Pin Selector to fix thumb-block selection issues. |
-| **S13-019** | Modisa | P1 | 5 | 🔴 To Do | Migrate Side Trays to Mobile Bottom Sheets (`@gorhom/bottom-sheet`). |
-| **S13-020** | Modisa | P2 | 5 | 🔴 To Do | Refactor `NavigationService` rerouting logic & stabilize audio feedback. |
-| **S13-021** | Modisa | P2 | 3 | 🔴 To Do | Implement real-time Host Fleet View mapping. |
+| **S13-017** | Modisa | P0 | 5 | ✅ DONE | Modularize `CustomMapbox.tsx` & extract hooks (`useMapMarkers`, `useMapRouting`). |
+| **S13-018** | Modisa | P1 | 3 | ✅ DONE | Implement Center-Pin Selector to fix thumb-block selection issues. |
+| **S13-019** | Modisa | P1 | 5 | ✅ DONE | Migrate Side Trays to Mobile Bottom Sheets (`@gorhom/bottom-sheet`). |
+| **S13-020** | Modisa | P2 | 5 | ✅ DONE | Refactor `NavigationService` rerouting logic & stabilize audio feedback. |
+| **S13-021** | Modisa | P2 | 3 | ✅ DONE | Implement real-time Host Fleet View mapping. |
 
 ---
 

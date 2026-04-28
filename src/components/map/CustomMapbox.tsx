@@ -11,8 +11,14 @@ import { HostPopup } from "./HostPopup";
 import { HostCarsSideTray } from "./HostCarsSideTray";
 import { Host } from "@/services/hostService";
 import { createRoot, Root } from "react-dom/client";
-import { navigationService } from "@/services/navigationService";
 import { RouteLayer } from "@/components/navigation/RouteLayer";
+import { useMapboxNavigation } from "@/hooks/useMapboxNavigation";
+import { useVehicleClustering } from "@/hooks/useVehicleClustering";
+import { useGeocoding } from "@/hooks/useGeocoding";
+import { useMapMarkers } from "@/hooks/useMapMarkers";
+import { useMapControls } from "@/hooks/useMapControls";
+import { useMapCenterPin } from "@/hooks/useMapCenterPin";
+import { MapCenterPin } from "./MapCenterPin";
 
 // Host interface for route calculations
 interface HostLocation {
@@ -58,30 +64,50 @@ const CustomMapbox = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const geolocateControlRef = useRef<mapboxgl.GeolocateControl | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
-  const handoverMarkersRef = useRef<mapboxgl.Marker[]>([]);
-  const popupRootsRef = useRef<Map<HTMLElement, Root>>(new Map());
   const geolocateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoRouteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [mapInit, setMapInit] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState({ latitude, longitude });
-  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
-  const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
   const [isHostTrayOpen, setIsHostTrayOpen] = useState(false);
+  const [isMapMoving, setIsMapMoving] = useState(false);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
-  const [activeNavigationState, setActiveNavigationState] = useState({
-    activeRoute: null,
-    currentStepIndex: 0,
-    isNavigating: false,
-    showTraffic: false
+  
+  const { 
+    navigationState, 
+    fetchRoute, 
+    clearRoute 
+  } = useMapboxNavigation(mapInstance, mapInit);
+
+  const { fetchAddressFromCoordinates } = useGeocoding(mapbox_token);
+
+  // MOB-20: Manage markers
+  useMapMarkers({
+    map: mapInstance,
+    mapInit,
+    destination,
+    isHandoverMode,
+    handover
   });
 
-  useEffect(() => {
-    const unsubscribe = navigationService.subscribe((state) => {
-      setActiveNavigationState(state);
-    });
-    return unsubscribe;
-  }, []);
+  const { onUp, onDown, onLeft, onRight, onReset } = useMapControls({
+    map: mapInstance,
+    userLocation
+  });
+
+  const { centerAddress, centerCoords } = useMapCenterPin({
+    map: mapInstance,
+    enabled: true // Always show for now, can be toggled via props later
+  });
+
+  // MOB-18: Enable vehicle clustering
+  useVehicleClustering({
+    map: mapInstance,
+    mapInit,
+    onlineHosts: onlineHosts || [],
+    onHostSelect: (hostId) => handleViewHostCars(hostId),
+    HostPopup
+  });
 
   // Always call hooks - move conditional logic to usage
   const handoverData = useHandoverSafe();
@@ -218,6 +244,9 @@ const CustomMapbox = ({
         }, 1000);
       });
 
+      map.current.on("movestart", () => setIsMapMoving(true));
+      map.current.on("moveend", () => setIsMapMoving(false));
+
       map.current.on("error", (e) => {
         console.error("Map error:", e);
         toast.error("Error loading map. Please refresh.");
@@ -243,17 +272,9 @@ const CustomMapbox = ({
         autoRouteTimeoutRef.current = null;
       }
 
-      // Clean up all markers
+      // Clean up markers
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
-      handoverMarkersRef.current.forEach((marker) => marker.remove());
-      handoverMarkersRef.current = [];
-
-      // Clean up all React roots for popups
-      popupRootsRef.current.forEach((root) => {
-        root.unmount();
-      });
-      popupRootsRef.current.clear();
 
       // Remove map
       if (map.current) {
@@ -263,25 +284,7 @@ const CustomMapbox = ({
     };
   }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover, zoom, interactive, returnLocation]);
 
-  const fetchAddressFromCoordinates = async (
-    lat: number,
-    lng: number
-  ): Promise<string | null> => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapbox_token}`
-      );
-      const data = await response.json();
 
-      if (data.features && data.features.length > 0) {
-        return data.features[0].place_name;
-      }
-      return null;
-    } catch (error) {
-      console.error("Error fetching address:", error);
-      return null;
-    }
-  };
 
   useEffect(() => {
     if (map.current && mapInit) {
@@ -330,458 +333,35 @@ const CustomMapbox = ({
 
   // Function to show route to a specific host
   const showRouteToHost = (host: HostLocation) => {
-    if (!map.current || !mapInit || !userLocation.latitude || !userLocation.longitude) return;
-
-    const fetchRouteToHost = async () => {
-      try {
-        const response = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${host.longitude},${host.latitude}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`
-        );
-        const data = await response.json();
-
-        if (data.routes && data.routes.length > 0) {
-          const route = data.routes[0].geometry;
-          const steps = data.routes[0].legs[0].steps;
-
-          if (onRouteFound && steps) {
-            onRouteFound(steps.map((step: any) => ({
-              instruction: step.maneuver.instruction,
-              distance: step.distance,
-              duration: step.duration,
-              maneuver: step.maneuver.type,
-              road_name: step.name
-            })));
-          }
-
-          // Remove existing route
-          if (map.current!.getSource("host-route")) {
-            (map.current!.getSource("host-route") as mapboxgl.GeoJSONSource).setData(route);
-          } else {
-            map.current!.addSource("host-route", {
-              type: "geojson",
-              data: route,
-            });
-
-            map.current!.addLayer({
-              id: "host-route",
-              type: "line",
-              source: "host-route",
-              layout: {
-                "line-join": "round",
-                "line-cap": "round",
-              },
-              paint: {
-                "line-color": host.isActiveHandover ? "#ef4444" : "#3b82f6",
-                "line-width": host.isActiveHandover ? 6 : 4,
-              },
-            });
-          }
-
-          // Fit map to show both user and host location
-          const bounds = new mapboxgl.LngLatBounds()
-            .extend([userLocation.longitude, userLocation.latitude])
-            .extend([host.longitude, host.latitude]);
-
-          map.current!.fitBounds(bounds, {
-            padding: 50,
-            maxZoom: 15,
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching route to host:", error);
-        toast.error("Unable to calculate route");
-      }
-    };
-
-    fetchRouteToHost();
+    if (!host.latitude || !host.longitude || !userLocation.latitude || !userLocation.longitude) return;
+    
+    fetchRoute(
+      [userLocation.longitude, userLocation.latitude],
+      [host.longitude, host.latitude],
+      "host-route",
+      onRouteFound,
+      host.isActiveHandover ? "#ef4444" : "#3b82f6",
+      host.isActiveHandover ? 6 : 4
+    );
   };
 
+  // MOB-18: Auto-route logic for active handover
   useEffect(() => {
-    if (!map.current || !mapInit || !onlineHosts?.length)
-      return;
+    if (!mapInit || !onlineHosts?.length || !userLocation.latitude) return;
 
-    // Clean up old markers
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current = [];
-    markers.forEach((marker) => marker.remove());
-    setMarkers([]);
-
-    const newMarkers = onlineHosts
-      .map((host) => {
-        if (!host.latitude || !host.longitude) return null;
-
-        // Create marker element
-        const el = document.createElement("div");
-        el.className = "host-marker";
-        el.style.width = host.isActiveHandover ? "24px" : "20px";
-        el.style.height = host.isActiveHandover ? "24px" : "20px";
-        el.style.borderRadius = "50%";
-        el.style.backgroundColor = host.isActiveHandover ? "#ef4444" : "#4ade80";
-        el.style.border = host.isActiveHandover ? "3px solid white" : "2px solid white";
-        el.style.boxShadow = host.isActiveHandover
-          ? "0 0 15px rgba(239, 68, 68, 0.5)"
-          : "0 0 10px rgba(0, 0, 0, 0.3)";
-        el.style.cursor = "pointer";
-
-        // Add pulsing animation for active handover
-        if (host.isActiveHandover) {
-          el.style.animation = "pulse 2s infinite";
-        }
-
-        // Create popup container
-        const popupDiv = document.createElement('div');
-
-        // Create marker with custom popup
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat([host.longitude, host.latitude])
-          .addTo(map.current!);
-
-        // Add hover events
-        el.addEventListener('mouseenter', () => {
-          // Use createRoot instead of deprecated ReactDOM.render
-          if (!popupRootsRef.current.has(popupDiv)) {
-            const root = createRoot(popupDiv);
-            popupRootsRef.current.set(popupDiv, root);
-            root.render(
-              <HostPopup host={host as Host} onViewCars={handleViewHostCars} />
-            );
-          }
-
-          const popup = new mapboxgl.Popup({
-            offset: 25,
-            closeButton: false,
-            closeOnClick: false,
-            className: 'host-popup'
-          })
-            .setDOMContent(popupDiv)
-            .addTo(map.current!);
-
-          marker.setPopup(popup);
-          popup.addTo(map.current!);
-        });
-
-        el.addEventListener('mouseleave', () => {
-          setTimeout(() => {
-            const popup = marker.getPopup();
-            if (popup) {
-              popup.remove();
-            }
-          }, 100);
-        });
-
-        // Click to open side tray and show route
-        el.addEventListener('click', () => {
-          handleViewHostCars(host.id);
-
-          // Add route to this host using unique source name
-          if (map.current && mapInit) {
-            const fetchRouteToHost = async () => {
-              try {
-                const response = await fetch(
-                  `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${host.longitude},${host.latitude}?geometries=geojson&access_token=${mapboxgl.accessToken}`
-                );
-                const data = await response.json();
-
-                if (data.routes && data.routes.length > 0) {
-                  const route = data.routes[0].geometry;
-                  const hostRouteSourceId = "host-route";
-                  const hostRouteLayerId = "host-route-layer";
-
-                  // Remove existing host route
-                  if (map.current!.getSource(hostRouteSourceId)) {
-                    (map.current!.getSource(hostRouteSourceId) as mapboxgl.GeoJSONSource).setData(route);
-                  } else {
-                    map.current!.addSource(hostRouteSourceId, {
-                      type: "geojson",
-                      data: route,
-                    });
-
-                    map.current!.addLayer({
-                      id: hostRouteLayerId,
-                      type: "line",
-                      source: hostRouteSourceId,
-                      layout: {
-                        "line-join": "round",
-                        "line-cap": "round",
-                      },
-                      paint: {
-                        "line-color": "#3b82f6",
-                        "line-width": 5,
-                      },
-                    });
-                  }
-
-                  // Fit map to show both user and host location
-                  const bounds = new mapboxgl.LngLatBounds()
-                    .extend([userLocation.longitude, userLocation.latitude])
-                    .extend([host.longitude, host.latitude]);
-
-                  map.current!.fitBounds(bounds, {
-                    padding: 50,
-                    maxZoom: 15,
-                  });
-                }
-              } catch (error) {
-                console.error("Error fetching route to host:", error);
-                toast.error("Unable to calculate route");
-              }
-            };
-
-            fetchRouteToHost();
-          }
-        });
-
-        return marker;
-      })
-      .filter(Boolean) as mapboxgl.Marker[];
-
-    // Store markers in both state and ref
-    setMarkers(newMarkers);
-    markersRef.current = newMarkers;
-
-    // Auto-show route to active handover host
     const activeHandoverHost = onlineHosts?.find(host => host.isActiveHandover);
-    if (activeHandoverHost && userLocation.latitude && userLocation.longitude) {
-      // Clear previous timeout
-      if (autoRouteTimeoutRef.current) {
-        clearTimeout(autoRouteTimeoutRef.current);
-      }
+    if (activeHandoverHost) {
+      if (autoRouteTimeoutRef.current) clearTimeout(autoRouteTimeoutRef.current);
 
       autoRouteTimeoutRef.current = setTimeout(() => {
         showRouteToHost(activeHandoverHost);
       }, 1000);
     }
+  }, [onlineHosts, mapInit, userLocation]);
 
-    // Cleanup function for this effect
-    return () => {
-      // Clean up markers when hosts change
-      newMarkers.forEach((marker) => marker.remove());
-    };
-  }, [onlineHosts, mapInit, isHandoverMode, userLocation]);
 
-  useEffect(() => {
-    if (!map.current || !mapInit || !destination) return;
 
-    const { latitude, longitude } = destination;
 
-    // Guard: ensure coordinates are valid finite numbers
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      console.warn("Invalid destination coordinates:", { latitude, longitude });
-      return;
-    }
-
-    const el = document.createElement("div");
-    el.className = "destination-marker";
-    el.style.width = "24px";
-    el.style.height = "24px";
-    el.style.borderRadius = "50%";
-    el.style.backgroundColor = "#f59e0b";
-    el.style.border = "3px solid white";
-    el.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
-
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat([longitude, latitude])
-      .setPopup(
-        new mapboxgl.Popup({ offset: 25 }).setHTML(
-          `<p class="font-medium">Destination</p>`
-        )
-      )
-      .addTo(map.current!);
-
-    return () => {
-      marker.remove();
-    };
-  }, [destination, mapInit]);
-
-  useEffect(() => {
-    if (!map.current || !mapInit || !destination) return;
-
-    const { latitude, longitude } = destination;
-
-    // Guard clause: Ensure destination coordinates are valid before fetching
-    if (!latitude || !longitude || !userLocation.latitude || !userLocation.longitude) {
-      return;
-    }
-
-    const fetchRoute = async () => {
-      try {
-        const response = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.longitude},${userLocation.latitude};${longitude},${latitude}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`
-        );
-
-        if (!response.ok) {
-          console.warn('Route fetch failed:', response.statusText);
-          return;
-        }
-
-        const data = await response.json();
-
-        if (data.routes && data.routes.length > 0) {
-          const route = data.routes[0].geometry;
-          const steps = data.routes[0].legs[0].steps;
-
-          if (onRouteFound && steps) {
-            onRouteFound(steps.map((step: any) => ({
-              instruction: step.maneuver.instruction,
-              distance: step.distance,
-              duration: step.duration,
-              maneuver: step.maneuver.type,
-              road_name: step.name
-            })));
-          }
-
-          if (map.current.getSource("route")) {
-            (map.current.getSource("route") as mapboxgl.GeoJSONSource).setData(route);
-          } else {
-            map.current.addSource("route", {
-              type: "geojson",
-              data: route,
-            });
-
-            map.current.addLayer({
-              id: "route",
-              type: "line",
-              source: "route",
-              layout: {
-                "line-join": "round",
-                "line-cap": "round",
-              },
-              paint: {
-                "line-color": "#3b82f6",
-                "line-width": 5,
-              },
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching route:", error);
-      }
-    };
-
-    fetchRoute();
-
-    return () => {
-      if (map.current) {
-        if (map.current.getStyle() && map.current.getLayer("route")) {
-          map.current.removeLayer("route");
-        }
-        if (map.current.getStyle() && map.current.getSource("route")) {
-          map.current.removeSource("route");
-        }
-      }
-    };
-  }, [mapInit, destination, userLocation]);
-
-  useEffect(() => {
-    if (
-      !map.current ||
-      !mapInit ||
-      !isHandoverMode ||
-      !handover?.handoverStatus
-    )
-      return;
-
-    handoverMarkers.forEach((marker) => marker.remove());
-    setHandoverMarkers([]);
-
-    const newHandoverMarkers: mapboxgl.Marker[] = [];
-
-    if (handover.handoverStatus.host_location) {
-      const hostLocation = handover.handoverStatus.host_location;
-      const hostEl = document.createElement("div");
-      hostEl.className = "host-handover-marker";
-      hostEl.style.width = "24px";
-      hostEl.style.height = "24px";
-      hostEl.style.borderRadius = "50%";
-      hostEl.style.backgroundColor = "#3b82f6";
-      hostEl.style.border = "3px solid white";
-      hostEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
-
-      const hostMarker = new mapboxgl.Marker(hostEl)
-        .setLngLat([hostLocation.longitude, hostLocation.latitude])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 }).setHTML(
-            `<p class="font-medium">Host Location</p>
-             <p class="text-xs">${hostLocation.address}</p>`
-          )
-        )
-        .addTo(map.current!);
-
-      newHandoverMarkers.push(hostMarker);
-    }
-
-    if (handover.handoverStatus.renter_location) {
-      const renterLocation = handover.handoverStatus.renter_location;
-      const renterEl = document.createElement("div");
-      renterEl.className = "renter-handover-marker";
-      renterEl.style.width = "24px";
-      renterEl.style.height = "24px";
-      renterEl.style.borderRadius = "50%";
-      renterEl.style.backgroundColor = "#ec4899";
-      renterEl.style.border = "3px solid white";
-      renterEl.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.3)";
-
-      const renterMarker = new mapboxgl.Marker(renterEl)
-        .setLngLat([renterLocation.longitude, renterLocation.latitude])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 }).setHTML(
-            `<p class="font-medium">Renter Location</p>
-             <p class="text-xs">${renterLocation.address}</p>`
-          )
-        )
-        .addTo(map.current!);
-
-      newHandoverMarkers.push(renterMarker);
-    }
-
-    if (newHandoverMarkers.length === 2 && map.current) {
-      const bounds = new mapboxgl.LngLatBounds();
-      newHandoverMarkers.forEach((marker) => {
-        bounds.extend(marker.getLngLat());
-      });
-
-      map.current.fitBounds(bounds, {
-        padding: 100,
-        maxZoom: 15,
-      });
-    }
-
-    setHandoverMarkers(newHandoverMarkers);
-  }, [handover?.handoverStatus, mapInit, isHandoverMode]);
-
-  const onUp = () => {
-    if (map.current) {
-      map.current.panBy([0, -100], { duration: 500 });
-    }
-  };
-
-  const onDown = () => {
-    if (map.current) {
-      map.current.panBy([0, 100], { duration: 500 });
-    }
-  };
-
-  const onLeft = () => {
-    if (map.current) {
-      map.current.panBy([-100, 0], { duration: 500 });
-    }
-  };
-
-  const onRight = () => {
-    if (map.current) {
-      map.current.panBy([100, 0], { duration: 500 });
-    }
-  };
-
-  const onReset = () => {
-    if (map.current) {
-      map.current.flyTo({
-        center: [userLocation.longitude, userLocation.latitude],
-        zoom: 20,
-        essential: true,
-      });
-    }
-  };
 
   return (
     <div className="relative w-full h-full bottom-0 left-0 right-0 top-0">
@@ -836,18 +416,24 @@ const CustomMapbox = ({
         />
       )}
 
+      <MapCenterPin
+        isVisible={!navigationState.isNavigating}
+        address={centerAddress}
+        isMoving={isMapMoving}
+      />
+
       <HostCarsSideTray
         isOpen={isHostTrayOpen}
         onClose={() => setIsHostTrayOpen(false)}
         host={selectedHost}
       />
 
-      {activeNavigationState.isNavigating && (
+      {navigationState.isNavigating && (
         <RouteLayer
           map={mapInstance}
-          route={activeNavigationState.activeRoute}
+          route={navigationState.activeRoute}
           userLocation={userLocation}
-          showTraffic={activeNavigationState.showTraffic}
+          showTraffic={navigationState.showTraffic}
         />
       )}
     </div>

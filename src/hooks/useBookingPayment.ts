@@ -59,9 +59,9 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
         throw new Error('No payment URL returned from provider');
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       setProcessingStep('error');
-      const errorMessage = err.message || 'An unexpected error occurred';
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
       
       toast({
