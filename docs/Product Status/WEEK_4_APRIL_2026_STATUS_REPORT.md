@@ -70,9 +70,9 @@ Additionally, the team has integrated **Tapologo's QA testing results** into the
 | MOB-700 Security | 70% (5/9 done) | ✅ Partial / 🔴 In Sprint 12 | MOB-15 and MOB-9 shipped. Remaining carried to S12. |
 | BUG-010 (Orphaned Users) | 76 count, open | ✅ Resolved | MOB-20 closed. |
 | BUG-011 (Admin Core Logic) | Open | ✅ Resolved | MOB-21 closed. RPCs shipped. |
-| BUG-012 (Mock Payments) | In production | 🔴 In Sprint 12 | S12-001–005 cover Phase 0 fixes |
-| BUG-014 (Migration drift) | Open | 🟡 In Review | MOB-63 In Review. Dep loops snapped. |
-| MOB-38 (Promo Codes) | Open | 🟡 In Review | Scoped validation & Admin UI shipped. |
+| BUG-012 (Mock Payments) | In production | 🔴 In Sprint 13 | S12-001–005 cover Phase 0 fixes |
+| BUG-014 (Migration drift) | Open | ✅ Resolved | Cleaned up remote_schema HTTP types. |
+| MOB-38 (Promo Codes) | Open | ✅ Resolved | Scoped validation & Admin UI shipped. |
 
 ---
 
@@ -138,17 +138,19 @@ Active bugs are tracked in [`docs/testing & bugs/BUG_REPORT.md`](../testing%20%2
 
 ## 🎯 Sprint 12 Execution Summary
 
-Sprint 12 launched April 18, 2026 targeting our absolute blockers to commercial readiness. Current scope is **35 tickets** (~100 SP).
+Sprint 12 launched April 18, 2026, targeting our absolute blockers to commercial readiness, and officially closed on April 28, 2026.
 
-| Category | Tickets | Owner | Progress |
+| Category | Tickets | Owner | Final Status |
 |----------|---------|-------|----------|
-| Payment Phase 0 (Mock Removals) | 5 | Arnold | 🔴 To Do |
-| Security MOB-700 Continuation | 4 | Arnold | 🔴 To Do |
-| **Booking UX Redesign** | 4 | Tapologo | 🔴 To Do |
-| **Duration Discounts Integration** | 3 | Modisa | 🔴 To Do |
-| Launch Harmonization | 2 | Modisa | 🔴 To Do |
-| Test Coverage Extensions | 3 | Tapologo | 🔴 To Do |
-| Linear Hygiene & Triage | 7 | Modisa | 🔴 To Do |
+| Payment Phase 0 (Mock Removals) | 5 | Arnold | 🔴 Carried over |
+| Security MOB-700 Continuation | 4 | Arnold | 🟡 Partial (3/4 Done) |
+| **Booking UX Redesign** | 4 | Tapologo | 🔴 Carried over |
+| **Duration Discounts Integration** | 3 | Modisa | 🔴 Carried over |
+| Launch Harmonization | 2 | Modisa | 🔴 Carried over |
+| Test Coverage Extensions | 3 | Tapologo | 🔴 Carried over |
+| Linear Hygiene & Triage | 7 | Modisa | ✅ Done |
+| Admin Integrity & Security Audit | 4 | Arnold/Modisa | ✅ Done |
+| Migration & Build Stabilization | 3 | Modisa | ✅ Done |
 
 ---
 
@@ -169,11 +171,11 @@ Sprint 12 launched April 18, 2026 targeting our absolute blockers to commercial 
 
 | # | Action | Owner | Priority | Status | Due |
 |---|--------|-------|----------|--------|-----|
-| 1 | Complete S12-001–005: Payment Mock Breakages | Arnold | P0 | 🔴 To Do | Apr 24 |
-| 2 | Finalize Security MOB-700 fixes | Arnold | P0 | 🔴 To Do | Apr 24 |
-| 3 | **Booking UX**: Implement `PlanBookingStep.tsx` & Slider | Tapologo | P1 | 🔴 To Do | Apr 28 |
-| 4 | **Duration Pricing**: Implement `evaluateDurationRule` | Modisa | P1 | 🔴 To Do | Apr 28 |
-| 5 | Complete Email Phase 4 broadcast remnants | Modisa | P1 | ✅ Done | Apr 24 |
+| 1 | Complete S12-001–005: Payment Mock Breakages | Arnold | P0 | 🔴 Carried to S13 | May 5 |
+| 2 | Finalize Security MOB-700 (Remaining: MOB-708) | Arnold | P0 | 🔴 Carried to S13 | May 5 |
+| 3 | **Booking UX**: Implement `PlanBookingStep.tsx` & Slider | Tapologo | P1 | 🔴 Carried to S13 | May 5 |
+| 4 | **Duration Pricing**: Implement `evaluateDurationRule` | Modisa | P1 | 🔴 Carried to S13 | May 5 |
+| 5 | **Strategy**: Update Roadmap/GTM Terminology | Modisa | P1 | 🔴 Carried to S13 | May 5 |
 
 ---
 

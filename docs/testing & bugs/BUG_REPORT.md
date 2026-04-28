@@ -100,7 +100,7 @@ Security scan identified 9 actionable findings. Sprint 10–11 shipped 5 of 9:
 |-------|--------|
 | **Date Reported** | 2026-04-07 |
 | **Severity** | Medium (blocks strict build) |
-| **Status** | 🔴 Open |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | `AdminClaimsDashboard.tsx`, `AddressSection.tsx`, `EmergencyContactSection.tsx`, `PersonalInfoSection.tsx`, `HostBookings.tsx`, `enhancedHandoverService.ts`, `handoverService.ts` |
 | **Assigned To** | Tapologo |
 | **Sprint 12** | S12-025 |
@@ -122,7 +122,7 @@ Security scan identified 9 actionable findings. Sprint 10–11 shipped 5 of 9:
 |-------|--------|
 | **Date Reported** | 2026-04-10 |
 | **Severity** | Medium |
-| **Status** | 🟡 Partially Resolved |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts` |
 | **Assigned To** | Modisa |
 | **Sprint 12** | S12-012 |
@@ -138,7 +138,7 @@ Sprint 11 successfully restored 18/20 email templates (Phases 1–3 of MOB-712).
 |-------|--------|
 | **Date Reported** | 2026-04-11 |
 | **Severity** | Low (IDE-specific, not blocking builds) |
-| **Status** | 🟡 Workaround Applied |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | `android/build.gradle`, Java Language Server |
 | **Plan** | [`docs/plans/20260411_BUG009_GRADLE_BUILD_FIX.md`](../plans/20260411_BUG009_GRADLE_BUILD_FIX.md) |
 
@@ -155,7 +155,7 @@ IDE Gradle initialization script path mismatch in RedHat Java extension. Sprint 
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | High (Revenue/User Block) |
-| **Status** | 🔴 Open |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | `auth.users`, `public.profiles` |
 | **Linear** | ❌ No ticket — to be created Sprint 12 (S12-017) |
 
@@ -209,7 +209,7 @@ Sprint 12 targets Phase 0 (fix mock-flow bugs). Phase 1 (real provider integrati
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | High |
-| **Status** | 🟡 Partially Resolved |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | SQL functions, `conversations` table RLS |
 | **Linear** | MOB-23 (In Progress — status needs update) |
 
@@ -224,7 +224,7 @@ Sprint 11 shipped MOB-706 (S11-011) which applied `SET search_path = public` to 
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | Critical (Blocks `db pull` & CI/CD) |
-| **Status** | 🟡 In Review |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | `supabase/migrations/20260319212624_remote_schema.sql`, `20260410143004_remote_schema.sql` |
 | **Linear** | MOB-63 (In Review) |
 
@@ -340,7 +340,7 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 |-------|--------|
 | **Date Requested** | 2026-04-07 |
 | **Severity** | Low (Enhancement) |
-| **Status** | 🔴 Open |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | 6 Admin Management tables |
 | **Plan** | [`docs/plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md`](../plans/20260407_MOB711_ADMIN_DETAILED_VIEWS_IMPLEMENTATION.md) |
 
@@ -357,7 +357,7 @@ Admin Portal lacks explicit "View Details" `<Eye />` action icons on complex tab
 |-------|--------|
 | **Date Requested** | 2026-04-12 |
 | **Severity** | Low (Internal refactoring) |
-| **Status** | 🔴 Open |
+| **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | `UnifiedUserTable`, `UserManagementTable`, `AdvancedUserManagement` |
 
 **Description:**  
