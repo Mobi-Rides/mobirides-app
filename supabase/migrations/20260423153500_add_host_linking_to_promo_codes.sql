@@ -36,8 +36,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.admins 
-        WHERE admins.id = auth.uid() 
-        AND admins.status = 'active'
+        WHERE id = auth.uid()
     )
 );
 
