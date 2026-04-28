@@ -68,11 +68,11 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-001** | Arnold | P0 | 3 | 🔴 To Do | Fix double commission bug in `BookingRequestDetails.tsx`. |
-| **S13-002** | Arnold | P0 | 5 | 🔴 To Do | Wire payment webhook flow path. |
-| **S13-003** | Arnold | P0 | 3 | 🔴 To Do | Create `payment_transaction` records natively. |
-| **S13-004** | Arnold | P0 | 3 | 🔴 To Do | Stub real provider interface (remove setTimeout mock payout). |
-| **S13-005** | Arnold | P0 | 2 | 🔴 To Do | Add refund flow placeholder service interface. |
+| **S13-001** | Arnold | P0 | 3 | ✅ DONE | Fix double commission bug in `BookingRequestDetails.tsx`. |
+| **S13-002** | Arnold | P0 | 5 | ✅ DONE | Wire payment webhook flow path. |
+| **S13-003** | Arnold | P0 | 3 | ✅ DONE | Create `payment_transaction` records natively. |
+| **S13-004** | Arnold | P0 | 3 | ✅ DONE | Stub real provider interface (remove setTimeout mock payout). |
+| **S13-005** | Arnold | P0 | 2 | ✅ DONE | Add refund flow placeholder service interface. |
 
 ---
 
