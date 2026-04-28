@@ -308,48 +308,48 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 6 of 40 (4 In Review) |
+| **Tasks Completed** | 20 of 40 (20 Carried over/In Review) |
 | **Current Blockers** | Missing `google-services.json` (MOB-13), Payment provider credentials (future sprints) |
 
 ### Sprint 12 Completion Table
 
 | ID | Owner | Status | Notes |
 |----|-------|--------|-------|
-| S12-001 | Arnold | 🔴 To Do | Payment: Double commission fix |
-| S12-002 | Arnold | 🔴 To Do | Payment: Webhook flow wiring |
-| S12-003 | Arnold | 🔴 To Do | Payment: Transaction record creation |
-| S12-004 | Arnold | 🔴 To Do | Payment: Mock payout replacement |
-| S12-005 | Arnold | 🔴 To Do | Payment: Refund flow placeholder |
-| S12-006 | Arnold | 🔴 To Do | Security: MOB-705 edge fn validation |
-| S12-007 | Arnold | 🔴 To Do | Security: MOB-707 password hashing |
-| S12-008 | Arnold | 🔴 To Do | Security: MOB-708 author email |
-| S12-009 | Arnold | 🔴 To Do | Security: MOB-709 leaked-password |
-| S12-010 | Modisa | 🔴 To Do | MOB-43: Roadmap terminology |
-| S12-011 | Modisa | 🔴 To Do | MOB-44: GTM plan update |
-| S12-012 | Modisa | 🟡 In Review | MOB-811: Admin bulk broadcast (Centralized Dashboard + RPC Fixes) |
-| S12-013 | Tapologo | 🔴 To Do | G5: InsuranceComparison stub |
-| S12-014 | Tapologo | 🔴 To Do | G6: PolicyDetailsCard stub |
-| S12-015 | Modisa | 🟡 In Review | MOB-38: Host-linked promo codes |
+| S12-001 | Arnold | 🔴 Carried to S13 | Payment: Double commission fix |
+| S12-002 | Arnold | 🔴 Carried to S13 | Payment: Webhook flow wiring |
+| S12-003 | Arnold | 🔴 Carried to S13 | Payment: Transaction record creation |
+| S12-004 | Arnold | 🔴 Carried to S13 | Payment: Mock payout replacement |
+| S12-005 | Arnold | 🔴 Carried to S13 | Payment: Refund flow placeholder |
+| S12-006 | Arnold | ✅ DONE | Security: MOB-705 edge fn validation |
+| S12-007 | Arnold | ✅ DONE | Security: MOB-707 password hashing |
+| S12-008 | Arnold | 🔴 Carried to S13 | Security: MOB-708 author email |
+| S12-009 | Arnold | ✅ DONE | Security: MOB-709 leaked-password |
+| S12-010 | Modisa | 🔴 Carried to S13 | MOB-43: Roadmap terminology |
+| S12-011 | Modisa | 🔴 Carried to S13 | MOB-44: GTM plan update |
+| S12-012 | Modisa | ✅ DONE | MOB-811: Admin bulk broadcast (Centralized Dashboard + RPC Fixes) |
+| S12-013 | Tapologo | 🔴 Carried to S13 | G5: InsuranceComparison stub |
+| S12-014 | Tapologo | 🔴 Carried to S13 | G6: PolicyDetailsCard stub |
+| S12-015 | Modisa | ✅ DONE | MOB-38: Host-linked promo codes |
 | S12-016 | Arnold | 🔵 Blocked | MOB-13: Google native integration |
-| S12-017 | Modisa | 🔴 To Do | Create Linear: BUG-010 |
-| S12-018 | Modisa | 🔴 To Do | Create Linear: BUG-011 |
-| S12-019 | Modisa | 🟡 In Review | Create Linear: BUG-014 |
-| S12-020 | Modisa | 🔴 To Do | Linear: Close MOB-32 |
-| S12-021 | Modisa | 🔴 To Do | Linear: Close MOB-23 |
-| S12-022 | Modisa | 🔴 To Do | Linear: Fix MOB-13 status |
+| S12-017 | Modisa | ✅ DONE | Create Linear: BUG-010 |
+| S12-018 | Modisa | ✅ DONE | Create Linear: BUG-011 |
+| S12-019 | Modisa | ✅ DONE | Create Linear: BUG-014 |
+| S12-020 | Modisa | ✅ DONE | Linear: Close MOB-32 |
+| S12-021 | Modisa | ✅ DONE | Linear: Close MOB-23 |
+| S12-022 | Modisa | ✅ DONE | Linear: Fix MOB-13 status |
 | S12-023 | Modisa | ✅ DONE | Linear: Sync Sprint 11 statuses |
-| S12-024 | Tapologo | 🔴 To Do | MOB-37: Contextual loading messages |
-| S12-025 | Tapologo | 🔴 To Do | BUG-006: RejectExcessProperties fix |
-| S12-026 | Tapologo | 🔴 To Do | Vehicle Management unit tests (CAR-001 to CAR-025) |
-| S12-027 | Tapologo | 🔴 To Do | Reviews & Ratings unit tests (REV-001 to REV-008) |
-| S12-028 | Tapologo | 🔴 To Do | Promo Codes unit tests (PROMO-001 to PROMO-008) |
-| S12-029 | Tapologo | 🔴 To Do | Booking UX: Extract PlanBookingStep |
-| S12-030 | Tapologo | 🔴 To Do | Booking UX: Duration slider & unit toggle |
-| S12-031 | Tapologo | 🔴 To Do | Booking UX: Select dropdowns for options |
-| S12-032 | Tapologo | 🔴 To Do | Booking UX: Debounce derive end date |
-| S12-033 | Modisa | 🔴 To Do | Duration Discounts: Update pricing.ts |
-| S12-034 | Modisa | 🔴 To Do | Duration Discounts: evaluateDurationRule engine |
-| S12-035 | Modisa | 🔴 To Do | Duration Discounts: Admin UI controls |
+| S12-024 | Tapologo | ✅ DONE | MOB-37: Contextual loading messages |
+| S12-025 | Tapologo | ✅ DONE | BUG-006: RejectExcessProperties fix |
+| S12-026 | Tapologo | 🔴 Carried to S13 | Vehicle Management unit tests (CAR-001 to CAR-025) |
+| S12-027 | Tapologo | 🔴 Carried to S13 | Reviews & Ratings unit tests (REV-001 to REV-008) |
+| S12-028 | Tapologo | 🔴 Carried to S13 | Promo Codes unit tests (PROMO-001 to PROMO-008) |
+| S12-029 | Tapologo | ✅ DONE | Booking UX: Extract PlanBookingStep |
+| S12-030 | Tapologo | ✅ DONE | Booking UX: Duration slider & unit toggle |
+| S12-031 | Tapologo | ✅ DONE | Booking UX: Select dropdowns for options |
+| S12-032 | Tapologo | ✅ DONE | Booking UX: Debounce derive end date |
+| S12-033 | Modisa | 🔴 Carried to S13 | Duration Discounts: Update pricing.ts |
+| S12-034 | Modisa | 🔴 Carried to S13 | Duration Discounts: evaluateDurationRule engine |
+| S12-035 | Modisa | 🔴 Carried to S13 | Duration Discounts: Admin UI controls |
 | S12-036 | Modisa | ✅ DONE | Vite 8 & Rolldown Migration (10x Speed) |
 | S12-037 | Modisa | ✅ DONE | Admin Integrity Audit Execution |
 | S12-038 | Arnold | ✅ DONE | MOB-81: Admin component consolidation |

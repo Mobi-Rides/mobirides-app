@@ -28,86 +28,37 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
     setProcessingStep('validating');
 
     try {
-      // Step 1: Validation (Simulated)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       setProcessingStep('processing');
       
-      // Step 2: Process Payment
-      // In production, this would call an edge function (initiate-payment)
-      // For dev/mock, we use the mock service
-      const result = await mockBookingPaymentService.processPayment(request);
+      const { data, error: functionError } = await supabase.functions.invoke('initiate-payment', {
+        body: {
+          booking_id: request.booking_id,
+          payment_method: request.payment_method,
+          // Route to our new return page
+          success_url: `${window.location.origin}/payment/return`,
+          cancel_url: `${window.location.origin}/rental-details/${request.booking_id}`
+        }
+      });
 
-      if (result.success) {
+      if (functionError) {
+        throw new Error(functionError.message || 'Payment initiation failed');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.paymentUrl) {
         setProcessingStep('confirming');
         
-        if (!result.requires_user_action) {
-          // Record the payment transaction
-          const { data: { user } } = await supabase.auth.getUser();
-          const amount = request.grand_total;
-          const commissionRate = await getCurrentCommissionRate();
-          // Commission applies to rental portion only (not insurance premium)
-          const rentalPortion = request.base_rental_price + request.dynamic_pricing_adjustment - request.discount_amount;
-          const commission = rentalPortion * commissionRate;
-          const hostEarnings = rentalPortion - commission;
-          const { error: txnError } = await supabase
-            .from('payment_transactions')
-            .insert({
-              booking_id: request.booking_id,
-              user_id: user?.id,
-              amount,
-              currency: 'BWP',
-              payment_method: request.payment_method,
-              payment_provider: request.payment_method === 'card' ? 'PayU' : 'MobileMoney',
-              status: 'completed',
-              platform_commission: commission,
-              host_earnings: hostEarnings,
-              commission_rate: commissionRate,
-              completed_at: new Date().toISOString(),
-            })
-            .select('id')
-            .single();
-
-          if (txnError) throw new Error(`Failed to record payment transaction: ${txnError.message}`);
-
-          const { error: earningsError } = await supabase.rpc('credit_pending_earnings', {
-            p_booking_id: request.booking_id,
-            p_host_earnings: hostEarnings,
-            p_platform_commission: commission,
-          });
-
-          if (earningsError) throw new Error(`Failed to credit host earnings: ${earningsError.message}`);
-
-          const { bookingLifecycle } = await import("@/services/bookingLifecycle");
-          const updateResult = await bookingLifecycle.updateStatus(request.booking_id, 'confirmed');
-          
-          if (!updateResult.success) {
-            console.error("Dev lifecycle update failed:", updateResult.error);
-            throw new Error("Failed to update booking status");
-          }
-        }
-
-        // Simulate confirmation delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setProcessingStep('complete');
-        
-        if (result.requires_user_action) {
-           toast({
-             title: "Payment Initiated",
-             description: "Please check your phone to complete the transaction.",
-           });
-        } else {
-           toast({
-             title: "Payment Successful",
-             description: "Your booking has been confirmed.",
-           });
-        }
-
-        options.onSuccess?.(result);
+        // In a real scenario, this would be an external gateway URL (PayGate).
+        // Since we are returning a local /payment/return URL for the mock, we can
+        // do a window redirect.
+        window.location.href = data.paymentUrl;
       } else {
-        throw new Error(result.error_message || 'Payment failed');
+        throw new Error('No payment URL returned from provider');
       }
+
     } catch (err: any) {
       setProcessingStep('error');
       const errorMessage = err.message || 'An unexpected error occurred';
@@ -120,9 +71,7 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
       });
       
       options.onError?.(errorMessage);
-    } finally {
       setIsProcessing(false);
-      // Reset step after delay if needed, or leave at complete/error
     }
   };
 
