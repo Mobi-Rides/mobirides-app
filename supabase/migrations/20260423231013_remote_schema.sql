@@ -606,9 +606,8 @@ drop function if exists "public"."get_admin_users"();
 
 drop function if exists "public"."get_user_notifications"(p_page integer, p_page_size integer, p_only_unread boolean);
 
-drop type "public"."http_request";
 
-drop type "public"."http_response";
+
 
 alter table "public"."promo_code_cars" drop constraint "promo_code_cars_pkey";
 
@@ -3731,9 +3730,8 @@ END;
 $function$
 ;
 
-create type "public"."http_request" as ("method" public.http_method, "uri" character varying, "headers" public.http_header[], "content_type" character varying, "content" character varying);
 
-create type "public"."http_response" as ("status" integer, "content_type" character varying, "headers" public.http_header[], "content" character varying);
+
 
 CREATE OR REPLACE FUNCTION public.increment_car_view_count(car_id uuid)
  RETURNS void
