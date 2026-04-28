@@ -86,8 +86,7 @@ const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
 const PromoCodeHistory = lazy(() => import("@/pages/PromoCodeHistory"));
-
-
+const PaymentReturnPage = lazy(() => import("@/pages/PaymentReturnPage"));
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
@@ -293,6 +292,13 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <PromoCodeHistory />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/payment/return" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <PaymentReturnPage />
                             </ProtectedRoute>
                           </Suspense>
                         } />

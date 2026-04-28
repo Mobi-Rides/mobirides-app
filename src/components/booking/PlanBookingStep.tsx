@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { format, addDays, addWeeks, addMonths } from "date-fns";
+import { format, addDays, addMonths } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";

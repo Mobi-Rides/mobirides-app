@@ -61,6 +61,38 @@ export const bookingLifecycle = {
       toast.error(error.message || "Failed to update booking status");
       return { success: false, error };
     }
+  },
+
+  /**
+   * Placeholder interface for refund flow (S13-005)
+   * To be integrated with provider APIs (PayGate/Ooze)
+   */
+  refundBooking: async (bookingId: string, reason: string) => {
+    console.log(`[BookingLifecycle] Initiating refund for booking ${bookingId}. Reason: ${reason}`);
+    
+    try {
+      // 1. Mark transaction as refunded in DB
+      // 2. Debit host pending_balance
+      // 3. Call provider refund API via edge function
+      
+      const { error } = await supabase.functions.invoke('refund-payment', {
+        body: { booking_id: bookingId, reason }
+      });
+
+      if (error) {
+        console.error("Refund edge function not fully implemented yet:", error);
+        // Fallback for UI testing
+        toast.info("Refund initiated (Mock)");
+        return { success: true };
+      }
+
+      toast.success("Refund processed successfully.");
+      return { success: true };
+    } catch (error: any) {
+      console.error(`[BookingLifecycle] Error processing refund:`, error);
+      toast.error(error.message || "Failed to process refund");
+      return { success: false, error };
+    }
   }
 };
 

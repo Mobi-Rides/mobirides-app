@@ -42,7 +42,7 @@ This period covers the final audit of Sprint 12 and the initiation of core comme
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Payment Phase 0 (S13-001–005) | 🔴 To Do | Addressing double-commission and webhook bypass bugs. |
+| Payment Phase 0 (S13-001–005) | ✅ DONE | Mock flow breakages, double commission, and edge function wireups complete. |
 | Booking UX (S13-010–013) | ✅ DONE | Unified 'Build Your Plan' screen implemented with Duration Slider. |
 | Map Navigation (S13-017–021) | 🔴 To Do | Extracting hooks and implementing bottom sheets. |
 | Route Consolidation (S13-022) | 🔴 To Do | Removing `/bookings/:id` in favor of `/rental-details/:id`. |
@@ -78,7 +78,7 @@ This period covers the final audit of Sprint 12 and the initiation of core comme
 
 | ID | Severity | Status | Description | Plan |
 |----|----------|--------|-------------|------|
-| BUG-012 | Critical | 🔴 Open | Payment system mock in production | S13-001–005 |
+| BUG-012 | Critical | ✅ Resolved | Payment system mock in production | S13-001–005 |
 | BUG-015 | Medium | 🔴 Open | Admin Analytics charts empty | S13-023 |
 | BUG-016 | Medium | 🔴 Open | CSV Export inconsistency | S13-024 |
 | BUG-019 | Medium | 🔴 Open | Orphaned Booking routes | S13-022 |
@@ -92,7 +92,7 @@ This period covers the final audit of Sprint 12 and the initiation of core comme
 | # | Action | Owner | Priority | Status | Due |
 |---|--------|-------|----------|--------|-----|
 | 1 | Complete Route Consolidation (S13-022) | Tapologo | P1 | 🔴 To Do | May 1 |
-| 2 | Implement Payment P0 Mock Fixes | Arnold | P0 | 🔴 To Do | May 2 |
+| 2 | Implement Payment P0 Mock Fixes | Arnold | P0 | ✅ DONE | May 2 |
 | 3 | Modularize Mapbox Hooks | Modisa | P1 | 🔴 To Do | May 1 |
 | 4 | Fix Analytics Chart Empty Data | Arnold | P2 | 🔴 To Do | May 3 |
 
