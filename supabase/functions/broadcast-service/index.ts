@@ -111,14 +111,16 @@ Deno.serve(async (req: Request) => {
   if (recent && recent.length > 0) {
     const sentAt = new Date(recent[0].sent_at).getTime();
     const minutesLeft = Math.ceil((sentAt + 60 * 60 * 1000 - Date.now()) / 60000);
-    return jsonResponse({
-      error: `Rate limit: 1 broadcast per hour. Try again in ~${minutesLeft} minute(s).`,
-      rateLimited: true,
-    }, 429);
+    if (minutesLeft > 0) {
+      return jsonResponse({
+        error: `Rate limit: 1 broadcast per hour. Try again in ~${minutesLeft} minute(s).`,
+        rateLimited: true,
+      }, 429);
+    }
   }
 
   // --- Build audience query ---
-  let query = supabase.from("profiles").select("id, email, role");
+  let query = supabase.from("profiles").select("id, role");
   if (payload.audience === "renters") query = query.eq("role", "renter");
   else if (payload.audience === "hosts") query = query.eq("role", "host");
   else if (payload.audience === "verified") query = query.eq("is_verified", true);
@@ -127,10 +129,24 @@ Deno.serve(async (req: Request) => {
     query = query.gte("last_active_at", thirtyDaysAgo);
   }
 
-  const { data: recipients, error: recipientError } = await query;
+  const { data: profiles, error: recipientError } = await query;
   if (recipientError) return jsonResponse({ error: recipientError.message }, 500);
 
-  const recipientCount = recipients?.length ?? 0;
+  // Fetch emails from auth.users
+  const { data: authData, error: authErr } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+  if (authErr) return jsonResponse({ error: authErr.message }, 500);
+
+  const emailMap = new Map();
+  if (authData?.users) {
+    for (const u of authData.users) emailMap.set(u.id, u.email);
+  }
+
+  const recipients = profiles?.map(p => ({
+    ...p,
+    email: emailMap.get(p.id)
+  })).filter(p => p.email) || [];
+
+  const recipientCount = recipients.length;
 
   // --- Insert broadcast record ---
   const isScheduled = payload.scheduled_at && new Date(payload.scheduled_at) > new Date();

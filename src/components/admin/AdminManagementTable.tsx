@@ -41,12 +41,26 @@ const useAdmins = () => {
     queryKey: ["admins"],
     queryFn: async (): Promise<Admin[]> => {
       const { data, error } = await supabase
-        .from("admins")
-        .select("id, email, full_name, is_super_admin, created_at, last_sign_in_at")
+        .from("user_roles")
+        .select(`
+          user_id,
+          role,
+          created_at,
+          profiles:user_id ( full_name, last_sign_in_at )
+        `)
+        .in("role", ["admin", "super_admin"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []) as Admin[];
+      
+      return (data || []).map(d => ({
+        id: d.user_id,
+        email: "Hidden for security", // Email is protected in auth.users
+        full_name: d.profiles?.full_name || null,
+        is_super_admin: d.role === "super_admin",
+        created_at: d.created_at,
+        last_sign_in_at: d.profiles?.last_sign_in_at || null,
+      })) as Admin[];
     },
   });
 };
@@ -57,10 +71,11 @@ const useNonAdminUsers = () => {
     queryFn: async (): Promise<Profile[]> => {
       // First get existing admin IDs to exclude
       const { data: existingAdmins } = await supabase
-        .from("admins")
-        .select("id");
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "super_admin"]);
       
-      const adminIds = existingAdmins?.map(admin => admin.id) || [];
+      const adminIds = existingAdmins?.map(admin => admin.user_id) || [];
       
       // Get profiles that are not already admins
       let query = supabase
@@ -97,12 +112,12 @@ export const AdminManagementTable = () => {
       isSuperAdmin: boolean; 
       userName: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke('add-admin', {
-        body: { userId, isSuperAdmin, userName }
+      const { error } = await supabase.rpc('add_admin', {
+        target_user_id: userId,
+        make_super_admin: isSuperAdmin
       });
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admins"] });

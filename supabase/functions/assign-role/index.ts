@@ -53,9 +53,10 @@ Deno.serve(async (req) => {
     )
 
     const { data: adminRecord } = await serviceClient
-      .from('admins')
+      .from('user_roles')
       .select('id')
-      .eq('id', callerId)
+      .eq('user_id', callerId)
+      .in('role', ['admin', 'super_admin'])
       .maybeSingle()
 
     if (!adminRecord) {
@@ -83,13 +84,12 @@ Deno.serve(async (req) => {
       )
     }
 
-    // --- MOB-106: UPSERT instead of INSERT ---
+    // --- MOB-106: REPLACE existing roles ---
+    await serviceClient.from('user_roles').delete().eq('user_id', userId)
+
     const { error } = await serviceClient
       .from('user_roles')
-      .upsert(
-        { user_id: userId, role },
-        { onConflict: 'user_id' }
-      )
+      .insert({ user_id: userId, role })
 
     if (error) throw error
 

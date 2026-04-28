@@ -39,13 +39,29 @@ const useAdminStatus = (userId: string) => {
   return useQuery({
     queryKey: ["admin-status", userId],
     queryFn: async (): Promise<AdminData | null> => {
+      // Query user_roles and join with profiles to get email/full_name
       const { data, error } = await supabase
-        .from("admins")
-        .select("id, email, full_name, is_super_admin, created_at, last_sign_in_at")
-        .eq("id", userId)
-        .single();
+        .from("user_roles")
+        .select(`
+          user_id,
+          role,
+          created_at,
+          profiles:user_id ( full_name, last_sign_in_at )
+        `)
+        .eq("user_id", userId)
+        .in("role", ["admin", "super_admin"])
+        .maybeSingle();
       
-      return error ? null : data as AdminData;
+      if (error || !data) return null;
+      
+      return {
+        id: data.user_id,
+        email: "", // Not available in public profiles, but not critical for UI
+        full_name: data.profiles?.full_name || null,
+        is_super_admin: data.role === "super_admin",
+        created_at: data.created_at,
+        last_sign_in_at: data.profiles?.last_sign_in_at || null,
+      } as AdminData;
     },
   });
 };
@@ -61,20 +77,17 @@ export const UserAdminTab = ({ user, onUpdate }: UserAdminTabProps) => {
 
   const addAdminMutation = useMutation({
     mutationFn: async ({ isSuperAdmin }: { isSuperAdmin: boolean }) => {
-      const { error } = await supabase
-        .from("admins")
-        .insert({
-          id: user.id,
-          email: user.email || `${user.id}@placeholder.com`, // Use actual email or fallback
-          full_name: user.full_name,
-          is_super_admin: isSuperAdmin,
-        });
+      const { error } = await supabase.rpc('add_admin', {
+        target_user_id: user.id,
+        make_super_admin: isSuperAdmin
+      });
       
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-status", user.id] });
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-complete"] });
       toast.success("User added as admin successfully");
       onUpdate?.();
       setShowAddDialog(false);
