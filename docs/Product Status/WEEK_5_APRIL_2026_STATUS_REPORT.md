@@ -43,7 +43,7 @@ This period covers the final audit of Sprint 12 and the initiation of core comme
 | Item | Status | Notes |
 |------|--------|-------|
 | Payment Phase 0 (S13-001–005) | 🔴 To Do | Addressing double-commission and webhook bypass bugs. |
-| Booking UX (S13-010–013) | 🔴 To Do | Implementing unified configuration card and duration slider. |
+| Booking UX (S13-010–013) | ✅ DONE | Unified 'Build Your Plan' screen implemented with Duration Slider. |
 | Map Navigation (S13-017–021) | 🔴 To Do | Extracting hooks and implementing bottom sheets. |
 | Route Consolidation (S13-022) | 🔴 To Do | Removing `/bookings/:id` in favor of `/rental-details/:id`. |
 | Admin Analytics (S13-023–024) | 🔴 To Do | Resolving empty chart data and export consistency (BUG-015/016). |

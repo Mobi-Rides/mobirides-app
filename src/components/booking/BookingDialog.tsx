@@ -39,9 +39,10 @@ import {
   calculateDiscount,
   PromoCode
 } from "@/services/promoCodeService";
-import { DestinationTypeSelector, DestinationType } from "./DestinationTypeSelector";
-import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 import { ContextualHelp } from "@/components/guides/ContextualHelp";
+import { PlanBookingStep } from "./PlanBookingStep";
+import { useDebounce } from "@/hooks/useDebounce";
+import { DestinationType } from "@/types/booking";
 
 interface BookingDialogProps {
   car: Car;
@@ -82,6 +83,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const navigate = useNavigate();
   const { isVerified, isLoading: isVerificationLoading } =
     useVerificationStatus();
+  const debouncedStartDate = useDebounce(startDate, 500);
+  const debouncedEndDate = useDebounce(endDate, 500);
 
   // Promo Code State
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
@@ -99,8 +102,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
   const { calculation, finalPrice, loading: dpLoading } = useDynamicPricing(
     car.id,
     basePrice,
-    startDate,
-    endDate,
+    debouncedStartDate,
+    debouncedEndDate,
     pickupLocation?.latitude,
     pickupLocation?.longitude,
     userId ?? undefined,
@@ -158,16 +161,16 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
     }
   }, [isOpen, car.id]);
 
-  // Check availability whenever date range changes
+  // Check availability whenever debounced date range changes
   useEffect(() => {
     const checkAvailability = async () => {
-      if (startDate && endDate && car.id) {
+      if (debouncedStartDate && debouncedEndDate && car.id) {
         setIsCheckingAvailability(true);
         try {
           const available = await checkCarAvailability(
             car.id,
-            startDate,
-            endDate,
+            debouncedStartDate,
+            debouncedEndDate,
           );
           console.log('BookingDialog: Availability check result', available);
           setIsAvailable(available);
@@ -180,12 +183,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       }
     };
 
-    if (startDate && endDate) {
+    if (debouncedStartDate && debouncedEndDate) {
       checkAvailability();
     } else {
       setIsAvailable(true);
     }
-  }, [startDate, endDate, car.id]);
+  }, [debouncedStartDate, debouncedEndDate, car.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -681,16 +684,15 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
 
   const canGoNext = () => {
     switch (wizardStep) {
-      case 1: return !!startDate && !!endDate && isAvailable;
-      case 2: return !!pickupLocation;
-      case 3: return true; // insurance is optional
-      case 4: return true;
+      case 1: return !!startDate && !!endDate && isAvailable && !isCheckingAvailability && !dpLoading;
+      case 2: return true; // insurance is optional
+      case 3: return true;
       default: return false;
     }
   };
 
   const handleNext = () => {
-    if (wizardStep < 4) setWizardStep(wizardStep + 1);
+    if (wizardStep < 3) setWizardStep(wizardStep + 1);
   };
 
   const handleBack = () => {
@@ -709,24 +711,22 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
           {/* Progress indicator */}
           <BookingWizardProgress
             currentStep={wizardStep}
-            totalSteps={4}
-            stepLabels={WIZARD_STEPS}
+            totalSteps={3}
+            stepLabels={["Plan", "Protection", "Review"]}
           />
 
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto px-5 pb-2">
             <DialogHeader className="pb-3">
               <DialogTitle className="text-lg flex items-center gap-1.5">
-                {wizardStep === 1 && <>Select Dates <ContextualHelp helpText="Pick a start and end date for your rental. Greyed-out dates are unavailable." guideSection="booking" role="renter" /></>}
-                {wizardStep === 2 && <>Pickup & Destination <ContextualHelp helpText="Confirm where you'll pick up the car and select your trip type (in-town or out-of-town)." guideSection="booking" role="renter" /></>}
-                {wizardStep === 3 && <>Damage Protection <ContextualHelp helpText="Choose optional damage protection to cover you during the rental. You can skip this step." guideSection="insurance" role="renter" /></>}
-                {wizardStep === 4 && "Review & Confirm"}
+                {wizardStep === 1 && <>Build Your Plan <ContextualHelp helpText="Configure your rental duration and pickup preferences in one place." guideSection="booking" role="renter" /></>}
+                {wizardStep === 2 && <>Damage Protection <ContextualHelp helpText="Choose optional damage protection to cover you during the rental. You can skip this step." guideSection="insurance" role="renter" /></>}
+                {wizardStep === 3 && "Review & Confirm"}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
-                {wizardStep === 1 && `Choose your rental dates for ${car.brand} ${car.model}`}
-                {wizardStep === 2 && "Confirm pickup and trip type"}
-                {wizardStep === 3 && "Choose your protection level (optional)"}
-                {wizardStep === 4 && "Review your booking details and confirm"}
+                {wizardStep === 1 && `Customize your trip for ${car.brand} ${car.model}`}
+                {wizardStep === 2 && "Choose your protection level (optional)"}
+                {wizardStep === 3 && "Review your booking details and confirm"}
               </DialogDescription>
             </DialogHeader>
 
@@ -740,99 +740,30 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               </Alert>
             )}
 
-            {/* Step 1: Date Selection */}
+            {/* Step 1: Build Your Plan */}
             {wizardStep === 1 && (
-              <div className="space-y-4">
-                <Calendar
-                  mode="range"
-                  selected={{ from: startDate, to: endDate }}
-                  onSelect={(range) => {
-                    setStartDate(range?.from);
-                    setEndDate(range?.to);
-                  }}
-                  numberOfMonths={1}
-                  disabled={isDateDisabled}
-                  modifiers={{ booked: bookedDates }}
-                  modifiersStyles={{
-                    booked: {
-                      backgroundColor: "hsl(var(--destructive) / 0.1)",
-                      color: "hsl(var(--destructive))",
-                      textDecoration: "line-through",
-                    },
-                  }}
-                  className="mx-auto"
-                />
-
-                {!isAvailable && startDate && endDate && (
-                  <Alert variant="destructive">
-                    <CalendarX className="h-4 w-4" />
-                    <AlertDescription>
-                      Not available for selected dates. Please choose different dates.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {startDate && endDate && (
-                  <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Start</span>
-                      <span className="font-medium">{format(startDate, "MMM dd, yyyy")}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">End</span>
-                      <span className="font-medium">{format(endDate, "MMM dd, yyyy")}</span>
-                    </div>
-                    <div className="flex justify-between pt-1 border-t border-border/50">
-                      <span className="text-muted-foreground">Duration</span>
-                      <span className="font-medium">{numberOfDays} {numberOfDays === 1 ? 'day' : 'days'}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <PlanBookingStep
+                car={car}
+                startDate={startDate}
+                endDate={endDate}
+                onDateRangeChange={(start, end) => {
+                  setStartDate(start);
+                  setEndDate(end);
+                }}
+                pickupLocation={pickupLocation}
+                onLocationSelect={handleLocationSelected}
+                destinationType={destinationType}
+                onDestinationTypeSelect={setDestinationType}
+                isCheckingAvailability={isCheckingAvailability}
+                isAvailable={isAvailable}
+                bookedDates={bookedDates}
+                isDateDisabled={isDateDisabled}
+                setIsLocationPickerOpen={setIsLocationPickerOpen}
+              />
             )}
 
-            {/* Step 2: Location */}
+            {/* Step 2: Insurance / Protection */}
             {wizardStep === 2 && (
-              <div className="space-y-4">
-                <div className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Pickup Location</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatLocationDescription()}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setIsLocationPickerOpen(true)}
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Change Location
-                  </Button>
-                </div>
-
-                <div className="border-t border-border/50" />
-
-                {/* Destination type selector */}
-                <DestinationTypeSelector
-                  selectedType={destinationType}
-                  onSelect={setDestinationType}
-                />
-
-                {/* Date summary reminder */}
-                <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                  <p className="text-muted-foreground">
-                    {format(startDate!, "MMM dd")} – {format(endDate!, "MMM dd, yyyy")} · {numberOfDays} {numberOfDays === 1 ? 'day' : 'days'}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Insurance / Protection */}
-            {wizardStep === 3 && (
               <div className="space-y-4">
                 {isFeatureEnabled("INSURANCE_V2") && basePrice !== undefined ? (
                   <InsurancePackageSelector
@@ -856,8 +787,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               </div>
             )}
 
-            {/* Step 4: Review & Confirm */}
-            {wizardStep === 4 && (
+            {/* Step 3: Review & Confirm */}
+            {wizardStep === 3 && (
               <div className="space-y-4">
                 {/* Car info */}
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -934,13 +865,13 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
               </Button>
             )}
 
-            {wizardStep < 4 ? (
+            {wizardStep < 3 ? (
               <Button
                 onClick={handleNext}
                 disabled={!canGoNext() || isOwner || isCheckingAvailability}
                 className="flex-1"
               >
-                {isCheckingAvailability ? "Checking..." : "Next"}
+                {isCheckingAvailability || dpLoading ? "Calculating..." : "Next"}
               </Button>
             ) : (
               <Button

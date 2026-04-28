@@ -343,10 +343,10 @@ Sprint 12 is the **last full sprint before May** and must set up these targets b
 | S12-026 | Tapologo | 🔴 Carried to S13 | Vehicle Management unit tests (CAR-001 to CAR-025) |
 | S12-027 | Tapologo | 🔴 Carried to S13 | Reviews & Ratings unit tests (REV-001 to REV-008) |
 | S12-028 | Tapologo | 🔴 Carried to S13 | Promo Codes unit tests (PROMO-001 to PROMO-008) |
-| S12-029 | Tapologo | 🔴 Carried to S13 | Booking UX: Extract PlanBookingStep |
-| S12-030 | Tapologo | 🔴 Carried to S13 | Booking UX: Duration slider & unit toggle |
-| S12-031 | Tapologo | 🔴 Carried to S13 | Booking UX: Select dropdowns for options |
-| S12-032 | Tapologo | 🔴 Carried to S13 | Booking UX: Debounce derive end date |
+| S12-029 | Tapologo | ✅ DONE | Booking UX: Extract PlanBookingStep |
+| S12-030 | Tapologo | ✅ DONE | Booking UX: Duration slider & unit toggle |
+| S12-031 | Tapologo | ✅ DONE | Booking UX: Select dropdowns for options |
+| S12-032 | Tapologo | ✅ DONE | Booking UX: Debounce derive end date |
 | S12-033 | Modisa | 🔴 Carried to S13 | Duration Discounts: Update pricing.ts |
 | S12-034 | Modisa | 🔴 Carried to S13 | Duration Discounts: evaluateDurationRule engine |
 | S12-035 | Modisa | 🔴 Carried to S13 | Duration Discounts: Admin UI controls |
