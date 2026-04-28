@@ -188,8 +188,8 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-037** | Modisa | P1 | 3 | 🔴 To Do | MOB-43: Refactor H1 Roadmap terminology (June "Commercial Launch"). |
-| **S13-038** | Modisa | P1 | 3 | 🔴 To Do | MOB-44: Update GTM Plan launch timelines & traction metrics. |
+| **S13-037** | Modisa | P1 | 3 | ✅ DONE | MOB-43: Refactor H1 Roadmap terminology (V1.0 Official Commercial Launch). |
+| **S13-038** | Modisa | P1 | 3 | ✅ DONE | MOB-44: Update GTM Plan launch timelines & traction metrics. |
 
 ---
 
@@ -198,7 +198,7 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 0 of 35 |
+| **Tasks Completed** | 2 of 35 |
 | **Current Blockers** | Missing `google-services.json` (MOB-13) |
 
 ---

@@ -47,7 +47,7 @@ This period covers the final audit of Sprint 12 and the initiation of core comme
 | Map Navigation (S13-017–021) | 🔴 To Do | Extracting hooks and implementing bottom sheets. |
 | Route Consolidation (S13-022) | 🔴 To Do | Removing `/bookings/:id` in favor of `/rental-details/:id`. |
 | Admin Analytics (S13-023–024) | 🔴 To Do | Resolving empty chart data and export consistency (BUG-015/016). |
-| Strategy Harmonization | 🔴 To Do | Updating Roadmap/GTM terminology (MOB-43/44). |
+| Strategy Harmonization | ✅ DONE | Updated Roadmap/GTM terminology (MOB-43/44). |
 
 ---
 
