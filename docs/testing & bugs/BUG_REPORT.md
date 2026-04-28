@@ -1,6 +1,6 @@
 # MobiRides Bug Report
 
-**Last Updated:** April 22, 2026  
+**Last Updated:** April 28, 2026  
 **Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
@@ -224,9 +224,9 @@ Sprint 11 shipped MOB-706 (S11-011) which applied `SET search_path = public` to 
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | Critical (Blocks `db pull` & CI/CD) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Review |
 | **Affects** | `supabase/migrations/20260319212624_remote_schema.sql`, `20260410143004_remote_schema.sql` |
-| **Linear** | ❌ No ticket — to be created Sprint 12 (S12-019) |
+| **Linear** | MOB-63 (In Review) |
 
 **Description:**  
 Migration `20260319212624` contains manual `CREATE TYPE` blocks for `http_*` types that should be extension-owned. The CLI generates corrective `DROP TYPE` statements that fail during Shadow DB sync (`SQLSTATE 2BP01`).
@@ -274,6 +274,66 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
+### BUG-017: Admin Security Privilege Escalation Risk
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-27 |
+| **Severity** | Critical |
+| **Status** | ✅ Resolved |
+| **Affects** | `AdminPromoCodes.tsx`, `AdminSecurity.tsx` |
+| **Resolution** | Migrated all role checks to the canonical `user_roles` table in Supabase. |
+
+---
+
+### BUG-018: Admin Promo Codes Schema Mismatch
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-27 |
+| **Severity** | High |
+| **Status** | ✅ Resolved |
+| **Affects** | `AdminPromoCodes.tsx` |
+| **Resolution** | Aligned `host_id` -> `created_by` and handled missing `promo_code_cars` table with FUTURE comments. |
+
+---
+
+### BUG-019: Orphaned Booking Route Technical Debt
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-28 |
+| **Severity** | Medium |
+| **Status** | 🔴 Open |
+| **Affects** | `App.tsx`, `BookingDetails.tsx`, `NotificationDetails.tsx` |
+| **Plan** | [`docs/plans/20260428_ROUTE_CONSOLIDATION_PLAN.md`](../plans/20260428_ROUTE_CONSOLIDATION_PLAN.md) |
+
+---
+
+### BUG-020: Invalid "Approved" Status Check in Renter UI
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-28 |
+| **Severity** | Medium |
+| **Status** | 🔴 Open |
+| **Affects** | `RenterBookingCard.tsx` |
+| **Description** | Hardcoded check for `status === "approved"` which does not exist in the `BookingStatus` enum. |
+
+---
+
+### BUG-021: Clumsy Map & Navigation Architecture
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-28 |
+| **Severity** | High |
+| **Status** | 🔴 Open |
+| **Affects** | `CustomMapbox.tsx`, `NavigationService.ts`, `MapMarkers.tsx` |
+| **Plan** | [`docs/plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md`](../plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md) |
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -314,6 +374,8 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-004** | 2026-04-06 | Outbound SSRF via `send-push-notification` — SSRF whitelist deployed, keys rotated. |
 | **BUG-005** | 2026-04-06 | Excessive unauthenticated query spam — 85% request reduction (309→50-80 req/min). |
 | **BUG-007** | 2026-04-10 | Admin table data inaccuracies — 10 tables standardized with accurate pagination/exports. |
+| **BUG-017** | 2026-04-28 | Admin Security Privilege Escalation Risk — Migrated to `user_roles`. |
+| **BUG-018** | 2026-04-28 | Admin Promo Codes Schema Mismatch — Fixed `created_by` mapping. |
 
 ---
 

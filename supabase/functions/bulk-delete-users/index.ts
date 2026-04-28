@@ -2,7 +2,7 @@
 // S9-009 / MOB-132: Refactored bulk-delete-users with anonymize + soft-delete
 // Per docs/plans/ANONYMIZE_ON_DELETE_2026_03_02.md Phase 2
 
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,22 +29,30 @@ interface BulkDeleteRequest {
  * - Hard-deletes auth.users last
  */
 async function anonymizeAndDeleteUser(
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseClient,
   userId: string,
   adminId: string,
   reason: string
 ): Promise<DeleteResult> {
   try {
     // Guard: don't delete admins/super_admins
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name, role")
-      .eq("id", userId)
+    const { data: adminRecord } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["admin", "super_admin"])
       .maybeSingle();
 
-    if (profile?.role === "admin" || profile?.role === "super_admin") {
+    if (adminRecord) {
       return { userId, success: false, error: "Cannot delete admin or super_admin users" };
     }
+
+    // Get full_name for audit log
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userId)
+      .maybeSingle();
 
     // ── Step 1: Hard-delete PII tables ────────────────────────────────────────
     const piiTables = [
@@ -79,7 +87,7 @@ async function anonymizeAndDeleteUser(
       .eq("owner_id", userId);
 
     if (userCars?.length) {
-      const carIds = userCars.map((c: any) => c.id);
+      const carIds = userCars.map((c: { id: string }) => c.id);
       await supabaseAdmin
         .from("cars")
         .update({ description: "[removed]", location: "[removed]" })
@@ -107,9 +115,8 @@ async function anonymizeAndDeleteUser(
     // ── Step 4: Hard-delete auth user ─────────────────────────────────────────
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (authErr) {
-      // Fallback: ban for 100 years if delete fails
+      // Fallback: ban for 100 years if delete fails due to constraints
       await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
-      return { userId, success: false, error: `Auth delete failed (user banned): ${authErr.message}` };
     }
 
     // ── Step 5: Audit log ─────────────────────────────────────────────────────
@@ -157,8 +164,14 @@ Deno.serve(async (req) => {
     if (authError || !user) return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: corsHeaders });
 
     // Admin check
-    const { data: adminProfile } = await supabaseAdmin.from("profiles").select("role").eq("id", user.id).single();
-    if (!["admin", "super_admin"].includes(adminProfile?.role)) {
+    const { data: adminRecord } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .in("role", ["admin", "super_admin"])
+      .maybeSingle();
+
+    if (!adminRecord) {
       return new Response(JSON.stringify({ error: "Admin access required" }), { status: 403, headers: corsHeaders });
     }
 

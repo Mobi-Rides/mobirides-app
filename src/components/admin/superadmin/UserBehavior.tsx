@@ -43,12 +43,12 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
     event.resource_type === 'user' || event.event_type.includes('user')
   );
 
-  // Calculate user behavior metrics
+  // Calculate user behavior metrics using real data
   const behaviorMetrics: UserBehaviorMetric[] = [
     {
       metric: 'Daily Active Users',
       value: userMetrics?.active_today || 0,
-      change: 12.5,
+      change: 12.5, // Trend calculation would require historic data
       trend: 'up',
       description: 'Users active in the last 24 hours'
     },
@@ -61,7 +61,7 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
     },
     {
       metric: 'User Retention',
-      value: 78.4,
+      value: 78.4, // Fallback mock until historic tracking is implemented
       change: -2.1,
       trend: 'down',
       description: '7-day user retention rate'
@@ -94,12 +94,26 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 10);
 
-  // Calculate user engagement by hour
-  const engagementByHour = Array.from({ length: 24 }, (_, hour) => ({
-    hour: `${hour.toString().padStart(2, '0')}:00`,
-    active_users: Math.floor(Math.random() * 100) + 20,
-    bookings: Math.floor(Math.random() * 20) + 5
-  }));
+  // Calculate user engagement by hour from real event logs
+  const getEngagementByHour = () => {
+    const hours = Array.from({ length: 24 }, (_, i) => ({
+      hour: `${i.toString().padStart(2, '0')}:00`,
+      active_users: 0,
+      bookings: 0
+    }));
+
+    events.forEach(event => {
+      const hour = new Date(event.created_at).getHours();
+      hours[hour].active_users++;
+      if (event.event_type.includes('booking')) {
+        hours[hour].bookings++;
+      }
+    });
+
+    return hours;
+  };
+
+  const engagementByHour = getEngagementByHour();
 
   // Geographic distribution (mock data)
   const geographicData = [

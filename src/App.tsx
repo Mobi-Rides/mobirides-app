@@ -111,6 +111,7 @@ const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"));
 const AdminGuides = lazy(() => import("@/pages/admin/AdminGuides"));
 const AdminRemittanceDashboard = lazy(() => import("@/components/insurance/AdminRemittanceDashboard").then(module => ({ default: module.AdminRemittanceDashboard })));
 const AdminSettings = lazy(() => import("@/pages/admin/AdminSettings"));
+const AdminCampaigns = lazy(() => import("@/pages/admin/AdminCampaigns"));
 
 // Insurance claims pages
 const UserClaimsList = lazy(() => import("@/components/insurance/UserClaimsList"));
@@ -494,6 +495,11 @@ function App() {
                         <Route path="/admin/settings" element={
                           <Suspense fallback={<LoadingView />}>
                             <AdminSettings />
+                          </Suspense>
+                        } />
+                        <Route path="/admin/campaigns" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <AdminCampaigns />
                           </Suspense>
                         } />
 

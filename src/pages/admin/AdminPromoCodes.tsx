@@ -29,14 +29,30 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Tag, CalendarIcon, Send } from "lucide-react";
-import { format } from "date-fns";
-import { toast } from "sonner";
-import { PromoCode } from "@/services/promoCodeService";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ResendEmailService } from "@/services/notificationService";
+import { toast } from "sonner";
+import { Plus, Tag, Loader2, Send, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+
+interface PromoCode {
+  id: string;
+  code: string;
+  discount_amount: number;
+  discount_type: 'fixed' | 'percentage';
+  max_uses: number | null;
+  current_uses: number;
+  min_booking_amount: number | null;
+  description: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+}
 
 export default function AdminPromoCodes() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -59,34 +75,59 @@ export default function AdminPromoCodes() {
 
   // Create Promo Code Mutation
   const createMutation = useMutation({
-    mutationFn: async (newPromo: Partial<PromoCode>) => {
-      if (!newPromo.code || !newPromo.discount_amount) {
+    mutationFn: async (payload: { promo: Partial<PromoCode>; carIds?: string[] }) => {
+      const { promo: newPromo, carIds } = payload;
+      const code = newPromo.code;
+      const discount_amount = newPromo.discount_amount;
+      
+      if (!code || discount_amount === undefined || discount_amount === null) {
         throw new Error('Code and discount amount are required');
       }
-      const { data, error } = await supabase
+
+      // 1. Insert Promo Code
+      const { data: promoData, error: promoError } = await supabase
         .from("promo_codes")
         .insert([{
-          code: newPromo.code,
-          discount_amount: newPromo.discount_amount,
+          code,
+          discount_amount,
           discount_type: newPromo.discount_type || 'fixed',
-          max_uses: newPromo.max_uses,
-          min_booking_amount: newPromo.min_booking_amount,
-          description: newPromo.description,
-          valid_until: newPromo.valid_until,
-          is_active: newPromo.is_active ?? true
+          max_uses: newPromo.max_uses || null,
+          min_booking_amount: newPromo.min_booking_amount || null,
+          description: newPromo.description || null,
+          valid_until: newPromo.valid_until || null,
+          is_active: newPromo.is_active ?? true,
+          created_by: newPromo.created_by || null
         }])
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (promoError) throw promoError;
+
+      /* FUTURE: Re-implement when promo_code_cars table is restored
+      // 2. Insert Car Scoping if any
+      if (carIds && carIds.length > 0) {
+        const carLinks = carIds.map(carId => ({
+          promo_code_id: promoData.id,
+          car_id: carId
+        }));
+
+        // @ts-ignore - promo_code_cars is missing from types.ts
+        const { error: carError } = await supabase
+          .from("promo_code_cars")
+          .insert(carLinks);
+
+        if (carError) throw carError;
+      }
+      */
+
+      return promoData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-promo-codes"] });
       setIsCreateOpen(false);
       toast.success("Promo code created successfully");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(`Failed to create promo code: ${error.message}`);
     },
   });
@@ -95,7 +136,7 @@ export default function AdminPromoCodes() {
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       const { error } = await supabase
-        .from("promo_codes" as any)
+        .from("promo_codes")
         .update({ is_active: isActive })
         .eq("id", id);
 
@@ -105,7 +146,7 @@ export default function AdminPromoCodes() {
       queryClient.invalidateQueries({ queryKey: ["admin-promo-codes"] });
       toast.success("Promo code status updated");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update status: ${error.message}`);
     },
   });
@@ -114,7 +155,7 @@ export default function AdminPromoCodes() {
   const sendNotificationMutation = useMutation({
     mutationFn: async (promo: PromoCode) => {
       // 1. Get users with marketing notifications enabled using secure RPC
-      const { data: users, error } = await supabase.rpc('get_marketing_recipients' as any);
+      const { data: users, error } = await supabase.rpc('get_marketing_recipients');
 
       if (error) throw error;
       if (!users || users.length === 0) throw new Error("No users found with marketing notifications enabled");
@@ -203,7 +244,7 @@ export default function AdminPromoCodes() {
             <DialogHeader>
               <DialogTitle>Create New Promo Code</DialogTitle>
             </DialogHeader>
-            <CreatePromoForm onSubmit={(data) => createMutation.mutate(data)} isLoading={createMutation.isPending} />
+            <CreatePromoForm onSubmit={(data, carIds) => createMutation.mutate({ promo: data, carIds })} isLoading={createMutation.isPending} />
           </DialogContent>
         </Dialog>
       </div>
@@ -336,7 +377,7 @@ function CreatePromoForm({
   onSubmit,
   isLoading,
 }: {
-  onSubmit: (data: Partial<PromoCode>) => void;
+  onSubmit: (data: Partial<PromoCode>, carIds?: string[]) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
@@ -347,6 +388,36 @@ function CreatePromoForm({
     min_booking_amount: "",
     description: "",
     valid_until: undefined as Date | undefined,
+    scope: "platform" as "platform" | "host",
+    created_by: "all",
+    selectedCarIds: [] as string[],
+  });
+
+  // Fetch hosts
+  const { data: hosts } = useQuery({
+    queryKey: ["admin-hosts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .order("full_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch cars for selected host
+  const { data: cars } = useQuery({
+    queryKey: ["admin-cars", formData.created_by],
+    queryFn: async () => {
+      let query = supabase.from("cars").select("id, brand, model, owner_id");
+      if (formData.created_by !== "all") {
+        query = query.eq("owner_id", formData.created_by);
+      }
+      const { data, error } = await query.order("brand");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -361,8 +432,18 @@ function CreatePromoForm({
         : null,
       description: formData.description,
       valid_until: formData.valid_until ? formData.valid_until.toISOString() : null,
+      created_by: formData.scope === "host" && formData.created_by !== "all" ? formData.created_by : null,
       is_active: true,
-    });
+    }, formData.selectedCarIds);
+  };
+
+  const toggleCar = (carId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedCarIds: prev.selectedCarIds.includes(carId)
+        ? prev.selectedCarIds.filter(id => id !== carId)
+        : [...prev.selectedCarIds, carId]
+    }));
   };
 
   return (
@@ -451,14 +532,77 @@ function CreatePromoForm({
         </Popover>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Input
-          id="description"
-          placeholder="Internal note or user-facing description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
+      <div className="space-y-4 pt-4 border-t">
+        <div className="space-y-2">
+          <Label>Campaign Scope</Label>
+          <Select
+            value={formData.scope}
+            onValueChange={(val: "platform" | "host") =>
+              setFormData({ ...formData, scope: val, selectedCarIds: [] })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="platform">Platform-wide</SelectItem>
+              <SelectItem value="host">Host-specific</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.scope === "host" && (
+          <div className="space-y-2">
+            <Label htmlFor="host">Select Host</Label>
+            <Select
+              value={formData.created_by}
+              onValueChange={(val) => setFormData({ ...formData, created_by: val, selectedCarIds: [] })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Hosts" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Hosts</SelectItem>
+                {hosts?.map((host) => (
+                  <SelectItem key={host.id} value={host.id}>
+                    {host.full_name || "Unnamed Host"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* FUTURE: Re-implement when promo_code_cars table is restored
+        <div className="space-y-2">
+          <Label>Specific Cars (Optional)</Label>
+          <div className="border rounded-md p-2">
+            <ScrollArea className="h-32">
+              <div className="space-y-2">
+                {cars?.map((car) => (
+                  <div key={car.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`car-${car.id}`}
+                      checked={formData.selectedCarIds.includes(car.id)}
+                      onCheckedChange={() => toggleCar(car.id)}
+                    />
+                    <label
+                      htmlFor={`car-${car.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {car.brand} {car.model}
+                    </label>
+                  </div>
+                ))}
+                {(!cars || cars.length === 0) && (
+                  <p className="text-xs text-muted-foreground p-2">No cars found for this selection.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+          <p className="text-[10px] text-muted-foreground">If none selected, code applies to all cars in the chosen scope.</p>
+        </div>
+        */}
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
