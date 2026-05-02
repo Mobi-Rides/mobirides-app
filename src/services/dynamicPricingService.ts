@@ -96,10 +96,17 @@ export class DynamicPricingService {
       // Sort rules by priority (higher priority first)
       const sortedRules = rules.sort((a, b) => b.priority - a.priority);
 
+      // Only the highest-priority matching DURATION rule applies (no compounding).
+      let durationRuleApplied = false;
+
       for (const rule of sortedRules) {
+        if (rule.type === PricingRuleType.DURATION && durationRuleApplied) continue;
+
         const ruleApplies = this.evaluateRule(rule, request, loyaltyData, demandData);
 
         if (ruleApplies) {
+          if (rule.type === PricingRuleType.DURATION) durationRuleApplied = true;
+
           appliedRules.push({
             rule_id: rule.id,
             rule_name: rule.name,
@@ -249,6 +256,33 @@ export class DynamicPricingService {
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
+      },
+      {
+        id: "monthly-discount",
+        name: "Monthly Discount",
+        type: PricingRuleType.DURATION,
+        is_active: true,
+        multiplier: 0.8,
+        priority: 65,
+        conditions: {
+          min_duration_days: 28
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: "weekly-discount",
+        name: "Weekly Discount",
+        type: PricingRuleType.DURATION,
+        is_active: true,
+        multiplier: 0.9,
+        priority: 60,
+        conditions: {
+          min_duration_days: 7,
+          max_duration_days: 27
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     ];
   }
@@ -289,6 +323,12 @@ export class DynamicPricingService {
 
       case PricingRuleType.DESTINATION:
         return this.evaluateDestinationRule(rule, request.destination_type);
+
+      case PricingRuleType.DURATION: {
+        if (!request.return_date) return false;
+        const returnDate = parseISO(request.return_date);
+        return this.evaluateDurationRule(rule, pickupDate, returnDate);
+      }
 
       default:
         return false;
@@ -390,6 +430,20 @@ export class DynamicPricingService {
   }
 
   /**
+   * Evaluate duration-based pricing rule (weekly / monthly discount)
+   */
+  static evaluateDurationRule(rule: PricingRule, pickupDate: Date, returnDate: Date): boolean {
+    const { min_duration_days, max_duration_days } = rule.conditions;
+    if (min_duration_days === undefined) return false;
+
+    const totalDays = differenceInDays(returnDate, pickupDate);
+    if (totalDays < min_duration_days) return false;
+    if (max_duration_days !== undefined && totalDays > max_duration_days) return false;
+
+    return true;
+  }
+
+  /**
    * Evaluate destination-based pricing rule
    */
   static evaluateDestinationRule(rule: PricingRule, destinationType?: string): boolean {
@@ -485,6 +539,8 @@ export class DynamicPricingService {
         return `Location premium (${multiplierText})`;
       case PricingRuleType.DESTINATION:
         return `Destination premium (${multiplierText})`;
+      case PricingRuleType.DURATION:
+        return `Duration discount (${multiplierText})`;
       default:
         return `${rule.name} (${multiplierText})`;
     }

@@ -151,6 +151,76 @@ describe('DynamicPricingService helpers', () => {
     expect(DynamicPricingService.generateRuleDescription(mkRule({ type: PricingRuleType.EARLY_BIRD, multiplier: 0.9 }))).toContain('-10%');
   });
 
+  // ── Duration discount tests (BUG plan: 20260417_DURATION_DISCOUNTS_PLAN.md) ──
+
+  describe('evaluateDurationRule', () => {
+    const weekly  = mkRule({ type: PricingRuleType.DURATION, multiplier: 0.9,  conditions: { min_duration_days: 7,  max_duration_days: 27 } });
+    const monthly = mkRule({ type: PricingRuleType.DURATION, multiplier: 0.8,  conditions: { min_duration_days: 28 } });
+    const noMin   = mkRule({ type: PricingRuleType.DURATION, conditions: {} });
+
+    it('3 days — no discount (below 7-day threshold)', () => {
+      const pickup = new Date('2026-05-01');
+      const ret    = new Date('2026-05-04'); // 3 days
+      expect(DynamicPricingService.evaluateDurationRule(weekly,  pickup, ret)).toBe(false);
+      expect(DynamicPricingService.evaluateDurationRule(monthly, pickup, ret)).toBe(false);
+    });
+
+    it('7 days — weekly applies, monthly does not', () => {
+      const pickup = new Date('2026-05-01');
+      const ret    = new Date('2026-05-08'); // 7 days
+      expect(DynamicPricingService.evaluateDurationRule(weekly,  pickup, ret)).toBe(true);
+      expect(DynamicPricingService.evaluateDurationRule(monthly, pickup, ret)).toBe(false);
+    });
+
+    it('28 days — monthly applies, weekly does not (no compounding)', () => {
+      const pickup = new Date('2026-05-01');
+      const ret    = new Date('2026-05-29'); // 28 days
+      expect(DynamicPricingService.evaluateDurationRule(weekly,  pickup, ret)).toBe(false);
+      expect(DynamicPricingService.evaluateDurationRule(monthly, pickup, ret)).toBe(true);
+    });
+
+    it('returns false when min_duration_days is not set', () => {
+      const pickup = new Date('2026-05-01');
+      const ret    = new Date('2026-05-15'); // 14 days
+      expect(DynamicPricingService.evaluateDurationRule(noMin, pickup, ret)).toBe(false);
+    });
+
+    it('evaluateRule routes DURATION type and parses return_date from request', () => {
+      const request = { car_id: 'c1', base_price: 100, pickup_date: '2026-05-01', return_date: '2026-05-08' };
+      expect(DynamicPricingService.evaluateRule(weekly, request, null, null)).toBe(true);
+    });
+
+    it('generateRuleDescription labels duration discounts', () => {
+      expect(DynamicPricingService.generateRuleDescription(weekly)).toBe('Duration discount (-10%)');
+      expect(DynamicPricingService.generateRuleDescription(monthly)).toBe('Duration discount (-20%)');
+    });
+
+    it('default rules include weekly (7–27 days, 0.9×) and monthly (28+ days, 0.8×)', () => {
+      const defaults = DynamicPricingService.getDefaultPricingRules();
+      const dur = defaults.filter(r => r.type === PricingRuleType.DURATION);
+      expect(dur).toHaveLength(2);
+
+      const w = dur.find(r => r.conditions.min_duration_days === 7);
+      const m = dur.find(r => r.conditions.min_duration_days === 28);
+
+      expect(w).toBeDefined();
+      expect(w?.conditions.max_duration_days).toBe(27);
+      expect(w?.multiplier).toBe(0.9);
+
+      expect(m).toBeDefined();
+      expect(m?.conditions.max_duration_days).toBeUndefined();
+      expect(m?.multiplier).toBe(0.8);
+    });
+
+    it('monthly priority is higher than weekly so it wins when both evaluated', () => {
+      const defaults = DynamicPricingService.getDefaultPricingRules();
+      const dur = defaults.filter(r => r.type === PricingRuleType.DURATION);
+      const w = dur.find(r => r.conditions.min_duration_days === 7)!;
+      const m = dur.find(r => r.conditions.min_duration_days === 28)!;
+      expect(m.priority).toBeGreaterThan(w.priority);
+    });
+  });
+
   it('returns null demand data when location missing and bounded values when present', () => {
     expect(DynamicPricingService.getSimulatedDemandData(undefined, 25.9)).toBeNull();
 

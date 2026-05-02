@@ -273,6 +273,43 @@ export const PricingRuleConditionFields: React.FC<PricingRuleConditionFieldsProp
         </div>
       );
 
+    case PricingRuleType.DURATION:
+      return (
+        <div className="space-y-3 p-3 bg-muted/50 rounded-md">
+          <Label className="text-sm font-medium">Rental Duration</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs">Minimum Days</Label>
+              <Input
+                type="number"
+                min="1"
+                value={conditions.min_duration_days ?? ''}
+                onChange={(e) =>
+                  onConditionsChange({ ...conditions, min_duration_days: parseInt(e.target.value) || undefined })
+                }
+                placeholder="e.g. 7"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Maximum Days (Optional)</Label>
+              <Input
+                type="number"
+                min="1"
+                value={conditions.max_duration_days ?? ''}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  onConditionsChange({ ...conditions, max_duration_days: isNaN(val) ? undefined : val });
+                }}
+                placeholder="Leave blank for no upper limit"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Discount applies when total rental days fall within this range. Only the highest-eligible duration discount is applied.
+          </p>
+        </div>
+      );
+
     default:
       return null;
   }
