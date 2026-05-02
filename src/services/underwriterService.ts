@@ -39,17 +39,6 @@ export class UnderwriterService {
       const riskFactors: string[] = [];
       let baseScore = 20; // Start with low base risk
 
-      // --- Age Factor (Simulated) ---
-      // In a real app, we'd have date_of_birth. Here we simulate or check metadata.
-      // Assuming 'driver_age' might be in user_metadata or we treat unknown as 25+.
-      // For this MVP, we'll verify if they are a 'verified' driver.
-
-      const isVerified = (profile as any).is_verified || false;
-      if (!isVerified) {
-        baseScore += 30;
-        riskFactors.push('Unverified Driver Profile');
-      }
-
       // --- Car Value Factor ---
       // Luxury cars (e.g. > P1000/day implied value) carry higher risk
       const carPrice = car.price_per_day || 0;

@@ -43,6 +43,7 @@ import { ContextualHelp } from "@/components/guides/ContextualHelp";
 import { PlanBookingStep } from "./PlanBookingStep";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DestinationType } from "@/types/booking";
+import { getCarImagePublicUrl } from "@/utils/carImageUtils";
 
 interface BookingDialogProps {
   car: Car;
