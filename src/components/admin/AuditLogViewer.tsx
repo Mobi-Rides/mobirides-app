@@ -108,17 +108,19 @@ export const AuditLogViewer = () => {
       const userIds = new Set<string>();
       logs.forEach(log => {
         if (log.admin_id) userIds.add(log.admin_id);
-        if (log.resource_id) userIds.add(log.resource_id);
+        // Only add resource_id to profile lookup when it refers to a user, not a vehicle
+        if (log.resource_id && log.resource_type !== 'vehicle') userIds.add(log.resource_id);
+        // For vehicle transfers, the meaningful target is the new owner
+        const details = log.details as Record<string, unknown> | null;
+        if (log.resource_type === 'vehicle' && details?.to_owner_id) {
+          userIds.add(details.to_owner_id as string);
+        }
       });
-
-      console.log("User IDs to fetch:", Array.from(userIds));
 
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, full_name")
         .in("id", Array.from(userIds));
-
-      console.log("Profiles query result:", { profiles, profilesError });
 
       if (profilesError) {
         console.warn("Failed to fetch profiles:", profilesError);
@@ -126,31 +128,37 @@ export const AuditLogViewer = () => {
 
       const profileMap = new Map();
       if (profiles) {
-        profiles.forEach(profile => {
-          profileMap.set(profile.id, profile);
-        });
+        profiles.forEach(profile => profileMap.set(profile.id, profile));
       }
 
-      const enrichedLogs = logs.map(log => ({
-        id: log.id,
-        event_type: log.action,
-        severity: 'medium' as const,
-        actor_id: log.admin_id,
-        target_id: log.resource_id,
-        session_id: null,
-        ip_address: log.ip_address as string | null,
-        user_agent: log.user_agent as string | null,
-        location_data: null,
-        action_details: (log.details || {}) as { [key: string]: unknown },
-        event_timestamp: log.created_at,
-        resource_type: log.resource_type,
-        resource_id: log.resource_id,
-        reason: null,
-        anomaly_flags: {},
-        compliance_tags: null,
-        actor_profile: log.admin_id ? profileMap.get(log.admin_id) : null,
-        target_profile: log.resource_id ? profileMap.get(log.resource_id) : null,
-      }));
+      const enrichedLogs = logs.map(log => {
+        const details = (log.details || {}) as Record<string, unknown>;
+        const isVehicleEvent = log.resource_type === 'vehicle';
+        const targetProfileId = isVehicleEvent
+          ? (details.to_owner_id as string | undefined)
+          : log.resource_id;
+
+        return {
+          id: log.id,
+          event_type: log.action,
+          severity: 'medium' as const,
+          actor_id: log.admin_id,
+          target_id: log.resource_id,
+          session_id: null,
+          ip_address: log.ip_address as string | null,
+          user_agent: log.user_agent as string | null,
+          location_data: null,
+          action_details: details,
+          event_timestamp: log.created_at,
+          resource_type: log.resource_type,
+          resource_id: log.resource_id,
+          reason: null,
+          anomaly_flags: {},
+          compliance_tags: null,
+          actor_profile: log.admin_id ? profileMap.get(log.admin_id) : null,
+          target_profile: targetProfileId ? profileMap.get(targetProfileId) : null,
+        };
+      });
 
       return enrichedLogs;
     },

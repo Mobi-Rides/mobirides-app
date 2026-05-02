@@ -56,7 +56,6 @@ export const VehicleTransferDialog: React.FC<VehicleTransferDialogProps> = ({
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [transferReason, setTransferReason] = useState("");
   const [validationResult, setValidationResult] = useState<TransferValidation | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -111,39 +110,30 @@ export const VehicleTransferDialog: React.FC<VehicleTransferDialogProps> = ({
     enabled: searchTerm.length >= 2,
   });
 
-  // Validate transfer
-  const validateTransfer = async (toUserId: string) => {
-    if (!vehicleId || !fromOwnerId) return;
+  // Validate transfer client-side (validate_vehicle_transfer RPC was dropped in migration 20260319212624)
+  const validateTransfer = (toUser: UserProfile) => {
+    if (!vehicle || !fromOwnerId) return;
 
-    setIsValidating(true);
-    try {
-      const { data, error } = await supabase.rpc('validate_vehicle_transfer', {
-        p_vehicle_id: vehicleId,
-        p_from_owner_id: fromOwnerId,
-        p_to_owner_id: toUserId
-      });
+    const errors: string[] = [];
+    const warnings: string[] = [];
 
-      if (error) throw error;
+    if (vehicle.owner_id !== fromOwnerId) {
+      errors.push("Vehicle owner mismatch.");
+    }
+    if (fromOwnerId === toUser.id) {
+      errors.push("Source and destination owners must differ.");
+    }
+    if (toUser.role !== "host") {
+      warnings.push("Target user is not currently a host.");
+    }
 
-      // Handle the composite type return value correctly
-      // Supabase JS might return it as an object
-      const result = data as any;
-      setValidationResult({
-        valid: result.valid,
-        warnings: result.warnings || [],
-        errors: result.errors || []
-      });
+    const result: TransferValidation = { valid: errors.length === 0, errors, warnings };
+    setValidationResult(result);
 
-      if (result.valid && (!result.errors || result.errors.length === 0)) {
-        toast.success("Transfer validated successfully");
-      } else if (result.errors && result.errors.length > 0) {
-        toast.error("Transfer validation failed");
-      }
-    } catch (error) {
-      console.error("Validation error:", error);
-      toast.error("Failed to validate transfer");
-    } finally {
-      setIsValidating(false);
+    if (result.valid) {
+      toast.success("Transfer validated successfully");
+    } else {
+      toast.error("Transfer validation failed");
     }
   };
 
@@ -185,10 +175,10 @@ export const VehicleTransferDialog: React.FC<VehicleTransferDialogProps> = ({
     setValidationResult(null);
   };
 
-  const handleUserSelect = async (user: UserProfile) => {
+  const handleUserSelect = (user: UserProfile) => {
     setSelectedUser(user);
     setSearchTerm(user.full_name || user.phone_number || "");
-    await validateTransfer(user.id);
+    validateTransfer(user);
   };
 
   const handleTransfer = () => {
@@ -209,6 +199,13 @@ export const VehicleTransferDialog: React.FC<VehicleTransferDialogProps> = ({
       resetForm();
     }
   }, [isOpen]);
+
+  // Re-run validation once vehicle data arrives if user already picked a target
+  useEffect(() => {
+    if (vehicle && selectedUser) {
+      validateTransfer(selectedUser);
+    }
+  }, [vehicle]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -390,8 +387,7 @@ export const VehicleTransferDialog: React.FC<VehicleTransferDialogProps> = ({
               !transferReason.trim() ||
               !validationResult?.valid ||
               validationResult?.errors.length > 0 ||
-              transferMutation.isPending ||
-              isValidating
+              transferMutation.isPending
             }
             className="w-full sm:w-auto"
           >
