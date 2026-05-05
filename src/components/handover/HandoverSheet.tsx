@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Check, Car, X } from "lucide-react";
-import { useHandover } from "@/contexts/HandoverContext";
+import { useHandover } from "@/hooks/useHandover";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/utils/toast-utils";
 import { BookingWithRelations } from "@/types/booking";

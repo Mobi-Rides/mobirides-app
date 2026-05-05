@@ -7,7 +7,7 @@ import { toast } from "@/utils/toast-utils";
 import { BarLoader } from "react-spinners";
 import { useTheme } from "@/contexts/ThemeContext";
 import { fetchHostById, fetchOnlineHosts } from "@/services/hostService";
-import { HandoverProvider } from "@/contexts/HandoverContext";
+import { HandoverProvider } from "@/contexts/HandoverProvider";
 import { EnhancedHandoverSheet } from "@/components/handover/EnhancedHandoverSheet";
 import { HandoverBookingButtons } from "@/components/map/HandoverBookingButtons";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
