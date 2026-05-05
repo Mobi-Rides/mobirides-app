@@ -1,4 +1,4 @@
-import { supabase } from '../../src/integrations/supabase/client.js';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,17 +12,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Call our custom Resend service to send the branded email
+    // Backend environment variables on Vercel
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
     
-    if (!supabaseServiceRole || !supabaseUrl) {
-      console.error('Missing Supabase configuration');
+    if (!supabaseUrl || !supabaseServiceRole) {
+      console.error('Missing Supabase configuration (URL or Service Role Key)');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
+    // Initialize backend client
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
     // Create a generic reset URL - Supabase will handle the actual token via email
-    const resetUrl = `${process.env.VITE_APP_URL || 'http://localhost:5173'}/reset-password`;
+    // Unify frontend URL variables
+    const frontendUrl = process.env.VITE_FRONTEND_URL || process.env.VITE_APP_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password`;
+    const supportEmail = process.env.VITE_SUPPORT_EMAIL || 'support@mobirides.com';
 
     // Call our Resend service function to send branded email
     const resendResponse = await fetch(`${supabaseUrl}/functions/v1/resend-service`, {
@@ -37,8 +44,8 @@ export default async function handler(req, res) {
         data: {
           reset_url: resetUrl,
           confirmation_url: resetUrl,
-          support_email: process.env.VITE_SUPPORT_EMAIL || 'support@mobirides.com',
-          app_url: process.env.VITE_APP_URL || 'https://mobirides.com'
+          support_email: supportEmail,
+          app_url: frontendUrl
         }
       })
     });
