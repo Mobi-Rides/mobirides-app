@@ -164,9 +164,9 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-029** | Tapologo | P1 | 3 | 🔴 To Do | G5: Replace `InsuranceComparison.tsx` stub with full modal. |
-| **S13-030** | Tapologo | P1 | 3 | 🔴 To Do | G6: Replace `PolicyDetailsCard.tsx` stub with full details card. |
-| **S13-031** | Modisa | P2 | 2 | 🔴 To Do | G8: Deploy 4 Resend templates for Insurance claims. |
+| **S13-029** | Tapologo | P1 | 3 | ✅ DONE | G5: Replace `InsuranceComparison.tsx` stub with full modal. |
+| **S13-030** | Tapologo | P1 | 3 | ✅ DONE | G6: Replace `PolicyDetailsCard.tsx` stub with full details card. |
+| **S13-031** | Modisa | P2 | 2 | ✅ DONE | G8: Deploy 4 Resend templates for Insurance claims. |
 
 ---
 
@@ -175,7 +175,7 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-032** | Arnold | P0 | 5 | 🔴 To Do | SAR-001: Implement `suspend`, `ban`, and `transfer` RPCs (if not fully closed by BUG-011). |
+| **S13-032** | Arnold | P0 | 5 | ✅ DONE | SAR-001: Implement `suspend`, `ban`, and `transfer` RPCs (if not fully closed by BUG-011). |
 | **S13-033** | Arnold | P1 | 8 | 🔴 To Do | SAR-002: Session Anomaly Detection & Lockdown Engine. |
 | **S13-034** | Modisa | P1 | 5 | 🔴 To Do | SAR-003: System Health Monitoring & Auto-Cleanup tools. |
 | **S13-035** | Arnold | P2 | 8 | 🔴 To Do | SAR-004: Document OCR & Automated Content Moderation. |
@@ -198,7 +198,7 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 2 of 35 |
+| **Tasks Completed** | 21 of 35 |
 | **Current Blockers** | Missing `google-services.json` (MOB-13) |
 
 ---
