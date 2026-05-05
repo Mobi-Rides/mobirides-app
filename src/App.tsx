@@ -15,7 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
 import { LocationSearchProvider } from "@/contexts/LocationSearchContext";
 import { VerificationProvider } from "@/contexts/VerificationContext";
-import { HandoverProvider } from "@/contexts/HandoverContext";
+import { HandoverProvider } from "@/contexts/HandoverProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
