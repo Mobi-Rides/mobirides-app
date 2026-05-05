@@ -20,7 +20,8 @@ export enum PricingRuleType {
   WEEKEND = "weekend",
   HOLIDAY = "holiday",
   LOCATION = "location",
-  DESTINATION = "destination"
+  DESTINATION = "destination",
+  DURATION = "duration"
 }
 
 export interface PricingConditions {
@@ -50,6 +51,10 @@ export interface PricingConditions {
 
   // Destination conditions
   destination_type?: 'local' | 'out_of_zone' | 'cross_border';
+
+  // Duration conditions
+  min_duration_days?: number;
+  max_duration_days?: number;
 }
 
 export enum Season {

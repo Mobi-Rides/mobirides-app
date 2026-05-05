@@ -51,7 +51,10 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
       setCalculations(premiums);
       setError(null);
     } catch (err) {
-      setError('Failed to load insurance options. Please try again.');
+      const isNotAvailable = err instanceof Error && err.message.startsWith('INSURANCE_NOT_AVAILABLE:');
+      setError(isNotAvailable
+        ? 'Insurance is not available for this booking due to your risk profile. Please contact support.'
+        : 'Failed to load insurance options. Please try again.');
       console.error('Insurance loading error:', err);
     } finally {
       setLoading(false);

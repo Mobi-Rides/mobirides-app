@@ -81,7 +81,20 @@ serve(async (req: Request) => {
 
     // 5. Mock Provider Integration
     // In production, this would call PayGate/Ooze API
-    // For now, return success immediately for testing or a mock URL
+    // For dev/mock, we simulate the webhook callback before returning
+    const webhookUrl = `${supabaseUrl}/functions/v1/payment-webhook`
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({
+        transaction_id: transaction.id,
+        status: 'success',
+        provider_ref: transaction.provider_reference
+      })
+    }).catch(err => console.error("Mock webhook simulation failed", err))
 
     return new Response(
       JSON.stringify({

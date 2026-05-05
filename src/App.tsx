@@ -59,7 +59,6 @@ const AddCar = lazy(() => import("@/pages/AddCar"));
 const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
-const BookingDetails = lazy(() => import("@/components/BookingDetails"));
 const NotificationDetails = lazy(() => import("@/components/NotificationDetails"));
 const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const HelpSection = lazy(() => import("@/pages/HelpSection"));
@@ -86,8 +85,7 @@ const CreateCar = lazy(() => import("@/pages/CreateCar"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CarListing = lazy(() => import("@/pages/CarListing"));
 const PromoCodeHistory = lazy(() => import("@/pages/PromoCodeHistory"));
-
-
+const PaymentReturnPage = lazy(() => import("@/pages/PaymentReturnPage"));
 
 // Settings pages
 const ProfileSettingsPage = lazy(() => import("@/pages/ProfileSettingsPage"));
@@ -296,6 +294,13 @@ function App() {
                             </ProtectedRoute>
                           </Suspense>
                         } />
+                        <Route path="/payment/return" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <PaymentReturnPage />
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
                         <Route path="/settings/profile" element={
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
@@ -353,13 +358,6 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <RoleAwareBookingsRedirect />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/bookings/:id" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <BookingDetails />
                             </ProtectedRoute>
                           </Suspense>
                         } />

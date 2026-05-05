@@ -1,2 +1,0 @@
--- Placeholder for remote migration 20260305172025
--- This file was created to satisfy Supabase CLI migration history checks.
