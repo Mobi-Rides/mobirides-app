@@ -12,7 +12,6 @@
 export const ROUTE_PARENTS: Record<string, string | string[]> = {
     // Detail pages - High Priority
     "/cars/:carId": ["/", "/map"], // Can come from home or map
-    "/bookings/:id": "/bookings",
     "/booking-requests/:id": "/host-bookings",
     "/rental-details/:id": "/bookings",
     "/rental-review/:bookingId": "/bookings",
@@ -92,7 +91,7 @@ export const ROOT_ROUTES = [
  *
  * @example
  * ```typescript
- * getParentRoute('/bookings/123'); // Returns '/bookings'
+ * getParentRoute('/rental-details/123'); // Returns '/bookings'
  * getParentRoute('/cars/abc'); // Returns ['/', '/map']
  * getParentRoute('/unknown'); // Returns null
  * ```
@@ -132,7 +131,7 @@ export function getParentRoute(
  * ```typescript
  * isRootRoute('/'); // Returns true
  * isRootRoute('/bookings'); // Returns true
- * isRootRoute('/bookings/123'); // Returns false
+ * isRootRoute('/rental-details/123'); // Returns false
  * ```
  */
 export function isRootRoute(pathname: string): boolean {
@@ -168,7 +167,7 @@ export function isDetailPage(pathname: string): boolean {
  *
  * @example
  * ```typescript
- * getBackDestination('/bookings/123'); // Returns '/bookings'
+ * getBackDestination('/rental-details/123'); // Returns '/bookings'
  * getBackDestination('/unknown'); // Returns 'back'
  * ```
  */

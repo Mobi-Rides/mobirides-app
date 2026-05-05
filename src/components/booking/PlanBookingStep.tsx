@@ -61,9 +61,11 @@ export const PlanBookingStep = ({
   useEffect(() => {
     if (startDate && endDate) {
       const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      if (durationUnit === "days") setDurationValue(days);
-      else if (durationUnit === "weeks") setDurationValue(Math.max(1, Math.floor(days / 7)));
-      else if (durationUnit === "months") setDurationValue(Math.max(1, Math.floor(days / 30)));
+      setTimeout(() => {
+        if (durationUnit === "days") setDurationValue(days);
+        else if (durationUnit === "weeks") setDurationValue(Math.max(1, Math.floor(days / 7)));
+        else if (durationUnit === "months") setDurationValue(Math.max(1, Math.floor(days / 30)));
+      }, 0);
     }
   }, [startDate, endDate, durationUnit]);
 

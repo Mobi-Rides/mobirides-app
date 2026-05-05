@@ -15,6 +15,25 @@ import { HandoverErrorBoundary } from "@/components/handover/HandoverErrorBounda
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { RouteStepsPanel } from "@/components/navigation/RouteStepsPanel";
+import { Host } from "@/services/hostService";
+import { NavigationStep } from "@/services/navigationService";
+
+interface MapMarker extends Partial<Host> {
+  id: string;
+  isFleetCar?: boolean;
+  price?: number;
+  isActiveHandover?: boolean;
+}
+
+interface FleetMarker {
+  id: string;
+  full_name: string;
+  latitude: number;
+  longitude: number;
+  avatar_url: string | null;
+  isFleetCar: boolean;
+  price: number;
+}
 
 const Map = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -24,26 +43,25 @@ const Map = () => {
 
   const [mapToken, setMapToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const [onlineHosts, setOnlineHosts] = useState([]);
+  const [onlineHosts, setOnlineHosts] = useState<MapMarker[]>([]);
   const [isHandoverSheetOpen, setIsHandoverSheetOpen] = useState(false);
   const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [routeSteps, setRouteSteps] = useState<any[]>([]);
+  const [routeSteps, setRouteSteps] = useState<NavigationStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   const { theme } = useTheme();
 
   const [isHandoverMode, setIsHandoverMode] = useState(false);
   const [isValidatingHandover, setIsValidatingHandover] = useState(false);
-  const [hostId] = useState<string | null>(null);
 
-  const handleRouteFound = (steps: any[]) => {
+  const handleRouteFound = useCallback((steps: NavigationStep[]) => {
     console.log("Route steps received:", steps);
     setRouteSteps(steps);
     setCurrentStepIndex(0);
-  };
+  }, []);
 
   // Validate booking for handover mode
-  const validateBooking = async (bookingId: string) => {
+  const validateBooking = useCallback(async (bookingId: string) => {
     try {
       const { data: booking, error } = await supabase
         .from('bookings')
@@ -146,7 +164,7 @@ const Map = () => {
       console.error('Error validating booking:', error);
       return false;
     }
-  };
+  }, [user]);
 
   // Handle handover mode detection and validation
   useEffect(() => {
@@ -191,14 +209,14 @@ const Map = () => {
     };
 
     handleHandoverMode();
-  }, [mode, bookingId, user]);
+  }, [mode, bookingId, user, setSearchParams, validateBooking]);
 
   useEffect(() => {
     // Open handover sheet automatically in handover mode, but only once
     if (isHandoverMode && !isHandoverSheetOpen) {
       setIsHandoverSheetOpen(true);
     }
-  }, [isHandoverMode]);
+  }, [isHandoverMode, isHandoverSheetOpen]);
 
   useEffect(() => {
     //subscribe to the map token
@@ -223,7 +241,7 @@ const Map = () => {
   }, []);
 
   // Fetch active handover host location from Supabase
-  const fetchActiveHandoverHost = async () => {
+  const fetchActiveHandoverHost = useCallback(async () => {
     if (!user) return null;
 
     try {
@@ -268,10 +286,10 @@ const Map = () => {
       console.error("Error fetching active handover host:", error);
     }
     return null;
-  };
+  }, [user]);
 
   // get host locations
-  const fetchHostLocations = async () => {
+  const fetchHostLocations = useCallback(async () => {
     console.log("Fetching host locations...");
 
     try {
@@ -301,20 +319,19 @@ const Map = () => {
         toast.info("No hosts are currently online");
       }
 
-      console.log("All host locations to display:", allHosts);
       setOnlineHosts(allHosts);
     } catch (error) {
       console.error("Error fetching host locations:", error);
       toast.error("Failed to fetch host locations");
     }
-  };
+  }, [fetchActiveHandoverHost]);
 
   useEffect(() => {
     if (!isHandoverMode) {
       fetchHostLocations();
       console.log("Location", destination);
     }
-  }, [isHandoverMode]);
+  }, [isHandoverMode, destination, fetchHostLocations]);
 
   // Map style based on theme
   const getMapStyle = () => {
@@ -323,6 +340,46 @@ const Map = () => {
     }
     return "mapbox://styles/mapbox/streets-v12";
   };
+
+  const [fleetCars, setFleetCars] = useState<FleetMarker[]>([]);
+  const isFleetMode = mode === "fleet";
+
+  // Fetch host's own fleet for Fleet View
+  const fetchFleetCars = useCallback(async () => {
+    if (!user) return;
+    console.log("Fetching fleet cars for host:", user.id);
+    try {
+      const { data, error } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('owner_id', user.id);
+
+      if (error) throw error;
+      
+      // Transform cars to host-like objects for map markers if needed,
+      // or just pass as cars. CustomMapbox needs onlineHosts format or similar.
+      const fleetMarkers = data.map(car => ({
+        id: car.id,
+        full_name: `${car.brand} ${car.model}`,
+        latitude: car.latitude,
+        longitude: car.longitude,
+        avatar_url: car.image_url,
+        isFleetCar: true,
+        price: car.price_per_day
+      }));
+
+      setFleetCars(fleetMarkers);
+    } catch (error) {
+      console.error("Error fetching fleet cars:", error);
+      toast.error("Failed to load your fleet");
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isFleetMode) {
+      fetchFleetCars();
+    }
+  }, [isFleetMode, fetchFleetCars]);
 
   const renderContent = () => {
     if (isLoading || isValidatingHandover) {
@@ -349,12 +406,22 @@ const Map = () => {
       );
     }
 
+    // Determine what markers to show
+    let markersToShow = [];
+    if (isHandoverMode) {
+      markersToShow = [];
+    } else if (isFleetMode) {
+      markersToShow = fleetCars;
+    } else {
+      markersToShow = onlineHosts;
+    }
+
     return (
       <CustomMapbox
         mapbox_token={mapToken}
         longitude={25.90859}
         latitude={-24.65451}
-        onlineHosts={isHandoverMode ? [] : onlineHosts}
+        onlineHosts={markersToShow}
         mapStyle={getMapStyle()}
         isHandoverMode={isHandoverMode}
         bookingId={bookingId}

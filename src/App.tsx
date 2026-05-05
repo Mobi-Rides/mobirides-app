@@ -59,7 +59,6 @@ const AddCar = lazy(() => import("@/pages/AddCar"));
 const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
-const BookingDetails = lazy(() => import("@/components/BookingDetails"));
 const NotificationDetails = lazy(() => import("@/components/NotificationDetails"));
 const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const HelpSection = lazy(() => import("@/pages/HelpSection"));
@@ -359,13 +358,6 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <RoleAwareBookingsRedirect />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/bookings/:id" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <BookingDetails />
                             </ProtectedRoute>
                           </Suspense>
                         } />

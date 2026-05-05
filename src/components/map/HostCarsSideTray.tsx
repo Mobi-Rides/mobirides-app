@@ -1,14 +1,22 @@
 import { useState, useEffect } from "react";
-import { X, Car, Star, MapPin, User, Eye } from "lucide-react";
+import { Car, Star, MapPin, User, Eye, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { getAvatarPublicUrl } from "@/utils/avatarUtils";
 import { useNavigate } from "react-router-dom";
 import { Host } from "@/services/hostService";
+import { motion } from "framer-motion";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Car {
   id: string;
@@ -45,184 +53,140 @@ export const HostCarsSideTray = ({ isOpen, onClose, host }: HostCarsSideTrayProp
 
   const fetchHostCars = async (hostId: string) => {
     setLoading(true);
-
     try {
-      // Fetch available cars directly from cars table
       const { data, error } = await supabase
         .from("cars")
         .select("*")
         .eq("owner_id", hostId)
         .eq("is_available", true);
 
-      if (error) {
-        console.error("Error fetching host cars:", error);
-        return;
-      }
-
+      if (error) throw error;
       setCars(data || []);
     } catch (error) {
-      console.error("Error in fetchHostCars:", error);
+      console.error("Error fetching host cars:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const getCarImageUrl = (imageUrl: string | null) => {
-    if (!imageUrl) {
-      console.warn("No image URL provided, using placeholder");
-      return "/placeholder.svg";
-    }
-
-    try {
-      // Check if imageUrl is already a full URL
-      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        return imageUrl;
-      }
-
-      // If it's just a storage path, generate the public URL
-      const publicUrl = supabase.storage
-        .from("car-images")
-        .getPublicUrl(imageUrl).data.publicUrl;
-
-      return publicUrl;
-    } catch (error) {
-      console.error("Error processing image URL:", error, "Original URL:", imageUrl);
-      return "/placeholder.svg";
-    }
-  };
-
-  const getHostAvatarUrl = () => {
-    const url = getAvatarPublicUrl(host?.avatar_url);
-    return url || "/placeholder.svg";
+    if (!imageUrl) return "/placeholder.svg";
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return supabase.storage.from("car-images").getPublicUrl(imageUrl).data.publicUrl;
   };
 
   const handleCarClick = (carId: string) => {
-    navigate(`/cars/${carId}`);  // ✅ Correct: /cars/ (plural)
+    navigate(`/cars/${carId}`);
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40"
-        onClick={onClose}
-      />
-
-      {/* Side Tray */}
-      <div className="fixed left-0 top-0 h-full w-80 bg-background border-r shadow-xl z-50 transform transition-transform duration-300">
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-4 border-b">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">Host's Cars</h2>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="w-4 h-4" />
-              </Button>
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="max-h-[85vh]">
+        <div className="mx-auto w-full max-w-md overflow-hidden flex flex-col h-full">
+          <DrawerHeader className="border-b bg-muted/30">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <img
+                  src={getAvatarPublicUrl(host?.avatar_url) || "/placeholder.svg"}
+                  alt={host?.full_name || "Host"}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
+              </div>
+              <div className="flex-1">
+                <DrawerTitle className="text-xl font-bold tracking-tight">
+                  {host?.full_name || "Host"}'s Fleet
+                </DrawerTitle>
+                <DrawerDescription className="flex items-center gap-1.5 mt-0.5">
+                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                  <span className="font-semibold text-slate-900">4.8</span>
+                  <span className="text-slate-500">• 32 reviews</span>
+                </DrawerDescription>
+              </div>
             </div>
+          </DrawerHeader>
 
-            {/* Host Info */}
-            {host && (
-              <div className="flex items-center gap-3">
-                {host.avatar_url ? (
-                  <img
-                    src={getHostAvatarUrl()}
-                    alt={host.full_name || "Host"}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                    <User className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
-                <div>
-                  <p className="font-medium text-sm">{host.full_name || "Host"}</p>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs text-muted-foreground">4.8 (32 reviews)</span>
-                  </div>
-                </div>
+          <ScrollArea className="flex-1 p-4">
+            {loading ? (
+              <div className="space-y-4 py-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-muted animate-pulse rounded-xl" />
+                ))}
+              </div>
+            ) : cars.length === 0 ? (
+              <div className="text-center py-12">
+                <Car className="w-16 h-16 text-muted/30 mx-auto mb-4" />
+                <p className="text-slate-500 font-medium">No available cars found</p>
+              </div>
+            ) : (
+              <div className="space-y-4 pb-8">
+                {cars.map((car) => (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    key={car.id}
+                  >
+                    <Card
+                      className="group cursor-pointer overflow-hidden hover:ring-2 hover:ring-primary/20 transition-all active:scale-[0.98]"
+                      onClick={() => handleCarClick(car.id)}
+                    >
+                      <CardContent className="p-0 flex">
+                        <div className="w-32 h-32 flex-shrink-0 bg-muted overflow-hidden">
+                          <img
+                            src={getCarImageUrl(car.image_url)}
+                            alt={car.brand}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="flex-1 p-3 flex flex-col justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-start justify-between">
+                              <h3 className="font-bold text-sm leading-none">
+                                {car.brand} {car.model}
+                              </h3>
+                              <ChevronRight className="w-4 h-4 text-muted/50" />
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                              <Badge variant="outline" className="px-1.5 py-0 rounded text-[9px] uppercase tracking-wider">
+                                {car.transmission}
+                              </Badge>
+                              <span>•</span>
+                              <span>{car.seats} Seats</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-end justify-between">
+                            <div className="space-y-0.5">
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                <span className="truncate max-w-[120px]">{car.location}</span>
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center gap-0.5">
+                                <span className="text-[10px] font-medium text-slate-500">P</span>
+                                <span className="text-base font-black text-slate-900">{car.price_per_day}</span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground font-bold -mt-1">/DAY</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
               </div>
             )}
-          </div>
-
-          {/* Cars List */}
-          <ScrollArea className="flex-1">
-            <div className="p-4 space-y-4">
-              {loading ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Loading cars...</p>
-                </div>
-              ) : cars.length === 0 ? (
-                <div className="text-center py-8">
-                  <Car className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">No available cars</p>
-                </div>
-              ) : (
-                cars.map((car) => (
-                  <Card
-                    key={car.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleCarClick(car.id)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="aspect-video w-full mb-3 rounded-lg overflow-hidden bg-muted">
-                        <img
-                          src={getCarImageUrl(car.image_url)}
-                          alt={`${car.brand} ${car.model}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold text-sm">
-                              {car.brand} {car.model}
-                            </h3>
-                            <p className="text-xs text-muted-foreground">{car.year}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-sm">P{car.price_per_day}</p>
-                            <p className="text-xs text-muted-foreground">per day</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <MapPin className="w-3 h-3" />
-                          <span className="truncate">{car.location}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-xs">
-                          <Badge variant="secondary" className="text-xs px-2 py-1">
-                            {car.vehicle_type}
-                          </Badge>
-                          <span className="text-muted-foreground">{car.seats} seats</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{car.transmission}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs text-muted-foreground">4.5 (12)</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">{car.view_count || 0} views</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
           </ScrollArea>
+          
+          <DrawerFooter className="border-t bg-muted/10">
+            <Button variant="outline" onClick={onClose} className="w-full rounded-xl h-12 font-bold">
+              Dismiss
+            </Button>
+          </DrawerFooter>
         </div>
-      </div>
-    </>
+      </DrawerContent>
+    </Drawer>
   );
 };
