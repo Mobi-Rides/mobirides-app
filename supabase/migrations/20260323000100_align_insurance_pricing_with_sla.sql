@@ -11,7 +11,7 @@ ALTER TABLE public.insurance_packages
 UPDATE public.insurance_packages SET
   daily_premium_amount = 0,
   excess_percentage = 0
-WHERE name = 'none';
+WHERE name = 'no_coverage';
 
 UPDATE public.insurance_packages SET
   daily_premium_amount = 80.00,
