@@ -346,6 +346,18 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
+### BUG-023: Navigation Service TypeScript 'any' Lint Errors
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-05 |
+| **Severity** | Low (Lint/Type Safety) |
+| **Status** | ✅ Resolved |
+| **Affects** | `navigationService.ts` |
+| **Resolution** | Removed unexpected `any` types by implementing `NavigationState` and `MapboxStep` interfaces and applying correct explicit types to ensure strict typing. |
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -392,6 +404,7 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-017** | 2026-04-28 | Admin Security Privilege Escalation Risk — Migrated to `user_roles`. |
 | **BUG-018** | 2026-04-28 | Admin Promo Codes Schema Mismatch — Fixed `created_by` mapping. |
 | **BUG-022** | 2026-05-05 | Bulk Delete Admin Access Failure — Fixed edge function to use `profiles.role` and `is_admin` RPC. |
+| **BUG-023** | 2026-05-05 | Navigation Service TypeScript 'any' Lint Errors — Replaced `any` with strict typing. |
 
 ---
 
