@@ -90,10 +90,10 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-010** | Tapologo | P1 | 5 | 🔴 To Do | Extract existing wizard stages 1 & 2 into `PlanBookingStep.tsx`. |
-| **S13-011** | Tapologo | P1 | 5 | 🔴 To Do | Implement Duration Slider with unit toggle. |
-| **S13-012** | Tapologo | P2 | 3 | 🔴 To Do | Migrate Trip Type & Collection Location to `<Select>` dropdowns. |
-| **S13-013** | Tapologo | P1 | 3 | 🔴 To Do | Implement 500ms debounce on derived `endDate`. |
+| **S13-010** | Tapologo | P1 | 5 | ✅ DONE | Extract existing wizard stages 1 & 2 into `PlanBookingStep.tsx`. |
+| **S13-011** | Tapologo | P1 | 5 | ✅ DONE | Implement Duration Slider with unit toggle. |
+| **S13-012** | Tapologo | P2 | 3 | ✅ DONE | Migrate Trip Type & Collection Location to `<Select>` dropdowns. |
+| **S13-013** | Tapologo | P1 | 3 | ✅ DONE | Implement 500ms debounce on derived `endDate`. |
 
 ---
 
@@ -126,7 +126,7 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-022** | Tapologo | P1 | 5 | 🔴 To Do | Consolidate duplicate booking routes: Delete `BookingDetails.tsx`, remove `/bookings/:id`, point to `/rental-details/:id`, fix "approved" status error. |
+| **S13-022** | Tapologo | P1 | 5 | ✅ DONE | Consolidate duplicate booking routes: Delete `BookingDetails.tsx`, remove `/bookings/:id`, point to `/rental-details/:id`, fix "approved" status error. |
 
 ---
 
