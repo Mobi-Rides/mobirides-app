@@ -5,6 +5,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -21,7 +22,7 @@ import {
   hasCompletedPickupHandover
 } from "@/services/handoverService";
 
-interface HandoverContextType {
+export interface HandoverContextType {
   updateLocation(arg0: {
     latitude: number;
     longitude: number;
@@ -40,21 +41,10 @@ interface HandoverContextType {
   currentUserId: string | null;
 }
 
-const HandoverContext = createContext<HandoverContextType | undefined>(
+export const HandoverContext = createContext<HandoverContextType | undefined>(
   undefined
 );
 
-export const useHandover = () => {
-  const context = useContext(HandoverContext);
-  if (!context) {
-    throw new Error("useHandover must be used within a HandoverProvider");
-  }
-  return context;
-};
-
-export const useHandoverSafe = () => {
-  return useContext(HandoverContext) ?? null;
-};
 
 interface HandoverProviderProps {
   children: ReactNode;
@@ -118,7 +108,7 @@ const convertDatabaseHandoverToHandoverStatus = (
 };
 
 // Helper function to determine handover type based on booking dates
-const determineHandoverType = (bookingDetails: any): HandoverType => {
+const determineHandoverType = (bookingDetails: { start_date: string; end_date: string } | null): HandoverType => {
   if (!bookingDetails) return 'pickup';
   
   const now = new Date();
@@ -152,7 +142,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   const [isHandoverSessionLoading, setIsHandoverSessionLoading] = useState(false);
 
   // Fetch destination from bookings table
-  const fetchDestination = async () => {
+  const fetchDestination = useCallback(async () => {
     if (!bookingId) return;
     const { data, error } = await supabase
       .from("bookings")
@@ -172,11 +162,9 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     });
 
     setCarId(data.car_id);
+  }, [bookingId]);
 
-    return;
-  };
-
-  const fetchHostId = async () => {
+  const fetchHostId = useCallback(async () => {
     if (!carId) return;
     try {
       const { data, error } = await supabase
@@ -190,22 +178,20 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
       }
 
       setOwnerId(data.owner_id);
-
-      return;
     } catch (error) {
       console.error('Error fetching destination:', error);
     }
-  };
+  }, [carId]);
 
   useEffect(() => {
     if (!bookingId) return;
     fetchDestination();
-  }, [bookingId]);
+  }, [bookingId, fetchDestination]);
 
   useEffect(() => {
     if (!carId) return;
     fetchHostId();
-  }, [carId]);
+  }, [carId, fetchHostId]);
 
   // Get current user
   useEffect(() => {
@@ -271,7 +257,7 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
         console.log("Determined handover type:", handoverType);
         
         // Try to get existing session for this specific handover type
-        let handoverData: any = await getHandoverSession(bookingId, handoverType);
+        let handoverData: Record<string, unknown> | HandoverStatus | null = await getHandoverSession(bookingId, handoverType);
         let isNewSession = false;
         
         if (!handoverData) {
@@ -294,12 +280,13 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
             throw new Error("Cannot create handover session: missing renter information");
           }
         } else {
-          console.log(`Found existing ${handoverType} handover session:`, (handoverData as any).id, "completed:", (handoverData as any).handover_completed);
+          console.log(`Found existing ${handoverType} handover session:`, (handoverData as Record<string, unknown>).id, "completed:", (handoverData as Record<string, unknown>).handover_completed);
         }
         
         if (handoverData) {
-          console.log(`${handoverType} handover session ready:`, handoverData.id);
-          setHandoverId(handoverData.id);
+          const sid = (handoverData as HandoverStatus).id;
+          console.log(`${handoverType} handover session ready:`, sid);
+          setHandoverId(sid);
           
           // Handle type conversion based on data source
           let convertedHandoverStatus: HandoverStatus | null;

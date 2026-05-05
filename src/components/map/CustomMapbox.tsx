@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import Dpad from "./Dpad";
 import { OnlineStatusToggle } from "../profile/OnlineStatusToggle";
 import { ExtendedProfile } from "@/utils/profileTypes";
-import { useHandoverSafe } from "@/contexts/HandoverContext";
+import { useHandoverSafe } from "@/hooks/useHandover";
 import { HandoverLocation } from "@/services/handoverService";
 import { HostPopup } from "./HostPopup";
 import { HostCarsSideTray } from "./HostCarsSideTray";
@@ -19,6 +19,7 @@ import { useMapMarkers } from "@/hooks/useMapMarkers";
 import { useMapControls } from "@/hooks/useMapControls";
 import { useMapCenterPin } from "@/hooks/useMapCenterPin";
 import { MapCenterPin } from "./MapCenterPin";
+import { NavigationStep } from "@/services/navigationService";
 
 // Host interface for route calculations
 interface HostLocation {
@@ -41,7 +42,7 @@ interface CustomMapboxProps {
   zoom?: number;
   locationToggle?: boolean;
   destination?: { latitude: number; longitude: number } | null;
-  onRouteFound?: (steps: any[]) => void;
+  onRouteFound?: (steps: NavigationStep[]) => void;
 }
 
 const CustomMapbox = ({
@@ -101,7 +102,8 @@ const CustomMapbox = ({
 
   const { centerAddress, centerCoords } = useMapCenterPin({
     map: mapInstance,
-    enabled: true // Always show for now, can be toggled via props later
+    enabled: true, // Always show for now, can be toggled via props later
+    mapboxToken: mapbox_token
   });
 
   // MOB-18: Enable vehicle clustering
@@ -282,6 +284,7 @@ const CustomMapbox = ({
         map.current = null;
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapbox_token, longitude, latitude, mapStyle, isHandoverMode, handover, zoom, interactive, returnLocation]);
 
 
@@ -332,9 +335,9 @@ const CustomMapbox = ({
   };
 
   // Function to show route to a specific host
-  const showRouteToHost = (host: HostLocation) => {
+  const showRouteToHost = useCallback((host: HostLocation) => {
     if (!host.latitude || !host.longitude || !userLocation.latitude || !userLocation.longitude) return;
-    
+
     fetchRoute(
       [userLocation.longitude, userLocation.latitude],
       [host.longitude, host.latitude],
@@ -343,7 +346,7 @@ const CustomMapbox = ({
       host.isActiveHandover ? "#ef4444" : "#3b82f6",
       host.isActiveHandover ? 6 : 4
     );
-  };
+  }, [fetchRoute, userLocation.latitude, userLocation.longitude, onRouteFound]);
 
   // MOB-18: Auto-route logic for active handover
   useEffect(() => {
@@ -357,7 +360,8 @@ const CustomMapbox = ({
         showRouteToHost(activeHandoverHost);
       }, 1000);
     }
-  }, [onlineHosts, mapInit, userLocation]);
+  }, [onlineHosts, mapInit, userLocation, showRouteToHost]);
+
 
 
 
