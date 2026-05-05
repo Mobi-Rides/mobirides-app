@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, FileText, Info, Loader2 } from 'lucide-react';
+import { Shield, Info, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PolicyDetailsCard } from './PolicyDetailsCard';
 import type { InsurancePolicy } from '@/types/insurance-schema';
