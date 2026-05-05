@@ -114,7 +114,7 @@ export function NotificationCard({
       }
     } else if (classification.type === 'booking' && notification.related_booking_id) {
       // Booking notifications go to booking details
-      navigate(`/bookings/${notification.related_booking_id}`);
+      navigate(`/rental-details/${notification.related_booking_id}`);
     } else if (classification.type === 'payment' || NotificationClassifier.isPaymentNotification(notification)) {
       // Payment notifications go to wallet
       navigate('/wallet');
@@ -143,7 +143,7 @@ export function NotificationCard({
         break;
       case 'view_booking':
         if (notification.related_booking_id) {
-          navigate(`/bookings/${notification.related_booking_id}`);
+          navigate(`/rental-details/${notification.related_booking_id}`);
         }
         break;
       case 'view_wallet':

@@ -30,11 +30,11 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Standard aliases for browser-compatible versions of Node modules
       "util": "util",
       "stream": "stream-browserify",
       "buffer": "buffer",
       "process": "process/browser",
+      "inherits": path.resolve(__dirname, "node_modules/inherits/inherits_browser.js"),
     },
   },
   define: {
@@ -42,12 +42,7 @@ export default defineConfig(({ mode }) => ({
     'global': 'globalThis',
   },
   optimizeDeps: {
-    exclude: ['lucide-react'],
-    rolldownOptions: {
-      plugins: [
-        nodePolyfills()
-      ]
-    }
+    include: ['simple-peer'],
   },
   build: {
     target: 'esnext',

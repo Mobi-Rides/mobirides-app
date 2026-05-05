@@ -2,6 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types.js';
 
+// IMPORTANT: These fallbacks ensure the app works even if Vercel env vars
+// are not yet configured. Once VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+// are confirmed in Vercel Project Settings, these can be removed.
 const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL ??
   "https://putjowciegpzdheideaf.supabase.co";
@@ -10,12 +13,13 @@ const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ??
   "sb_publishable_gGmqR81ZdJV5HOwbeWgPAA_nSZsQER6";
 
-if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
   console.warn(
-    '[Supabase] VITE_SUPABASE_ANON_KEY is not set — falling back to hardcoded key. ' +
-    'Set this env var in your Vercel project settings and locally in .env'
+    '[Supabase] ⚠️ VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set — using hardcoded fallback. ' +
+    'Set these env vars in your Vercel project settings to avoid this warning.'
   );
 }
+
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CarGrid } from "@/components/CarGrid";
 import BrandFilter from "@/components/BrandFilter";
 import { Button } from "@/components/ui/button";
-import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
+import { ArrowUpAZ, ArrowDownAZ, MapPin } from "lucide-react";
 import { HandoverBanner } from "@/components/handover/HandoverBanner";
 import { useHandoverPrompts } from "@/hooks/useHandoverPrompts";
 import { useNavigate } from "react-router-dom";
@@ -161,10 +161,19 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
         </Button>
       </div>
       
-      <div className="text-left flex items-center ">
-        <h3 className="font-bold  break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold break-words line-clamp-2 text-sm md:text-base text-gray-500 dark:text-white">
           My Cars
         </h3>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2 rounded-full border-primary/20 hover:border-primary/50 text-primary"
+          onClick={() => navigate('/map?mode=fleet')}
+        >
+          <MapPin className="w-4 h-4" />
+          View Fleet on Map
+        </Button>
       </div>
       <CarGrid
         cars={hostCars}

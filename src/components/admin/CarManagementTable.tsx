@@ -19,7 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CarEditDialog } from "./CarEditDialog";
 import { CarPreviewDialog } from "./CarPreviewDialog";
-import { Search, Eye, Edit, CheckCircle, XCircle, Download } from "lucide-react";
+import { VehicleTransferDialog } from "./VehicleTransferDialog";
+import { Search, Eye, Edit, CheckCircle, XCircle, Download, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 import { exportToCSV, buildExportFilename } from "@/utils/exportToCSV";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -66,6 +67,7 @@ export const CarManagementTable = () => {
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [previewCar, setPreviewCar] = useState<Car | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [transferCar, setTransferCar] = useState<Car | null>(null);
 
   const { data: cars, isLoading, error, refetch } = useAdminCars();
 
@@ -252,6 +254,14 @@ export const CarManagementTable = () => {
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           )}
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setTransferCar(car)}
+                          title="Transfer vehicle to another host"
+                        >
+                          <ArrowLeftRight className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -271,6 +281,12 @@ export const CarManagementTable = () => {
         />
       )}
       <CarPreviewDialog car={previewCar} onClose={() => setPreviewCar(null)} />
+      <VehicleTransferDialog
+        isOpen={!!transferCar}
+        onClose={() => setTransferCar(null)}
+        vehicleId={transferCar?.id}
+        fromOwnerId={transferCar?.owner_id}
+      />
     </div>
   );
 };

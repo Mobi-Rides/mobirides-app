@@ -130,7 +130,7 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
                     Review
                   </Button>
                 )}
-                {(booking.status === "awaiting_payment" || booking.status === "approved") && (
+                {booking.status === "awaiting_payment" && (
                   <Button 
                     size="sm" 
                     onClick={(e) => {
