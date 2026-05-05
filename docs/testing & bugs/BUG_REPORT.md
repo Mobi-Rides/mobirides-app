@@ -1,6 +1,6 @@
 # MobiRides Bug Report
 
-**Last Updated:** April 28, 2026  
+**Last Updated:** May 5, 2026  
 **Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
@@ -334,6 +334,18 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
+### BUG-022: Bulk Delete Admin Access Failure
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-05 |
+| **Severity** | High |
+| **Status** | ✅ Resolved |
+| **Affects** | `bulk-delete-users` Edge Function |
+| **Resolution** | Migrated admin access checks in `bulk-delete-users` to use `profiles.role` and the `is_admin` RPC, aligning it with the working pattern established in the `delete-user-with-transfer` function. |
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -379,6 +391,7 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-014** | 2026-04-28 | Persistent Migration Drift — Cleaned up http extension conflicts. |
 | **BUG-017** | 2026-04-28 | Admin Security Privilege Escalation Risk — Migrated to `user_roles`. |
 | **BUG-018** | 2026-04-28 | Admin Promo Codes Schema Mismatch — Fixed `created_by` mapping. |
+| **BUG-022** | 2026-05-05 | Bulk Delete Admin Access Failure — Fixed edge function to use `profiles.role` and `is_admin` RPC. |
 
 ---
 
@@ -391,4 +404,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — April 22, 2026*
+*Updated by: Modisa Maphanyane — May 5, 2026*

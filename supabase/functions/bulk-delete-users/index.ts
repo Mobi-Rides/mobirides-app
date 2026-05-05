@@ -36,14 +36,13 @@ async function anonymizeAndDeleteUser(
 ): Promise<DeleteResult> {
   try {
     // Guard: don't delete admins/super_admins
-    const { data: adminRecord } = await supabaseAdmin
-      .from("user_roles")
+    const { data: adminProfile } = await supabaseAdmin
+      .from("profiles")
       .select("role")
-      .eq("user_id", userId)
-      .in("role", ["admin", "super_admin"])
+      .eq("id", userId)
       .maybeSingle();
 
-    if (adminRecord) {
+    if (adminProfile?.role === "admin" || adminProfile?.role === "super_admin") {
       return { userId, success: false, error: "Cannot delete admin or super_admin users" };
     }
 
@@ -163,16 +162,26 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: corsHeaders });
 
-    // Admin check
-    const { data: adminRecord } = await supabaseAdmin
-      .from("user_roles")
+    // Admin check using profiles table (like delete-user-with-transfer)
+    const { data: adminProfile } = await supabaseAdmin
+      .from("profiles")
       .select("role")
-      .eq("user_id", user.id)
-      .in("role", ["admin", "super_admin"])
+      .eq("id", user.id)
       .maybeSingle();
 
-    if (!adminRecord) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), { status: 403, headers: corsHeaders });
+    const isAdmin = adminProfile?.role === "admin" || adminProfile?.role === "super_admin";
+
+    if (!isAdmin) {
+      // Try is_admin RPC as fallback just in case
+      const { data: isAdminRaw } = await supabaseUser.rpc('is_admin', { user_uuid: user.id });
+      let isRpcAdmin = false;
+      if (Array.isArray(isAdminRaw)) isRpcAdmin = !!isAdminRaw[0];
+      else if (typeof isAdminRaw === 'object' && isAdminRaw !== null) isRpcAdmin = !!(isAdminRaw as any).is_admin;
+      else isRpcAdmin = !!isAdminRaw;
+
+      if (!isRpcAdmin) {
+        return new Response(JSON.stringify({ error: "Admin access required" }), { status: 403, headers: corsHeaders });
+      }
     }
 
     // Parse body
