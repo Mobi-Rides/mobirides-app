@@ -37,6 +37,21 @@ export interface RouteRequest {
   profile?: 'driving' | 'walking' | 'cycling';
 }
 
+export interface NavigationState {
+  activeRoute: NavigationRoute | null;
+  currentStepIndex: number;
+  isNavigating: boolean;
+  showTraffic: boolean;
+}
+
+interface MapboxStep {
+  maneuver: { instruction: string; type: string };
+  distance: number;
+  duration: number;
+  name: string;
+  geometry: GeoJSON.Geometry;
+}
+
 export class NavigationService {
   private static instance: NavigationService;
   private mapboxToken: string | null = null;
@@ -45,7 +60,7 @@ export class NavigationService {
   private activeRoute: NavigationRoute | null = null;
   private currentStepIndex: number = 0;
   private trackingWatchId: number | null = null;
-  private subscribers: ((state: any) => void)[] = [];
+  private subscribers: ((state: NavigationState) => void)[] = [];
   private destination: { latitude: number; longitude: number } | null = null;
   private lastOffRouteCheck: number = 0;
   private showTraffic: boolean = false;
@@ -125,13 +140,7 @@ export class NavigationService {
         geometry: route.geometry,
         distance: route.distance,
         duration: route.duration,
-        steps: route.legs.flatMap((leg: any) => leg.steps.map((step: {
-          maneuver: { instruction: string; type: string };
-          distance: number;
-          duration: number;
-          name: string;
-          geometry: GeoJSON.Geometry;
-        }) => ({
+        steps: route.legs.flatMap((leg: { steps: MapboxStep[] }) => leg.steps.map((step: MapboxStep) => ({
           instruction: step.maneuver.instruction,
           distance: step.distance,
           duration: step.duration,
@@ -235,7 +244,7 @@ export class NavigationService {
 
   // Active Navigation Methods
 
-  subscribe(callback: (state: any) => void) {
+  subscribe(callback: (state: NavigationState) => void) {
     this.subscribers.push(callback);
     // Immediately call with current state
     callback({
@@ -286,7 +295,7 @@ export class NavigationService {
       let startLat = 0;
       let startLng = 0;
       
-      const geometry = route.geometry as any;
+      const geometry = route.geometry as GeoJSON.LineString;
       if (geometry.coordinates && geometry.coordinates.length > 0) {
         startLng = geometry.coordinates[0][0];
         startLat = geometry.coordinates[0][1];
@@ -295,7 +304,7 @@ export class NavigationService {
       this.currentSessionId = navigationAnalytics.startSession(
         'current-user', 
         { lat: startLat, lng: startLng }, // origin from route geometry start
-        destination as any,
+        { lat: destination.latitude, lng: destination.longitude },
         route
       );
     }
@@ -346,7 +355,7 @@ export class NavigationService {
     const nextStep = this.activeRoute.steps[this.currentStepIndex + 1];
 
     // Calculate distance to end of CURRENT step (the maneuver point)
-    const geometry = currentStep.geometry as any;
+    const geometry = currentStep.geometry as GeoJSON.LineString;
     if (geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length > 0) {
       const endPoint = geometry.coordinates[geometry.coordinates.length - 1];
       const distanceToManeuver = this.calculateDistance(
@@ -410,7 +419,7 @@ export class NavigationService {
       // Handle different geometry types
       let turfLine;
       if (lineGeometry.type === 'LineString') {
-        turfLine = turf.lineString((lineGeometry as any).coordinates);
+        turfLine = turf.lineString((lineGeometry as GeoJSON.LineString).coordinates);
       } else {
         // Fallback for non-linestring (shouldn't happen for steps)
         return 0;
@@ -432,7 +441,7 @@ export class NavigationService {
     toast.info("Recalculating route...");
     
     if (this.currentSessionId) {
-      navigationAnalytics.logReroute(this.currentSessionId, userLocation as any);
+      navigationAnalytics.logReroute(this.currentSessionId, { lat: userLocation.latitude, lng: userLocation.longitude });
     }
     
     // Fetch new route from current position to destination
