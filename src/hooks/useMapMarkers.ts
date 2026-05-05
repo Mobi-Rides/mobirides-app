@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
+import { HandoverContextType } from "@/contexts/HandoverContext";
 
 interface UseMapMarkersProps {
   map: mapboxgl.Map | null;
   mapInit: boolean;
   destination?: { latitude: number; longitude: number } | null;
   isHandoverMode?: boolean;
-  handover?: any; // Context data
+  handover?: HandoverContextType | null; // Context data
 }
 
 export const useMapMarkers = ({
@@ -16,7 +17,6 @@ export const useMapMarkers = ({
   isHandoverMode,
   handover
 }: UseMapMarkersProps) => {
-  const [handoverMarkers, setHandoverMarkers] = useState<mapboxgl.Marker[]>([]);
   const destinationMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
   // Destination Marker
@@ -52,7 +52,6 @@ export const useMapMarkers = ({
   useEffect(() => {
     if (!map || !mapInit || !isHandoverMode || !handover?.handoverStatus) return;
 
-    handoverMarkers.forEach((m) => m.remove());
     const newMarkers: mapboxgl.Marker[] = [];
 
     // Host location
@@ -102,15 +101,8 @@ export const useMapMarkers = ({
       map.fitBounds(bounds, { padding: 100, maxZoom: 15 });
     }
 
-    setHandoverMarkers(newMarkers);
-
     return () => {
       newMarkers.forEach(m => m.remove());
     };
   }, [map, mapInit, isHandoverMode, handover?.handoverStatus]);
-
-  return {
-    handoverMarkers,
-    destinationMarker: destinationMarkerRef.current
-  };
 };

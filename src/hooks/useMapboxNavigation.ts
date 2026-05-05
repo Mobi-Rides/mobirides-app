@@ -3,11 +3,21 @@ import mapboxgl from "mapbox-gl";
 import { toast } from "sonner";
 import { navigationService } from "@/services/navigationService";
 
-interface NavigationState {
-  activeRoute: any;
-  currentStepIndex: number;
-  isNavigating: boolean;
-  showTraffic: boolean;
+import { 
+  NavigationRoute, 
+  NavigationStep, 
+  NavigationState 
+} from "@/services/navigationService";
+
+interface MapboxStep {
+  maneuver: {
+    instruction: string;
+    type: string;
+  };
+  distance: number;
+  duration: number;
+  name: string;
+  geometry: GeoJSON.Geometry;
 }
 
 export const useMapboxNavigation = (map: mapboxgl.Map | null, mapInit: boolean) => {
@@ -28,7 +38,7 @@ export const useMapboxNavigation = (map: mapboxgl.Map | null, mapInit: boolean) 
     start: [number, number], 
     end: [number, number], 
     sourceId: string, 
-    onRouteFound?: (steps: any[]) => void,
+    onRouteFound?: (steps: NavigationStep[]) => void,
     color: string = "#3b82f6",
     lineWidth: number = 5
   ) => {
@@ -51,12 +61,13 @@ export const useMapboxNavigation = (map: mapboxgl.Map | null, mapInit: boolean) 
         const steps = data.routes[0].legs[0].steps;
 
         if (onRouteFound && steps) {
-          onRouteFound(steps.map((step: any) => ({
+          onRouteFound(steps.map((step: MapboxStep) => ({
             instruction: step.maneuver.instruction,
             distance: step.distance,
             duration: step.duration,
             maneuver: step.maneuver.type,
-            road_name: step.name
+            road_name: step.name,
+            geometry: step.geometry
           })));
         }
 

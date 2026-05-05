@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useHandover } from "@/contexts/HandoverContext";
+import { useHandover } from "@/hooks/useHandover";
 import { completeHandover } from "@/services/handoverService";
 import { 
   HANDOVER_STEPS, 
@@ -291,7 +291,7 @@ export const EnhancedHandoverSheet = ({
       const steps = await getHandoverSteps(handoverId);
       console.log("Loaded handover steps:", steps);
       console.log("Steps completion status:", steps.map(s => ({ name: s.step_name, completed: s.is_completed })));
-      setCompletedSteps(steps as any);
+      setCompletedSteps(steps as unknown as HandoverStepCompletion[]);
       
       // Find current step (first incomplete step)
       const firstIncomplete = steps.findIndex(step => !step.is_completed);
@@ -312,6 +312,68 @@ export const EnhancedHandoverSheet = ({
       toast.error("Failed to initialize handover process");
     }
   }, [handoverId]);
+
+  // Helper function to determine if this is a return handover
+  const isReturnHandover = useCallback(() => {
+    // First check if handoverType is explicitly provided in URL parameters
+    const urlHandoverType = searchParams.get('handoverType');
+    console.log('🔍 DEBUG: URL handoverType parameter:', urlHandoverType);
+    console.log('🔍 DEBUG: All URL search params:', Object.fromEntries(searchParams.entries()));
+    
+    if (urlHandoverType) {
+      console.log('✅ Using handoverType from URL:', urlHandoverType);
+      const isReturn = urlHandoverType === 'return';
+      console.log('✅ isReturnHandover result from URL:', isReturn);
+      return isReturn;
+    }
+    
+    console.log('⚠️ No handoverType in URL, checking handover session type');
+    // Check the handover session type directly
+    if (handoverStatus?.handover_type) {
+      console.log('✅ Using handover_type from session:', handoverStatus.handover_type);
+      const isReturn = handoverStatus.handover_type === 'return';
+      console.log('✅ isReturnHandover result from session:', isReturn);
+      return isReturn;
+    }
+    
+    console.log('⚠️ No handover_type in session, falling back to automatic detection');
+    // Fallback to automatic detection if no handover type is set
+    if (!bookingDetails) {
+      console.log('❌ Missing bookingDetails for automatic detection');
+      return false;
+    }
+    
+    const booking = bookingDetails as unknown as HandoverBookingDetails;
+    const bookingStartDate = new Date(booking.start_date);
+    const bookingEndDate = new Date(booking.end_date);
+    const now = new Date();
+    
+    console.log('📅 Booking dates - Start:', bookingStartDate.toISOString(), 'End:', bookingEndDate.toISOString());
+    console.log('📅 Current time:', now.toISOString());
+    
+    // If we're before the booking start date, this is definitely a pickup
+    if (now < bookingStartDate) {
+      console.log('✅ Before booking start date - this is a pickup');
+      return false;
+    }
+    
+    // If we're past the booking end date, this is definitely a return
+    if (now >= bookingEndDate) {
+      console.log('✅ Past booking end date - this is a return');
+      return true;
+    }
+    
+    // If we're between start and end date, determine based on time proximity
+    const timeToStart = Math.abs(now.getTime() - bookingStartDate.getTime());
+    const timeToEnd = Math.abs(now.getTime() - bookingEndDate.getTime());
+    
+    // If we're closer to the end date and past the start date, it's likely a return
+    const isPastStartDate = now >= bookingStartDate;
+    const isReturn = isPastStartDate && timeToEnd < timeToStart;
+    
+    console.log('✅ Time-based determination - isReturn:', isReturn);
+    return isReturn;
+  }, [searchParams, handoverStatus?.handover_type, bookingDetails]);
 
   useEffect(() => {
     if (handoverId && isOpen && !isHandoverSessionLoading) {
@@ -349,7 +411,7 @@ export const EnhancedHandoverSheet = ({
         }
       }
     }
-  }, [isOpen, handoverStatus, completedSteps, searchParams]);
+  }, [isOpen, handoverStatus, completedSteps, searchParams, isReturnHandover]);
 
   const handleStepComplete = async (stepName: string, completionData?: Record<string, unknown>) => {
     console.log(`🚀 handleStepComplete called for step: ${stepName}`);
@@ -372,7 +434,7 @@ export const EnhancedHandoverSheet = ({
       console.log(`✅ Step ${stepName} completed successfully, refreshing steps...`);
       // Refresh steps to get updated state
       const updatedSteps = await getHandoverSteps(handoverId);
-      setCompletedSteps(updatedSteps as any);
+      setCompletedSteps(updatedSteps as unknown as HandoverStepCompletion[]);
       
       // Move to next step
       const nextIncomplete = updatedSteps.findIndex(step => !step.is_completed);
@@ -468,68 +530,6 @@ export const EnhancedHandoverSheet = ({
       console.error("Error completing handover:", error);
       toast.error("Failed to complete handover. Please try again.");
     }
-  };
-
-  // Helper function to determine if this is a return handover
-  const isReturnHandover = () => {
-    // First check if handoverType is explicitly provided in URL parameters
-    const urlHandoverType = searchParams.get('handoverType');
-    console.log('🔍 DEBUG: URL handoverType parameter:', urlHandoverType);
-    console.log('🔍 DEBUG: All URL search params:', Object.fromEntries(searchParams.entries()));
-    
-    if (urlHandoverType) {
-      console.log('✅ Using handoverType from URL:', urlHandoverType);
-      const isReturn = urlHandoverType === 'return';
-      console.log('✅ isReturnHandover result from URL:', isReturn);
-      return isReturn;
-    }
-    
-    console.log('⚠️ No handoverType in URL, checking handover session type');
-    // Check the handover session type directly
-    if (handoverStatus?.handover_type) {
-      console.log('✅ Using handover_type from session:', handoverStatus.handover_type);
-      const isReturn = handoverStatus.handover_type === 'return';
-      console.log('✅ isReturnHandover result from session:', isReturn);
-      return isReturn;
-    }
-    
-    console.log('⚠️ No handover_type in session, falling back to automatic detection');
-    // Fallback to automatic detection if no handover type is set
-    if (!bookingDetails) {
-      console.log('❌ Missing bookingDetails for automatic detection');
-      return false;
-    }
-    
-    const booking = bookingDetails as unknown as HandoverBookingDetails;
-    const bookingStartDate = new Date(booking.start_date);
-    const bookingEndDate = new Date(booking.end_date);
-    const now = new Date();
-    
-    console.log('📅 Booking dates - Start:', bookingStartDate.toISOString(), 'End:', bookingEndDate.toISOString());
-    console.log('📅 Current time:', now.toISOString());
-    
-    // If we're before the booking start date, this is definitely a pickup
-    if (now < bookingStartDate) {
-      console.log('✅ Before booking start date - this is a pickup');
-      return false;
-    }
-    
-    // If we're past the booking end date, this is definitely a return
-    if (now >= bookingEndDate) {
-      console.log('✅ Past booking end date - this is a return');
-      return true;
-    }
-    
-    // If we're between start and end date, determine based on time proximity
-    const timeToStart = Math.abs(now.getTime() - bookingStartDate.getTime());
-    const timeToEnd = Math.abs(now.getTime() - bookingEndDate.getTime());
-    
-    // If we're closer to the end date and past the start date, it's likely a return
-    const isPastStartDate = now >= bookingStartDate;
-    const isReturn = isPastStartDate && timeToEnd < timeToStart;
-    
-    console.log('✅ Time-based determination - isReturn:', isReturn);
-    return isReturn;
   };
 
   const handleSuccessPopupClose = () => {
@@ -671,7 +671,7 @@ export const EnhancedHandoverSheet = ({
 
       case "key_exchange": {
         const stepData = completedSteps.find(s => s.step_name === step.name);
-        const completionData = (stepData?.completion_data as any) || {};
+        const completionData = (stepData?.completion_data as Record<string, unknown>) || {};
         return (
           <KeyExchangeStep
             hostCompleted={!!completionData.host_completed}
@@ -685,7 +685,7 @@ export const EnhancedHandoverSheet = ({
 
       case "sign_and_complete": {
         const stepData = completedSteps.find(s => s.step_name === step.name);
-        const completionData = (stepData?.completion_data as any) || {};
+        const completionData = (stepData?.completion_data as Record<string, unknown>) || {};
         return (
           <SignAndCompleteStep
             hostCompleted={!!completionData.host_completed}
