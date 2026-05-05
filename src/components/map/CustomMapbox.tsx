@@ -81,6 +81,10 @@ const CustomMapbox = ({
 
   const { fetchAddressFromCoordinates } = useGeocoding(mapbox_token);
 
+  // Always call hooks - handover must be declared before any hooks that use it
+  const handoverData = useHandoverSafe();
+  const handover = isHandoverMode ? handoverData : null;
+
   // MOB-20: Manage markers
   useMapMarkers({
     map: mapInstance,
@@ -108,10 +112,6 @@ const CustomMapbox = ({
     onHostSelect: (hostId) => handleViewHostCars(hostId),
     HostPopup
   });
-
-  // Always call hooks - move conditional logic to usage
-  const handoverData = useHandoverSafe();
-  const handover = isHandoverMode ? handoverData : null;
 
   // Memoize returnLocation callback to prevent unnecessary re-renders
   const returnLocationCallback = useCallback(() => {
