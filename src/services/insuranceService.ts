@@ -81,22 +81,20 @@ export class InsuranceService {
     startDate: Date,
     endDate: Date,
     renterId?: string,
-    carId?: string
+    carId?: string,
+    overrideMultiplier?: number
   ): Promise<PremiumCalculation> {
     const insurancePackage = await this.getPackageById(packageId);
 
-    // Get Risk Adjustment (if eligible)
-    let premiumMultiplier = 1.0;
+    // Use pre-computed multiplier from calculateAllPremiums when available
+    let premiumMultiplier = overrideMultiplier ?? 1.0;
 
-    if (renterId && carId) {
+    if (overrideMultiplier === undefined && renterId && carId) {
       const risk = await UnderwriterService.assessRisk(renterId, carId);
-
-      // If risk is prohibitive, block the calculation
       if (risk.premiumLoad === 0) {
-        throw new Error('Insurance is not available for this booking due to risk assessment.');
-      } else {
-        premiumMultiplier = risk.premiumLoad;
+        throw new Error('INSURANCE_NOT_AVAILABLE: Insurance is not available for this booking due to risk assessment.');
       }
+      premiumMultiplier = risk.premiumLoad;
     }
 
     // Calculate number of rental days (minimum 1 day)
@@ -148,13 +146,21 @@ export class InsuranceService {
   ): Promise<PremiumCalculation[]> {
     const packages = await this.getInsurancePackages();
 
-    const calculations = await Promise.all(
+    // Assess risk once for all packages instead of once per package
+    let sharedMultiplier: number | undefined;
+    if (renterId && carId) {
+      const risk = await UnderwriterService.assessRisk(renterId, carId);
+      if (risk.premiumLoad === 0) {
+        throw new Error('INSURANCE_NOT_AVAILABLE: Insurance is not available for this booking due to risk assessment.');
+      }
+      sharedMultiplier = risk.premiumLoad;
+    }
+
+    return Promise.all(
       packages.map(pkg =>
-        this.calculatePremium(pkg.id, dailyRentalAmount, startDate, endDate, renterId, carId)
+        this.calculatePremium(pkg.id, dailyRentalAmount, startDate, endDate, undefined, undefined, sharedMultiplier)
       )
     );
-
-    return calculations;
   }
 
   /**

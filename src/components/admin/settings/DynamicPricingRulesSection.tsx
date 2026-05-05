@@ -22,6 +22,7 @@ const RULE_TYPE_LABELS: Record<PricingRuleType, string> = {
   [PricingRuleType.HOLIDAY]: 'Holiday',
   [PricingRuleType.LOCATION]: 'Location',
   [PricingRuleType.DESTINATION]: 'Destination',
+  [PricingRuleType.DURATION]: 'Duration',
 };
 
 
