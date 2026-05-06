@@ -1,6 +1,6 @@
 # MobiRides Bug Report
 
-**Last Updated:** May 5, 2026  
+**Last Updated:** May 6, 2026  
 **Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
@@ -87,7 +87,7 @@ Security scan identified 9 actionable findings. Sprint 10–11 shipped 5 of 9:
 | MOB-706 | Mutable `search_path` on functions | ✅ Done (Sprint 11) |
 | MOB-705 | No input validation on edge functions | ✅ Done (Sprint 12) |
 | MOB-707 | Plaintext/weak password storage | ✅ Done (Sprint 12) |
-| MOB-708 | Exposed author emails | 🔴 Open — Sprint 13 (S13-006) |
+| MOB-708 | Exposed author emails | 🔴 Open — Sprint 13 (S13-006) (Requires backend branching) |
 | MOB-709 | Missing leaked-password protection | ✅ Done (Sprint 12) |
 
 **Target:** 100% remediation by end of Sprint 13 (May exit criterion).
@@ -358,6 +358,30 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
+### BUG-024: Handover System Fast Refresh & Type Safety
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-05 |
+| **Severity** | Medium (Build Warnings / Type Safety) |
+| **Status** | ✅ Resolved |
+| **Affects** | `HandoverContext.tsx`, `EnhancedHandoverSheet.tsx` |
+| **Resolution** | Decoupled the context object from the provider into separate files to satisfy Fast Refresh requirements and replaced all `any` casts with strict types (`HandoverStepCompletion`, `Record<string, unknown>`). |
+
+---
+
+### BUG-025: Mapbox Navigation Hook Type Safety
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-06 |
+| **Severity** | Low (Type Safety) |
+| **Status** | ✅ Resolved |
+| **Affects** | `useMapboxNavigation.ts` |
+| **Resolution** | Replaced `any` types with proper `NavigationStep` and `NavigationState` interfaces from the navigation service and strictly typed the Mapbox API response. |
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -405,6 +429,8 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-018** | 2026-04-28 | Admin Promo Codes Schema Mismatch — Fixed `created_by` mapping. |
 | **BUG-022** | 2026-05-05 | Bulk Delete Admin Access Failure — Fixed edge function to use `profiles.role` and `is_admin` RPC. |
 | **BUG-023** | 2026-05-05 | Navigation Service TypeScript 'any' Lint Errors — Replaced `any` with strict typing. |
+| **BUG-024** | 2026-05-06 | Handover System Fast Refresh & Type Safety — Decoupled context from provider and fixed any casts. |
+| **BUG-025** | 2026-05-06 | Mapbox Navigation Hook Type Safety — Hardened types for Mapbox API response. |
 
 ---
 
@@ -417,4 +443,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 5, 2026*
+*Updated by: Modisa Maphanyane — May 6, 2026*

@@ -81,7 +81,7 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-006** | Arnold | P1 | 2 | 🔴 To Do | MOB-708: Remove author email exposure from public APIs. |
+| **S13-006** | Arnold | P1 | 2 | 🔴 To Do | MOB-708: Remove author email exposure from public APIs. (Requires backend branching) |
 
 ---
 
@@ -102,9 +102,9 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **S13-014** | Modisa | P1 | 2 | 🔴 To Do | Update `pricing.ts` types with `PricingRuleType.DURATION`. |
-| **S13-015** | Modisa | P1 | 5 | 🔴 To Do | Implement `evaluateDurationRule()` within DynamicPricingService. |
-| **S13-016** | Modisa | P2 | 3 | 🔴 To Do | Update Admin UI to surface Duration Rule configuration. |
+| **S13-014** | Modisa | P1 | 2 | ✅ DONE | Update `pricing.ts` types with `PricingRuleType.DURATION`. |
+| **S13-015** | Modisa | P1 | 5 | ✅ DONE | Implement `evaluateDurationRule()` within DynamicPricingService. |
+| **S13-016** | Modisa | P2 | 3 | ✅ DONE | Update Admin UI to surface Duration Rule configuration. |
 
 ---
 
@@ -198,7 +198,7 @@ This sprint carries over critical paths from Sprint 12 (Payment Phase 0 and Book
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 21 of 35 |
+| **Tasks Completed** | 24 of 35 |
 | **Current Blockers** | Missing `google-services.json` (MOB-13) |
 
 ---
