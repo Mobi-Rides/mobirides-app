@@ -1,10 +1,10 @@
 # SuperAdmin Core Logic Remediation Plan
 ## Targeted "Next Sprint" Execution (Post-Sprint 12)
 
-**Status:** 📅 DRAFT (For Sprint 13 Inclusion)  
+**Status:** 🟡 Active (Sprint 14)  
 **Priority:** High (Technical Debt & Logic Gaps)  
 **Reference:** `20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md`
-**Date:** April 23, 2026
+**Date:** May 7, 2026 (Updated)  
 
 ---
 
@@ -85,11 +85,11 @@ This action plan addresses the "Logic-Stalled" state of the SuperAdmin portal di
 
 | Task ID | Component | Priority | Points | Summary |
 | :--- | :--- | :--- | :--- | :--- |
-| **SAR-001** | Database | P0 | 5 | Implement BUG-011 RPCs (`suspend`, `ban`, `transfer`). |
-| **SAR-002** | Security | P1 | 8 | Session Anomaly Detection & Lockdown Engine. |
-| **SAR-003** | Operations| P1 | 5 | System Health Monitoring & Auto-Cleanup tools. |
-| **SAR-004** | AI/OCR | P2 | 8 | Document OCR & Automated Content Moderation. |
-| **SAR-005** | Compliance| P2 | 5 | Signed Audit Log PDF Generation. |
+| **SAR-001** | Database | P0 | 5 | ✅ DONE (MOB-62 / BUG-011) |
+| **SAR-002** | Security | P1 | 8 | 🔴 Backlog (MOB-118) |
+| **SAR-003** | Operations| P1 | 5 | 🔴 Backlog (MOB-119) |
+| **SAR-004** | AI/OCR | P2 | 8 | 🔴 Backlog (MOB-120) |
+| **SAR-005** | Compliance| P2 | 5 | 🔴 Backlog (MOB-121) |
 
 ---
 

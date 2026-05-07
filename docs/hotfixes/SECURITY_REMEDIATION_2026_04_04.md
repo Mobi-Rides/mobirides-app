@@ -2,7 +2,7 @@
 **Date:** 2026-04-04  
 **Epic:** Security Hardening Sprint  
 **Author:** Modisa Maphanyane  
-**Status:** 🔴 Planned  
+**Status:** 🟡 Active (Sprint 14 Cleanup)  
 
 ---
 
@@ -21,7 +21,7 @@ Security scan identified **9 actionable findings** across database (RLS, functio
 | **Priority** | 🔴 Critical |
 | **Type** | Security / Credential Exposure |
 | **Affects** | `scripts/check-restrictions-by-phone.cjs` |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Description:**  
 Service role key, admin email, and admin password are hardcoded in a git-tracked file (lines 5-9).
@@ -44,7 +44,7 @@ No runtime consumers — script is a dev-only diagnostic tool. Safe to delete.
 | **Priority** | 🔴 Critical |
 | **Type** | API Security / Privilege Escalation |
 | **Affects** | `supabase/functions/add-admin/index.ts` |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Description:**  
 The `add-admin` edge function has **zero authentication or authorization**. Any request with a valid JSON body can create a super admin.
@@ -73,7 +73,7 @@ Consumers: `src/hooks/useAdminManagement.ts` (invokes via `supabase.functions.in
 | **Priority** | 🔴 Critical |
 | **Type** | Data Privacy / RLS |
 | **Affects** | `notifications` table |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Migration:** `YYYYMMDDHHMMSS_drop_blanket_notifications_policy.sql`
 
@@ -114,7 +114,7 @@ grep -r "notifications" src/ --include="*.ts" --include="*.tsx" | grep -i "from\
 | **Priority** | 🟠 High |
 | **Type** | Data Exposure / RLS |
 | **Affects** | `insurance_commission_rates`, `premium_remittance_batches` |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Migration:** `YYYYMMDDHHMMSS_enable_rls_financial_tables.sql`
 
@@ -165,7 +165,7 @@ grep -r "insurance_commission_rates\|premium_remittance_batches" src/ --include=
 | **Priority** | 🟠 High |
 | **Type** | Input Security |
 | **Affects** | `supabase/functions/add-admin/`, `supabase/functions/assign-role/`, `supabase/functions/bulk-assign-role/` |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Description:**  
 Edge functions accept user input without UUID format or type validation, enabling potential injection or malformed data.
@@ -191,7 +191,7 @@ Edge functions accept user input without UUID format or type validation, enablin
 | **Priority** | 🟡 Medium |
 | **Type** | DB Hardening |
 | **Affects** | 11 public functions |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Migration:** `YYYYMMDDHHMMSS_fix_function_search_paths.sql`
 
@@ -242,7 +242,7 @@ grep -r "advance_handover_step\|calculate_handover_progress\|expire_insurance\|g
 | **Priority** | 🟡 Medium |
 | **Type** | Credential Storage |
 | **Affects** | `pending_confirmations` table, signup edge function |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Migration:** `YYYYMMDDHHMMSS_hash_pending_confirmation_passwords.sql`
 
@@ -275,7 +275,7 @@ grep -r "pending_confirmations" src/ supabase/functions/ --include="*.ts" --incl
 | **Priority** | 🟢 Low |
 | **Type** | Data Exposure |
 | **Affects** | `blog_posts` table, blog frontend components |
-| **Status** | To Do (**Requires backend branching**) |
+| **Status** | 🟡 Active (Sprint 14) |
 
 **Migration:** `YYYYMMDDHHMMSS_create_blog_posts_public_view.sql`
 
@@ -322,7 +322,7 @@ grep -r "blog_posts" src/ --include="*.ts" --include="*.tsx"
 | **Priority** | 🟢 Low |
 | **Type** | Auth Config |
 | **Affects** | Supabase Auth settings |
-| **Status** | To Do |
+| **Status** | ✅ Done |
 
 **Description:**  
 Enable "Leaked Password Protection" (HaveIBeenPwned integration) via Supabase Dashboard.

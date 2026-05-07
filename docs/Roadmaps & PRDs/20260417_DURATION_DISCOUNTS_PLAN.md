@@ -2,6 +2,7 @@
 
 **Date**: 2026-04-17
 **Epic**: Pricing & Promotional Capabilities
+**Status**: ✅ COMPLETED (May 6, 2026)
 
 ## 1. Goal Description
 The objective is to re-integrate Duration Discounts (e.g., Weekly and Monthly price breaks) into the existing dynamic pricing engine. Following global best practices for the vehicle rental industry, long-term rentals (7+ days, 28+ days) expect progressive base-price discounting to incentivize longer durations. This will be implemented seamlessly into the current `DynamicPricingService` pipeline which evaluates rule multipliers natively, allowing these discounts to be configurable via the Admin UI.

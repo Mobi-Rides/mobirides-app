@@ -1,7 +1,7 @@
 # MobiRides Bug Report
 
-**Last Updated:** May 6, 2026  
-**Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
+**Last Updated:** May 8, 2026  
+**Reference:** Week 2 May Status Report, Sprint 13 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
 
@@ -179,15 +179,6 @@ Sprint 11 delivered `suspend_user` and `ban_user` RPCs (MOB-21, verified by Arno
 
 ---
 
-### BUG-012: Payment System Mock Implementation in Production
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-12 |
-| **Severity** | Critical (blocks revenue) |
-| **Status** | 🔴 Open |
-| **Affects** | `useBookingPayment.ts`, `mockBookingPaymentService.ts`, `useHostPayouts.ts`, `BookingRequestDetails.tsx` |
-| **Linear** | MOB-22 |
 | **Sprint 12** | S12-001 through S12-005 (Phase 0 fixes) |
 
 **Description:**  
@@ -199,7 +190,43 @@ The application uses `mockBookingPaymentService` with `setTimeout` simulations f
 4. **Mock payout** — `useHostPayouts.ts` returns fake API responses with `setTimeout(2000)`.
 5. **No refund path** — Cancellation has no refund flow.
 
-Sprint 12 targets Phase 0 (fix mock-flow bugs). Phase 1 (real provider integration) deferred to Sprint 13+ pending DPO/Ooze credentials.
+**Resolution (Sprint 13):** Phase 0 fixes implemented. Double commission logic removed, and mock service now generates valid internal transactions for testing. Phase 1 (real provider) pending credentials.
+
+---
+
+### BUG-019: Orphaned Booking Route Technical Debt
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-28 |
+| **Severity** | Medium |
+| **Status** | ✅ Resolved (Sprint 13) |
+| **Affects** | `App.tsx`, `BookingDetails.tsx`, `NotificationDetails.tsx` |
+| **Plan** | [`docs/plans/20260428_ROUTE_CONSOLIDATION_PLAN.md`](../plans/20260428_ROUTE_CONSOLIDATION_PLAN.md) |
+
+---
+
+### BUG-020: Invalid "Approved" Status Check in Renter UI
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-28 |
+| **Severity** | Medium |
+| **Status** | ✅ Resolved (Sprint 13) |
+| **Affects** | `RenterBookingCard.tsx` |
+| **Description** | Hardcoded check for `status === "approved"` which does not exist in the `BookingStatus` enum. Fixed during route consolidation. |
+
+---
+
+### BUG-021: Clumsy Map & Navigation Architecture
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-04-28 |
+| **Severity** | High |
+| **Status** | ✅ Resolved (Sprint 13) |
+| **Affects** | `CustomMapbox.tsx`, `NavigationService.ts`, `MapMarkers.tsx` |
+| **Plan** | [`docs/plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md`](../plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md) |
 
 ---
 
@@ -298,39 +325,6 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
-### BUG-019: Orphaned Booking Route Technical Debt
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-28 |
-| **Severity** | Medium |
-| **Status** | 🔴 Open — Sprint 13 (S13-022) |
-| **Affects** | `App.tsx`, `BookingDetails.tsx`, `NotificationDetails.tsx` |
-| **Plan** | [`docs/plans/20260428_ROUTE_CONSOLIDATION_PLAN.md`](../plans/20260428_ROUTE_CONSOLIDATION_PLAN.md) |
-
----
-
-### BUG-020: Invalid "Approved" Status Check in Renter UI
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-28 |
-| **Severity** | Medium |
-| **Status** | 🔴 Open — Sprint 13 (S13-022) |
-| **Affects** | `RenterBookingCard.tsx` |
-| **Description** | Hardcoded check for `status === "approved"` which does not exist in the `BookingStatus` enum. Fixed during route consolidation. |
-
----
-
-### BUG-021: Clumsy Map & Navigation Architecture
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-28 |
-| **Severity** | High |
-| **Status** | 🔴 Open — Sprint 13 (S13-017–021) |
-| **Affects** | `CustomMapbox.tsx`, `NavigationService.ts`, `MapMarkers.tsx` |
-| **Plan** | [`docs/plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md`](../plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md) |
 
 ---
 
@@ -379,6 +373,54 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 | **Status** | ✅ Resolved |
 | **Affects** | `useMapboxNavigation.ts` |
 | **Resolution** | Replaced `any` types with proper `NavigationStep` and `NavigationState` interfaces from the navigation service and strictly typed the Mapbox API response. |
+
+---
+
+### BUG-026: Wallet Access Restriction Error
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-07 |
+| **Severity** | High |
+| **Status** | ✅ Resolved |
+| **Affects** | `walletService.ts`, `HostWallet.tsx` |
+| **Resolution** | Fixed incorrect permission check in `getWalletBalance` that was blocking legitimate hosts from viewing their earnings. |
+
+---
+
+### BUG-029: 404 Error on Notification Action Links
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-07 |
+| **Severity** | High |
+| **Status** | ✅ Resolved |
+| **Affects** | `resend-service/index.ts` |
+| **Resolution** | Updated hardcoded `localhost:3000` URLs to `app.mobirides.com` and corrected relative pathing for deep links. |
+
+---
+
+### BUG-030: Rolldown OOM Build Panic
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-07 |
+| **Severity** | Critical |
+| **Status** | ✅ Resolved |
+| **Affects** | `package.json`, Vercel Deployment |
+| **Resolution** | Increased Node.js heap limit to 8GB (`--max-old-space-size=8192`) and disabled parallel minification to stabilize production builds. |
+
+---
+
+### BUG-031: Missing Mapbox GL Type Definitions
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-07 |
+| **Severity** | Low |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/types/mapbox.d.ts` |
+| **Resolution** | Manually added missing `MapboxEvent` and `Layer` type definitions to satisfy strict TypeScript build requirements. |
 
 ---
 
@@ -431,6 +473,13 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-023** | 2026-05-05 | Navigation Service TypeScript 'any' Lint Errors — Replaced `any` with strict typing. |
 | **BUG-024** | 2026-05-06 | Handover System Fast Refresh & Type Safety — Decoupled context from provider and fixed any casts. |
 | **BUG-025** | 2026-05-06 | Mapbox Navigation Hook Type Safety — Hardened types for Mapbox API response. |
+| **BUG-026** | 2026-05-08 | Wallet access restriction fix — Corrected permission logic in wallet service. |
+| **BUG-029** | 2026-05-08 | 404 on notification links — Switched to production absolute URLs. |
+| **BUG-030** | 2026-05-08 | Rolldown OOM Build Panic — Increased heap memory allocation. |
+| **BUG-031** | 2026-05-08 | Missing Mapbox GL types — Added custom declaration file. |
+| **BUG-012** | 2026-05-08 | Payment System Mock Phase 0 — Internal transactions and double-commission fixed. |
+| **BUG-019** | 2026-05-08 | Orphaned Booking Route — Consolidated routes into `/rental-details/:id`. |
+| **BUG-021** | 2026-05-08 | Clumsy Map Architecture — Extracted modular hooks and bottom sheets. |
 
 ---
 
@@ -443,4 +492,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 6, 2026*
+*Updated by: Modisa Maphanyane — May 8, 2026*
