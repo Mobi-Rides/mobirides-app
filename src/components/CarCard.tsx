@@ -51,12 +51,6 @@ export const CarCard = ({ car }: CarCardProps) => {
     }
   };
 
-  const getCarType = (seats: number) => {
-    if (seats <= 2) return "Sports";
-    if (seats <= 5) return "Sedan";
-    if (seats <= 7) return "SUV";
-    return "Van";
-  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -148,7 +142,7 @@ export const CarCard = ({ car }: CarCardProps) => {
         {/* Type and Rating */}
         <div className="flex items-center justify-between mb-2">
           <span className="px-3 py-1.5 rounded-md text-xs md:text-sm bg-[#F1F0FB] dark:bg-[#352a63] text-[#7C3AED] dark:text-[#a87df8] w-fit font-medium">
-            {getCarType(car.seats)}
+            {car.vehicle_type}
           </span>
           <div className="flex items-center gap-1" aria-label={`Rating: ${(car.rating || 0).toFixed(1)} out of 5 stars`}>
             <div className="flex items-center" role="img" aria-hidden="true">

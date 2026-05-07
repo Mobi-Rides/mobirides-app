@@ -38,6 +38,8 @@ export interface BookingNotificationData {
   totalAmount: number;
   bookingReference: string;
   carImage?: string;
+  approveUrl?: string;
+  declineUrl?: string;
 }
 
 // Resend Email Service Class
@@ -171,7 +173,7 @@ export class ResendEmailService {
       {
         name: recipient.name,
         rejectionReason: reason,
-        actionUrl: `${window.location.host}/profile`
+        actionUrl: `${window.location.origin}/profile`
       },
       subject
     );
@@ -201,7 +203,9 @@ export class ResendEmailService {
       totalAmount: bookingData.totalAmount,
       customerName: bookingData.customerName,
       hostName: bookingData.hostName,
-      carImage: bookingData.carImage || ''
+      carImage: bookingData.carImage || '',
+      approve_url: bookingData.approveUrl,
+      decline_url: bookingData.declineUrl
     };
 
     const templateKey = isHost ? 'owner-booking-notification' : 'booking-confirmation';

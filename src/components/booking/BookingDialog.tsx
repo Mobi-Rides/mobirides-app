@@ -437,9 +437,12 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): Rea
         pickupTime: startTime,
         pickupLocation: car.location || "Pickup location",
         dropoffLocation: car.location || "Return location",
-        totalAmount: grandTotal,
+        totalAmount: totalPrice,
         bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`,
-        carImage: getCarImagePublicUrl(car.image_url || null)
+        carImage: getCarImagePublicUrl(car.image_url || null),
+        approveUrl: `${window.location.origin}/booking-requests/${booking.id}`,
+        declineUrl: `${window.location.origin}/booking-requests/${booking.id}`
+
       };
 
       // Notify Renter

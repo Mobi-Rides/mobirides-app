@@ -132,7 +132,7 @@ export class CompleteNotificationService {
       this.sendPushNotification(data.userId, data.title, data.description);
 
       // 3. Send email notification (non-blocking)
-      this.sendEmailNotification(data.userId, data.title, data.description, data.type, data.metadata);
+      this.sendEmailNotification(data.userId, data.title, data.description, data.type, data.metadata, data.relatedBookingId);
 
       // 4. Send WhatsApp notification (non-blocking)
       this.sendWhatsAppNotification(data.userId, data.type, data.metadata, data.relatedBookingId);
@@ -168,7 +168,9 @@ export class CompleteNotificationService {
     title: string, 
     description: string, 
     type: NotificationType | string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
+    relatedBookingId?: string
+
   ): Promise<void> {
     try {
       // Get user email and profile data
@@ -200,8 +202,12 @@ export class CompleteNotificationService {
         // Add specific data mappings for known templates
         if (templateKey === 'booking-confirmation') {
           templateData.customerName = name;
-        } else if (templateKey === 'booking-request') {
+        } else if (templateKey === 'booking-request' || templateKey === 'owner-booking-notification') {
           templateData.hostName = name;
+          if (relatedBookingId) {
+            templateData.approve_url = `${window.location.origin}/booking-requests/${relatedBookingId}`;
+            templateData.decline_url = `${window.location.origin}/booking-requests/${relatedBookingId}`;
+          }
         } else if (templateKey === 'awaiting-payment') {
           templateData.customerName = name;
           // Ensure car details are available for payment email
@@ -209,6 +215,7 @@ export class CompleteNotificationService {
             templateData.carDetails = `${metadata.carBrand} ${metadata.carModel}`;
           }
         }
+
 
         await emailService.sendEmail(
           emailResponse.data,
