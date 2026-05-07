@@ -474,7 +474,9 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         pickupLocation: car.location || "Pickup location",
         dropoffLocation: car.location || "Return location",
         totalAmount: totalPrice,
-        bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`
+        bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`,
+        approveUrl: `${window.location.origin}/booking-requests/${booking.id}`,
+        declineUrl: `${window.location.origin}/booking-requests/${booking.id}`
       };
 
       // Send notifications using new services (non-blocking)
