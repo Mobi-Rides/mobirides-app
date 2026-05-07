@@ -56,11 +56,17 @@ const RentalDetailsRefactored = () => {
     queryKey: ['insurance-package-name', booking?.insurance_policy_id],
     queryFn: async () => {
       const { data } = await supabase
-        .from('insurance_policies' as any)
+        .from('insurance_policies')
         .select('insurance_packages(display_name)')
         .eq('id', booking!.insurance_policy_id)
         .single();
-      return (data as any)?.insurance_packages?.display_name || null;
+
+      // Use a proper type for the join result instead of 'any'
+      const typedData = data as unknown as { 
+        insurance_packages: { display_name: string } | null 
+      } | null;
+      
+      return typedData?.insurance_packages?.display_name || null;
     },
     enabled: !!booking?.insurance_policy_id,
   });
@@ -74,17 +80,20 @@ const RentalDetailsRefactored = () => {
   useEffect(() => {
     const shouldOpen = searchParams.get('pay') === 'true';
     if (shouldOpen && booking?.status === 'awaiting_payment') {
-      setIsPaymentModalOpen(true);
-      // Clean up the URL param so refreshing doesn't re-trigger
-      if (searchParams.get('pay')) {
+      // Defer state updates to avoid synchronous setState warnings during render
+      const timer = setTimeout(() => {
+        setIsPaymentModalOpen(true);
+        // Clean up the URL param so refreshing doesn't re-trigger
         setSearchParams(prev => {
           const newParams = new URLSearchParams(prev);
           newParams.delete('pay');
           return newParams;
         }, { replace: true });
-      }
+      }, 0);
+      
+      return () => clearTimeout(timer);
     }
-  }, [booking, searchParams, setSearchParams]);
+  }, [booking?.status, searchParams, setSearchParams]);
 
   const handleExtensionUpdate = () => {
     setRefreshKey(prev => prev + 1);

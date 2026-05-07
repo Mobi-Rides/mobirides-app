@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RenterBookingFilters } from "@/components/renter-bookings/RenterBookingFilters";
 import { RenterBookingCard } from "@/components/renter-bookings/RenterBookingCard";
 import { RenterBookingStats } from "@/components/renter-bookings/RenterBookingStats";
+import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
 
 const RenterBookings = () => {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ const RenterBookings = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<Booking | null>(null);
 
   const { data: bookings, isLoading, error } = useQuery({
     queryKey: ["renter-bookings"],
@@ -108,6 +111,14 @@ const RenterBookings = () => {
         variant: "destructive",
       });
       queryClient.invalidateQueries({ queryKey: ["renter-bookings"] });
+    }
+  };
+
+  const handlePayNow = (bookingId: string) => {
+    const booking = bookings?.find(b => b.id === bookingId);
+    if (booking) {
+      setSelectedBookingForPayment(booking);
+      setIsPaymentModalOpen(true);
     }
   };
 
@@ -250,6 +261,7 @@ const RenterBookings = () => {
                   key={booking.id}
                   booking={booking}
                   onCancelBooking={handleCancelBooking}
+                  onPayNow={handlePayNow}
                 />
               ))}
             </div>
@@ -257,6 +269,24 @@ const RenterBookings = () => {
         </div>
       </div>
       <Navigation />
+
+      {selectedBookingForPayment && (
+        <RenterPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setSelectedBookingForPayment(null);
+          }}
+          booking={selectedBookingForPayment}
+          onPaymentSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["renter-bookings"] });
+            toast({
+              title: "Payment Success",
+              description: "Your payment has been processed successfully.",
+            });
+          }}
+        />
+      )}
     </div>
   );
 };

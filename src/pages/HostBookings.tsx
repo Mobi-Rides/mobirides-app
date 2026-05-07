@@ -17,6 +17,7 @@ import { HostBookingStats } from "@/components/host-bookings/HostBookingStats";
 import { useToast } from "@/hooks/use-toast";
 import { BookingWithRelations, BookingStatus } from "@/types/booking";
 import { pushNotificationService } from "@/services/pushNotificationService";
+import { bookingLifecycle } from "@/services/bookingLifecycle";
 
 type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired" | "awaiting_payment";
 type SortOption = "date_asc" | "date_desc" | "earnings_asc" | "earnings_desc" | "status" | "renter";
@@ -120,7 +121,15 @@ export const HostBookings = () => {
   }, [bookings, searchQuery, statusFilter, sortBy]);
 
   const categorizedBookings = useMemo(() => {
-    if (!filteredAndSortedBookings) return {};
+    const empty = {
+      active: [] as BookingWithRelations[],
+      upcoming: [] as BookingWithRelations[],
+      pending: [] as BookingWithRelations[],
+      expired: [] as BookingWithRelations[],
+      completed: [] as BookingWithRelations[]
+    };
+
+    if (!filteredAndSortedBookings) return empty;
     
     const today = new Date();
     
@@ -145,72 +154,47 @@ export const HostBookings = () => {
 
   const handleBookingAction = useCallback(async (bookingId: string, action: "approve" | "decline" | "cancel") => {
     try {
-      // Only allow DB columns in update
-      const updateData: Database['public']['Tables']['bookings']['Update'] = {
-        status: action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED
-      };
+      let newStatus: BookingStatus;
       if (action === "approve") {
-        updateData.payment_status = "unpaid";
-        updateData.payment_deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        newStatus = BookingStatus.AWAITING_PAYMENT;
+      } else if (action === "decline" || action === "cancel") {
+        newStatus = BookingStatus.CANCELLED;
+      } else {
+        return;
       }
 
-      const { error } = await supabase
-        .from("bookings")
-        .update(updateData)
-        .eq("id", bookingId);
-
-      if (error) throw error;
+      await bookingLifecycle.updateStatus(bookingId, newStatus);
 
       await queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
       toast({
         title: "Success",
         description: `Booking ${action}d successfully`,
       });
-
-      // Send notification if approved
-      if (action === "approve") {
-        const booking = bookings?.find(b => b.id === bookingId);
-        if (booking && booking.renter?.id) {
-          pushNotificationService.sendBookingNotification(booking.renter.id, {
-            type: 'awaiting_payment',
-            carBrand: booking.cars.brand,
-            carModel: booking.cars.model,
-            bookingReference: booking.id
-          }).catch(err => console.error("Failed to send notification:", err));
-        }
-      }
     } catch (error) {
+      console.error(`Error in handleBookingAction (${action}):`, error);
       toast({
         title: "Error",
         description: `Failed to ${action} booking`,
         variant: "destructive",
       });
     }
-  }, [queryClient, toast, bookings]);
+  }, [queryClient, toast]);
 
   const handleBulkAction = useCallback(async (action: "approve" | "decline") => {
     if (selectedBookings.length === 0) return;
     try {
       const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED;
-      // Only allow DB columns in update
-      const updateData: Database['public']['Tables']['bookings']['Update'] = {
-        status: newStatus
-      };
-      if (action === "approve") {
-        updateData.payment_status = "unpaid";
-        updateData.payment_deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      }
-      const { error } = await supabase
-        .from("bookings")
-        .update(updateData)
-        .in("id", selectedBookings);
-      if (error) throw error;
+      
+      // Update each booking through the lifecycle service to trigger side effects
+      await Promise.all(selectedBookings.map(id => bookingLifecycle.updateStatus(id, newStatus)));
+
       await queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
       toast({
         title: "Success",
         description: `Bookings ${action}d successfully`,
       });
     } catch (error) {
+      console.error(`Error in handleBulkAction (${action}):`, error);
       toast({
         title: "Error",
         description: `Failed to ${action} bookings`,
