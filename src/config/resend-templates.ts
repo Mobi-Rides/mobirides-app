@@ -187,7 +187,9 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
   },
   booking_request_received: {
     id: "booking-request-received",
+    name: 'Booking Request Received',
     subject: "📋 Booking Request Sent — Awaiting Host Approval",
+    description: 'Sent to renters when their booking request is submitted and awaiting host approval'
   },
   awaiting_payment: {
     id: 'awaiting-payment',

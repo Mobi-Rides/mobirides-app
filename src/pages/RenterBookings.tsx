@@ -128,11 +128,19 @@ const RenterBookings = () => {
     handleExpiredBookings();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load bookings.",
+        variant: "destructive",
+      });
+    }
   }, [error, toast]);
 
   // Realtime subscription for renter bookings
   useEffect(() => {
-    let channel: any;
+    let channel: ReturnType<typeof supabase.channel>;
 
     const setupSubscription = async () => {
       const { data: { session } } = await supabase.auth.getSession();

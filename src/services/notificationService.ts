@@ -33,6 +33,8 @@ export interface BookingNotificationData {
   pickupTime: string;
   pickupLocation: string;
   dropoffLocation: string;
+  dropoffDate?: string;
+  endDate?: string;
   totalAmount: number;
   bookingReference: string;
   carImage?: string;
@@ -842,7 +844,7 @@ export class TwilioNotificationService {
           bookingReference: bookingData.bookingReference,
           carDetails: `${bookingData.carBrand} ${bookingData.carModel}`,
           actualReturnDate: actualReturnDate,
-          originalEndDate: bookingData.pickupDate, // This should be end date in real implementation
+          originalEndDate: bookingData.endDate || bookingData.dropoffDate || bookingData.pickupDate, // Using end date if available
           hostName: bookingData.hostName,
           totalAmount: bookingData.totalAmount
         },

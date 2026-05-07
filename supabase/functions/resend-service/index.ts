@@ -116,8 +116,8 @@ const EMAIL_TEMPLATES = {
             </div>
             
             <div class="cta-section">
-                <a href="${data.browse_cars_url || 'https://mobirides.com/cars'}" class="cta-button">🔍 Browse Available Cars</a>
-                <a href="${data.profile_url || 'https://mobirides.com/profile'}" class="cta-button secondary-button">✏️ Complete Your Profile</a>
+                <a href="${data.browse_cars_url || 'https://app.mobirides.com/car-listing'}" class="cta-button">🔍 Browse Available Cars</a>
+                <a href="${data.profile_url || 'https://app.mobirides.com/profile'}" class="cta-button secondary-button">✏️ Complete Your Profile</a>
             </div>
             
             <div class="next-steps">
@@ -139,7 +139,7 @@ const EMAIL_TEMPLATES = {
             <div class="community-section">
                 <h3>🌟 Join Our Community</h3>
                 <p>Connect with thousands of car-sharing enthusiasts across Botswana. Share tips, discover hidden gems, and make new friends!</p>
-                <a href="${data.community_url || 'https://mobirides.com/community'}" class="cta-button" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">Join Community</a>
+                <a href="${data.community_url || 'https://app.mobirides.com/'}" class="cta-button" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">Join Community</a>
             </div>
             
             <div style="text-align: center; margin: 40px 0; padding: 20px; border: 2px dashed #e2e8f0; border-radius: 12px;">
@@ -153,8 +153,8 @@ const EMAIL_TEMPLATES = {
             <p>Need help getting started? We're here for you!</p>
             <p>
                 📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a> | 
-                📚 <a href="${data.help_center_url || 'https://mobirides.com/help'}">Help Center</a> | 
-                🌐 <a href="${data.app_url || 'https://mobirides.com'}">Visit Website</a>
+                📚 <a href="${data.help_center_url || 'https://app.mobirides.com/help'}">Help Center</a> | 
+                🌐 <a href="${data.app_url || 'https://app.mobirides.com'}">Visit Website</a>
             </p>
             
             <div class="social-links">
@@ -215,7 +215,7 @@ const EMAIL_TEMPLATES = {
             </div>
             
             <div style="text-align: center; margin: 40px 0;">
-                <a href="${data.app_url || 'https://mobirides.com'}" class="cta-button">🚗 List Your Car Now</a>
+                <a href="${data.app_url || 'https://app.mobirides.com'}" class="cta-button">🚗 List Your Car Now</a>
             </div>
         </div>
         
@@ -295,7 +295,7 @@ const EMAIL_TEMPLATES = {
             <p>Need help? We're here for you!</p>
             <p>
                 📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a> |
-                🌐 <a href="${data.app_url || 'https://mobirides.com'}">Visit Website</a>
+                🌐 <a href="${data.app_url || 'https://app.mobirides.com'}">Visit Website</a>
             </p>
 
             <p style="font-size: 12px; color: #718096; margin-top: 20px;">
@@ -341,7 +341,7 @@ const EMAIL_TEMPLATES = {
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.actionUrl || 'https://mobirides.com/dashboard'}" class="cta-button">Get Started</a>
+                <a href="${data.actionUrl || 'https://app.mobirides.com/dashboard'}" class="cta-button">Get Started</a>
             </div>
         </div>
         <div class="footer">
@@ -393,7 +393,7 @@ const EMAIL_TEMPLATES = {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.dashboardUrl || 'https://mobirides.com/dashboard'}" class="cta-button">Go to Dashboard</a>
+                <a href="${data.dashboardUrl || 'https://app.mobirides.com/dashboard'}" class="cta-button">Go to Dashboard</a>
             </div>
         </div>
         <div class="footer">
@@ -445,7 +445,7 @@ const EMAIL_TEMPLATES = {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.verificationUrl || 'https://mobirides.com/profile/verification'}" class="cta-button">Update Verification Documents</a>
+                <a href="${data.verificationUrl || 'https://app.mobirides.com/profile'}" class="cta-button">Update Verification Documents</a>
             </div>
         </div>
         <div class="footer">
@@ -495,7 +495,7 @@ const EMAIL_TEMPLATES = {
             <p style="text-align: center; color: #2d3748; font-weight: bold;">New Balance: P${data.newBalance || '0.00'}</p>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.walletUrl || 'https://mobirides.com/wallet'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Wallet</a>
+                <a href="${data.walletUrl || 'https://app.mobirides.com/wallet'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Wallet</a>
             </div>
         </div>
         <div class="footer">
@@ -652,8 +652,8 @@ const EMAIL_TEMPLATES = {
             </div>
 
             <div style="text-align: center; margin: 40px 0;">
-                <a href="${data.app_url || 'https://mobirides.com/app'}" class="cta-button">📱 Download App</a>
-                <a href="${data.support_url || 'https://mobirides.com/support'}" class="cta-button" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);">📞 Contact Support</a>
+                <a href="${data.app_url || 'https://app.mobirides.com'}" class="cta-button">📱 Download App</a>
+                <a href="${data.support_url || 'https://app.mobirides.com/help'}" class="cta-button" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);">📞 Contact Support</a>
             </div>
 
             <div style="background-color: #fef5e7; padding: 20px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #ed8936;">
@@ -673,7 +673,7 @@ const EMAIL_TEMPLATES = {
             <p>
                 📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a> |
                 📱 <a href="${data.whatsapp_url || 'https://wa.me/2671234567'}">WhatsApp Support</a> |
-                🌐 <a href="${data.app_url || 'https://mobirides.com'}">Visit Website</a>
+                🌐 <a href="${data.app_url || 'https://app.mobirides.com'}">Visit Website</a>
             </p>
 
             <p style="font-size: 12px; color: #718096; margin-top: 20px;">
@@ -1016,7 +1016,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Prepare vehicle for handover if accepted</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.manage_url || 'https://mobirides.com/host/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">✓ Review Booking Request</a>
+                <a href="${data.manage_url || 'https://app.mobirides.com/host-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">✓ Review Booking Request</a>
             </div>
         </div>
         <div class="footer">
@@ -1118,11 +1118,11 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <p>Thank you for signing up for MobiRides. Please confirm your email address by clicking the button below:</p>
             </div>
             <div class="button-container">
-                <a href="${data.confirmation_url || 'https://mobirides.com/confirm-email?token=' + (data.token || '')}" class="confirm-button">✓ Confirm Email</a>
+                <a href="${data.confirmation_url || 'https://app.mobirides.com/confirm-email?token=' + (data.token || '')}" class="confirm-button">✓ Confirm Email</a>
             </div>
             <div class="fallback">
                 <p>Button not working? Copy and paste this link into your browser:</p>
-                <p style="word-break: break-all; font-size: 14px;">${data.confirmation_url || 'https://mobirides.com/confirm-email?token=' + (data.token || 'YOUR_TOKEN')}</p>
+                <p style="word-break: break-all; font-size: 14px;">${data.confirmation_url || 'https://app.mobirides.com/confirm-email?token=' + (data.token || 'YOUR_TOKEN')}</p>
             </div>
             <p style="color: #718096; font-size: 14px; margin-top: 30px;">If you didn't create an account with MobiRides, please ignore this email.</p>
         </div>
@@ -1188,7 +1188,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="feature-item"><span class="feature-icon">✓</span><span class="feature-text">Full insurance coverage</span></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.dashboard_url || 'https://mobirides.com/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">🚀 Go to Dashboard</a>
+                <a href="${data.dashboard_url || 'https://app.mobirides.com/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">🚀 Go to Dashboard</a>
             </div>
         </div>
         <div class="footer">
@@ -1254,7 +1254,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Remove personal belongings and check for items</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+                <a href="${data.booking_url || 'https://app.mobirides.com/renter-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
             </div>
         </div>
         <div class="footer">
@@ -1320,7 +1320,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Review the vehicle condition report</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+                <a href="${data.booking_url || 'https://app.mobirides.com/renter-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
             </div>
         </div>
         <div class="footer">
@@ -1386,7 +1386,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Payment method for security deposit</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+                <a href="${data.booking_url || 'https://app.mobirides.com/renter-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
             </div>
         </div>
         <div class="footer">
