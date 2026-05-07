@@ -623,7 +623,7 @@ const EMAIL_TEMPLATES = {
             <div class="car-info">
                 <h3 style="color: #2d3748; margin: 0 0 15px 0;">🚗 Your Vehicle</h3>
                 <div style="display: flex; align-items: center;">
-                    ${data.carImage ? `<img src="${data.carImage}" alt="${data.carBrand} ${data.carModel}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">` : ''}
+                    ${data.carImage ? '<img src="' + data.carImage + '" alt="' + data.carBrand + ' ' + data.carModel + '" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">' : ''}
                     <div>
                         <div style="font-weight: 600; color: #2d3748; font-size: 18px;">${data.carBrand || 'N/A'} ${data.carModel || 'N/A'}</div>
                         <div style="color: #4a5568;">Hosted by ${data.hostName || 'N/A'}</div>
@@ -684,7 +684,8 @@ const EMAIL_TEMPLATES = {
     </div>
 </body>
 </html>
-    `,
+    `
+  },
   'booking-request-received': {
     subject: (data: EmailTemplateData) => `📋 Booking Request Sent — Awaiting Host Approval #${data.bookingReference?.split('-')[0].toUpperCase() || ''}`,
     html: (data: EmailTemplateData) => `
@@ -826,7 +827,7 @@ const EMAIL_TEMPLATES = {
             <div class="car-info">
                 <h3 style="color: #2d3748; margin: 0 0 15px 0;">🚗 Your Vehicle</h3>
                 <div style="display: flex; align-items: center;">
-                    ${data.carImage ? `<img src="${data.carImage}" alt="${data.carBrand} ${data.carModel}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">` : ''}
+                    ${data.carImage ? '<img src="' + data.carImage + '" alt="' + data.carBrand + ' ' + data.carModel + '" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">' : ''}
                     <div>
                         <div style="font-weight: 600; color: #2d3748; font-size: 18px;">${data.carBrand || ''} ${data.carModel || ''}</div>
                         <div style="color: #4a5568;">Hosted by ${data.hostName || 'N/A'}</div>
@@ -867,7 +868,7 @@ const EMAIL_TEMPLATES = {
 <div class="row"><span class="label">Coverage Period:</span><span class="value">${data.startDate} – ${data.endDate}</span></div>
 <div class="row"><span class="label">Total Premium:</span><span class="value">BWP ${data.premiumAmount}</span></div>
 </div>
-${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${data.downloadLink}" class="btn">📄 Download Policy PDF</a></div>` : ''}
+${data.downloadLink ? '<div style="text-align:center;margin:30px 0"><a href="' + data.downloadLink + '" class="btn">📄 Download Policy PDF</a></div>' : ''}
 <div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936;margin-top:25px">
 <p style="color:#744210;margin:0;font-size:14px">To file a claim: MobiRides app → My Bookings → Insurance → File a Claim.</p>
 </div>
@@ -924,7 +925,7 @@ ${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${d
 <div style="margin-bottom:14px"><span style="font-weight:600;color:#2d3748;font-size:14px">New Status: </span><span class="badge">${(data.newStatus || '').replace(/_/g, ' ')}</span></div>
 <div style="font-size:14px"><span style="font-weight:600;color:#2d3748">Updated: </span><span style="color:#4a5568">${data.updatedAt}</span></div>
 </div>
-${data.notes ? `<div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936"><p style="color:#744210;font-weight:600;margin:0 0 6px">Notes from our team:</p><p style="color:#975a16;margin:0;font-size:14px">${data.notes}</p></div>` : ''}
+${data.notes ? '<div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936"><p style="color:#744210;font-weight:600;margin:0 0 6px">Notes from our team:</p><p style="color:#975a16;margin:0;font-size:14px">' + data.notes + '</p></div>' : ''}
 </div>
 <div class="footer"><p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p></div>
 </div></body></html>`;
@@ -949,7 +950,7 @@ ${data.notes ? `<div style="background:#fef5e7;padding:18px;border-radius:10px;b
 <div class="row"><span class="label">Incident Date:</span><span class="value">${data.incidentDate}</span></div>
 <div class="row"><span class="label">Incident Type:</span><span class="value">${(data.incidentType || '').replace(/_/g, ' ')}</span></div>
 </div>
-${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:10px;margin-top:20px"><p style="color:#2d3748;font-weight:600;margin:0 0 8px;font-size:14px">Incident Description:</p><p style="color:#4a5568;margin:0;font-size:14px">${data.description}</p></div>` : ''}
+${data.description ? '<div style="background:#f7fafc;padding:18px;border-radius:10px;margin-top:20px"><p style="color:#2d3748;font-weight:600;margin:0 0 8px;font-size:14px">Incident Description:</p><p style="color:#4a5568;margin:0;font-size:14px">' + data.description + '</p></div>' : ''}
 <div style="background:#f0fff4;padding:18px;border-radius:10px;border-left:4px solid #38a169;margin-top:20px">
 <p style="color:#2d3748;margin:0;font-size:14px">Our claims team will handle this process. <strong>No action is required from you at this time.</strong></p>
 </div>
@@ -1067,9 +1068,9 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="alert-title">${data.notificationTitle || 'Notification Details'}</div>
                 <div class="alert-content">${data.notificationContent || ''}</div>
             </div>
-            ${data.action_url ? `<div style="text-align: center; margin: 30px 0;">
-                <a href="${data.action_url}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">${data.action_text || 'View Details'}</a>
-            </div>` : ''}
+            ${data.action_url ? '<div style="text-align: center; margin: 30px 0;">' +
+                '<a href="' + data.action_url + '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">' + (data.action_text || 'View Details') + '</a>' +
+            '</div>' : ''}
             <p style="color: #718096; font-size: 14px; margin-top: 30px;">This is an automated notification. Please do not reply to this email.</p>
         </div>
         <div class="footer">
@@ -1980,50 +1981,6 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
         .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
     </style>
 </head><body><div class="container"><div class="header"><h1>🚗 Early Vehicle Return</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We've registered an early return for your rental <strong>${data.carName}</strong>.</p><p>Return Date: ${data.actualReturnDate}</p><p>Our team will process any necessary adjustments to your booking.</p></div><div class="footer"><p>MobiRides Support</p></div></div></body></html>`
-  },
-
-  'wallet-notification': {
-    subject: '💳 Wallet Activity - MobiRides',
-    html: (data: EmailTemplateData) => `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet Notification - MobiRides</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 0 auto; background-color: white; }
-        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
-        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
-        .content { padding: 40px 30px; }
-        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
-    </style>
-</head><body><div class="container"><div class="header"><h1>💳 Wallet Update</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>${data.message || 'There has been activity in your MobiRides wallet.'}</p><div style="background: #f0fff4; padding: 20px; border-radius: 12px; margin: 20px 0;"><strong>New Balance: P${data.balance}</strong></div></div><div class="footer"><p>MobiRides Wallet Services</p></div></div></body></html>`
-  },
-
-  'promo-notification': {
-    subject: '🎁 Exclusive Offer Just For You! - MobiRides',
-    html: (data: EmailTemplateData) => `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Promo Offer - MobiRides</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 0 auto; background-color: white; }
-        .header { background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%); padding: 40px 20px; text-align: center; }
-        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
-        .content { padding: 40px 30px; text-align: center; }
-        .promo-code { display: inline-block; background: #fdf2f2; border: 2px dashed #f56565; padding: 15px 30px; border-radius: 8px; font-size: 24px; font-weight: 700; color: #c53030; margin: 25px 0; letter-spacing: 2px; }
-        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
-    </style>
-</head><body><div class="container"><div class="header"><h1>🎁 Surprise Inside!</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We have a special treat for you! Use the code below on your next rental for <strong>${data.discount || 'a special discount'}</strong>.</p><div class="promo-code">${data.code || 'MOBI2026'}</div><p>Valid until: ${data.expiryDate || 'Limited time'}</p><div><a href="https://mobirides.com/cars" style="display: inline-block; background: #d53f8c; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px;">Book Now</a></div></div><div class="footer"><p>MobiRides Rewards Team</p></div></div></body></html>`
-  },
-
-  'system-notification': {
-    subject: (data: EmailTemplateData) => String(data.subject || '📢 Important Update from MobiRides'),
-    html: (data: EmailTemplateData) => `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.subject || 'MobiRides Notification'}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;background-color:#f8fafc}.container{max-width:600px;margin:0 auto;background-color:white}.header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-bottom:4px solid #E2EE0D;padding:40px 20px;text-align:center}.header h1{color:white;margin:0 0 8px 0;font-size:26px;font-weight:700}.badge{display:inline-block;background:#E2EE0D;color:#1a1a2e;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}.content{padding:40px 30px}.message-body{font-size:16px;color:#2d3748;line-height:1.8;white-space:pre-line}.cta-section{text-align:center;margin:35px 0}.cta-button{display:inline-block;background:#E2EE0D;color:#1a1a2e;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:700;font-size:15px}.footer{background-color:#2d3748;color:#a0aec0;padding:25px 30px;text-align:center;font-size:13px}.footer a{color:#E2EE0D;text-decoration:none}.divider{height:1px;background:#e2e8f0;margin:30px 0}</style></head><body><div class="container"><div class="header"><div class="badge">📢 System Announcement</div><h1>${data.subject || 'Important Update'}</h1></div><div class="content"><div class="message-body">${data.message || ''}</div>${data.cta_url ? `<div class="cta-section"><a href="${data.cta_url}" class="cta-button">${data.cta_text || 'Learn More'}</a></div>` : ''}<div class="divider"></div><p style="color:#718096;font-size:13px;text-align:center;">You're receiving this because you're a valued MobiRides member.</p></div><div class="footer"><p>MobiRides | <a href="https://mobirides.com">www.mobirides.com</a></p><p style="margin:5px 0 0"><a href="https://mobirides.com/settings/notifications">Manage Notifications</a></p></div></div></body></html>`
   },
 };
 
