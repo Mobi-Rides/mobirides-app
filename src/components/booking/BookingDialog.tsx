@@ -485,7 +485,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       if (renterProfile) {
         try {
           // Send email to renter
-          await emailService.sendBookingConfirmation(
+          await emailService.sendBookingRequestReceivedEmail(
             {
               id: session.session.user.id,
               email: session.session.user.email,
@@ -607,12 +607,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         totalPrice: totalPrice,
       });
 
-      if (booking.status === 'awaiting_payment' || booking.status === 'pending') {
-         navigate(`/rental-details/${booking.id}?pay=true`);
-         handleDialogClose();
-      } else {
-         setIsSuccessModalOpen(true);
-      }
+      setIsSuccessModalOpen(true);
     } catch (error) {
       if (!mountedRef.current) return;
 

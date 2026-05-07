@@ -40,6 +40,8 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
         return <Badge variant="success" className="bg-green-100 text-green-800 flex items-center gap-1"><Check className="h-3 w-3" /> Confirmed</Badge>;
       case "cancelled":
         return <Badge variant="destructive" className="flex items-center gap-1"><X className="h-3 w-3" /> Cancelled</Badge>;
+      case "awaiting_payment":
+        return <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center gap-1 animate-pulse border-amber-200"><Clock className="h-3 w-3" /> Awaiting Payment</Badge>;
       case "completed":
         return <Badge variant="default" className="flex items-center gap-1"><Check className="h-3 w-3" /> Completed</Badge>;
       default:
@@ -87,13 +89,25 @@ export const BookingRow = ({ booking, onCancelBooking }: BookingRowProps) => {
       </TableCell>
       <TableCell>
         <div className="flex items-center justify-end gap-2">
-          {booking.status === "pending" && (
+          {(booking.status === "pending" || booking.status === "awaiting_payment") && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleCancelClick}
             >
               Cancel
+            </Button>
+          )}
+          {booking.status === "awaiting_payment" && (
+            <Button
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/rental-details/${booking.id}?pay=true`);
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold"
+            >
+              Pay Now
             </Button>
           )}
           <TooltipProvider>

@@ -223,9 +223,14 @@ export class ResendEmailService {
 
     const templateData = {
       name: recipient.name,
+      customerName: recipient.name, // For template compatibility
       bookingReference: bookingData.bookingReference,
       carBrand: bookingData.carBrand,
       carModel: bookingData.carModel,
+      pickupDate: bookingData.pickupDate,
+      pickupTime: bookingData.pickupTime,
+      pickupLocation: bookingData.pickupLocation,
+      dropoffLocation: bookingData.dropoffLocation,
       totalAmount: bookingData.totalAmount,
       hostName: bookingData.hostName,
       carImage: bookingData.carImage || '',
@@ -237,6 +242,36 @@ export class ResendEmailService {
       'awaiting-payment',
       templateData,
       `Action Required: Your Booking is Approved! Pay Now to Confirm`
+    );
+  }
+
+  /**
+   * Send booking request received email to renter
+   */
+  async sendBookingRequestReceivedEmail(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      customerName: recipient.name,
+      bookingReference: bookingData.bookingReference,
+      carBrand: bookingData.carBrand,
+      carModel: bookingData.carModel,
+      pickupDate: bookingData.pickupDate,
+      endDate: bookingData.dropoffDate || bookingData.endDate, // Use whichever is available
+      bookings_url: `https://app.mobirides.com/renter-bookings`
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'booking-request-received',
+      templateData,
+      `📋 Booking Request Sent — Awaiting Host Approval`
     );
   }
 

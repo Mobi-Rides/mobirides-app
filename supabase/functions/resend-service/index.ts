@@ -684,6 +684,89 @@ const EMAIL_TEMPLATES = {
     </div>
 </body>
 </html>
+    `,
+  'booking-request-received': {
+    subject: (data: EmailTemplateData) => `📋 Booking Request Sent — Awaiting Host Approval #${data.bookingReference?.split('-')[0].toUpperCase() || ''}`,
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Request Received - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); padding: 40px 20px; text-align: center; color: white; }
+        .content { padding: 40px 30px; color: #4a5568; line-height: 1.6; }
+        .booking-card { background-color: #f7fafc; border-radius: 12px; padding: 25px; margin: 25px 0; border: 1px solid #edf2f7; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); color: white !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; font-size: 14px; }
+        .step { display: flex; margin-bottom: 20px; }
+        .step-number { background-color: #3182ce; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 15px; flex-shrink: 0; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #edf2f7; padding-bottom: 10px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">Request Submitted! 📋</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">We've sent your request to the host</p>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; color: #2d3748; margin-top: 0;">Hi ${data.name || 'there'},</p>
+            <p>Good news! Your booking request for the <strong>${data.carBrand || ''} ${data.carModel || ''}</strong> has been successfully submitted and sent to the host for review.</p>
+            
+            <div class="booking-card">
+                <h3 style="color: #2d3748; margin: 0 0 20px 0;">📅 Request Summary</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Booking Reference:</span>
+                    <span style="color: #2d3748; font-weight: 600;">#${data.bookingReference?.split('-')[0].toUpperCase() || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Pickup:</span>
+                    <span>${data.pickupDate || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Return:</span>
+                    <span>${data.endDate || data.dropoffDate || 'N/A'}</span>
+                </div>
+            </div>
+
+            <h3 style="color: #2d3748;">🚀 What Happens Next?</h3>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div><strong>Host Review:</strong> The host will review your request. Most hosts respond within 2 hours.</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div><strong>Approval Notification:</strong> You'll receive an email and app notification once the host approves.</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div><strong>Payment:</strong> After approval, you'll have 24 hours to complete payment and secure your booking.</div>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="${data.bookings_url || 'https://app.mobirides.com/renter-bookings'}" class="cta-button">View My Bookings</a>
+            </div>
+
+            <div style="background-color: #ebf8ff; padding: 20px; border-radius: 12px; margin-top: 30px; border-left: 4px solid #3182ce;">
+                <p style="margin: 0; font-size: 14px; color: #2c5282;">
+                    <strong>Note:</strong> This is not a confirmed booking yet. Your payment is only required <em>after</em> the host approves your request.
+                </p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support | <a href="mailto:support@mobirides.com" style="color: #63b3ed; text-decoration: none;">support@mobirides.com</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">
+                MobiRides, Gaborone, Botswana
+            </p>
+        </div>
+    </div>
+</body>
+</html>
     `
   },
   'awaiting-payment': {

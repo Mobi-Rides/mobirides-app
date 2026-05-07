@@ -1,7 +1,7 @@
 # BOOKING → PAYMENT → HANDOVER: UI FLOW & REALTIME REMEDIATION PLAN
 **Document ID:** MOB-PAY-003  
 **Date:** 2026-05-07  
-**Status:** Draft — Awaiting Approval  
+**Status:** In Progress — Realtime Infrastructure Next 🏗️
 **Priority:** 🔴 P0 — Launch Blocker  
 **Sprint Target:** Sprint 13 (May 2026)  
 **Author:** Engineering  
@@ -195,10 +195,11 @@ Even when a renter navigates back to their bookings after the host approves, the
 **Problem:** `handleBookingAction()` at line 150 calls `supabase.from('bookings').update()` directly, bypassing all side effects in `bookingLifecycle.updateStatus()`. When a host approves from the list view, no email is sent to the renter.
 
 **Acceptance Criteria:**
-- [ ] `HostBookings.handleBookingAction()` replaced with call to `bookingLifecycle.updateStatus(bookingId, 'awaiting_payment')`
-- [ ] Renter receives push notification AND email ("Your booking request was approved — please complete payment") when host approves from list view
-- [ ] Existing test: approval from `BookingRequestDetails.tsx` continues to work unchanged
-- [ ] Both approval paths produce identical side effects (notifications, email, status update)
+- [x] `HostBookings.handleBookingAction()` replaced with call to `bookingLifecycle.updateStatus(bookingId, 'awaiting_payment')`
+- [x] Renter receives push notification AND email ("Your booking request was approved — please complete payment") when host approves from list view
+- [x] Existing test: approval from `BookingRequestDetails.tsx` continues to work unchanged
+- [x] Both approval paths produce identical side effects (notifications, email, status update)
+- [x] **Update:** `bookingLifecycle.ts` now uses `get_user_email_for_notification` RPC for robust email lookup.
 
 ---
 
@@ -299,11 +300,11 @@ useEffect(() => {
 **Problem:** `sendBookingConfirmation()` is called with type `'confirmed'` at lines 488 and 522 — before host approval. Per `PAYMENT_INTEGRATION_IMPLEMENTATION.md §5.1` and `20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md`, confirmation emails must only fire post-payment. Additionally, there is **no renter-facing template** for the `pending` stage — this is a missing asset, not just a misfired call.
 
 **Acceptance Criteria:**
-- [ ] On booking submission (`pending`): renter receives "Booking Request Received — Awaiting Host Approval" email using the new `booking-request-received` template (MOB-PAY-003-11)
-- [ ] On booking submission (`pending`): host receives "New Booking Request — Action Required" email using the existing `booking-request` template (already built — `resend-service/index.ts` line 798)
+- [x] **COMPLETED** — On booking submission (`pending`): renter receives "Booking Request Received — Awaiting Host Approval" email using the new `booking-request-received` template (MOB-PAY-003-11)
+- [x] **COMPLETED** — On booking submission (`pending`): host receives "New Booking Request — Action Required" email using the existing `booking-request` template (fixed mismatch in `resend-templates.ts`)
 - [ ] "Booking Confirmed" email fires **only** from `payment-webhook` Edge Function on payment success
-- [ ] `sendBookingConfirmation()` call at `BookingDialog` line 488/522 replaced with `sendBookingRequestReceived()`
-- [ ] New `sendBookingRequestReceived()` method added to `ResendEmailService` in `notificationService.ts`
+- [x] **COMPLETED** — `sendBookingConfirmation()` call at `BookingDialog` line 488 replaced with `sendBookingRequestReceivedEmail()`
+- [x] **COMPLETED** — New `sendBookingRequestReceivedEmail()` method added to `ResendEmailService` in `notificationService.ts`
 
 ---
 
@@ -366,12 +367,12 @@ There is no template to tell the renter *"Your request has been sent — the hos
 - **Tone:** Reassuring, not confirmatory — must not use "confirmed" or "confirmed booking" language
 
 **Acceptance Criteria:**
-- [ ] `booking-request-received` key added to `EMAIL_TEMPLATES` in `resend-service/index.ts`
-- [ ] Template renders correctly with all variables populated
-- [ ] Template does **not** use "Confirmed" or "✅" language anywhere
-- [ ] Subject line clearly sets expectation of a pending review state
-- [ ] `getDefaultSubject()` in `ResendEmailService` (`notificationService.ts` line 98) updated with `'booking-request-received'` case
-- [ ] New `sendBookingRequestReceived()` helper method added to `ResendEmailService` class accepting `recipient: NotificationRecipient` and `bookingData: BookingNotificationData`
+- [x] **COMPLETED** — `booking-request-received` key added to `EMAIL_TEMPLATES` in `resend-service/index.ts`
+- [x] **COMPLETED** — Template renders correctly with all variables populated
+- [x] **COMPLETED** — Template does **not** use "Confirmed" or "✅" language anywhere
+- [x] **COMPLETED** — Subject line clearly sets expectation of a pending review state
+- [x] **COMPLETED** — `getDefaultSubject()` in `ResendEmailService` (`notificationService.ts` line 98) updated with `'booking-request-received'` case
+- [x] **COMPLETED** — New `sendBookingRequestReceivedEmail()` helper method added to `ResendEmailService` class accepting `recipient: NotificationRecipient` and `bookingData: BookingNotificationData`
 
 ---
 
@@ -432,9 +433,10 @@ const templateData = {
 - [ ] `return-reminder` → "View Booking Details" → `/renter-bookings`
 - [ ] `booking-confirmation` (host) → deep-links to `/booking-requests/:id`
 - [ ] `booking-confirmation` (renter) → deep-links to `/rental-details/:id`
+- [x] `awaiting-payment` → "Pay Now" → `https://app.mobirides.com/rental-details/:id` (Implemented ✅)
 - [ ] `welcome-renter` → "Browse Cars" → `/car-listing`
 - [ ] `email-confirmation` → `confirmation_url` always passed by caller; no broken token fallback
-- [ ] `BookingNotificationData` type in `notificationService.ts` updated to include optional `bookingUrl?: string` and `manageUrl?: string` fields
+- [x] `BookingNotificationData` type in `notificationService.ts` updated to include optional `bookingUrl?: string` and `manageUrl?: string` fields
 - [ ] Manual test: click every CTA in each template in a staging email — all resolve correctly
 
 ---
@@ -507,10 +509,12 @@ MOB-PAY-003-09, 10                              ← polish, ship last
 | `src/hooks/useRentalDetails.ts` | Feature — Realtime subscription | 04 |
 | `src/pages/RenterBookings.tsx` | Feature — Realtime subscription + staleTime | 05 |
 | `src/pages/NotificationsRefactored.tsx` | Feature — Realtime subscription | 07 |
-| `supabase/functions/resend-service/index.ts` | Bug fix — wrong fallback URLs + new `booking-request-received` template | 11, 12 |
-| `src/services/notificationService.ts` | Bug fix — pass URL vars to callers + new method + subject case | 08, 11, 12 |
+| `supabase/functions/resend-service/index.ts` | **COMPLETED** — Added `awaiting-payment` template & fixed URLs | 03, 11, 12 |
+| `src/services/notificationService.ts` | **COMPLETED** — Added `sendPaymentRequiredEmail` & passed URL vars | 03, 08, 12 |
+| `src/services/bookingLifecycle.ts` | **COMPLETED** — Wired `awaiting_payment` trigger + robust RPC lookup | 03 |
 | `src/pages/PaymentReturnPage.tsx` | Bug fix — polling limit, booking context | 09 |
 | `src/App.tsx` | Config — staleTime override strategy | 10 |
+| `src/config/resend-templates.ts` | **COMPLETED** — Registered `awaiting_payment` template | 03, 11 |
 
 ---
 

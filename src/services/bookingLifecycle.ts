@@ -11,10 +11,17 @@ export interface BookingData {
   renter_id: string;
   status: string;
   total_price: number;
+  start_date: string;
+  end_date: string;
   cars: {
     brand: string;
     model: string;
     owner_id: string;
+    image_url?: string | null;
+    location?: string;
+    owner?: {
+      full_name: string | null;
+    };
   };
 }
 
@@ -34,10 +41,17 @@ export const bookingLifecycle = {
           renter_id, 
           status,
           total_price,
+          start_date,
+          end_date,
           cars (
             brand,
             model,
-            owner_id
+            owner_id,
+            image_url,
+            location,
+            owner:profiles!owner_id (
+              full_name
+            )
           )
         `)
         .eq('id', bookingId)
@@ -109,23 +123,38 @@ export const bookingLifecycle = {
   }
 };
 
-// Helper function to get user email from auth.users
+// Helper function to get user email and profile info
 async function getUserEmail(userId: string): Promise<{ email?: string; name?: string } | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', userId)
-    .single();
+  try {
+    // Get name from profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single();
 
-  if (error || !data) return null;
-  
-  // Get email from auth.users
-  const { data: authData } = await supabase.auth.admin.getUserById(userId);
-  
-  return {
-    email: authData?.user?.email,
-    name: data.full_name
-  };
+    if (profileError) {
+      console.error("[BookingLifecycle] Error fetching profile for email:", profileError);
+    }
+    
+    // Use the safe RPC function to get email from auth.users
+    const { data: emailData, error: emailError } = await supabase.rpc('get_user_email_for_notification', {
+      user_uuid: userId
+    });
+    
+    if (emailError) {
+      console.error("[BookingLifecycle] Error fetching user email via RPC:", emailError);
+      return null;
+    }
+    
+    return {
+      email: emailData as string,
+      name: profileData?.full_name || undefined
+    };
+  } catch (error) {
+    console.error("[BookingLifecycle] Unhandled error in getUserEmail:", error);
+    return null;
+  }
 }
 
 async function handleSideEffects(booking: BookingData, newStatus: BookingStatus) {
@@ -141,7 +170,39 @@ async function handleSideEffects(booking: BookingData, newStatus: BookingStatus)
         carModel: car.model,
         bookingReference: booking.id
       });
-      // TODO: Add email notification once email lookup is implemented
+
+      // Trigger payment required email
+      try {
+        const renter = await getUserEmail(booking.renter_id);
+        if (renter?.email) {
+          await emailService.sendPaymentRequiredEmail(
+            { 
+              id: booking.renter_id, 
+              email: renter.email, 
+              name: renter.name || 'Valued Customer' 
+            },
+            {
+              bookingId: booking.id,
+              customerName: renter.name || 'Valued Customer',
+              hostName: booking.cars?.owner?.full_name || 'Your Host',
+              carBrand: car.brand,
+              carModel: car.model,
+              pickupDate: booking.start_date || '',
+              pickupTime: '', // Time not directly in top-level fetch
+              pickupLocation: car.location || '',
+              dropoffLocation: car.location || '',
+              totalAmount: booking.total_price,
+              bookingReference: booking.id.split('-')[0].toUpperCase(),
+              carImage: car.image_url || ''
+            }
+          );
+          console.log(`[BookingLifecycle] Payment notification email sent to ${renter.email}`);
+        } else {
+          console.warn(`[BookingLifecycle] Could not send payment email: Renter email not found for ${booking.renter_id}`);
+        }
+      } catch (e) {
+        console.error("[BookingLifecycle] Failed to send payment required email:", e);
+      }
       break;
 
     case 'confirmed':
