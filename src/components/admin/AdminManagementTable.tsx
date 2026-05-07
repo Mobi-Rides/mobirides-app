@@ -50,7 +50,17 @@ const useAdmins = () => {
       if (roleError) throw roleError;
       if (!roleData?.length) return [];
 
-      const userIds = roleData.map(d => d.user_id);
+      // Deduplicate by user_id, preferring super_admin over admin
+      const seen = new Map<string, typeof roleData[0]>();
+      for (const row of roleData) {
+        const existing = seen.get(row.user_id);
+        if (!existing || row.role === "super_admin") {
+          seen.set(row.user_id, row);
+        }
+      }
+      const dedupedRoleData = Array.from(seen.values());
+
+      const userIds = dedupedRoleData.map(d => d.user_id);
 
       // Enrich with full_name from profiles
       const { data: profileData } = await supabase
@@ -67,7 +77,7 @@ const useAdmins = () => {
       const profileMap = new Map((profileData || []).map(p => [p.id, p]));
       const adminMap = new Map((adminData || []).map(a => [a.id, a]));
 
-      return roleData.map(d => ({
+      return dedupedRoleData.map(d => ({
         id: d.user_id,
         email: adminMap.get(d.user_id)?.email ?? "—",
         full_name: profileMap.get(d.user_id)?.full_name || null,
