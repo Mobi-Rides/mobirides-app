@@ -686,6 +686,86 @@ const EMAIL_TEMPLATES = {
 </html>
     `
   },
+  'awaiting-payment': {
+    subject: '🚗 Action Required: Your Booking is Approved! Pay Now to Confirm',
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Required - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #e2e8f0; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .booking-details { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #667eea; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .car-info { background-color: #f7fafc; padding: 20px; border-radius: 12px; margin: 30px 0; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white !important; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; margin: 20px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); text-align: center; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Booking Approved!</h1>
+            <p>Complete your payment to secure your rental</p>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; color: #2d3748; line-height: 1.6;">
+                Hi ${data.name || 'there'},<br><br>
+                Great news! Your booking request for <strong>${data.carBrand || ''} ${data.carModel || ''}</strong> has been approved by the host. 
+                To finalize your booking and secure the vehicle, please complete the payment using the link below.
+            </p>
+
+            <div style="text-align: center;">
+                <a href="${data.actionUrl}" class="cta-button">💳 Pay Now to Confirm</a>
+            </div>
+
+            <div class="booking-details">
+                <h3 style="color: #2d3748; margin: 0 0 20px 0;">📅 Booking Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Booking Reference:</span>
+                    <span class="detail-value">${data.bookingReference || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Total Amount:</span>
+                    <span class="detail-value">P${data.totalAmount || 'N/A'}</span>
+                </div>
+            </div>
+
+            <div class="car-info">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">🚗 Your Vehicle</h3>
+                <div style="display: flex; align-items: center;">
+                    ${data.carImage ? `<img src="${data.carImage}" alt="${data.carBrand} ${data.carModel}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">` : ''}
+                    <div>
+                        <div style="font-weight: 600; color: #2d3748; font-size: 18px;">${data.carBrand || ''} ${data.carModel || ''}</div>
+                        <div style="color: #4a5568;">Hosted by ${data.hostName || 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <p style="font-size: 14px; color: #e53e3e; text-align: center; margin-top: 20px;">
+                <strong>Note:</strong> Please complete payment within 24 hours to avoid cancellation.
+            </p>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support</p>
+            <p style="font-size: 12px; color: #718096;">
+                MobiRides, Gaborone, Botswana
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
   'insurance-policy-confirmation': {
     subject: (data: EmailTemplateData) => `✅ Insurance Policy Issued #${data.policyNumber || ''}`,
 

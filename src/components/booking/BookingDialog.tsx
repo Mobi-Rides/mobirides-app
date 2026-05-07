@@ -592,26 +592,27 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
             ? notificationError.message
             : JSON.stringify(notificationError, null, 2),
         );
-      }
-
       if (!mountedRef.current) return;
 
       console.log(
-        "[BookingDialog] Booking flow completed successfully, showing success modal...",
+        "[BookingDialog] Booking flow completed successfully, redirecting to payment...",
       );
 
-      // Set success modal data
       setSuccessBookingData({
         id: booking.id,
         carBrand: car.brand,
         carModel: car.model,
-        startDate: format(startDate, "PPP"),
-        endDate: format(endDate, "PPP"),
+        startDate: format(startDate, "PP"),
+        endDate: format(endDate, "PP"),
         totalPrice: totalPrice,
       });
 
-      onClose();
-      setIsSuccessModalOpen(true);
+      if (booking.status === 'awaiting_payment' || booking.status === 'pending') {
+         navigate(`/rental-details/${booking.id}?pay=true`);
+         handleDialogClose();
+      } else {
+         setIsSuccessModalOpen(true);
+      }
     } catch (error) {
       if (!mountedRef.current) return;
 

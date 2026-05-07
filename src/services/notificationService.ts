@@ -101,6 +101,8 @@ export class ResendEmailService {
         return 'Booking Confirmation - MobiRides';
       case 'booking-request':
         return 'New Booking Request - Action Required';
+      case 'awaiting-payment':
+        return 'Action Required: Your Booking is Approved! Pay Now to Confirm';
       case 'pickup-reminder':
         return 'Reminder: Your rental starts soon';
       case 'return-reminder':
@@ -206,6 +208,36 @@ export class ResendEmailService {
       : `Booking Confirmed - ${bookingData.carBrand} ${bookingData.carModel}`;
 
     return this.sendEmail(recipient.email, templateKey, templateData, subject);
+  }
+
+  /**
+   * Send payment required email when booking is approved
+   */
+  async sendPaymentRequiredEmail(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      bookingReference: bookingData.bookingReference,
+      carBrand: bookingData.carBrand,
+      carModel: bookingData.carModel,
+      totalAmount: bookingData.totalAmount,
+      hostName: bookingData.hostName,
+      carImage: bookingData.carImage || '',
+      actionUrl: `https://app.mobirides.com/rental-details/${bookingData.bookingId}`
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'awaiting-payment',
+      templateData,
+      `Action Required: Your Booking is Approved! Pay Now to Confirm`
+    );
   }
 
   /**

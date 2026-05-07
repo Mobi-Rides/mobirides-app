@@ -14,6 +14,7 @@ export type ResendTemplateKey =
   | 'booking_cancelled'
   | 'payment_received'
   | 'payment_failed'
+  | 'awaiting_payment'
   | 'wallet_topup'
   | 'handover_ready'
   | 'rental_reminder'
@@ -182,6 +183,12 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     subject: '⚠️ Claim Filed - {{carName}} #{{claimNumber}}',
 
     description: 'Sent to car owners when a claim is filed on their vehicle'
+  },
+  awaiting_payment: {
+    id: 'awaiting-payment',
+    name: 'Payment Required',
+    subject: '🚗 Action Required: Your Booking is Approved! Pay Now to Confirm',
+    description: 'Sent when a booking request is approved and payment is required'
   }
 };
 
