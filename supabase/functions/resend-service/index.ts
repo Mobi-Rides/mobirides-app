@@ -116,8 +116,8 @@ const EMAIL_TEMPLATES = {
             </div>
             
             <div class="cta-section">
-                <a href="${data.browse_cars_url || 'https://mobirides.com/cars'}" class="cta-button">🔍 Browse Available Cars</a>
-                <a href="${data.profile_url || 'https://mobirides.com/profile'}" class="cta-button secondary-button">✏️ Complete Your Profile</a>
+                <a href="${data.browse_cars_url || 'https://app.mobirides.com/car-listing'}" class="cta-button">🔍 Browse Available Cars</a>
+                <a href="${data.profile_url || 'https://app.mobirides.com/profile'}" class="cta-button secondary-button">✏️ Complete Your Profile</a>
             </div>
             
             <div class="next-steps">
@@ -139,7 +139,7 @@ const EMAIL_TEMPLATES = {
             <div class="community-section">
                 <h3>🌟 Join Our Community</h3>
                 <p>Connect with thousands of car-sharing enthusiasts across Botswana. Share tips, discover hidden gems, and make new friends!</p>
-                <a href="${data.community_url || 'https://mobirides.com/community'}" class="cta-button" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">Join Community</a>
+                <a href="${data.community_url || 'https://app.mobirides.com/'}" class="cta-button" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">Join Community</a>
             </div>
             
             <div style="text-align: center; margin: 40px 0; padding: 20px; border: 2px dashed #e2e8f0; border-radius: 12px;">
@@ -153,8 +153,8 @@ const EMAIL_TEMPLATES = {
             <p>Need help getting started? We're here for you!</p>
             <p>
                 📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a> | 
-                📚 <a href="${data.help_center_url || 'https://mobirides.com/help'}">Help Center</a> | 
-                🌐 <a href="${data.app_url || 'https://mobirides.com'}">Visit Website</a>
+                📚 <a href="${data.help_center_url || 'https://app.mobirides.com/help'}">Help Center</a> | 
+                🌐 <a href="${data.app_url || 'https://app.mobirides.com'}">Visit Website</a>
             </p>
             
             <div class="social-links">
@@ -215,7 +215,7 @@ const EMAIL_TEMPLATES = {
             </div>
             
             <div style="text-align: center; margin: 40px 0;">
-                <a href="${data.app_url || 'https://mobirides.com'}" class="cta-button">🚗 List Your Car Now</a>
+                <a href="${data.app_url || 'https://app.mobirides.com'}" class="cta-button">🚗 List Your Car Now</a>
             </div>
         </div>
         
@@ -295,7 +295,7 @@ const EMAIL_TEMPLATES = {
             <p>Need help? We're here for you!</p>
             <p>
                 📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a> |
-                🌐 <a href="${data.app_url || 'https://mobirides.com'}">Visit Website</a>
+                🌐 <a href="${data.app_url || 'https://app.mobirides.com'}">Visit Website</a>
             </p>
 
             <p style="font-size: 12px; color: #718096; margin-top: 20px;">
@@ -341,7 +341,7 @@ const EMAIL_TEMPLATES = {
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.actionUrl || 'https://mobirides.com/dashboard'}" class="cta-button">Get Started</a>
+                <a href="${data.actionUrl || 'https://app.mobirides.com/dashboard'}" class="cta-button">Get Started</a>
             </div>
         </div>
         <div class="footer">
@@ -393,7 +393,7 @@ const EMAIL_TEMPLATES = {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.dashboardUrl || 'https://mobirides.com/dashboard'}" class="cta-button">Go to Dashboard</a>
+                <a href="${data.dashboardUrl || 'https://app.mobirides.com/dashboard'}" class="cta-button">Go to Dashboard</a>
             </div>
         </div>
         <div class="footer">
@@ -445,7 +445,7 @@ const EMAIL_TEMPLATES = {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.verificationUrl || 'https://mobirides.com/profile/verification'}" class="cta-button">Update Verification Documents</a>
+                <a href="${data.verificationUrl || 'https://app.mobirides.com/profile'}" class="cta-button">Update Verification Documents</a>
             </div>
         </div>
         <div class="footer">
@@ -495,7 +495,7 @@ const EMAIL_TEMPLATES = {
             <p style="text-align: center; color: #2d3748; font-weight: bold;">New Balance: P${data.newBalance || '0.00'}</p>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.walletUrl || 'https://mobirides.com/wallet'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Wallet</a>
+                <a href="${data.walletUrl || 'https://app.mobirides.com/wallet'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Wallet</a>
             </div>
         </div>
         <div class="footer">
@@ -623,7 +623,7 @@ const EMAIL_TEMPLATES = {
             <div class="car-info">
                 <h3 style="color: #2d3748; margin: 0 0 15px 0;">🚗 Your Vehicle</h3>
                 <div style="display: flex; align-items: center;">
-                    ${data.carImage ? `<img src="${data.carImage}" alt="${data.carBrand} ${data.carModel}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">` : ''}
+                    ${data.carImage ? '<img src="' + data.carImage + '" alt="' + data.carBrand + ' ' + data.carModel + '" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">' : ''}
                     <div>
                         <div style="font-weight: 600; color: #2d3748; font-size: 18px;">${data.carBrand || 'N/A'} ${data.carModel || 'N/A'}</div>
                         <div style="color: #4a5568;">Hosted by ${data.hostName || 'N/A'}</div>
@@ -652,8 +652,8 @@ const EMAIL_TEMPLATES = {
             </div>
 
             <div style="text-align: center; margin: 40px 0;">
-                <a href="${data.app_url || 'https://mobirides.com/app'}" class="cta-button">📱 Download App</a>
-                <a href="${data.support_url || 'https://mobirides.com/support'}" class="cta-button" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);">📞 Contact Support</a>
+                <a href="${data.app_url || 'https://app.mobirides.com'}" class="cta-button">📱 Download App</a>
+                <a href="${data.support_url || 'https://app.mobirides.com/help'}" class="cta-button" style="background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);">📞 Contact Support</a>
             </div>
 
             <div style="background-color: #fef5e7; padding: 20px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #ed8936;">
@@ -673,11 +673,175 @@ const EMAIL_TEMPLATES = {
             <p>
                 📧 <a href="mailto:${data.support_email || 'support@mobirides.com'}">Contact Support</a> |
                 📱 <a href="${data.whatsapp_url || 'https://wa.me/2671234567'}">WhatsApp Support</a> |
-                🌐 <a href="${data.app_url || 'https://mobirides.com'}">Visit Website</a>
+                🌐 <a href="${data.app_url || 'https://app.mobirides.com'}">Visit Website</a>
             </p>
 
             <p style="font-size: 12px; color: #718096; margin-top: 20px;">
                 You're receiving this email because you booked a vehicle on MobiRides.<br>
+                MobiRides, Gaborone, Botswana
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
+  'booking-request-received': {
+    subject: (data: EmailTemplateData) => `📋 Booking Request Sent — Awaiting Host Approval #${data.bookingReference?.split('-')[0].toUpperCase() || ''}`,
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Request Received - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); padding: 40px 20px; text-align: center; color: white; }
+        .content { padding: 40px 30px; color: #4a5568; line-height: 1.6; }
+        .booking-card { background-color: #f7fafc; border-radius: 12px; padding: 25px; margin: 25px 0; border: 1px solid #edf2f7; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); color: white !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; font-size: 14px; }
+        .step { display: flex; margin-bottom: 20px; }
+        .step-number { background-color: #3182ce; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 15px; flex-shrink: 0; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #edf2f7; padding-bottom: 10px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">Request Submitted! 📋</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">We've sent your request to the host</p>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; color: #2d3748; margin-top: 0;">Hi ${data.name || 'there'},</p>
+            <p>Good news! Your booking request for the <strong>${data.carBrand || ''} ${data.carModel || ''}</strong> has been successfully submitted and sent to the host for review.</p>
+            
+            <div class="booking-card">
+                <h3 style="color: #2d3748; margin: 0 0 20px 0;">📅 Request Summary</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Booking Reference:</span>
+                    <span style="color: #2d3748; font-weight: 600;">#${data.bookingReference?.split('-')[0].toUpperCase() || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Pickup:</span>
+                    <span>${data.pickupDate || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Return:</span>
+                    <span>${data.endDate || data.dropoffDate || 'N/A'}</span>
+                </div>
+            </div>
+
+            <h3 style="color: #2d3748;">🚀 What Happens Next?</h3>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div><strong>Host Review:</strong> The host will review your request. Most hosts respond within 2 hours.</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div><strong>Approval Notification:</strong> You'll receive an email and app notification once the host approves.</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div><strong>Payment:</strong> After approval, you'll have 24 hours to complete payment and secure your booking.</div>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="${data.bookings_url || 'https://app.mobirides.com/renter-bookings'}" class="cta-button">View My Bookings</a>
+            </div>
+
+            <div style="background-color: #ebf8ff; padding: 20px; border-radius: 12px; margin-top: 30px; border-left: 4px solid #3182ce;">
+                <p style="margin: 0; font-size: 14px; color: #2c5282;">
+                    <strong>Note:</strong> This is not a confirmed booking yet. Your payment is only required <em>after</em> the host approves your request.
+                </p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support | <a href="mailto:support@mobirides.com" style="color: #63b3ed; text-decoration: none;">support@mobirides.com</a></p>
+            <p style="font-size: 12px; color: #718096; margin-top: 20px;">
+                MobiRides, Gaborone, Botswana
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  },
+  'awaiting-payment': {
+    subject: '🚗 Action Required: Your Booking is Approved! Pay Now to Confirm',
+    html: (data: EmailTemplateData) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Required - MobiRides</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
+        .header p { color: #e2e8f0; margin: 10px 0 0 0; font-size: 16px; }
+        .content { padding: 40px 30px; }
+        .booking-details { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); padding: 25px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #667eea; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .detail-label { font-weight: 600; color: #2d3748; }
+        .detail-value { color: #4a5568; }
+        .car-info { background-color: #f7fafc; padding: 20px; border-radius: 12px; margin: 30px 0; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white !important; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; margin: 20px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); text-align: center; }
+        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Booking Approved!</h1>
+            <p>Complete your payment to secure your rental</p>
+        </div>
+        <div class="content">
+            <p style="font-size: 18px; color: #2d3748; line-height: 1.6;">
+                Hi ${data.name || 'there'},<br><br>
+                Great news! Your booking request for <strong>${data.carBrand || ''} ${data.carModel || ''}</strong> has been approved by the host. 
+                To finalize your booking and secure the vehicle, please complete the payment using the link below.
+            </p>
+
+            <div style="text-align: center;">
+                <a href="${data.actionUrl}" class="cta-button">💳 Pay Now to Confirm</a>
+            </div>
+
+            <div class="booking-details">
+                <h3 style="color: #2d3748; margin: 0 0 20px 0;">📅 Booking Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Booking Reference:</span>
+                    <span class="detail-value">${data.bookingReference || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Total Amount:</span>
+                    <span class="detail-value">P${data.totalAmount || 'N/A'}</span>
+                </div>
+            </div>
+
+            <div class="car-info">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">🚗 Your Vehicle</h3>
+                <div style="display: flex; align-items: center;">
+                    ${data.carImage ? '<img src="' + data.carImage + '" alt="' + data.carBrand + ' ' + data.carModel + '" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px;">' : ''}
+                    <div>
+                        <div style="font-weight: 600; color: #2d3748; font-size: 18px;">${data.carBrand || ''} ${data.carModel || ''}</div>
+                        <div style="color: #4a5568;">Hosted by ${data.hostName || 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <p style="font-size: 14px; color: #e53e3e; text-align: center; margin-top: 20px;">
+                <strong>Note:</strong> Please complete payment within 24 hours to avoid cancellation.
+            </p>
+        </div>
+        <div class="footer">
+            <p>MobiRides Support</p>
+            <p style="font-size: 12px; color: #718096;">
                 MobiRides, Gaborone, Botswana
             </p>
         </div>
@@ -704,7 +868,7 @@ const EMAIL_TEMPLATES = {
 <div class="row"><span class="label">Coverage Period:</span><span class="value">${data.startDate} – ${data.endDate}</span></div>
 <div class="row"><span class="label">Total Premium:</span><span class="value">BWP ${data.premiumAmount}</span></div>
 </div>
-${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${data.downloadLink}" class="btn">📄 Download Policy PDF</a></div>` : ''}
+${data.downloadLink ? '<div style="text-align:center;margin:30px 0"><a href="' + data.downloadLink + '" class="btn">📄 Download Policy PDF</a></div>' : ''}
 <div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936;margin-top:25px">
 <p style="color:#744210;margin:0;font-size:14px">To file a claim: MobiRides app → My Bookings → Insurance → File a Claim.</p>
 </div>
@@ -761,7 +925,7 @@ ${data.downloadLink ? `<div style="text-align:center;margin:30px 0"><a href="${d
 <div style="margin-bottom:14px"><span style="font-weight:600;color:#2d3748;font-size:14px">New Status: </span><span class="badge">${(data.newStatus || '').replace(/_/g, ' ')}</span></div>
 <div style="font-size:14px"><span style="font-weight:600;color:#2d3748">Updated: </span><span style="color:#4a5568">${data.updatedAt}</span></div>
 </div>
-${data.notes ? `<div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936"><p style="color:#744210;font-weight:600;margin:0 0 6px">Notes from our team:</p><p style="color:#975a16;margin:0;font-size:14px">${data.notes}</p></div>` : ''}
+${data.notes ? '<div style="background:#fef5e7;padding:18px;border-radius:10px;border-left:4px solid #ed8936"><p style="color:#744210;font-weight:600;margin:0 0 6px">Notes from our team:</p><p style="color:#975a16;margin:0;font-size:14px">' + data.notes + '</p></div>' : ''}
 </div>
 <div class="footer"><p>Questions? <a href="mailto:claims@mobirides.com">claims@mobirides.com</a></p></div>
 </div></body></html>`;
@@ -786,7 +950,7 @@ ${data.notes ? `<div style="background:#fef5e7;padding:18px;border-radius:10px;b
 <div class="row"><span class="label">Incident Date:</span><span class="value">${data.incidentDate}</span></div>
 <div class="row"><span class="label">Incident Type:</span><span class="value">${(data.incidentType || '').replace(/_/g, ' ')}</span></div>
 </div>
-${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:10px;margin-top:20px"><p style="color:#2d3748;font-weight:600;margin:0 0 8px;font-size:14px">Incident Description:</p><p style="color:#4a5568;margin:0;font-size:14px">${data.description}</p></div>` : ''}
+${data.description ? '<div style="background:#f7fafc;padding:18px;border-radius:10px;margin-top:20px"><p style="color:#2d3748;font-weight:600;margin:0 0 8px;font-size:14px">Incident Description:</p><p style="color:#4a5568;margin:0;font-size:14px">' + data.description + '</p></div>' : ''}
 <div style="background:#f0fff4;padding:18px;border-radius:10px;border-left:4px solid #38a169;margin-top:20px">
 <p style="color:#2d3748;margin:0;font-size:14px">Our claims team will handle this process. <strong>No action is required from you at this time.</strong></p>
 </div>
@@ -853,7 +1017,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Prepare vehicle for handover if accepted</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.manage_url || 'https://mobirides.com/host/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">✓ Review Booking Request</a>
+                <a href="${data.manage_url || 'https://app.mobirides.com/host-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">✓ Review Booking Request</a>
             </div>
         </div>
         <div class="footer">
@@ -904,9 +1068,9 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="alert-title">${data.notificationTitle || 'Notification Details'}</div>
                 <div class="alert-content">${data.notificationContent || ''}</div>
             </div>
-            ${data.action_url ? `<div style="text-align: center; margin: 30px 0;">
-                <a href="${data.action_url}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">${data.action_text || 'View Details'}</a>
-            </div>` : ''}
+            ${data.action_url ? '<div style="text-align: center; margin: 30px 0;">' +
+                '<a href="' + data.action_url + '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">' + (data.action_text || 'View Details') + '</a>' +
+            '</div>' : ''}
             <p style="color: #718096; font-size: 14px; margin-top: 30px;">This is an automated notification. Please do not reply to this email.</p>
         </div>
         <div class="footer">
@@ -955,11 +1119,11 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <p>Thank you for signing up for MobiRides. Please confirm your email address by clicking the button below:</p>
             </div>
             <div class="button-container">
-                <a href="${data.confirmation_url || 'https://mobirides.com/confirm-email?token=' + (data.token || '')}" class="confirm-button">✓ Confirm Email</a>
+                <a href="${data.confirmation_url || 'https://app.mobirides.com/confirm-email?token=' + (data.token || '')}" class="confirm-button">✓ Confirm Email</a>
             </div>
             <div class="fallback">
                 <p>Button not working? Copy and paste this link into your browser:</p>
-                <p style="word-break: break-all; font-size: 14px;">${data.confirmation_url || 'https://mobirides.com/confirm-email?token=' + (data.token || 'YOUR_TOKEN')}</p>
+                <p style="word-break: break-all; font-size: 14px;">${data.confirmation_url || 'https://app.mobirides.com/confirm-email?token=' + (data.token || 'YOUR_TOKEN')}</p>
             </div>
             <p style="color: #718096; font-size: 14px; margin-top: 30px;">If you didn't create an account with MobiRides, please ignore this email.</p>
         </div>
@@ -1025,7 +1189,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="feature-item"><span class="feature-icon">✓</span><span class="feature-text">Full insurance coverage</span></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.dashboard_url || 'https://mobirides.com/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">🚀 Go to Dashboard</a>
+                <a href="${data.dashboard_url || 'https://app.mobirides.com/dashboard'}" style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">🚀 Go to Dashboard</a>
             </div>
         </div>
         <div class="footer">
@@ -1091,7 +1255,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Remove personal belongings and check for items</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+                <a href="${data.booking_url || 'https://app.mobirides.com/renter-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
             </div>
         </div>
         <div class="footer">
@@ -1157,7 +1321,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Review the vehicle condition report</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+                <a href="${data.booking_url || 'https://app.mobirides.com/renter-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
             </div>
         </div>
         <div class="footer">
@@ -1223,7 +1387,7 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
                 <div class="step"><div class="step-number">3</div><div class="step-text">Payment method for security deposit</div></div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.booking_url || 'https://mobirides.com/dashboard/bookings'}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
+                <a href="${data.booking_url || 'https://app.mobirides.com/renter-bookings'}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">📋 View Booking Details</a>
             </div>
         </div>
         <div class="footer">
@@ -1818,50 +1982,6 @@ ${data.description ? `<div style="background:#f7fafc;padding:18px;border-radius:
     </style>
 </head><body><div class="container"><div class="header"><h1>🚗 Early Vehicle Return</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We've registered an early return for your rental <strong>${data.carName}</strong>.</p><p>Return Date: ${data.actualReturnDate}</p><p>Our team will process any necessary adjustments to your booking.</p></div><div class="footer"><p>MobiRides Support</p></div></div></body></html>`
   },
-
-  'wallet-notification': {
-    subject: '💳 Wallet Activity - MobiRides',
-    html: (data: EmailTemplateData) => `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet Notification - MobiRides</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 0 auto; background-color: white; }
-        .header { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); padding: 40px 20px; text-align: center; }
-        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
-        .content { padding: 40px 30px; }
-        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
-    </style>
-</head><body><div class="container"><div class="header"><h1>💳 Wallet Update</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>${data.message || 'There has been activity in your MobiRides wallet.'}</p><div style="background: #f0fff4; padding: 20px; border-radius: 12px; margin: 20px 0;"><strong>New Balance: P${data.balance}</strong></div></div><div class="footer"><p>MobiRides Wallet Services</p></div></div></body></html>`
-  },
-
-  'promo-notification': {
-    subject: '🎁 Exclusive Offer Just For You! - MobiRides',
-    html: (data: EmailTemplateData) => `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Promo Offer - MobiRides</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 0 auto; background-color: white; }
-        .header { background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%); padding: 40px 20px; text-align: center; }
-        .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 700; }
-        .content { padding: 40px 30px; text-align: center; }
-        .promo-code { display: inline-block; background: #fdf2f2; border: 2px dashed #f56565; padding: 15px 30px; border-radius: 8px; font-size: 24px; font-weight: 700; color: #c53030; margin: 25px 0; letter-spacing: 2px; }
-        .footer { background-color: #2d3748; color: #a0aec0; padding: 30px; text-align: center; }
-    </style>
-</head><body><div class="container"><div class="header"><h1>🎁 Surprise Inside!</h1></div><div class="content"><p>Hi ${data.name || 'there'},</p><p>We have a special treat for you! Use the code below on your next rental for <strong>${data.discount || 'a special discount'}</strong>.</p><div class="promo-code">${data.code || 'MOBI2026'}</div><p>Valid until: ${data.expiryDate || 'Limited time'}</p><div><a href="https://mobirides.com/cars" style="display: inline-block; background: #d53f8c; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px;">Book Now</a></div></div><div class="footer"><p>MobiRides Rewards Team</p></div></div></body></html>`
-  },
-
-  'system-notification': {
-    subject: (data: EmailTemplateData) => String(data.subject || '📢 Important Update from MobiRides'),
-    html: (data: EmailTemplateData) => `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.subject || 'MobiRides Notification'}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;background-color:#f8fafc}.container{max-width:600px;margin:0 auto;background-color:white}.header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-bottom:4px solid #E2EE0D;padding:40px 20px;text-align:center}.header h1{color:white;margin:0 0 8px 0;font-size:26px;font-weight:700}.badge{display:inline-block;background:#E2EE0D;color:#1a1a2e;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}.content{padding:40px 30px}.message-body{font-size:16px;color:#2d3748;line-height:1.8;white-space:pre-line}.cta-section{text-align:center;margin:35px 0}.cta-button{display:inline-block;background:#E2EE0D;color:#1a1a2e;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:700;font-size:15px}.footer{background-color:#2d3748;color:#a0aec0;padding:25px 30px;text-align:center;font-size:13px}.footer a{color:#E2EE0D;text-decoration:none}.divider{height:1px;background:#e2e8f0;margin:30px 0}</style></head><body><div class="container"><div class="header"><div class="badge">📢 System Announcement</div><h1>${data.subject || 'Important Update'}</h1></div><div class="content"><div class="message-body">${data.message || ''}</div>${data.cta_url ? `<div class="cta-section"><a href="${data.cta_url}" class="cta-button">${data.cta_text || 'Learn More'}</a></div>` : ''}<div class="divider"></div><p style="color:#718096;font-size:13px;text-align:center;">You're receiving this because you're a valued MobiRides member.</p></div><div class="footer"><p>MobiRides | <a href="https://mobirides.com">www.mobirides.com</a></p><p style="margin:5px 0 0"><a href="https://mobirides.com/settings/notifications">Manage Notifications</a></p></div></div></body></html>`
-  }
 };
 
 

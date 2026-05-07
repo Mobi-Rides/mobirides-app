@@ -33,6 +33,8 @@ export interface BookingNotificationData {
   pickupTime: string;
   pickupLocation: string;
   dropoffLocation: string;
+  dropoffDate?: string;
+  endDate?: string;
   totalAmount: number;
   bookingReference: string;
   carImage?: string;
@@ -103,6 +105,8 @@ export class ResendEmailService {
         return 'Booking Confirmation - MobiRides';
       case 'booking-request':
         return 'New Booking Request - Action Required';
+      case 'awaiting-payment':
+        return 'Action Required: Your Booking is Approved! Pay Now to Confirm';
       case 'pickup-reminder':
         return 'Reminder: Your rental starts soon';
       case 'return-reminder':
@@ -210,6 +214,71 @@ export class ResendEmailService {
       : `Booking Confirmed - ${bookingData.carBrand} ${bookingData.carModel}`;
 
     return this.sendEmail(recipient.email, templateKey, templateData, subject);
+  }
+
+  /**
+   * Send payment required email when booking is approved
+   */
+  async sendPaymentRequiredEmail(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      customerName: recipient.name, // For template compatibility
+      bookingReference: bookingData.bookingReference,
+      carBrand: bookingData.carBrand,
+      carModel: bookingData.carModel,
+      pickupDate: bookingData.pickupDate,
+      pickupTime: bookingData.pickupTime,
+      pickupLocation: bookingData.pickupLocation,
+      dropoffLocation: bookingData.dropoffLocation,
+      totalAmount: bookingData.totalAmount,
+      hostName: bookingData.hostName,
+      carImage: bookingData.carImage || '',
+      actionUrl: `https://app.mobirides.com/rental-details/${bookingData.bookingId}`
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'awaiting-payment',
+      templateData,
+      `Action Required: Your Booking is Approved! Pay Now to Confirm`
+    );
+  }
+
+  /**
+   * Send booking request received email to renter
+   */
+  async sendBookingRequestReceivedEmail(
+    recipient: NotificationRecipient,
+    bookingData: BookingNotificationData
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!recipient.email) {
+      return { success: false, error: 'No email address provided' };
+    }
+
+    const templateData = {
+      name: recipient.name,
+      customerName: recipient.name,
+      bookingReference: bookingData.bookingReference,
+      carBrand: bookingData.carBrand,
+      carModel: bookingData.carModel,
+      pickupDate: bookingData.pickupDate,
+      endDate: bookingData.dropoffDate || bookingData.endDate, // Use whichever is available
+      bookings_url: `https://app.mobirides.com/renter-bookings`
+    };
+
+    return this.sendEmail(
+      recipient.email,
+      'booking-request-received',
+      templateData,
+      `📋 Booking Request Sent — Awaiting Host Approval`
+    );
   }
 
   /**
@@ -779,7 +848,7 @@ export class TwilioNotificationService {
           bookingReference: bookingData.bookingReference,
           carDetails: `${bookingData.carBrand} ${bookingData.carModel}`,
           actualReturnDate: actualReturnDate,
-          originalEndDate: bookingData.pickupDate, // This should be end date in real implementation
+          originalEndDate: bookingData.endDate || bookingData.dropoffDate || bookingData.pickupDate, // Using end date if available
           hostName: bookingData.hostName,
           totalAmount: bookingData.totalAmount
         },

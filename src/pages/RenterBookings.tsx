@@ -24,6 +24,9 @@ const RenterBookings = () => {
 
   const { data: bookings, isLoading, error } = useQuery({
     queryKey: ["renter-bookings"],
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       console.log("Fetching renter bookings");
       
@@ -127,14 +130,51 @@ const RenterBookings = () => {
 
   useEffect(() => {
     if (error) {
-      console.error("Booking query error:", error);
       toast({
-        title: "Error loading bookings",
-        description: "Please try again later or contact support",
+        title: "Error",
+        description: "Failed to load bookings.",
         variant: "destructive",
       });
     }
   }, [error, toast]);
+
+  // Realtime subscription for renter bookings
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel>;
+
+    const setupSubscription = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      console.log("Setting up Realtime subscription for renter bookings:", session.user.id);
+      
+      channel = supabase
+        .channel('renter-bookings-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookings',
+            filter: `renter_id=eq.${session.user.id}`
+          },
+          (payload) => {
+            console.log('Realtime update received for renter bookings:', payload);
+            queryClient.invalidateQueries({ queryKey: ["renter-bookings"] });
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
+
+    return () => {
+      if (channel) {
+        console.log("Cleaning up Realtime subscription for renter bookings");
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [queryClient]);
 
   if (isLoading) {
     return (

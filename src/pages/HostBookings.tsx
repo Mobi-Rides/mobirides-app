@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useQuery, useQueryClient, QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Filter, Search } from "lucide-react";
@@ -25,6 +26,9 @@ export const HostBookings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Initialize realtime subscription
+  useHostBookingsRealtime(queryClient);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingFilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortOption>("date_desc");
@@ -33,6 +37,9 @@ export const HostBookings = () => {
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["host-bookings"],
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
@@ -139,7 +146,7 @@ export const HostBookings = () => {
   const handleBookingAction = useCallback(async (bookingId: string, action: "approve" | "decline" | "cancel") => {
     try {
       // Only allow DB columns in update
-      const updateData: Partial<Pick<BookingWithRelations, 'status' | 'payment_status' | 'payment_deadline'>> = {
+      const updateData: Database['public']['Tables']['bookings']['Update'] = {
         status: action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED
       };
       if (action === "approve") {
@@ -179,14 +186,14 @@ export const HostBookings = () => {
         variant: "destructive",
       });
     }
-  }, [queryClient, toast, selectedBookings]);
+  }, [queryClient, toast, bookings]);
 
   const handleBulkAction = useCallback(async (action: "approve" | "decline") => {
     if (selectedBookings.length === 0) return;
     try {
       const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED;
       // Only allow DB columns in update
-      const updateData: Partial<Pick<BookingWithRelations, 'status' | 'payment_status' | 'payment_deadline'>> = {
+      const updateData: Database['public']['Tables']['bookings']['Update'] = {
         status: newStatus
       };
       if (action === "approve") {
@@ -460,6 +467,34 @@ export const HostBookings = () => {
       <Navigation />
     </div>
   );
+};
+
+// Realtime subscription hook (internal)
+const useHostBookingsRealtime = (queryClient: QueryClient) => {
+  useEffect(() => {
+    console.log("Setting up Realtime subscription for host bookings");
+    
+    const channel = supabase
+      .channel('host-bookings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings'
+        },
+        (payload) => {
+          console.log('Realtime update received in host bookings:', payload);
+          queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("Cleaning up Realtime subscription for host bookings");
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 };
 
 export default HostBookings;

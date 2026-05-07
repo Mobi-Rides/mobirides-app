@@ -11,9 +11,11 @@ export interface ResendTemplate {
 export type ResendTemplateKey =
   | 'booking_confirmation'
   | 'booking_request'
+  | 'booking_request_received'
   | 'booking_cancelled'
   | 'payment_received'
   | 'payment_failed'
+  | 'awaiting_payment'
   | 'wallet_topup'
   | 'handover_ready'
   | 'rental_reminder'
@@ -150,7 +152,7 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     description: 'Sent when a booking request is approved by the host'
   },
   'owner-booking-notification': {
-    id: 'owner-booking-notification',
+    id: 'booking-request',
     name: 'New Booking Request',
     subject: '📋 New Booking Request - Action Required',
     description: 'Sent to hosts when they receive a new booking request'
@@ -182,6 +184,18 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     subject: '⚠️ Claim Filed - {{carName}} #{{claimNumber}}',
 
     description: 'Sent to car owners when a claim is filed on their vehicle'
+  },
+  booking_request_received: {
+    id: "booking-request-received",
+    name: 'Booking Request Received',
+    subject: "📋 Booking Request Sent — Awaiting Host Approval",
+    description: 'Sent to renters when their booking request is submitted and awaiting host approval'
+  },
+  awaiting_payment: {
+    id: 'awaiting-payment',
+    name: 'Payment Required',
+    subject: '🚗 Action Required: Your Booking is Approved! Pay Now to Confirm',
+    description: 'Sent when a booking request is approved and payment is required'
   }
 };
 

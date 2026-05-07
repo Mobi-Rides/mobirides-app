@@ -1,6 +1,6 @@
 
 import { useParams, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { differenceInDays, isWithinInterval, addDays } from "date-fns";
@@ -11,12 +11,16 @@ import { BookingWithRelations, HandoverType } from "@/types/booking";
 export const useRentalDetails = () => {
   const { id } = useParams();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const shouldPrint = location.search.includes("print=true");
   const [isInitiatingHandover, setIsInitiatingHandover] = useState(false);
 
   // Fetch booking details with handover sessions
   const { data: booking, isLoading: isBookingLoading } = useQuery({
     queryKey: ["rental-details", id],
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       console.log("Fetching rental details for ID:", id);
       const { data, error } = await supabase
@@ -81,6 +85,34 @@ export const useRentalDetails = () => {
       return () => clearTimeout(timer);
     }
   }, [shouldPrint, booking, isBookingLoading]);
+
+  // Realtime subscription for booking changes
+  useEffect(() => {
+    if (!id) return;
+
+    console.log("Setting up Realtime subscription for booking:", id);
+    const channel = supabase
+      .channel(`booking-details-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Realtime update received for booking:', payload);
+          queryClient.invalidateQueries({ queryKey: ["rental-details", id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("Cleaning up Realtime subscription for booking:", id);
+      supabase.removeChannel(channel);
+    };
+  }, [id, queryClient]);
 
   // Calculate rental details
   const isRenter = booking && currentUser && booking.renter_id === currentUser.id;

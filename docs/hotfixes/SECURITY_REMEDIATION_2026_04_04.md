@@ -275,7 +275,7 @@ grep -r "pending_confirmations" src/ supabase/functions/ --include="*.ts" --incl
 | **Priority** | 🟢 Low |
 | **Type** | Data Exposure |
 | **Affects** | `blog_posts` table, blog frontend components |
-| **Status** | To Do |
+| **Status** | To Do (**Requires backend branching**) |
 
 **Migration:** `YYYYMMDDHHMMSS_create_blog_posts_public_view.sql`
 
@@ -345,7 +345,7 @@ Enable "Leaked Password Protection" (HaveIBeenPwned integration) via Supabase Da
 | **Phase 3** | MOB-703, MOB-704 | Low | Requires build verification |
 | **Phase 4** | MOB-706 | None | Requires function signature lookup |
 | **Phase 5** | MOB-707 | ⚠️ High | Requires edge function audit first |
-| **Phase 6** | MOB-708 | Low | Requires frontend query updates |
+| **Phase 6** | MOB-708 (EPIC) | Low | Requires backend branching & frontend query updates |
 
 ---
 
