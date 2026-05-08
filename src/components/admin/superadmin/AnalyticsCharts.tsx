@@ -479,9 +479,7 @@ export const AnalyticsCharts = ({
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={getActivityTrends().slice(-7)}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  {/* @ts-expect-error recharts v3 JSX compat */}
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  {/* @ts-expect-error recharts v3 JSX compat */}
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Area
@@ -523,15 +521,15 @@ export const AnalyticsCharts = ({
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8">
-          {[
+          {([
             { id: 'overview', label: 'Overview', icon: Activity },
             { id: 'users', label: 'Users', icon: Users },
             { id: 'security', label: 'Security', icon: Shield },
             { id: 'system', label: 'System', icon: TrendingUp }
-          ].map(({ id, label, icon: Icon }) => (
+          ] as const).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id as any)}
+              onClick={() => setActiveTab(id)}
               className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === id
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'

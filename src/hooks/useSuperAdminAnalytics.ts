@@ -1,19 +1,28 @@
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { Json } from "@/integrations/supabase/types";
 import { format, subDays } from "date-fns";
-import { analyticsService } from "@/services/analyticsService";
+import { 
+  analyticsService, 
+  AnalyticsFilters, 
+  UserMetrics, 
+  SystemMetrics, 
+  SecurityMetrics,
+  AuditLogEvent 
+} from "@/services/analyticsService";
+import { AdminUserComplete } from "./useAdminUsersComplete";
 import { useSuperAdminRoles } from "./useSuperAdminRoles";
 
 // Analytics data types
 export interface SecurityEvent {
   id: string;
   event_type: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  actor_id?: string;
-  target_id?: string;
+  severity: string;
+  actor_id: string | null;
+  target_id: string | null;
   created_at: string;
-  action_details?: Record<string, unknown>;
-  resource_type?: string;
+  action_details: Json;
+  resource_type: string | null;
 }
 
 export interface AnalyticsData {
@@ -25,6 +34,8 @@ export interface AnalyticsData {
   unique_targets: number;
   compliance_tags?: string[];
 }
+
+export type { SecurityMetrics, SystemMetrics };
 
 export interface UserActivityMetrics {
   total_users: number;
@@ -38,23 +49,6 @@ export interface UserActivityMetrics {
   user_profiles?: Record<string, unknown>[];
   admin_users: number;
   admin_user_details: AdminUserComplete[];
-}
-
-export interface SystemMetrics {
-  total_bookings: number;
-  completed_bookings: number;
-  cancelled_bookings: number;
-  revenue: number;
-  average_booking_value: number;
-}
-
-export interface SecurityMetrics {
-  total_events: number;
-  critical_events: number;
-  high_severity_events: number;
-  medium_severity_events: number;
-  low_severity_events: number;
-  top_event_types: Array<{ type: string; count: number }>;
 }
 
 export interface ChartDataPoint {
@@ -80,337 +74,108 @@ export const useSuperAdminAnalytics = () => {
   const [userGrowth, setUserGrowth] = useState<ChartDataPoint[]>([]);
   const [bookingGrowth, setBookingGrowth] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState({
     start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     end: format(new Date(), 'yyyy-MM-dd')
   });
-  const [realtimeSubscription, setRealtimeSubscription] = useState<import("@supabase/supabase-js").RealtimeChannel | null>(null);
+  const [realtimeSubscription, setRealtimeSubscription] = useState<RealtimeChannel | null>(null);
 
-  // Use existing roles hook for user data integration
   const { users: adminUsers } = useSuperAdminRoles();
 
-  // Fallback function for manual data fetching
-  const fetchAnalyticsFallback = useCallback(async () => {
-    try {
-      // Fetch analytics data from audit_analytics view
-      const { data: analyticsData, error: analyticsError } = await supabase
-        .from("audit_analytics")
-        .select("*")
-        .gte('date', dateRange.start)
-        .lte('date', dateRange.end)
-        .order('date', { ascending: false });
 
-      if (analyticsError) throw analyticsError;
-      setAnalytics(analyticsData || []);
+  const calculateSecurityMetrics = useCallback((events: AuditLogEvent[]): SecurityMetrics => {
+    const metrics: SecurityMetrics = {
+      total_events: events.length,
+      critical_events: events.filter(e => e.severity === 'critical').length,
+      high_severity_events: events.filter(e => e.severity === 'high').length,
+      medium_severity_events: events.filter(e => e.severity === 'medium').length,
+      low_severity_events: events.filter(e => e.severity === 'low').length,
+      top_event_types: [],
+      top_actors: [],
+      security_trends: []
+    };
 
-      // Fetch recent security events
-      const { data: eventsData, error: eventsError } = await supabase
-        .from("audit_logs")
-        .select("id, event_type, severity, actor_id, target_id, created_at, action_details, resource_type")
-        .order("created_at", { ascending: false })
-        .limit(100);
+    const typeCounts: Record<string, number> = {};
+    events.forEach(e => {
+      typeCounts[e.event_type] = (typeCounts[e.event_type] || 0) + 1;
+    });
+    metrics.top_event_types = Object.entries(typeCounts)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
 
-      if (eventsError) throw eventsError;
-      setEvents(eventsData || []);
-
-      // Fetch user metrics
-      await fetchUserMetrics();
-      
-      // Fetch system metrics
-      await fetchSystemMetrics();
-      
-      // Calculate security metrics
-      calculateSecurityMetrics(eventsData || []);
-
-    } catch (error) {
-      console.error('Error in fallback analytics fetching:', error);
-    }
-  }, [dateRange.start, dateRange.end, fetchUserMetrics, fetchSystemMetrics, calculateSecurityMetrics]);
+    return metrics;
+  }, []);
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    const filters = { startDate: dateRange.start, endDate: dateRange.end };
     try {
-      // Use analytics service for comprehensive data fetching
-      const dateRangeParam = {
-        start: dateRange.start,
-        end: dateRange.end
-      };
-
-      // Fetch all analytics data in parallel
-      const [
-        analyticsData,
-        securityEvents,
-        userMetricsData,
-        systemMetricsData,
-        securityMetricsData,
-        userGrowthData,
-        bookingGrowthData
-      ] = await Promise.all([
-        analyticsService.getAnalytics({
-          startDate: dateRange.start,
-          endDate: dateRange.end
-        }),
-        analyticsService.getSecurityEvents({
-          startDate: dateRange.start,
-          endDate: dateRange.end
-        }, 100),
-        analyticsService.getUserMetrics(dateRangeParam),
-        analyticsService.getSystemMetrics(dateRangeParam),
-        analyticsService.getSecurityMetrics(dateRangeParam),
+      const [events, registrationStats, bookingStats] = await Promise.all([
+        analyticsService.getSecurityEvents(filters),
         analyticsService.getUserRegistrationStats(),
         analyticsService.getBookingGrowthStats()
       ]);
 
-      // Set analytics data
-      setAnalytics(analyticsData);
-      setEvents(securityEvents);
-      setUserGrowth(userGrowthData);
-      setBookingGrowth(bookingGrowthData);
+      setEvents(events as unknown as SecurityEvent[]);
+      setUserGrowth(registrationStats);
+      setBookingGrowth(bookingStats);
       
-      // Merge service user metrics with admin users data
+      const securityMetricsData = calculateSecurityMetrics(events);
+      setSecurityMetrics(securityMetricsData);
+
+      // Fetch other metrics and merge with admin user data
+      const [userMetricsData, systemMetricsData] = await Promise.all([
+        analyticsService.getUserMetrics(filters.startDate && filters.endDate ? {
+          start: filters.startDate,
+          end: filters.endDate
+        } : undefined),
+        analyticsService.getSystemMetrics(filters.startDate && filters.endDate ? {
+          start: filters.startDate,
+          end: filters.endDate
+        } : undefined)
+      ]);
+
       if (userMetricsData) {
         setUserMetrics({
           ...userMetricsData,
           admin_users: adminUsers?.length || 0,
           admin_user_details: (adminUsers as unknown as AdminUserComplete[]) || []
-        });
+        } as UserActivityMetrics);
       }
       
-      setSystemMetrics(systemMetricsData);
-      setSecurityMetrics(securityMetricsData);
-
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-      // Fallback to manual fetching if service fails
-      await fetchAnalyticsFallback();
+      if (systemMetricsData) {
+        setSystemMetrics(systemMetricsData as SystemMetrics);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch analytics");
+      console.error("Analytics fetch error:", err);
     } finally {
       setLoading(false);
     }
-  }, [dateRange.start, dateRange.end, adminUsers, fetchAnalyticsFallback]);
-
-  const fetchUserMetrics = useCallback(async () => {
-    try {
-      // Get total users
-      const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Get active users (logged in last 30 days)
-      const thirtyDaysAgo = subDays(new Date(), 30);
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('last_login_attempt', thirtyDaysAgo.toISOString());
-
-      // Get new users (last 7 days)
-      const sevenDaysAgo = subDays(new Date(), 7);
-      const { count: newUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', sevenDaysAgo.toISOString());
-
-      // Get suspended users (accounts that are locked)
-      const { count: suspendedUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .not('account_locked_until', 'is', null);
-
-      // Get role distribution
-      const { data: roleData } = await supabase
-        .from('profiles')
-        .select('role, id, created_at, last_login_attempt');
-
-      const roleDistribution = roleData?.reduce((acc, item) => {
-        const role = item.role || 'renter';
-        acc[role] = (acc[role] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Get today's metrics for fallback
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayIso = today.toISOString();
-      const activeToday = roleData?.filter(p => p.last_login_attempt && p.last_login_attempt >= todayIso).length || 0;
-      const newUsersToday = roleData?.filter(p => p.created_at && p.created_at >= todayIso).length || 0;
-
-      // Include admin users data if available
-      const adminUsersCount = adminUsers?.length || 0;
-
-      setUserMetrics({
-        total_users: totalUsers || 0,
-        active_users: activeUsers || 0,
-        active_today: activeToday,
-        new_users: newUsers || 0,
-        new_users_today: newUsersToday,
-        suspended_users: suspendedUsers || 0,
-        role_distribution: roleDistribution,
-        admin_users: adminUsersCount,
-        admin_user_details: (adminUsers as unknown as AdminUserComplete[]) || []
-      });
-
-    } catch (error) {
-      console.error('Error fetching user metrics:', error);
-    }
-  }, [adminUsers]);
-
-  const fetchSystemMetrics = useCallback(async () => {
-    try {
-      // Get booking metrics
-      const { count: totalBookings } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: completedBookings } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'completed');
-
-      const { count: cancelledBookings } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'cancelled');
-
-      // Get revenue data from completed bookings and wallet transactions
-      let revenue = 0;
-
-      // Source 1: Sum total_price from completed bookings
-      try {
-        const { data: completedBookingsData } = await supabase
-          .from('bookings')
-          .select('total_price')
-          .eq('status', 'completed');
-
-        revenue = completedBookingsData?.reduce((sum, b) => sum + (b.total_price || 0), 0) || 0;
-      } catch (error) {
-        console.warn('Could not fetch completed bookings revenue:', error);
-      }
-
-      // Source 2: Fallback to payment_transactions if no completed bookings revenue
-      if (revenue === 0) {
-        try {
-          const { data: paymentData } = await supabase
-            .from('payment_transactions')
-            .select('amount, platform_commission')
-            .eq('status', 'completed');
-
-          revenue = paymentData?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-        } catch (error) {
-          console.warn('Could not fetch payment_transactions revenue:', error);
-        }
-      }
-
-      // Source 3: Fallback to wallet_transactions rental earnings
-      try {
-        const { data: walletData } = await supabase
-          .from('wallet_transactions')
-          .select('amount, transaction_type')
-          .eq('status', 'completed')
-          .in('transaction_type', ['rental_earnings', 'credit']);
-
-        const walletRevenue = walletData?.reduce((sum, t) => sum + (t.amount > 0 ? t.amount : 0), 0) || 0;
-        if (walletRevenue > revenue) {
-          revenue = walletRevenue;
-        }
-      } catch (error) {
-        console.warn('Could not fetch wallet_transactions revenue:', error);
-      }
-
-      const averageBookingValue = totalBookings ? revenue / totalBookings : 0;
-
-      setSystemMetrics({
-        total_bookings: totalBookings || 0,
-        completed_bookings: completedBookings || 0,
-        cancelled_bookings: cancelledBookings || 0,
-        revenue: revenue,
-        average_booking_value: averageBookingValue
-      });
-    } catch (error) {
-      console.error('Error fetching system metrics:', error);
-    }
-  }, []);
-
-  const calculateSecurityMetrics = useCallback((securityEvents: SecurityEvent[]) => {
-    const metrics: SecurityMetrics = {
-      total_events: securityEvents.length,
-      critical_events: 0,
-      high_severity_events: 0,
-      medium_severity_events: 0,
-      low_severity_events: 0,
-      top_event_types: []
-    };
-
-    const eventTypeCounts: Record<string, number> = {};
-
-    securityEvents.forEach(event => {
-      switch (event.severity) {
-        case 'critical':
-          metrics.critical_events++;
-          break;
-        case 'high':
-          metrics.high_severity_events++;
-          break;
-        case 'medium':
-          metrics.medium_severity_events++;
-          break;
-        case 'low':
-          metrics.low_severity_events++;
-          break;
-      }
-
-      eventTypeCounts[event.event_type] = (eventTypeCounts[event.event_type] || 0) + 1;
-    });
-
-    metrics.top_event_types = Object.entries(eventTypeCounts)
-      .map(([type, count]) => ({ type, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    setSecurityMetrics(metrics);
-  }, []);
+  }, [dateRange, adminUsers, calculateSecurityMetrics]);
 
   const refreshData = useCallback(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Setup real-time subscription
   const setupRealtimeSubscription = useCallback(() => {
-    // Unsubscribe from existing subscription
     if (realtimeSubscription) {
       realtimeSubscription.unsubscribe();
     }
 
-    // Subscribe to analytics updates
-    const subscription = analyticsService.subscribeToAnalytics((payload) => {
-      console.log('Real-time analytics update:', payload);
-      
-      // Check if this is a new event
-      if (payload.new && payload.eventType === 'INSERT') {
-        const newEvent = payload.new as SecurityEvent;
-        
-        // Show notification for critical/high severity events
-        if (newEvent.severity === 'critical' || newEvent.severity === 'high') {
-          // This will be handled by the component using toast notifications
-          window.dispatchEvent(new CustomEvent('analytics-new-event', {
-            detail: {
-              event: newEvent,
-              message: `New ${newEvent.severity} severity event: ${newEvent.event_type}`
-            }
-          }));
-        }
-      }
-      
-      // Refresh data when new events are detected
-      refreshData();
+    const sub = analyticsService.subscribeToAnalytics((payload) => {
+      fetchAnalytics();
     });
-
-    setRealtimeSubscription(subscription);
+    setRealtimeSubscription(sub.subscription);
 
     return () => {
-      subscription.unsubscribe();
+      sub.unsubscribe();
     };
-  }, [realtimeSubscription, refreshData]);
+  }, [realtimeSubscription, fetchAnalytics]);
 
-  // Export analytics data
   const exportAnalytics = useCallback(async (exportFormat: 'json' | 'csv' = 'json') => {
     try {
       const exportData = await analyticsService.exportAnalytics({

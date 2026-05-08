@@ -71,19 +71,12 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     );
   }, [users, searchTerm]);
 
-  const [sortJustChanged, setSortJustChanged] = useState(false);
   const { sortedData: sortedUsers, sortKey, sortDirection, handleSort: baseHandleSort } = useTableSort<AdminUserComplete>(filteredUsers);
 
   const handleSort = useCallback((key: string) => {
-    setSortJustChanged(true);
     baseHandleSort(key);
   }, [baseHandleSort]);
 
-  useEffect(() => {
-    if (sortJustChanged) {
-      setSortJustChanged(false);
-    }
-  }, [sortedUsers, sortJustChanged]);
 
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -237,7 +230,6 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
                 size="sm"
                 onClick={handleExport}
                 className="gap-2 shrink-0"
-                disabled={sortJustChanged}
               >
                 <Download className="h-4 w-4" />
                 Export CSV
