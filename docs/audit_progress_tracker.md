@@ -19,6 +19,7 @@ This document tracks the systematic review of all `.md` files in the `docs` fold
 | :--- | :--- | :--- | :--- |
 | `docs/Roadmaps & PRDs/20260410_Roadmap_2026_H1.md` | Roadmap | ✅ SYNCED | Matches Sprint 14 priorities. |
 | `docs/Roadmaps & PRDs/20260417_DURATION_DISCOUNTS_PLAN.md` | PRD/Plan | ✅ SYNCED | Feature implemented. |
+| `docs/Product Status/WEEK_1_MAY_2026_STATUS_REPORT.md` | Status | ✅ SYNCED | Verified & Renamed (prev: Week 2 May). |
 | `docs/plans/20260423_SUPERADMIN_CORE_LOGIC_REMEDIATION_PLAN.md` | Plan | ✅ SYNCED | SAR-001 (RPCs) verified done. Module 2-4 in backlog. |
 | `docs/plans/20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md` | Plan | ✅ SYNCED | Completed and verified in S13/14. |
 | `docs/plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md` | Plan | ✅ SYNCED | Verified live in S14. |
