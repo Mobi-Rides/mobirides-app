@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
 import { NotificationCampaignBuilder } from "@/components/admin/NotificationCampaignBuilder";
-import { NotificationMonitoringFixed } from "@/components/admin/NotificationMonitoringFixed";
+import { NotificationMonitoring } from "@/components/admin/NotificationMonitoring";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -241,7 +241,7 @@ const AdminCampaigns = () => {
             </TabsContent>
 
             <TabsContent value="monitoring" className="mt-4">
-              <NotificationMonitoringFixed />
+              <NotificationMonitoring />
             </TabsContent>
           </Tabs>
         </div>

@@ -1,6 +1,6 @@
 # MobiRides Bug Report
 
-**Last Updated:** May 8, 2026 (BUG-032–036 added)  
+**Last Updated:** May 8, 2026 (BUG-032–039 added)  
 **Reference:** Week 2 May Status Report, Sprint 13 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
@@ -547,6 +547,103 @@ Test script (`_geo_analytics_test_tmp.mjs`) ran 20 checks — all passed:
 
 ---
 
+### BUG-037: Admin Notification Monitoring — Canonical File Missing, Only "Fixed" Variant Existed
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Code hygiene / naming hazard) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/components/admin/NotificationMonitoring.tsx`, `src/components/admin/NotificationMonitoringFixed.tsx`, `src/pages/admin/AdminCampaigns.tsx` |
+| **Branch** | `bathoensescob/feat-superadmin-geographic-analytics` |
+
+**Description:**  
+The canonical `NotificationMonitoring.tsx` file did not exist; only `NotificationMonitoringFixed.tsx` (a parallel "patched" variant from a prior emergency fix) was present. `AdminCampaigns.tsx` imported the `Fixed` version directly. While the Monitoring tab worked, the codebase carried a confusing naming artifact and the canonical path was a dangling reference — any future code (or test) importing from `@/components/admin/NotificationMonitoring` would fail to resolve.
+
+Initial reports indicated both files were 0-byte; investigation confirmed `NotificationMonitoringFixed.tsx` was fully implemented (223 lines) and `NotificationMonitoring.tsx` was simply absent. No orphaned admin sidebar links existed — all 17 sidebar entries already had matching routes.
+
+**Resolution:**  
+- Created canonical `src/components/admin/NotificationMonitoring.tsx` with the full delivery dashboard implementation (4 metric cards + per-campaign delivery table querying `notification_campaigns`)
+- Updated `AdminCampaigns.tsx` to import `{ NotificationMonitoring }` from the canonical path
+- Deleted the now-orphaned `NotificationMonitoringFixed.tsx`
+
+**Verification:**  
+3 Jest unit tests in `__tests__/notificationMonitoring.test.tsx`:
+- Renders the empty-state when `notification_campaigns` is empty
+- Aggregates Total Sent / Delivered / Failed / Rate correctly across `completed` campaigns; renders per-row dashes for rows without data
+- Renders the "no failed campaigns" caption when all sends succeeded
+
+All 3 passing.
+
+---
+
+### BUG-038: Navigation Realtime Channel Collision + Cleanup Leak
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Realtime degradation, channel leak) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/components/Navigation.tsx` |
+| **Branch** | `bathoensescob/feat-superadmin-geographic-analytics` |
+
+**Description:**  
+Browser console emitted `Error: cannot add postgres_changes callbacks for realtime:navigation-updates after subscribe()` on every component remount (React strict mode in dev, hot reload in prod). Two compounding bugs in the unread-message-count realtime subscription:
+
+1. **Hardcoded channel name** — `.channel('navigation-updates')` used a static string. On the second mount, Supabase already had a subscribed channel by that name, so the new `.on(...)` calls failed.
+2. **Cleanup returned from inner async function, not from `useEffect`** — the `return () => supabase.removeChannel(channel)` was returned from the inner `setupRealtimeSubscription()` async function whose return value was then discarded by the `useEffect`. React had nothing to call on unmount, so channels leaked indefinitely.
+
+Practical impact: messages unread badge stopped refreshing in real-time after first remount; users had to wait for the 60s polling fallback. Channel count grew over the session lifetime.
+
+**Resolution:**  
+- Channel name now includes user ID: `navigation-updates-${user.id}`
+- Cleanup function is returned directly from the `useEffect`, with `channel` captured in a closure variable so unmount can call `supabase.removeChannel(channel)` reliably
+- Added a `cancelled` flag so an in-flight `getUser()` doesn't subscribe after unmount
+
+**Verification:**  
+4 Jest unit tests in `__tests__/realtimeSubscriptionFixes.test.tsx` (Bug A suite):
+- Channel name uses the user-scoped form, not the bare `navigation-updates`
+- Both `.on()` handlers attach before `.subscribe()` (mock throws the exact production error if reversed)
+- `removeChannel` is called on unmount
+- Mount → unmount → remount produces two distinct, independently-cleaned channels (the old hardcoded-name bug would throw on the second mount)
+
+All 4 passing.
+
+---
+
+### BUG-039: useConversationMessages — Auth Listener Unreachable + Receipts Channel Leak
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Low (Realtime cleanup leak, sign-out edge case) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/hooks/useOptimizedConversations.ts` (`useConversationMessages` effect) |
+| **Branch** | `bathoensescob/feat-superadmin-geographic-analytics` |
+
+**Description:**  
+Inside `useConversationMessages`'s realtime setup, an early `return () => { ... }` in the inner async function made the subsequent `authListener = supabase.auth.onAuthStateChange(...)` call unreachable. Two consequences:
+
+1. **Auth state listener never registered** — sign-out while a conversation was open did not auto-cleanup the message subscription
+2. **Receipts channel leaked on unmount** — the outer cleanup at lines 905-914 only removed `currentChannel` and called `authListener.data?.subscription?.unsubscribe()`; the receipts channel had no outer-scope reference and was never removed
+
+Impact was bounded — component unmount of `useConversationMessages` is rare in normal navigation, and the conversation-list-level subscription has its own working auth listener — but the leaked receipts channels accumulated across conversation switches.
+
+**Resolution:**  
+- Removed the dead `return () => {...}` block that was short-circuiting the function
+- Moved the receipts channel onto the outer scope via a new `receiptsChannelRef` variable so the outer cleanup can remove it
+- The `authListener = supabase.auth.onAuthStateChange(...)` call now actually executes, and the outer cleanup correctly unsubscribes it on unmount
+
+**Verification:**  
+3 Jest unit tests in `__tests__/realtimeSubscriptionFixes.test.tsx` (Bug B suite):
+- `supabase.auth.onAuthStateChange` is now called (was unreachable before)
+- Both messages and receipts channels are created and subscribed
+- Unmount removes both channels and unsubscribes the auth listener
+
+All 3 passing.
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -608,6 +705,9 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-034** | 2026-05-08 | Host booking email approve/decline links 404 — Fixed fallback domain and added URL fields to payload. |
 | **BUG-035** | 2026-05-08 | Test suite regressions (10 tests / 7 suites) — Fixed mock mismatches, stale assertions, TZ config, and component mismatches. |
 | **BUG-036** | 2026-05-08 | UserBehavior dashboard geo/revenue/engagement tabs empty — Deployed 3 missing RPCs; 20/20 verification checks passing. |
+| **BUG-037** | 2026-05-08 | Admin NotificationMonitoring canonical file missing — Created canonical component, updated AdminCampaigns import, removed orphan "Fixed" file. |
+| **BUG-038** | 2026-05-08 | Navigation realtime channel collision + cleanup leak — User-scoped channel name; cleanup now returned from useEffect itself. |
+| **BUG-039** | 2026-05-08 | useConversationMessages auth listener unreachable + receipts channel leak — Removed dead-code early return; tracked receipts channel on outer scope. |
 
 ---
 
@@ -620,4 +720,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–036 added by Arnold T. Bathoen — May 8, 2026*
+*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026*

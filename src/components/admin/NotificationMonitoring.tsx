@@ -51,7 +51,7 @@ function failedCount(successful: number | null, total: number | null): number {
   return Math.max(0, (total ?? 0) - (successful ?? 0));
 }
 
-export const NotificationMonitoringFixed = () => {
+export const NotificationMonitoring = () => {
   const { data: campaigns, isLoading } = useQuery<Campaign[]>({
     queryKey: ["notification-monitoring"],
     queryFn: async () => {

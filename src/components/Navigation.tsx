@@ -100,12 +100,15 @@ export const Navigation = () => {
 
   // Listen for real-time changes to refresh counts
   useEffect(() => {
-    const setupRealtimeSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
 
-      const channel = supabase
-        .channel('navigation-updates')
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      channel = supabase
+        .channel(`navigation-updates-${user.id}`)
         .on(
           'postgres_changes',
           {
@@ -114,7 +117,6 @@ export const Navigation = () => {
             table: 'conversation_messages'
           },
           () => {
-            // Invalidate message count when conversation messages change
             queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
           }
         )
@@ -124,21 +126,19 @@ export const Navigation = () => {
             event: 'UPDATE',
             schema: 'public',
             table: 'conversation_participants',
-            filter: `user_id=eq.${user?.id}`
+            filter: `user_id=eq.${user.id}`
           },
           () => {
-            // Invalidate unread count when user reads a conversation
             queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
           }
         )
         .subscribe();
+    })();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
-
-    setupRealtimeSubscription();
   }, [queryClient]);
 
   const totalUnreadCount = unreadCount + unreadNotifications;

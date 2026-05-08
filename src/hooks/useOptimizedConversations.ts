@@ -800,6 +800,7 @@ export const useConversationMessages = (conversationId?: string) => {
     if (!conversationId) return;
 
     let currentChannel: any;
+    let receiptsChannelRef: any;
     let authListener: any;
 
     const setupAuthAwareMessageSubscription = async () => {
@@ -869,12 +870,8 @@ export const useConversationMessages = (conversationId?: string) => {
           )
           .subscribe();
 
-        // Cleanup function needs to handle both checks
-        return () => {
-          if (currentChannel) supabase.removeChannel(currentChannel);
-          if (receiptsChannel) supabase.removeChannel(receiptsChannel);
-        };
-
+        // Track receipts channel on the outer scope so cleanup can remove it
+        receiptsChannelRef = receiptsChannel;
 
         // Set up auth state listener for message subscription
         authListener = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -886,11 +883,9 @@ export const useConversationMessages = (conversationId?: string) => {
               await supabase.removeChannel(currentChannel);
               currentChannel = null;
             }
-            // Clear message cache
             queryClient.removeQueries({ queryKey: ['conversation-messages', conversationId] });
           } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             console.log('🔐 [MESSAGE_SUB] User signed in/token refreshed, refreshing messages');
-            // Refresh message queries with new session
             queryClient.invalidateQueries({ queryKey: ['conversation-messages', conversationId] });
           }
         });
@@ -907,6 +902,9 @@ export const useConversationMessages = (conversationId?: string) => {
         if (currentChannel) {
           console.log('🧹 [MESSAGE_SUB] Cleaning up message subscription for conversation:', conversationId);
           supabase.removeChannel(currentChannel);
+        }
+        if (receiptsChannelRef) {
+          supabase.removeChannel(receiptsChannelRef);
         }
         if (authListener) {
           authListener.data?.subscription?.unsubscribe();
