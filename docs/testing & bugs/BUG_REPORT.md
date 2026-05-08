@@ -1,7 +1,7 @@
 # MobiRides Bug Report
 
-**Last Updated:** May 8, 2026  
-**Reference:** Week 2 May Status Report, Sprint 13 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
+**Last Updated:** May 8, 2026 (Documentation Sync)  
+**Reference:** Week 1 May Status Report, Sprint 14 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
 
@@ -170,12 +170,12 @@ IDE Gradle initialization script path mismatch in RedHat Java extension. Sprint 
 |-------|--------|
 | **Date Reported** | 2026-04-12 |
 | **Severity** | Medium |
-| **Status** | 🟡 Partially Addressed |
+| **Status** | ✅ Resolved (Sprint 14) |
 | **Affects** | SuperAdmin Portal, PostgreSQL RPCs |
 | **Linear** | ❌ No ticket — to be created Sprint 12 (S12-018) |
 
 **Description:**  
-Sprint 11 delivered `suspend_user` and `ban_user` RPCs (MOB-21, verified by Arnold). Still missing: `transfer_vehicle`, `remove_restriction`, and `log_admin_action` functions.
+Sprint 11 delivered `suspend_user` and `ban_user` RPCs. Sprint 14 finalized the remaining `transfer_vehicle`, `remove_restriction`, and `log_admin_action` functions (Migration `20260416120000` & `20260502000000`). Verified permissions granted to `authenticated` role.
 
 ---
 
@@ -238,7 +238,7 @@ The application uses `mockBookingPaymentService` with `setTimeout` simulations f
 | **Severity** | High |
 | **Status** | ✅ Resolved (Sprint 12) |
 | **Affects** | SQL functions, `conversations` table RLS |
-| **Linear** | MOB-23 (In Progress — status needs update) |
+| **Linear** | MOB-23 (Done) |
 
 **Description:**  
 Sprint 11 shipped MOB-706 (S11-011) which applied `SET search_path = public` to all `SECURITY DEFINER` functions. The residual item is that `conversations` table RLS is reportedly still disabled for "testing" in production — this needs verification and re-enablement.
@@ -271,12 +271,12 @@ Migration `20260319212624` contains manual `CREATE TYPE` blocks for `http_*` typ
 |-------|--------|
 | **Date Reported** | 2026-04-22 |
 | **Severity** | Medium (Reporting broken) |
-| **Status** | 🔴 Open |
+| **Status** | ✅ Resolved (Sprint 14) |
 | **Affects** | `SuperAdminAnalytics.tsx`, `useSuperAdminAnalytics.ts`, `analyticsService.ts` |
 | **Plan** | [`docs/plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md`](../plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) |
 
 **Description:**  
-The "User Growth Trend" and "Booking Trends" charts on the Super Admin Analytics Overview tab render as empty. Root cause: `MobileOptimizedChart` components are hardcoded with `data={[]}` (lines 472 & 480 of `SuperAdminAnalytics.tsx`). The `getUserGrowthData()` method in `useSuperAdminAnalytics.ts` returns an empty array with a TODO comment. No service methods exist in `analyticsService.ts` to aggregate user registrations or bookings by month.
+The "User Growth Trend" and "Booking Trends" charts were previously empty. Sprint 14 implemented `getUserRegistrationStats()` and `getBookingGrowthStats()` in `analyticsService.ts` and integrated them into the `useSuperAdminAnalytics` hook. Charts are now data-driven.
 
 **Database Context:**
 - 317 total profiles (295 renters, 20 hosts, 2 super_admin)
@@ -292,12 +292,12 @@ The "User Growth Trend" and "Booking Trends" charts on the Super Admin Analytics
 |-------|--------|
 | **Date Reported** | 2026-04-22 |
 | **Severity** | Medium (Blocks audit workflows) |
-| **Status** | 🔴 Open |
+| **Status** | ✅ Resolved (Sprint 14) |
 | **Affects** | `BulkActionBar.tsx`, `UnifiedUserTable.tsx` |
 | **Plan** | [`docs/plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md`](../plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) |
 
 **Description:**  
-The "Export Selected" button in the `BulkActionBar` (line 200–217) only exports a single `user_id` column per selected user, making the CSV output useless for database auditing. It should export full user records (name, email, role, KYC status, account status, vehicles, bookings, joined date) — the same columns as the "Export CSV" button in `UnifiedUserTable`. Additionally, the `UnifiedUserTable` "Export CSV" button uses `filteredUsers` (all rows in memory), which is correct but needs browser verification to confirm the user isn't seeing a stale cached version.
+`BulkActionBar.tsx` has been refactored to export full user records (name, email, role, KYC status, account status, vehicles, bookings, joined date) instead of just IDs. The logic now filters the `users` array in memory and maps to the correct columns for CSV generation. Verified correct column mapping for database auditing.
 
 ---
 
@@ -477,6 +477,9 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-029** | 2026-05-08 | 404 on notification links — Switched to production absolute URLs. |
 | **BUG-030** | 2026-05-08 | Rolldown OOM Build Panic — Increased heap memory allocation. |
 | **BUG-031** | 2026-05-08 | Missing Mapbox GL types — Added custom declaration file. |
+| **BUG-011** | 2026-05-08 | Missing SuperAdmin Core RPCs — `transfer_vehicle`, `remove_restriction` finalized. |
+| **BUG-015** | 2026-05-08 | Admin Analytics — Implemented registration/booking growth aggregation. |
+| **BUG-016** | 2026-05-08 | CSV Export — Refactored bulk export to include full user metadata. |
 | **BUG-012** | 2026-05-08 | Payment System Mock Phase 0 — Internal transactions and double-commission fixed. |
 | **BUG-019** | 2026-05-08 | Orphaned Booking Route — Consolidated routes into `/rental-details/:id`. |
 | **BUG-021** | 2026-05-08 | Clumsy Map Architecture — Extracted modular hooks and bottom sheets. |
