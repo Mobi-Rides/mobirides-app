@@ -12,7 +12,7 @@ export interface SecurityEvent {
   actor_id?: string;
   target_id?: string;
   created_at: string;
-  action_details?: any;
+  action_details?: Record<string, unknown>;
   resource_type?: string;
 }
 
@@ -35,9 +35,9 @@ export interface UserActivityMetrics {
   suspended_users: number;
   role_distribution: Record<string, number>;
   role_users?: Record<string, string[]>;
-  user_profiles?: any[];
+  user_profiles?: Record<string, unknown>[];
   admin_users: number;
-  admin_user_details: any[];
+  admin_user_details: AdminUserComplete[];
 }
 
 export interface SystemMetrics {
@@ -77,73 +77,20 @@ export const useSuperAdminAnalytics = () => {
   const [userMetrics, setUserMetrics] = useState<UserActivityMetrics | null>(null);
   const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
   const [securityMetrics, setSecurityMetrics] = useState<SecurityMetrics | null>(null);
+  const [userGrowth, setUserGrowth] = useState<ChartDataPoint[]>([]);
+  const [bookingGrowth, setBookingGrowth] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState({
     start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     end: format(new Date(), 'yyyy-MM-dd')
   });
-  const [realtimeSubscription, setRealtimeSubscription] = useState<any>(null);
+  const [realtimeSubscription, setRealtimeSubscription] = useState<import("@supabase/supabase-js").RealtimeChannel | null>(null);
 
   // Use existing roles hook for user data integration
   const { users: adminUsers } = useSuperAdminRoles();
 
-  const fetchAnalytics = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Use analytics service for comprehensive data fetching
-      const dateRangeParam = {
-        start: dateRange.start,
-        end: dateRange.end
-      };
-
-      // Fetch all analytics data in parallel
-      const [
-        analyticsData,
-        securityEvents,
-        userMetricsData,
-        systemMetricsData,
-        securityMetricsData
-      ] = await Promise.all([
-        analyticsService.getAnalytics({
-          startDate: dateRange.start,
-          endDate: dateRange.end
-        }),
-        analyticsService.getSecurityEvents({
-          startDate: dateRange.start,
-          endDate: dateRange.end
-        }, 100),
-        analyticsService.getUserMetrics(dateRangeParam),
-        analyticsService.getSystemMetrics(dateRangeParam),
-        analyticsService.getSecurityMetrics(dateRangeParam)
-      ]);
-
-      // Set analytics data
-      setAnalytics(analyticsData);
-      setEvents(securityEvents);
-      
-      // Merge service user metrics with admin users data
-      if (userMetricsData) {
-        setUserMetrics({
-          ...userMetricsData,
-          admin_users: adminUsers?.length || 0,
-          admin_user_details: adminUsers || []
-        });
-      }
-      
-      setSystemMetrics(systemMetricsData);
-      setSecurityMetrics(securityMetricsData);
-
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-      // Fallback to manual fetching if service fails
-      await fetchAnalyticsFallback();
-    } finally {
-      setLoading(false);
-    }
-  }, [dateRange]);
-
   // Fallback function for manual data fetching
-  const fetchAnalyticsFallback = async () => {
+  const fetchAnalyticsFallback = useCallback(async () => {
     try {
       // Fetch analytics data from audit_analytics view
       const { data: analyticsData, error: analyticsError } = await supabase
@@ -178,9 +125,70 @@ export const useSuperAdminAnalytics = () => {
     } catch (error) {
       console.error('Error in fallback analytics fetching:', error);
     }
-  };
+  }, [dateRange.start, dateRange.end, fetchUserMetrics, fetchSystemMetrics, calculateSecurityMetrics]);
 
-  const fetchUserMetrics = async () => {
+  const fetchAnalytics = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Use analytics service for comprehensive data fetching
+      const dateRangeParam = {
+        start: dateRange.start,
+        end: dateRange.end
+      };
+
+      // Fetch all analytics data in parallel
+      const [
+        analyticsData,
+        securityEvents,
+        userMetricsData,
+        systemMetricsData,
+        securityMetricsData,
+        userGrowthData,
+        bookingGrowthData
+      ] = await Promise.all([
+        analyticsService.getAnalytics({
+          startDate: dateRange.start,
+          endDate: dateRange.end
+        }),
+        analyticsService.getSecurityEvents({
+          startDate: dateRange.start,
+          endDate: dateRange.end
+        }, 100),
+        analyticsService.getUserMetrics(dateRangeParam),
+        analyticsService.getSystemMetrics(dateRangeParam),
+        analyticsService.getSecurityMetrics(dateRangeParam),
+        analyticsService.getUserRegistrationStats(),
+        analyticsService.getBookingGrowthStats()
+      ]);
+
+      // Set analytics data
+      setAnalytics(analyticsData);
+      setEvents(securityEvents);
+      setUserGrowth(userGrowthData);
+      setBookingGrowth(bookingGrowthData);
+      
+      // Merge service user metrics with admin users data
+      if (userMetricsData) {
+        setUserMetrics({
+          ...userMetricsData,
+          admin_users: adminUsers?.length || 0,
+          admin_user_details: (adminUsers as unknown as AdminUserComplete[]) || []
+        });
+      }
+      
+      setSystemMetrics(systemMetricsData);
+      setSecurityMetrics(securityMetricsData);
+
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      // Fallback to manual fetching if service fails
+      await fetchAnalyticsFallback();
+    } finally {
+      setLoading(false);
+    }
+  }, [dateRange.start, dateRange.end, adminUsers, fetchAnalyticsFallback]);
+
+  const fetchUserMetrics = useCallback(async () => {
     try {
       // Get total users
       const { count: totalUsers } = await supabase
@@ -237,15 +245,15 @@ export const useSuperAdminAnalytics = () => {
         suspended_users: suspendedUsers || 0,
         role_distribution: roleDistribution,
         admin_users: adminUsersCount,
-        admin_user_details: adminUsers || []
+        admin_user_details: (adminUsers as unknown as AdminUserComplete[]) || []
       });
 
     } catch (error) {
       console.error('Error fetching user metrics:', error);
     }
-  };
+  }, [adminUsers]);
 
-  const fetchSystemMetrics = async () => {
+  const fetchSystemMetrics = useCallback(async () => {
     try {
       // Get booking metrics
       const { count: totalBookings } = await supabase
@@ -319,9 +327,9 @@ export const useSuperAdminAnalytics = () => {
     } catch (error) {
       console.error('Error fetching system metrics:', error);
     }
-  };
+  }, []);
 
-  const calculateSecurityMetrics = (securityEvents: SecurityEvent[]) => {
+  const calculateSecurityMetrics = useCallback((securityEvents: SecurityEvent[]) => {
     const metrics: SecurityMetrics = {
       total_events: securityEvents.length,
       critical_events: 0,
@@ -358,7 +366,7 @@ export const useSuperAdminAnalytics = () => {
       .slice(0, 5);
 
     setSecurityMetrics(metrics);
-  };
+  }, []);
 
   const refreshData = useCallback(() => {
     fetchAnalytics();
@@ -400,7 +408,7 @@ export const useSuperAdminAnalytics = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [refreshData]);
+  }, [realtimeSubscription, refreshData]);
 
   // Export analytics data
   const exportAnalytics = useCallback(async (exportFormat: 'json' | 'csv' = 'json') => {
@@ -507,7 +515,8 @@ export const useSuperAdminAnalytics = () => {
     getTimeSeriesData,
     getSeverityDistribution,
     getEventTypeDistribution,
-    getUserGrowthData,
+    userGrowth,
+    bookingGrowth,
     adminUsers // Include admin users from roles hook
   };
 };

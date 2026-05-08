@@ -3,9 +3,12 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
 import { UnifiedUserTable } from "@/components/admin/UnifiedUserTable";
 import { BulkActionBar } from "@/components/admin/BulkActionBar";
+import { useAdminUsersComplete } from "@/hooks/useAdminUsersComplete";
 
 const AdminUsers = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const { data: users } = useAdminUsersComplete(showDeleted);
 
   const handleUserSelect = useCallback((userId: string, selected: boolean) => {
     setSelectedUsers(prev => 
@@ -45,12 +48,15 @@ const AdminUsers = () => {
             selectedUsers={selectedUsers}
             onUserSelect={handleUserSelect}
             onSelectAll={handleSelectAll}
+            showDeleted={showDeleted}
+            onShowDeletedChange={setShowDeleted}
           />
         </div>
 
         {/* Floating Bulk Action Bar */}
         <BulkActionBar 
           selectedUsers={selectedUsers}
+          users={users || []}
           onClearSelection={handleClearSelection}
         />
       </AdminLayout>
