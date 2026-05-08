@@ -1,6 +1,6 @@
 # MobiRides Bug Report
 
-**Last Updated:** May 8, 2026 (BUG-032–035 added)  
+**Last Updated:** May 8, 2026 (BUG-032–036 added)  
 **Reference:** Week 2 May Status Report, Sprint 13 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
@@ -509,6 +509,44 @@ After merging `develop` into the bugfix branch, 10 tests failed across 7 test su
 
 ---
 
+### BUG-036: SuperAdmin UserBehavior Dashboard — Geographic/Revenue/Engagement Tabs Showing Mock Data
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Reporting broken — superadmin only) |
+| **Status** | ✅ Resolved |
+| **Affects** | `UserBehavior.tsx`, `useGeographicAnalytics.ts`, Supabase database |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+The Geographic, Revenue, and Engagement tabs on the SuperAdmin UserBehavior dashboard were backed by the `useGeographicAnalytics` hook but the three required Supabase RPCs did not exist in the database. All three tabs silently fell back to empty/zero states (the hook returns `[]` / `null` on error). The hook was already wired correctly in the component — the gap was entirely at the database layer.
+
+**Root cause:** Migration `20260508000000_add_geographic_analytics_rpcs.sql` was present locally but had never been applied to the remote database.
+
+**RPCs deployed:**
+
+| Function | Returns |
+|----------|---------|
+| `get_geographic_revenue_stats()` | Top 10 locations by revenue — `location`, `unique_users`, `total_bookings`, `total_revenue` |
+| `get_revenue_summary()` | Aggregate figures — `monthly_revenue`, `avg_booking_value`, `avg_revenue_per_user`, `total_bookings`, `total_users` |
+| `get_engagement_metrics()` | Booking KPIs — `booking_conversion_rate`, `return_booking_rate`, `avg_bookings_per_user`, `total_users`, `users_with_bookings` |
+
+All functions use `SECURITY DEFINER SET search_path = public` and grant `EXECUTE` to `authenticated` and `service_role`.
+
+**Resolution:**  
+Applied migration via `supabase db query --linked`, then registered it as applied with `supabase migration repair --status applied 20260508000000`. (Direct query approach was required because a remote-only orphaned migration `20260508083755` blocked `db push`.)
+
+**Verification:**  
+Test script (`_geo_analytics_test_tmp.mjs`) ran 20 checks — all passed:
+- All 3 RPCs callable by authenticated user, correct column shapes, non-negative values
+- `get_geographic_revenue_stats` returns 10 rows ordered by revenue DESC (live data)
+- Revenue summary: P1,786.50 monthly revenue, P8,972.05 avg booking value
+- Engagement: 322 total users, 10.2% booking conversion, 54.5% return booker rate
+- `UserBehavior.tsx` source confirmed: no hardcoded city/revenue strings, hook and loading states wired correctly
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -569,6 +607,7 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-033** | 2026-05-08 | Admin user list duplicate entries — Deduplicated by aggregating roles per user. |
 | **BUG-034** | 2026-05-08 | Host booking email approve/decline links 404 — Fixed fallback domain and added URL fields to payload. |
 | **BUG-035** | 2026-05-08 | Test suite regressions (10 tests / 7 suites) — Fixed mock mismatches, stale assertions, TZ config, and component mismatches. |
+| **BUG-036** | 2026-05-08 | UserBehavior dashboard geo/revenue/engagement tabs empty — Deployed 3 missing RPCs; 20/20 verification checks passing. |
 
 ---
 
@@ -581,4 +620,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–035 added by Arnold T. Bathoen — May 8, 2026*
+*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–036 added by Arnold T. Bathoen — May 8, 2026*

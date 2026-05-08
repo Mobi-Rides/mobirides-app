@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, TrendingUp, Clock, MapPin, DollarSign, Activity, Filter, RefreshCw, User, Calendar } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Users, TrendingUp, Clock, MapPin, DollarSign, Activity, RefreshCw, User, Calendar } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { SecurityEvent } from "@/hooks/useSuperAdminAnalytics";
+import { useGeographicAnalytics } from "@/hooks/useGeographicAnalytics";
 
 interface Props {
   events: SecurityEvent[];
@@ -34,74 +36,86 @@ const TREND_ICONS = {
 };
 
 export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props) => {
-  const [filterType, setFilterType] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('7d');
   const [viewMode, setViewMode] = useState<'overview' | 'engagement' | 'geographic' | 'revenue'>('overview');
 
+  const {
+    geoStats,
+    geoLoading,
+    revenueSummary,
+    revenueLoading,
+    engagementMetrics,
+    engagementLoading,
+    refetch: refetchAnalytics,
+  } = useGeographicAnalytics();
+
+  const handleRefresh = () => {
+    onRefresh();
+    refetchAnalytics();
+  };
+
   // Filter user-related events
-  const userEvents = events.filter(event => 
+  const userEvents = events.filter(event =>
     event.resource_type === 'user' || event.event_type.includes('user')
   );
 
-  // Calculate user behavior metrics using real data
+  // Behavior metrics derived from real userMetrics + engagementMetrics
   const behaviorMetrics: UserBehaviorMetric[] = [
     {
       metric: 'Daily Active Users',
       value: userMetrics?.active_today || 0,
-      change: 12.5, // Trend calculation would require historic data
-      trend: 'up',
+      change: 0,
+      trend: 'neutral',
       description: 'Users active in the last 24 hours'
     },
     {
       metric: 'New Registrations',
       value: userMetrics?.new_users_today || 0,
-      change: 8.2,
-      trend: 'up',
+      change: 0,
+      trend: 'neutral',
       description: 'New user signups today'
     },
     {
-      metric: 'User Retention',
-      value: 78.4, // Fallback mock until historic tracking is implemented
-      change: -2.1,
-      trend: 'down',
-      description: '7-day user retention rate'
-    },
-    {
-      metric: 'Average Session',
-      value: 24.7,
-      change: 5.3,
-      trend: 'up',
-      description: 'Average session duration (minutes)'
-    },
-    {
       metric: 'Booking Conversion',
-      value: 15.2,
-      change: 1.8,
-      trend: 'up',
-      description: 'Users who completed bookings'
+      value: engagementMetrics?.booking_conversion_rate ?? 0,
+      change: 0,
+      trend: 'neutral',
+      description: 'Users who made at least one booking'
     },
     {
-      metric: 'Churn Rate',
-      value: 3.4,
-      change: -0.5,
-      trend: 'down',
-      description: 'Monthly user churn rate'
+      metric: 'Return Booking Rate',
+      value: engagementMetrics?.return_booking_rate ?? 0,
+      change: 0,
+      trend: 'neutral',
+      description: 'Bookers with more than one booking'
+    },
+    {
+      metric: 'Avg Bookings / User',
+      value: engagementMetrics?.avg_bookings_per_user ?? 0,
+      change: 0,
+      trend: 'neutral',
+      description: 'Average bookings per active renter'
+    },
+    {
+      metric: 'Total Bookings',
+      value: engagementMetrics?.total_bookings ?? 0,
+      change: 0,
+      trend: 'neutral',
+      description: 'All-time bookings across all statuses'
     }
   ];
 
-  // Get recent user activities
   const recentUserActivities = userEvents
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 10);
 
-  // Calculate user engagement by hour from real event logs
-  const getEngagementByHour = () => {
+  // Derive hourly engagement from real audit event logs
+  const engagementByHour = (() => {
     const hours = Array.from({ length: 24 }, (_, i) => ({
       hour: `${i.toString().padStart(2, '0')}:00`,
       active_users: 0,
       bookings: 0
     }));
-
     events.forEach(event => {
       const hour = new Date(event.created_at).getHours();
       hours[hour].active_users++;
@@ -109,24 +123,21 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
         hours[hour].bookings++;
       }
     });
-
     return hours;
-  };
+  })();
 
-  const engagementByHour = getEngagementByHour();
-
-  // Geographic distribution (mock data)
-  const geographicData = [
-    { location: 'Gaborone', users: 1250, bookings: 340, revenue: 85000 },
-    { location: 'Francistown', users: 890, bookings: 220, revenue: 55000 },
-    { location: 'Maun', users: 650, bookings: 180, revenue: 42000 },
-    { location: 'Kasane', users: 420, bookings: 95, revenue: 28000 },
-    { location: 'Selebi-Phikwe', users: 380, bookings: 85, revenue: 25000 }
-  ];
+  // Total revenue across all geographic locations (for percentage calc)
+  const totalGeoRevenue = geoStats.reduce((sum, loc) => sum + loc.revenue, 0);
 
   const MetricCard = ({ metric }: { metric: UserBehaviorMetric }) => {
     const IconComponent = TREND_ICONS[metric.trend];
-    
+    const isLoading = engagementLoading && (
+      metric.metric === 'Booking Conversion' ||
+      metric.metric === 'Return Booking Rate' ||
+      metric.metric === 'Avg Bookings / User' ||
+      metric.metric === 'Total Bookings'
+    );
+
     return (
       <Card className="hover:shadow-md transition-shadow">
         <CardContent className="p-6">
@@ -136,20 +147,28 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
             </div>
             <div className={`flex items-center space-x-1 ${TREND_COLORS[metric.trend]}`}>
               <IconComponent className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {metric.change > 0 ? '+' : ''}{metric.change}%
-              </span>
+              <span className="text-sm font-medium">—</span>
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {typeof metric.value === 'number' && metric.value % 1 !== 0 
-                ? metric.value.toFixed(1) 
-                : metric.value}
-            </p>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {metric.metric}
-            </p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-8 w-20 mb-1" />
+                <Skeleton className="h-4 w-32" />
+              </>
+            ) : (
+              <>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {typeof metric.value === 'number' && metric.value % 1 !== 0
+                    ? metric.value.toFixed(1)
+                    : metric.value.toLocaleString()}
+                  {(metric.metric === 'Booking Conversion' || metric.metric === 'Return Booking Rate') ? '%' : ''}
+                </p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {metric.metric}
+                </p>
+              </>
+            )}
             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {metric.description}
             </p>
@@ -159,40 +178,38 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
     );
   };
 
-  const ActivityCard = ({ event }: { event: SecurityEvent }) => {
-    return (
-      <div className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full">
-          <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {event.event_type.replace('.', ' ').toUpperCase()}
-            </p>
-            <Badge variant="outline" className="capitalize">
-              {event.severity}
-            </Badge>
-          </div>
-          <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-            <span className="flex items-center">
-              <User className="h-3 w-3 mr-1" />
-              User {event.target_id?.slice(0, 8)}...
-            </span>
-            <span className="flex items-center">
-              <Calendar className="h-3 w-3 mr-1" />
-              {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
-            </span>
-          </div>
-          {event.resource_type && (
-            <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
-              Resource: {event.resource_type}
-            </p>
-          )}
-        </div>
+  const ActivityCard = ({ event }: { event: SecurityEvent }) => (
+    <div className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full">
+        <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
       </div>
-    );
-  };
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            {event.event_type.replace('.', ' ').toUpperCase()}
+          </p>
+          <Badge variant="outline" className="capitalize">
+            {event.severity}
+          </Badge>
+        </div>
+        <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+          <span className="flex items-center">
+            <User className="h-3 w-3 mr-1" />
+            User {event.target_id?.slice(0, 8)}...
+          </span>
+          <span className="flex items-center">
+            <Calendar className="h-3 w-3 mr-1" />
+            {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+          </span>
+        </div>
+        {event.resource_type && (
+          <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+            Resource: {event.resource_type}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 
   const EngagementChart = () => (
     <Card>
@@ -208,7 +225,7 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
                 {hour.hour}
               </div>
               <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${Math.min(hour.active_users / 150 * 100, 100)}%` }}
                 />
@@ -223,6 +240,42 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
     </Card>
   );
 
+  const GeoLocationRow = ({ location, users, bookings, revenue }: {
+    location: string; users: number; bookings: number; revenue: number;
+  }) => (
+    <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div>
+        <p className="font-medium text-gray-900 dark:text-white">{location}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          {users.toLocaleString()} users • {bookings.toLocaleString()} bookings
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="font-medium text-gray-900 dark:text-white">
+          P{revenue.toLocaleString()}
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Revenue</p>
+      </div>
+    </div>
+  );
+
+  const GeoLoadingSkeleton = () => (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-44" />
+          </div>
+          <div className="space-y-1 flex flex-col items-end">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-3 w-14" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   const GeographicCard = () => (
     <Card>
       <CardHeader>
@@ -235,24 +288,19 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {geographicData.map((location, index) => (
-            <div key={index} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">{location.location}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {location.users} users • {location.bookings} bookings
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-medium text-gray-900 dark:text-white">
-                  P{location.revenue.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Revenue</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        {geoLoading ? (
+          <GeoLoadingSkeleton />
+        ) : geoStats.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No geographic data available yet
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {geoStats.map((loc, index) => (
+              <GeoLocationRow key={index} {...loc} />
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -277,7 +325,7 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
             <option value="90d">Last 90 days</option>
           </select>
           <Button
-            onClick={onRefresh}
+            onClick={handleRefresh}
             disabled={loading}
             variant="outline"
             size="sm"
@@ -316,14 +364,12 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
       {/* Overview Tab */}
       {viewMode === 'overview' && (
         <div className="space-y-6">
-          {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {behaviorMetrics.map((metric, index) => (
               <MetricCard key={index} metric={metric} />
             ))}
           </div>
 
-          {/* Recent User Activities */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -355,31 +401,50 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
       {viewMode === 'engagement' && (
         <div className="space-y-6">
           <EngagementChart />
-          
+
           <Card>
             <CardHeader>
               <CardTitle>User Engagement Metrics</CardTitle>
-              <CardDescription>Detailed engagement statistics</CardDescription>
+              <CardDescription>Booking-based engagement statistics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">4.2</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Sessions/User</p>
+              {engagementLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                      <Skeleton className="h-4 w-24 mx-auto" />
+                    </div>
+                  ))}
                 </div>
-                <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">24m</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Session Duration</p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {engagementMetrics?.avg_bookings_per_user.toFixed(1) ?? '—'}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Avg Bookings/User</p>
+                  </div>
+                  <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {engagementMetrics?.total_bookings.toLocaleString() ?? '—'}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Bookings</p>
+                  </div>
+                  <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {engagementMetrics ? `${engagementMetrics.return_booking_rate}%` : '—'}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Return Booker Rate</p>
+                  </div>
+                  <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {engagementMetrics ? `${engagementMetrics.booking_conversion_rate}%` : '—'}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Booking Conversion</p>
+                  </div>
                 </div>
-                <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">68%</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Return Rate</p>
-                </div>
-                <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">3.1</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Pages/Session</p>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -398,10 +463,20 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
                   <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full">
                     <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
-                  <span className="text-sm text-green-600 dark:text-green-400">+15.3%</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">P245,000</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Revenue</p>
+                {revenueLoading ? (
+                  <>
+                    <Skeleton className="h-8 w-28 mb-1" />
+                    <Skeleton className="h-4 w-32" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      P{(revenueSummary?.monthly_revenue ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Revenue</p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -411,10 +486,20 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
                   <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
                     <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <span className="text-sm text-blue-600 dark:text-blue-400">+8.7%</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">P850</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Revenue/User</p>
+                {revenueLoading ? (
+                  <>
+                    <Skeleton className="h-8 w-20 mb-1" />
+                    <Skeleton className="h-4 w-36" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      P{(revenueSummary?.avg_revenue_per_user ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Avg Revenue/User</p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -424,10 +509,20 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
                   <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-full">
                     <Activity className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <span className="text-sm text-purple-600 dark:text-purple-400">+12.1%</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">P2,340</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Booking Value</p>
+                {revenueLoading ? (
+                  <>
+                    <Skeleton className="h-8 w-24 mb-1" />
+                    <Skeleton className="h-4 w-32" />
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      P{(revenueSummary?.avg_booking_value ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Avg Booking Value</p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -435,34 +530,52 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
           <Card>
             <CardHeader>
               <CardTitle>Revenue by Location</CardTitle>
-              <CardDescription>Revenue distribution across different locations</CardDescription>
+              <CardDescription>Revenue distribution across vehicle pickup locations</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {geographicData.map((location, index) => {
-                  const totalRevenue = 245000; // Mock total
-                  const percentage = (location.revenue / totalRevenue) * 100;
-                  
-                  return (
-                    <div key={index} className="space-y-2">
+              {geoLoading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {location.location}
-                        </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          P{location.revenue.toLocaleString()} ({percentage.toFixed(1)}%)
-                        </span>
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-32" />
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-green-600 dark:bg-green-400 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
+                      <Skeleton className="h-2 w-full rounded-full" />
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              ) : geoStats.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No revenue data available yet
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {geoStats.map((loc, index) => {
+                    const percentage = totalGeoRevenue > 0
+                      ? (loc.revenue / totalGeoRevenue) * 100
+                      : 0;
+                    return (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {loc.location}
+                          </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            P{loc.revenue.toLocaleString()} ({percentage.toFixed(1)}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div
+                            className="bg-green-600 dark:bg-green-400 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
