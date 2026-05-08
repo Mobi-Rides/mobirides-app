@@ -1737,8 +1737,8 @@ ${data.description ? '<div style="background:#f7fafc;padding:18px;border-radius:
             </div>
 
             <div class="action-buttons">
-                <a href="${data.approve_url || 'https://mobirides.com/dashboard/bookings'}" class="approve-button">✅ Approve Request</a>
-                <a href="${data.decline_url || 'https://mobirides.com/dashboard/bookings'}" class="decline-button">❌ Decline Request</a>
+                <a href="${data.approve_url || 'https://app.mobirides.com/host-bookings'}" class="approve-button">✅ Approve Request</a>
+                <a href="${data.decline_url || 'https://app.mobirides.com/host-bookings'}" class="decline-button">❌ Decline Request</a>
             </div>
 
             <div style="background-color: #f0fff4; padding: 20px; border-radius: 12px; margin: 30px 0; border-left: 4px solid #38a169;">

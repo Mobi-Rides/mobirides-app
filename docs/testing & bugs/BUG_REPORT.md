@@ -1,6 +1,6 @@
 # MobiRides Bug Report
 
-**Last Updated:** May 8, 2026  
+**Last Updated:** May 8, 2026 (BUG-032–035 added)  
 **Reference:** Week 2 May Status Report, Sprint 13 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
 
 ---
@@ -424,6 +424,91 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
+### BUG-032: Admin Vehicle Type Displaying Raw Enum Value
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Display / UX) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/pages/admin/AdminCampaigns.tsx`, admin vehicle management views |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+The vehicle type field in admin-facing tables was displaying the raw database enum value (e.g., `sedan_4_door`) instead of a human-readable label. Caused by missing enum-to-label mapping in the admin display layer.
+
+**Resolution:** Added a `vehicleTypeLabel` mapping function to convert DB enum values to display strings in the affected admin views.
+
+---
+
+### BUG-033: Admin User List Showing Duplicate Entries
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Data Integrity / UX) |
+| **Status** | ✅ Resolved |
+| **Affects** | Admin user management list / `UnifiedUserTable` data fetch |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+The admin user list was showing duplicate rows for some users due to a join on `user_roles` returning multiple rows per user when a user holds more than one role. Each role row was producing a separate user entry.
+
+**Resolution:** Deduplicated results by grouping/aggregating roles per user instead of producing a row per role. Users now appear once with all roles merged into a single entry.
+
+---
+
+### BUG-034: Host Booking Email Approve/Decline Links 404
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Blocks host approval workflow) |
+| **Status** | ✅ Resolved |
+| **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts` |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+When a host received a `owner-booking-notification` email and clicked the "Approve Request" or "Decline Request" buttons, the links resolved to a 404. Two separate root causes:
+
+1. **Wrong fallback domain** — The fallback `href` values in the approve/decline buttons used `https://mobirides.com/host-bookings` (missing `app.` subdomain). Production routes require `https://app.mobirides.com/...`.
+2. **Missing URL fields in service layer** — `notificationService.ts` was not populating `manage_url`, `approve_url`, `decline_url`, or `booking_url` fields when constructing the email template payload, causing the template to fall back to the static (wrong) defaults.
+
+**Resolution:**
+- Updated both approve and decline button fallback `href` values in `resend-service/index.ts` (owner-booking-notification template) to `https://app.mobirides.com/host-bookings`.
+- Added `approve_url`, `decline_url`, `manage_url`, and `booking_url` to the template data payload in `notificationService.ts`, correctly derived from `bookingData.bookingId`.
+
+**Related:** Merge conflict between `develop` and local stash was resolved; upstream changes from `develop` were kept for the domain fallback.
+
+---
+
+### BUG-035: Test Suite Regressions — 10 Failing Tests Across 7 Suites
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (CI / Code Quality) |
+| **Status** | ✅ Resolved |
+| **Affects** | Jest test suite (7 test files, 10 individual tests) |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+After merging `develop` into the bugfix branch, 10 tests failed across 7 test suites. Each had a distinct root cause:
+
+| File | Root Cause | Fix Applied |
+|------|-----------|-------------|
+| `notificationRouting.test.ts` | `getEmailTemplateKey` returns hyphen-style keys (e.g., `'booking-cancelled'`) that were absent from `RESEND_TEMPLATES` | Added 12 hyphen-style alias keys to `ResendTemplateKey` type and `RESEND_TEMPLATES` object in `resend-templates.ts` |
+| `bookingLifecycle.test.ts` | Tests asserted `pushNotificationService.sendBookingNotification` but the service was refactored to use `CompleteNotificationService` which no longer calls that method | Removed stale `sendBookingNotification` assertions; success/payment field assertions retained |
+| `dynamicPricingCalculation.test.ts` (x2) | Mock `dbRule` used `name`/`type`/`conditions` but service reads `rule_name`/`condition_type`/`condition_value`; settings mock passed boolean `true` but service compares `=== "true"` | Fixed mock field names; changed `buildSettingsChain(true)` → `buildSettingsChain("true")` |
+| `enhancedBookingService.test.ts` | Timezone mismatch: test used UTC fake time but service parsed booking start times as local time; on UTC+2 machines, 2h and 30min reminder windows evaluated to 0 min difference | Added `process.env.TZ = 'UTC'` to `jest.config.js` |
+| `UnifiedUserTable.test.tsx` | Test clicked sort header once (producing descending order) but expected ascending order in export | Fixed test to click header twice (first = desc, second = asc) |
+| `extensionRequestDialog.test.tsx` | Test queried UI by labels/text that didn't match actual component (`"Total Cost"` vs `"Additional cost"`, missing aria-labels, `"Submit"` vs `"Send Request"`); global supabase mock lacked `insert` method | Rewrote test to match component; added `insert` to `src/__mocks__/supabaseClient.ts`; added `async/waitFor` for submit test |
+| `sprint10-arnold.test.ts` | `CarManagementTable` Eye icon opened a preview dialog instead of navigating to `/car/${car.id}` as the test required | Changed Eye button `onClick` from `setPreviewCar(car)` to `navigate(\`/car/${car.id}\`)` in `CarManagementTable.tsx` |
+
+**Post-fix result:** 487 tests across 42 suites — all passing.
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -480,6 +565,10 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-012** | 2026-05-08 | Payment System Mock Phase 0 — Internal transactions and double-commission fixed. |
 | **BUG-019** | 2026-05-08 | Orphaned Booking Route — Consolidated routes into `/rental-details/:id`. |
 | **BUG-021** | 2026-05-08 | Clumsy Map Architecture — Extracted modular hooks and bottom sheets. |
+| **BUG-032** | 2026-05-08 | Admin vehicle type raw enum display — Added label mapping for human-readable output. |
+| **BUG-033** | 2026-05-08 | Admin user list duplicate entries — Deduplicated by aggregating roles per user. |
+| **BUG-034** | 2026-05-08 | Host booking email approve/decline links 404 — Fixed fallback domain and added URL fields to payload. |
+| **BUG-035** | 2026-05-08 | Test suite regressions (10 tests / 7 suites) — Fixed mock mismatches, stale assertions, TZ config, and component mismatches. |
 
 ---
 
@@ -492,4 +581,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026*
+*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–035 added by Arnold T. Bathoen — May 8, 2026*
