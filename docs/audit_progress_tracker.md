@@ -141,8 +141,20 @@ This document tracks the systematic review of all `.md` files in the `docs` fold
 *   **Reality:** Codebase verifies `mockPaymentService.ts` is the active driver.
 *   **Proposed Fix:** Ensure all docs explicitly label payments as "Mock/Pending" until formal cutover.
 
+## ✅ V1.0 Final Production Documentation Suite
+
+| Artifact | Markdown Source | UI Component | Status |
+| :--- | :--- | :--- | :--- |
+| **General ToS** | `docs/production_assets/legal/TermsOfService.md` | `TermsOfService.tsx` | ✅ DEPLOYED |
+| **Renter Terms** | `docs/production_assets/legal/RenterTerms.md` | `RenterTerms.tsx` | ✅ DEPLOYED |
+| **Host Terms** | `docs/production_assets/legal/HostTerms.md` | `HostTerms.tsx` | ✅ DEPLOYED |
+| **Privacy Policy** | `docs/production_assets/legal/PrivacyPolicy.md` | `PrivacyPolicy.tsx` | ✅ DEPLOYED |
+| **Community Guidelines** | `docs/production_assets/legal/CommunityGuidelines.md` | `CommunityGuidelines.tsx` | ✅ DEPLOYED |
+| **Insurance Terms** | `docs/production_assets/legal/InsuranceTerms.md` | `InsuranceTerms.tsx` | ✅ DEPLOYED |
+| **Tutorial Summary** | `docs/production_assets/instructional/TutorialSteps.md` | Interactive Flow | ✅ VERIFIED |
+
 ## 🛠️ Next Methodical Steps
 
-1.  [ ] **Continue Category 12: docs/plans** — Review remaining 40+ planning docs.
+1.  [x] **Final Reconciliation** — Create a "V1.0 Final Production Documentation" suite with all fixed content.
 2.  [ ] **Category 13: funding/data_room** — Ensure investor-facing docs reflect V1.0 launch readiness.
-3.  [ ] **Final Reconciliation** — Create a "V1.0 Final Production Documentation" artifact with all fixed content.
+3.  [ ] **Production Deployment** — Verify all routes are accessible in the production build.

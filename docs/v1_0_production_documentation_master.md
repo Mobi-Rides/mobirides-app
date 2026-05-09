@@ -48,17 +48,42 @@
 
 ---
 
-## 4. Known Launch Blockers (P0)
-1. **Payment Credentials**: Integration with PayGate/Ooze production sandbox is pending receipt of credentials.
-2. **User Documents**: Final verification of ID/License upload RLS policies for international users is ongoing.
+## 4. Legal & Policies (Commercial V1.0)
+
+| Document | UI Route | Markdown Asset |
+| :--- | :--- | :--- |
+| **General Terms of Service** | `/terms` | `docs/production_assets/legal/TermsOfService.md` |
+| **Renter Specific Terms** | `/terms/renter` | `docs/production_assets/legal/RenterTerms.md` |
+| **Host Specific Terms** | `/terms/host` | `docs/production_assets/legal/HostTerms.md` |
+| **Privacy Policy** | `/privacy` | `docs/production_assets/legal/PrivacyPolicy.md` |
+| **Community Guidelines** | `/community-guidelines` | `docs/production_assets/legal/CommunityGuidelines.md` |
+| **Insurance Policies** | `/insurance-policies` | `docs/production_assets/legal/InsuranceTerms.md` |
+
+### 4.2 Help Center & Instructional Assets
+
+| Document | UI Route | Markdown Asset |
+| :--- | :--- | :--- |
+| **Tutorial System Steps** | N/A (Mobi AI) | `docs/production_assets/instructional/TutorialSteps.md` |
+| **ToS Guide** | `/help/:role/terms` | `docs/production_assets/help_center/TermsOfServiceGuide.md` |
+| **Cancellation Policy** | `/help/:role/cancellation` | `docs/production_assets/help_center/CancellationPolicyGuide.md` |
+| **Safety Guidelines** | `/help/renter/safety` | `docs/production_assets/help_center/SafetyGuidelinesGuide.md` |
+| **Handover Process** | `/help/host/handover` | `docs/production_assets/help_center/HandoverProcessGuide.md` |
+| **Refer a Friend** | `/help/:role/referral` | `docs/production_assets/help_center/ReferAFriendGuide.md` |
+| **Loyalty Program** | `/help/:role/rewards` | `docs/production_assets/help_center/LoyaltyProgramGuide.md` |
 
 ---
 
-## 5. Deployment Info
+## 5. Known Launch Blockers (P0)
+1. **Payment Credentials**: Integration with PayGate/Ooze production sandbox is pending receipt of credentials.
+2. **Native Push Provisioning**: `google-services.json` setup (MOB-122) blocked pending Google Cloud console access.
+
+---
+
+## 6. Deployment Info
 - **Production URL**: [app.mobirides.com](https://app.mobirides.com)
 - **Frontend**: React + Vite + Tailwind (Inter/Outfit fonts).
 - **Backend**: Supabase (PostgreSQL + Edge Functions).
-- **hosting**: Vercel.
+- **Hosting**: Vercel.
 
 ---
 *Verified by Antigravity AI on behalf of the MobiRides Engineering Team.*
