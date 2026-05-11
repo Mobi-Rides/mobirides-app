@@ -424,6 +424,111 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
+### BUG-032: Verification Document Uploads Fail After Storage Policy Cleanup
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Blocks KYC verification) |
+| **Status** | 🔴 Open |
+| **Affects** | `verification-documents`, `verification-selfies`, verification upload flow |
+| **Visible Result** | Users see failed verification document upload errors when submitting ID/selfie documents. |
+
+**Description:**  
+The verification flow uploads national ID images/PDFs to `verification-documents` and selfie photos to `verification-selfies`. Current migration scan shows those buckets were created historically, but latest remote-schema storage policies only preserve admin read access for verification buckets. Normal authenticated users may be blocked by storage RLS during insert/update.
+
+**Likely Cause:**  
+Security/storage cleanup removed or failed to preserve authenticated user `INSERT` / `UPDATE` / own-file `SELECT` policies for verification buckets.
+
+**Verification:**  
+Source confirmed in `src/services/verificationService.ts`; latest remote-schema migration policy block only shows admin read for verification storage. Fix candidate exists in `supabase/migrations/20260511083000_restore_verification_storage_user_policies.sql`.
+
+---
+
+### BUG-033: Vehicle Document Upload Uses Bucket With No Confirmed Creation Migration
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Can block host vehicle listing documents) |
+| **Status** | 🔴 Open |
+| **Affects** | `car-documents`, `/add-car`, vehicle document upload |
+| **Visible Result** | Vehicle document uploads can fail if the `car-documents` bucket is missing online. |
+
+**Description:**  
+`AddCar.tsx` uploads vehicle documents to `car-documents`, but migration scan did not find a committed active migration that creates this bucket before the local storage repair migration. If the online Supabase project does not already contain the bucket, uploads will fail with bucket-not-found/storage errors.
+
+**Likely Cause:**  
+The application introduced `car-documents` usage without a matching durable storage bucket migration, or a later schema/security sync omitted it.
+
+**Verification:**  
+Source confirmed in `src/pages/AddCar.tsx`. No active pre-repair migration was found creating `car-documents`.
+
+---
+
+### BUG-034: Chat Attachment Bucket Name Mismatch
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Can break chat file attachments) |
+| **Status** | 🔴 Open |
+| **Affects** | `chat-attachments`, `message-attachments`, chat attachment upload |
+| **Visible Result** | Users may be unable to upload or view chat attachments. |
+
+**Description:**  
+The chat UI uploads files to `chat-attachments`, while latest remote-schema storage policies reference `message-attachments`. Older migrations mention `chat-attachments`, but the current schema snapshot favors `message-attachments`, creating a bucket/policy mismatch.
+
+**Likely Cause:**  
+Storage bucket naming drift between chat implementation and later remote schema/security migrations.
+
+**Verification:**  
+Source confirmed in `src/components/chat/MessageInput.tsx`; latest remote-schema policy blocks reference `message-attachments`.
+
+---
+
+### BUG-035: Handover Photo Bucket Is Not Clearly Present in Active Migrations
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Can block handover photo documentation) |
+| **Status** | 🔴 Open |
+| **Affects** | `handover-photos`, enhanced handover photo uploads |
+| **Visible Result** | Handover step photo uploads may fail with missing bucket or storage policy errors. |
+
+**Description:**  
+The handover service uploads photos to `handover-photos`, but the bucket creation found during scan appears in archived duplicate-timestamp migrations rather than clearly active latest migrations. Latest remote-schema storage policy snippets do not clearly preserve handover photo policies.
+
+**Likely Cause:**  
+Handover storage setup may have been archived or omitted during migration cleanup / remote schema sync.
+
+**Verification:**  
+Source confirmed in `src/services/enhancedHandoverService.ts`; active migration scan did not find a clear current bucket creation/policy restoration path.
+
+---
+
+### BUG-036: Storage Policy Regression Risk Across Public Upload Buckets
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Multiple upload workflows can fail) |
+| **Status** | 🔴 Open |
+| **Affects** | `avatars`, `car-images`, `insurance-claims`, `return-photos`, public upload/read flows |
+| **Visible Result** | Profile avatars, car images, insurance claim evidence, or return photos may fail to upload or display depending on online bucket/policy state. |
+
+**Description:**  
+Several app features depend on Supabase Storage buckets and public/authenticated policies. Historical migrations create or configure these buckets, but latest remote-schema storage policy blocks only show a subset of policies, especially for `car-images`, `insurance-claims`, `message-attachments`, and verification buckets. This creates a regression risk after security hardening or remote schema sync.
+
+**Likely Cause:**  
+Security hardening and remote-schema migrations preserved some storage policies but not the full set of user-facing upload/read policies required by current frontend flows.
+
+**Verification:**  
+Read-only scan compared `supabase.storage.from(...)` usage against storage bucket/policy migrations. Broad repair candidate exists in `supabase/migrations/20260511090000_repair_app_storage_buckets_and_policies.sql`.
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -492,4 +597,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026*
+*Updated by: Codex storage audit — May 11, 2026*
