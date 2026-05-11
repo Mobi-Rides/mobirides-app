@@ -424,6 +424,300 @@ The "Export Selected" button in the `BulkActionBar` (line 200–217) only export
 
 ---
 
+### BUG-032: False Map Initialization Error on Non-Map Pages
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Core auth pages look broken) |
+| **Status** | 🔴 Open |
+| **Affects** | `/login`, `/signup`, `/forgot-password`, `/terms-of-service`, protected-route sign-in screens |
+| **Visible Result** | Users see `Failed to initialize map. Please try again later.` on pages that do not display a map. |
+
+**Description:**  
+After pulling latest `origin/develop`, mobile UI smoke testing at 390×844 shows the Mapbox error toast on every public/auth page tested. This is user-visible before any interaction and makes login/signup/legal pages appear broken.
+
+**Likely Cause:**  
+`MapboxTokenProvider` wraps the entire app in `App.tsx` and emits a global toast when token initialization fails (`src/contexts/MapboxTokenContext.tsx`). Map token initialization should be scoped to map-dependent routes/components, or token failures should be silent outside map UI.
+
+**Verification:**  
+`npm run build` passes. Reproduced locally with Vite on `/login`, `/signup`, `/forgot-password`, `/terms-of-service`, `/profile`, `/bookings`, and `/wallet`.
+
+---
+
+### BUG-033: Auth Form Labels Are Nearly Invisible in Dark Mode
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Users cannot reliably identify required auth fields) |
+| **Status** | 🔴 Open |
+| **Affects** | `Login.tsx`, `signup.tsx`, `ForgotPassword.tsx`, protected-route sign-in screens |
+| **Visible Result** | Labels such as `Email`, `Password`, `Full Name`, and `Phone Number` render nearly white on white cards. |
+
+**Description:**  
+On mobile with the app in dark theme, auth page containers are hardcoded to light surfaces (`bg-gray-50`, `bg-white`) while field labels inherit dark-theme foreground color. Selenium confirmed label color `rgb(248, 250, 252)` on the white auth cards, making labels effectively unreadable.
+
+**Likely Cause:**  
+Auth pages use fixed light backgrounds while shared auth form labels rely on theme tokens. Either force dark text inside the light auth cards or convert these screens to theme-aware `bg-card text-card-foreground` surfaces.
+
+**Verification:**  
+Reproduced on `/signup`, `/forgot-password`, `/profile`, `/bookings`, and `/wallet`; `/profile`, `/bookings`, and `/wallet` show the same sign-in form through the protected-route auth flow.
+
+---
+
+### BUG-034: Floating Chat Button Covers Auth Form Controls on Mobile
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Blocks or obscures core auth inputs/actions) |
+| **Status** | 🔴 Open |
+| **Affects** | `/signup`, `/forgot-password`, `/password-reset-sent`, `/car-listing`, protected-route sign-in screens, public legal pages |
+| **Visible Result** | The floating chat button overlaps signup phone input, forgot-password submit button, password-reset confirmation content, car-listing filter controls, and sign-in button areas. |
+
+**Description:**  
+Mobile smoke testing at 390×844 shows the global floating chat button positioned over primary page controls. On `/signup`, it covers the right side of the phone input. On `/forgot-password`, it sits over the `Send Reset Email` button. On `/password-reset-sent`, it covers the reset confirmation copy / action area. On `/car-listing`, it covers the filter sort control area above `Apply Filters`. On protected-route sign-in screens, it overlaps the right side of the `Sign In` button.
+
+**Likely Cause:**  
+`ChatManager` renders globally with `SHOW_FLOATING_CHAT = true`, and `FloatingChatButton` uses `fixed bottom-[25vh] right-6 z-40`. The button should be hidden on auth/legal pages and unauthenticated protected-route sign-in screens, or repositioned so it cannot cover form controls.
+
+**Verification:**  
+`npm run build` passes. Reproduced locally on mobile screenshots for `/signup`, `/forgot-password`, `/password-reset-sent`, `/car-listing`, `/profile`, `/bookings`, and `/wallet`.
+
+---
+
+### BUG-035: Branded Password Reset Email Can Send a Tokenless Reset Link
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Password recovery link can appear broken to users) |
+| **Status** | 🔴 Open |
+| **Affects** | Password reset email flow, `/reset-password` |
+| **Visible Result** | A user clicking the branded reset link can land back on sign-in instead of seeing the password reset form. |
+
+**Description:**  
+The reset page requires `?token=...&redirectedFromEmail=true` before it will render the reset form. However `api/auth/reset-password.js` sends the `password-reset` Resend template with `reset_url` and `confirmation_url` set to `/reset-password` without a token. If a user clicks that branded email link, the UI treats it as invalid and redirects them to sign-in.
+
+**Likely Cause:**  
+There are two reset-email paths: the custom Resend template gets a tokenless URL, while Supabase's built-in reset is triggered separately. The visible branded email link must include the same recovery token format that `ResetPassword.tsx` expects, or `ResetPassword.tsx` must support Supabase's redirect/session format.
+
+**Verification:**  
+Source confirmed in `api/auth/reset-password.js` and `src/pages/ResetPassword.tsx`. Directly opening `/reset-password` reproduces the visible failure by redirecting to the sign-in screen instead of presenting reset instructions or a reset form.
+
+---
+
+### BUG-036: Invalid Vehicle Detail Links Leave Users Waiting Before Showing a Generic Error
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Broken/shared vehicle links appear to hang) |
+| **Status** | 🔴 Open |
+| **Affects** | `/cars/:carId` |
+| **Visible Result** | Invalid vehicle URLs show `Loading vehicle details...` for roughly 15 seconds before changing to a generic error. |
+
+**Description:**  
+Mobile smoke testing `/cars/test-id` at 390×844 showed the page stuck on `Loading vehicle details...` at 3 and 8 seconds, then only changing to `Error loading vehicle details` around 15 seconds. Browser logs showed repeated 400 responses from the cars query before the error screen appeared. This creates a broken-link experience for users opening malformed or stale shared vehicle links.
+
+**Likely Cause:**  
+`CarDetails.tsx` queries Supabase with `carId` directly and lets React Query retry invalid ID errors. Non-UUID / invalid IDs should be validated client-side and fail fast into a clear `Vehicle not found` state rather than retrying server 400s.
+
+**Verification:**  
+Reproduced locally on `/cars/test-id`. The error eventually appears, but only after repeated failed requests and a long loading state.
+
+---
+
+### BUG-037: Car Listing Filters Are Visible but Mostly Ignored
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Search/discovery feature gives incorrect results) |
+| **Status** | 🔴 Open |
+| **Affects** | `/car-listing`, `SearchFilters.tsx`, `CarListing.tsx` |
+| **Visible Result** | Users can enter model, year, min price, max price, date range, and distance sort filters, but the results are not filtered by those values. |
+
+**Description:**  
+The car listing page exposes filter controls for model, year, price range, dates, vehicle type, pickup location, and sort by distance/price. `CarListing.tsx` only applies `location` and `vehicleType`, then maps `sortBy !== "price"` to `created_at`. This means model, year, min/max price, selected dates, and distance sorting are accepted in the UI but ignored in the query.
+
+**Likely Cause:**  
+`SearchFilters.tsx` tracks a richer `SearchFilters` object, but `CarListing.tsx` only consumes a small subset of it. Distance sorting also needs coordinates and distance calculation instead of falling back to `created_at`.
+
+**Verification:**  
+Source confirmed after browser smoke testing `/car-listing` at mobile and desktop sizes. The UI presents the controls, while the query only applies `filters.location`, `filters.vehicleType`, and price/created_at sorting.
+
+---
+
+### BUG-038: Host Booking CSV/PDF Export Buttons Do Not Export Files
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Host reporting/export workflow is non-functional) |
+| **Status** | 🔴 Open |
+| **Affects** | `/host-bookings`, `HostBookings.tsx` |
+| **Visible Result** | Hosts can tap `CSV` or `PDF`, but the app only shows an “Export Started” toast and does not generate or download anything. |
+
+**Description:**  
+The host bookings page displays CSV and PDF export buttons as real actions. The `exportData` handler only calls a toast and contains a placeholder comment. No file is created, no download starts, and no data is exported.
+
+**Likely Cause:**  
+Export UI was shipped before the export implementation. Either implement CSV/PDF generation or remove/disable the buttons until the feature exists.
+
+**Verification:**  
+Source confirmed in `HostBookings.tsx`: `exportData()` only displays a toast. The buttons are wired directly to that placeholder handler.
+
+---
+
+### BUG-039: Pending Renter Booking Shows “Pay Now” but Does Not Open Payment
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Misleads renters in payment workflow) |
+| **Status** | 🔴 Open |
+| **Affects** | `/renter-bookings`, `RenterBookingCard.tsx` |
+| **Visible Result** | Pending bookings show a `Pay Now` button even though payment is only actionable after the booking is approved / awaiting payment. |
+
+**Description:**  
+`RenterBookingCard` renders the same `Pay Now` button for both `awaiting_payment` and `pending` bookings. For `awaiting_payment`, it opens the payment modal. For `pending`, clicking the same visible `Pay Now` button navigates to rental details instead of opening payment. This makes renters think they can pay for a request that is still waiting for host approval.
+
+**Likely Cause:**  
+The status condition combines `awaiting_payment` and `pending` for a payment-labeled CTA. Pending bookings should use a different label such as `View Request` / `View Details`, or hide payment actions until the status is `awaiting_payment`.
+
+**Verification:**  
+Source confirmed in `RenterBookingCard.tsx`: the button label remains `Pay Now`, but the click handler only calls `onPayNow` when `booking.status === "awaiting_payment"` and otherwise navigates to details.
+
+---
+
+### BUG-040: Payment Return Page Sends Users to a Non-Existent Bookings Route
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Payment recovery/navigation flow can end in 404) |
+| **Status** | 🔴 Open |
+| **Affects** | `/payment/return`, `PaymentReturnPage.tsx` |
+| **Visible Result** | If the payment return page cannot resolve a booking ID, its recovery buttons navigate to `/my-bookings`, which is not a registered route. |
+
+**Description:**  
+The payment return screen uses `/my-bookings` as the fallback destination for success, failure, and missing transaction states. The app route table registers `/bookings`, `/host-bookings`, and `/renter-bookings`, but not `/my-bookings`. A user whose payment status cannot be mapped to a booking will be sent to the 404 page when they tap `View Booking`, `Return to Booking`, or `Go to Bookings`.
+
+**Likely Cause:**  
+`PaymentReturnPage.tsx` retained an old route name after booking routes were consolidated behind `/bookings` / role-aware redirects.
+
+**Verification:**  
+Source confirmed in `PaymentReturnPage.tsx`; `App.tsx` has no `/my-bookings` route.
+
+---
+
+### BUG-041: `/create-car` Route Shows a Listing Form but Does Not Create a Car
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Vehicle listing flow can silently lose user work) |
+| **Status** | 🔴 Open |
+| **Affects** | `/create-car`, `CreateCar.tsx` |
+| **Visible Result** | Users can fill and submit the `/create-car` form, but no vehicle is inserted or uploaded; the page just navigates away. |
+
+**Description:**  
+The app registers `/create-car` as a protected route and renders the same `CarForm` pattern as the real add-car flow. Its submit handler only toggles `isSubmitting` and navigates to `/cars`, while the comment says “Submission logic would go here.” There is no `/cars` index route, only `/cars/:carId`, so this flow both fails to create the listing and sends users to an invalid route afterward.
+
+**Likely Cause:**  
+`CreateCar.tsx` appears to be an unfinished duplicate of `AddCar.tsx` that was left registered in production routing.
+
+**Verification:**  
+Source confirmed in `CreateCar.tsx` and `App.tsx`. The actual implemented listing flow lives in `/add-car`.
+
+---
+
+### BUG-042: Receipt “Download PDF” Button Does Not Download Anything
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Receipt/export workflow is non-functional) |
+| **Status** | 🔴 Open |
+| **Affects** | Receipt modal, `ReceiptModal.tsx` |
+| **Visible Result** | Users see a `Download PDF` receipt button, but clicking it does not generate or download a PDF. |
+
+**Description:**  
+The rental receipt modal has working receipt content and a `Download PDF` CTA. The handler contains only a future-implementation comment and `console.log`, so the visible feature does nothing for users.
+
+**Likely Cause:**  
+Receipt PDF generation was exposed in UI before implementation. Either wire it to the existing PDF/export utility stack or hide/disable the button until supported.
+
+**Verification:**  
+Source confirmed in `ReceiptModal.tsx`: `handleDownload()` only logs `Download receipt for booking`.
+
+---
+
+### BUG-043: Booking Approval and Payment Transitions Do Not Send Visible Push Notifications
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Users can miss booking approval/payment state changes) |
+| **Status** | 🔴 Open |
+| **Affects** | Booking lifecycle notifications, `bookingLifecycle.ts`, `completeNotificationService.ts` |
+| **Visible Result** | Renters and hosts may not receive expected notifications when a booking moves to awaiting payment or confirmed/paid. |
+
+**Description:**  
+The booking/payment trigger contract suite passes, but the adjacent booking lifecycle tests show notification side effects failing during key user-visible transitions. The `pending -> awaiting_payment` transition does not call the expected renter push notification, and the `confirmed` / `paid` transition does not send the expected renter and host notifications.
+
+**Likely Cause:**  
+The lifecycle path now routes through `completeNotificationService.createNotification`, but the tested Supabase insert path is failing with `supabase.from(...).insert is not a function`. This can prevent visible booking status notifications from being created or pushed even when the booking state itself changes.
+
+**Verification:**  
+`npx jest __tests__/bookingPaymentTriggers.test.ts __tests__/bookingLifecycle.test.ts __tests__/enhancedBookingService.test.ts --runInBand` fails in `bookingLifecycle.test.ts` on the missing notification calls. Console errors point to `src/services/completeNotificationService.ts:114`; transition side effects are triggered from `src/services/bookingLifecycle.ts`.
+
+---
+
+### BUG-044: Booking Reminder Notifications Are Only Partially Created
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Upcoming-trip reminders can be missed) |
+| **Status** | 🔴 Open |
+| **Affects** | Booking reminders, `enhancedBookingService.ts` |
+| **Visible Result** | Users may receive only some scheduled booking reminders instead of the expected 24h, 2h, and 30m reminders. |
+
+**Description:**  
+The enhanced booking service reminder test expects reminder notifications for all configured windows, but only part of the expected inserts occur. This means upcoming rental reminder coverage can be incomplete, leaving renters or hosts without visible prompts before pickup/handover.
+
+**Likely Cause:**  
+The reminder processing path is not creating all notification records for the configured reminder windows, or the query/filter path is excluding some reminders before insert.
+
+**Verification:**  
+`__tests__/enhancedBookingService.test.ts` fails in `processes booking reminders for 24h, 2h and 30m windows`: expected 6 notification inserts, received 2.
+
+---
+
+### BUG-045: Payment Return Page Never Reaches Success After Live Payment Initiation
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Payment confirmation flow can hang/fail after payment starts) |
+| **Status** | 🔴 Open |
+| **Affects** | `/payment/return`, `initiate-payment`, `payment-webhook`, `query-payment` |
+| **Visible Result** | After payment is initiated, the user lands on the payment return flow but never sees `Payment successful`; the booking remains unconfirmed. |
+
+**Description:**  
+The live Selenium booking/payment flow successfully signed in the renter, created a pending booking, called `initiate-payment`, and opened the returned payment URL. The return page then timed out waiting for the success state. Direct database verification showed the booking was updated to `payment_status=awaiting_payment` with a transaction ID, but the booking stayed `status=pending` and the transaction stayed `status=initiated`.
+
+**Likely Cause:**  
+`initiate-payment` creates a transaction and fires a mock `payment-webhook` request asynchronously, but the webhook is not completing the transaction in the live environment. Because `PaymentReturnPage` only shows success when `query-payment` returns `status=completed`, users remain in the processing/failure path and the booking never becomes confirmed/paid.
+
+**Verification:**  
+Selenium run against local Vite and live Supabase created booking `a3dbeb76-4e50-4896-9202-1df145529398` and transaction `2b7768cd-1a6a-4a41-b0a2-4886d4e50a6b`. Final live state: booking `status=pending`, `payment_status=awaiting_payment`; transaction `status=initiated`. The script failed while waiting for `Payment successful`.
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -492,4 +786,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026*
+*Updated by: Codex UI audit — May 8, 2026*
