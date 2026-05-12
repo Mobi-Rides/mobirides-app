@@ -35,6 +35,14 @@ jest.mock('@/services/notificationService', () => ({
     }
 }));
 
+jest.mock('@/services/completeNotificationService', () => ({
+    CompleteNotificationService: {
+        getInstance: jest.fn().mockReturnValue({
+            createNotification: jest.fn().mockResolvedValue({ success: true })
+        })
+    }
+}));
+
 // Mock toast
 jest.mock('sonner', () => ({
     toast: {
@@ -45,7 +53,7 @@ jest.mock('sonner', () => ({
 }));
 
 import { supabase } from '@/integrations/supabase/client';
-import { pushNotificationService } from '@/services/pushNotificationService';
+import { CompleteNotificationService } from '@/services/completeNotificationService';
 
 describe('Booking Lifecycle Service', () => {
     const mockBooking = {
@@ -81,6 +89,18 @@ describe('Booking Lifecycle Service', () => {
             const result = await bookingLifecycle.updateStatus('booking-123', 'awaiting_payment');
 
             expect(result.success).toBe(true);
+            expect(CompleteNotificationService.getInstance().createNotification).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'renter-456',
+                    type: 'system_notification',
+                    title: 'Payment Required',
+                    metadata: expect.objectContaining({
+                        type: 'awaiting_payment',
+                        carBrand: 'Toyota',
+                        carModel: 'Corolla'
+                    })
+                })
+            );
         });
 
         it('should transition to confirmed and set payment_status to paid', async () => {
@@ -98,6 +118,7 @@ describe('Booking Lifecycle Service', () => {
             const result = await bookingLifecycle.updateStatus('booking-123', 'confirmed');
 
             expect(result.success).toBe(true);
+            expect(CompleteNotificationService.getInstance().createNotification).toHaveBeenCalledTimes(2);
         });
 
         it('should handle in_progress status correctly', async () => {
