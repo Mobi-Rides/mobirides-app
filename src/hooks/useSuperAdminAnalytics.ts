@@ -4,8 +4,6 @@ import { Json } from "@/integrations/supabase/types";
 import { format, subDays } from "date-fns";
 import { 
   analyticsService, 
-  AnalyticsFilters, 
-  UserMetrics, 
   SystemMetrics, 
   SecurityMetrics,
   AuditLogEvent 

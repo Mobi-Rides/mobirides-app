@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { Database, Json } from "@/integrations/supabase/types";
 
