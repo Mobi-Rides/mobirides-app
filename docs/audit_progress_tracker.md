@@ -116,30 +116,30 @@ This document tracks the systematic review of all `.md` files in the `docs` fold
 
 ---
 
-## 🚩 Flagged Contradictions for Decision-Making
+## 🚩 Flagged Contradictions (Assigned to Sprint 14)
 
-### 1. SuperAdmin Logic Reality Gap
+### 1. SuperAdmin Logic Reality Gap (Ticket: AUD-001)
 *   **Source:** `20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md`
 *   **Issue:** Lists `suspend_user` and `ban_user` as "MISSING".
 *   **Reality:** These were implemented and verified in Sprint 13.
-*   **Proposed Fix:** Update audit findings to "VERIFIED/DONE" in the final docs update.
+*   **Proposed Fix:** Update audit findings to "VERIFIED/DONE".
 
-### 2. Security Remediation Stale Milestones
+### 2. Security Remediation Stale Milestones (Ticket: AUD-002)
 *   **Source:** `SECURITY_INCIDENT_REPORT_BUG004.md`
 *   **Issue:** References "Sprint 10" for remaining hardening tasks.
 *   **Reality:** We are in Sprint 14; items like MOB-704/706 are part of current DB remediation.
 *   **Proposed Fix:** Realign Section 6 with current Sprint 14 roadmap.
 
-### 3. Testing Protocol Versioning
+### 3. Testing Protocol Versioning (Ticket: AUD-003)
 *   **Source:** `PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`
 *   **Issue:** Still reports HAND-011 as a critical open bug.
 *   **Reality:** Resolved in March.
 *   **Proposed Fix:** Update "Current Status" table to reflect 0 critical blockers.
 
-### 4. Payment Gateway "Done" Hallucinations
+### 4. Payment Gateway "Done" Hallucinations (Ticket: AUD-004)
 *   **Issue:** Some planning docs suggest PayGate/Ooze is live.
 *   **Reality:** Codebase verifies `mockPaymentService.ts` is the active driver.
-*   **Proposed Fix:** Ensure all docs explicitly label payments as "Mock/Pending" until formal cutover.
+*   **Proposed Fix:** Ensure all docs explicitly label payments as "Mock/Pending".
 
 ## ✅ V1.0 Final Production Documentation Suite
 
@@ -153,8 +153,9 @@ This document tracks the systematic review of all `.md` files in the `docs` fold
 | **Insurance Terms** | `docs/production_assets/legal/InsuranceTerms.md` | `InsuranceTerms.tsx` | ✅ DEPLOYED |
 | **Tutorial Summary** | `docs/production_assets/instructional/TutorialSteps.md` | Interactive Flow | ✅ VERIFIED |
 
-## 🛠️ Next Methodical Steps
+## 🛠️ Next Methodical Steps (Sprint 14 Integration)
 
-1.  [x] **Final Reconciliation** — Create a "V1.0 Final Production Documentation" suite with all fixed content.
-2.  [ ] **Category 13: funding/data_room** — Ensure investor-facing docs reflect V1.0 launch readiness.
-3.  [ ] **Production Deployment** — Verify all routes are accessible in the production build.
+1.  [x] **Final Reconciliation** — Create a "V1.0 Final Production Documentation" suite with all fixed content. (✅ Done)
+2.  [ ] **Category 13: funding/data_room** — Ensure investor-facing docs reflect V1.0 launch readiness. (Ticket: AUD-005)
+3.  [ ] **Audit Remediations** — Execute AUD-001 through AUD-004 to close parity gaps. (🟡 IN PROGRESS)
+4.  [ ] **Production Deployment** — Verify all routes are accessible in the production build.

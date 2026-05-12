@@ -31,8 +31,10 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 3.  **SuperAdmin Remediation (SAR-002 to SAR-005)**: Deploy advanced security and audit tools.
 4.  **V1.0 Documentation Compliance**: Finalize and integrate all legal and instructional artifacts (ToS, Privacy, Insurance, Tutorials).
 5.  **Analytics & Merge Remediation (MOB-124)**: Resolve merge conflicts and satisfy static analysis requirements for launch.
-6.  **Native Integration**: Provision `google-services.json` and initialize Push Notifications.
-7.  **Technical Debt**: Cleanup legacy components and orphaned code.
+6.  **Booking-Payment Flow Remediation (MOB-PAY-003)**: Finalize realtime subscriptions and UI payment action gaps.
+7.  **Documentation Reconciliation Audit**: Resolve identified contradictions and stale findings across the `docs/` suite.
+8.  **Native Integration**: Provision `google-services.json` and initialize Push Notifications.
+9.  **Technical Debt**: Cleanup legacy components and orphaned code.
 
 ---
 
@@ -93,6 +95,16 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 | **MOB-125** | Antigravity | P0 | 3 | 🔵 IN PROGRESS | Finalize Production Branding & OG Asset Reconciliation. |
 | **MOB-126** | Tapologo | P1 | 8 | 🟡 TO DO | [RE-DESIGN] Premium Auth Landing experience (Desktop & Mobile). [View Plan](MOB_126_AUTHENTICATION_REDESIGN_IMPLEMENTATION.md) |
 | **S14-004** | Antigravity | P1 | 3 | 🟡 TO DO | Execute Master Storage Migration & Verify Multi-Tenant Isolation. |
+| **MOB-PAY-003** | Antigravity | P0 | 5 | 🟡 TO DO | [REMEDIATION] Finalize Realtime subscriptions and Pay Now UI actions. [View Plan](../plans/20260507_BOOKING_PAYMENT_REALTIME_REMEDIATION_PLAN.md) |
+
+### Category 6: Documentation Reconciliation & Audit (P1)
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **AUD-001** | Antigravity | P1 | 2 | 🟡 TO DO | Update `20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md` (suspend/ban user status). |
+| **AUD-002** | Antigravity | P1 | 2 | 🟡 TO DO | Realign Section 6 of `SECURITY_INCIDENT_REPORT_BUG004.md` with Sprint 14. |
+| **AUD-003** | Antigravity | P1 | 2 | 🟡 TO DO | Update "Current Status" table in `PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`. |
+| **AUD-004** | Tapologo | P2 | 1 | 🟡 TO DO | Enforce "Mock/Pending" labeling across all payment documentation. |
+| **AUD-005** | Modisa | P1 | 3 | 🟡 TO DO | Category 13: funding/data_room — Ensure investor-facing docs are launch-ready. |
 
 ---
 
