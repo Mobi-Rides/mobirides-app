@@ -37,6 +37,21 @@ export interface RouteRequest {
   profile?: 'driving' | 'walking' | 'cycling';
 }
 
+export interface NavigationState {
+  activeRoute: NavigationRoute | null;
+  currentStepIndex: number;
+  isNavigating: boolean;
+  showTraffic: boolean;
+}
+
+interface MapboxStep {
+  maneuver: { instruction: string; type: string };
+  distance: number;
+  duration: number;
+  name: string;
+  geometry: GeoJSON.Geometry;
+}
+
 export class NavigationService {
   private static instance: NavigationService;
   private mapboxToken: string | null = null;
@@ -45,7 +60,7 @@ export class NavigationService {
   private activeRoute: NavigationRoute | null = null;
   private currentStepIndex: number = 0;
   private trackingWatchId: number | null = null;
-  private subscribers: ((state: any) => void)[] = [];
+  private subscribers: ((state: NavigationState) => void)[] = [];
   private destination: { latitude: number; longitude: number } | null = null;
   private lastOffRouteCheck: number = 0;
   private showTraffic: boolean = false;
@@ -125,13 +140,7 @@ export class NavigationService {
         geometry: route.geometry,
         distance: route.distance,
         duration: route.duration,
-        steps: route.legs.flatMap((leg: any) => leg.steps.map((step: {
-          maneuver: { instruction: string; type: string };
-          distance: number;
-          duration: number;
-          name: string;
-          geometry: GeoJSON.Geometry;
-        }) => ({
+        steps: route.legs.flatMap((leg: { steps: MapboxStep[] }) => leg.steps.map((step: MapboxStep) => ({
           instruction: step.maneuver.instruction,
           distance: step.distance,
           duration: step.duration,
@@ -235,7 +244,7 @@ export class NavigationService {
 
   // Active Navigation Methods
 
-  subscribe(callback: (state: any) => void) {
+  subscribe(callback: (state: NavigationState) => void) {
     this.subscribers.push(callback);
     // Immediately call with current state
     callback({
@@ -286,7 +295,7 @@ export class NavigationService {
       let startLat = 0;
       let startLng = 0;
       
-      const geometry = route.geometry as any;
+      const geometry = route.geometry as GeoJSON.LineString;
       if (geometry.coordinates && geometry.coordinates.length > 0) {
         startLng = geometry.coordinates[0][0];
         startLat = geometry.coordinates[0][1];
@@ -295,7 +304,7 @@ export class NavigationService {
       this.currentSessionId = navigationAnalytics.startSession(
         'current-user', 
         { lat: startLat, lng: startLng }, // origin from route geometry start
-        destination as any,
+        { lat: destination.latitude, lng: destination.longitude },
         route
       );
     }
@@ -326,43 +335,54 @@ export class NavigationService {
   ): void {
     if (!this.activeRoute) return;
 
-    // Check if off-route every 10 seconds
-    if (Date.now() - this.lastOffRouteCheck > 10000 && this.destination) {
-      this.lastOffRouteCheck = Date.now();
+    // Check if off-route every 10 seconds (throttle)
+    const now = Date.now();
+    if (now - this.lastOffRouteCheck > 10000 && this.destination) {
+      this.lastOffRouteCheck = now;
       
       if (this.isOffRoute(userLocation, this.activeRoute)) {
         this.handleOffRoute(userLocation, this.destination).then((newRoute) => {
           if (newRoute && onRouteUpdated) {
             onRouteUpdated(newRoute);
-            // Also notify subscribers as activeRoute changed
             this.notifySubscribers();
           }
         });
-        return; // Skip step progression during reroute
+        return; 
       }
     }
 
     const currentStep = this.activeRoute.steps[this.currentStepIndex];
     const nextStep = this.activeRoute.steps[this.currentStepIndex + 1];
 
-    if (nextStep) {
-      // Check distance to end of current step (which is start of next step maneuver)
-      const geometry = currentStep.geometry as any;
-      if (geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length > 0) {
-        const endPoint = geometry.coordinates[geometry.coordinates.length - 1];
-        const distance = this.calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          endPoint[1],
-          endPoint[0]
-        );
+    // Calculate distance to end of CURRENT step (the maneuver point)
+    const geometry = currentStep.geometry as GeoJSON.LineString;
+    if (geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length > 0) {
+      const endPoint = geometry.coordinates[geometry.coordinates.length - 1];
+      const distanceToManeuver = this.calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        endPoint[1],
+        endPoint[0]
+      );
 
-        // Progress to next step if within 30m
-        if (distance < 30) {
-          this.currentStepIndex++;
-          onStepChange(this.currentStepIndex);
-          this.notifySubscribers();
-          this.announceManeuver(nextStep, distance);
+      // 1. Announce upcoming maneuver if voice is enabled
+      if (nextStep) {
+        this.announceManeuver(nextStep, distanceToManeuver);
+      } else {
+        // Handle destination arrival announcement
+        this.announceArrival(distanceToManeuver);
+      }
+
+      // 2. Progress to next step if within 25m (tightened from 30m)
+      if (nextStep && distanceToManeuver < 25) {
+        this.currentStepIndex++;
+        onStepChange(this.currentStepIndex);
+        this.notifySubscribers();
+        
+        // Immediate instruction for the new step
+        if (this.voiceEnabled) {
+          const utterance = new SpeechSynthesisUtterance(this.activeRoute.steps[this.currentStepIndex].instruction);
+          window.speechSynthesis.speak(utterance);
         }
       }
     }
@@ -399,7 +419,7 @@ export class NavigationService {
       // Handle different geometry types
       let turfLine;
       if (lineGeometry.type === 'LineString') {
-        turfLine = turf.lineString((lineGeometry as any).coordinates);
+        turfLine = turf.lineString((lineGeometry as GeoJSON.LineString).coordinates);
       } else {
         // Fallback for non-linestring (shouldn't happen for steps)
         return 0;
@@ -421,7 +441,7 @@ export class NavigationService {
     toast.info("Recalculating route...");
     
     if (this.currentSessionId) {
-      navigationAnalytics.logReroute(this.currentSessionId, userLocation as any);
+      navigationAnalytics.logReroute(this.currentSessionId, { lat: userLocation.latitude, lng: userLocation.longitude });
     }
     
     // Fetch new route from current position to destination
@@ -487,40 +507,63 @@ export class NavigationService {
       this.lastAnnouncedDistance = Infinity;
     }
     
-    // Announce at 500m, 200m, and 50m before maneuver
-    const announceDistances = [500, 200, 50];
+    // Announce at 1000m, 500m, 200m, and 50m before maneuver
+    const announceDistances = [1000, 500, 200, 50];
     
-    // Find if we crossed any threshold we haven't announced yet
-    const shouldAnnounce = announceDistances.some(d => 
+    // Find if we crossed any threshold
+    const threshold = announceDistances.find(d => 
       distance <= d && this.lastAnnouncedDistance > d
     );
     
-    if (shouldAnnounce) {
-      this.lastAnnouncedDistance = distance;
+    if (threshold !== undefined) {
+      this.lastAnnouncedDistance = threshold; // Pin to threshold to avoid repeats
       
       const announcement = this.buildAnnouncement(step, distance);
-      const utterance = new SpeechSynthesisUtterance(announcement);
-      
-      // Configure voice settings
-      utterance.rate = 0.9; // Slightly slower for clarity
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      utterance.lang = 'en-US';
-      
-      // Cancel any ongoing speech to prioritize navigation
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
+      this.speak(announcement);
     }
+  }
+
+  private announceArrival(distance: number): void {
+    if (!this.voiceEnabled || !('speechSynthesis' in window)) return;
+
+    // Announce arrival at 100m and 20m
+    const arrivalThresholds = [100, 20];
+    const threshold = arrivalThresholds.find(d => 
+      distance <= d && this.lastAnnouncedDistance > d
+    );
+
+    if (threshold !== undefined) {
+      this.lastAnnouncedDistance = threshold;
+      const message = threshold === 20 
+        ? "You have arrived at your destination." 
+        : `Your destination is in ${Math.round(distance)} meters.`;
+      this.speak(message);
+    }
+  }
+
+  private speak(text: string): void {
+    if (!('speechSynthesis' in window)) return;
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    utterance.lang = 'en-US';
+
+    // Queue instead of cancel if it's not a maneuver change
+    // Actually, for navigation, we usually want to cancel current if it's a new instruction
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    window.speechSynthesis.speak(utterance);
   }
   
   private buildAnnouncement(step: NavigationStep, distance: number): string {
-    const distanceText = distance < 100 
-      ? `In ${Math.round(distance)} meters` 
-      : `In ${Math.round(distance / 100) * 100} meters`;
+    const roundedDist = distance >= 1000 
+      ? `${(distance / 1000).toFixed(1)} kilometers`
+      : `${Math.round(distance / 10) * 10} meters`;
     
-    // Clean up instruction (sometimes API gives "Head north on Road", we want "Turn right onto Road")
-    // Use maneuver type + road name if instruction is too verbose or just use instruction
-    return `${distanceText}, ${step.instruction}`;
+    return `In ${roundedDist}, ${step.instruction}`;
   }
 }
 

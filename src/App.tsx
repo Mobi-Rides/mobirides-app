@@ -15,7 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MapboxTokenProvider } from "@/contexts/MapboxTokenContext";
 import { LocationSearchProvider } from "@/contexts/LocationSearchContext";
 import { VerificationProvider } from "@/contexts/VerificationContext";
-import { HandoverProvider } from "@/contexts/HandoverContext";
+import { HandoverProvider } from "@/contexts/HandoverProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingView } from "@/components/home/LoadingView";
 import { ChatManager } from "@/components/chat/ChatManager";
@@ -59,11 +59,13 @@ const AddCar = lazy(() => import("@/pages/AddCar"));
 const DriverLicense = lazy(() => import("@/pages/DriverLicense"));
 const EditCar = lazy(() => import("@/pages/EditCar"));
 const SavedCars = lazy(() => import("@/pages/SavedCars"));
-const BookingDetails = lazy(() => import("@/components/BookingDetails"));
 const NotificationDetails = lazy(() => import("@/components/NotificationDetails"));
 const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const HelpSection = lazy(() => import("@/pages/HelpSection"));
 const PasswordResetSent = lazy(() => import("@/pages/PasswordResetSent"));
+const InsuranceTerms = lazy(() => import("@/pages/InsuranceTerms"));
+const RenterTerms = lazy(() => import("@/pages/RenterTerms"));
+const HostTerms = lazy(() => import("@/pages/HostTerms"));
 
 const BookingRequestDetails = lazy(
   () => import("@/pages/BookingRequestDetails"),
@@ -162,6 +164,21 @@ function App() {
                         <Route path="/community-guidelines" element={
                           <Suspense fallback={<LoadingView />}>
                             <CommunityGuidelines />
+                          </Suspense>
+                        } />
+                        <Route path="/terms/insurance" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <InsuranceTerms />
+                          </Suspense>
+                        } />
+                        <Route path="/terms/renter" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <RenterTerms />
+                          </Suspense>
+                        } />
+                        <Route path="/terms/host" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <HostTerms />
                           </Suspense>
                         } />
                         <Route path="/reset-password" element={
@@ -359,13 +376,6 @@ function App() {
                           <Suspense fallback={<LoadingView />}>
                             <ProtectedRoute>
                               <RoleAwareBookingsRedirect />
-                            </ProtectedRoute>
-                          </Suspense>
-                        } />
-                        <Route path="/bookings/:id" element={
-                          <Suspense fallback={<LoadingView />}>
-                            <ProtectedRoute>
-                              <BookingDetails />
                             </ProtectedRoute>
                           </Suspense>
                         } />

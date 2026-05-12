@@ -218,7 +218,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
             aria-label={`Book ${car.brand} ${car.model} now`}
           >
             <Calendar className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>Book Now</span>
+            <span>Request</span>
           </Button>
         </div>
       )}

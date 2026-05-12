@@ -83,11 +83,11 @@ describe("UnifiedUserTable Sorting & Filtering", () => {
         />
       </QueryClientProvider>
     );
-    // Find all elements with 'User' and click the sortable header (should be the second one)
+    // Find the sortable "User" column header (inside a th) and click twice for ascending order
     const allUserHeaders = screen.getAllByText(/^User$/i);
-    // Find the one that is inside a th (table header)
     const nameHeader = allUserHeaders.find(el => el.closest('th'));
-    fireEvent.click(nameHeader!);
+    fireEvent.click(nameHeader!); // first click → descending
+    fireEvent.click(nameHeader!); // second click → ascending
     // Click export
     const exportBtn = screen.getByText(/Export CSV/i);
     fireEvent.click(exportBtn);

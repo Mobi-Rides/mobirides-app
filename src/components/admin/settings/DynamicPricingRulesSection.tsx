@@ -12,6 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, TrendingUp, Calendar, Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { PricingRuleConditionFields } from './pricing/PricingRuleConditionFields';
+import {
+  getNextDurationRuleConditions,
+  validateDurationRuleCandidate,
+} from './pricing/durationRuleValidation';
 
 const RULE_TYPE_LABELS: Record<PricingRuleType, string> = {
   [PricingRuleType.SEASONAL]: 'Seasonal',
@@ -22,8 +26,8 @@ const RULE_TYPE_LABELS: Record<PricingRuleType, string> = {
   [PricingRuleType.HOLIDAY]: 'Holiday',
   [PricingRuleType.LOCATION]: 'Location',
   [PricingRuleType.DESTINATION]: 'Destination',
+  [PricingRuleType.DURATION]: 'Duration',
 };
-
 
 export const DynamicPricingRulesSection = () => {
   const { toast } = useToast();
@@ -41,6 +45,12 @@ export const DynamicPricingRulesSection = () => {
       conditions: {},
       priority: rules.length + 1,
     };
+    const validationError = validateDurationRuleCandidate(rules, newRule);
+    if (validationError) {
+      toast({ title: validationError, variant: 'destructive' });
+      return;
+    }
+
     const result = await addRule(newRule);
     if (result.success) {
       toast({ title: 'New pricing rule created' });
@@ -58,7 +68,57 @@ export const DynamicPricingRulesSection = () => {
     }
   };
 
+  const handleAddDurationRule = async () => {
+    const conditions = getNextDurationRuleConditions(rules);
+    if (!conditions) {
+      toast({
+        title: 'No available duration range',
+        description: 'Edit or delete the existing open-ended duration rule before adding another one.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const newRule = {
+      id: uuidv4(),
+      name: 'New Duration Rule',
+      type: PricingRuleType.DURATION,
+      is_active: true,
+      multiplier: 0.9,
+      conditions,
+      priority: rules.length + 1,
+    };
+
+    const validationError = validateDurationRuleCandidate(rules, newRule);
+    if (validationError) {
+      toast({ title: validationError, variant: 'destructive' });
+      return;
+    }
+
+    const result = await addRule(newRule);
+    if (result.success) {
+      toast({ title: 'Duration pricing rule created' });
+    } else {
+      toast({ title: 'Failed to create duration rule', variant: 'destructive' });
+    }
+  };
+
   const handleUpdateRule = async (id: string, updates: Record<string, any>) => {
+    const currentRule = rules.find((rule) => rule.id === id);
+    if (!currentRule) return;
+
+    const candidateRule = {
+      ...currentRule,
+      ...updates,
+      conditions: updates.conditions ?? currentRule.conditions,
+    };
+
+    const validationError = validateDurationRuleCandidate(rules, candidateRule);
+    if (validationError) {
+      toast({ title: validationError, variant: 'destructive' });
+      return;
+    }
+
     setSavingId(id);
     const result = await updateRule(id, updates);
     setSavingId(null);
@@ -165,6 +225,8 @@ export const DynamicPricingRulesSection = () => {
                         if (value === PricingRuleType.DESTINATION) {
                           updates.conditions = { destination_type: 'local' };
                           updates.multiplier = 1.0;
+                        } else if (value === PricingRuleType.DURATION) {
+                          updates.multiplier = 0.9;
                         }
                         handleUpdateRule(rule.id, updates);
                       }}
@@ -223,10 +285,16 @@ export const DynamicPricingRulesSection = () => {
               </div>
             ))}
 
-            <Button variant="outline" onClick={handleAddRule} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Pricing Rule
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button variant="outline" onClick={handleAddRule} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Pricing Rule
+              </Button>
+              <Button variant="outline" onClick={handleAddDurationRule} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Duration Rule
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

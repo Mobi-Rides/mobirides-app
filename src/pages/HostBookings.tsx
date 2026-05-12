@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useQuery, useQueryClient, QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Filter, Search } from "lucide-react";
@@ -16,6 +17,7 @@ import { HostBookingStats } from "@/components/host-bookings/HostBookingStats";
 import { useToast } from "@/hooks/use-toast";
 import { BookingWithRelations, BookingStatus } from "@/types/booking";
 import { pushNotificationService } from "@/services/pushNotificationService";
+import { bookingLifecycle } from "@/services/bookingLifecycle";
 
 type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired" | "awaiting_payment";
 type SortOption = "date_asc" | "date_desc" | "earnings_asc" | "earnings_desc" | "status" | "renter";
@@ -25,6 +27,9 @@ export const HostBookings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Initialize realtime subscription
+  useHostBookingsRealtime(queryClient);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingFilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortOption>("date_desc");
@@ -33,6 +38,9 @@ export const HostBookings = () => {
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["host-bookings"],
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
@@ -113,7 +121,15 @@ export const HostBookings = () => {
   }, [bookings, searchQuery, statusFilter, sortBy]);
 
   const categorizedBookings = useMemo(() => {
-    if (!filteredAndSortedBookings) return {};
+    const empty = {
+      active: [] as BookingWithRelations[],
+      upcoming: [] as BookingWithRelations[],
+      pending: [] as BookingWithRelations[],
+      expired: [] as BookingWithRelations[],
+      completed: [] as BookingWithRelations[]
+    };
+
+    if (!filteredAndSortedBookings) return empty;
     
     const today = new Date();
     
@@ -138,72 +154,47 @@ export const HostBookings = () => {
 
   const handleBookingAction = useCallback(async (bookingId: string, action: "approve" | "decline" | "cancel") => {
     try {
-      // Only allow DB columns in update
-      const updateData: Partial<Pick<BookingWithRelations, 'status' | 'payment_status' | 'payment_deadline'>> = {
-        status: action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED
-      };
+      let newStatus: BookingStatus;
       if (action === "approve") {
-        updateData.payment_status = "unpaid";
-        updateData.payment_deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        newStatus = BookingStatus.AWAITING_PAYMENT;
+      } else if (action === "decline" || action === "cancel") {
+        newStatus = BookingStatus.CANCELLED;
+      } else {
+        return;
       }
 
-      const { error } = await supabase
-        .from("bookings")
-        .update(updateData)
-        .eq("id", bookingId);
-
-      if (error) throw error;
+      await bookingLifecycle.updateStatus(bookingId, newStatus);
 
       await queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
       toast({
         title: "Success",
         description: `Booking ${action}d successfully`,
       });
-
-      // Send notification if approved
-      if (action === "approve") {
-        const booking = bookings?.find(b => b.id === bookingId);
-        if (booking && booking.renter?.id) {
-          pushNotificationService.sendBookingNotification(booking.renter.id, {
-            type: 'awaiting_payment',
-            carBrand: booking.cars.brand,
-            carModel: booking.cars.model,
-            bookingReference: booking.id
-          }).catch(err => console.error("Failed to send notification:", err));
-        }
-      }
     } catch (error) {
+      console.error(`Error in handleBookingAction (${action}):`, error);
       toast({
         title: "Error",
         description: `Failed to ${action} booking`,
         variant: "destructive",
       });
     }
-  }, [queryClient, toast, selectedBookings]);
+  }, [queryClient, toast]);
 
   const handleBulkAction = useCallback(async (action: "approve" | "decline") => {
     if (selectedBookings.length === 0) return;
     try {
       const newStatus = action === "approve" ? BookingStatus.AWAITING_PAYMENT : BookingStatus.CANCELLED;
-      // Only allow DB columns in update
-      const updateData: Partial<Pick<BookingWithRelations, 'status' | 'payment_status' | 'payment_deadline'>> = {
-        status: newStatus
-      };
-      if (action === "approve") {
-        updateData.payment_status = "unpaid";
-        updateData.payment_deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      }
-      const { error } = await supabase
-        .from("bookings")
-        .update(updateData)
-        .in("id", selectedBookings);
-      if (error) throw error;
+      
+      // Update each booking through the lifecycle service to trigger side effects
+      await Promise.all(selectedBookings.map(id => bookingLifecycle.updateStatus(id, newStatus)));
+
       await queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
       toast({
         title: "Success",
         description: `Bookings ${action}d successfully`,
       });
     } catch (error) {
+      console.error(`Error in handleBulkAction (${action}):`, error);
       toast({
         title: "Error",
         description: `Failed to ${action} bookings`,
@@ -460,6 +451,34 @@ export const HostBookings = () => {
       <Navigation />
     </div>
   );
+};
+
+// Realtime subscription hook (internal)
+const useHostBookingsRealtime = (queryClient: QueryClient) => {
+  useEffect(() => {
+    console.log("Setting up Realtime subscription for host bookings");
+    
+    const channel = supabase
+      .channel('host-bookings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings'
+        },
+        (payload) => {
+          console.log('Realtime update received in host bookings:', payload);
+          queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("Cleaning up Realtime subscription for host bookings");
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 };
 
 export default HostBookings;

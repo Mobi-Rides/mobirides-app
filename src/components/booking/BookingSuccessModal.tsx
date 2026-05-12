@@ -33,22 +33,18 @@ export const BookingSuccessModal = ({
 
   const handleViewBooking = useCallback(() => {
     onClose();
-    if (bookingData?.id) {
-      navigate(`/rental-details/${bookingData.id}`);
-    } else {
-      navigate("/bookings");
-    }
-  }, [onClose, navigate, bookingData?.id]);
+    navigate("/renter-bookings");
+  }, [onClose, navigate]);
 
   useEffect(() => {
     if (!isOpen) {
-      setCountdown(5);
       return;
     }
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
+          clearInterval(timer);
           handleViewBooking();
           return 0;
         }
@@ -56,7 +52,10 @@ export const BookingSuccessModal = ({
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      setCountdown(5);
+    };
   }, [isOpen, handleViewBooking]);
 
   const handleCloseModal = () => {

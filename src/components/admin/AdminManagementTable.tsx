@@ -40,26 +40,50 @@ const useAdmins = () => {
   return useQuery({
     queryKey: ["admins"],
     queryFn: async (): Promise<Admin[]> => {
-      const { data, error } = await supabase
+      // user_roles is the authoritative table (post admin_rpc_migration)
+      const { data: roleData, error: roleError } = await supabase
         .from("user_roles")
-        .select(`
-          user_id,
-          role,
-          created_at,
-          profiles:user_id ( full_name, last_sign_in_at )
-        `)
+        .select("user_id, role, created_at")
         .in("role", ["admin", "super_admin"])
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      
-      return (data || []).map(d => ({
+      if (roleError) throw roleError;
+      if (!roleData?.length) return [];
+
+      // Deduplicate by user_id, preferring super_admin over admin
+      const seen = new Map<string, typeof roleData[0]>();
+      for (const row of roleData) {
+        const existing = seen.get(row.user_id);
+        if (!existing || row.role === "super_admin") {
+          seen.set(row.user_id, row);
+        }
+      }
+      const dedupedRoleData = Array.from(seen.values());
+
+      const userIds = dedupedRoleData.map(d => d.user_id);
+
+      // Enrich with full_name from profiles
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      // Enrich with email and last_sign_in_at from the admins table (kept in sync by RPCs)
+      const { data: adminData } = await supabase
+        .from("admins")
+        .select("id, email, last_sign_in_at")
+        .in("id", userIds);
+
+      const profileMap = new Map((profileData || []).map(p => [p.id, p]));
+      const adminMap = new Map((adminData || []).map(a => [a.id, a]));
+
+      return dedupedRoleData.map(d => ({
         id: d.user_id,
-        email: "Hidden for security", // Email is protected in auth.users
-        full_name: d.profiles?.full_name || null,
+        email: adminMap.get(d.user_id)?.email ?? "—",
+        full_name: profileMap.get(d.user_id)?.full_name || null,
         is_super_admin: d.role === "super_admin",
         created_at: d.created_at,
-        last_sign_in_at: d.profiles?.last_sign_in_at || null,
+        last_sign_in_at: adminMap.get(d.user_id)?.last_sign_in_at || null,
       })) as Admin[];
     },
   });
@@ -69,19 +93,19 @@ const useNonAdminUsers = () => {
   return useQuery({
     queryKey: ["non-admin-users"],
     queryFn: async (): Promise<Profile[]> => {
-      // First get existing admin IDs to exclude
+      // user_roles is the authoritative source; exclude users who already have admin/super_admin role
       const { data: existingAdmins } = await supabase
         .from("user_roles")
         .select("user_id")
         .in("role", ["admin", "super_admin"]);
-      
+
       const adminIds = existingAdmins?.map(admin => admin.user_id) || [];
-      
+
       // Get profiles that are not already admins
       let query = supabase
         .from("profiles")
         .select("id, full_name, role");
-        
+
       if (adminIds.length > 0) {
         query = query.not("id", "in", `(${adminIds.join(",")})`);
       }

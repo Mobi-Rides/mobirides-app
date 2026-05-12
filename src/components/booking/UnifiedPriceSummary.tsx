@@ -77,13 +77,37 @@ export const UnifiedPriceSummary: React.FC<UnifiedPriceSummaryProps> = ({
         </div>
 
         {/* Dynamic Pricing Adjustments */}
-        {dynamicPricing?.is_dynamic && dynamicPricing.final_price !== basePrice && (
+        {dynamicPricing?.is_dynamic && dynamicPricing.applied_rules && dynamicPricing.applied_rules.length > 0 ? (
+          <div className="space-y-1">
+            {dynamicPricing.applied_rules.map((rule, idx) => (
+              <div key={rule.rule_id || idx} className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
+                <span>{rule.description}</span>
+                <span>
+                  {/* Since we don't have individual amounts, we show the multiplier or just the total below if multiple */}
+                  {dynamicPricing.applied_rules!.length === 1 ? (
+                    <>
+                      {rule.multiplier > 1 ? '+' : ''}
+                      {formatCurrency(dynamicPricing.final_price - basePrice)}
+                    </>
+                  ) : (
+                    `${rule.multiplier > 1 ? '+' : ''}${Math.round((rule.multiplier - 1) * 100)}%`
+                  )}
+                </span>
+              </div>
+            ))}
+            {dynamicPricing.applied_rules.length > 1 && (
+              <div className="flex justify-between text-xs font-medium text-amber-700 dark:text-amber-300 pt-1">
+                <span>Total Dynamic Adjustment</span>
+                <span>
+                  {dynamicPricing.final_price > basePrice ? '+' : ''}
+                  {formatCurrency(dynamicPricing.final_price - basePrice)}
+                </span>
+              </div>
+            )}
+          </div>
+        ) : dynamicPricing?.is_dynamic && dynamicPricing.final_price !== basePrice && (
           <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
-            <span>
-              {destinationType && destinationType !== 'local' 
-                ? `${destinationType === 'cross_border' ? 'Cross-Border' : 'Out of Zone'} Surcharge` 
-                : 'Demand Adjustment'}
-            </span>
+            <span>Adjustment</span>
             <span>
               {dynamicPricing.final_price > basePrice ? '+' : ''}
               {formatCurrency(dynamicPricing.final_price - basePrice)}

@@ -2,14 +2,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { pushNotificationService } from "./pushNotificationService";
 import { ResendEmailService } from "./notificationService";
+import { CompleteNotificationService } from "./completeNotificationService";
+import type { Database } from "@/integrations/supabase/types";
 
 export type BookingStatus = 'pending' | 'awaiting_payment' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+
+export interface BookingData {
+  id: string;
+  renter_id: string;
+  status: string;
+  total_price: number;
+  start_date: string;
+  end_date: string;
+  cars: {
+    brand: string;
+    model: string;
+    owner_id: string;
+    image_url?: string | null;
+    location?: string;
+    owner?: {
+      full_name: string | null;
+    };
+  };
+}
 
 export const bookingLifecycle = {
   /**
    * Updates the status of a booking and triggers relevant side effects (notifications, etc)
    */
-  updateStatus: async (bookingId: string, newStatus: BookingStatus, metadata?: any) => {
+  updateStatus: async (bookingId: string, newStatus: BookingStatus, metadata?: Database['public']['Tables']['bookings']['Update']) => {
     console.log(`[BookingLifecycle] Transitioning booking ${bookingId} to ${newStatus}`);
     
     try {
@@ -21,10 +42,17 @@ export const bookingLifecycle = {
           renter_id, 
           status,
           total_price,
+          start_date,
+          end_date,
           cars (
             brand,
             model,
-            owner_id
+            owner_id,
+            image_url,
+            location,
+            owner:profiles!owner_id (
+              full_name
+            )
           )
         `)
         .eq('id', bookingId)
@@ -35,7 +63,7 @@ export const bookingLifecycle = {
       }
 
       // 2. Perform the update
-      const updatePayload: any = { status: newStatus, ...metadata };
+      const updatePayload: Database['public']['Tables']['bookings']['Update'] = { status: newStatus, ...metadata };
       
       // Handle status-specific logic
       if (newStatus === 'awaiting_payment') {
@@ -56,9 +84,9 @@ export const bookingLifecycle = {
       await handleSideEffects(booking, newStatus);
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[BookingLifecycle] Error updating status:`, error);
-      toast.error(error.message || "Failed to update booking status");
+      toast.error(error instanceof Error ? error.message : "Failed to update booking status");
       return { success: false, error };
     }
   },
@@ -88,108 +116,114 @@ export const bookingLifecycle = {
 
       toast.success("Refund processed successfully.");
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[BookingLifecycle] Error processing refund:`, error);
-      toast.error(error.message || "Failed to process refund");
+      toast.error(error instanceof Error ? error.message : "Failed to process refund");
       return { success: false, error };
     }
   }
 };
 
-// Helper function to get user email from auth.users
+// Helper function to get user email and profile info
 async function getUserEmail(userId: string): Promise<{ email?: string; name?: string } | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', userId)
-    .single();
+  try {
+    // Get name from profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single();
 
-  if (error || !data) return null;
-  
-  // Get email from auth.users
-  const { data: authData } = await supabase.auth.admin.getUserById(userId);
-  
-  return {
-    email: authData?.user?.email,
-    name: data.full_name
-  };
+    if (profileError) {
+      console.error("[BookingLifecycle] Error fetching profile for email:", profileError);
+    }
+    
+    // Use the safe RPC function to get email from auth.users
+    const { data: emailData, error: emailError } = await supabase.rpc('get_user_email_for_notification', {
+      user_uuid: userId
+    });
+    
+    if (emailError) {
+      console.error("[BookingLifecycle] Error fetching user email via RPC:", emailError);
+      return null;
+    }
+    
+    return {
+      email: emailData as string,
+      name: profileData?.full_name || undefined
+    };
+  } catch (error) {
+    console.error("[BookingLifecycle] Unhandled error in getUserEmail:", error);
+    return null;
+  }
 }
 
-async function handleSideEffects(booking: any, newStatus: BookingStatus) {
+async function handleSideEffects(booking: BookingData, newStatus: BookingStatus) {
   const car = booking.cars;
   const emailService = ResendEmailService.getInstance();
   
   switch (newStatus) {
     case 'awaiting_payment':
-      // Notify renter to pay - push
-      await pushNotificationService.sendBookingNotification(booking.renter_id, {
-        type: 'awaiting_payment',
-        carBrand: car.brand,
-        carModel: car.model,
-        bookingReference: booking.id
+      await CompleteNotificationService.getInstance().createNotification({
+        userId: booking.renter_id,
+        type: 'system_notification',
+        title: 'Payment Required',
+        description: `Your booking for ${car.brand} ${car.model} has been approved. Please complete payment to confirm.`,
+        relatedBookingId: booking.id,
+        metadata: {
+          type: 'awaiting_payment',
+          carBrand: car.brand,
+          carModel: car.model,
+          bookingReference: booking.id.split('-')[0].toUpperCase(),
+          totalAmount: booking.total_price,
+          hostName: car.owner?.full_name || 'Your Host',
+          actionUrl: `https://app.mobirides.com/rental-details/${booking.id}?pay=true`
+        }
       });
-      // TODO: Add email notification once email lookup is implemented
       break;
 
     case 'confirmed':
-      // Notify host and renter that it's confirmed - push
       await Promise.all([
-        pushNotificationService.sendBookingNotification(booking.renter_id, {
-          type: 'confirmed',
-          carBrand: car.brand,
-          carModel: car.model,
-          bookingReference: booking.id
+        CompleteNotificationService.getInstance().createNotification({
+          userId: booking.renter_id,
+          type: 'booking_confirmed_renter',
+          title: 'Booking Confirmed',
+          description: `Your booking for ${car.brand} ${car.model} has been confirmed!`,
+          relatedBookingId: booking.id,
+          metadata: {
+            carBrand: car.brand,
+            carModel: car.model,
+            totalPrice: booking.total_price
+          }
         }),
-        pushNotificationService.sendBookingNotification(car.owner_id, {
-          type: 'confirmed',
-          carBrand: car.brand,
-          carModel: car.model,
-          bookingReference: booking.id
+        CompleteNotificationService.getInstance().createNotification({
+          userId: car.owner_id,
+          type: 'booking_confirmed_host',
+          title: 'Booking Confirmed',
+          description: `The booking for your ${car.brand} ${car.model} has been confirmed.`,
+          relatedBookingId: booking.id,
+          metadata: {
+            carBrand: car.brand,
+            carModel: car.model,
+            totalPrice: booking.total_price
+          }
         })
       ]);
-      // Send booking confirmation email to renter
-      try {
-        const user = await getUserEmail(booking.renter_id);
-        if (user?.email) {
-          await emailService.sendEmail(
-            user.email,
-            'booking-confirmation',
-            {
-              customerName: user.name,
-              bookingReference: booking.id,
-              carBrand: car.brand,
-              carModel: car.model,
-              totalPrice: booking.total_price
-            },
-            '🎉 Your MobiRides Booking is Confirmed!'
-          );
-        }
-      } catch (emailError) {
-        console.error('[BookingLifecycle] Failed to send confirmation email:', emailError);
-      }
       break;
 
     case 'in_progress':
       toast.success("Trip started! Drive safely.");
-      // Send handover ready email
-      try {
-        const user = await getUserEmail(booking.renter_id);
-        if (user?.email) {
-          await emailService.sendEmail(
-            user.email,
-            'handover-ready',
-            {
-              customerName: user.name,
-              bookingReference: booking.id,
-              carBrand: car.brand,
-              carModel: car.model
-            },
-            '🚗 Your Vehicle is Ready for Handover - MobiRides'
-          );
+      await CompleteNotificationService.getInstance().createNotification({
+        userId: booking.renter_id,
+        type: 'handover_ready',
+        title: 'Trip Started',
+        description: `Your trip with the ${car.brand} ${car.model} has started.`,
+        relatedBookingId: booking.id,
+        metadata: {
+          carBrand: car.brand,
+          carModel: car.model
         }
-      } catch (emailError) {
-        console.error('[BookingLifecycle] Failed to send handover ready email:', emailError);
-      }
+      });
       break;
 
     case 'completed':
@@ -200,26 +234,18 @@ async function handleSideEffects(booking: any, newStatus: BookingStatus) {
 
     case 'cancelled':
       toast.info("Booking cancelled.");
-      // Send cancellation email to renter
-      try {
-        const user = await getUserEmail(booking.renter_id);
-        if (user?.email) {
-          await emailService.sendEmail(
-            user.email,
-            'booking-cancelled',
-            {
-              customerName: user.name,
-              bookingReference: booking.id,
-              carBrand: car.brand,
-              carModel: car.model,
-              cancelledDate: new Date().toLocaleDateString()
-            },
-            '❌ Your MobiRides Booking Has Been Cancelled'
-          );
+      await CompleteNotificationService.getInstance().createNotification({
+        userId: booking.renter_id,
+        type: 'booking_cancelled_renter',
+        title: 'Booking Cancelled',
+        description: `Your booking for ${car.brand} ${car.model} has been cancelled.`,
+        relatedBookingId: booking.id,
+        metadata: {
+          carBrand: car.brand,
+          carModel: car.model,
+          cancelledDate: new Date().toLocaleDateString()
         }
-      } catch (emailError) {
-        console.error('[BookingLifecycle] Failed to send cancellation email:', emailError);
-      }
+      });
       break;
   }
 }

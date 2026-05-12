@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
+const frontendUrl = process.env.VITE_FRONTEND_URL || process.env.VITE_APP_URL || 'http://localhost:5173';
+
 if (!process.env.SUPABASE_URL) {
     throw new Error('SUPABASE_URL environment variable is required');
 }
@@ -85,7 +87,7 @@ export async function forgotPassword(req, res) {
             });
         }
 
-        const resetLink = `${process.env.VITE_FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}&redirectedFromEmail=true`;
+        const resetLink = `${frontendUrl}/reset-password?token=${token}&redirectedFromEmail=true`;
 
         const emailHtml = `
       <html>

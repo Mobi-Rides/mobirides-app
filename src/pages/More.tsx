@@ -10,7 +10,9 @@ import {
   ChevronRight,
   Wallet,
   Car,
-  FileText
+  FileText,
+  Heart,
+  Lock
 } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
@@ -118,6 +120,53 @@ const More = () => {
           description: "Version 1.0.0",
           onClick: () => { },
           color: "text-indigo-600",
+        },
+      ]
+    },
+    {
+      title: "Legal & Policies",
+      items: [
+        {
+          icon: FileText,
+          label: "Terms of Service",
+          description: "General platform terms",
+          onClick: () => navigate("/terms"),
+          color: "text-blue-600",
+        },
+        {
+          icon: User,
+          label: "Renter Terms",
+          description: "Terms for renting a vehicle",
+          onClick: () => navigate("/terms/renter"),
+          color: "text-blue-500",
+        },
+        {
+          icon: Car,
+          label: "Host Terms",
+          description: "Terms for vehicle owners",
+          onClick: () => navigate("/terms/host"),
+          color: "text-orange-600",
+        },
+        {
+          icon: Lock,
+          label: "Privacy Policy",
+          description: "How we protect your data",
+          onClick: () => navigate("/privacy"),
+          color: "text-purple-600",
+        },
+        {
+          icon: Shield,
+          label: "Insurance Terms",
+          description: "Protection and coverage details",
+          onClick: () => navigate("/terms/insurance"),
+          color: "text-green-600",
+        },
+        {
+          icon: Heart,
+          label: "Community Guidelines",
+          description: "Our standards for the community",
+          onClick: () => navigate("/community-guidelines"),
+          color: "text-red-500",
         },
       ]
     }

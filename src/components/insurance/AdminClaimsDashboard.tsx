@@ -241,12 +241,12 @@ export default function AdminClaimsDashboard() {
     }
   };
 
-  const updateClaimStatus = async (claimId: string, newStatus: string, notes?: string, approvedAmount?: number, requestExcess?: boolean) => {
+  const updateClaimStatus = async (claimId: string, newStatus: string, notes?: string, approvedAmount?: number, requestExcess?: boolean, excessAmount?: number) => {
     try {
       // First get the claim to send notifications
       const { data: rawClaim, error: claimFetchError } = await supabase
         .from('insurance_claims')
-        .select('claim_number, renter_id, status')
+        .select('claim_number, renter_id, status, policy_id')
         .eq('id', claimId)
         .single();
 
@@ -255,13 +255,7 @@ export default function AdminClaimsDashboard() {
       // Cast to any to avoid strict type checks on partial data
       const claim = rawClaim as unknown as InsuranceClaim;
 
-      interface ExtendedInsuranceClaim extends InsuranceClaim {
-        excess_requested?: boolean;
-      }
-
-      // ... existing code ...
-
-      const updateData: Partial<ExtendedInsuranceClaim> = {
+      const updateData: any = {
         status: newStatus as InsuranceClaim['status'],
         admin_notes: notes,
         approved_amount: approvedAmount,
@@ -272,13 +266,12 @@ export default function AdminClaimsDashboard() {
       };
 
       if (requestExcess) {
-        updateData.excess_requested = true;
-        updateData.excess_amount_due = 1500; // Example fixed excess or calc from policy
+        updateData.excess_amount_due = excessAmount || 0;
       }
 
       const { error } = await supabase
         .from('insurance_claims')
-        .update(updateData) // Type-safe update with proper typing
+        .update(updateData)
         .eq('id', claimId);
 
       if (error) throw error;
@@ -568,16 +561,42 @@ export default function AdminClaimsDashboard() {
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Actions</h3>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Approved Amount (BWP)</label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4"
-                    placeholder="Enter approved amount..."
-                    defaultValue={selectedClaim.estimated_damage_cost || 0}
-                    id="approved-amount"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Approved Amount (BWP)</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter approved amount..."
+                      defaultValue={selectedClaim.estimated_damage_cost || 0}
+                      id="approved-amount"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Excess Amount Due (BWP)</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter excess amount..."
+                      defaultValue={1500}
+                      id="excess-amount"
+                    />
+                  </div>
+                </div>
 
+                <div className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    id="request-excess"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    defaultChecked={true}
+                  />
+                  <label htmlFor="request-excess" className="ml-2 block text-sm text-gray-900">
+                    Request excess payment from renter before payout
+                  </label>
+                </div>
+
+                <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Review Notes</label>
                   <textarea
                     rows={3}
@@ -591,7 +610,9 @@ export default function AdminClaimsDashboard() {
                     onClick={() => {
                       const notes = (document.getElementById('review-notes') as HTMLTextAreaElement)?.value;
                       const amount = parseFloat((document.getElementById('approved-amount') as HTMLInputElement)?.value) || 0;
-                      updateClaimStatus(selectedClaim.id, 'approved', notes, amount);
+                      const requestExcess = (document.getElementById('request-excess') as HTMLInputElement)?.checked;
+                      const excessAmount = parseFloat((document.getElementById('excess-amount') as HTMLInputElement)?.value) || 0;
+                      updateClaimStatus(selectedClaim.id, 'approved', notes, amount, requestExcess, excessAmount);
                     }}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                   >
