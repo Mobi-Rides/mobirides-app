@@ -4938,6 +4938,27 @@ export type Database = {
         }[]
       }
       get_encryption_key: { Args: never; Returns: string }
+      get_engagement_metrics: {
+        Args: never
+        Returns: {
+          total_users: number
+          users_with_bookings: number
+          users_with_multiple_bookings: number
+          total_bookings: number
+          booking_conversion_rate: number
+          return_booking_rate: number
+          avg_bookings_per_user: number
+        }[]
+      }
+      get_geographic_revenue_stats: {
+        Args: never
+        Returns: {
+          location: string
+          unique_users: number
+          total_bookings: number
+          total_revenue: number
+        }[]
+      }
       get_marketing_recipients: {
         Args: never
         Returns: {
@@ -4971,6 +4992,16 @@ export type Database = {
           avatar_url: string
           full_name: string
           id: string
+        }[]
+      }
+      get_revenue_summary: {
+        Args: never
+        Returns: {
+          monthly_revenue: number
+          avg_booking_value: number
+          avg_revenue_per_user: number
+          total_bookings: number
+          total_users: number
         }[]
       }
       get_reply_chain: {
