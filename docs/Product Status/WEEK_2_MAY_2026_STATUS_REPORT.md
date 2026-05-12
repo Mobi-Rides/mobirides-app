@@ -25,6 +25,8 @@ Despite these infrastructure hurdles, the application remains on track for the J
 - **Merge Parity**: Resolving conflicts in analytics hooks and services to ensure a clean production build.
 - **Security Hardening**: Closing the exposed email PII vulnerability (MOB-708).
 - **Native Integration**: Resolving the block on Google Cloud console access to provision push notifications.
+- **Branding Consistency**: Replacing legacy asset `MOBI_LOGO.png` and updating `og-image.png` for production parity (MOB-125).
+- **Authentication Redesign**: Initiated the high-fidelity redesign of Login/Signup landing pages to match approved brand aesthetics (MOB-126).
 
 ---
 
@@ -34,7 +36,9 @@ Despite these infrastructure hurdles, the application remains on track for the J
 - 🟡 **Master Storage Reconciliation Plan** — DRAFTED. Ready for execution in `20260512140000_master_storage_reconciliation.sql`.
 - 🟡 **Analytics Merge Remediation** — IN PROGRESS. Resolving conflicts in `analyticsService.ts` and `useSuperAdminAnalytics.ts`.
 - 🟡 **BUG-054 to BUG-058** — CAPTURED & INVESTIGATED. All storage regressions are now tracked and assigned.
-- 🟡 **Sprint 14 Rollover** — Sprint 14 task list updated to include storage and merge remediation.
+- 🟡 **Sprint 14 Rollover** — Sprint 14 task list updated to include storage, merge, and branding remediation.
+- 🟡 **Branding Audit** — COMPLETED. Identified legacy screenshot in `og-image.png` and low-res `MOBI_LOGO.png`.
+- 🔵 **Authentication Redesign (MOB-126)** — INITIATED. Implementation plan drafted; assigned to Tapologo for implementation.
 
 ---
 
@@ -49,7 +53,7 @@ Despite these infrastructure hurdles, the application remains on track for the J
 | Test Coverage | 74%+ | **74%+** | — | 85% |
 | Security Vulnerabilities | 1 | **6** | +5 (Identified storage RLS drift) | 0 |
 | Database Migrations | ~272 | **~274** | +2 (Storage & Policy fixes) | — |
-| Known Bugs | ~2 | **~8** | +6 (Storage & Merge issues) | 0 |
+| Known Bugs | ~2 | **~9** | +7 (Storage, Merge, & Branding issues) | 0 |
 
 ---
 
@@ -60,6 +64,7 @@ Despite these infrastructure hurdles, the application remains on track for the J
 | **Storage RLS Drift** | High | Blocks KYC and Handover uploads | Execute Master Reconciliation Migration (MOB-123) |
 | **Analytics Merge Conflicts** | Medium | Potential build/runtime regressions | Manual service reconciliation & lint cleanup (MOB-124) |
 | **Native Provisioning** | Medium | Blocks Push Notifications | Modisa to follow up on Google Cloud access (MOB-122) |
+| **Branding Regression** | High | Undermines professional launch trust | Reconcile production branding assets (MOB-125) |
 
 ---
 
@@ -77,6 +82,8 @@ Despite these infrastructure hurdles, the application remains on track for the J
 - [ ] **Execute MOB-124**: Finalize analytics merge and satisfy static analysis.
 - [ ] **Verify BUG-054/055**: Confirm KYC and Car Document uploads are functional in the staging environment.
 - [ ] **Close MOB-708**: Finalize PII protection for public profiles.
+- [ ] **Execute MOB-125**: Replace legacy branding assets and verify production parity.
+- [ ] **Implement MOB-126**: Execute high-fidelity redesign of Login/Signup landing pages.
 
 ---
 

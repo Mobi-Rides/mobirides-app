@@ -672,6 +672,44 @@ Found during `npm run build` and merge validation on 2026-05-12.
 
 ---
 
+### BUG-060: Branding & Favicon Regression (Legacy Assets in Production)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | High (User Trust / Branding Parity) |
+| **Status** | 🟡 In Progress |
+| **Affects** | `og-image.png`, `MOBI_LOGO.png`, `index.html`, Signup/Login preview |
+| **Visible Result** | External links (Slack/WhatsApp) show the legacy "K Rent Private Cars" signup page. Favicon may appear inconsistent. |
+
+**Description:**  
+The production environment still serves `og-image.png` containing the legacy branding screenshot. Additionally, the high-resolution "Mobi Rides" logo has not been correctly synced to the public asset directory, leaving low-resolution or legacy placeholders in place.
+
+**Likely Cause:**  
+Static asset cache-busting was not implemented, and the `og-image.png` file was never updated after the rebrand from "K Rent" to "Mobi Rides".
+
+**Verification:**  
+Visual inspection of `app.mobirides.com` and local `og-image.png` asset.
+
+---
+
+### BUG-061: Slogan Typo "Cars for You, Buy You" in Metadata
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | High (Brand Image / Professionalism) |
+| **Status** | 🔵 Tracked via MOB-126 |
+| **Affects** | `index.html`, `MOB_126_AUTHENTICATION_REDESIGN_IMPLEMENTATION.md` |
+| **Visible Result** | The site metadata and some headers read "Buy You" instead of the official "By You". |
+
+**Description:**  
+A critical typo exists in the primary brand slogan where "By You" (indicating user-driven supply) is written as "Buy You" (indicating purchase). This appears in `index.html` metadata and potentially other hardcoded strings.
+
+**Resolution:** Standardize all slogan strings to "MobiRides: Cars for You, By You" as part of the MOB-126 redesign.
+
+---
+
 ### FEATURE-001: Missing Detailed Views on Admin Tables (MOB-711)
 
 | Field | Detail |
@@ -751,4 +789,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026*
+*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–061 added via Antigravity — May 12, 2026*

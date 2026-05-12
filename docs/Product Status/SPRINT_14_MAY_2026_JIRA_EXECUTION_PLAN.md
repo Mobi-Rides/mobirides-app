@@ -41,7 +41,7 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 | Owner | Module Focus | Primary Responsibilities |
 |-------|-------------|--------------------------|
 | **Arnold (Snr Engineer)** | Security, Admin Logic | MOB-708 (PII), SAR-002 (Anomaly Detection), SAR-004 (OCR) |
-| **Tapologo (QA / Test Engineer)** | QA, Documentation | Regression Testing, Documentation Audit, QA Verification |
+| **Tapologo (QA / Test Engineer)** | QA, UI Redesign | Regression Testing, Documentation Audit, MOB-126 (Auth Redesign) |
 | **Modisa (CEO)** | Architecture, Native, Plans | Native Integration (MOB-122), SAR-003 (Health), Sprint Oversight |
 
 ---
@@ -90,6 +90,8 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 |--------|-------|----------|--------|--------|---------|
 | **MOB-123** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | Master Storage Reconciliation: Fix missing buckets & RLS drift. |
 | **MOB-124** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | Resolve Analytics Merge conflicts & satisfy static analysis. |
+| **MOB-125** | Antigravity | P0 | 3 | 🔵 IN PROGRESS | Finalize Production Branding & OG Asset Reconciliation. |
+| **MOB-126** | Tapologo | P1 | 8 | 🟡 TO DO | [RE-DESIGN] Premium Auth Landing experience (Desktop & Mobile). [View Plan](MOB_126_AUTHENTICATION_REDESIGN_IMPLEMENTATION.md) |
 | **S14-004** | Antigravity | P1 | 3 | 🟡 TO DO | Execute Master Storage Migration & Verify Multi-Tenant Isolation. |
 
 ---
@@ -100,7 +102,7 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 | Metric | Status |
 |--------|--------|
 | **Tasks Completed** | 1 of 15 |
-| **Current Blockers** | Storage Policy Inconsistency (BUG-054-058), Analytics Merge Parity (BUG-059) |
+| **Current Blockers** | Storage Policy Inconsistency (BUG-054-058), Analytics Merge Parity (BUG-059), Branding Regression (BUG-060) |
 
 ---
 
