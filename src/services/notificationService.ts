@@ -191,6 +191,7 @@ export class ResendEmailService {
       return { success: false, error: 'No email address provided' };
     }
 
+    const bookingUrl = `${window.location.origin}/booking-requests/${bookingData.bookingId}`;
     const templateData = {
       name: recipient.name,
       bookingReference: bookingData.bookingReference,
@@ -204,8 +205,10 @@ export class ResendEmailService {
       customerName: bookingData.customerName,
       hostName: bookingData.hostName,
       carImage: bookingData.carImage || '',
-      approve_url: bookingData.approveUrl,
-      decline_url: bookingData.declineUrl
+      manage_url: bookingUrl,
+      approve_url: bookingUrl,
+      decline_url: bookingUrl,
+      booking_url: bookingUrl,
     };
 
     const templateKey = isHost ? 'owner-booking-notification' : 'booking-confirmation';
