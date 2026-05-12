@@ -44,6 +44,7 @@ import { PlanBookingStep } from "./PlanBookingStep";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DestinationType } from "@/types/booking";
 import { getCarImagePublicUrl } from "@/utils/carImageUtils";
+import { CompleteNotificationService } from "@/services/completeNotificationService";
 
 interface BookingDialogProps {
   car: Car;
@@ -51,7 +52,7 @@ interface BookingDialogProps {
   onClose: () => void;
 }
 
-export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
+export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): React.JSX.Element => {
   const [wizardStep, setWizardStep] = useState(1);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -220,39 +221,6 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       mountedRef.current = false;
     };
   }, []);
-
-  const createNotification = async (
-    userId: string,
-    type: "booking_request", // Use string literal for DB compatibility
-    content: string,
-    carId: string,
-    bookingId: string,
-  ) => {
-    console.log("Creating notification:", {
-      userId,
-      type,
-      content,
-      carId,
-      bookingId,
-    });
-    // Use the database function instead of direct insert to avoid schema mismatches
-    const { error } = await supabase.rpc('create_booking_notification', {
-      p_booking_id: bookingId,
-      p_notification_type: 'booking_request',
-      p_content: content
-    });
-
-
-    if (error) {
-      console.error(
-        "Error creating notification:",
-        error.message || JSON.stringify(error, null, 2),
-      );
-      // Don't throw error to prevent blocking the booking flow
-      return false;
-    }
-    return true;
-  };
 
   const handleBooking = async () => {
     // Check session validity first
@@ -459,14 +427,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         .eq("id", car.owner_id)
         .single();
 
-      // Import notification service
-
-
-      // Prepare booking data for notifications
-      const bookingNotificationData = {
-        bookingId: booking.id,
-        customerName: renterProfile?.full_name || "Customer",
-        hostName: hostProfile?.full_name || "Host",
+      // Send notifications using the centralized service
+      const notificationService = CompleteNotificationService.getInstance();
+      
+      const sharedMetadata = {
         carBrand: car.brand,
         carModel: car.model,
         pickupDate: format(startDate, "PPP"),
@@ -474,143 +438,53 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
         pickupLocation: car.location || "Pickup location",
         dropoffLocation: car.location || "Return location",
         totalAmount: totalPrice,
-        bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`
+        bookingReference: `MR-${booking.id.slice(-8).toUpperCase()}`,
+        carImage: getCarImagePublicUrl(car.image_url || null),
+        approveUrl: `${window.location.origin}/booking-requests/${booking.id}`,
+        declineUrl: `${window.location.origin}/booking-requests/${booking.id}`
+
       };
 
-      // Send notifications using new services (non-blocking)
-      const { ResendEmailService, TwilioWhatsAppService } = await import("@/services/notificationService");
-      const emailService = ResendEmailService.getInstance();
-      const whatsappService = TwilioWhatsAppService.getInstance();
+      // Notify Renter
+      notificationService.createNotification({
+        userId: session.session.user.id,
+        type: 'booking_request_sent',
+        title: 'Booking Request Submitted',
+        description: `Your booking request for ${car.brand} ${car.model} has been submitted.`,
+        relatedBookingId: booking.id,
+        relatedCarId: car.id,
+        metadata: sharedMetadata
+      });
 
-      if (renterProfile) {
-        try {
-          // Send email to renter
-          await emailService.sendBookingConfirmation(
-            {
-              id: session.session.user.id,
-              email: session.session.user.email,
-              name: renterProfile.full_name || "Customer"
-            },
-            bookingNotificationData
-          );
-
-          // Send WhatsApp to renter
-          await whatsappService.sendBookingConfirmation(
-            {
-              id: session.session.user.id,
-              phone: renterProfile.phone_number,
-              name: renterProfile.full_name || "Customer"
-            },
-            bookingNotificationData
-          );
-
-          console.log("✅ Renter notifications sent successfully");
-        } catch (error) {
-          console.error("❌ Failed to send renter notifications:", error);
+      // Notify Host
+      notificationService.createNotification({
+        userId: car.owner_id,
+        type: 'booking_request_received',
+        title: 'New Booking Request',
+        description: `You have received a new booking request for your ${car.brand} ${car.model}.`,
+        relatedBookingId: booking.id,
+        relatedCarId: car.id,
+        metadata: {
+          ...sharedMetadata,
+          customerName: renterProfile?.full_name || "Customer"
         }
-      }
-
-      if (hostProfile) {
-        try {
-          // Get host email using Edge Function (safe server-side admin access)
-          const { data: emailResponse, error: emailError } = await supabase.functions.invoke('get-user-email', {
-            body: { userId: car.owner_id }
-          });
-
-          if (!emailError && emailResponse?.email) {
-            // Send email to host
-            await emailService.sendBookingConfirmation(
-              {
-                id: car.owner_id,
-                email: emailResponse.email,
-                name: hostProfile.full_name || "Host"
-              },
-              {
-                ...bookingNotificationData,
-                customerName: renterProfile?.full_name || "Customer"
-              },
-              true // isHost flag
-            );
-          }
-
-          // Send WhatsApp to host
-          await whatsappService.sendBookingConfirmation(
-            {
-              id: car.owner_id,
-              phone: hostProfile.phone_number,
-              name: hostProfile.full_name || "Host"
-            },
-            {
-              ...bookingNotificationData,
-              customerName: renterProfile?.full_name || "Customer"
-            },
-            true // isHost flag
-          );
-
-          console.log("✅ Host notifications sent successfully");
-        } catch (error) {
-          console.error("❌ Failed to send host notifications:", error);
-        }
-      }
-
-      // Create legacy database notifications (non-blocking - don't let notification failures block the booking flow)
-      try {
-        // Create notification for renter
-        await createNotification(
-          session.session.user.id,
-          "booking_request",
-          `Your booking request for ${car.brand} ${car.model} from ${format(
-            startDate,
-            "PPP",
-          )} to ${format(endDate, "PPP")} has been submitted.`,
-          car.id,
-          booking.id,
-        );
-      } catch (notificationError) {
-        console.error(
-          "Failed to create renter notification (non-blocking):",
-          notificationError instanceof Error
-            ? notificationError.message
-            : JSON.stringify(notificationError, null, 2),
-        );
-      }
-
-      try {
-        // Create notification for host
-        await createNotification(
-          car.owner_id,
-          "booking_request",
-          `New booking request received for your ${car.brand} ${car.model
-          } from ${format(startDate, "PPP")} to ${format(endDate, "PPP")}.`,
-          car.id,
-          booking.id,
-        );
-      } catch (notificationError) {
-        console.error(
-          "Failed to create host notification (non-blocking):",
-          notificationError instanceof Error
-            ? notificationError.message
-            : JSON.stringify(notificationError, null, 2),
-        );
-      }
+      });
 
       if (!mountedRef.current) return;
 
       console.log(
-        "[BookingDialog] Booking flow completed successfully, showing success modal...",
+        "[BookingDialog] Booking flow completed successfully, redirecting to payment...",
       );
 
-      // Set success modal data
       setSuccessBookingData({
         id: booking.id,
         carBrand: car.brand,
         carModel: car.model,
-        startDate: format(startDate, "PPP"),
-        endDate: format(endDate, "PPP"),
+        startDate: format(startDate, "PP"),
+        endDate: format(endDate, "PP"),
         totalPrice: totalPrice,
       });
 
-      onClose();
       setIsSuccessModalOpen(true);
     } catch (error) {
       if (!mountedRef.current) return;
@@ -917,7 +791,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps) => {
       <BookingSuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
-        bookingData={successBookingData}
+        bookingData={successBookingData || undefined}
       />
     </>
   );

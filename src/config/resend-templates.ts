@@ -11,9 +11,11 @@ export interface ResendTemplate {
 export type ResendTemplateKey =
   | 'booking_confirmation'
   | 'booking_request'
+  | 'booking_request_received'
   | 'booking_cancelled'
   | 'payment_received'
   | 'payment_failed'
+  | 'awaiting_payment'
   | 'wallet_topup'
   | 'handover_ready'
   | 'rental_reminder'
@@ -32,7 +34,19 @@ export type ResendTemplateKey =
   | 'insurance-claim-received'
   | 'insurance-claim-update'
   | 'insurance-policy-confirmation'
-  | 'insurance-host-claim-notification';
+  | 'insurance-host-claim-notification'
+  | 'booking-request'
+  | 'booking-request-received'
+  | 'booking-cancelled'
+  | 'payment-received'
+  | 'payment-failed'
+  | 'wallet-topup'
+  | 'handover-ready'
+  | 'rental-reminder'
+  | 'return-reminder'
+  | 'wallet-notification'
+  | 'early-return-notification'
+  | 'system-notification';
 
 export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
   booking_confirmation: {
@@ -150,7 +164,7 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     description: 'Sent when a booking request is approved by the host'
   },
   'owner-booking-notification': {
-    id: 'owner-booking-notification',
+    id: 'booking-request',
     name: 'New Booking Request',
     subject: '📋 New Booking Request - Action Required',
     description: 'Sent to hosts when they receive a new booking request'
@@ -182,6 +196,90 @@ export const RESEND_TEMPLATES: Record<ResendTemplateKey, ResendTemplate> = {
     subject: '⚠️ Claim Filed - {{carName}} #{{claimNumber}}',
 
     description: 'Sent to car owners when a claim is filed on their vehicle'
+  },
+  booking_request_received: {
+    id: "booking-request-received",
+    name: 'Booking Request Received',
+    subject: "📋 Booking Request Sent — Awaiting Host Approval",
+    description: 'Sent to renters when their booking request is submitted and awaiting host approval'
+  },
+  awaiting_payment: {
+    id: 'awaiting-payment',
+    name: 'Payment Required',
+    subject: '🚗 Action Required: Your Booking is Approved! Pay Now to Confirm',
+    description: 'Sent when a booking request is approved and payment is required'
+  },
+  'booking-request': {
+    id: 'booking-request',
+    name: 'New Booking Request',
+    subject: 'New booking request for your vehicle',
+    description: 'Sent to hosts when they receive a new booking request'
+  },
+  'booking-request-received': {
+    id: 'booking-request-received',
+    name: 'Booking Request Received',
+    subject: '📋 Booking Request Sent — Awaiting Host Approval',
+    description: 'Sent to renters when their booking request is submitted'
+  },
+  'booking-cancelled': {
+    id: 'booking-cancelled',
+    name: 'Booking Cancelled',
+    subject: 'Your MobiRides booking has been cancelled',
+    description: 'Sent when a booking is cancelled'
+  },
+  'payment-received': {
+    id: 'payment-received',
+    name: 'Payment Received',
+    subject: 'Payment received - MobiRides',
+    description: 'Sent when a payment is successfully processed'
+  },
+  'payment-failed': {
+    id: 'payment-failed',
+    name: 'Payment Failed',
+    subject: 'Payment failed - Please try again',
+    description: 'Sent when a payment fails to process'
+  },
+  'wallet-topup': {
+    id: 'wallet-topup',
+    name: 'Wallet Top-up',
+    subject: 'Your MobiRides wallet has been topped up',
+    description: 'Sent when a host successfully tops up their wallet'
+  },
+  'handover-ready': {
+    id: 'handover-ready',
+    name: 'Vehicle Handover Ready',
+    subject: 'Your vehicle is ready for pickup/return',
+    description: 'Sent when a vehicle is ready for pickup or return'
+  },
+  'rental-reminder': {
+    id: 'rental-reminder',
+    name: 'Rental Reminder',
+    subject: 'Reminder: Your rental starts soon',
+    description: 'Sent as a reminder before rental start time'
+  },
+  'return-reminder': {
+    id: 'return-reminder',
+    name: 'Return Reminder',
+    subject: 'Reminder: Please return your rental vehicle',
+    description: 'Sent as a reminder before rental end time'
+  },
+  'wallet-notification': {
+    id: 'wallet-notification',
+    name: 'Wallet Activity Notification',
+    subject: 'MobiRides Wallet Activity Update',
+    description: 'Sent for generic wallet activities'
+  },
+  'early-return-notification': {
+    id: 'early-return-notification',
+    name: 'Early Return Notification',
+    subject: 'Notice: Vehicle Returned Early',
+    description: 'Sent to host when a vehicle is returned early'
+  },
+  'system-notification': {
+    id: 'system-notification',
+    name: 'System Notification',
+    subject: 'MobiRides System Notification',
+    description: 'General system notifications and updates'
   }
 };
 

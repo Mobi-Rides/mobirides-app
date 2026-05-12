@@ -1,6 +1,4 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceCard } from "@/components/dashboard/WalletBalanceCard";
 import { WalletTransactionHistory } from "@/components/dashboard/WalletTransactionHistory";
 import { ArrowLeft } from "lucide-react";
@@ -9,29 +7,6 @@ import { useNavigate } from "react-router-dom";
 
 const Wallet = () => {
   const navigate = useNavigate();
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Redirect if not a host
-  if (profile && profile.role !== 'host') {
-    navigate('/profile');
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-background">

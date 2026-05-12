@@ -2,13 +2,15 @@
 
 *Comprehensive index of all documentation files in the docs folder*
 
-**Total: 186 markdown files**
+**Total: 191 markdown files**
 
 
 ## Product Status (Status Report)
 
 | File | Date | Status | Description |
 |------|------|--------|-------------|
+| [WEEK_2_MAY_2026_STATUS_REPORT.md](Product Status/WEEK_2_MAY_2026_STATUS_REPORT.md) | May 8, 2026 | ✅ FINAL | Commercial Readiness: 95%. Sprint 13 Closure. |
+| [SPRINT_13_MAY_2026_JIRA_EXECUTION_PLAN.md](Product Status/SPRINT_13_MAY_2026_JIRA_EXECUTION_PLAN.md) | May 8, 2026 | ✅ COMPLETED | Finalized Sprint 13 execution and retrospective. |
 | [20251120_rls_migration_implementation_status_report.md](Product Status/20251120_rls_migration_implementation_status_report.md) | November 20, 2025 | Recovery | --- |
 | [20251128_WORKFLOW_MEMO_WEEK5_DEC2025.md](Product Status/20251128_WORKFLOW_MEMO_WEEK5_DEC2025.md) | 27/11/2025 | Active | --- |
 | [20251205_MCP_CONFIG_SECURITY_FIX.md](Product Status/20251205_MCP_CONFIG_SECURITY_FIX.md) | December 5, 2025 | Action | The `mcp-config.json` file contains an exposed Sup... |
@@ -87,6 +89,7 @@
 | [20260410_Roadmap_2026_H1.md](Roadmaps & PRDs/20260410_Roadmap_2026_H1.md) | April 10, 2026 | Active | --- |
 | [20260412_USER_STORIES_PRD_INPUTS_V2.0.md](Roadmaps & PRDs/20260412_USER_STORIES_PRD_INPUTS_V2.0.md) | Unknown | Active | --- |
 | [20260417_BOOKING_SCREEN_UX_PLAN.md](Roadmaps & PRDs/20260417_BOOKING_SCREEN_UX_PLAN.md) | April 17, 2026 | Active | Booking screen UX improvement plan — Sprint 12 |
+| [20260417_DURATION_DISCOUNTS_PLAN.md](Roadmaps & PRDs/20260417_DURATION_DISCOUNTS_PLAN.md) | April 17, 2026 | ✅ COMPLETED | Duration-based pricing logic implementation. |
 | [MobiRides_Valuation_Framework_06-02-2026.md](Roadmaps & PRDs/MobiRides_Valuation_Framework_06-02-2026.md) | February 6, 2026 | Active | --- |
 | [ROADMAP-NOV-DEC-2025.md](Roadmaps & PRDs/ROADMAP-NOV-DEC-2025.md) | Unknown | Active | --- |
 | [ROADMAP.md](Roadmaps & PRDs/ROADMAP.md) | Unknown | Active | *Based on comprehensive system analysis - December... |
@@ -160,12 +163,15 @@
 | [HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md](hotfixes/HOTFIX_HANDOVER_CONSOLIDATION_2026_03_09.md) | 2026-03-09 | Ready | --- |
 | [HOTFIX_HELP_CENTER_2026_03_08.md](hotfixes/HOTFIX_HELP_CENTER_2026_03_08.md) | 2026-03-08 | Active | --- |
 | [HOTFIX_RENTAL_LIFECYCLE_2026_03_06.md](hotfixes/HOTFIX_RENTAL_LIFECYCLE_2026_03_06.md) | March 6, 2026 | Ready | > **📌 Progress (March 17–22, 2026):** **MOB-200 Ph... |
-| [SECURITY_REMEDIATION_2026_04_04.md](hotfixes/SECURITY_REMEDIATION_2026_04_04.md) | 2026-04-04 | Active | --- |
+| [SECURITY_REMEDIATION_2026_04_04.md](hotfixes/SECURITY_REMEDIATION_2026_04_04.md) | 2026-04-04 | 🟡 Active (Sprint 14 Cleanup) | MOB-700 security series remediation. |
 
 ## plans (Plan)
 
 | File | Date | Status | Description |
 |------|------|--------|-------------|
+| [20260423_SUPERADMIN_CORE_LOGIC_REMEDIATION_PLAN.md](plans/20260423_SUPERADMIN_CORE_LOGIC_REMEDIATION_PLAN.md) | April 23, 2026 | 🟡 Active (Sprint 14) | Backend security and SuperAdmin logic remediation. |
+| [20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md](plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md) | April 28, 2026 | ✅ COMPLETED | Modular map architecture and Android readiness. |
+| [20260428_ROUTE_CONSOLIDATION_PLAN.md](plans/20260428_ROUTE_CONSOLIDATION_PLAN.md) | April 28, 2026 | ✅ COMPLETED | Route consolidation and payment UI cleanup. |
 | [20251118_MIGRATION_ARCHIVE_PLAN-UPDATED.md](plans/20251118_MIGRATION_ARCHIVE_PLAN-UPDATED.md) | November 18, 2025 (Updated Dec 4, 2025) | Active | --- |
 | [20251124_NOTIFICATION_SYSTEM_RECOVERY.md](plans/20251124_NOTIFICATION_SYSTEM_RECOVERY.md) | November 24, 2025 | Active | --- |
 | [20251205_DUPLICATE_MIGRATIONS_ARCHIVED.md](plans/20251205_DUPLICATE_MIGRATIONS_ARCHIVED.md) | December 5, 2025 | Active | --- |
@@ -173,7 +179,7 @@
 | [20251218_CRITICAL_ARCHIVE_RECOVERY.md](plans/20251218_CRITICAL_ARCHIVE_RECOVERY.md) | December 18, 2025 | Active | --- |
 | [20260225_HOST_LINKED_PROMO_CODES.md](plans/20260225_HOST_LINKED_PROMO_CODES.md) | Unknown | Ready | --- |
 | [20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md](plans/20260322_ADMIN_SETTINGS_IMPLEMENTATION_PLAN.md) | 22 March 2026 | Active | --- |
-| [20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md](plans/20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md) | 23 March 2026 | Active | | Gap | Description | Status | |
+| [20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md](plans/20260323_INSURANCE_PRODUCTION_READINESS_PLAN.md) | 23 March 2026 | ✅ COMPLETED | Insurance module production readiness. |
 | [20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md](plans/20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md) | 23 March 2026 | DRAFT | --- |
 | [20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md](plans/20260324_EMAIL_NOTIFICATION_SYSTEM_ENHANCEMENT_PLAN.md) | March 24, 2026 | Active | | Phase | Status | Sprint Delivered | |
 | [20260407_CONTEXTUAL_LOADING_MESSAGES_PLAN.md](plans/20260407_CONTEXTUAL_LOADING_MESSAGES_PLAN.md) | 2026-04-07 | Active | --- |

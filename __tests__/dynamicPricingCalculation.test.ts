@@ -62,19 +62,19 @@ describe("DynamicPricingService calculations", () => {
   it("applies DB pricing rules and computes premium correctly", async () => {
     const dbRule = {
       id: "db-weekend",
-      name: "Weekend",
-      type: PricingRuleType.WEEKEND,
+      rule_name: "Weekend",
+      condition_type: PricingRuleType.WEEKEND,
       is_active: true,
       multiplier: 1.2,
       priority: 100,
-      conditions: { days_of_week: [0, 6] },
+      condition_value: { days_of_week: [0, 6] },
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     };
 
     (supabase.from as jest.Mock).mockImplementation((table: string) => {
       if (table === "platform_settings") {
-        return buildSettingsChain(true);
+        return buildSettingsChain("true");
       }
       if (table === "dynamic_pricing_rules") {
         return buildRulesChain([dbRule], null);

@@ -12,6 +12,8 @@ export default function PaymentReturnPage() {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'failed' | 'not_found'>('loading');
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState(0);
+  const MAX_ATTEMPTS = 15; // Max 30 seconds of polling (15 * 2s)
 
   useEffect(() => {
     if (!transactionId) {
@@ -20,6 +22,12 @@ export default function PaymentReturnPage() {
     }
 
     const checkStatus = async () => {
+      if (attempts >= MAX_ATTEMPTS) {
+        console.error("Payment status polling timeout reached");
+        setStatus('failed');
+        return;
+      }
+
       try {
         const { data, error } = await supabase.functions.invoke('query-payment', {
           body: { payment_transaction_id: transactionId }
@@ -37,6 +45,7 @@ export default function PaymentReturnPage() {
           setStatus('failed');
         } else {
           // If still initiated, poll again after 2s
+          setAttempts(prev => prev + 1);
           setTimeout(checkStatus, 2000);
         }
       } catch (err) {
@@ -46,7 +55,7 @@ export default function PaymentReturnPage() {
     };
 
     checkStatus();
-  }, [transactionId]);
+  }, [transactionId, attempts]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">

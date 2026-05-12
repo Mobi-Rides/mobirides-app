@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: 'esnext',
-    minify: 'oxc',
+    minify: false,
     cssMinify: true,
     sourcemap: false,
     rolldownOptions: {

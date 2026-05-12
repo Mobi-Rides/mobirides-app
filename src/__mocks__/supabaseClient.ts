@@ -14,6 +14,11 @@ export const supabase = {
     update: (_values: unknown) => ({
       eq: (_col: string, _val: unknown) => resolveData({}),
     }),
+    insert: (_values: unknown) => resolveData({}),
+    delete: () => ({
+      eq: (_col: string, _val: unknown) => resolveData({}),
+    }),
+    upsert: (_values: unknown) => resolveData({}),
   }),
   rpc: (_fn: string, _params?: unknown) => resolveData({ success: true }),
   channel: (_name: string) => ({

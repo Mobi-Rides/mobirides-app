@@ -1,10 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
+import { format, parse } from 'date-fns';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { Database, Json } from "@/integrations/supabase/types";
+
+export type AuditEventType = Database["public"]["Enums"]["audit_event_type"];
+export type AuditSeverity = Database["public"]["Enums"]["audit_severity"];
 
 export interface AnalyticsFilters {
   startDate?: string;
   endDate?: string;
-  eventTypes?: string[];
-  severityLevels?: ('low' | 'medium' | 'high' | 'critical')[];
+  eventTypes?: AuditEventType[];
+  severityLevels?: AuditSeverity[];
   actorIds?: string[];
   resourceTypes?: string[];
 }
@@ -21,13 +27,99 @@ export interface ExportOptions {
   };
 }
 
+export interface SecurityAlert {
+  id?: string;
+  title?: string;
+  description?: string;
+  severity?: string;
+  category?: string;
+  timestamp?: string;
+  source?: string;
+  action_required?: boolean;
+  acknowledged?: boolean;
+}
+
+export interface AuditLogEvent {
+  id: string;
+  event_type: AuditEventType;
+  severity: AuditSeverity;
+  actor_id: string | null;
+  target_id: string | null;
+  created_at: string;
+  action_details: Json;
+  resource_type: string | null;
+}
+
+export interface UserMetrics {
+  total_users: number;
+  active_users: number;
+  active_today: number;
+  new_users: number;
+  new_users_today: number;
+  suspended_users: number;
+  role_distribution: Record<string, number>;
+  role_users: Record<string, string[]>;
+  user_profiles: Array<{ id: string; full_name: string | null; created_at: string | null }>;
+}
+
+export interface SystemMetrics {
+  total_bookings: number;
+  completed_bookings: number;
+  cancelled_bookings: number;
+  pending_bookings: number;
+  revenue: number;
+  platform_commission: number;
+  average_booking_value: number;
+  booking_stats: Record<string, number>;
+}
+
+export interface SecurityMetrics {
+  total_events: number;
+  critical_events: number;
+  high_severity_events: number;
+  medium_severity_events: number;
+  low_severity_events: number;
+  top_event_types: Array<{ type: string; count: number }>;
+  top_actors: Array<{ actor_id: string; count: number }>;
+  security_trends: Array<{ date: string; count: number; severity: string }>;
+}
+
+export interface FullAnalyticsExport {
+  exported_at: string;
+  format: 'json' | 'csv';
+  version: string;
+  date_range?: { start: string; end: string };
+  events?: AuditLogEvent[];
+  metrics?: {
+    security: SecurityMetrics;
+    system: SystemMetrics;
+  };
+  users?: UserMetrics;
+  security_alerts?: {
+    total_alerts: number;
+    critical_alerts: number;
+    acknowledged_alerts: number;
+    unacknowledged_alerts: number;
+    alerts: SecurityAlert[];
+  };
+  applied_filters?: {
+    severity_levels?: AuditSeverity[];
+    event_types?: AuditEventType[];
+    actor_ids?: string[];
+    resource_types?: string[];
+    search_term?: string;
+    status?: string;
+    user_status?: string;
+  };
+}
+
 export interface RealtimeSubscription {
-  subscription: any;
+  subscription: RealtimeChannel;
   unsubscribe: () => void;
 }
 
 // Helper function to escape CSV values
-function escapeCSVValue(value: any): string {
+function escapeCSVValue(value: unknown): string {
   if (value === null || value === undefined) return '';
   const stringValue = String(value);
   // Escape quotes and wrap in quotes if contains comma, quote, or newline
@@ -52,10 +144,10 @@ export const analyticsService = {
       query = query.lte('date', filters.endDate);
     }
     if (filters.eventTypes?.length) {
-      query = query.in('event_type', filters.eventTypes as any);
+      query = query.in('event_type', filters.eventTypes);
     }
     if (filters.severityLevels?.length) {
-      query = query.in('severity', filters.severityLevels as any);
+      query = query.in('severity', filters.severityLevels);
     }
 
     const { data, error } = await query;
@@ -77,10 +169,10 @@ export const analyticsService = {
       query = query.lte('created_at', filters.endDate);
     }
     if (filters.eventTypes?.length) {
-      query = query.in('event_type', filters.eventTypes as any);
+      query = query.in('event_type', filters.eventTypes);
     }
     if (filters.severityLevels?.length) {
-      query = query.in('severity', filters.severityLevels as any);
+      query = query.in('severity', filters.severityLevels);
     }
     if (filters.actorIds?.length) {
       query = query.in('actor_id', filters.actorIds);
@@ -362,7 +454,7 @@ export const analyticsService = {
 
   // Export analytics data
   async exportAnalytics(options: ExportOptions) {
-    const exportData: any = {
+    const exportData: FullAnalyticsExport = {
       exported_at: new Date().toISOString(),
       format: options.format,
       version: '2.0'
@@ -411,7 +503,7 @@ export const analyticsService = {
   },
 
   // Convert data to CSV format
-  convertToCSV(data: any): string {
+  convertToCSV(data: FullAnalyticsExport): string {
     const csvRows: string[] = [];
     
     // Add summary information
@@ -500,7 +592,7 @@ export const analyticsService = {
       if (data.metrics.security.top_event_types?.length > 0) {
         csvRows.push('Top Event Types:');
         csvRows.push('Event Type,Count');
-        data.metrics.security.top_event_types.forEach((item: any) => {
+        data.metrics.security.top_event_types.forEach((item: { type: string; count: number }) => {
           csvRows.push(`${item.type},${item.count}`);
         });
         csvRows.push('');
@@ -521,7 +613,7 @@ export const analyticsService = {
       if (data.security_alerts.alerts?.length > 0) {
         csvRows.push('Security Alerts Details:');
         csvRows.push('ID,Title,Description,Severity,Category,Timestamp,Source,Action Required,Acknowledged');
-        data.security_alerts.alerts.forEach((alert: any) => {
+        data.security_alerts.alerts.forEach((alert: SecurityAlert) => {
           const values = [
             alert.id || '',
             alert.title || '',
@@ -548,7 +640,7 @@ export const analyticsService = {
       csvRows.push(headers.join(','));
       
       // Add event data
-      data.events.forEach((event: any) => {
+      data.events.forEach((event: AuditLogEvent) => {
         const values = [
           event.id || '',
           event.event_type || '',
@@ -567,7 +659,7 @@ export const analyticsService = {
   },
 
   // Subscribe to real-time analytics updates
-  subscribeToAnalytics(callback: (payload: any) => void): RealtimeSubscription {
+  subscribeToAnalytics(callback: (payload: RealtimePostgresChangesPayload<AuditLogEvent>) => void): RealtimeSubscription {
     const subscription = supabase
       .channel('analytics-updates')
       .on('postgres_changes', 
@@ -582,6 +674,49 @@ export const analyticsService = {
         supabase.removeChannel(subscription);
       }
     };
+  },
+
+  // Get user registration statistics over time (BUG-015)
+  async getUserRegistrationStats() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('created_at')
+      .not('role', 'in', '("admin","super_admin")')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    if (!data) return [];
+
+    const stats: Record<string, number> = {};
+    data.forEach(row => {
+      if (row.created_at) {
+        const month = format(new Date(row.created_at), 'MMM yyyy');
+        stats[month] = (stats[month] || 0) + 1;
+      }
+    });
+
+    return Object.entries(stats).map(([name, value]) => ({ name, value }));
+  },
+
+  // Get booking growth statistics over time (BUG-015)
+  async getBookingGrowthStats() {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('created_at')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    if (!data) return [];
+
+    const stats: Record<string, number> = {};
+    data.forEach(row => {
+      if (row.created_at) {
+        const month = format(new Date(row.created_at), 'MMM yyyy');
+        stats[month] = (stats[month] || 0) + 1;
+      }
+    });
+
+    return Object.entries(stats).map(([name, value]) => ({ name, value }));
   },
 
   // Get dashboard summary

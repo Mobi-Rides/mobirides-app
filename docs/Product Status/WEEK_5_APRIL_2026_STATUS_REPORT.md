@@ -83,7 +83,7 @@ This period covers the final audit of Sprint 12 and the initiation of core comme
 | BUG-016 | Medium | 🔴 Open | CSV Export inconsistency | S13-024 |
 | BUG-019 | Medium | 🔴 Open | Orphaned Booking routes | S13-022 |
 | BUG-021 | High | 🔴 Open | Clumsy Map & Navigation architecture | S13-017 |
-| MOB-708 | Medium | 🔴 Open | Exposed author emails in public APIs | S13-006 |
+| MOB-708 | Medium | 🔴 Open | Exposed author emails in public APIs (Requires backend branching) | S13-006 |
 
 ---
 

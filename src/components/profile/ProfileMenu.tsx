@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { 
-  User, Settings, HelpCircle, Shield, Bell, CalendarClock, 
+import {
+  User, Settings, HelpCircle, Shield, Bell, CalendarClock,
   LayoutDashboard, LogOut, UserRound, Moon, Sun, Bookmark,
   ArrowRightLeft, Wallet, Car, Users, BookOpen, MessageSquare, AlertTriangle, Ticket
 } from "lucide-react";
@@ -173,7 +173,7 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
     <>
       {/* Enhanced Floating Role Switch Button */}
       <div className="fixed bottom-[96px] left-0 right-0 z-50 flex justify-center px-4">
-        <Button 
+        <Button
           type="button"
           onClick={handleSwitchRole}
           className="shadow-lg rounded-full px-6 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all duration-200 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 transform hover:scale-105"
@@ -204,9 +204,9 @@ export const ProfileMenu = ({ fullName, avatarUrl, setActiveView, role = 'renter
           aria-label="View and edit profile"
         >
           <Avatar className="h-10 w-10 bg-[#2B2B2B] text-white">
-            <AvatarImage 
+            <AvatarImage
               src={avatarPublicUrl || undefined}
-              alt="Profile" 
+              alt="Profile"
             />
             <AvatarFallback className="text-sm font-medium">
               {fullName?.charAt(0).toUpperCase()}

@@ -9,6 +9,9 @@ declare global {
   interface ImportMeta {
     readonly env: ImportMetaEnv;
   }
+  interface Window {
+    mapboxgl: typeof import('mapbox-gl');
+  }
 }
 
 export {};

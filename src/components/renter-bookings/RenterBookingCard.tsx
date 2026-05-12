@@ -13,9 +13,10 @@ import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer"
 interface RenterBookingCardProps {
   booking: Booking;
   onCancelBooking: (bookingId: string) => Promise<void>;
+  onPayNow?: (bookingId: string) => void;
 }
 
-export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCardProps) => {
+export const RenterBookingCard = ({ booking, onCancelBooking, onPayNow }: RenterBookingCardProps) => {
   const navigate = useNavigate();
 
   // Check if review exists for this booking
@@ -130,12 +131,16 @@ export const RenterBookingCard = ({ booking, onCancelBooking }: RenterBookingCar
                     Review
                   </Button>
                 )}
-                {booking.status === "awaiting_payment" && (
+                {(booking.status === "awaiting_payment" || booking.status === "pending") && (
                   <Button 
                     size="sm" 
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/rental-details/${booking.id}?pay=true`);
+                      if (booking.status === "awaiting_payment" && onPayNow) {
+                        onPayNow(booking.id);
+                      } else {
+                        navigate(`/rental-details/${booking.id}`);
+                      }
                     }}
                     className="bg-primary text-primary-foreground"
                   >

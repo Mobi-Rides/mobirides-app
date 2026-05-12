@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { ExtensionRequestDialog } from '../src/components/rental-details/ExtensionRequestDialog';
 
 describe('ExtensionRequestDialog', () => {
@@ -12,29 +13,34 @@ describe('ExtensionRequestDialog', () => {
     pricePerDay: 100,
   };
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('calculates cost as extraDays × pricePerDay', () => {
     render(<ExtensionRequestDialog {...baseProps} />);
-    // Default extraDays is 1
-    expect(screen.getByText(/Total Cost/i).textContent).toMatch('100');
-    // Increase days
-    fireEvent.click(screen.getByLabelText(/increase/i));
-    expect(screen.getByText(/Total Cost/i).textContent).toMatch('200');
+    // Default extraDays is 1, cost should be 100
+    expect(screen.getByText(/Additional cost/i).textContent).toMatch('100');
+    // Increase days to 2
+    fireEvent.click(screen.getByRole('button', { name: '+' }));
+    expect(screen.getByText(/Additional cost/i).textContent).toMatch('200');
   });
 
   it('calculates new end date as currentEndDate + extraDays', () => {
     render(<ExtensionRequestDialog {...baseProps} />);
     // Default extraDays is 1
-    expect(screen.getByText(/New End Date/i)).toBeInTheDocument();
+    expect(screen.getByText(/New end date/i)).toBeInTheDocument();
     // Increase days
-    fireEvent.click(screen.getByLabelText(/increase/i));
-    // Should update new end date
-    expect(screen.getByText(/New End Date/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '+' }));
+    // Updated end date should still be shown
+    expect(screen.getByText(/New end date/i)).toBeInTheDocument();
   });
 
-  it('calls submit and inserts booking_extensions row', () => {
+  it('calls onSuccess after submitting extension request', async () => {
     render(<ExtensionRequestDialog {...baseProps} />);
-    fireEvent.change(screen.getByLabelText(/Reason/i), { target: { value: 'Need more time' } });
-    fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
-    expect(baseProps.onSuccess).toHaveBeenCalled();
+    const textarea = screen.getByPlaceholderText(/Let the host know why you need more time/i);
+    fireEvent.change(textarea, { target: { value: 'Need more time' } });
+    fireEvent.click(screen.getByRole('button', { name: /Send Request/i }));
+    await waitFor(() => expect(baseProps.onSuccess).toHaveBeenCalled());
   });
 });

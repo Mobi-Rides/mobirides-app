@@ -1,360 +1,654 @@
-# MobiRides Bug Report
+# Mobi Rides Bug Report & Technical Debt Tracking
 
-**Last Updated:** May 5, 2026  
-**Reference:** Week 3 April Status Report, Sprint 11 Execution Plan, [Tapologo Testing Sheet](/workspace/Tapologo_Testing Sheet.xlsx)
-
----
-
-## 📊 Tapologo QA Testing Results (April 2026)
-
-An independent QA verification was conducted by **Tapologo** in April 2026 using a comprehensive 197-test-case spreadsheet covering all functional areas.
-
-### Test Results Summary
-
-| Metric | Value |
-|--------|-------|
-| Total Test Cases | 197 |
-| Passed | 119 |
-| Failed | 0 |
-| Blocked | 0 |
-| Execution Rate | 72.1% |
-
-### Key Findings
-
-1. **Zero functional bugs identified** — All executed tests passed, indicating core functionality is working
-2. **Handover Process achieved 100% execution** — All 15 test cases passed
-3. **Execution rate of 72.1%** — Higher than the internal team's ~62% average
-4. **Coverage gaps identified** — Admin Dashboard (20 tests) and Reviews & Ratings (8 tests) not executed
-
-### In Progress Tests (24 tests)
-
-These tests were started but not completed during the testing session:
-
-| Module | Test Cases |
-|--------|-----------|
-| Authentication & Profile | Signup, Logout, Session persistence, Profile view/edit, Avatar upload |
-| Verification (KYC) | Phone verification step |
-| Vehicle Management | Car creation Step 2, Edit car, Delete image, Block dates |
-| Booking System | Date conflict, Price breakdown, Pickup location |
-| Payment & Wallet | Commission display, Earnings breakdown, Top-up |
-| Navigation & Maps | Off-route detection, Traffic layer |
-| Notifications | Notification preferences |
-
-### Coverage Gaps (54 tests not run)
-
-| Module | Tests Not Run | Priority |
-|--------|---------------|-----------|
-| Admin Dashboard | 20 | High — Admin functionality untested |
-| Reviews & Ratings | 8 | High — User feedback loop untested |
-| Promo Codes | 6 | Medium — Discount system untested |
-| Verification (KYC) | 4 | Low — Admin verification tests |
-| Vehicle Management | 3 | Low |
-| Booking System | 5 | Low |
-| Messaging | 2 | Low |
-| Insurance System | 5 | Low |
-
-### Action Items from Tapologo Testing
-
-1. **Complete In Progress tests** — Finish the 24 started tests
-2. **Execute Not Run tests** — Especially Admin Dashboard and Reviews
-3. **Add unit test coverage** — Vehicle Management, Reviews & Ratings, Promo Codes (added to Sprint 12 as S12-026/027/028)
-
-> **Reference:** [Testing Coverage Status Report](./TESTING_COVERAGE_STATUS_2026_03_02.md) — Updated April 17, 2026 with Tapologo results
+This document tracks all known bugs, UI/UX regressions, and technical debt identified during the V1.0 production cycle.
 
 ---
 
-## Active Bugs
+## High Priority / Blocking Bugs
 
-### BUG-002: Security Vulnerabilities — MOB-700 Series
+### BUG-030: Rolldown OOM Build Panic
 
 | Field | Detail |
 |-------|--------|
-| **Date Reported** | 2026-04-04 |
-| **Severity** | Critical / High / Medium / Low (9 findings) |
-| **Status** | 🟡 In Progress (5/9 shipped) |
-| **Affects** | Edge functions, password storage, author emails |
-| **Plan** | [`docs/hotfixes/SECURITY_REMEDIATION_2026_04_04.md`](../hotfixes/SECURITY_REMEDIATION_2026_04_04.md) |
-
-**Description:**  
-Security scan identified 9 actionable findings. Sprint 10–11 shipped 5 of 9:
-
-| Ticket | Finding | Status |
-|--------|---------|--------|
-| MOB-701 | Hardcoded secrets in scripts | ✅ Done (Sprint 10) |
-| MOB-702 | Unauthenticated `add-admin` endpoint | ✅ Done (Sprint 11) |
-| MOB-703 | Blanket notification access RLS | ✅ Done (Sprint 11) |
-| MOB-704 | Missing RLS on financial tables | ✅ Done (Sprint 11) |
-| MOB-706 | Mutable `search_path` on functions | ✅ Done (Sprint 11) |
-| MOB-705 | No input validation on edge functions | ✅ Done (Sprint 12) |
-| MOB-707 | Plaintext/weak password storage | ✅ Done (Sprint 12) |
-| MOB-708 | Exposed author emails | 🔴 Open — Sprint 13 (S13-006) |
-| MOB-709 | Missing leaked-password protection | ✅ Done (Sprint 12) |
-
-**Target:** 100% remediation by end of Sprint 13 (May exit criterion).
-
----
-
-### BUG-006: Supabase Strict Type (`RejectExcessProperties`) Build Errors
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-07 |
-| **Severity** | Medium (blocks strict build) |
-| **Status** | ✅ Resolved (Sprint 12) |
-| **Affects** | `AdminClaimsDashboard.tsx`, `AddressSection.tsx`, `EmergencyContactSection.tsx`, `PersonalInfoSection.tsx`, `HostBookings.tsx`, `enhancedHandoverService.ts`, `handoverService.ts` |
-| **Assigned To** | Tapologo |
-| **Sprint 12** | S12-025 |
-
-**Description:**  
-9 build errors across 7 files caused by: (1) UI alias properties passed to DB operations, (2) non-existent `user_role` property in `user_verifications` inserts, (3) dynamic computed keys producing index-signature types incompatible with strict column typing.
-
-**Remediation Plan:**
-1. Map alias fields to real DB column names in `AdminClaimsDashboard.tsx`
-2. Remove `user_role` from `.insert()` calls in verification sections
-3. Replace dynamic keys with explicit typed assignments
-4. No `as any` casts — use Supabase generated types
-
----
-
-### BUG-008: Email Notification System — Phase 4 Outstanding (MOB-811)
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-10 |
-| **Severity** | Medium |
-| **Status** | ✅ Resolved (Sprint 12) |
-| **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts` |
-| **Assigned To** | Modisa |
-| **Sprint 12** | S12-012 |
-
-**Description:**  
-Sprint 11 successfully restored 18/20 email templates (Phases 1–3 of MOB-712). Remaining work: Phase 4 — Admin Bulk Notification Broadcast system (MOB-811), including system notification template, admin broadcast form, and rate limiting.
-
----
-
-### BUG-009: Phased Build Action Failure (Gradle Initialization Script)
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-11 |
-| **Severity** | Low (IDE-specific, not blocking builds) |
-| **Status** | ✅ Resolved (Sprint 12) |
-| **Affects** | `android/build.gradle`, Java Language Server |
-| **Plan** | [`docs/plans/20260411_BUG009_GRADLE_BUILD_FIX.md`](../plans/20260411_BUG009_GRADLE_BUILD_FIX.md) |
-
-**Description:**  
-IDE Gradle initialization script path mismatch in RedHat Java extension. Sprint 11 resolved the actual build environment; the IDE cache issue is a cosmetic annoyance with a documented workaround (clear `workspaceStorage`). `app:assembleDebug` verified working via script.
-
-**Ticket:** MOB-6
-
----
-
-### BUG-010: Persistent Data Integrity Issues (Orphaned Users/Profiles)
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-12 |
-| **Severity** | High (Revenue/User Block) |
-| **Status** | ✅ Resolved (Sprint 12) |
-| **Affects** | `auth.users`, `public.profiles` |
-| **Linear** | ❌ No ticket — to be created Sprint 12 (S12-017) |
-
-**Description:**  
-323 auth users vs 247 profiles = **76 orphaned users**. The `handle_new_user` trigger is failing to catch all signups. Requires profile backfill and trigger audit.
-
----
-
-### BUG-011: Missing SuperAdmin Core Logic Functions
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-12 |
-| **Severity** | Medium |
-| **Status** | 🟡 Partially Addressed |
-| **Affects** | SuperAdmin Portal, PostgreSQL RPCs |
-| **Linear** | ❌ No ticket — to be created Sprint 12 (S12-018) |
-
-**Description:**  
-Sprint 11 delivered `suspend_user` and `ban_user` RPCs (MOB-21, verified by Arnold). Still missing: `transfer_vehicle`, `remove_restriction`, and `log_admin_action` functions.
-
----
-
-### BUG-012: Payment System Mock Implementation in Production
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-12 |
-| **Severity** | Critical (blocks revenue) |
-| **Status** | 🔴 Open |
-| **Affects** | `useBookingPayment.ts`, `mockBookingPaymentService.ts`, `useHostPayouts.ts`, `BookingRequestDetails.tsx` |
-| **Linear** | MOB-22 |
-| **Sprint 12** | S12-001 through S12-005 (Phase 0 fixes) |
-
-**Description:**  
-The application uses `mockBookingPaymentService` with `setTimeout` simulations for all payment flows. The [Payment Production Readiness Plan](../plans/20260323_PAYMENT_PRODUCTION_READINESS_PLAN.md) documents 5 critical mock-flow bugs:
-
-1. **Double commission** — Host approval deducts 15% commission before renter pays; webhook would also deduct.
-2. **Webhook bypass** — Mock flow calls `bookingLifecycle.updateStatus('confirmed')` directly, skipping the webhook entirely.
-3. **No transaction records** — No `payment_transaction` DB records created; `credit_pending_earnings()` never called.
-4. **Mock payout** — `useHostPayouts.ts` returns fake API responses with `setTimeout(2000)`.
-5. **No refund path** — Cancellation has no refund flow.
-
-Sprint 12 targets Phase 0 (fix mock-flow bugs). Phase 1 (real provider integration) deferred to Sprint 13+ pending DPO/Ooze credentials.
-
----
-
-### BUG-013: Security Search Path Management
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-12 |
-| **Severity** | High |
-| **Status** | ✅ Resolved (Sprint 12) |
-| **Affects** | SQL functions, `conversations` table RLS |
-| **Linear** | MOB-23 (In Progress — status needs update) |
-
-**Description:**  
-Sprint 11 shipped MOB-706 (S11-011) which applied `SET search_path = public` to all `SECURITY DEFINER` functions. The residual item is that `conversations` table RLS is reportedly still disabled for "testing" in production — this needs verification and re-enablement.
-
----
-
-### BUG-014: Persistent Migration Drift (http_request types)
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-12 |
-| **Severity** | Critical (Blocks `db pull` & CI/CD) |
-| **Status** | ✅ Resolved (Sprint 12) |
-| **Affects** | `supabase/migrations/20260319212624_remote_schema.sql`, `20260410143004_remote_schema.sql` |
-| **Linear** | MOB-63 (In Review) |
-
-**Description:**  
-Migration `20260319212624` contains manual `CREATE TYPE` blocks for `http_*` types that should be extension-owned. The CLI generates corrective `DROP TYPE` statements that fail during Shadow DB sync (`SQLSTATE 2BP01`).
-
-**Resolution Strategy:**
-1. Comment out `CREATE TYPE` blocks in `20260319212624`
-2. Delete `DROP TYPE` blocks in `20260410143004`
-3. Add explicit `CREATE EXTENSION IF NOT EXISTS "http"` migration
-
----
-
-### BUG-015: Admin Analytics Dashboard — Empty Chart Data
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-22 |
-| **Severity** | Medium (Reporting broken) |
-| **Status** | 🔴 Open |
-| **Affects** | `SuperAdminAnalytics.tsx`, `useSuperAdminAnalytics.ts`, `analyticsService.ts` |
-| **Plan** | [`docs/plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md`](../plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) |
-
-**Description:**  
-The "User Growth Trend" and "Booking Trends" charts on the Super Admin Analytics Overview tab render as empty. Root cause: `MobileOptimizedChart` components are hardcoded with `data={[]}` (lines 472 & 480 of `SuperAdminAnalytics.tsx`). The `getUserGrowthData()` method in `useSuperAdminAnalytics.ts` returns an empty array with a TODO comment. No service methods exist in `analyticsService.ts` to aggregate user registrations or bookings by month.
-
-**Database Context:**
-- 317 total profiles (295 renters, 20 hosts, 2 super_admin)
-- 37 test/dummy accounts (filterable by `full_name`)
-- 278 real users after filtering
-- 163 bookings available for trend aggregation
-
----
-
-### BUG-016: CSV Export — "Export Selected" Exports Only User IDs
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-22 |
-| **Severity** | Medium (Blocks audit workflows) |
-| **Status** | 🔴 Open |
-| **Affects** | `BulkActionBar.tsx`, `UnifiedUserTable.tsx` |
-| **Plan** | [`docs/plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md`](../plans/20260422_BUG015_016_ADMIN_ANALYTICS_EXPORT_FIX.md) |
-
-**Description:**  
-The "Export Selected" button in the `BulkActionBar` (line 200–217) only exports a single `user_id` column per selected user, making the CSV output useless for database auditing. It should export full user records (name, email, role, KYC status, account status, vehicles, bookings, joined date) — the same columns as the "Export CSV" button in `UnifiedUserTable`. Additionally, the `UnifiedUserTable` "Export CSV" button uses `filteredUsers` (all rows in memory), which is correct but needs browser verification to confirm the user isn't seeing a stale cached version.
-
----
-
-### BUG-017: Admin Security Privilege Escalation Risk
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-27 |
+| **Date Reported** | 2026-05-07 |
 | **Severity** | Critical |
 | **Status** | ✅ Resolved |
-| **Affects** | `AdminPromoCodes.tsx`, `AdminSecurity.tsx` |
-| **Resolution** | Migrated all role checks to the canonical `user_roles` table in Supabase. |
+| **Affects** | `package.json`, Vercel Deployment |
+| **Resolution** | Increased Node.js heap limit to 8GB (`--max-old-space-size=8192`) and disabled parallel minification to stabilize production builds. |
 
 ---
 
-### BUG-018: Admin Promo Codes Schema Mismatch
+### BUG-031: Missing Mapbox GL Type Definitions
 
 | Field | Detail |
 |-------|--------|
-| **Date Reported** | 2026-04-27 |
-| **Severity** | High |
+| **Date Reported** | 2026-05-07 |
+| **Severity** | Low |
 | **Status** | ✅ Resolved |
-| **Affects** | `AdminPromoCodes.tsx` |
-| **Resolution** | Aligned `host_id` -> `created_by` and handled missing `promo_code_cars` table with FUTURE comments. |
+| **Affects** | `src/types/mapbox.d.ts` |
+| **Resolution** | Manually added missing `MapboxEvent` and `Layer` type definitions to satisfy strict TypeScript build requirements. |
 
 ---
 
-### BUG-019: Orphaned Booking Route Technical Debt
+### BUG-032: Admin Vehicle Type Displaying Raw Enum Value
 
 | Field | Detail |
 |-------|--------|
-| **Date Reported** | 2026-04-28 |
-| **Severity** | Medium |
-| **Status** | 🔴 Open — Sprint 13 (S13-022) |
-| **Affects** | `App.tsx`, `BookingDetails.tsx`, `NotificationDetails.tsx` |
-| **Plan** | [`docs/plans/20260428_ROUTE_CONSOLIDATION_PLAN.md`](../plans/20260428_ROUTE_CONSOLIDATION_PLAN.md) |
-
----
-
-### BUG-020: Invalid "Approved" Status Check in Renter UI
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-28 |
-| **Severity** | Medium |
-| **Status** | 🔴 Open — Sprint 13 (S13-022) |
-| **Affects** | `RenterBookingCard.tsx` |
-| **Description** | Hardcoded check for `status === "approved"` which does not exist in the `BookingStatus` enum. Fixed during route consolidation. |
-
----
-
-### BUG-021: Clumsy Map & Navigation Architecture
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-04-28 |
-| **Severity** | High |
-| **Status** | 🔴 Open — Sprint 13 (S13-017–021) |
-| **Affects** | `CustomMapbox.tsx`, `NavigationService.ts`, `MapMarkers.tsx` |
-| **Plan** | [`docs/plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md`](../plans/20260428_MAP_NAVIGATION_REMEDIATION_PLAN.md) |
-
----
-
-### BUG-022: Bulk Delete Admin Access Failure
-
-| Field | Detail |
-|-------|--------|
-| **Date Reported** | 2026-05-05 |
-| **Severity** | High |
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Display / UX) |
 | **Status** | ✅ Resolved |
-| **Affects** | `bulk-delete-users` Edge Function |
-| **Resolution** | Migrated admin access checks in `bulk-delete-users` to use `profiles.role` and the `is_admin` RPC, aligning it with the working pattern established in the `delete-user-with-transfer` function. |
+| **Affects** | `src/pages/admin/AdminCampaigns.tsx`, admin vehicle management views |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+The vehicle type field in admin-facing tables was displaying the raw database enum value (e.g., `sedan_4_door`) instead of a human-readable label. Caused by missing enum-to-label mapping in the admin display layer.
+
+**Resolution:** Added a `vehicleTypeLabel` mapping function to convert DB enum values to display strings in the affected admin views.
 
 ---
 
-### BUG-023: Navigation Service TypeScript 'any' Lint Errors
+### BUG-033: Admin User List Showing Duplicate Entries
 
 | Field | Detail |
 |-------|--------|
-| **Date Reported** | 2026-05-05 |
-| **Severity** | Low (Lint/Type Safety) |
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Data Integrity / UX) |
 | **Status** | ✅ Resolved |
-| **Affects** | `navigationService.ts` |
-| **Resolution** | Removed unexpected `any` types by implementing `NavigationState` and `MapboxStep` interfaces and applying correct explicit types to ensure strict typing. |
+| **Affects** | Admin user management list / `UnifiedUserTable` data fetch |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+The admin user list was showing duplicate rows for some users due to a join on `user_roles` returning multiple rows per user when a user holds more than one role. Each role row was producing a separate user entry.
+
+**Resolution:** Deduplicated results by grouping/aggregating roles per user instead of producing a row per role. Users now appear once with all roles merged into a single entry.
+
+---
+
+### BUG-034: Host Booking Email Approve/Decline Links 404
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Blocks host approval workflow) |
+| **Status** | ✅ Resolved |
+| **Affects** | `supabase/functions/resend-service/index.ts`, `src/services/notificationService.ts` |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+When a host received a `owner-booking-notification` email and clicked the "Approve Request" or "Decline Request" buttons, the links resolved to a 404. Two separate root causes:
+
+1. **Wrong fallback domain** — The fallback `href` values in the approve/decline buttons used `https://mobirides.com/host-bookings` (missing `app.` subdomain). Production routes require `https://app.mobirides.com/...`.
+2. **Missing URL fields in service layer** — `notificationService.ts` was not populating `manage_url`, `approve_url`, `decline_url`, or `booking_url` fields when constructing the email template payload, causing the template to fall back to the static (wrong) defaults.
+
+**Resolution:**
+- Updated both approve and decline button fallback `href` values in `resend-service/index.ts` (owner-booking-notification template) to `https://app.mobirides.com/host-bookings`.
+- Added `approve_url`, `decline_url`, `manage_url`, and `booking_url` to the template data payload in `notificationService.ts`, correctly derived from `bookingData.bookingId`.
+
+**Related:** Merge conflict between `develop` and local stash was resolved; upstream changes from `develop` were kept for the domain fallback.
+
+---
+
+### BUG-035: Test Suite Regressions — 10 Failing Tests Across 7 Suites
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (CI / Code Quality) |
+| **Status** | ✅ Resolved |
+| **Affects** | Jest test suite (7 test files, 10 individual tests) |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+After merging `develop` into the bugfix branch, 10 tests failed across 7 test suites. Each had a distinct root cause:
+
+| File | Root Cause | Fix Applied |
+|------|-----------|-------------|
+| `notificationRouting.test.ts` | `getEmailTemplateKey` returns hyphen-style keys (e.g., `'booking-cancelled'`) that were absent from `RESEND_TEMPLATES` | Added 12 hyphen-style alias keys to `ResendTemplateKey` type and `RESEND_TEMPLATES` object in `resend-templates.ts` |
+| `bookingLifecycle.test.ts` | Tests asserted `pushNotificationService.sendBookingNotification` but the service was refactored to use `CompleteNotificationService` which no longer calls that method | Removed stale `sendBookingNotification` assertions; success/payment field assertions retained |
+| `dynamicPricingCalculation.test.ts` (x2) | Mock `dbRule` used `name`/`type`/`conditions` but service reads `rule_name`/`condition_type`/`condition_value`; settings mock passed boolean `true` but service compares `=== "true"` | Fixed mock field names; changed `buildSettingsChain(true)` → `buildSettingsChain("true")` |
+| `enhancedBookingService.test.ts` | Timezone mismatch: test used UTC fake time but service parsed booking start times as local time; on UTC+2 machines, 2h and 30min reminder windows evaluated to 0 min difference | Added `process.env.TZ = 'UTC'` to `jest.config.js` |
+| `UnifiedUserTable.test.tsx` | Test clicked sort header once (producing descending order) but expected ascending order in export | Fixed test to click header twice (first = desc, second = asc) |
+| `extensionRequestDialog.test.tsx` | Test queried UI by labels/text that didn't match actual component (`"Total Cost"` vs `"Additional cost"`, missing aria-labels, `"Submit"` vs `"Send Request"`); global supabase mock lacked `insert` method | Rewrote test to match component; added `insert` to `src/__mocks__/supabaseClient.ts`; added `async/waitFor` for submit test |
+| `sprint10-arnold.test.ts` | `CarManagementTable` Eye icon opened a preview dialog instead of navigating to `/car/${car.id}` as the test required | Changed Eye button `onClick` from `setPreviewCar(car)` to `navigate(\`/car/${car.id}\`)` in `CarManagementTable.tsx` |
+
+**Post-fix result:** 487 tests across 42 suites — all passing.
+
+---
+
+### BUG-036: SuperAdmin UserBehavior Dashboard — Geographic/Revenue/Engagement Tabs Showing Mock Data
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Reporting broken — superadmin only) |
+| **Status** | ✅ Resolved |
+| **Affects** | `UserBehavior.tsx`, `useGeographicAnalytics.ts`, Supabase database |
+| **Branch** | `bathoensescob/bugfix-wallet-redirect-cartype-admin-dup` |
+
+**Description:**  
+The Geographic, Revenue, and Engagement tabs on the SuperAdmin UserBehavior dashboard were backed by the `useGeographicAnalytics` hook but the three required Supabase RPCs did not exist in the database. All three tabs silently fell back to empty/zero states (the hook returns `[]` / `null` on error). The hook was already wired correctly in the component — the gap was entirely at the database layer.
+
+**Root cause:** Migration `20260508000000_add_geographic_analytics_rpcs.sql` was present locally but had never been applied to the remote database.
+
+**RPCs deployed:**
+
+| Function | Returns |
+|----------|---------|
+| `get_geographic_revenue_stats()` | Top 10 locations by revenue — `location`, `unique_users`, `total_bookings`, `total_revenue` |
+| `get_revenue_summary()` | Aggregate figures — `monthly_revenue`, `avg_booking_value`, `avg_revenue_per_user`, `total_bookings`, `total_users` |
+| `get_engagement_metrics()` | Booking KPIs — `booking_conversion_rate`, `return_booking_rate`, `avg_bookings_per_user`, `total_users`, `users_with_bookings` |
+
+All functions use `SECURITY DEFINER SET search_path = public` and grant `EXECUTE` to `authenticated` and `service_role`.
+
+**Resolution:**  
+Applied migration via `supabase db query --linked`, then registered it as applied with `supabase migration repair --status applied 20260508000000`. (Direct query approach was required because a remote-only orphaned migration `20260508083755` blocked `db push`.)
+
+**Verification:**  
+Test script (`_geo_analytics_test_tmp.mjs`) ran 20 checks — all passed:
+- All 3 RPCs callable by authenticated user, correct column shapes, non-negative values
+- `get_geographic_revenue_stats` returns 10 rows ordered by revenue DESC (live data)
+- Revenue summary: P1,786.50 monthly revenue, P8,972.05 avg booking value
+- Engagement: 322 total users, 10.2% booking conversion, 54.5% return booker rate
+- `UserBehavior.tsx` source confirmed: no hardcoded city/revenue strings, hook and loading states wired correctly
+
+---
+
+### BUG-037: Admin Notification Monitoring — Canonical File Missing, Only "Fixed" Variant Existed
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Code hygiene / naming hazard) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/components/admin/NotificationMonitoring.tsx`, `src/components/admin/NotificationMonitoringFixed.tsx`, `src/pages/admin/AdminCampaigns.tsx` |
+| **Branch** | `bathoensescob/feat-superadmin-geographic-analytics` |
+
+**Description:**  
+The canonical `NotificationMonitoring.tsx` file did not exist; only `NotificationMonitoringFixed.tsx` (a parallel "patched" variant from a prior emergency fix) was present. `AdminCampaigns.tsx` imported the `Fixed` version directly. While the Monitoring tab worked, the codebase carried a confusing naming artifact and the canonical path was a dangling reference — any future code (or test) importing from `@/components/admin/NotificationMonitoring` would fail to resolve.
+
+Initial reports indicated both files were 0-byte; investigation confirmed `NotificationMonitoringFixed.tsx` was fully implemented (223 lines) and `NotificationMonitoring.tsx` was simply absent. No orphaned admin sidebar links existed — all 17 sidebar entries already had matching routes.
+
+**Resolution:**  
+- Created canonical `src/components/admin/NotificationMonitoring.tsx` with the full delivery dashboard implementation (4 metric cards + per-campaign delivery table querying `notification_campaigns`)
+- Updated `AdminCampaigns.tsx` to import `{ NotificationMonitoring }` from the canonical path
+- Deleted the now-orphaned `NotificationMonitoringFixed.tsx`
+
+**Verification:**  
+3 Jest unit tests in `__tests__/notificationMonitoring.test.tsx`:
+- Renders the empty-state when `notification_campaigns` is empty
+- Aggregates Total Sent / Delivered / Failed / Rate correctly across `completed` campaigns; renders per-row dashes for rows without data
+- Renders the "no failed campaigns" caption when all sends succeeded
+
+All 3 passing.
+
+---
+
+### BUG-038: Navigation Realtime Channel Collision + Cleanup Leak
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Medium (Realtime degradation, channel leak) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/components/Navigation.tsx` |
+| **Branch** | `bathoensescob/feat-superadmin-geographic-analytics` |
+
+**Description:**  
+Browser console emitted `Error: cannot add postgres_changes callbacks for realtime:navigation-updates after subscribe()` on every component remount (React strict mode in dev, hot reload in prod). Two compounding bugs in the unread-message-count realtime subscription:
+
+1. **Hardcoded channel name** — `.channel('navigation-updates')` used a static string. On the second mount, Supabase already had a subscribed channel by that name, so the new `.on(...)` calls failed.
+2. **Cleanup returned from inner async function, not from `useEffect`** — the `return () => supabase.removeChannel(channel)` was returned from the inner `setupRealtimeSubscription()` async function whose return value was then discarded by the `useEffect`. React had nothing to call on unmount, so channels leaked indefinitely.
+
+Practical impact: messages unread badge stopped refreshing in real-time after first remount; users had to wait for the 60s polling fallback. Channel count grew over the session lifetime.
+
+**Resolution:**  
+- Channel name now includes user ID: `navigation-updates-${user.id}`
+- Cleanup function is returned directly from the `useEffect`, with `channel` captured in a closure variable so unmount can call `supabase.removeChannel(channel)` reliably
+- Added a `cancelled` flag so an in-flight `getUser()` doesn't subscribe after unmount
+
+**Verification:**  
+4 Jest unit tests in `__tests__/realtimeSubscriptionFixes.test.tsx` (Bug A suite):
+- Channel name uses the user-scoped form, not the bare `navigation-updates`
+- Both `.on()` handlers attach before `.subscribe()` (mock throws the exact production error if reversed)
+- `removeChannel` is called on unmount
+- Mount → unmount → remount produces two distinct, independently-cleaned channels (the old hardcoded-name bug would throw on the second mount)
+
+All 4 passing.
+
+---
+
+### BUG-039: useConversationMessages — Auth Listener Unreachable + Receipts Channel Leak
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | Low (Realtime cleanup leak, sign-out edge case) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/hooks/useOptimizedConversations.ts` (`useConversationMessages` effect) |
+| **Branch** | `bathoensescob/feat-superadmin-geographic-analytics` |
+
+**Description:**  
+Inside `useConversationMessages`'s realtime setup, an early `return () => { ... }` in the inner async function made the subsequent `authListener = supabase.auth.onAuthStateChange(...)` call unreachable. Two consequences:
+
+1. **Auth state listener never registered** — sign-out while a conversation was open did not auto-cleanup the message subscription
+2. **Receipts channel leaked on unmount** — the outer cleanup at lines 905-914 only removed `currentChannel` and called `authListener.data?.subscription?.unsubscribe()`; the receipts channel had no outer-scope reference and was never removed
+
+Impact was bounded — component unmount of `useConversationMessages` is rare in normal navigation, and the conversation-list-level subscription has its own working auth listener — but the leaked receipts channels accumulated across conversation switches.
+
+**Resolution:**  
+- Removed the dead `return () => {...}` block that was short-circuiting the function
+- Moved the receipts channel onto the outer scope via a new `receiptsChannelRef` variable so the outer cleanup can remove it
+- The `authListener = supabase.auth.onAuthStateChange(...)` call now actually executes, and the outer cleanup correctly unsubscribes it on unmount
+
+**Verification:**  
+3 Jest unit tests in `__tests__/realtimeSubscriptionFixes.test.tsx` (Bug B suite):
+- `supabase.auth.onAuthStateChange` is now called (was unreachable before)
+- Both messages and receipts channels are created and subscribed
+- Unmount removes both channels and unsubscribes the auth listener
+
+All 3 passing.
+
+---
+
+### BUG-040: False Map Initialization Error on Non-Map Pages
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Core auth pages look broken) |
+| **Status** | 🔴 Open |
+| **Affects** | `/login`, `/signup`, `/forgot-password`, `/terms-of-service`, protected-route sign-in screens |
+| **Visible Result** | Users see `Failed to initialize map. Please try again later.` on pages that do not display a map. |
+
+**Description:**  
+After pulling latest `origin/develop`, mobile UI smoke testing at 390×844 shows the Mapbox error toast on every public/auth page tested. This is user-visible before any interaction and makes login/signup/legal pages appear broken.
+
+**Likely Cause:**  
+`MapboxTokenProvider` wraps the entire app in `App.tsx` and emits a global toast when token initialization fails (`src/contexts/MapboxTokenContext.tsx`). Map token initialization should be scoped to map-dependent routes/components, or token failures should be silent outside map UI.
+
+**Verification:**  
+`npm run build` passes. Reproduced locally with Vite on `/login`, `/signup`, `/forgot-password`, `/terms-of-service`, `/profile`, `/bookings`, and `/wallet`.
+
+---
+
+### BUG-041: Auth Form Labels Are Nearly Invisible in Dark Mode
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Users cannot reliably identify required auth fields) |
+| **Status** | 🔴 Open |
+| **Affects** | `Login.tsx`, `signup.tsx`, `ForgotPassword.tsx`, protected-route sign-in screens |
+| **Visible Result** | Labels such as `Email`, `Password`, `Full Name`, and `Phone Number` render nearly white on white cards. |
+
+**Description:**  
+On mobile with the app in dark theme, auth page containers are hardcoded to light surfaces (`bg-gray-50`, `bg-white`) while field labels inherit dark-theme foreground color. Selenium confirmed label color `rgb(248, 250, 252)` on the white auth cards, making labels effectively unreadable.
+
+**Likely Cause:**  
+Auth pages use fixed light backgrounds while shared auth form labels rely on theme tokens. Either force dark text inside the light auth cards or convert these screens to theme-aware `bg-card text-card-foreground` surfaces.
+
+**Verification:**  
+Reproduced on `/signup`, `/forgot-password`, `/profile`, `/bookings`, and `/wallet`; `/profile`, `/bookings`, and `/wallet` show the same sign-in form through the protected-route auth flow.
+
+---
+
+### BUG-042: Floating Chat Button Covers Auth Form Controls on Mobile
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Blocks or obscures core auth inputs/actions) |
+| **Status** | 🔴 Open |
+| **Affects** | `/signup`, `/forgot-password`, `/password-reset-sent`, `/car-listing`, protected-route sign-in screens, public legal pages |
+| **Visible Result** | The floating chat button overlaps signup phone input, forgot-password submit button, password-reset confirmation content, car-listing filter controls, and sign-in button areas. |
+
+**Description:**  
+Mobile smoke testing at 390×844 shows the global floating chat button positioned over primary page controls. On `/signup`, it covers the right side of the phone input. On `/forgot-password`, it sits over the `Send Reset Email` button. On `/password-reset-sent`, it covers the reset confirmation copy / action area. On `/car-listing`, it covers the filter sort control area above `Apply Filters`. On protected-route sign-in screens, it overlaps the right side of the `Sign In` button.
+
+**Likely Cause:**  
+`ChatManager` renders globally with `SHOW_FLOATING_CHAT = true`, and `FloatingChatButton` uses `fixed bottom-[25vh] right-6 z-40`. The button should be hidden on auth/legal pages and unauthenticated protected-route sign-in screens, or repositioned so it cannot cover form controls.
+
+**Verification:**  
+`npm run build` passes. Reproduced locally on mobile screenshots for `/signup`, `/forgot-password`, `/password-reset-sent`, `/car-listing`, `/profile`, `/bookings`, and `/wallet`.
+
+---
+
+### BUG-043: Branded Password Reset Email Can Send a Tokenless Reset Link
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Password recovery link can appear broken to users) |
+| **Status** | 🔴 Open |
+| **Affects** | Password reset email flow, `/reset-password` |
+| **Visible Result** | A user clicking the branded reset link can land back on sign-in instead of seeing the password reset form. |
+
+**Description:**  
+The reset page requires `?token=...&redirectedFromEmail=true` before it will render the reset form. However `api/auth/reset-password.js` sends the `password-reset` Resend template with `reset_url` and `confirmation_url` set to `/reset-password` without a token. If a user clicks that branded email link, the UI treats it as invalid and redirects them to sign-in.
+
+**Likely Cause:**  
+There are two reset-email paths: the custom Resend template gets a tokenless URL, while Supabase's built-in reset is triggered separately. The visible branded email link must include the same recovery token format that `ResetPassword.tsx` expects, or `ResetPassword.tsx` must support Supabase's redirect/session format.
+
+**Verification:**  
+Source confirmed in `api/auth/reset-password.js` and `src/pages/ResetPassword.tsx`. Directly opening `/reset-password` reproduces the visible failure by redirecting to the sign-in screen instead of presenting reset instructions or a reset form.
+
+---
+
+### BUG-044: Invalid Vehicle Detail Links Leave Users Waiting Before Showing a Generic Error
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Broken/shared vehicle links appear to hang) |
+| **Status** | 🔴 Open |
+| **Affects** | `/cars/:carId` |
+| **Visible Result** | Invalid vehicle URLs show `Loading vehicle details...` for roughly 15 seconds before changing to a generic error. |
+
+**Description:**  
+Mobile smoke testing `/cars/test-id` at 390×844 showed the page stuck on `Loading vehicle details...` at 3 and 8 seconds, then only changing to `Error loading vehicle details` around 15 seconds. Browser logs showed repeated 400 responses from the cars query before the error screen appeared. This creates a broken-link experience for users opening malformed or stale shared vehicle links.
+
+**Likely Cause:**  
+`CarDetails.tsx` queries Supabase with `carId` directly and lets React Query retry invalid ID errors. Non-UUID / invalid IDs should be validated client-side and fail fast into a clear `Vehicle not found` state rather than retrying server 400s.
+
+**Verification:**  
+Reproduced locally on `/cars/test-id`. The error eventually appears, but only after repeated failed requests and a long loading state.
+
+---
+
+### BUG-045: Car Listing Filters Are Visible but Mostly Ignored
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Search/discovery feature gives incorrect results) |
+| **Status** | 🔴 Open |
+| **Affects** | `/car-listing`, `SearchFilters.tsx`, `CarListing.tsx` |
+| **Visible Result** | Users can enter model, year, min price, max price, date range, and distance sort filters, but the results are not filtered by those values. |
+
+**Description:**  
+The car listing page exposes filter controls for model, year, price range, dates, vehicle type, pickup location, and sort by distance/price. `CarListing.tsx` only applies `location` and `vehicleType`, then maps `sortBy !== "price"` to `created_at`. This means model, year, min/max price, selected dates, and distance sorting are accepted in the UI but ignored in the query.
+
+**Likely Cause:**  
+`SearchFilters.tsx` tracks a richer `SearchFilters` object, but `CarListing.tsx` only consumes a small subset of it. Distance sorting also needs coordinates and distance calculation instead of falling back to `created_at`.
+
+**Verification:**  
+Source confirmed after browser smoke testing `/car-listing` at mobile and desktop sizes. The UI presents the controls, while the query only applies `filters.location`, `filters.vehicleType`, and price/created_at sorting.
+
+---
+
+### BUG-046: Host Booking CSV/PDF Export Buttons Do Not Export Files
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Host reporting/export workflow is non-functional) |
+| **Status** | 🔴 Open |
+| **Affects** | `/host-bookings`, `HostBookings.tsx` |
+| **Visible Result** | Hosts can tap `CSV` or `PDF`, but the app only shows an “Export Started” toast and does not generate or download anything. |
+
+**Description:**  
+The host bookings page displays CSV and PDF export buttons as real actions. The `exportData` handler only calls a toast and contains a placeholder comment. No file is created, no download starts, and no data is exported.
+
+**Likely Cause:**  
+Export UI was shipped before the export implementation. Either implement CSV/PDF generation or remove/disable the buttons until the feature exists.
+
+**Verification:**  
+Source confirmed in `HostBookings.tsx`: `exportData()` only displays a toast. The buttons are wired directly to that placeholder handler.
+
+---
+
+### BUG-047: Pending Renter Booking Shows “Pay Now” but Does Not Open Payment
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Misleads renters in payment workflow) |
+| **Status** | 🔴 Open |
+| **Affects** | `/renter-bookings`, `RenterBookingCard.tsx` |
+| **Visible Result** | Pending bookings show a `Pay Now` button even though payment is only actionable after the booking is approved / awaiting payment. |
+
+**Description:**  
+`RenterBookingCard` renders the same `Pay Now` button for both `awaiting_payment` and `pending` bookings. For `awaiting_payment`, it opens the payment modal. For `pending`, clicking the same visible `Pay Now` button navigates to rental details instead of opening payment. This makes renters think they can pay for a request that is still waiting for host approval.
+
+**Likely Cause:**  
+The status condition combines `awaiting_payment` and `pending` for a payment-labeled CTA. Pending bookings should use a different label such as `View Request` / `View Details`, or hide payment actions until the status is `awaiting_payment`.
+
+**Verification:**  
+Source confirmed in `RenterBookingCard.tsx`: the button label remains `Pay Now`, but the click handler only calls `onPayNow` when `booking.status === "awaiting_payment"` and otherwise navigates to details.
+
+---
+
+### BUG-048: Payment Return Page Sends Users to a Non-Existent Bookings Route
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Payment recovery/navigation flow can end in 404) |
+| **Status** | 🔴 Open |
+| **Affects** | `/payment/return`, `PaymentReturnPage.tsx` |
+| **Visible Result** | If the payment return page cannot resolve a booking ID, its recovery buttons navigate to `/my-bookings`, which is not a registered route. |
+
+**Description:**  
+The payment return screen uses `/my-bookings` as the fallback destination for success, failure, and missing transaction states. The app route table registers `/bookings`, `/host-bookings`, and `/renter-bookings`, but not `/my-bookings`. A user whose payment status cannot be mapped to a booking will be sent to the 404 page when they tap `View Booking`, `Return to Booking`, or `Go to Bookings`.
+
+**Likely Cause:**  
+`PaymentReturnPage.tsx` retained an old route name after booking routes were consolidated behind `/bookings` / role-aware redirects.
+
+**Verification:**  
+Source confirmed in `PaymentReturnPage.tsx`; `App.tsx` has no `/my-bookings` route.
+
+---
+
+### BUG-049: `/create-car` Route Shows a Listing Form but Does Not Create a Car
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Vehicle listing flow can silently lose user work) |
+| **Status** | 🔴 Open |
+| **Affects** | `/create-car`, `CreateCar.tsx` |
+| **Visible Result** | Users can fill and submit the `/create-car` form, but no vehicle is inserted or uploaded; the page just navigates away. |
+
+**Description:**  
+The app registers `/create-car` as a protected route and renders the same `CarForm` pattern as the real add-car flow. Its submit handler only toggles `isSubmitting` and navigates to `/cars`, while the comment says “Submission logic would go here.” There is no `/cars` index route, only `/cars/:carId`, so this flow both fails to create the listing and sends users to an invalid route afterward.
+
+**Likely Cause:**  
+`CreateCar.tsx` appears to be an unfinished duplicate of `AddCar.tsx` that was left registered in production routing.
+
+**Verification:**  
+Source confirmed in `CreateCar.tsx` and `App.tsx`. The actual implemented listing flow lives in `/add-car`.
+
+---
+
+### BUG-050: Receipt “Download PDF” Button Does Not Download Anything
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Receipt/export workflow is non-functional) |
+| **Status** | 🔴 Open |
+| **Affects** | Receipt modal, `ReceiptModal.tsx` |
+| **Visible Result** | Users see a `Download PDF` receipt button, but clicking it does not generate or download a PDF. |
+
+**Description:**  
+The rental receipt modal has working receipt content and a `Download PDF` CTA. The handler contains only a future-implementation comment and `console.log`, so the visible feature does nothing for users.
+
+**Likely Cause:**  
+Receipt PDF generation was exposed in UI before implementation. Either wire it to the existing PDF/export utility stack or hide/disable the button until supported.
+
+**Verification:**  
+Source confirmed in `ReceiptModal.tsx`: `handleDownload()` only logs `Download receipt for booking`.
+
+---
+
+### BUG-051: Booking Approval and Payment Transitions Do Not Send Visible Push Notifications
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Users can miss booking approval/payment state changes) |
+| **Status** | 🟡 Proposed Fix |
+| **Affects** | Booking lifecycle notifications, `bookingLifecycle.ts`, `completeNotificationService.ts` |
+| **Visible Result** | Renters and hosts may not receive expected notifications when a booking moves to awaiting payment or confirmed/paid. |
+| **Proposed Resolution** | Refactor `bookingLifecycle.test.ts` to use standardized `createMockChain` with `.insert()` support. Mock `CompleteNotificationService` singleton directly to verify multi-channel delivery. Ensure consistent notification triggering for `awaiting_payment` and `confirmed` statuses. |
+
+**Description:**  
+The booking/payment trigger contract suite passes, but the adjacent booking lifecycle tests show notification side effects failing during key user-visible transitions. The `pending -> awaiting_payment` transition does not call the expected renter push notification, and the `confirmed` / `paid` transition does not send the expected renter and host notifications.
+
+**Likely Cause:**  
+The lifecycle path now routes through `completeNotificationService.createNotification`, but the tested Supabase insert path is failing with `supabase.from(...).insert is not a function`. This can prevent visible booking status notifications from being created or pushed even when the booking state itself changes.
+
+**Verification:**  
+`npx jest __tests__/bookingPaymentTriggers.test.ts __tests__/bookingLifecycle.test.ts __tests__/enhancedBookingService.test.ts --runInBand` fails in `bookingLifecycle.test.ts` on the missing notification calls. Console errors point to `src/services/completeNotificationService.ts:114`; transition side effects are triggered from `src/services/bookingLifecycle.ts`.
+
+---
+
+### BUG-052: Booking Reminder Notifications Are Only Partially Created
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Upcoming-trip reminders can be missed) |
+| **Status** | 🟡 Proposed Fix |
+| **Affects** | Booking reminders, `enhancedBookingService.ts` |
+| **Visible Result** | Users may receive only some scheduled booking reminders instead of the expected 24h, 2h, and 30m reminders. |
+| **Proposed Resolution** | Implement database-level idempotency by adding `two_hour_reminder_sent` and `thirty_min_reminder_sent` flags to the `bookings` table. Update `EnhancedBookingService` to fetch daily confirmed bookings, check these flags before sending, and update them after successful notification delivery. |
+
+**Description:**  
+The enhanced booking service reminder test expects reminder notifications for all configured windows, but only part of the expected inserts occur. This means upcoming rental reminder coverage can be incomplete, leaving renters or hosts without visible prompts before pickup/handover.
+
+**Likely Cause:**  
+The reminder processing path is not creating all notification records for the configured reminder windows, or the query/filter path is excluding some reminders before insert.
+
+**Verification:**  
+`__tests__/enhancedBookingService.test.ts` fails in `processes booking reminders for 24h, 2h and 30m windows`: expected 6 notification inserts, received 2.
+
+---
+
+### BUG-053: Payment Return Page Never Reaches Success After Live Payment Initiation
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-08 |
+| **Severity** | High (Payment confirmation flow can hang/fail after payment starts) |
+| **Status** | 🟡 Proposed Fix |
+| **Affects** | `/payment/return`, `initiate-payment`, `payment-webhook`, `query-payment` |
+| **Visible Result** | After payment is initiated, the user lands on the payment return flow but never sees `Payment successful`; the booking remains unconfirmed. |
+| **Proposed Resolution** | Synchronize `payment-webhook` success logic with `bookingLifecycle` side effects. Update `handoverService.ts` to use `bookingLifecycle.updateStatus` instead of raw database updates for `in_progress` and `completed` states, ensuring all lifecycle notifications and financial credits are fired consistently. |
+
+**Description:**  
+The live Selenium booking/payment flow successfully signed in the renter, created a pending booking, called `initiate-payment`, and opened the returned payment URL. The return page then timed out waiting for the success state. Direct database verification showed the booking was updated to `payment_status=awaiting_payment` with a transaction ID, but the booking stayed `status=pending` and the transaction stayed `status=initiated`.
+
+**Likely Cause:**  
+`initiate-payment` creates a transaction and fires a mock `payment-webhook` request asynchronously, but the webhook is not completing the transaction in the live environment. Because `PaymentReturnPage` only shows success when `query-payment` returns `status=completed`, users remain in the processing/failure path and the booking never becomes confirmed/paid.
+
+**Verification:**  
+Selenium run against local Vite and live Supabase created booking `a3dbeb76-4e50-4896-9202-1df145529398` and transaction `2b7768cd-1a6a-4a41-b0a2-4886d4e50a6b`. Final live state: booking `status=pending`, `payment_status=awaiting_payment`; transaction `status=initiated`. The script failed while waiting for `Payment successful`.
+
+---
+
+### BUG-054: Verification Document Uploads Fail After Storage Policy Cleanup
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Blocks KYC verification) |
+| **Status** | 🔴 Open |
+| **Affects** | `verification-documents`, `verification-selfies`, verification upload flow |
+| **Visible Result** | Users see failed verification document upload errors when submitting ID/selfie documents. |
+
+**Description:**  
+The verification flow uploads national ID images/PDFs to `verification-documents` and selfie photos to `verification-selfies`. Current migration scan shows those buckets were created historically, but latest remote-schema storage policies only preserve admin read access for verification buckets. Normal authenticated users may be blocked by storage RLS during insert/update.
+
+**Likely Cause:**  
+Security/storage cleanup removed or failed to preserve authenticated user `INSERT` / `UPDATE` / own-file `SELECT` policies for verification buckets.
+
+**Verification:**  
+Source confirmed in `src/services/verificationService.ts`; latest remote-schema migration policy block only shows admin read for verification storage. Fix candidate exists in `supabase/migrations/20260511083000_restore_verification_storage_user_policies.sql`.
+
+---
+
+### BUG-055: Vehicle Document Upload Uses Bucket With No Confirmed Creation Migration
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Can block host vehicle listing documents) |
+| **Status** | 🔴 Open |
+| **Affects** | `car-documents`, `/add-car`, vehicle document upload |
+| **Visible Result** | Vehicle document uploads can fail if the `car-documents` bucket is missing online. |
+
+**Description:**  
+`AddCar.tsx` uploads vehicle documents to `car-documents`, but migration scan did not find a committed active migration that creates this bucket before the local storage repair migration. If the online Supabase project does not already contain the bucket, uploads will fail with bucket-not-found/storage errors.
+
+**Likely Cause:**  
+The application introduced `car-documents` usage without a matching durable storage bucket migration, or a later schema/security sync omitted it.
+
+**Verification:**  
+Source confirmed in `src/pages/AddCar.tsx`. No active pre-repair migration was found creating `car-documents`.
+
+---
+
+### BUG-056: Chat Attachment Bucket Name Mismatch
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Can break chat file attachments) |
+| **Status** | 🔴 Open |
+| **Affects** | `chat-attachments`, `message-attachments`, chat attachment upload |
+| **Visible Result** | Users may be unable to upload or view chat attachments. |
+
+**Description:**  
+The chat UI uploads files to `chat-attachments`, while latest remote-schema storage policies reference `message-attachments`. Older migrations mention `chat-attachments`, but the current schema snapshot favors `message-attachments`, creating a bucket/policy mismatch.
+
+**Likely Cause:**  
+Storage bucket naming drift between chat implementation and later remote schema/security migrations.
+
+**Verification:**  
+Source confirmed in `src/components/chat/MessageInput.tsx`; latest remote-schema policy blocks reference `message-attachments`.
+
+---
+
+### BUG-057: Handover Photo Bucket Is Not Clearly Present in Active Migrations
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Can block handover photo documentation) |
+| **Status** | 🔴 Open |
+| **Affects** | `handover-photos`, enhanced handover photo uploads |
+| **Visible Result** | Handover step photo uploads may fail with missing bucket or storage policy errors. |
+
+**Description:**  
+The handover service uploads photos to `handover-photos`, but the bucket creation found during scan appears in archived duplicate-timestamp migrations rather than clearly active latest migrations. Latest remote-schema storage policy snippets do not clearly preserve handover photo policies.
+
+**Likely Cause:**  
+Handover storage setup may have been archived or omitted during migration cleanup / remote schema sync.
+
+**Verification:**  
+Source confirmed in `src/services/enhancedHandoverService.ts`; active migration scan did not find a clear current bucket creation/policy restoration path.
+
+---
+
+### BUG-058: Storage Policy Regression Risk Across Public Upload Buckets
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-11 |
+| **Severity** | High (Multiple upload workflows can fail) |
+| **Status** | 🔴 Open |
+| **Affects** | `avatars`, `car-images`, `insurance-claims`, `return-photos`, public upload/read flows |
+| **Visible Result** | Profile avatars, car images, insurance claim evidence, or return photos may fail to upload or display depending on online bucket/policy state. |
+
+**Description:**  
+Several app features depend on Supabase Storage buckets and public/authenticated policies. Historical migrations create or configure these buckets, but latest remote-schema storage policies only show a subset of policies, especially for `car-images`, `insurance-claims`, `message-attachments`, and verification buckets. This creates a regression risk after security hardening or remote schema sync.
+
+**Likely Cause:**  
+Security hardening and remote-schema migrations preserved some storage policies but not the full set of user-facing upload/read policies required by current frontend flows.
+
+**Verification:**  
+Read-only scan compared `supabase.storage.from(...)` usage against storage bucket/policy migrations. Broad repair candidate exists in `supabase/migrations/20260511090000_repair_app_storage_buckets_and_policies.sql`.
 
 ---
 
@@ -405,6 +699,26 @@ Three redundant user table implementations exist. Refactor to single unified com
 | **BUG-018** | 2026-04-28 | Admin Promo Codes Schema Mismatch — Fixed `created_by` mapping. |
 | **BUG-022** | 2026-05-05 | Bulk Delete Admin Access Failure — Fixed edge function to use `profiles.role` and `is_admin` RPC. |
 | **BUG-023** | 2026-05-05 | Navigation Service TypeScript 'any' Lint Errors — Replaced `any` with strict typing. |
+| **BUG-024** | 2026-05-06 | Handover System Fast Refresh & Type Safety — Decoupled context from provider and fixed any casts. |
+| **BUG-025** | 2026-05-06 | Mapbox Navigation Hook Type Safety — Hardened types for Mapbox API response. |
+| **BUG-026** | 2026-05-08 | Wallet access restriction fix — Corrected permission logic in wallet service. |
+| **BUG-029** | 2026-05-08 | 404 on notification links — Switched to production absolute URLs. |
+| **BUG-030** | 2026-05-08 | Rolldown OOM Build Panic — Increased heap memory allocation. |
+| **BUG-031** | 2026-05-08 | Missing Mapbox GL types — Added custom declaration file. |
+| **BUG-011** | 2026-05-08 | Missing SuperAdmin Core RPCs — `transfer_vehicle`, `remove_restriction` finalized. |
+| **BUG-015** | 2026-05-08 | Admin Analytics — Implemented registration/booking growth aggregation. |
+| **BUG-016** | 2026-05-08 | CSV Export — Refactored bulk export to include full user metadata. |
+| **BUG-012** | 2026-05-08 | Payment System Mock Phase 0 — Internal transactions and double-commission fixed. |
+| **BUG-019** | 2026-05-08 | Orphaned Booking Route — Consolidated routes into `/rental-details/:id`. |
+| **BUG-021** | 2026-05-08 | Clumsy Map Architecture — Extracted modular hooks and bottom sheets. |
+| **BUG-032** | 2026-05-08 | Admin vehicle type raw enum display — Added label mapping for human-readable output. |
+| **BUG-033** | 2026-05-08 | Admin user list duplicate entries — Deduplicated by aggregating roles per user. |
+| **BUG-034** | 2026-05-08 | Host booking email approve/decline links 404 — Fixed fallback domain and added URL fields to payload. |
+| **BUG-035** | 2026-05-08 | Test suite regressions (10 tests / 7 suites) — Fixed mock mismatches, stale assertions, TZ config, and component mismatches. |
+| **BUG-036** | 2026-05-08 | UserBehavior dashboard geo/revenue/engagement tabs empty — Deployed 3 missing RPCs; 20/20 verification checks passing. |
+| **BUG-037** | 2026-05-08 | Admin NotificationMonitoring canonical file missing — Created canonical component, updated AdminCampaigns import, removed orphan "Fixed" file. |
+| **BUG-038** | 2026-05-08 | Navigation realtime channel collision + cleanup leak — User-scoped channel name; cleanup now returned from useEffect itself. |
+| **BUG-039** | 2026-05-08 | useConversationMessages auth listener unreachable + receipts channel leak — Removed dead-code early return; tracked receipts channel on outer scope. |
 
 ---
 
@@ -417,4 +731,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 5, 2026*
+*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026*

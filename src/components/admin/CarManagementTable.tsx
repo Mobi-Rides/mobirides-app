@@ -222,7 +222,7 @@ export const CarManagementTable = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setPreviewCar(car)}
+                          onClick={() => navigate(`/car/${car.id}`)}
                           title="Preview listing"
                         >
                           <Eye className="h-4 w-4" />

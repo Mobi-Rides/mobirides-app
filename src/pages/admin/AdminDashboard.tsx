@@ -25,6 +25,8 @@ const AdminDashboard = () => {
     userMetrics,
     systemMetrics,
     securityMetrics,
+    userGrowth,
+    bookingGrowth,
     events,
     loading,
     refreshData
@@ -123,6 +125,8 @@ const AdminDashboard = () => {
                     userMetrics={userMetrics}
                     systemMetrics={systemMetrics}
                     securityMetrics={securityMetrics}
+                    userGrowth={userGrowth}
+                    bookingGrowth={bookingGrowth}
                     onRefresh={refreshData}
                     loading={loading}
                     isPreview

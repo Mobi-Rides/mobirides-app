@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RenterBookingFilters } from "@/components/renter-bookings/RenterBookingFilters";
 import { RenterBookingCard } from "@/components/renter-bookings/RenterBookingCard";
 import { RenterBookingStats } from "@/components/renter-bookings/RenterBookingStats";
+import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
 
 const RenterBookings = () => {
   const navigate = useNavigate();
@@ -21,9 +22,14 @@ const RenterBookings = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<Booking | null>(null);
 
   const { data: bookings, isLoading, error } = useQuery({
     queryKey: ["renter-bookings"],
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       console.log("Fetching renter bookings");
       
@@ -108,6 +114,14 @@ const RenterBookings = () => {
     }
   };
 
+  const handlePayNow = (bookingId: string) => {
+    const booking = bookings?.find(b => b.id === bookingId);
+    if (booking) {
+      setSelectedBookingForPayment(booking);
+      setIsPaymentModalOpen(true);
+    }
+  };
+
   // Filter bookings based on search and status
   const filteredBookings = bookings?.filter(booking => {
     const matchesSearch = searchTerm === "" || 
@@ -127,14 +141,51 @@ const RenterBookings = () => {
 
   useEffect(() => {
     if (error) {
-      console.error("Booking query error:", error);
       toast({
-        title: "Error loading bookings",
-        description: "Please try again later or contact support",
+        title: "Error",
+        description: "Failed to load bookings.",
         variant: "destructive",
       });
     }
   }, [error, toast]);
+
+  // Realtime subscription for renter bookings
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel>;
+
+    const setupSubscription = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      console.log("Setting up Realtime subscription for renter bookings:", session.user.id);
+      
+      channel = supabase
+        .channel('renter-bookings-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookings',
+            filter: `renter_id=eq.${session.user.id}`
+          },
+          (payload) => {
+            console.log('Realtime update received for renter bookings:', payload);
+            queryClient.invalidateQueries({ queryKey: ["renter-bookings"] });
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
+
+    return () => {
+      if (channel) {
+        console.log("Cleaning up Realtime subscription for renter bookings");
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [queryClient]);
 
   if (isLoading) {
     return (
@@ -210,6 +261,7 @@ const RenterBookings = () => {
                   key={booking.id}
                   booking={booking}
                   onCancelBooking={handleCancelBooking}
+                  onPayNow={handlePayNow}
                 />
               ))}
             </div>
@@ -217,6 +269,24 @@ const RenterBookings = () => {
         </div>
       </div>
       <Navigation />
+
+      {selectedBookingForPayment && (
+        <RenterPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setSelectedBookingForPayment(null);
+          }}
+          booking={selectedBookingForPayment}
+          onPaymentSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["renter-bookings"] });
+            toast({
+              title: "Payment Success",
+              description: "Your payment has been processed successfully.",
+            });
+          }}
+        />
+      )}
     </div>
   );
 };
