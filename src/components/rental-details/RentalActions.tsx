@@ -54,13 +54,13 @@ export const RentalActions = ({
       <TooltipProvider>
         {/* Pay Now Button */}
         {booking.status === 'awaiting_payment' && booking.payment_status !== 'paid' && isRenter && (
-           <Button
-             className="w-full sm:w-auto flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-             onClick={onPayNow}
-           >
-             <CreditCard className="h-4 w-4" />
-             Pay Now
-           </Button>
+          <Button
+            className="w-full sm:w-auto flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={onPayNow}
+          >
+            <CreditCard className="h-4 w-4" />
+            Pay Now
+          </Button>
         )}
 
         {/* Only show review button for completed rentals */}
@@ -125,8 +125,7 @@ export const RentalActions = ({
                 variant="outline"
                 onClick={() =>
                   navigate(
-                    `/map?handover=true&bookingId=${bookingId}&role=${
-                      isRenter ? "renter" : "host"
+                    `/map?handover=true&bookingId=${bookingId}&role=${isRenter ? "renter" : "host"
                     }`
                   )
                 }

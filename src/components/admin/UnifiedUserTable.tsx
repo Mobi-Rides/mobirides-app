@@ -37,19 +37,22 @@ interface UnifiedUserTableProps {
   selectedUsers: string[];
   onUserSelect: (userId: string, selected: boolean) => void;
   onSelectAll: (userIds: string[], selected: boolean) => void;
+  showDeleted: boolean;
+  onShowDeletedChange: (show: boolean) => void;
 }
 
 export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
   selectedUsers,
   onUserSelect,
   onSelectAll,
+  showDeleted,
+  onShowDeletedChange,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<AdminUserComplete | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [showDeleted, setShowDeleted] = useState(false);
   const itemsPerPage = 15;
 
   const { isSuperAdmin } = useIsAdmin();
@@ -68,19 +71,12 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     );
   }, [users, searchTerm]);
 
-  const [sortJustChanged, setSortJustChanged] = useState(false);
   const { sortedData: sortedUsers, sortKey, sortDirection, handleSort: baseHandleSort } = useTableSort<AdminUserComplete>(filteredUsers);
 
   const handleSort = useCallback((key: string) => {
-    setSortJustChanged(true);
     baseHandleSort(key);
   }, [baseHandleSort]);
 
-  useEffect(() => {
-    if (sortJustChanged) {
-      setSortJustChanged(false);
-    }
-  }, [sortedUsers, sortJustChanged]);
 
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -146,15 +142,14 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
     setSelectedUser(null);
   };
 
-  const sortedUsersRef = useRef(sortedUsers);
-  sortedUsersRef.current = sortedUsers;
+  // Removed sortedUsersRef update during render as it causes React errors
 
   const handleExport = useCallback(() => {
-    let exportRows = [...filteredUsers];
+    const exportRows = [...filteredUsers];
     if (sortKey) {
       exportRows.sort((a, b) => {
-        const aVal = (a as any)[sortKey];
-        const bVal = (b as any)[sortKey];
+        const aVal = a[sortKey as keyof AdminUserComplete];
+        const bVal = b[sortKey as keyof AdminUserComplete];
         if (aVal == null && bVal == null) return 0;
         if (aVal == null) return 1;
         if (bVal == null) return -1;
@@ -212,7 +207,7 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
               <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                 <Checkbox
                   checked={showDeleted}
-                  onCheckedChange={(v) => { setShowDeleted(!!v); setCurrentPage(1); }}
+                  onCheckedChange={(v) => { onShowDeletedChange(!!v); setCurrentPage(1); }}
                 />
                 Show deleted users
               </label>
@@ -235,7 +230,6 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
                 size="sm"
                 onClick={handleExport}
                 className="gap-2 shrink-0"
-                disabled={sortJustChanged}
               >
                 <Download className="h-4 w-4" />
                 Export CSV

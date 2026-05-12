@@ -23,13 +23,16 @@ interface ErrorWithContext {
   };
 }
 
+import { type AdminUserComplete } from '@/hooks/useAdminUsersComplete';
+
 interface BulkActionBarProps {
   selectedUsers: string[];
+  users?: AdminUserComplete[];
   onClearSelection: () => void;
   className?: string;
 }
 
-export function BulkActionBar({ selectedUsers, onClearSelection, className }: BulkActionBarProps) {
+export function BulkActionBar({ selectedUsers, users = [], onClearSelection, className }: BulkActionBarProps) {
   const [action, setAction] = useState<BulkAction | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole>('renter');
   const [deleteReason, setDeleteReason] = useState('');
@@ -202,13 +205,33 @@ export function BulkActionBar({ selectedUsers, onClearSelection, className }: Bu
               variant="outline"
               size="sm"
               onClick={() => {
-                const rows = selectedUsers.map((id) => ({ user_id: id }));
-                exportToCSV(
-                  rows,
-                  buildExportFilename('selected_users'),
-                  [{ key: 'user_id', label: 'User ID' }]
-                );
-                toast.success(`Exported ${selectedUsers.length} user ID${selectedUsers.length !== 1 ? 's' : ''}`);
+                const selectedData = users.filter(u => selectedUsers.includes(u.id));
+                const rows = selectedData.map((u) => ({
+                  name: u.full_name ?? "",
+                  email: u.email ?? "",
+                  role: u.role ?? "",
+                  user_roles: u.user_roles.join(" | "),
+                  kyc_status: u.verification_status ?? "not_started",
+                  account_status: u.is_deleted ? "deleted" : u.is_restricted ? "restricted" : "active",
+                  vehicles: u.vehicles_count,
+                  bookings: u.bookings_count,
+                  joined: new Date(u.created_at).toLocaleDateString(),
+                }));
+
+                const columns = [
+                  { key: "name", label: "Name" },
+                  { key: "email", label: "Email" },
+                  { key: "role", label: "Profile Role" },
+                  { key: "user_roles", label: "User Roles" },
+                  { key: "kyc_status", label: "KYC Status" },
+                  { key: "account_status", label: "Account Status" },
+                  { key: "vehicles", label: "Vehicles" },
+                  { key: "bookings", label: "Bookings" },
+                  { key: "joined", label: "Joined" },
+                ];
+
+                exportToCSV(rows, buildExportFilename('selected_users'), columns);
+                toast.success(`Exported ${selectedUsers.length} user record${selectedUsers.length !== 1 ? 's' : ''}`);
               }}
               disabled={isPending}
             >

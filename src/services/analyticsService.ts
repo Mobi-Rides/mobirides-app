@@ -676,6 +676,49 @@ export const analyticsService = {
     };
   },
 
+  // Get user registration statistics over time (BUG-015)
+  async getUserRegistrationStats() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('created_at')
+      .not('role', 'in', '("admin","super_admin")')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    if (!data) return [];
+
+    const stats: Record<string, number> = {};
+    data.forEach(row => {
+      if (row.created_at) {
+        const month = format(new Date(row.created_at), 'MMM yyyy');
+        stats[month] = (stats[month] || 0) + 1;
+      }
+    });
+
+    return Object.entries(stats).map(([name, value]) => ({ name, value }));
+  },
+
+  // Get booking growth statistics over time (BUG-015)
+  async getBookingGrowthStats() {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('created_at')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    if (!data) return [];
+
+    const stats: Record<string, number> = {};
+    data.forEach(row => {
+      if (row.created_at) {
+        const month = format(new Date(row.created_at), 'MMM yyyy');
+        stats[month] = (stats[month] || 0) + 1;
+      }
+    });
+
+    return Object.entries(stats).map(([name, value]) => ({ name, value }));
+  },
+
   // Get dashboard summary
   async getDashboardSummary(dateRange?: { start: string; end: string }) {
     const [userMetrics, systemMetrics, securityMetrics] = await Promise.all([
