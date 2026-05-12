@@ -256,7 +256,7 @@ All 3 passing.
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Core auth pages look broken) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-131 |
 | **Affects** | `/login`, `/signup`, `/forgot-password`, `/terms-of-service`, protected-route sign-in screens |
 | **Visible Result** | Users see `Failed to initialize map. Please try again later.` on pages that do not display a map. |
 
@@ -277,7 +277,7 @@ After pulling latest `origin/develop`, mobile UI smoke testing at 390×844 shows
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Users cannot reliably identify required auth fields) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-132 |
 | **Affects** | `Login.tsx`, `signup.tsx`, `ForgotPassword.tsx`, protected-route sign-in screens |
 | **Visible Result** | Labels such as `Email`, `Password`, `Full Name`, and `Phone Number` render nearly white on white cards. |
 
@@ -298,7 +298,7 @@ Reproduced on `/signup`, `/forgot-password`, `/profile`, `/bookings`, and `/wall
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Blocks or obscures core auth inputs/actions) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-133 |
 | **Affects** | `/signup`, `/forgot-password`, `/password-reset-sent`, `/car-listing`, protected-route sign-in screens, public legal pages |
 | **Visible Result** | The floating chat button overlaps signup phone input, forgot-password submit button, password-reset confirmation content, car-listing filter controls, and sign-in button areas. |
 
@@ -319,7 +319,7 @@ Mobile smoke testing at 390×844 shows the global floating chat button positione
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Password recovery link can appear broken to users) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-134 |
 | **Affects** | Password reset email flow, `/reset-password` |
 | **Visible Result** | A user clicking the branded reset link can land back on sign-in instead of seeing the password reset form. |
 
@@ -340,7 +340,7 @@ Source confirmed in `api/auth/reset-password.js` and `src/pages/ResetPassword.ts
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Broken/shared vehicle links appear to hang) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-135 |
 | **Affects** | `/cars/:carId` |
 | **Visible Result** | Invalid vehicle URLs show `Loading vehicle details...` for roughly 15 seconds before changing to a generic error. |
 
@@ -361,7 +361,7 @@ Reproduced locally on `/cars/test-id`. The error eventually appears, but only af
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Search/discovery feature gives incorrect results) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-136 |
 | **Affects** | `/car-listing`, `SearchFilters.tsx`, `CarListing.tsx` |
 | **Visible Result** | Users can enter model, year, min price, max price, date range, and distance sort filters, but the results are not filtered by those values. |
 
@@ -382,7 +382,7 @@ Source confirmed after browser smoke testing `/car-listing` at mobile and deskto
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Host reporting/export workflow is non-functional) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-137 |
 | **Affects** | `/host-bookings`, `HostBookings.tsx` |
 | **Visible Result** | Hosts can tap `CSV` or `PDF`, but the app only shows an “Export Started” toast and does not generate or download anything. |
 
@@ -403,7 +403,7 @@ Source confirmed in `HostBookings.tsx`: `exportData()` only displays a toast. Th
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Misleads renters in payment workflow) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-138 |
 | **Affects** | `/renter-bookings`, `RenterBookingCard.tsx` |
 | **Visible Result** | Pending bookings show a `Pay Now` button even though payment is only actionable after the booking is approved / awaiting payment. |
 
@@ -424,7 +424,7 @@ Source confirmed in `RenterBookingCard.tsx`: the button label remains `Pay Now`,
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Payment recovery/navigation flow can end in 404) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-139 |
 | **Affects** | `/payment/return`, `PaymentReturnPage.tsx` |
 | **Visible Result** | If the payment return page cannot resolve a booking ID, its recovery buttons navigate to `/my-bookings`, which is not a registered route. |
 
@@ -445,7 +445,7 @@ Source confirmed in `PaymentReturnPage.tsx`; `App.tsx` has no `/my-bookings` rou
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Vehicle listing flow can silently lose user work) |
-| **Status** | 🔴 Open |
+| **Status** | ❌ False Flag / Canceled |
 | **Affects** | `/create-car`, `CreateCar.tsx` |
 | **Visible Result** | Users can fill and submit the `/create-car` form, but no vehicle is inserted or uploaded; the page just navigates away. |
 
@@ -466,7 +466,7 @@ Source confirmed in `CreateCar.tsx` and `App.tsx`. The actual implemented listin
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Receipt/export workflow is non-functional) |
-| **Status** | 🔴 Open |
+| **Status** | 🔵 Tracked via MOB-140 |
 | **Affects** | Receipt modal, `ReceiptModal.tsx` |
 | **Visible Result** | Users see a `Download PDF` receipt button, but clicking it does not generate or download a PDF. |
 
@@ -487,7 +487,7 @@ Source confirmed in `ReceiptModal.tsx`: `handleDownload()` only logs `Download r
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Users can miss booking approval/payment state changes) |
-| **Status** | 🟡 Proposed Fix |
+| **Status** | 🔵 Tracked via MOB-127 |
 | **Affects** | Booking lifecycle notifications, `bookingLifecycle.ts`, `completeNotificationService.ts` |
 | **Visible Result** | Renters and hosts may not receive expected notifications when a booking moves to awaiting payment or confirmed/paid. |
 | **Proposed Resolution** | Refactor `bookingLifecycle.test.ts` to use standardized `createMockChain` with `.insert()` support. Mock `CompleteNotificationService` singleton directly to verify multi-channel delivery. Ensure consistent notification triggering for `awaiting_payment` and `confirmed` statuses. |
@@ -509,7 +509,7 @@ The lifecycle path now routes through `completeNotificationService.createNotific
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Upcoming-trip reminders can be missed) |
-| **Status** | 🟡 Proposed Fix |
+| **Status** | 🔵 Tracked via MOB-127 |
 | **Affects** | Booking reminders, `enhancedBookingService.ts` |
 | **Visible Result** | Users may receive only some scheduled booking reminders instead of the expected 24h, 2h, and 30m reminders. |
 | **Proposed Resolution** | Implement database-level idempotency by adding `two_hour_reminder_sent` and `thirty_min_reminder_sent` flags to the `bookings` table. Update `EnhancedBookingService` to fetch daily confirmed bookings, check these flags before sending, and update them after successful notification delivery. |
@@ -531,7 +531,7 @@ The reminder processing path is not creating all notification records for the co
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Payment confirmation flow can hang/fail after payment starts) |
-| **Status** | 🟡 Proposed Fix |
+| **Status** | 🔵 Tracked via MOB-127 |
 | **Affects** | `/payment/return`, `initiate-payment`, `payment-webhook`, `query-payment` |
 | **Visible Result** | After payment is initiated, the user lands on the payment return flow but never sees `Payment successful`; the booking remains unconfirmed. |
 | **Proposed Resolution** | Synchronize `payment-webhook` success logic with `bookingLifecycle` side effects. Update `handoverService.ts` to use `bookingLifecycle.updateStatus` instead of raw database updates for `in_progress` and `completed` states, ensuring all lifecycle notifications and financial credits are fired consistently. |
@@ -552,7 +552,7 @@ Selenium run against local Vite and live Supabase created booking `a3dbeb76-4e50
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Blocks KYC verification) |
-| **Status** | 🟡 In Progress (Audit Complete) |
+| **Status** | 🔵 Tracked via MOB-129 |
 | **Affects** | `verification-documents`, `verification-selfies`, `avatars`, `return-photos` |
 | **Visible Result** | Users see failed verification document upload errors when submitting ID/selfie documents. |
 
@@ -573,7 +573,7 @@ Confirmed via comparison of `src/services/verificationService.ts` vs `2026050808
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can block host vehicle listing documents) |
-| **Status** | 🟡 In Progress (Audit Complete) |
+| **Status** | 🔵 Tracked via MOB-129 |
 | **Affects** | `car-documents`, `/add-car`, vehicle document upload |
 | **Visible Result** | Vehicle document uploads fail with "Bucket not found" errors. |
 
@@ -594,7 +594,7 @@ Confirmed via `grep` and migration history analysis. No reference to `car-docume
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can break chat file attachments) |
-| **Status** | 🟡 In Progress (Audit Complete) |
+| **Status** | 🔵 Tracked via MOB-129 |
 | **Affects** | `chat-attachments`, `message-attachments`, chat attachment upload |
 | **Visible Result** | Users unable to upload/view chat attachments; storage 404/403 errors. |
 
@@ -615,7 +615,7 @@ Confirmed naming collision. Resolution: Standardize on `chat-attachments` in the
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can block handover photo documentation) |
-| **Status** | 🟡 In Progress (Audit Complete) |
+| **Status** | 🔵 Tracked via MOB-129 |
 | **Affects** | `handover-photos`, enhanced handover photo uploads |
 | **Visible Result** | Rental handover photos fail to upload during check-in/check-out. |
 
@@ -636,7 +636,7 @@ Confirmed via `enhancedHandoverService.ts` dependency check. Restoration require
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Multiple upload workflows can fail) |
-| **Status** | 🟡 In Progress (Audit Complete) |
+| **Status** | 🔵 Tracked via MOB-129 |
 | **Affects** | `avatars`, `car-images`, `insurance-claims`, `return-photos`, public upload/read flows |
 | **Visible Result** | Profile avatars, car images, insurance claim evidence, or return photos may fail to upload or display depending on online bucket/policy state. |
 
@@ -657,7 +657,7 @@ Confirmed via visual inspection of `supabase/migrations/20260508083755_remote_sc
 |-------|--------|
 | **Date Reported** | 2026-05-12 |
 | **Severity** | High (Build Failure Risk) |
-| **Status** | 🟡 In Progress |
+| **Status** | 🔵 Tracked via MOB-141 |
 | **Affects** | `analyticsService.ts`, `useSuperAdminAnalytics.ts`, code hygiene |
 | **Visible Result** | Production build failures or lint errors due to unused imports and duplicated service logic after team merges. |
 
@@ -678,7 +678,7 @@ Found during `npm run build` and merge validation on 2026-05-12.
 |-------|--------|
 | **Date Reported** | 2026-05-12 |
 | **Severity** | High (User Trust / Branding Parity) |
-| **Status** | 🟡 In Progress |
+| **Status** | 🔵 Tracked via MOB-142 |
 | **Affects** | `og-image.png`, `MOBI_LOGO.png`, `index.html`, Signup/Login preview |
 | **Visible Result** | External links (Slack/WhatsApp) show the legacy "K Rent Private Cars" signup page. Favicon may appear inconsistent. |
 
@@ -741,6 +741,102 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
+### BUG-062: Rental Details UI Lacks Real-Time Updates for Booking Status
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | High (User experience / State desync) |
+| **Status** | 🔵 Tracked via MOB-143 |
+| **Affects** | `RentalDetailsRefactored.tsx`, `useBookingStatus` |
+| **Visible Result** | Renters must manually refresh the page to see if a host has approved their booking. |
+
+**Description:**  
+The refactored rental details view does not subscribe to realtime changes for the active booking. When a host approves a booking via the host dashboard, the renter's view remains "Pending" until a manual page reload occurs.
+
+---
+
+### BUG-063: Host Dashboard Does Not Update Booking List in Real-Time
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | High (Operational efficiency) |
+| **Status** | 🔵 Tracked via MOB-144 |
+| **Affects** | `HostBookings.tsx`, `useHostBookings` |
+| **Visible Result** | Hosts do not see new booking requests appear without refreshing the dashboard. |
+
+**Description:**  
+The host bookings management page lacks a realtime subscription to the `bookings` table for the host's vehicles. New "Request to Book" events are missed unless the host manually refreshes.
+
+---
+
+### BUG-064: Payment Return Page Fails to Persist State on Refresh
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | High (Reliability / SPA State) |
+| **Status** | 🔵 Tracked via MOB-145 |
+| **Affects** | `PaymentReturnPage.tsx` |
+| **Visible Result** | Refreshing the page during "Processing Payment" results in a loss of context and often a 404 or redirect to home. |
+
+**Description:**  
+The payment return flow relies on transient state that is lost on browser refresh. If a user refreshes while the system is querying the transaction status, the flow breaks.
+
+---
+
+### BUG-065: "Book Now" Label Misalignment with "Request-First" Model
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | Medium (User Expectation) |
+| **Status** | 🔵 Tracked via MOB-146 |
+| **Affects** | `CarDetails.tsx`, `BookingLifecycle` |
+| **Visible Result** | Button says "Book Now" but the actual action is "Request to Book". |
+
+**Description:**  
+To align with the Turo-style model, the primary CTA should be "Request to Book" to manage user expectations that host approval is required before payment.
+
+---
+
+### BUG-066: Hardcoded Breadcrumbs in Booking Flow Lead to 404s
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | Medium (Navigation) |
+| **Status** | 🔵 Tracked via MOB-139 |
+| **Affects** | `BookingFlow.tsx`, `Breadcrumbs.tsx` |
+| **Visible Result** | Tapping "Back to Listings" or intermediate breadcrumbs occasionally leads to 404 pages. |
+
+---
+
+### BUG-067: Premature "Booking Confirmed" Email Trigger
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | High (Financial/Trust) |
+| **Status** | 🔵 Tracked via MOB-147 |
+| **Affects** | `booking-notifications` edge function |
+| **Visible Result** | Renters receive a "Booking Confirmed" email immediately after requesting, before host approval or payment. |
+
+---
+
+### BUG-068: Inconsistent Navigation After Payment Success
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | Medium (UX Flow) |
+| **Status** | 🔵 Tracked via MOB-145 |
+| **Affects** | `PaymentReturnPage.tsx` |
+| **Visible Result** | Some users are sent to `/bookings` while others are sent to `/rental-details/:id` after successful payment. |
+
+---
+
 ## Resolved Bugs
 
 | ID | Resolution Date | Summary |
@@ -789,4 +885,4 @@ Three redundant user table implementations exist. Refactor to single unified com
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–061 added via Antigravity — May 12, 2026*
+*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026*
