@@ -21,16 +21,18 @@
 
 ## 📊 Executive Summary
 
-Sprint 14 is the **final stabilization sprint** before the V1.0 commercial launch. Following the successful resolution of the build infrastructure blockers and the deployment of core commercial features (Duration Pricing, Map Hooks) in Sprint 13, the focus now shifts to **Security Hardening**, **Advanced SuperAdmin Logic**, and **Final Documentation Compliance**.
+Sprint 14 is the **final stabilization sprint** before the V1.0 commercial launch. Following the successful resolution of the build infrastructure blockers and the deployment of core commercial features (Duration Pricing, Map Hooks) in Sprint 13, the focus now shifts to **Security Hardening**, **Storage Infrastructure Reconciliation**, **Advanced SuperAdmin Logic**, and **Final Documentation Compliance**.
 
 This sprint also marks the initiation of the **Native Mobile Integration** phase, specifically targeting the provisioning of Firebase/Google Cloud services for push notifications.
 
 **Primary Targets for Sprint 14:**
 1.  **Security (MOB-708)**: Finalize PII exposure reduction in public profiles.
-2.  **SuperAdmin Remediation (SAR-002 to SAR-005)**: Deploy advanced security and audit tools.
-3.  **V1.0 Documentation Compliance**: Finalize and integrate all legal and instructional artifacts (ToS, Privacy, Insurance, Tutorials).
-4.  **Native Integration**: Provision `google-services.json` and initialize Push Notifications.
-5.  **Technical Debt**: Cleanup legacy components and orphaned code.
+2.  **Storage Reconciliation (MOB-123)**: Resolve missing buckets and re-implement folder-aware RLS policies.
+3.  **SuperAdmin Remediation (SAR-002 to SAR-005)**: Deploy advanced security and audit tools.
+4.  **V1.0 Documentation Compliance**: Finalize and integrate all legal and instructional artifacts (ToS, Privacy, Insurance, Tutorials).
+5.  **Analytics & Merge Remediation (MOB-124)**: Resolve merge conflicts and satisfy static analysis requirements for launch.
+6.  **Native Integration**: Provision `google-services.json` and initialize Push Notifications.
+7.  **Technical Debt**: Cleanup legacy components and orphaned code.
 
 ---
 
@@ -47,10 +49,12 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ## 🎯 Sprint Objectives
 
 1.  **V1.0 Doc Audit**: 100% compliance of all legal/instructional docs in UI.
-2.  **PII Protection**: Restrict email/phone visibility in public APIs (MOB-708).
-3.  **Anomaly Detection**: Implement the first phase of the session lockdown engine (SAR-002).
-4.  **Audit Integrity**: Deploy Signed Audit Log PDF generation (SAR-005).
-5.  **Push Foundation**: Get Firebase provisioning confirmed and config injected.
+2.  **Storage Reconciled**: 100% parity between UI bucket usage and DB schema (MOB-123).
+3.  **PII Protection**: Restrict email/phone visibility in public APIs (MOB-708).
+4.  **Analytics Parity**: Resolved all merge conflicts in analytics hooks and services (MOB-124).
+5.  **Anomaly Detection**: Implement the first phase of the session lockdown engine (SAR-002).
+6.  **Audit Integrity**: Deploy Signed Audit Log PDF generation (SAR-005).
+7.  **Push Foundation**: Get Firebase provisioning confirmed and config injected.
 
 ---
 
@@ -81,6 +85,13 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 |--------|-------|----------|--------|--------|---------|
 | **MOB-122** | Modisa | P1 | 5 | 🟡 TO DO | Firebase/Google Services setup and `google-services.json` config. |
 
+### Category 5: Storage & Merge Remediation (P0)
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **MOB-123** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | Master Storage Reconciliation: Fix missing buckets & RLS drift. |
+| **MOB-124** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | Resolve Analytics Merge conflicts & satisfy static analysis. |
+| **S14-004** | Antigravity | P1 | 3 | 🟡 TO DO | Execute Master Storage Migration & Verify Multi-Tenant Isolation. |
+
 ---
 
 ## 🚦 Execution Tracker
@@ -88,8 +99,8 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 1 of 12 |
-| **Current Blockers** | Google Cloud Console Access (MOB-122) |
+| **Tasks Completed** | 1 of 15 |
+| **Current Blockers** | Storage Policy Inconsistency (BUG-054-058), Analytics Merge Parity (BUG-059) |
 
 ---
 

@@ -538,7 +538,6 @@ The reminder processing path is not creating all notification records for the co
 
 **Description:**  
 The live Selenium booking/payment flow successfully signed in the renter, created a pending booking, called `initiate-payment`, and opened the returned payment URL. The return page then timed out waiting for the success state. Direct database verification showed the booking was updated to `payment_status=awaiting_payment` with a transaction ID, but the booking stayed `status=pending` and the transaction stayed `status=initiated`.
-
 **Likely Cause:**  
 `initiate-payment` creates a transaction and fires a mock `payment-webhook` request asynchronously, but the webhook is not completing the transaction in the live environment. Because `PaymentReturnPage` only shows success when `query-payment` returns `status=completed`, users remain in the processing/failure path and the booking never becomes confirmed/paid.
 
@@ -553,18 +552,18 @@ Selenium run against local Vite and live Supabase created booking `a3dbeb76-4e50
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Blocks KYC verification) |
-| **Status** | 🔴 Open |
-| **Affects** | `verification-documents`, `verification-selfies`, verification upload flow |
+| **Status** | 🟡 In Progress (Audit Complete) |
+| **Affects** | `verification-documents`, `verification-selfies`, `avatars`, `return-photos` |
 | **Visible Result** | Users see failed verification document upload errors when submitting ID/selfie documents. |
 
 **Description:**  
-The verification flow uploads national ID images/PDFs to `verification-documents` and selfie photos to `verification-selfies`. Current migration scan shows those buckets were created historically, but latest remote-schema storage policies only preserve admin read access for verification buckets. Normal authenticated users may be blocked by storage RLS during insert/update.
+The verification flow uploads national ID images/PDFs to `verification-documents` and selfie photos to `verification-selfies`. Audit on 2026-05-12 confirmed that while these buckets exist, the latest `remote_schema.sql` is missing user-level RLS policies for `INSERT` and `SELECT`. Additionally, `return-photos` and `avatars` policies in the remote schema only provide admin read access, breaking normal user flows.
 
 **Likely Cause:**  
-Security/storage cleanup removed or failed to preserve authenticated user `INSERT` / `UPDATE` / own-file `SELECT` policies for verification buckets.
+Security/storage cleanup removed or failed to preserve authenticated user `INSERT` / `UPDATE` / own-file `SELECT` policies during the last schema sync.
 
 **Verification:**  
-Source confirmed in `src/services/verificationService.ts`; latest remote-schema migration policy block only shows admin read for verification storage. Fix candidate exists in `supabase/migrations/20260511083000_restore_verification_storage_user_policies.sql`.
+Confirmed via comparison of `src/services/verificationService.ts` vs `20260508083755_remote_schema.sql`. Fix planned in `20260512140000_master_storage_reconciliation.sql`.
 
 ---
 
@@ -574,18 +573,18 @@ Source confirmed in `src/services/verificationService.ts`; latest remote-schema 
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can block host vehicle listing documents) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Progress (Audit Complete) |
 | **Affects** | `car-documents`, `/add-car`, vehicle document upload |
-| **Visible Result** | Vehicle document uploads can fail if the `car-documents` bucket is missing online. |
+| **Visible Result** | Vehicle document uploads fail with "Bucket not found" errors. |
 
 **Description:**  
-`AddCar.tsx` uploads vehicle documents to `car-documents`, but migration scan did not find a committed active migration that creates this bucket before the local storage repair migration. If the online Supabase project does not already contain the bucket, uploads will fail with bucket-not-found/storage errors.
+`AddCar.tsx` and `CarImageManager.tsx` reference the `car-documents` bucket for vehicle registrations. A full repository scan on 2026-05-12 confirmed that NO active, committed migration creates this bucket. It currently exists only in the UI/Service code, creating a hard deployment blocker.
 
 **Likely Cause:**  
-The application introduced `car-documents` usage without a matching durable storage bucket migration, or a later schema/security sync omitted it.
+The application introduced `car-documents` usage without a matching durable storage bucket migration, or the migration was lost during the recent merge/archival process.
 
 **Verification:**  
-Source confirmed in `src/pages/AddCar.tsx`. No active pre-repair migration was found creating `car-documents`.
+Confirmed via `grep` and migration history analysis. No reference to `car-documents` found in any `supabase/migrations/*.sql` file.
 
 ---
 
@@ -595,18 +594,18 @@ Source confirmed in `src/pages/AddCar.tsx`. No active pre-repair migration was f
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can break chat file attachments) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Progress (Audit Complete) |
 | **Affects** | `chat-attachments`, `message-attachments`, chat attachment upload |
-| **Visible Result** | Users may be unable to upload or view chat attachments. |
+| **Visible Result** | Users unable to upload/view chat attachments; storage 404/403 errors. |
 
 **Description:**  
-The chat UI uploads files to `chat-attachments`, while latest remote-schema storage policies reference `message-attachments`. Older migrations mention `chat-attachments`, but the current schema snapshot favors `message-attachments`, creating a bucket/policy mismatch.
+The UI (`MessageInput.tsx`) uses `chat-attachments`, but the `remote_schema.sql` and historical RLS policies reference `message-attachments`. This creates a service-level parity gap where the database expects one name and the code uses another.
 
 **Likely Cause:**  
-Storage bucket naming drift between chat implementation and later remote schema/security migrations.
+Inconsistent naming during the initial implementation of the Chat module vs the DB schema design.
 
 **Verification:**  
-Source confirmed in `src/components/chat/MessageInput.tsx`; latest remote-schema policy blocks reference `message-attachments`.
+Confirmed naming collision. Resolution: Standardize on `chat-attachments` in the DB to match frontend implementation.
 
 ---
 
@@ -616,18 +615,18 @@ Source confirmed in `src/components/chat/MessageInput.tsx`; latest remote-schema
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can block handover photo documentation) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Progress (Audit Complete) |
 | **Affects** | `handover-photos`, enhanced handover photo uploads |
-| **Visible Result** | Handover step photo uploads may fail with missing bucket or storage policy errors. |
+| **Visible Result** | Rental handover photos fail to upload during check-in/check-out. |
 
 **Description:**  
-The handover service uploads photos to `handover-photos`, but the bucket creation found during scan appears in archived duplicate-timestamp migrations rather than clearly active latest migrations. Latest remote-schema storage policy snippets do not clearly preserve handover photo policies.
+The handover service uploads photos to `handover-photos`. A scan on 2026-05-12 confirmed that this bucket creation exists only in ARCHIVED migrations (e.g., `docs/plans/20251205_DUPLICATE_MIGRATIONS_ARCHIVED.md`) and is missing from the active production migration history.
 
 **Likely Cause:**  
-Handover storage setup may have been archived or omitted during migration cleanup / remote schema sync.
+The handover storage migration was accidentally moved to the archive during a previous technical debt cleanup phase.
 
 **Verification:**  
-Source confirmed in `src/services/enhancedHandoverService.ts`; active migration scan did not find a clear current bucket creation/policy restoration path.
+Confirmed via `enhancedHandoverService.ts` dependency check. Restoration required in master reconciliation migration.
 
 ---
 
@@ -637,18 +636,39 @@ Source confirmed in `src/services/enhancedHandoverService.ts`; active migration 
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Multiple upload workflows can fail) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 In Progress (Audit Complete) |
 | **Affects** | `avatars`, `car-images`, `insurance-claims`, `return-photos`, public upload/read flows |
 | **Visible Result** | Profile avatars, car images, insurance claim evidence, or return photos may fail to upload or display depending on online bucket/policy state. |
 
 **Description:**  
-Several app features depend on Supabase Storage buckets and public/authenticated policies. Historical migrations create or configure these buckets, but latest remote-schema storage policies only show a subset of policies, especially for `car-images`, `insurance-claims`, `message-attachments`, and verification buckets. This creates a regression risk after security hardening or remote schema sync.
+Latest `remote_schema.sql` (2026-05-08) is missing critical "Folder-Aware" RLS isolation policies (`auth.uid()::text = (storage.foldername(name))[1]`). Most buckets are defaulted to admin-only or broad authenticated access without user-isolation, creating a security regression risk.
 
 **Likely Cause:**  
-Security hardening and remote-schema migrations preserved some storage policies but not the full set of user-facing upload/read policies required by current frontend flows.
+Security hardening and remote-schema migrations simplified storage policies, accidentally removing the complex folder-based isolation logic required for multi-tenant security.
 
 **Verification:**  
-Read-only scan compared `supabase.storage.from(...)` usage against storage bucket/policy migrations. Broad repair candidate exists in `supabase/migrations/20260511090000_repair_app_storage_buckets_and_policies.sql`.
+Confirmed via visual inspection of `supabase/migrations/20260508083755_remote_schema.sql`. Master reconciliation will re-implement folder-aware isolation.
+
+---
+
+### BUG-059: Analytics & Service Merge Conflicts / Static Analysis Failures
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-12 |
+| **Severity** | High (Build Failure Risk) |
+| **Status** | 🟡 In Progress |
+| **Affects** | `analyticsService.ts`, `useSuperAdminAnalytics.ts`, code hygiene |
+| **Visible Result** | Production build failures or lint errors due to unused imports and duplicated service logic after team merges. |
+
+**Description:**  
+Merges from feature branches (Arnold/Tapologo) introduced conflicts in analytics hooks and services. Additionally, static analysis reveals several orphaned imports and redundant service methods that could cause runtime issues or build-time regressions.
+
+**Likely Cause:**  
+Concurrent development on analytics features without periodic base-branch synchronization.
+
+**Verification:**  
+Found during `npm run build` and merge validation on 2026-05-12.
 
 ---
 
