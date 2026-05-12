@@ -487,9 +487,10 @@ Source confirmed in `ReceiptModal.tsx`: `handleDownload()` only logs `Download r
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Users can miss booking approval/payment state changes) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 Proposed Fix |
 | **Affects** | Booking lifecycle notifications, `bookingLifecycle.ts`, `completeNotificationService.ts` |
 | **Visible Result** | Renters and hosts may not receive expected notifications when a booking moves to awaiting payment or confirmed/paid. |
+| **Proposed Resolution** | Refactor `bookingLifecycle.test.ts` to use standardized `createMockChain` with `.insert()` support. Mock `CompleteNotificationService` singleton directly to verify multi-channel delivery. Ensure consistent notification triggering for `awaiting_payment` and `confirmed` statuses. |
 
 **Description:**  
 The booking/payment trigger contract suite passes, but the adjacent booking lifecycle tests show notification side effects failing during key user-visible transitions. The `pending -> awaiting_payment` transition does not call the expected renter push notification, and the `confirmed` / `paid` transition does not send the expected renter and host notifications.
@@ -508,9 +509,10 @@ The lifecycle path now routes through `completeNotificationService.createNotific
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Upcoming-trip reminders can be missed) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 Proposed Fix |
 | **Affects** | Booking reminders, `enhancedBookingService.ts` |
 | **Visible Result** | Users may receive only some scheduled booking reminders instead of the expected 24h, 2h, and 30m reminders. |
+| **Proposed Resolution** | Implement database-level idempotency by adding `two_hour_reminder_sent` and `thirty_min_reminder_sent` flags to the `bookings` table. Update `EnhancedBookingService` to fetch daily confirmed bookings, check these flags before sending, and update them after successful notification delivery. |
 
 **Description:**  
 The enhanced booking service reminder test expects reminder notifications for all configured windows, but only part of the expected inserts occur. This means upcoming rental reminder coverage can be incomplete, leaving renters or hosts without visible prompts before pickup/handover.
@@ -529,9 +531,10 @@ The reminder processing path is not creating all notification records for the co
 |-------|--------|
 | **Date Reported** | 2026-05-08 |
 | **Severity** | High (Payment confirmation flow can hang/fail after payment starts) |
-| **Status** | 🔴 Open |
+| **Status** | 🟡 Proposed Fix |
 | **Affects** | `/payment/return`, `initiate-payment`, `payment-webhook`, `query-payment` |
 | **Visible Result** | After payment is initiated, the user lands on the payment return flow but never sees `Payment successful`; the booking remains unconfirmed. |
+| **Proposed Resolution** | Synchronize `payment-webhook` success logic with `bookingLifecycle` side effects. Update `handoverService.ts` to use `bookingLifecycle.updateStatus` instead of raw database updates for `in_progress` and `completed` states, ensuring all lifecycle notifications and financial credits are fired consistently. |
 
 **Description:**  
 The live Selenium booking/payment flow successfully signed in the renter, created a pending booking, called `initiate-payment`, and opened the returned payment URL. The return page then timed out waiting for the success state. Direct database verification showed the booking was updated to `payment_status=awaiting_payment` with a transaction ID, but the booking stayed `status=pending` and the transaction stayed `status=initiated`.
