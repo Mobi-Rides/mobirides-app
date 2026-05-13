@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { Json } from "@/integrations/supabase/types";
 import { format, subDays } from "date-fns";
@@ -34,6 +34,28 @@ export interface AnalyticsData {
 }
 
 export type { SecurityMetrics, SystemMetrics };
+
+const ANALYTICS_QUERY_TIMEOUT_MS = 10000;
+
+async function withAnalyticsTimeout<T>(label: string, promise: Promise<T>, fallback: T): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timeoutId = setTimeout(() => {
+          console.warn(`[Analytics] ${label} timed out; rendering with fallback data`);
+          resolve(fallback);
+        }, ANALYTICS_QUERY_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
 
 export interface UserActivityMetrics {
   total_users: number;
@@ -77,7 +99,7 @@ export const useSuperAdminAnalytics = () => {
     start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     end: format(new Date(), 'yyyy-MM-dd')
   });
-  const [realtimeSubscription, setRealtimeSubscription] = useState<RealtimeChannel | null>(null);
+  const realtimeSubscriptionRef = useRef<RealtimeChannel | null>(null);
 
   const { users: adminUsers } = useSuperAdminRoles();
 
@@ -112,9 +134,9 @@ export const useSuperAdminAnalytics = () => {
     const filters = { startDate: dateRange.start, endDate: dateRange.end };
     try {
       const [events, registrationStats, bookingStats] = await Promise.all([
-        analyticsService.getSecurityEvents(filters),
-        analyticsService.getUserRegistrationStats(),
-        analyticsService.getBookingGrowthStats()
+        withAnalyticsTimeout("security events query", analyticsService.getSecurityEvents(filters), []),
+        withAnalyticsTimeout("user registration stats query", analyticsService.getUserRegistrationStats(), []),
+        withAnalyticsTimeout("booking growth stats query", analyticsService.getBookingGrowthStats(), [])
       ]);
 
       setEvents(events as unknown as SecurityEvent[]);
@@ -126,14 +148,33 @@ export const useSuperAdminAnalytics = () => {
 
       // Fetch other metrics and merge with admin user data
       const [userMetricsData, systemMetricsData] = await Promise.all([
-        analyticsService.getUserMetrics(filters.startDate && filters.endDate ? {
+        withAnalyticsTimeout("user metrics query", analyticsService.getUserMetrics(filters.startDate && filters.endDate ? {
           start: filters.startDate,
           end: filters.endDate
-        } : undefined),
-        analyticsService.getSystemMetrics(filters.startDate && filters.endDate ? {
+        } : undefined), {
+          total_users: 0,
+          active_users: 0,
+          active_today: 0,
+          new_users: 0,
+          new_users_today: 0,
+          suspended_users: 0,
+          role_distribution: {},
+          role_users: {},
+          user_profiles: []
+        }),
+        withAnalyticsTimeout("system metrics query", analyticsService.getSystemMetrics(filters.startDate && filters.endDate ? {
           start: filters.startDate,
           end: filters.endDate
-        } : undefined)
+        } : undefined), {
+          total_bookings: 0,
+          completed_bookings: 0,
+          cancelled_bookings: 0,
+          pending_bookings: 0,
+          revenue: 0,
+          platform_commission: 0,
+          average_booking_value: 0,
+          booking_stats: {}
+        })
       ]);
 
       if (userMetricsData) {
@@ -160,19 +201,21 @@ export const useSuperAdminAnalytics = () => {
   }, [fetchAnalytics]);
 
   const setupRealtimeSubscription = useCallback(() => {
-    if (realtimeSubscription) {
-      realtimeSubscription.unsubscribe();
+    if (realtimeSubscriptionRef.current) {
+      realtimeSubscriptionRef.current.unsubscribe();
+      realtimeSubscriptionRef.current = null;
     }
 
     const sub = analyticsService.subscribeToAnalytics((payload) => {
       fetchAnalytics();
     });
-    setRealtimeSubscription(sub.subscription);
+    realtimeSubscriptionRef.current = sub.subscription;
 
     return () => {
       sub.unsubscribe();
+      realtimeSubscriptionRef.current = null;
     };
-  }, [realtimeSubscription, fetchAnalytics]);
+  }, [fetchAnalytics]);
 
   const exportAnalytics = useCallback(async (exportFormat: 'json' | 'csv' = 'json') => {
     try {

@@ -118,6 +118,8 @@ export interface RealtimeSubscription {
   unsubscribe: () => void;
 }
 
+const ANALYTICS_ROW_LIMIT = 5000;
+
 // Helper function to escape CSV values
 function escapeCSVValue(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -233,7 +235,8 @@ export const analyticsService = {
     const { data: roleData } = await supabase
       .from('profiles')
       .select('role, id, created_at, last_login_attempt')
-      .order('role');
+      .order('role')
+      .limit(ANALYTICS_ROW_LIMIT);
 
     // Get today's metrics
     const today = new Date();
@@ -291,9 +294,17 @@ export const analyticsService = {
     const { count: totalBookings } = await bookingQuery;
 
     // Get booking status breakdown manually
-    const { data: allBookings } = await supabase
+    let allBookingsQuery = supabase
       .from('bookings')
       .select('status');
+
+    if (dateRange) {
+      allBookingsQuery = allBookingsQuery
+        .gte('created_at', dateRange.start)
+        .lte('created_at', dateRange.end);
+    }
+
+    const { data: allBookings } = await allBookingsQuery.limit(ANALYTICS_ROW_LIMIT);
 
     const bookingStats = allBookings?.reduce((acc, item) => {
       acc[item.status] = (acc[item.status] || 0) + 1;
@@ -309,7 +320,8 @@ export const analyticsService = {
       const { data: completedBookingsData } = await supabase
         .from('bookings')
         .select('total_price')
-        .eq('status', 'completed');
+        .eq('status', 'completed')
+        .limit(ANALYTICS_ROW_LIMIT);
 
       revenue = completedBookingsData?.reduce((sum, b) => sum + (b.total_price || 0), 0) || 0;
     } catch (error) {
@@ -322,7 +334,8 @@ export const analyticsService = {
         const { data: paymentData } = await supabase
           .from('payment_transactions')
           .select('amount, host_earnings, platform_commission')
-          .eq('status', 'completed');
+          .eq('status', 'completed')
+          .limit(ANALYTICS_ROW_LIMIT);
 
         revenue = paymentData?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
         platformCommission = paymentData?.reduce((sum, p) => sum + (p.platform_commission || 0), 0) || 0;
@@ -337,7 +350,8 @@ export const analyticsService = {
         .from('wallet_transactions')
         .select('amount, transaction_type')
         .eq('status', 'completed')
-        .in('transaction_type', ['rental_earnings', 'credit']);
+        .in('transaction_type', ['rental_earnings', 'credit'])
+        .limit(ANALYTICS_ROW_LIMIT);
 
       const walletRevenue = walletData?.reduce((sum, t) => sum + (t.amount > 0 ? t.amount : 0), 0) || 0;
       // Use wallet revenue if it's higher (more complete data)
@@ -682,7 +696,8 @@ export const analyticsService = {
       .from('profiles')
       .select('created_at')
       .not('role', 'in', '("admin","super_admin")')
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(ANALYTICS_ROW_LIMIT);
 
     if (error) throw error;
     if (!data) return [];
@@ -703,7 +718,8 @@ export const analyticsService = {
     const { data, error } = await supabase
       .from('bookings')
       .select('created_at')
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(ANALYTICS_ROW_LIMIT);
 
     if (error) throw error;
     if (!data) return [];
