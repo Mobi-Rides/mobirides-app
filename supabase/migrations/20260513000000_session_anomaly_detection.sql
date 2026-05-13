@@ -50,7 +50,7 @@ CREATE TABLE public.session_anomalies (
   status              text NOT NULL DEFAULT 'pending' CHECK (
     status IN ('pending','reviewed','auto_suspended','dismissed')
   ),
-  reviewed_by         uuid REFERENCES auth.users(id),
+  reviewed_by         uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   reviewed_at         timestamptz,
   auto_suspend_after  timestamptz,
   created_at          timestamptz NOT NULL DEFAULT now()
@@ -91,19 +91,39 @@ CREATE POLICY "service_role_manage_session_anomalies"
 
 -- ── pg_cron auto-suspend job (runs every 15 minutes) ─────────────────────────
 -- Calls session-monitor edge function with action=process_auto_suspensions
-SELECT cron.schedule(
-  'session-anomaly-auto-suspend',
-  '*/15 * * * *',
-  $$
-    SELECT net.http_post(
-      url := current_setting('app.supabase_url') || '/functions/v1/session-monitor',
-      headers := jsonb_build_object(
-        'Authorization', 'Bearer ' || current_setting('app.service_role_key'),
-        'Content-Type', 'application/json'
-      ),
-      body := '{"action":"process_auto_suspensions"}'::jsonb
+
+-- SETUP REQUIRED: Set these PostgreSQL database settings before the cron job fires:
+--   ALTER DATABASE postgres SET "app.supabase_url" = 'https://<project>.supabase.co';
+--   ALTER DATABASE postgres SET "app.service_role_key" = '<service_role_key>';
+-- Without these, the cron job will call the edge function with an empty Authorization header.
+
+DO $cron_block$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    BEGIN
+      PERFORM cron.unschedule('session-anomaly-auto-suspend');
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+    PERFORM cron.schedule(
+      'session-anomaly-auto-suspend',
+      '*/15 * * * *',
+      $$
+        SELECT net.http_post(
+          url := current_setting('app.supabase_url') || '/functions/v1/session-monitor',
+          headers := jsonb_build_object(
+            'Authorization', 'Bearer ' || current_setting('app.service_role_key'),
+            'Content-Type', 'application/json'
+          ),
+          body := '{"action":"process_auto_suspensions"}'::jsonb
+        );
+      $$
     );
-  $$
-);
+  ELSE
+    RAISE NOTICE 'pg_cron not available — schedule session-anomaly-auto-suspend manually';
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'Could not schedule cron job: %', SQLERRM;
+END;
+$cron_block$;
 
 COMMIT;
