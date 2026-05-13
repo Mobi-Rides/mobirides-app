@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
 import { Resend } from "npm:resend@4";
+import { getRequiredSecret } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,9 +10,9 @@ const corsHeaders = {
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const signingKeyB64 = Deno.env.get("COMPLIANCE_SIGNING_KEY") ?? "";
-const publicKeyB64 = Deno.env.get("COMPLIANCE_PUBLIC_KEY") ?? "";
-const keyFingerprint = Deno.env.get("COMPLIANCE_KEY_FINGERPRINT") ?? "";
+const signingKeyB64 = getRequiredSecret("COMPLIANCE_SIGNING_KEY");
+const publicKeyB64 = getRequiredSecret("COMPLIANCE_PUBLIC_KEY");
+const keyFingerprint = getRequiredSecret("COMPLIANCE_KEY_FINGERPRINT");
 const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
@@ -23,8 +24,16 @@ function resolveReportMonth(monthParam?: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function canonicalizeReport(payload: object): string {
-  return JSON.stringify(payload, Object.keys(payload).sort());
+function canonicalizeReport(payload: unknown): string {
+  const sortedReplacer = (_key: string, value: unknown) =>
+    value !== null && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(
+          Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+            a.localeCompare(b)
+          )
+        )
+      : value;
+  return JSON.stringify(payload, sortedReplacer);
 }
 
 function buildSummaryStats(records: Array<{ event_type: string; severity: string }>) {
@@ -158,6 +167,7 @@ async function renderPdf(
     summary.drawText(String(sev), { x: margin + 10, y, size: 9, font: helvetica, color: black });
     summary.drawText(String(count), { x: W - margin - 40, y, size: 9, font: helvetica, color: black });
     y -= 14;
+    if (y < 80) break;
   }
   addFooter(summary);
 
@@ -210,6 +220,8 @@ Deno.serve(async (req) => {
   // Parse body once — req.json() can only be called once
   const body = await req.json().catch(() => ({}));
 
+  let userId: string | null = null;
+
   try {
     const action = body.action as string | undefined;
 
@@ -244,6 +256,7 @@ Deno.serve(async (req) => {
           status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      userId = user.id;
       const { data: profile } = await supabase
         .from("profiles").select("role").eq("id", user.id).single();
       if (!profile || !["admin", "super_admin"].includes(profile.role)) {
@@ -296,14 +309,14 @@ Deno.serve(async (req) => {
       .select("id")
       .in("role", ["admin", "super_admin"]);
 
-    const { data: authData } = await supabase.auth.admin.listUsers();
+    const { data: authData, error: listErr } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    if (listErr) console.warn("compliance-report: could not fetch auth users:", listErr.message);
     const adminEmails = (adminProfiles ?? [])
       .map((a: { id: string }) => authData?.users?.find((u) => u.id === a.id)?.email)
       .filter(Boolean) as string[];
 
     if (adminEmails.length > 0) {
       const resend = new Resend(resendApiKey);
-      const sigBytes = Uint8Array.from(atob(signatureB64), (c) => c.charCodeAt(0));
       await resend.emails.send({
         from: "MobiRides Compliance <noreply@app.mobirides.com>",
         to: adminEmails,
@@ -319,7 +332,7 @@ Deno.serve(async (req) => {
         `,
         attachments: [
           { filename: `compliance-${reportMonth}.pdf`, content: uint8ToBase64(pdfBytes) },
-          { filename: `compliance-${reportMonth}.sig`, content: uint8ToBase64(sigBytes) },
+          { filename: `compliance-${reportMonth}.sig`, content: signatureB64 },
         ],
       });
     }
@@ -331,7 +344,7 @@ Deno.serve(async (req) => {
         storage_path: storagePath,
         public_key_fingerprint: keyFingerprint,
         signature_b64: signatureB64,
-        generated_by: isServiceRole ? null : undefined,
+        generated_by: isServiceRole ? null : userId,
         record_count: safeRecords.length,
         status: "completed",
         error_details: null,
