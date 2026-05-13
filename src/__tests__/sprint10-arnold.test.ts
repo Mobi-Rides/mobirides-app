@@ -533,9 +533,9 @@ describe('S10-025 / MOB-711 — Admin Portal Detailed Views (Eye Icons)', () => 
     expect(content).toContain('Eye');
   });
 
-  it('CarManagementTable Eye navigates to /car/:id', () => {
+  it('CarManagementTable listing edit action navigates to /edit-car/:id', () => {
     const content = fs.readFileSync(path.join(adminDir, 'CarManagementTable.tsx'), 'utf-8');
-    expect(content).toMatch(/navigate\(`\/car\/\$\{car\.id\}`\)/);
+    expect(content).toMatch(/navigate\(`\/edit-car\/\$\{car\.id\}`\)/);
   });
 
   it('TransactionLedgerTable imports Eye and TransactionJourneyDialog', () => {

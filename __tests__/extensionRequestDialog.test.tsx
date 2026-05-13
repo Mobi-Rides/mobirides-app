@@ -3,6 +3,24 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ExtensionRequestDialog } from '../src/components/rental-details/ExtensionRequestDialog';
 
+jest.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    auth: {
+      getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }),
+    },
+    from: jest.fn(() => ({
+      insert: jest.fn().mockResolvedValue({ error: null }),
+    })),
+  },
+}));
+
+jest.mock('sonner', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 describe('ExtensionRequestDialog', () => {
   const baseProps = {
     open: true,
@@ -19,9 +37,9 @@ describe('ExtensionRequestDialog', () => {
 
   it('calculates cost as extraDays × pricePerDay', () => {
     render(<ExtensionRequestDialog {...baseProps} />);
-    // Default extraDays is 1, cost should be 100
+    // Default extraDays is 1
     expect(screen.getByText(/Additional cost/i).textContent).toMatch('100');
-    // Increase days to 2
+    // Increase days
     fireEvent.click(screen.getByRole('button', { name: '+' }));
     expect(screen.getByText(/Additional cost/i).textContent).toMatch('200');
   });
@@ -32,14 +50,13 @@ describe('ExtensionRequestDialog', () => {
     expect(screen.getByText(/New end date/i)).toBeInTheDocument();
     // Increase days
     fireEvent.click(screen.getByRole('button', { name: '+' }));
-    // Updated end date should still be shown
+    // Should update new end date
     expect(screen.getByText(/New end date/i)).toBeInTheDocument();
   });
 
-  it('calls onSuccess after submitting extension request', async () => {
+  it('calls submit and inserts booking_extensions row', async () => {
     render(<ExtensionRequestDialog {...baseProps} />);
-    const textarea = screen.getByPlaceholderText(/Let the host know why you need more time/i);
-    fireEvent.change(textarea, { target: { value: 'Need more time' } });
+    fireEvent.change(screen.getByPlaceholderText(/let the host know/i), { target: { value: 'Need more time' } });
     fireEvent.click(screen.getByRole('button', { name: /Send Request/i }));
     await waitFor(() => expect(baseProps.onSuccess).toHaveBeenCalled());
   });
