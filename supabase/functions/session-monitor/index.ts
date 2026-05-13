@@ -481,7 +481,7 @@ Deno.serve(async (req) => {
     await supabaseAdmin
       .from("session_anomalies")
       .update({
-        status: "reviewed",
+        status: verdict === "suspend" ? "reviewed" : "dismissed",
         reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
       })
