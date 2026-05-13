@@ -354,7 +354,15 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
 
-    if (token !== SERVICE_ROLE_KEY) {
+    // Accept exact match (legacy JWT) or any JWT with role=service_role claim
+    const jwtRole = (() => {
+      try {
+        const parts = token.split(".");
+        if (parts.length !== 3) return null;
+        return (JSON.parse(atob(parts[1])) as { role?: string }).role ?? null;
+      } catch { return null; }
+    })();
+    if (token !== SERVICE_ROLE_KEY && jwtRole !== "service_role") {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
