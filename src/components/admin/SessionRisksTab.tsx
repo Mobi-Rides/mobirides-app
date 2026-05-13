@@ -18,7 +18,7 @@ interface SessionAnomaly {
   status: "pending" | "reviewed" | "auto_suspended" | "dismissed";
   auto_suspend_after: string | null;
   created_at: string;
-  profiles: { email: string; role: string } | null;
+  profiles: Array<{ email: string; role: string }> | { email: string; role: string } | null;
 }
 
 function formatCountdown(autoSuspendAfter: string): string {
@@ -91,7 +91,7 @@ export function SessionRisksTab() {
     return () => clearInterval(interval);
   }, []);
 
-  const { data: anomalies = [], isLoading } = useQuery<SessionAnomaly[]>({
+  const { data: anomalies = [], isLoading, error: queryError } = useQuery<SessionAnomaly[]>({
     queryKey: ["session_anomalies"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -113,11 +113,12 @@ export function SessionRisksTab() {
   const updateMutation = useMutation({
     mutationFn: async ({ anomalyId, verdict }: { anomalyId: string; verdict: "suspend" | "dismiss" }) => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No active session");
       const res = await fetch(`${supabaseUrl}/functions/v1/session-monitor`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session!.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ action: "update_anomaly", anomaly_id: anomalyId, verdict }),
       });
@@ -144,6 +145,14 @@ export function SessionRisksTab() {
 
   if (isLoading) {
     return <div className="py-8 text-center text-muted-foreground">Loading session risks...</div>;
+  }
+
+  if (queryError) {
+    return (
+      <div className="py-8 text-center text-red-600 text-sm">
+        Failed to load session risks. Check your permissions and try again.
+      </div>
+    );
   }
 
   return (
@@ -224,8 +233,12 @@ export function SessionRisksTab() {
               className={`grid grid-cols-[2fr_1fr_1fr_1.5fr_1fr_1.2fr] px-3 py-2.5 border-t text-sm items-center gap-2 ${isCritical ? "bg-red-50" : ""}`}
             >
               <div>
-                <div className="font-medium text-xs">{anomaly.profiles?.email ?? anomaly.user_id.slice(0, 8)}</div>
-                <div className="text-xs text-muted-foreground capitalize">{anomaly.profiles?.role}</div>
+                <div className="font-medium text-xs">{
+                  (Array.isArray(anomaly.profiles) ? anomaly.profiles[0] : anomaly.profiles)?.email ?? anomaly.user_id.slice(0, 8)
+                }</div>
+                <div className="text-xs text-muted-foreground capitalize">{
+                  (Array.isArray(anomaly.profiles) ? anomaly.profiles[0] : anomaly.profiles)?.role ?? "—"
+                }</div>
               </div>
               <div><RiskTypeBadge type={anomaly.risk_type} /></div>
               <div><ConfidenceBadge confidence={anomaly.confidence} /></div>
@@ -246,6 +259,7 @@ export function SessionRisksTab() {
                       size="sm"
                       variant="destructive"
                       className="h-6 text-xs px-2"
+                      aria-label={`Suspend user ${(Array.isArray(anomaly.profiles) ? anomaly.profiles[0] : anomaly.profiles)?.email ?? anomaly.user_id}`}
                       onClick={() => updateMutation.mutate({ anomalyId: anomaly.id, verdict: "suspend" })}
                       disabled={updateMutation.isPending}
                     >
@@ -255,6 +269,7 @@ export function SessionRisksTab() {
                       size="sm"
                       variant="outline"
                       className="h-6 text-xs px-2"
+                      aria-label={`Dismiss anomaly for ${(Array.isArray(anomaly.profiles) ? anomaly.profiles[0] : anomaly.profiles)?.email ?? anomaly.user_id}`}
                       onClick={() => updateMutation.mutate({ anomalyId: anomaly.id, verdict: "dismiss" })}
                       disabled={updateMutation.isPending}
                     >
