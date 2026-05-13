@@ -182,7 +182,7 @@ async function detectConcurrentCountries(
     details: {
       countries: distinctCountries,
       window_hours: 4,
-      login_count: (rows?.length ?? 0) + 1,
+      login_count: (rows?.length ?? 0) + (current.country_code ? 1 : 0),
       continents,
     },
   };
@@ -228,7 +228,10 @@ async function notifySuperAdmins(supabase: SupabaseClient, message: string): Pro
     content: message,
   }));
 
-  await supabase.from("notifications").insert(notifications);
+  const { error: notifyErr } = await supabase.from("notifications").insert(notifications);
+  if (notifyErr) {
+    console.error("Failed to insert security notifications:", notifyErr.message);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -291,8 +294,8 @@ Deno.serve(async (req) => {
 
     if (insertError || !loginEvent) {
       console.error("Failed to insert login event:", insertError?.message);
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
+      return new Response(JSON.stringify({ success: false, error: "Failed to record login event" }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -384,10 +387,13 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        await supabaseAdmin
+        const { error: suspendUpdateErr } = await supabaseAdmin
           .from("session_anomalies")
           .update({ status: "auto_suspended" })
           .eq("id", anomaly.id);
+        if (suspendUpdateErr) {
+          console.error(`Failed to update anomaly ${anomaly.id} status:`, suspendUpdateErr.message);
+        }
 
         const { data: profile } = await supabaseAdmin
           .from("profiles")
@@ -478,7 +484,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    await supabaseAdmin
+    const { error: updateErr } = await supabaseAdmin
       .from("session_anomalies")
       .update({
         status: verdict === "suspend" ? "reviewed" : "dismissed",
@@ -486,6 +492,13 @@ Deno.serve(async (req) => {
         reviewed_at: new Date().toISOString(),
       })
       .eq("id", anomalyId);
+
+    if (updateErr) {
+      console.error("Failed to update anomaly status:", updateErr.message);
+      return new Response(JSON.stringify({ error: "Failed to update anomaly" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
