@@ -247,7 +247,17 @@ Deno.serve(async (req) => {
     // ── Auth gate for report generation ──────────────────────────────────────
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
-    const isServiceRole = token === serviceRoleKey;
+
+    // Accept either exact token match (legacy JWT) or a JWT whose role claim is service_role.
+    // The latter handles new-format sb_secret_ keys that Supabase resolves to a role-claim JWT.
+    const jwtRole = (() => {
+      try {
+        const parts = token.split(".");
+        if (parts.length !== 3) return null;
+        return (JSON.parse(atob(parts[1])) as { role?: string }).role ?? null;
+      } catch { return null; }
+    })();
+    const isServiceRole = token === serviceRoleKey || jwtRole === "service_role";
 
     if (!isServiceRole) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
