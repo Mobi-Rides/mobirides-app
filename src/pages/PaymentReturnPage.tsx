@@ -12,16 +12,21 @@ export default function PaymentReturnPage() {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'failed' | 'not_found'>('loading');
   const [bookingId, setBookingId] = useState<string | null>(null);
-  const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 15; // Max 30 seconds of polling (15 * 2s)
 
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    let attempts = 0;
+
     if (!transactionId) {
       setStatus('not_found');
       return;
     }
 
     const checkStatus = async () => {
+      if (cancelled) return;
+
       if (attempts >= MAX_ATTEMPTS) {
         console.error("Payment status polling timeout reached");
         setStatus('failed');
@@ -40,22 +45,34 @@ export default function PaymentReturnPage() {
         setBookingId(data.booking_id);
         
         if (data.status === 'completed') {
+          if (cancelled) return;
           setStatus('success');
         } else if (data.status === 'failed' || data.status === 'cancelled') {
+          if (cancelled) return;
           setStatus('failed');
         } else {
           // If still initiated, poll again after 2s
-          setAttempts(prev => prev + 1);
-          setTimeout(checkStatus, 2000);
+          attempts += 1;
+          timeoutId = setTimeout(checkStatus, 2000);
         }
       } catch (err) {
+        if (cancelled) return;
         console.error("Failed to query payment status:", err);
         setStatus('failed');
       }
     };
 
     checkStatus();
-  }, [transactionId, attempts]);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [transactionId]);
+
+  const bookingFallbackRoute = '/bookings';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
@@ -77,7 +94,7 @@ export default function PaymentReturnPage() {
               <p className="text-gray-700 dark:text-gray-300 text-center">
                 Payment successful! Your booking is confirmed.
               </p>
-              <Button onClick={() => navigate(bookingId ? `/rental-details/${bookingId}` : '/my-bookings')} className="w-full">
+              <Button onClick={() => navigate(bookingId ? `/rental-details/${bookingId}` : bookingFallbackRoute)} className="w-full">
                 View Booking
               </Button>
             </>
@@ -89,7 +106,7 @@ export default function PaymentReturnPage() {
               <p className="text-gray-700 dark:text-gray-300 text-center">
                 Payment failed or was cancelled.
               </p>
-              <Button onClick={() => navigate(bookingId ? `/rental-details/${bookingId}` : '/my-bookings')} variant="outline" className="w-full">
+              <Button onClick={() => navigate(bookingId ? `/rental-details/${bookingId}` : bookingFallbackRoute)} variant="outline" className="w-full">
                 Return to Booking
               </Button>
             </>
@@ -101,7 +118,7 @@ export default function PaymentReturnPage() {
               <p className="text-gray-700 dark:text-gray-300 text-center">
                 Transaction ID not found.
               </p>
-              <Button onClick={() => navigate('/my-bookings')} variant="outline" className="w-full">
+              <Button onClick={() => navigate(bookingFallbackRoute)} variant="outline" className="w-full">
                 Go to Bookings
               </Button>
             </>

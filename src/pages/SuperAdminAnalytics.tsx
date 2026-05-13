@@ -29,7 +29,9 @@ export default function SuperAdminAnalytics() {
     refreshData,
     exportAnalytics,
     dateRange,
-    setDateRange
+    setDateRange,
+    userGrowth,
+    bookingGrowth
   } = useSuperAdminAnalytics();
 
   // Performance optimization hook
@@ -469,7 +471,7 @@ export default function SuperAdminAnalytics() {
           {/* Analytics Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <MobileOptimizedChart
-              data={[]}
+              data={userGrowth}
               title="User Growth Trend"
               type="line"
               height={300}
@@ -477,7 +479,7 @@ export default function SuperAdminAnalytics() {
               onExport={(exportFormat) => handleExport(exportFormat as any)}
             />
             <MobileOptimizedChart
-              data={[]}
+              data={bookingGrowth}
               title="Booking Trends"
               type="bar"
               height={300}
@@ -496,8 +498,11 @@ export default function SuperAdminAnalytics() {
               onExport={(exportFormat) => handleExport(exportFormat as any)}
             />
             <MobileOptimizedChart
-              data={(analytics as any)?.bookingTrends || []}
-              title="Booking Trends"
+              data={analytics.map(item => ({
+                name: `${item.date} ${item.event_type}`,
+                value: item.event_count
+              }))}
+              title="Analytics Events"
               type="line"
               height={300}
               responsive={true}
