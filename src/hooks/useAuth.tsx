@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import AuthTriggerService from '@/services/authTriggerService';
+import { reportLogin } from '@/utils/sessionMonitor';
 import { toast } from "sonner";
 
 type AuthContextType = {
@@ -69,6 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('Sign-in detected, executing pending actions with session ID:', currentSession.access_token.substring(0, 10));
           // Pass session ID to prevent duplicate executions
           AuthTriggerService.executePendingAction(currentSession.access_token);
+          reportLogin(currentSession); // fire-and-forget — never blocks login
         }
         
         // Clear session tracker on sign out
