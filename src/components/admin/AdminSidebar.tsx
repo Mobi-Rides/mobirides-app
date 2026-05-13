@@ -16,7 +16,8 @@ import {
   FileText,
   Star,
   DollarSign,
-  Megaphone
+  Megaphone,
+  FileCheck
 } from "lucide-react";
 import {
   Sidebar,
@@ -48,6 +49,7 @@ const adminMenuItems = [
   { title: "Admin Management", url: "/admin/management", icon: UserCog },
   { title: "FAQ & Guides", url: "/admin/guides", icon: FileText },
   { title: "Audit Logs", url: "/admin/audit", icon: Shield },
+  { title: "Compliance", url: "/admin/compliance", icon: FileCheck },
 ];
 
 const appMenuItems = [
