@@ -29,7 +29,7 @@ CREATE POLICY "superadmins_read_compliance_reports"
   USING (
     EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
+      WHERE id = auth.uid() AND role IN ('admin', 'super_admin')
     )
   );
 
@@ -52,7 +52,7 @@ BEGIN
   JOIN public.profiles p ON p.id = al.actor_id
   WHERE al.event_timestamp >= date_trunc('month', month::timestamptz)
     AND al.event_timestamp <  date_trunc('month', month::timestamptz) + INTERVAL '1 month'
-    AND p.role IN ('admin', 'superadmin')
+    AND p.role IN ('admin', 'super_admin')
   ORDER BY al.event_timestamp ASC;
 END;
 $$;
@@ -63,20 +63,25 @@ GRANT EXECUTE ON FUNCTION public.get_audit_logs_for_month(date) TO service_role;
 
 -- ── pg_cron: monthly schedule (requires pg_cron + pg_net extensions) ──────────
 -- Run on the 1st of each month at 09:00 UTC.
--- SETUP REQUIRED: Before enabling, set your project's Edge Function URL and
--- service role key below. The pg_net extension must be enabled in Supabase.
--- To enable this schedule, run the DO block manually after deployment.
+-- SETUP REQUIRED: Set app.supabase_url and app.service_role_key as PostgreSQL
+-- settings in your Supabase project before enabling the cron job.
+-- Example: ALTER DATABASE postgres SET app.supabase_url = 'https://xxx.supabase.co';
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    -- Unschedule first to allow idempotent re-runs
+    BEGIN
+      PERFORM cron.unschedule('monthly-compliance-report');
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
     PERFORM cron.schedule(
       'monthly-compliance-report',
       '0 9 1 * *',
       $cron$
       SELECT net.http_post(
-        url     := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/compliance-report',
+        url     := current_setting('app.supabase_url') || '/functions/v1/compliance-report',
         headers := jsonb_build_object(
-          'Authorization', 'Bearer YOUR_SERVICE_ROLE_KEY',
+          'Authorization', 'Bearer ' || current_setting('app.service_role_key'),
           'Content-Type',  'application/json'
         ),
         body    := '{}'::jsonb
