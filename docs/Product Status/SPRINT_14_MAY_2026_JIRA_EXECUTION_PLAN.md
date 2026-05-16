@@ -111,6 +111,7 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 |--------|-------|----------|--------|--------|---------|
 | **MOB-148** | Modisa | P1 | 3 | ✅ DONE | Resolve Date Picker (v9) layout and Insurance Pricing overflow. |
 | **MOB-151** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | [COMPLIANCE] Mandatory T&C acceptance & Signed Rental Agreements. [View Plan](../plans/20260516_RENTAL_COMPLIANCE_EXECUTION_PLAN.md) |
+| **MOB-160** | Arnold | P1 | 13 | 🟡 TO DO | [FLEET] Co-hosting & Multi-user Fleet Management Infrastructure. [View Plan](../plans/20260516_COHOSTING_AND_FLEET_MANAGEMENT_EXECUTION_PLAN.md) |
 
 ---
 
@@ -119,7 +120,7 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 2 of 16 |
+| **Tasks Completed** | 2 of 17 |
 | **Current Blockers** | Storage Policy Inconsistency (BUG-054-058), Analytics Merge Parity (BUG-059), Branding Regression (BUG-060) |
 
 ---
