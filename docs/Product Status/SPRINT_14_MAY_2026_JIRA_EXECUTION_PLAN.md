@@ -106,6 +106,11 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 | **AUD-004** | Tapologo | P2 | 1 | 🟡 TO DO | Enforce "Mock/Pending" labeling across all payment documentation. |
 | **AUD-005** | Modisa | P1 | 3 | 🟡 TO DO | Category 13: funding/data_room — Ensure investor-facing docs are launch-ready. |
 
+### Category 7: UI Stabilization & Regression Remediation (P1)
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **MOB-148** | Modisa | P1 | 3 | ✅ DONE | Resolve Date Picker (v9) layout and Insurance Pricing overflow. |
+
 ---
 
 ## 🚦 Execution Tracker

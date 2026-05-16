@@ -170,7 +170,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
             <CardContent className="space-y-4">
               {/* Pricing Display */}
               <div className="bg-background/80 backdrop-blur p-4 rounded-lg">
-                <div className="flex items-baseline justify-between mb-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-4 mb-2">
                   <div>
                     <div className="text-3xl font-bold text-foreground">
                       {formatCurrency(calc.totalPremium)}
@@ -191,7 +191,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                 </div>
 
                 {(calc.excessAmount !== null || calc.excessPercentage !== null) && (
-                  <div className="flex items-center justify-between pt-2 border-t text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t text-xs">
                     <span className="text-muted-foreground">Excess per claim:</span>
                     <span className="font-medium">
                       {calc.excessPercentage !== null
