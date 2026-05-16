@@ -119,9 +119,6 @@ describe("EnhancedBookingService", () => {
 
     await EnhancedBookingService.createBookingReminders();
 
-    // Tomorrow reminder creates renter + host notification.
-    // 2-hour reminder creates renter + host notification.
-    // 30-minute reminder creates renter + host notification.
     expect(insertMock).toHaveBeenCalledTimes(6);
     expect(updateMock).toHaveBeenCalledTimes(1);
   });

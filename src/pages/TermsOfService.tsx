@@ -1,7 +1,7 @@
 import { ArrowLeft, Shield, Scale, FileText, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Separator } from "@/components/ui/separator";
 
 const TermsOfService = () => {

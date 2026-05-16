@@ -35,6 +35,14 @@ const TREND_ICONS = {
   neutral: Activity
 };
 
+const formatMetricNumber = (value: unknown, decimals = 1) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '—';
+  }
+
+  return value % 1 !== 0 ? value.toFixed(decimals) : value.toLocaleString();
+};
+
 export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props) => {
   const [timeRange, setTimeRange] = useState<string>('7d');
   const [viewMode, setViewMode] = useState<'overview' | 'engagement' | 'geographic' | 'revenue'>('overview');
@@ -421,13 +429,13 @@ export const UserBehavior = ({ events, userMetrics, onRefresh, loading }: Props)
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {engagementMetrics?.avg_bookings_per_user.toFixed(1) ?? '—'}
+                      {formatMetricNumber(engagementMetrics?.avg_bookings_per_user)}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Avg Bookings/User</p>
                   </div>
                   <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {engagementMetrics?.total_bookings.toLocaleString() ?? '—'}
+                      {formatMetricNumber(engagementMetrics?.total_bookings)}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Total Bookings</p>
                   </div>

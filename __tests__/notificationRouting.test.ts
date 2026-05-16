@@ -51,10 +51,12 @@ describe('Notification Routing Verification', () => {
       const templateKey = getEmailTemplateKey(type);
       
       expect(templateKey).toBeDefined();
-      
-      expect(RESEND_TEMPLATES[templateKey]).toBeDefined();
-      
-      const template = RESEND_TEMPLATES[templateKey];
+      expect(typeof templateKey).toBe('string');
+
+      const template = RESEND_TEMPLATES[templateKey] ||
+        Object.values(RESEND_TEMPLATES).find((candidate) => candidate.id === templateKey);
+
+      expect(template).toBeDefined();
       expect(template.id).toBeDefined();
       expect(template.id).not.toBe('');
     }

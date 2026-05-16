@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, renderHook, waitFor, act } from '@testing-library/react';
+import { render, renderHook, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
@@ -18,18 +18,25 @@ type ChannelRecord = {
   subscribed: boolean;
 };
 
+interface MockChannel {
+  _record: ChannelRecord;
+  on: (...args: unknown[]) => MockChannel;
+  subscribe: (cb?: (status: string) => void) => MockChannel;
+  unsubscribe: () => void;
+}
+
 const tracker = {
   channels: [] as ChannelRecord[],
   authListeners: [] as Array<{ unsubscribed: boolean }>,
 };
 
-function createChannel(name: string): any {
+function createChannel(name: string): MockChannel {
   const record: ChannelRecord = { name, removed: false, onCalls: 0, subscribed: false };
   tracker.channels.push(record);
 
-  const chan: any = {
+  const chan: MockChannel = {
     _record: record,
-    on: function (..._args: any[]) {
+    on: function (..._args: unknown[]) {
       // BUG REPRO: real Supabase throws here if .subscribe() already ran
       if (record.subscribed) {
         throw new Error(
@@ -52,7 +59,7 @@ function createChannel(name: string): any {
 jest.mock('@/integrations/supabase/client', () => ({
   supabase: {
     channel: (name: string) => createChannel(name),
-    removeChannel: (chan: any) => {
+    removeChannel: (chan: MockChannel) => {
       if (chan?._record) chan._record.removed = true;
       return Promise.resolve();
     },

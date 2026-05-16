@@ -21,16 +21,20 @@
 
 ## 📊 Executive Summary
 
-Sprint 14 is the **final stabilization sprint** before the V1.0 commercial launch. Following the successful resolution of the build infrastructure blockers and the deployment of core commercial features (Duration Pricing, Map Hooks) in Sprint 13, the focus now shifts to **Security Hardening**, **Advanced SuperAdmin Logic**, and **Final Documentation Compliance**.
+Sprint 14 is the **final stabilization sprint** before the V1.0 commercial launch. Following the successful resolution of the build infrastructure blockers and the deployment of core commercial features (Duration Pricing, Map Hooks) in Sprint 13, the focus now shifts to **Security Hardening**, **Storage Infrastructure Reconciliation**, **Advanced SuperAdmin Logic**, and **Final Documentation Compliance**.
 
 This sprint also marks the initiation of the **Native Mobile Integration** phase, specifically targeting the provisioning of Firebase/Google Cloud services for push notifications.
 
 **Primary Targets for Sprint 14:**
 1.  **Security (MOB-708)**: Finalize PII exposure reduction in public profiles.
-2.  **SuperAdmin Remediation (SAR-002 to SAR-005)**: Deploy advanced security and audit tools.
-3.  **V1.0 Documentation Compliance**: Finalize and integrate all legal and instructional artifacts (ToS, Privacy, Insurance, Tutorials).
-4.  **Native Integration**: Provision `google-services.json` and initialize Push Notifications.
-5.  **Technical Debt**: Cleanup legacy components and orphaned code.
+2.  **Storage Reconciliation (MOB-123)**: Resolve missing buckets and re-implement folder-aware RLS policies.
+3.  **SuperAdmin Remediation (SAR-002 to SAR-005)**: Deploy advanced security and audit tools.
+4.  **V1.0 Documentation Compliance**: Finalize and integrate all legal and instructional artifacts (ToS, Privacy, Insurance, Tutorials).
+5.  **Analytics & Merge Remediation (MOB-124)**: Resolve merge conflicts and satisfy static analysis requirements for launch.
+6.  **Booking-Payment Flow Remediation (MOB-PAY-003)**: Finalize realtime subscriptions and UI payment action gaps.
+7.  **Documentation Reconciliation Audit**: Resolve identified contradictions and stale findings across the `docs/` suite.
+8.  **Native Integration**: Provision `google-services.json` and initialize Push Notifications.
+9.  **Technical Debt**: Cleanup legacy components and orphaned code.
 
 ---
 
@@ -39,7 +43,7 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 | Owner | Module Focus | Primary Responsibilities |
 |-------|-------------|--------------------------|
 | **Arnold (Snr Engineer)** | Security, Admin Logic | MOB-708 (PII), SAR-002 (Anomaly Detection), SAR-004 (OCR) |
-| **Tapologo (QA / Test Engineer)** | QA, Documentation | Regression Testing, Documentation Audit, QA Verification |
+| **Tapologo (QA / Test Engineer)** | QA, UI Redesign | Regression Testing, Documentation Audit, MOB-126 (Auth Redesign) |
 | **Modisa (CEO)** | Architecture, Native, Plans | Native Integration (MOB-122), SAR-003 (Health), Sprint Oversight |
 
 ---
@@ -47,10 +51,12 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ## 🎯 Sprint Objectives
 
 1.  **V1.0 Doc Audit**: 100% compliance of all legal/instructional docs in UI.
-2.  **PII Protection**: Restrict email/phone visibility in public APIs (MOB-708).
-3.  **Anomaly Detection**: Implement the first phase of the session lockdown engine (SAR-002).
-4.  **Audit Integrity**: Deploy Signed Audit Log PDF generation (SAR-005).
-5.  **Push Foundation**: Get Firebase provisioning confirmed and config injected.
+2.  **Storage Reconciled**: 100% parity between UI bucket usage and DB schema (MOB-123).
+3.  **PII Protection**: Restrict email/phone visibility in public APIs (MOB-708).
+4.  **Analytics Parity**: Resolved all merge conflicts in analytics hooks and services (MOB-124).
+5.  **Anomaly Detection**: Implement the first phase of the session lockdown engine (SAR-002).
+6.  **Audit Integrity**: Deploy Signed Audit Log PDF generation (SAR-005).
+7.  **Push Foundation**: Get Firebase provisioning confirmed and config injected.
 
 ---
 
@@ -81,6 +87,25 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 |--------|-------|----------|--------|--------|---------|
 | **MOB-122** | Modisa | P1 | 5 | 🟡 TO DO | Firebase/Google Services setup and `google-services.json` config. |
 
+### Category 5: Storage & Merge Remediation (P0)
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **MOB-123** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | Master Storage Reconciliation: Fix missing buckets & RLS drift. |
+| **MOB-124** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | Resolve Analytics Merge conflicts & satisfy static analysis. |
+| **MOB-125** | Antigravity | P0 | 3 | 🔵 IN PROGRESS | Finalize Production Branding & OG Asset Reconciliation. |
+| **MOB-126** | Tapologo | P1 | 8 | 🟡 TO DO | [RE-DESIGN] Premium Auth Landing experience (Desktop & Mobile). [View Plan](MOB_126_AUTHENTICATION_REDESIGN_IMPLEMENTATION.md) |
+| **S14-004** | Antigravity | P1 | 3 | 🟡 TO DO | Execute Master Storage Migration & Verify Multi-Tenant Isolation. |
+| **MOB-PAY-003** | Antigravity | P0 | 5 | 🟡 TO DO | [REMEDIATION] Finalize Realtime subscriptions and Pay Now UI actions. [View Plan](../plans/20260507_BOOKING_PAYMENT_REALTIME_REMEDIATION_PLAN.md) |
+
+### Category 6: Documentation Reconciliation & Audit (P1)
+| Ticket | Owner | Priority | Points | Status | Summary |
+|--------|-------|----------|--------|--------|---------|
+| **AUD-001** | Antigravity | P1 | 2 | 🟡 TO DO | Update `20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md` (suspend/ban user status). |
+| **AUD-002** | Antigravity | P1 | 2 | 🟡 TO DO | Realign Section 6 of `SECURITY_INCIDENT_REPORT_BUG004.md` with Sprint 14. |
+| **AUD-003** | Antigravity | P1 | 2 | 🟡 TO DO | Update "Current Status" table in `PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`. |
+| **AUD-004** | Tapologo | P2 | 1 | 🟡 TO DO | Enforce "Mock/Pending" labeling across all payment documentation. |
+| **AUD-005** | Modisa | P1 | 3 | 🟡 TO DO | Category 13: funding/data_room — Ensure investor-facing docs are launch-ready. |
+
 ---
 
 ## 🚦 Execution Tracker
@@ -88,8 +113,8 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 1 of 12 |
-| **Current Blockers** | Google Cloud Console Access (MOB-122) |
+| **Tasks Completed** | 1 of 15 |
+| **Current Blockers** | Storage Policy Inconsistency (BUG-054-058), Analytics Merge Parity (BUG-059), Branding Regression (BUG-060) |
 
 ---
 

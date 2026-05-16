@@ -27,7 +27,7 @@ export const useSuperAdminRoles = () => {
       if (roleError) throw roleError;
 
       // Group roles by user_id
-      const rolesByUser = roleData.reduce((acc, item) => {
+      const rolesByUser = (roleData || []).reduce((acc, item) => {
         if (!acc[item.user_id]) {
           acc[item.user_id] = [];
         }
@@ -52,7 +52,7 @@ export const useSuperAdminRoles = () => {
       if (profileError) throw profileError;
 
       // Combine profile data with roles
-      return profileData.map(profile => ({
+      return (profileData || []).map(profile => ({
         id: profile.id,
         email: '', // Email not directly available in profiles table - use edge function for email
         full_name: profile.full_name,
