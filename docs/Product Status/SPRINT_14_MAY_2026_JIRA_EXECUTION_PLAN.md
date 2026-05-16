@@ -109,7 +109,7 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Category 7: UI Stabilization & Regression Remediation (P1)
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **MOB-148** | Modisa | P1 | 3 | ✅ DONE | Resolve Date Picker (v9) layout and Insurance Pricing overflow. |
+| **MOB-148** | Modisa | P1 | 3 | 🔵 IN PROGRESS | Resolve Date Picker (v9) layout and Insurance Pricing overflow. |
 
 ---
 

@@ -170,9 +170,9 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
             <CardContent className="space-y-4">
               {/* Pricing Display */}
               <div className="bg-background/80 backdrop-blur p-4 rounded-lg">
-                <div className="flex flex-wrap items-baseline justify-between gap-4 mb-2">
-                  <div>
-                    <div className="text-3xl font-bold text-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 mb-2">
+                  <div className="flex-shrink-0">
+                    <div className="text-3xl font-bold text-foreground whitespace-nowrap">
                       {formatCurrency(calc.totalPremium)}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
@@ -181,9 +181,9 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                   </div>
 
                   {calc.coverageCap && (
-                    <div className="text-right">
+                    <div className="sm:text-right flex-shrink-0">
                       <div className="text-sm font-semibold">Coverage</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatCurrency(calc.coverageCap)}
                       </div>
                     </div>
