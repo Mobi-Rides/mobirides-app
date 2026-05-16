@@ -109,7 +109,8 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Category 7: UI Stabilization & Regression Remediation (P1)
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **MOB-148** | Modisa | P1 | 3 | 🔵 IN PROGRESS | Resolve Date Picker (v9) layout and Insurance Pricing overflow. |
+| **MOB-148** | Modisa | P1 | 3 | ✅ DONE | Resolve Date Picker (v9) layout and Insurance Pricing overflow. |
+| **MOB-151** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | [COMPLIANCE] Mandatory T&C acceptance & Signed Rental Agreements. [View Plan](../plans/20260516_RENTAL_COMPLIANCE_EXECUTION_PLAN.md) |
 
 ---
 
@@ -118,7 +119,7 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 1 of 15 |
+| **Tasks Completed** | 2 of 16 |
 | **Current Blockers** | Storage Policy Inconsistency (BUG-054-058), Analytics Merge Parity (BUG-059), Branding Regression (BUG-060) |
 
 ---
