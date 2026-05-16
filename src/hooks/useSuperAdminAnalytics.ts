@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Json } from "@/integrations/supabase/types";
 import { format, subDays } from "date-fns";
 import { 
@@ -77,7 +76,7 @@ export const useSuperAdminAnalytics = () => {
     start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     end: format(new Date(), 'yyyy-MM-dd')
   });
-  const [realtimeSubscription, setRealtimeSubscription] = useState<RealtimeChannel | null>(null);
+  const realtimeUnsubscribeRef = useRef<(() => void) | null>(null);
 
   const { users: adminUsers } = useSuperAdminRoles();
 
@@ -111,12 +110,14 @@ export const useSuperAdminAnalytics = () => {
     setError(null);
     const filters = { startDate: dateRange.start, endDate: dateRange.end };
     try {
-      const [events, registrationStats, bookingStats] = await Promise.all([
+      const [analyticsData, events, registrationStats, bookingStats] = await Promise.all([
+        analyticsService.getAnalytics(filters),
         analyticsService.getSecurityEvents(filters),
         analyticsService.getUserRegistrationStats(),
         analyticsService.getBookingGrowthStats()
       ]);
 
+      setAnalytics(analyticsData as unknown as AnalyticsData[]);
       setEvents(events as unknown as SecurityEvent[]);
       setUserGrowth(registrationStats);
       setBookingGrowth(bookingStats);
@@ -160,19 +161,20 @@ export const useSuperAdminAnalytics = () => {
   }, [fetchAnalytics]);
 
   const setupRealtimeSubscription = useCallback(() => {
-    if (realtimeSubscription) {
-      realtimeSubscription.unsubscribe();
+    if (realtimeUnsubscribeRef.current) {
+      realtimeUnsubscribeRef.current();
     }
 
     const sub = analyticsService.subscribeToAnalytics((payload) => {
       fetchAnalytics();
     });
-    setRealtimeSubscription(sub.subscription);
+    realtimeUnsubscribeRef.current = sub.unsubscribe;
 
     return () => {
-      sub.unsubscribe();
+      realtimeUnsubscribeRef.current?.();
+      realtimeUnsubscribeRef.current = null;
     };
-  }, [realtimeSubscription, fetchAnalytics]);
+  }, [fetchAnalytics]);
 
   const exportAnalytics = useCallback(async (exportFormat: 'json' | 'csv' = 'json') => {
     try {
@@ -278,6 +280,7 @@ export const useSuperAdminAnalytics = () => {
     getTimeSeriesData,
     getSeverityDistribution,
     getEventTypeDistribution,
+    getUserGrowthData,
     userGrowth,
     bookingGrowth,
     adminUsers // Include admin users from roles hook
