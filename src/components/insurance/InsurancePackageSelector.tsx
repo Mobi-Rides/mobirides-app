@@ -35,31 +35,31 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadInsuranceOptions = async () => {
+      try {
+        setLoading(true);
+        const premiums = await InsuranceService.calculateAllPremiums(
+          dailyRentalAmount,
+          startDate,
+          endDate,
+          userId,
+          carId
+        );
+        setCalculations(premiums);
+        setError(null);
+      } catch (err) {
+        const isNotAvailable = err instanceof Error && err.message.startsWith('INSURANCE_NOT_AVAILABLE:');
+        setError(isNotAvailable
+          ? 'Insurance is not available for this booking due to your risk profile. Please contact support.'
+          : 'Failed to load insurance options. Please try again.');
+        console.error('Insurance loading error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadInsuranceOptions();
   }, [dailyRentalAmount, startDate, endDate, userId, carId]);
-
-  const loadInsuranceOptions = async () => {
-    try {
-      setLoading(true);
-      const premiums = await InsuranceService.calculateAllPremiums(
-        dailyRentalAmount,
-        startDate,
-        endDate,
-        userId,
-        carId
-      );
-      setCalculations(premiums);
-      setError(null);
-    } catch (err) {
-      const isNotAvailable = err instanceof Error && err.message.startsWith('INSURANCE_NOT_AVAILABLE:');
-      setError(isNotAvailable
-        ? 'Insurance is not available for this booking due to your risk profile. Please contact support.'
-        : 'Failed to load insurance options. Please try again.');
-      console.error('Insurance loading error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatCurrency = (amount: number): string => {
     return `P ${amount.toFixed(2)}`;
