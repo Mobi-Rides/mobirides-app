@@ -90,17 +90,23 @@ const InsuranceTerms = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    <TableRow className="bg-slate-50/50 text-slate-500">
+                      <TableCell className="font-bold">No Coverage</TableCell>
+                      <TableCell className="text-right">None</TableCell>
+                      <TableCell className="text-right">Full Liability</TableCell>
+                      <TableCell className="text-xs">Budget / risk-tolerant renters</TableCell>
+                    </TableRow>
                     <TableRow>
                       <TableCell className="font-bold">Basic</TableCell>
                       <TableCell className="text-right">P8,000</TableCell>
                       <TableCell className="text-right">20% of claim</TableCell>
-                      <TableCell className="text-slate-500 text-xs">Essential coverage</TableCell>
+                      <TableCell className="text-slate-500 text-xs">Short-term city rentals</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell className="font-bold">Standard</TableCell>
                       <TableCell className="text-right">P20,000</TableCell>
                       <TableCell className="text-right">15% of claim</TableCell>
-                      <TableCell className="text-slate-500 text-xs">Balanced protection</TableCell>
+                      <TableCell className="text-slate-500 text-xs">Multi-day / intercity trips</TableCell>
                     </TableRow>
                     <TableRow className="bg-primary/5">
                       <TableCell className="font-bold text-primary">Premium</TableCell>
@@ -125,15 +131,15 @@ const InsuranceTerms = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2 text-green-900">
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  What's Covered
+                  What's Covered (Varies by Tier)
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-sm space-y-3 text-green-800/80">
-                <p>• Accidental collision damage</p>
-                <p>• Single-vehicle incidents</p>
-                <p>• Weather damage (hail, flooding)</p>
-                <p>• Vandalism and malicious damage</p>
-                <p>• Attempted theft damage</p>
+                <p>• Windscreen and window damage (Basic+)</p>
+                <p>• Tyre protection: punctures, blowouts (Basic+)</p>
+                <p>• Accidental collision damage (Standard+)</p>
+                <p>• Theft and vandalism (Standard+)</p>
+                <p>• Fire and weather-related damage (Standard+)</p>
               </CardContent>
             </Card>
 
@@ -141,15 +147,15 @@ const InsuranceTerms = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2 text-red-900">
                   <AlertCircle className="h-5 w-5 text-red-600" />
-                  Exclusions
+                  General Exclusions
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-sm space-y-3 text-red-800/80">
+                <p>• Missing police report for major incidents</p>
                 <p>• Driving under the influence</p>
                 <p>• Unlicensed or unauthorized drivers</p>
-                <p>• Off-road use (unless authorized)</p>
                 <p>• Intentional or reckless damage</p>
-                <p>• Mechanical wear and tear</p>
+                <p>• Mechanical wear and tear not due to collision</p>
               </CardContent>
             </Card>
           </div>

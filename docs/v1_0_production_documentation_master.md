@@ -21,7 +21,7 @@
 
 ### 1.3 Insurance Module (Pay-U SLA)
 - **Partner**: Pay-U Insurance Partners (Underwriter).
-- **Tiers**: Basic (P80/day), Standard (P150/day), Premium (P250/day).
+- **Tiers**: No Coverage (P0/day), Basic (P80/day), Standard (P150/day), Premium (P250/day).
 - **Claim Logic**: `InsuranceService.calculateClaimPayout()` enforces excess rates and P150 admin fee deductions.
 - **UI**: `ClaimsSubmissionForm.tsx` handles multi-step filing and RLS-compliant document uploads.
 
