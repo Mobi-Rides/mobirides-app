@@ -2,6 +2,12 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { InsurancePolicy, InsurancePackage } from '@/types/insurance-schema';
 
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
 export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: InsurancePackage, renterName: string, carDetails: string): Blob => {
   const doc = new jsPDF();
 
@@ -41,7 +47,7 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
   });
 
   // Coverage Details
-  const summaryY = (doc as any).lastAutoTable.finalY + 15;
+  const summaryY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
   doc.setFontSize(14);
   doc.text('Coverage Summary', 20, summaryY);
 
@@ -59,7 +65,7 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
     headStyles: { fillColor: [40, 167, 69] },
   });
 
-  let currentY = (doc as any).lastAutoTable.finalY + 15;
+  let currentY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
 
   // Package Features
   if (insurancePackage.features && insurancePackage.features.length > 0) {
@@ -73,11 +79,11 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
       theme: 'grid',
       headStyles: { fillColor: [0, 51, 102] },
     });
-    currentY = (doc as any).lastAutoTable.finalY + 15;
+    currentY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
   }
 
   // Terms
-  const termsY = (doc as any).lastAutoTable.finalY + 15;
+  const termsY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
   doc.setFontSize(12);
   doc.text('Important Terms & Conditions', 20, termsY);
   doc.setFontSize(8);

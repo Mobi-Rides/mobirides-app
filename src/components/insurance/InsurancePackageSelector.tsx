@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,11 +34,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadInsuranceOptions();
-  }, [dailyRentalAmount, startDate, endDate, userId, carId]);
-
-  const loadInsuranceOptions = async () => {
+  const loadInsuranceOptions = useCallback(async () => {
     try {
       setLoading(true);
       const premiums = await InsuranceService.calculateAllPremiums(
@@ -59,7 +55,11 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
     } finally {
       setLoading(false);
     }
-  };
+  }, [dailyRentalAmount, startDate, endDate, userId, carId]);
+
+  useEffect(() => {
+    loadInsuranceOptions();
+  }, [loadInsuranceOptions]);
 
   const formatCurrency = (amount: number): string => {
     return `P ${amount.toFixed(2)}`;

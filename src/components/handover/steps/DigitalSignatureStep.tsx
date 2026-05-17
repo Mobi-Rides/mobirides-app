@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PenTool, RotateCcw, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,7 +101,7 @@ export const DigitalSignatureStep = ({
   };
 
   // Initialize canvas if there's an initial signature
-  useState(() => {
+  useEffect(() => {
     if (initialSignature && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
@@ -111,7 +111,7 @@ export const DigitalSignatureStep = ({
       };
       img.src = initialSignature;
     }
-  });
+  }, [initialSignature]);
 
   return (
     <Card className="w-full">
