@@ -98,6 +98,15 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
     currentY += 5;
   });
 
+  // Link to Full T&Cs
+  currentY += 5;
+  doc.setFontSize(9);
+  doc.setTextColor(0, 51, 102);
+  doc.text('For the full Damage Protection Terms & Conditions, please visit:', 20, currentY);
+  currentY += 5;
+  doc.setTextColor(0, 102, 204);
+  doc.text('https://app.mobirides.com/insurance-terms', 20, currentY);
+
   // Footer
   doc.setFontSize(8);
   doc.setTextColor(150);
