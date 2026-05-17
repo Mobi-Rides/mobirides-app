@@ -28,11 +28,21 @@ BEGIN
 END;
 $$;
 
--- 2. Backfill existing blank/null details in profiles from auth.users
+-- 2. Backfill existing blank/null details in profiles from auth.users (with safety check for unique phone numbers)
 UPDATE public.profiles p
 SET 
   full_name = COALESCE(p.full_name, u.raw_user_meta_data ->> 'full_name'),
-  phone_number = COALESCE(p.phone_number, u.raw_user_meta_data ->> 'phone_number'),
+  phone_number = COALESCE(
+    p.phone_number,
+    CASE 
+      WHEN EXISTS (
+        SELECT 1 FROM public.profiles p2 
+        WHERE p2.phone_number = u.raw_user_meta_data ->> 'phone_number' 
+          AND p2.id <> p.id
+      ) THEN NULL -- skip duplicate phone numbers to prevent unique key violation
+      ELSE u.raw_user_meta_data ->> 'phone_number'
+    END
+  ),
   updated_at = NOW()
 FROM auth.users u
 WHERE p.id = u.id
