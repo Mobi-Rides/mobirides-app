@@ -39,19 +39,19 @@ export const UserDetailDialog = ({ user, isOpen, onClose, onUserUpdate }: UserDe
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            {user.full_name || "Unnamed User"} - User Profile
+            {user.full_name || user.email || `User (${user.id.slice(0, 8)})`} - User Profile
           </DialogTitle>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="restrictions">Restrictions</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="verification">Verification</TabsTrigger>
-            <TabsTrigger value="admin">Admin</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsList className="flex w-full overflow-x-auto justify-start h-auto p-1 bg-muted scrollbar-none flex-nowrap">
+            <TabsTrigger value="overview" className="flex-shrink-0">Overview</TabsTrigger>
+            <TabsTrigger value="restrictions" className="flex-shrink-0">Restrictions</TabsTrigger>
+            <TabsTrigger value="bookings" className="flex-shrink-0">Bookings</TabsTrigger>
+            <TabsTrigger value="transactions" className="flex-shrink-0">Transactions</TabsTrigger>
+            <TabsTrigger value="verification" className="flex-shrink-0">Verification</TabsTrigger>
+            <TabsTrigger value="admin" className="flex-shrink-0">Admin</TabsTrigger>
+            <TabsTrigger value="activity" className="flex-shrink-0">Activity</TabsTrigger>
           </TabsList>
           
           <div className="overflow-y-auto max-h-[70vh] mt-4">

@@ -28,23 +28,35 @@ BEGIN
 END;
 $$;
 
--- 2. Backfill existing blank/null details in profiles from auth.users (with safety check for unique phone numbers)
+-- 2. Backfill existing blank/null details in profiles from auth.users (Stage 1: Safe update of full_name)
 UPDATE public.profiles p
 SET 
   full_name = COALESCE(p.full_name, u.raw_user_meta_data ->> 'full_name'),
-  phone_number = COALESCE(
-    p.phone_number,
-    CASE 
-      WHEN EXISTS (
-        SELECT 1 FROM public.profiles p2 
-        WHERE p2.phone_number = u.raw_user_meta_data ->> 'phone_number' 
-          AND p2.id <> p.id
-      ) THEN NULL -- skip duplicate phone numbers to prevent unique key violation
-      ELSE u.raw_user_meta_data ->> 'phone_number'
-    END
-  ),
   updated_at = NOW()
 FROM auth.users u
 WHERE p.id = u.id
-  AND (p.full_name IS NULL OR p.phone_number IS NULL)
-  AND (u.raw_user_meta_data ->> 'full_name' IS NOT NULL OR u.raw_user_meta_data ->> 'phone_number' IS NOT NULL);
+  AND p.full_name IS NULL
+  AND u.raw_user_meta_data ->> 'full_name' IS NOT NULL;
+
+-- 3. Backfill existing blank/null details in profiles from auth.users (Stage 2: Safe, deduplicated update of phone_number)
+WITH unique_phone_users AS (
+  -- For each phone number, pick exactly one user (the oldest one by created_at)
+  SELECT DISTINCT ON (u.raw_user_meta_data ->> 'phone_number')
+    u.id,
+    u.raw_user_meta_data ->> 'phone_number' AS phone_number
+  FROM auth.users u
+  WHERE u.raw_user_meta_data ->> 'phone_number' IS NOT NULL
+  ORDER BY u.raw_user_meta_data ->> 'phone_number', u.created_at ASC
+)
+UPDATE public.profiles p
+SET 
+  phone_number = upu.phone_number,
+  updated_at = NOW()
+FROM unique_phone_users upu
+WHERE p.id = upu.id
+  AND p.phone_number IS NULL
+  AND NOT EXISTS (
+    -- Ensure this phone number does not already exist in profiles
+    SELECT 1 FROM public.profiles p2 
+    WHERE p2.phone_number = upu.phone_number
+  );

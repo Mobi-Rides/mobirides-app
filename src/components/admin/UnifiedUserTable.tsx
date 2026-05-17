@@ -419,6 +419,7 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
         {selectedUser && (
           <>
             <UserEditDialog
+              key={selectedUser.id}
               user={{
                 id: selectedUser.id,
                 full_name: selectedUser.full_name,
@@ -431,6 +432,7 @@ export const UnifiedUserTable: React.FC<UnifiedUserTableProps> = ({
               onSuccess={handleUpdateSuccess}
             />
             <UserDetailDialog
+              key={selectedUser.id}
               user={{
                 id: selectedUser.id,
                 full_name: selectedUser.full_name,

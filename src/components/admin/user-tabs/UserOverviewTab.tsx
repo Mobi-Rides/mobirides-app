@@ -20,6 +20,7 @@ interface Profile {
   longitude?: number;
   is_sharing_location?: boolean;
   location_sharing_scope?: string;
+  email?: string;
 }
 
 interface UserOverviewTabProps {
@@ -191,7 +192,7 @@ export const UserOverviewTab = ({ user, onUpdate }: UserOverviewTabProps) => {
             </div>
             <div className="flex items-center space-x-3">
               <Mail className="h-4 w-4 text-muted-foreground" />
-              <span>Email not available</span>
+              <span>{user.email || "Email not available"}</span>
             </div>
             {profile?.latitude && profile?.longitude && (
               <div className="flex items-center space-x-3">
@@ -251,6 +252,7 @@ export const UserOverviewTab = ({ user, onUpdate }: UserOverviewTabProps) => {
 
       {isEditDialogOpen && (
         <UserEditDialog
+          key={user.id}
           user={user}
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
