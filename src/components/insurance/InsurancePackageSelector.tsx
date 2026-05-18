@@ -83,11 +83,11 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
 
   const getPackageGradient = (packageName: string) => {
     switch (packageName) {
-      case 'no_coverage': return 'from-orange-50 to-red-50';
-      case 'basic': return 'from-blue-50 to-cyan-50';
-      case 'standard': return 'from-purple-50 to-pink-50';
-      case 'premium': return 'from-amber-50 to-yellow-50';
-      default: return 'from-gray-50 to-gray-100';
+      case 'no_coverage': return 'from-orange-50 to-red-50 dark:from-orange-950/40 dark:to-red-950/40';
+      case 'basic': return 'from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40';
+      case 'standard': return 'from-purple-50 to-pink-50 dark:from-purple-950/40 dark:to-pink-950/40';
+      case 'premium': return 'from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/40';
+      default: return 'from-gray-50 to-gray-100 dark:from-gray-900/40 dark:to-gray-800/40';
     }
   };
 
