@@ -59,6 +59,9 @@ export interface BookingWithRelations {
       step_order: number;
     }[];
   }[];
+  payment_transaction?: {
+    payment_method: string;
+  } | null;
 }
 
 // Export Booking type alias for components

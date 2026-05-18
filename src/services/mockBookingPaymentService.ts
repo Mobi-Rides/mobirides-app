@@ -1,6 +1,6 @@
 export interface BookingPaymentRequest {
   booking_id: string;
-  payment_method: 'card' | 'orange_money' | 'myzaka' | 'smega';
+  payment_method: 'card' | 'orange_money' | 'myzaka' | 'smega' | 'eft';
   mobile_number?: string;  // Required for mobile money
   
   // Price breakdown (from UnifiedPriceSummary)

@@ -15,7 +15,7 @@ import { UnifiedPriceSummary } from "./UnifiedPriceSummary";
 import { PaymentMethodSelector, PaymentMethodType } from "./PaymentMethodSelector";
 import { PaymentDeadlineTimer } from "./PaymentDeadlineTimer";
 import { useBookingPayment } from "@/hooks/useBookingPayment";
-import { Loader2 } from "lucide-react";
+import { Loader2, Landmark } from "lucide-react";
 
 interface RenterPaymentModalProps {
   isOpen: boolean;
@@ -115,6 +115,20 @@ export const RenterPaymentModal: React.FC<RenterPaymentModalProps> = ({
                 value={mobileNumber}
                 onChange={(e) => setMobileNumber(e.target.value)}
               />
+            </div>
+          )}
+
+          {selectedMethod === 'eft' && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 text-emerald-800 space-y-2 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2 font-semibold text-emerald-900">
+                <Landmark className="h-5 w-5 text-emerald-600" />
+                <span>Bank Transfer (EFT) Payment</span>
+              </div>
+              <p className="text-xs leading-relaxed">
+                By choosing EFT, your booking status will transition to <strong>Paid</strong> once you initiate. 
+                Please transfer <strong>BWP {booking.total_price.toFixed(2)}</strong> to the Mobi Rides bank account 
+                and email your Proof of Payment (PoP) to <a href="mailto:hello@mobirides.africa" className="underline font-medium hover:text-emerald-950">hello@mobirides.africa</a>.
+              </p>
             </div>
           )}
 
