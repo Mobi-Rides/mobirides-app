@@ -4,7 +4,7 @@ import { z } from "npm:zod@3"
 
 const bodySchema = z.object({
   booking_id: z.string().uuid(),
-  payment_method: z.enum(['card', 'orange_money']),
+  payment_method: z.enum(['card', 'orange_money', 'eft']),
   success_url: z.string().url(),
   cancel_url: z.string().url(),
 })
@@ -61,7 +61,7 @@ serve(async (req: Request) => {
         amount,
         currency: 'BWP',
         payment_method,
-        payment_provider: payment_method === 'card' ? 'paygate' : 'orange_money',
+        payment_provider: payment_method === 'card' ? 'paygate' : payment_method === 'eft' ? 'eft' : 'orange_money',
         status: 'initiated',
         provider_reference: `REF_${Date.now()}` // Temporary ref
       })

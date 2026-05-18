@@ -50,6 +50,9 @@ export const useRentalDetails = () => {
               is_completed,
               step_order
             )
+          ),
+          payment_transaction:payment_transactions!payment_transaction_id (
+            payment_method
           )
         `
         )
