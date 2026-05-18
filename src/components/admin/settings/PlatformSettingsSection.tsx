@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { usePlatformSettings } from '@/hooks/usePlatformSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Globe, Mail, Bell, Shield, Palette } from 'lucide-react';
+import { Settings, Bell, Shield, Palette, Loader2 } from 'lucide-react';
 
 export const PlatformSettingsSection = () => {
   const { toast } = useToast();
+  const { getSetting, updateSetting, loading, error } = usePlatformSettings();
   const [saving, setSaving] = useState(false);
 
   // General settings
@@ -31,19 +33,56 @@ export const PlatformSettingsSection = () => {
   const [primaryColor, setPrimaryColor] = useState('#3B82F6');
   const [fontSize, setFontSize] = useState('medium');
 
+  // Load settings when hook completes loading
+  useEffect(() => {
+    if (!loading) {
+      setAppName(getSetting('app_name', 'MobiRides'));
+      setSupportEmail(getSetting('support_email', 'support@mobirides.co.bw'));
+      setSupportPhone(getSetting('support_phone', '+267 XX XXX XXX'));
+      setEmailNotifications(getSetting('email_notifications_enabled', 'true') === 'true');
+      setSmsNotifications(getSetting('sms_notifications_enabled', 'false') === 'true');
+      setPushNotifications(getSetting('push_notifications_enabled', 'true') === 'true');
+      setTwoFactorEnabled(getSetting('two_factor_enabled', 'false') === 'true');
+      setSessionTimeout(getSetting('session_timeout_minutes', '60'));
+      setThemeMode(getSetting('theme_mode', 'system'));
+      setPrimaryColor(getSetting('primary_color', '#3B82F6'));
+      setFontSize(getSetting('font_size', 'medium'));
+    }
+  }, [loading]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Simulate save - in production, this would call an API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const updates = [
+        updateSetting('app_name', appName),
+        updateSetting('support_email', supportEmail),
+        updateSetting('support_phone', supportPhone),
+        updateSetting('email_notifications_enabled', String(emailNotifications)),
+        updateSetting('sms_notifications_enabled', String(smsNotifications)),
+        updateSetting('push_notifications_enabled', String(pushNotifications)),
+        updateSetting('two_factor_enabled', String(twoFactorEnabled)),
+        updateSetting('session_timeout_minutes', sessionTimeout),
+        updateSetting('theme_mode', themeMode),
+        updateSetting('primary_color', primaryColor),
+        updateSetting('font_size', fontSize),
+      ];
+
+      const results = await Promise.all(updates);
+      const failed = results.filter((r) => !r.success);
+
+      if (failed.length > 0) {
+        throw new Error('Failed to update some settings');
+      }
+
       toast({
         title: 'Settings saved',
         description: 'Platform settings have been updated successfully.',
       });
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to save settings:', err);
       toast({
         title: 'Error',
-        description: 'Failed to save settings. Please try again.',
+        description: 'Failed to save platform settings. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -51,23 +90,78 @@ export const PlatformSettingsSection = () => {
     }
   };
 
-  const handleReset = () => {
-    setAppName('MobiRides');
-    setSupportEmail('support@mobirides.co.bw');
-    setSupportPhone('+267 XX XXX XXX');
-    setEmailNotifications(true);
-    setSmsNotifications(false);
-    setPushNotifications(true);
-    setTwoFactorEnabled(false);
-    setSessionTimeout('60');
-    setThemeMode('system');
-    setPrimaryColor('#3B82F6');
-    setFontSize('medium');
-    toast({
-      title: 'Settings reset',
-      description: 'All settings have been reset to defaults.',
-    });
+  const handleReset = async () => {
+    setSaving(true);
+    try {
+      const resets = [
+        updateSetting('app_name', 'MobiRides'),
+        updateSetting('support_email', 'support@mobirides.co.bw'),
+        updateSetting('support_phone', '+267 XX XXX XXX'),
+        updateSetting('email_notifications_enabled', 'true'),
+        updateSetting('sms_notifications_enabled', 'false'),
+        updateSetting('push_notifications_enabled', 'true'),
+        updateSetting('two_factor_enabled', 'false'),
+        updateSetting('session_timeout_minutes', '60'),
+        updateSetting('theme_mode', 'system'),
+        updateSetting('primary_color', '#3B82F6'),
+        updateSetting('font_size', 'medium'),
+      ];
+
+      const results = await Promise.all(resets);
+      const failed = results.filter((r) => !r.success);
+
+      if (failed.length > 0) {
+        throw new Error('Failed to reset some settings');
+      }
+
+      setAppName('MobiRides');
+      setSupportEmail('support@mobirides.co.bw');
+      setSupportPhone('+267 XX XXX XXX');
+      setEmailNotifications(true);
+      setSmsNotifications(false);
+      setPushNotifications(true);
+      setTwoFactorEnabled(false);
+      setSessionTimeout('60');
+      setThemeMode('system');
+      setPrimaryColor('#3B82F6');
+      setFontSize('medium');
+
+      toast({
+        title: 'Settings reset',
+        description: 'All platform settings have been reset to defaults.',
+      });
+    } catch (err) {
+      console.error('Failed to reset settings:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to reset settings to defaults. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-destructive">Failed to load platform settings: {error.message}</p>
+          <Button variant="outline" className="mt-2" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -103,7 +197,7 @@ export const PlatformSettingsSection = () => {
                 placeholder="support@example.com"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="supportPhone">Support Phone</Label>
               <Input
                 id="supportPhone"
@@ -272,7 +366,7 @@ export const PlatformSettingsSection = () => {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={handleReset}>
+        <Button variant="outline" onClick={handleReset} disabled={saving}>
           Reset to Defaults
         </Button>
         <Button onClick={handleSave} disabled={saving}>
