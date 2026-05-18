@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,11 +34,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadInsuranceOptions();
-  }, [dailyRentalAmount, startDate, endDate, userId, carId]);
-
-  const loadInsuranceOptions = async () => {
+  const loadInsuranceOptions = useCallback(async () => {
     try {
       setLoading(true);
       const premiums = await InsuranceService.calculateAllPremiums(
@@ -59,8 +55,11 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
     } finally {
       setLoading(false);
     }
-  };
+  }, [dailyRentalAmount, startDate, endDate, userId, carId]);
 
+  useEffect(() => {
+    loadInsuranceOptions();
+  }, [loadInsuranceOptions]);
   const formatCurrency = (amount: number): string => {
     return `P ${amount.toFixed(2)}`;
   };
@@ -170,9 +169,9 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
             <CardContent className="space-y-4">
               {/* Pricing Display */}
               <div className="bg-background/80 backdrop-blur p-4 rounded-lg">
-                <div className="flex items-baseline justify-between mb-2">
-                  <div>
-                    <div className="text-3xl font-bold text-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 mb-2">
+                  <div className="flex-shrink-0">
+                    <div className="text-3xl font-bold text-foreground whitespace-nowrap">
                       {formatCurrency(calc.totalPremium)}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
@@ -181,9 +180,9 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                   </div>
 
                   {calc.coverageCap && (
-                    <div className="text-right">
+                    <div className="sm:text-right flex-shrink-0">
                       <div className="text-sm font-semibold">Coverage</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatCurrency(calc.coverageCap)}
                       </div>
                     </div>
@@ -191,7 +190,7 @@ export const InsurancePackageSelector: React.FC<InsurancePackageSelectorProps> =
                 </div>
 
                 {(calc.excessAmount !== null || calc.excessPercentage !== null) && (
-                  <div className="flex items-center justify-between pt-2 border-t text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t text-xs">
                     <span className="text-muted-foreground">Excess per claim:</span>
                     <span className="font-medium">
                       {calc.excessPercentage !== null

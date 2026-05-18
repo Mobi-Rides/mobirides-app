@@ -837,6 +837,31 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 
 ---
 
+### BUG-069: Date Picker Layout Regression (v9 Breaking Changes)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-16 |
+| **Severity** | High (UX/UI) |
+| **Status** | 🔵 IN PROGRESS |
+| **Affects** | `src/components/ui/calendar.tsx` |
+| **Visible Result** | Calendar headers (Weekdays) are scrunched and misaligned; cell spacing is broken in both mobile and desktop views. |
+
+---
+
+### BUG-070: Insurance Package Pricing Text Overflow
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-16 |
+| **Severity** | Medium (UI) |
+| **Status** | 🔵 IN PROGRESS |
+| **Affects** | `src/components/insurance/InsurancePackageSelector.tsx` |
+| **Visible Result** | Pricing labels overlap with value amounts when currency strings or coverage caps are long (e.g., \"P 1,500.00\"). |
+
+
+---
+
 ## Resolved Bugs
 
 | ID | Resolution Date | Summary |

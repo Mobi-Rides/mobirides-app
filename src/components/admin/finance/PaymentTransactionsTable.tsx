@@ -161,7 +161,7 @@ export const PaymentTransactionsTable = () => {
                         {txn.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="capitalize">
+                    <TableCell className={txn.payment_method === 'eft' ? 'uppercase' : 'capitalize'}>
                       {txn.payment_method.replace('_', ' ')}
                     </TableCell>
                     <TableCell className="font-mono text-xs">

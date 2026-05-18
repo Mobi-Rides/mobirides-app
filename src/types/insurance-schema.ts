@@ -16,6 +16,7 @@ export interface InsurancePackage {
   coverage_cap: number | null
   excess_amount: number | null
   excess_percentage?: number | null
+  target_segment?: string | null
   covers_minor_damage: boolean
   covers_major_incidents: boolean
   features: string[]

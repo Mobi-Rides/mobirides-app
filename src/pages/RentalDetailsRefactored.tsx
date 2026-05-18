@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
-import { Receipt, Shield } from "lucide-react";
+import { Receipt, Shield, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { useRentalDetails } from "@/hooks/useRentalDetails";
@@ -149,6 +149,25 @@ const RentalDetailsRefactored = () => {
             </div>
           )}
         </div>
+
+        {booking?.payment_transaction?.payment_method === 'eft' && (
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-lg p-4 space-y-2">
+            <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2 text-sm">
+              <Mail className="h-4 w-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+              EFT Payment Pending Verification
+            </h4>
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+              You selected to pay by EFT. If you haven't done so already, please email your Proof of Payment (PoP) to{" "}
+              <a
+                href="mailto:hello@mobirides.africa"
+                className="font-semibold underline hover:text-emerald-800 dark:hover:text-emerald-200"
+              >
+                hello@mobirides.africa
+              </a>{" "}
+              to ensure a smooth and timely handover of the vehicle.
+            </p>
+          </div>
+        )}
 
         {/* Car Info with null check */}
         {booking?.cars && <RentalCarInfoCard car={booking.cars} />}

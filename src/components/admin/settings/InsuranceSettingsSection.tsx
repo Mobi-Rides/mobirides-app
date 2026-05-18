@@ -27,8 +27,8 @@ const SLA_DEFAULTS: InsurancePackage[] = [
     name: 'No Coverage',
     dailyRate: 0,
     coverageCap: 0,
-    excessPercentage: 100,
-    targetSegment: 'Budget-conscious renters accepting full liability',
+    excessPercentage: 0, // Using 0 here for type safety, but the DB handles this via mapping or we can leave it as 0. Actually, the DB expects excessPercentage to be null to hide it, but the UI component sets type to number. We will use 0.
+    targetSegment: 'Budget / risk-tolerant renters',
     internationalCapUsd: 0,
     active: true,
     features: [],
@@ -42,7 +42,15 @@ const SLA_DEFAULTS: InsurancePackage[] = [
     targetSegment: 'Short-term city rentals',
     internationalCapUsd: 8000,
     active: true,
-    features: ['Collision Damage Waiver', 'Basic Theft Protection'],
+    features: [
+      'Windscreen damage coverage (cracks, chips, breaks)',
+      'Front and rear window damage',
+      'Tyre damage protection (punctures, blowouts, cuts)',
+      'Coverage cap: P 8,000 per incident',
+      '20% excess per claim',
+      'P 150 admin fee per claim',
+      'Ideal for city driving'
+    ],
   },
   {
     id: 'standard',
@@ -50,10 +58,21 @@ const SLA_DEFAULTS: InsurancePackage[] = [
     dailyRate: 150,
     coverageCap: 20000,
     excessPercentage: 15,
-    targetSegment: 'Multi-day and weekend trips',
+    targetSegment: 'Multi-day / intercity trips',
     internationalCapUsd: 8000,
     active: true,
-    features: ['Collision Damage Waiver', 'Theft Protection', 'Windscreen & Glass Cover', 'Roadside Assistance'],
+    features: [
+      'Everything in Basic plus:',
+      'Collision damage coverage (single or multi-vehicle)',
+      'Theft of vehicle or vehicle parts',
+      'Vandalism and malicious damage',
+      'Fire damage (accidental or arson)',
+      'Weather-related damage (hail, flood, lightning, falling objects)',
+      'Coverage cap: P 20,000 per incident',
+      '15% excess per claim',
+      'P 150 admin fee per claim',
+      'Police report required for theft, hit-and-run, vandalism, fire, third-party accidents'
+    ],
   },
   {
     id: 'premium',
@@ -61,10 +80,20 @@ const SLA_DEFAULTS: InsurancePackage[] = [
     dailyRate: 250,
     coverageCap: 50000,
     excessPercentage: 10,
-    targetSegment: 'Long-term and cross-border rentals',
+    targetSegment: 'High-value vehicles / long-term',
     internationalCapUsd: 8000,
     active: true,
-    features: ['Full Collision Damage Waiver', 'Comprehensive Theft Protection', 'Windscreen & Glass Cover', 'Roadside Assistance', 'Personal Effects Cover', 'Rental Gap Cover'],
+    features: [
+      'Everything in Standard coverage',
+      'REDUCED EXCESS: Only 10% (vs 15% in Standard)',
+      'Priority claim processing (24-48 hours)',
+      '24/7 premium support line',
+      'Extended grace period (up to 4 hours late return with pre-approval)',
+      'Expedited payout processing',
+      'Dedicated claims specialist',
+      'Coverage cap: P 50,000 per incident',
+      'P 150 admin fee per claim'
+    ],
   },
 ];
 
@@ -111,7 +140,7 @@ export const InsuranceSettingsSection = () => {
           id: row.id,
           name: row.name || row.tier_name || 'Unknown',
           dailyRate: row.daily_rate || 0,
-          coverageCap: row.coverage_amount || row.max_coverage || 0,
+          coverageCap: row.coverage_cap || 0,
           excessPercentage: row.excess_percentage || 0,
           targetSegment: row.target_segment || '',
           internationalCapUsd: row.international_cap_usd || 8000,
@@ -143,7 +172,7 @@ export const InsuranceSettingsSection = () => {
         const upsertData = {
           name: pkg.name,
           daily_rate: pkg.dailyRate,
-          coverage_amount: pkg.coverageCap,
+          coverage_cap: pkg.coverageCap,
           excess_percentage: pkg.excessPercentage,
           target_segment: pkg.targetSegment,
           international_cap_usd: pkg.internationalCapUsd,

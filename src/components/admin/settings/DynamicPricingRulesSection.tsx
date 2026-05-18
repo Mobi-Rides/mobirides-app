@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDynamicPricingRules } from '@/hooks/useDynamicPricingRules';
-import { PricingRuleType } from '@/types/pricing';
+import { usePlatformSettings } from '@/hooks/usePlatformSettings';
+import { PricingRule, PricingRuleType } from '@/types/pricing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, Calendar, Loader2, AlertCircle } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { PricingRuleConditionFields } from './pricing/PricingRuleConditionFields';
 import {
@@ -31,11 +32,58 @@ const RULE_TYPE_LABELS: Record<PricingRuleType, string> = {
 
 export const DynamicPricingRulesSection = () => {
   const { toast } = useToast();
-  const { rules, loading, error, updateRule, addRule, deleteRule } = useDynamicPricingRules();
+  
+  // Platform Settings hook for enabling/disabling the global engine
+  const { getSetting, updateSetting, loading: settingsLoading } = usePlatformSettings();
+  
+  // Supabase hooks for rule fetching/updating
+  const { rules, loading: rulesLoading, error, updateRule, addRule, deleteRule, refresh } = useDynamicPricingRules();
+  
+  // Local state for local modifications
+  const [localRules, setLocalRules] = useState<PricingRule[]>([]);
+  const [deletedRuleIds, setDeletedRuleIds] = useState<string[]>([]);
+  const [isDirty, setIsDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [pricingEnabled, setPricingEnabled] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
 
-  const handleAddRule = async () => {
+  // Sync settings toggle
+  useEffect(() => {
+    const val = getSetting('dynamic_pricing_enabled', 'true');
+    setPricingEnabled(val === 'true');
+  }, [settingsLoading, getSetting]);
+
+  // Sync pricing rules to local rules state on successful loading/updating
+  useEffect(() => {
+    if (!rulesLoading && rules) {
+      setLocalRules(rules);
+      setDeletedRuleIds([]);
+      setIsDirty(false);
+    }
+  }, [rules, rulesLoading]);
+
+  const handleTogglePricing = async (checked: boolean) => {
+    setPricingEnabled(checked);
+    try {
+      const res = await updateSetting('dynamic_pricing_enabled', String(checked));
+      if (res.success) {
+        toast({
+          title: checked ? 'Dynamic pricing enabled' : 'Dynamic pricing disabled',
+          description: `The dynamic pricing engine has been ${checked ? 'enabled' : 'disabled'} successfully.`,
+        });
+      } else {
+        throw res.error;
+      }
+    } catch (err) {
+      console.error('Failed to toggle dynamic pricing:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to update dynamic pricing toggle in platform settings.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddRule = () => {
     const newRule = {
       id: uuidv4(),
       name: 'New Rule',
@@ -43,33 +91,30 @@ export const DynamicPricingRulesSection = () => {
       is_active: true,
       multiplier: 1.0,
       conditions: {},
-      priority: rules.length + 1,
+      priority: localRules.length + 1,
     };
-    const validationError = validateDurationRuleCandidate(rules, newRule);
+    
+    const validationError = validateDurationRuleCandidate(localRules, newRule);
     if (validationError) {
       toast({ title: validationError, variant: 'destructive' });
       return;
     }
-
-    const result = await addRule(newRule);
-    if (result.success) {
-      toast({ title: 'New pricing rule created' });
-    } else {
-      toast({ title: 'Failed to create rule', variant: 'destructive' });
-    }
+    
+    setLocalRules([...localRules, newRule]);
+    setIsDirty(true);
   };
 
-  const handleDeleteRule = async (id: string) => {
-    const result = await deleteRule(id);
-    if (result.success) {
-      toast({ title: 'Pricing rule deleted' });
-    } else {
-      toast({ title: 'Failed to delete rule', variant: 'destructive' });
+  const handleDeleteRule = (id: string) => {
+    const existingRule = rules.find((r) => r.id === id);
+    if (existingRule) {
+      setDeletedRuleIds((prev) => [...prev, id]);
     }
+    setLocalRules(localRules.filter((r) => r.id !== id));
+    setIsDirty(true);
   };
 
-  const handleAddDurationRule = async () => {
-    const conditions = getNextDurationRuleConditions(rules);
+  const handleAddDurationRule = () => {
+    const conditions = getNextDurationRuleConditions(localRules);
     if (!conditions) {
       toast({
         title: 'No available duration range',
@@ -86,25 +131,21 @@ export const DynamicPricingRulesSection = () => {
       is_active: true,
       multiplier: 0.9,
       conditions,
-      priority: rules.length + 1,
+      priority: localRules.length + 1,
     };
 
-    const validationError = validateDurationRuleCandidate(rules, newRule);
+    const validationError = validateDurationRuleCandidate(localRules, newRule);
     if (validationError) {
       toast({ title: validationError, variant: 'destructive' });
       return;
     }
 
-    const result = await addRule(newRule);
-    if (result.success) {
-      toast({ title: 'Duration pricing rule created' });
-    } else {
-      toast({ title: 'Failed to create duration rule', variant: 'destructive' });
-    }
+    setLocalRules([...localRules, newRule]);
+    setIsDirty(true);
   };
 
-  const handleUpdateRule = async (id: string, updates: Record<string, any>) => {
-    const currentRule = rules.find((rule) => rule.id === id);
+  const handleUpdateRule = (id: string, updates: Record<string, any>) => {
+    const currentRule = localRules.find((rule) => rule.id === id);
     if (!currentRule) return;
 
     const candidateRule = {
@@ -113,21 +154,74 @@ export const DynamicPricingRulesSection = () => {
       conditions: updates.conditions ?? currentRule.conditions,
     };
 
-    const validationError = validateDurationRuleCandidate(rules, candidateRule);
-    if (validationError) {
-      toast({ title: validationError, variant: 'destructive' });
-      return;
+    setLocalRules(localRules.map((r) => (r.id === id ? candidateRule : r)));
+    setIsDirty(true);
+  };
+
+  const handleDiscard = () => {
+    setLocalRules(rules);
+    setDeletedRuleIds([]);
+    setIsDirty(false);
+    toast({
+      title: 'Changes discarded',
+      description: 'All local changes have been reverted to saved settings.',
+    });
+  };
+
+  const handleSaveAll = async () => {
+    // 1. Batch validate all duration rules in localRules
+    for (const rule of localRules) {
+      const otherRules = localRules.filter((r) => r.id !== rule.id);
+      const validationError = validateDurationRuleCandidate(otherRules, rule);
+      if (validationError) {
+        toast({
+          title: `Validation error in "${rule.name}"`,
+          description: validationError,
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
-    setSavingId(id);
-    const result = await updateRule(id, updates);
-    setSavingId(null);
-    if (!result.success) {
-      toast({ title: 'Failed to update rule', variant: 'destructive' });
+    setSaving(true);
+    try {
+      // 2. Perform deletions
+      for (const id of deletedRuleIds) {
+        await deleteRule(id);
+      }
+
+      // 3. Perform updates & insertions
+      for (const localRule of localRules) {
+        const isExisting = rules.some((r) => r.id === localRule.id);
+        if (isExisting) {
+          const dbRule = rules.find((r) => r.id === localRule.id);
+          const hasChanged = JSON.stringify(dbRule) !== JSON.stringify(localRule);
+          if (hasChanged) {
+            await updateRule(localRule.id, localRule);
+          }
+        } else {
+          await addRule(localRule);
+        }
+      }
+
+      await refresh();
+      toast({
+        title: 'Rules saved successfully',
+        description: 'All dynamic pricing rules have been saved and applied.',
+      });
+    } catch (err) {
+      console.error('Error saving pricing rules:', err);
+      toast({
+        title: 'Save failed',
+        description: 'An error occurred while saving rules. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) {
+  if (rulesLoading && localRules.length === 0) {
     return (
       <div className="flex items-center justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -168,7 +262,11 @@ export const DynamicPricingRulesSection = () => {
                 Automatically adjust prices based on configured rules
               </p>
             </div>
-            <Switch checked={pricingEnabled} onCheckedChange={setPricingEnabled} />
+            <Switch 
+              checked={pricingEnabled} 
+              onCheckedChange={handleTogglePricing} 
+              disabled={settingsLoading}
+            />
           </div>
         </CardContent>
       </Card>
@@ -178,7 +276,7 @@ export const DynamicPricingRulesSection = () => {
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Pricing Rules
-            <Badge variant="secondary" className="ml-2">{rules.length}</Badge>
+            <Badge variant="secondary" className="ml-2">{localRules.length}</Badge>
           </CardTitle>
           <CardDescription>
             Configure surge pricing, discounts, and destination-based multipliers
@@ -186,14 +284,14 @@ export const DynamicPricingRulesSection = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {rules.length === 0 && (
+            {localRules.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No pricing rules configured. Add your first rule below.
               </p>
             )}
 
-            {rules.map((rule) => (
-              <div key={rule.id} className="p-4 border rounded-lg space-y-4">
+            {localRules.map((rule) => (
+              <div key={rule.id} className="p-4 border rounded-lg space-y-4 bg-card text-card-foreground">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Switch
@@ -206,9 +304,6 @@ export const DynamicPricingRulesSection = () => {
                       className="w-48"
                       placeholder="Rule name"
                     />
-                    {savingId === rule.id && (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => handleDeleteRule(rule.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -285,7 +380,7 @@ export const DynamicPricingRulesSection = () => {
               </div>
             ))}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <Button variant="outline" onClick={handleAddRule} className="w-full">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Pricing Rule
@@ -295,6 +390,27 @@ export const DynamicPricingRulesSection = () => {
                 Add Duration Rule
               </Button>
             </div>
+
+            {/* Unsaved Changes Banner */}
+            {isDirty && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t mt-6 bg-amber-500/10 dark:bg-amber-500/5 p-4 rounded-xl border border-amber-500/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-medium">
+                    You have unsaved rules. Save to persist changes to database.
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                  <Button variant="outline" onClick={handleDiscard} disabled={saving} className="w-full sm:w-auto">
+                    Discard Changes
+                  </Button>
+                  <Button onClick={handleSaveAll} disabled={saving} className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-600 dark:hover:bg-amber-500">
+                    {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Save Rules
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

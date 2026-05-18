@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PenTool, RotateCcw, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,7 +101,7 @@ export const DigitalSignatureStep = ({
   };
 
   // Initialize canvas if there's an initial signature
-  useState(() => {
+  useEffect(() => {
     if (initialSignature && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
@@ -111,7 +111,7 @@ export const DigitalSignatureStep = ({
       };
       img.src = initialSignature;
     }
-  });
+  }, [initialSignature]);
 
   return (
     <Card className="w-full">
@@ -126,12 +126,12 @@ export const DigitalSignatureStep = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Signature Canvas */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-white">
           <canvas
             ref={canvasRef}
             width={400}
             height={200}
-            className="w-full h-48 border border-gray-200 rounded cursor-crosshair touch-none"
+            className="w-full h-48 border border-gray-200 rounded cursor-crosshair touch-none bg-white"
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
@@ -141,7 +141,7 @@ export const DigitalSignatureStep = ({
             onTouchEnd={stopDrawing}
             style={{ touchAction: 'none' }}
           />
-          <p className="text-xs text-muted-foreground mt-2 text-center">
+          <p className="text-xs text-gray-500 mt-2 text-center">
             Sign above using your mouse or finger
           </p>
         </div>
@@ -168,8 +168,8 @@ export const DigitalSignatureStep = ({
         </div>
 
         {/* Agreement Text */}
-        <div className="bg-gray-50 rounded-lg p-4 text-sm">
-          <h4 className="font-medium mb-2">Handover Agreement</h4>
+        <div className="bg-muted/50 rounded-lg p-4 text-sm border border-border">
+          <h4 className="font-medium mb-2 text-foreground">Handover Agreement</h4>
           <p className="text-muted-foreground">
             By signing above, I acknowledge that:
           </p>
