@@ -2,6 +2,12 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { InsurancePolicy, InsurancePackage } from '@/types/insurance-schema';
 
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
 export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: InsurancePackage, renterName: string, carDetails: string): Blob => {
   const doc = new jsPDF();
 
@@ -31,6 +37,7 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
       ['Policy Holder', renterName],
       ['Vehicle', carDetails],
       ['Coverage Plan', insurancePackage.display_name],
+      ['Target Segment', insurancePackage.target_segment || 'N/A'],
       ['Start Date', new Date(policy.start_date).toLocaleString()],
       ['End Date', new Date(policy.end_date).toLocaleString()],
       ['Status', policy.status.toUpperCase()],
@@ -40,16 +47,16 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
   });
 
   // Coverage Details
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const summaryY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
   doc.setFontSize(14);
-  doc.text('Coverage Summary', 20, finalY);
+  doc.text('Coverage Summary', 20, summaryY);
 
   autoTable(doc, {
-    startY: finalY + 5,
+    startY: summaryY + 5,
     head: [['Item', 'Details']],
     body: [
       ['Coverage Cap', `BWP ${policy.coverage_cap?.toFixed(2) || 'N/A'}`],
-      ['Excess (Deductible)', `BWP ${policy.excess_amount?.toFixed(2) || 'N/A'}`],
+      ['Excess (Deductible)', insurancePackage.excess_percentage ? `${(insurancePackage.excess_percentage * 100).toFixed(0)}% of approved claim` : `BWP ${policy.excess_amount?.toFixed(2) || 'Full Liability'}`],
       ['Premium Paid', `BWP ${policy.total_premium.toFixed(2)}`],
       ['Minor Damage', insurancePackage.covers_minor_damage ? 'Covered' : 'Not Covered'],
       ['Major Incidents', insurancePackage.covers_major_incidents ? 'Covered' : 'Not Covered'],
@@ -58,8 +65,25 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
     headStyles: { fillColor: [40, 167, 69] },
   });
 
+  let currentY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
+
+  // Package Features
+  if (insurancePackage.features && insurancePackage.features.length > 0) {
+    doc.setFontSize(14);
+    doc.text('Package Features', 20, currentY);
+    
+    autoTable(doc, {
+      startY: currentY + 5,
+      head: [['Included Features']],
+      body: insurancePackage.features.map(f => [f]),
+      theme: 'grid',
+      headStyles: { fillColor: [0, 51, 102] },
+    });
+    currentY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
+  }
+
   // Terms
-  const termsY = (doc as any).lastAutoTable.finalY + 15;
+  const termsY = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 15;
   doc.setFontSize(12);
   doc.text('Important Terms & Conditions', 20, termsY);
   doc.setFontSize(8);
@@ -74,11 +98,20 @@ export const generatePolicyPDF = (policy: InsurancePolicy, insurancePackage: Ins
     `6. Terms Version: ${policy.terms_version}`
   ];
 
-  let currentY = termsY + 5;
+  currentY = termsY + 5;
   terms.forEach(term => {
     doc.text(term, 20, currentY);
     currentY += 5;
   });
+
+  // Link to Full T&Cs
+  currentY += 5;
+  doc.setFontSize(9);
+  doc.setTextColor(0, 51, 102);
+  doc.text('For the full Damage Protection Terms & Conditions, please visit:', 20, currentY);
+  currentY += 5;
+  doc.setTextColor(0, 102, 204);
+  doc.text('https://app.mobirides.com/insurance-terms', 20, currentY);
 
   // Footer
   doc.setFontSize(8);

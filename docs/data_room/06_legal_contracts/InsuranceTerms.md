@@ -13,15 +13,28 @@ MobiRides facilitates supplemental insurance coverage for all confirmed bookings
 ## 2. Renter Protection Plans
 Renters must select a protection plan during the booking process. The plan determines the Renter’s maximum financial liability (the "Excess") in the event of an accident or damage.
 
-### 2.1 Basic Plan
-*   **Excess**: [Insert High Amount]
-*   **Coverage**: Standard third-party liability and collision damage.
-*   **Ideal for**: Cost-conscious renters willing to take higher financial risk.
+### 2.1 No Coverage
+*   **Excess**: Full Liability
+*   **Coverage**: None
+*   **Ideal for**: Budget-conscious or risk-tolerant renters.
 
-### 2.2 Premium Plan
-*   **Excess**: [Insert Low Amount]
-*   **Coverage**: Enhanced protection, including tire and glass coverage.
-*   **Ideal for**: Renters seeking maximum peace of mind.
+### 2.2 Basic Plan
+*   **Coverage Cap**: P8,000
+*   **Excess**: 20% of approved claim
+*   **Coverage**: Standard third-party liability, collision damage, windscreen and window damage, and tyre protection.
+*   **Ideal for**: Short-term city rentals.
+
+### 2.3 Standard Plan
+*   **Coverage Cap**: P20,000
+*   **Excess**: 15% of approved claim
+*   **Coverage**: All Basic features plus accidental collision, theft, vandalism, and fire/weather-related damage.
+*   **Ideal for**: Multi-day or intercity trips.
+
+### 2.4 Premium Plan
+*   **Coverage Cap**: P50,000
+*   **Excess**: 10% of approved claim
+*   **Coverage**: Maximum protection including all Standard features.
+*   **Ideal for**: High-value vehicles or long-term rentals.
 
 ## 3. Important Exclusions
 The insurance protection will be **VOID**, and the Renter will be liable for the full cost of all damages and third-party claims if:
