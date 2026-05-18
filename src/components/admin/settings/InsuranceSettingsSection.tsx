@@ -140,7 +140,7 @@ export const InsuranceSettingsSection = () => {
           id: row.id,
           name: row.name || row.tier_name || 'Unknown',
           dailyRate: row.daily_rate || 0,
-          coverageCap: row.coverage_amount || row.max_coverage || 0,
+          coverageCap: row.coverage_cap || 0,
           excessPercentage: row.excess_percentage || 0,
           targetSegment: row.target_segment || '',
           internationalCapUsd: row.international_cap_usd || 8000,
@@ -172,7 +172,7 @@ export const InsuranceSettingsSection = () => {
         const upsertData = {
           name: pkg.name,
           daily_rate: pkg.dailyRate,
-          coverage_amount: pkg.coverageCap,
+          coverage_cap: pkg.coverageCap,
           excess_percentage: pkg.excessPercentage,
           target_segment: pkg.targetSegment,
           international_cap_usd: pkg.internationalCapUsd,
