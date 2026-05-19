@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStatus } from './useAuthStatus';
 import {
@@ -26,6 +26,7 @@ interface TutorialState {
 export function useTutorial() {
   const { userId, userRole, isAuthenticated } = useAuthStatus();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
@@ -35,6 +36,41 @@ export function useTutorial() {
   const role = (userRole as 'renter' | 'host') ?? 'renter';
   const allSteps = useMemo(() => getStepsForRole(role), [role]);
   const currentStep = allSteps[currentIndex] ?? null;
+
+  // ── Auto-navigate when currentStep changes ────────────────
+  useEffect(() => {
+    if (!isActive || !currentStep) return;
+    const currentPath = location.pathname;
+    const targetRoute = currentStep.pageRoute;
+
+    const isPathMatching = (current: string, target: string) => {
+      if (target === '/') return current === '/';
+      return current === target || current.startsWith(target);
+    };
+
+    if (!isPathMatching(currentPath, targetRoute)) {
+      console.log(`[Tutorial] Auto-navigating from ${currentPath} to ${targetRoute} for step ${currentStep.key}`);
+      if (targetRoute === '/cars/') {
+        // Query Supabase for the first car to show renter details page
+        const fetchAndNavigateToCar = async () => {
+          try {
+            const { data: cars } = await supabase.from('cars').select('id').limit(1);
+            if (cars && cars.length > 0) {
+              navigate(`/cars/${cars[0].id}`);
+            } else {
+              navigate('/cars/mock-car-id');
+            }
+          } catch (err) {
+            console.error('[Tutorial] Failed to fetch first car for redirect:', err);
+            navigate('/cars/mock-car-id');
+          }
+        };
+        fetchAndNavigateToCar();
+      } else {
+        navigate(targetRoute);
+      }
+    }
+  }, [currentStep, location.pathname, isActive, navigate]);
 
   // ── Load progress & check if tutorial should auto-start ───
   useEffect(() => {
