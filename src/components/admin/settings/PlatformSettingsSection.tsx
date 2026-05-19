@@ -39,16 +39,16 @@ export const PlatformSettingsSection = () => {
       setAppName(getSetting('app_name', 'MobiRides'));
       setSupportEmail(getSetting('support_email', 'support@mobirides.co.bw'));
       setSupportPhone(getSetting('support_phone', '+267 XX XXX XXX'));
-      setEmailNotifications(getSetting('email_notifications_enabled', 'true') === 'true');
-      setSmsNotifications(getSetting('sms_notifications_enabled', 'false') === 'true');
-      setPushNotifications(getSetting('push_notifications_enabled', 'true') === 'true');
-      setTwoFactorEnabled(getSetting('two_factor_enabled', 'false') === 'true');
+      setEmailNotifications(getSetting<string>('email_notifications_enabled', 'true') === 'true');
+      setSmsNotifications(getSetting<string>('sms_notifications_enabled', 'false') === 'true');
+      setPushNotifications(getSetting<string>('push_notifications_enabled', 'true') === 'true');
+      setTwoFactorEnabled(getSetting<string>('two_factor_enabled', 'false') === 'true');
       setSessionTimeout(getSetting('session_timeout_minutes', '60'));
       setThemeMode(getSetting('theme_mode', 'system'));
       setPrimaryColor(getSetting('primary_color', '#3B82F6'));
       setFontSize(getSetting('font_size', 'medium'));
     }
-  }, [loading]);
+  }, [loading, getSetting]);
 
   const handleSave = async () => {
     setSaving(true);
