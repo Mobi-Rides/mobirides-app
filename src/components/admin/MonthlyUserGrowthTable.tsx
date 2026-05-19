@@ -2,6 +2,8 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth } from "date-fns";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@/integrations/supabase/types";
 import {
   Card,
   CardContent,
@@ -29,6 +31,30 @@ interface MonthlyRow {
   momChange: number | null;
 }
 
+export interface DbMonthlyUserGrowth {
+  created_at: string;
+  role: string | null;
+  full_name: string | null;
+}
+
+type ClientWithUserGrowth = SupabaseClient<
+  Omit<Database, "public"> & {
+    public: Omit<Database["public"], "Functions"> & {
+      Functions: Database["public"]["Functions"] & {
+        get_monthly_user_growth: {
+          Args: {
+            limit_val: number;
+            offset_val: number;
+          };
+          Returns: DbMonthlyUserGrowth[];
+        };
+      };
+    };
+  }
+>;
+
+const customSupabase = supabase as unknown as ClientWithUserGrowth;
+
 const fetchMonthlyUsers = async (): Promise<MonthlyRow[]> => {
   // Fetch all profiles paginated via SECURITY DEFINER RPC to bypass RLS and PostgREST limits
   let allProfiles: Array<{ created_at: string; role: string | null; full_name: string | null }> = [];
@@ -37,7 +63,7 @@ const fetchMonthlyUsers = async (): Promise<MonthlyRow[]> => {
   let hasMore = true;
 
   while (hasMore) {
-    const { data, error } = await supabase.rpc("get_monthly_user_growth", {
+    const { data, error } = await customSupabase.rpc("get_monthly_user_growth", {
       limit_val: limit,
       offset_val: offset
     });
