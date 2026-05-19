@@ -28,31 +28,53 @@ export const useAdminUsersComplete = (showDeleted = false) => {
   return useQuery<AdminUserComplete[], Error>({
     queryKey: ["admin-users-complete", showDeleted],
     queryFn: async (): Promise<AdminUserComplete[]> => {
-      const { data, error } = await supabase.rpc('get_admin_users_complete', {
-        show_deleted: showDeleted
-      });
+      let allUsers: AdminUserComplete[] = [];
+      let offset = 0;
+      const limit = 100;
+      let hasMore = true;
 
-      if (error) {
-        console.error("Error fetching admin users:", error);
-        throw error;
+      while (hasMore) {
+        const { data, error } = await supabase.rpc('get_admin_users_complete', {
+          show_deleted: showDeleted,
+          limit_val: limit,
+          offset_val: offset
+        });
+
+        if (error) {
+          console.error(`Error fetching admin users at offset ${offset}:`, error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+        } else {
+          const mapped = data.map((user: any) => ({
+            id: user.id,
+            email: user.email,
+            full_name: user.full_name,
+            phone_number: user.phone_number,
+            role: user.role,
+            created_at: user.created_at,
+            avatar_url: user.avatar_url,
+            verification_status: user.verification_status,
+            is_deleted: user.is_deleted || false,
+            user_roles: user.user_roles || [],
+            is_restricted: user.is_restricted || false,
+            active_restrictions: user.active_restrictions || [],
+            vehicles_count: user.vehicles_count || 0,
+            bookings_count: user.bookings_count || 0,
+          }));
+          allUsers = [...allUsers, ...mapped];
+          
+          if (data.length < limit) {
+            hasMore = false;
+          } else {
+            offset += limit;
+          }
+        }
       }
 
-      return (data || []).map((user: any) => ({
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        phone_number: user.phone_number,
-        role: user.role,
-        created_at: user.created_at,
-        avatar_url: user.avatar_url,
-        verification_status: user.verification_status,
-        is_deleted: user.is_deleted || false,
-        user_roles: user.user_roles || [],
-        is_restricted: user.is_restricted || false,
-        active_restrictions: user.active_restrictions || [],
-        vehicles_count: user.vehicles_count || 0,
-        bookings_count: user.bookings_count || 0,
-      }));
+      return allUsers;
     },
     staleTime: 30000,
   });

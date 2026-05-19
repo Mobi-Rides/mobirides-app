@@ -30,25 +30,68 @@ interface MonthlyRow {
 }
 
 const fetchMonthlyUsers = async (): Promise<MonthlyRow[]> => {
-  // Fetch all profiles since Jan 2025 excluding test/admin accounts
-  // Use limit(2000) to avoid the 1000-row default cap
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("created_at, role, full_name")
-    .gte("created_at", "2025-01-01T00:00:00Z")
-    .not("role", "in", "(admin,super_admin)")
-    .not("full_name", "ilike", "%test%")
-    .not("full_name", "ilike", "%dummy%")
-    .not("full_name", "ilike", "%tester%")
-    .limit(2000);
+  // Fetch all profiles paginated via SECURITY DEFINER RPC to bypass RLS and PostgREST limits
+  let allProfiles: Array<{ created_at: string; role: string | null; full_name: string | null }> = [];
+  let offset = 0;
+  const limit = 100;
+  let hasMore = true;
 
-  if (error) throw error;
+  while (hasMore) {
+    const { data, error } = await supabase.rpc("get_monthly_user_growth", {
+      limit_val: limit,
+      offset_val: offset
+    });
 
-  // Group by month
+    if (error) {
+      console.error(`Error fetching monthly user growth at offset ${offset}:`, error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      hasMore = false;
+    } else {
+      allProfiles = [...allProfiles, ...data];
+      if (data.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
+    }
+  }
+
+  // Filter out test and admin accounts client-side as requested
+  const filteredProfiles = allProfiles.filter((row) => {
+    const role = row.role || "";
+    const name = row.full_name || "";
+    const isTestOrAdmin =
+      role.includes("admin") ||
+      role.includes("super_admin") ||
+      name.toLowerCase().includes("test") ||
+      name.toLowerCase().includes("dummy") ||
+      name.toLowerCase().includes("tester");
+    return !isTestOrAdmin;
+  });
+
+  // Pre-populate all calendar months from Jan 2025 to the current month to eliminate data gaps
+  const start = new Date(2025, 0, 1); // Jan 2025
+  const end = new Date(); // Current date (May 2026)
+  
   const monthMap: Record<string, { newUsers: number; renters: number; hosts: number }> = {};
+  
+  let current = startOfMonth(start);
+  const stop = startOfMonth(end);
+  
+  while (current <= stop) {
+    const key = format(current, "yyyy-MM");
+    monthMap[key] = { newUsers: 0, renters: 0, hosts: 0 };
+    current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+  }
 
-  (data ?? []).forEach((row) => {
+  // Group real profiles into months
+  filteredProfiles.forEach((row) => {
     const d = new Date(row.created_at);
+    if (d < start) return; // Skip legacy profiles created before 2025
+    
     const key = format(startOfMonth(d), "yyyy-MM");
     if (!monthMap[key]) {
       monthMap[key] = { newUsers: 0, renters: 0, hosts: 0 };
@@ -58,7 +101,7 @@ const fetchMonthlyUsers = async (): Promise<MonthlyRow[]> => {
     if (row.role === "host") monthMap[key].hosts += 1;
   });
 
-  // Build sorted ascending list (oldest first) for cumulative calc
+  // Build sorted ascending list (oldest first) for cumulative calculation
   const sortedKeys = Object.keys(monthMap).sort();
   let running = 0;
   const rows: MonthlyRow[] = sortedKeys.map((key, idx) => {
