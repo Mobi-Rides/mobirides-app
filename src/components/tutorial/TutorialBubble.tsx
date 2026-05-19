@@ -37,48 +37,72 @@ export function TutorialBubble({
       return;
     }
 
-    const target = document.querySelector(step.targetSelector);
-    if (!target) {
-      setPos(null);
-      return;
-    }
+    let attempts = 0;
+    const maxAttempts = 20; // 2 seconds (20 * 100ms)
 
-    const rect = target.getBoundingClientRect();
-    const bubble = bubbleRef.current;
-    const bw = bubble?.offsetWidth ?? 340;
-    const bh = bubble?.offsetHeight ?? 200;
+    const calculate = () => {
+      const target = document.querySelector(step.targetSelector!);
+      if (!target) return false;
 
-    let top = 0;
-    let left = 0;
+      const rect = target.getBoundingClientRect();
+      // Wait if the element has 0 size (hidden or not fully layouted)
+      if (rect.width === 0 && rect.height === 0) return false;
 
-    switch (step.position) {
-      case 'bottom':
-        top = rect.bottom + 12;
-        left = rect.left + rect.width / 2 - bw / 2;
-        break;
-      case 'top':
-        top = rect.top - bh - 12;
-        left = rect.left + rect.width / 2 - bw / 2;
-        break;
-      case 'left':
-        top = rect.top + rect.height / 2 - bh / 2;
-        left = rect.left - bw - 12;
-        break;
-      case 'right':
-        top = rect.top + rect.height / 2 - bh / 2;
-        left = rect.right + 12;
-        break;
-      default:
-        setPos(null);
-        return;
-    }
+      const bubble = bubbleRef.current;
+      const bw = bubble?.offsetWidth ?? 340;
+      const bh = bubble?.offsetHeight ?? 200;
 
-    // Clamp to viewport — reserve 72px at bottom for the nav bar (64px) + margin (8px)
-    const BOTTOM_CLEARANCE = 72;
-    top = Math.max(8, Math.min(top, window.innerHeight - bh - BOTTOM_CLEARANCE));
-    left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+      let top = 0;
+      let left = 0;
 
-    setPos({ top, left });
+      switch (step.position) {
+        case 'bottom':
+          top = rect.bottom + 12;
+          left = rect.left + rect.width / 2 - bw / 2;
+          break;
+        case 'top':
+          top = rect.top - bh - 12;
+          left = rect.left + rect.width / 2 - bw / 2;
+          break;
+        case 'left':
+          top = rect.top + rect.height / 2 - bh / 2;
+          left = rect.left - bw - 12;
+          break;
+        case 'right':
+          top = rect.top + rect.height / 2 - bh / 2;
+          left = rect.right + 12;
+          break;
+        default:
+          setPos(null);
+          return true;
+      }
+
+      // Clamp to viewport — reserve 72px at bottom for the nav bar (64px) + margin (8px)
+      const BOTTOM_CLEARANCE = 72;
+      top = Math.max(8, Math.min(top, window.innerHeight - bh - BOTTOM_CLEARANCE));
+      left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+
+      setPos({ top, left });
+      return true;
+    };
+
+    // Attempt layout calculation immediately
+    if (calculate()) return;
+
+    // Start checking periodically for up to 2 seconds
+    const interval = setInterval(() => {
+      attempts++;
+      const success = calculate();
+      if (success || attempts >= maxAttempts) {
+        clearInterval(interval);
+        if (!success && attempts >= maxAttempts) {
+          console.warn(`[TutorialBubble] Could not locate target element ${step.targetSelector} after 2 seconds. Centering bubble.`);
+          setPos(null);
+        }
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
   }, [step]);
 
   const isCentered = !pos;

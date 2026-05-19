@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStatus } from './useAuthStatus';
 import {
@@ -26,6 +26,7 @@ interface TutorialState {
 export function useTutorial() {
   const { userId, userRole, isAuthenticated } = useAuthStatus();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
@@ -35,6 +36,41 @@ export function useTutorial() {
   const role = (userRole as 'renter' | 'host') ?? 'renter';
   const allSteps = useMemo(() => getStepsForRole(role), [role]);
   const currentStep = allSteps[currentIndex] ?? null;
+
+  // ── Auto-navigate when currentStep changes ────────────────
+  useEffect(() => {
+    if (!isActive || !currentStep) return;
+    const currentPath = location.pathname;
+    const targetRoute = currentStep.pageRoute;
+
+    const isPathMatching = (current: string, target: string) => {
+      if (target === '/') return current === '/';
+      return current === target || current.startsWith(target);
+    };
+
+    if (!isPathMatching(currentPath, targetRoute)) {
+      console.log(`[Tutorial] Auto-navigating from ${currentPath} to ${targetRoute} for step ${currentStep.key}`);
+      if (targetRoute === '/cars/') {
+        // Query Supabase for the first car to show renter details page
+        const fetchAndNavigateToCar = async () => {
+          try {
+            const { data: cars } = await supabase.from('cars').select('id').limit(1);
+            if (cars && cars.length > 0) {
+              navigate(`/cars/${cars[0].id}`);
+            } else {
+              navigate('/cars/mock-car-id');
+            }
+          } catch (err) {
+            console.error('[Tutorial] Failed to fetch first car for redirect:', err);
+            navigate('/cars/mock-car-id');
+          }
+        };
+        fetchAndNavigateToCar();
+      } else {
+        navigate(targetRoute);
+      }
+    }
+  }, [currentStep, location.pathname, isActive, navigate]);
 
   // ── Load progress & check if tutorial should auto-start ───
   useEffect(() => {
@@ -54,12 +90,12 @@ export function useTutorial() {
 
         // Load completed steps
         const { data: progress } = await supabase
-          .from('user_tutorial_progress' as any)
+          .from('user_tutorial_progress')
           .select('step_key')
           .eq('user_id', userId);
 
         const keys = new Set<string>(
-          (progress as any[] | null)?.map((p: any) => p.step_key) ?? []
+          progress?.map((p) => p.step_key) ?? []
         );
         setCompletedKeys(keys);
 
@@ -94,8 +130,8 @@ export function useTutorial() {
       setCompletedKeys((prev) => new Set([...prev, stepKey]));
 
       try {
-        await supabase.from('user_tutorial_progress' as any).upsert(
-          { user_id: userId, step_key: stepKey } as any,
+        await supabase.from('user_tutorial_progress').upsert(
+          { user_id: userId, step_key: stepKey },
           { onConflict: 'user_id,step_key' }
         );
       } catch (err) {
@@ -103,29 +139,6 @@ export function useTutorial() {
       }
     },
     [userId, completedKeys]
-  );
-
-  // ── Navigation ────────────────────────────────────────────
-  const next = useCallback(() => {
-    if (!currentStep) return;
-    markComplete(currentStep.key);
-    if (currentIndex < allSteps.length - 1) {
-      setCurrentIndex((i) => i + 1);
-    } else {
-      // Tutorial finished
-      completeTutorial();
-    }
-  }, [currentStep, currentIndex, allSteps.length, markComplete]);
-
-  const prev = useCallback(() => {
-    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
-  }, [currentIndex]);
-
-  const skipToStep = useCallback(
-    (index: number) => {
-      if (index >= 0 && index < allSteps.length) setCurrentIndex(index);
-    },
-    [allSteps.length]
   );
 
   const completeTutorial = useCallback(async () => {
@@ -138,12 +151,35 @@ export function useTutorial() {
         .update({
           tutorial_completed: true,
           tutorial_version: TUTORIAL_VERSION,
-        } as any)
+        })
         .eq('id', userId);
     } catch (err) {
       console.error('[Tutorial] Failed to mark complete:', err);
     }
   }, [userId]);
+
+  // ── Navigation ────────────────────────────────────────────
+  const next = useCallback(() => {
+    if (!currentStep) return;
+    markComplete(currentStep.key);
+    if (currentIndex < allSteps.length - 1) {
+      setCurrentIndex((i) => i + 1);
+    } else {
+      // Tutorial finished
+      completeTutorial();
+    }
+  }, [currentStep, currentIndex, allSteps.length, markComplete, completeTutorial]);
+
+  const prev = useCallback(() => {
+    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+  }, [currentIndex]);
+
+  const skipToStep = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < allSteps.length) setCurrentIndex(index);
+    },
+    [allSteps.length]
+  );
 
   const dismiss = useCallback(async () => {
     setIsActive(false);
@@ -155,7 +191,7 @@ export function useTutorial() {
         .from('profiles')
         .update({
           tutorial_dismissed_at: new Date().toISOString(),
-        } as any)
+        })
         .eq('id', userId);
     } catch (err) {
       console.error('[Tutorial] Failed to dismiss:', err);
@@ -173,7 +209,7 @@ export function useTutorial() {
     try {
       // Clear progress
       await supabase
-        .from('user_tutorial_progress' as any)
+        .from('user_tutorial_progress')
         .delete()
         .eq('user_id', userId);
 
@@ -183,7 +219,7 @@ export function useTutorial() {
           tutorial_completed: false,
           tutorial_dismissed_at: null,
           tutorial_version: TUTORIAL_VERSION,
-        } as any)
+        })
         .eq('id', userId);
     } catch (err) {
       console.error('[Tutorial] Failed to restart:', err);

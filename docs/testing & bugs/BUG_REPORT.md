@@ -843,9 +843,14 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 |-------|--------|
 | **Date Reported** | 2026-05-16 |
 | **Severity** | High (UX/UI) |
-| **Status** | 🔵 IN PROGRESS |
+| **Status** | ✅ Resolved |
 | **Affects** | `src/components/ui/calendar.tsx` |
 | **Visible Result** | Calendar headers (Weekdays) are scrunched and misaligned; cell spacing is broken in both mobile and desktop views. |
+
+**Description:**  
+The upgrade to `react-day-picker` v9 introduced layout structure changes that caused custom styling regressions. Calendar days, weekday labels, and cell paddings were misaligned and scrunched.
+
+**Resolution:** Refactored `calendar.tsx` to leverage `react-day-picker` v9 `UI` enum layout styles, correctly mapping navigation buttons and grid days to modern Tailwind/CSS classes.
 
 ---
 
@@ -855,10 +860,14 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 |-------|--------|
 | **Date Reported** | 2026-05-16 |
 | **Severity** | Medium (UI) |
-| **Status** | 🔵 IN PROGRESS |
+| **Status** | ✅ Resolved |
 | **Affects** | `src/components/insurance/InsurancePackageSelector.tsx` |
-| **Visible Result** | Pricing labels overlap with value amounts when currency strings or coverage caps are long (e.g., \"P 1,500.00\"). |
+| **Visible Result** | Pricing labels overlap with value amounts when currency strings or coverage caps are long (e.g., "P 1,500.00"). |
 
+**Description:**  
+When long currency formats or high coverage values were displayed (e.g., "P 1,500.00"), labels collided or overflowed the bounds of the package selection cards.
+
+**Resolution:** Updated `InsurancePackageSelector.tsx` to make the pricing and coverage labels dynamically wrap, adjusting grid/flex layouts to handle multi-line strings cleanly on both mobile and desktop views.
 
 ---
 
@@ -898,6 +907,8 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 | **BUG-037** | 2026-05-08 | Admin NotificationMonitoring canonical file missing — Created canonical component, updated AdminCampaigns import, removed orphan "Fixed" file. |
 | **BUG-038** | 2026-05-08 | Navigation realtime channel collision + cleanup leak — User-scoped channel name; cleanup now returned from useEffect itself. |
 | **BUG-039** | 2026-05-08 | useConversationMessages auth listener unreachable + receipts channel leak — Removed dead-code early return; tracked receipts channel on outer scope. |
+| **BUG-069** | 2026-05-19 | Date Picker Layout Regression (v9 Breaking Changes) — Refactored calendar.tsx to map v9 UI elements correctly. |
+| **BUG-070** | 2026-05-19 | Insurance Package Pricing Text Overflow — Updated grid and responsive styling to prevent overlap on long currency formats. |
 
 ---
 
@@ -910,4 +921,4 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026*
+*Updated by: Modisa Maphanyane — May 19, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026 | BUG-069–070 resolved by Antigravity & Modisa — May 19, 2026*
