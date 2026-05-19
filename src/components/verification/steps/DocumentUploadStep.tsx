@@ -45,7 +45,8 @@ const DocumentCameraView: React.FC<{
   photoUrl: string | null;
   onRetake: () => void;
   documentTitle: string;
-}> = ({ onPhotoCapture, photoUrl, onRetake, documentTitle }) => {
+  facingMode?: "user" | "environment";
+}> = ({ onPhotoCapture, photoUrl, onRetake, documentTitle, facingMode = "environment" }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -55,11 +56,12 @@ const DocumentCameraView: React.FC<{
   const initializeCamera = useCallback(async () => {
     try {
       setCameraError(null);
+      setCameraReady(false);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: "environment", // Use back camera for documents
+          width: { ideal: facingMode === 'user' ? 640 : 1280 },
+          height: { ideal: facingMode === 'user' ? 480 : 720 },
+          facingMode: facingMode,
         },
       });
 
@@ -85,7 +87,7 @@ const DocumentCameraView: React.FC<{
       
       setCameraError(errorMessage);
     }
-  }, []);
+  }, [facingMode]);
 
   const cleanupCamera = useCallback(() => {
     if (videoRef.current?.srcObject) {
@@ -136,13 +138,14 @@ const DocumentCameraView: React.FC<{
 
   return (
     <div className="space-y-4">
-      <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-[4/3] max-w-md mx-auto">
+      <div className="relative bg-gray-950 rounded-lg overflow-hidden aspect-[4/3] max-w-md mx-auto shadow-inner border border-gray-800">
         {cameraError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="text-center p-4">
-              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-              <p className="text-xs text-red-600 mb-2">{cameraError}</p>
-              <Button onClick={initializeCamera} size="sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90 p-4">
+            <div className="text-center max-w-xs bg-gray-950/80 p-6 rounded-xl border border-red-500/30 backdrop-blur shadow-2xl">
+              <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-3 animate-[pulse_1.5s_infinite]" />
+              <h4 className="text-sm font-semibold text-white mb-2">Camera Access Failed</h4>
+              <p className="text-xs text-red-400 mb-4 leading-relaxed">{cameraError}</p>
+              <Button onClick={initializeCamera} size="sm" className="bg-red-600 hover:bg-red-700 text-white font-medium px-4">
                 Try Again
               </Button>
             </div>
@@ -160,16 +163,58 @@ const DocumentCameraView: React.FC<{
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-300"
+              style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
             />
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute inset-4 border-2 border-white/50 rounded-lg flex items-center justify-center">
-                <div className="text-white text-center">
-                  <FileText className="h-8 w-8 mx-auto mb-2" />
-                  <p className="text-sm">Position {documentTitle} in frame</p>
-                </div>
+            
+            {/* Spotlight guide overlays */}
+            {cameraReady && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {facingMode === 'user' ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    {/* Circular cutout with high-contrast indicator */}
+                    <div className="relative w-52 h-52 sm:w-60 sm:h-60 rounded-full border-4 border-white/90 shadow-[0_0_0_9999px_rgba(3,7,18,0.55)] flex items-center justify-center">
+                      <div className="absolute inset-0 border border-blue-400/40 rounded-full animate-[ping_2.5s_infinite]" />
+                      <div className="absolute -inset-[2px] border border-white/20 rounded-full" />
+                    </div>
+                    <div className="absolute bottom-6 left-4 right-4 text-center">
+                      <div className="inline-block bg-black/75 backdrop-blur-md text-white text-[11px] px-4 py-2 rounded-full font-medium border border-white/10 shadow-xl tracking-wide">
+                        Position your face inside the circle
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    {/* Card cutout */}
+                    <div className="relative w-[85%] h-[75%] border-2 border-dashed border-white/80 rounded-xl shadow-[0_0_0_9999px_rgba(3,7,18,0.55)] flex items-center justify-center">
+                      <div className="absolute -inset-[2px] border border-white/20 rounded-xl" />
+                      <div className="text-white/60 text-center pointer-events-none p-4 select-none">
+                        <FileText className="h-8 w-8 mx-auto mb-2 text-white/80 animate-[pulse_1.5s_infinite]" />
+                        <span className="text-[11px] font-medium tracking-wide block">Align document with bounds</span>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-6 left-4 right-4 text-center">
+                      <div className="inline-block bg-black/75 backdrop-blur-md text-white text-[11px] px-4 py-2 rounded-full font-medium border border-white/10 shadow-xl tracking-wide">
+                        Position {documentTitle} in frame
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Premium Loader during camera startup */}
+            {!cameraReady && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/90 text-white">
+                <div className="relative flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+                  <Camera className="h-5 w-5 text-blue-400 absolute animate-[pulse_1s_infinite]" />
+                </div>
+                <span className="mt-4 text-xs font-semibold text-gray-400 tracking-widest animate-pulse">
+                  SECURE CAMERA INITIALIZING...
+                </span>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -181,7 +226,7 @@ const DocumentCameraView: React.FC<{
           <Button
             onClick={capturePhoto}
             disabled={isCapturing || !cameraReady}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-transform"
           >
             <Camera className="h-4 w-4" />
             <span>{isCapturing ? "Capturing..." : "Take Photo"}</span>
@@ -190,7 +235,7 @@ const DocumentCameraView: React.FC<{
           <Button
             variant="outline"
             onClick={onRetake}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 border-gray-300 hover:bg-gray-50 active:scale-95 transition-transform"
           >
             <RotateCcw className="h-4 w-4" />
             <span>Retake</span>
@@ -482,6 +527,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
                   photoUrl={isUploaded?.url || null}
                   onRetake={() => handleRetakePhoto(doc.id)}
                   documentTitle={doc.title}
+                  facingMode={doc.id === 'selfie_photo' ? 'user' : 'environment'}
                 />
               ) : (
                 <DocumentManualUpload
