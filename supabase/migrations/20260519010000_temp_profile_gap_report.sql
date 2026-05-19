@@ -1,0 +1,1 @@
+-- Temporary diagnostic migration cleaned up in 20260519030000_cleanup_temp_diagnostics.sql

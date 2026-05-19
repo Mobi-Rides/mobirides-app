@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
@@ -32,6 +33,7 @@ import { isFeatureEnabled } from "@/lib/featureFlags";
 import { UnifiedPriceSummary } from "./UnifiedPriceSummary";
 import { InsurancePackageSelector } from "@/components/insurance/InsurancePackageSelector";
 import { InsuranceService } from "@/services/insuranceService";
+import { Checkbox } from "@/components/ui/checkbox";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import {
   validatePromoCode,
@@ -90,6 +92,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): Rea
 
   // Promo Code State
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+  const [renterTermsAccepted, setRenterTermsAccepted] = useState(false);
   const [destinationType, setDestinationType] = useState<DestinationType>('local');
 
   const basePrice = useMemo(() => {
@@ -334,6 +337,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): Rea
           longitude: pickupLocation.longitude,
           destination_type: destinationType,
           status: "pending", // Explicitly set status to a valid enum value
+          renter_terms_accepted_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -582,7 +586,10 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): Rea
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="sm:max-w-[425px] md:max-w-lg max-h-[90vh] overflow-hidden p-0 flex flex-col">
+        <DialogContent className={cn(
+          "sm:max-w-[425px] max-h-[90vh] overflow-hidden p-0 flex flex-col transition-all duration-300",
+          wizardStep === 2 ? "md:max-w-2xl lg:max-w-3xl" : "md:max-w-lg"
+        )}>
           {/* Progress indicator */}
           <BookingWizardProgress
             currentStep={wizardStep}
@@ -724,6 +731,27 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): Rea
                   promoCode={appliedPromo?.code}
                   destinationType={destinationType}
                 />
+
+                {/* Compliance T&C Checkbox */}
+                <div className="flex items-start gap-3 p-4 rounded-xl border border-muted bg-muted/30 hover:bg-muted/50 transition-colors mt-4">
+                  <Checkbox
+                    id="renter-terms"
+                    checked={renterTermsAccepted}
+                    onCheckedChange={(checked) => setRenterTermsAccepted(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <div className="space-y-1">
+                    <label
+                      htmlFor="renter-terms"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Rental Terms and Conditions</a>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      By checking this, you confirm that you have read, understood, and agree to be bound by the Mobi Rides rental agreement.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -757,7 +785,8 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): Rea
                 }
                 disabled={
                   !startDate || !endDate || isLoading || isOwner ||
-                  !isAvailable || !pickupLocation || isVerificationLoading
+                  !isAvailable || !pickupLocation || isVerificationLoading ||
+                  (isVerified && !renterTermsAccepted)
                 }
                 className="flex-1"
                 variant={!isVerified && !isVerificationLoading ? "outline" : "default"}

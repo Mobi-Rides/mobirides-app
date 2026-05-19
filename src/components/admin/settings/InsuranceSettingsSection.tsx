@@ -128,7 +128,7 @@ export const InsuranceSettingsSection = () => {
   const fetchPackages = async () => {
     try {
       setLoading(true);
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('insurance_packages')
         .select('*')
         .order('daily_rate', { ascending: true });
@@ -136,9 +136,9 @@ export const InsuranceSettingsSection = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const mapped: InsurancePackage[] = data.map((row: any) => ({
+        const mapped: InsurancePackage[] = data.map((row) => ({
           id: row.id,
-          name: row.name || row.tier_name || 'Unknown',
+          name: row.name || (row as unknown as { tier_name?: string }).tier_name || 'Unknown',
           dailyRate: row.daily_rate || 0,
           coverageCap: row.coverage_cap || 0,
           excessPercentage: row.excess_percentage || 0,
@@ -180,7 +180,7 @@ export const InsuranceSettingsSection = () => {
           features: pkg.features,
         };
 
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from('insurance_packages')
           .update(upsertData)
           .eq('id', pkg.id);

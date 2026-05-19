@@ -84,7 +84,7 @@ export const DynamicPricingRulesSection = () => {
   };
 
   const handleAddRule = () => {
-    const newRule = {
+    const newRule: PricingRule = {
       id: uuidv4(),
       name: 'New Rule',
       type: PricingRuleType.DESTINATION,
@@ -92,6 +92,8 @@ export const DynamicPricingRulesSection = () => {
       multiplier: 1.0,
       conditions: {},
       priority: localRules.length + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     
     const validationError = validateDurationRuleCandidate(localRules, newRule);
@@ -124,7 +126,7 @@ export const DynamicPricingRulesSection = () => {
       return;
     }
 
-    const newRule = {
+    const newRule: PricingRule = {
       id: uuidv4(),
       name: 'New Duration Rule',
       type: PricingRuleType.DURATION,
@@ -132,6 +134,8 @@ export const DynamicPricingRulesSection = () => {
       multiplier: 0.9,
       conditions,
       priority: localRules.length + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const validationError = validateDurationRuleCandidate(localRules, newRule);
@@ -144,11 +148,11 @@ export const DynamicPricingRulesSection = () => {
     setIsDirty(true);
   };
 
-  const handleUpdateRule = (id: string, updates: Record<string, any>) => {
+  const handleUpdateRule = (id: string, updates: Partial<PricingRule>) => {
     const currentRule = localRules.find((rule) => rule.id === id);
     if (!currentRule) return;
 
-    const candidateRule = {
+    const candidateRule: PricingRule = {
       ...currentRule,
       ...updates,
       conditions: updates.conditions ?? currentRule.conditions,
@@ -316,7 +320,7 @@ export const DynamicPricingRulesSection = () => {
                     <Select
                       value={rule.type}
                       onValueChange={(value) => {
-                        const updates: Record<string, any> = { type: value, conditions: {} };
+                        const updates: Partial<PricingRule> = { type: value as PricingRuleType, conditions: {} };
                         if (value === PricingRuleType.DESTINATION) {
                           updates.conditions = { destination_type: 'local' };
                           updates.multiplier = 1.0;
