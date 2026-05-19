@@ -1,11 +1,12 @@
 
 import React, { useState } from "react";
-import { KeyRound, MapPin, Star, Clock, CreditCard } from "lucide-react";
+import { KeyRound, MapPin, Star, Clock, CreditCard, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
 import { ExtensionRequestDialog } from "./ExtensionRequestDialog";
 import { Booking } from "@/types/booking";
+import { useRentalAgreement } from "@/hooks/useRentalAgreement";
 
 interface RentalActionsProps {
   bookingId: string;
@@ -38,8 +39,7 @@ export const RentalActions = ({
 }: RentalActionsProps) => {
   const navigate = useNavigate();
   const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false);
-
-
+  const { downloadAgreement, isLoading: isAgreementLoading } = useRentalAgreement(bookingId);
 
   const handleExtendRental = () => {
     setIsExtensionDialogOpen(true);
@@ -52,6 +52,26 @@ export const RentalActions = ({
   return (
     <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
       <TooltipProvider>
+        {/* Download Agreement Button */}
+        {(booking.status === 'confirmed' || booking.status === 'in_progress' || booking.status === 'completed') && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="w-full sm:w-auto flex items-center gap-2"
+                variant="outline"
+                onClick={downloadAgreement}
+                disabled={isAgreementLoading}
+              >
+                <FileText className="h-4 w-4 text-primary" />
+                Download Agreement
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Download the signed legally binding rental agreement PDF</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* Pay Now Button */}
         {booking.status === 'awaiting_payment' && booking.payment_status !== 'paid' && isRenter && (
           <Button

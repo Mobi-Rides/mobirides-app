@@ -24,6 +24,8 @@ export interface BookingWithRelations {
   discount_amount?: number;
   promo_code_id?: string;
   destination_type?: DestinationType | string;
+  renter_terms_accepted_at?: string | null;
+  host_terms_accepted_at?: string | null;
   cars: {
     id?: string;
     brand: string;

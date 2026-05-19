@@ -108,7 +108,11 @@ const BookingRequestDetails = () => {
         }
       }
 
-      const result = await bookingLifecycle.updateStatus(id as string, status);
+      const result = await bookingLifecycle.updateStatus(
+        id as string,
+        status,
+        status === 'awaiting_payment' ? { host_terms_accepted_at: new Date().toISOString() } : undefined
+      );
       if (!result.success) {
         throw result.error;
       }
