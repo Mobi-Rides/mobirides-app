@@ -469,6 +469,7 @@ export type Database = {
           end_date: string
           end_time: string | null
           host_preparation_completed: boolean | null
+          host_terms_accepted_at: string | null
           id: string
           insurance_policy_id: string | null
           insurance_premium: number | null
@@ -482,6 +483,7 @@ export type Database = {
           promo_code_id: string | null
           renter_id: string
           renter_preparation_completed: boolean | null
+          renter_terms_accepted_at: string | null
           start_date: string
           start_time: string | null
           status: Database["public"]["Enums"]["booking_status"]
@@ -502,6 +504,7 @@ export type Database = {
           end_date: string
           end_time?: string | null
           host_preparation_completed?: boolean | null
+          host_terms_accepted_at?: string | null
           id?: string
           insurance_policy_id?: string | null
           insurance_premium?: number | null
@@ -515,6 +518,7 @@ export type Database = {
           promo_code_id?: string | null
           renter_id: string
           renter_preparation_completed?: boolean | null
+          renter_terms_accepted_at?: string | null
           start_date: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
@@ -535,6 +539,7 @@ export type Database = {
           end_date?: string
           end_time?: string | null
           host_preparation_completed?: boolean | null
+          host_terms_accepted_at?: string | null
           id?: string
           insurance_policy_id?: string | null
           insurance_premium?: number | null
@@ -548,6 +553,7 @@ export type Database = {
           promo_code_id?: string | null
           renter_id?: string
           renter_preparation_completed?: boolean | null
+          renter_terms_accepted_at?: string | null
           start_date?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
