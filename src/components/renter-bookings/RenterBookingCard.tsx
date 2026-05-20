@@ -131,15 +131,15 @@ export const RenterBookingCard = ({ booking, onCancelBooking, onPayNow }: Renter
                     Review
                   </Button>
                 )}
-                {(booking.status === "awaiting_payment" || booking.status === "pending") && (
-                  <Button 
-                    size="sm" 
+                {booking.status === "awaiting_payment" && (
+                  <Button
+                    size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (booking.status === "awaiting_payment" && onPayNow) {
+                      if (onPayNow) {
                         onPayNow(booking.id);
                       } else {
-                        navigate(`/rental-details/${booking.id}`);
+                        navigate(`/rental-details/${booking.id}?pay=true`);
                       }
                     }}
                     className="bg-primary text-primary-foreground"
