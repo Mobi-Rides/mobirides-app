@@ -206,7 +206,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
             </Button>
           </TouchTarget>
 
-          {/* Book Now Button - Full height for easy tapping */}
+          {/* Request to Book Button - Full height for easy tapping */}
           <Button
             className={cn(
               "flex-1 h-12 min-h-[48px] rounded-xl",
@@ -215,10 +215,10 @@ export const CarActions = ({ car }: CarActionsProps) => {
               "touch-manipulation"
             )}
             onClick={handleBookNow}
-            aria-label={`Book ${car.brand} ${car.model} now`}
+            aria-label={`Request to book ${car.brand} ${car.model}`}
           >
             <Calendar className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>Request</span>
+            <span>Request to Book</span>
           </Button>
         </div>
       )}
