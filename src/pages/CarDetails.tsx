@@ -90,6 +90,7 @@ const CarDetails = () => {
 
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", carId],
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
@@ -170,14 +171,21 @@ const CarDetails = () => {
   }
 
   if (error || !car) {
+    const isNotFound = !car || (error instanceof Error && error.message === "Car not found");
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
-        <MobileHeader title="Error" showBackButton backTo="/" />
+        <MobileHeader title={isNotFound ? "Not Found" : "Error"} showBackButton backTo="/" />
         <div className="container mx-auto">
           <div className="p-4 text-center space-y-4 mt-8">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
-            <h2 className="text-xl font-semibold text-red-500">Error loading vehicle details</h2>
-            <p className="text-muted-foreground dark:text-gray-400">Please try again later</p>
+            <h2 className="text-xl font-semibold text-red-500">
+              {isNotFound ? "Vehicle not found" : "Error loading vehicle details"}
+            </h2>
+            <p className="text-muted-foreground dark:text-gray-400">
+              {isNotFound
+                ? "This vehicle listing may have been removed or the link is invalid."
+                : "Please try again later"}
+            </p>
           </div>
         </div>
         <Navigation />
