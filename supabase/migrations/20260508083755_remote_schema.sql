@@ -552,9 +552,9 @@ drop function if exists "public"."get_admin_users"();
 
 drop function if exists "public"."get_user_notifications"(p_page integer, p_page_size integer, p_only_unread boolean);
 
-drop type "public"."http_request";
+-- drop type "public"."http_request";
 
-drop type "public"."http_response";
+-- drop type "public"."http_response";
 
 alter table "archive"."messages" alter column "status" set default 'sent'::public.message_status;
 
@@ -3791,9 +3791,9 @@ END;
 $function$
 ;
 
-create type "public"."http_request" as ("method" public.http_method, "uri" character varying, "headers" public.http_header[], "content_type" character varying, "content" character varying);
+-- create type "public"."http_request" as ("method" public.http_method, "uri" character varying, "headers" public.http_header[], "content_type" character varying, "content" character varying);
 
-create type "public"."http_response" as ("status" integer, "content_type" character varying, "headers" public.http_header[], "content" character varying);
+-- create type "public"."http_response" as ("status" integer, "content_type" character varying, "headers" public.http_header[], "content" character varying);
 
 CREATE OR REPLACE FUNCTION public.increment_car_view_count(car_id uuid)
  RETURNS void
@@ -6684,6 +6684,7 @@ CREATE TRIGGER trigger_log_bypass_session_creation AFTER INSERT ON public.verifi
 CREATE TRIGGER trigger_log_bypass_session_deactivation AFTER UPDATE ON public.verification_bypass_sessions FOR EACH ROW EXECUTE FUNCTION public.log_bypass_session_deactivation();
 
 drop trigger if exists "on_auth_user_created" on "auth"."users";
+drop trigger if exists "on_auth_user_created_profile" on "auth"."users";
 
 CREATE TRIGGER on_auth_user_created_profile AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_profile();
 

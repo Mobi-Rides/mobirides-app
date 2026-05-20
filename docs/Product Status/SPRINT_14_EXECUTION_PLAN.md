@@ -31,11 +31,11 @@ Sprint 14 focuses on launch hardening: SuperAdmin security expansion, native pus
 
 | Ticket | Linked Bug | Owner | Priority | Points | Status | Summary |
 |--------|------------|-------|----------|--------|--------|---------|
-| **S14-001** | BUG-032 | Modisa | P0 | 3 | 🔴 To Do | Restore authenticated user storage policies for `verification-documents` and `verification-selfies`. |
-| **S14-002** | BUG-033 | Modisa | P0 | 2 | 🔴 To Do | Confirm/create `car-documents` bucket and policies for vehicle listing document uploads. |
-| **S14-003** | BUG-034 | Arnold | P1 | 3 | 🔴 To Do | Resolve `chat-attachments` vs `message-attachments` bucket naming mismatch. |
-| **S14-004** | BUG-035 | Arnold | P1 | 2 | 🔴 To Do | Confirm/create `handover-photos` bucket and upload/read policies. |
-| **S14-005** | BUG-036 | Modisa | P1 | 5 | 🔴 To Do | Run full storage bucket/policy repair and regression test avatars, car images, insurance claims, return photos, and verification. |
+| **S14-001** | BUG-032 | Modisa | P0 | 3 | ✅ Done | Restore authenticated user storage policies for `verification-documents` and `verification-selfies`. |
+| **S14-002** | BUG-033 | Modisa | P0 | 2 | ✅ Done | Confirm/create `car-documents` bucket and policies for vehicle listing document uploads. |
+| **S14-003** | BUG-034 | Arnold | P1 | 3 | ✅ Done | Resolve `chat-attachments` vs `message-attachments` bucket naming mismatch. |
+| **S14-004** | BUG-035 | Arnold | P1 | 2 | ✅ Done | Confirm/create `handover-photos` bucket and upload/read policies. |
+| **S14-005** | BUG-036 | Modisa | P1 | 5 | ✅ Done | Run full storage bucket/policy repair and regression test avatars, car images, insurance claims, return photos, and verification. |
 
 **Acceptance Criteria:**
 - Verification document upload succeeds for authenticated users.

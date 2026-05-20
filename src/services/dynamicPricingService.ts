@@ -265,7 +265,7 @@ export class DynamicPricingService {
         multiplier: 0.8,
         priority: 65,
         conditions: {
-          min_duration_days: 28
+          min_duration_days: 14
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -279,7 +279,7 @@ export class DynamicPricingService {
         priority: 60,
         conditions: {
           min_duration_days: 7,
-          max_duration_days: 27
+          max_duration_days: 13
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

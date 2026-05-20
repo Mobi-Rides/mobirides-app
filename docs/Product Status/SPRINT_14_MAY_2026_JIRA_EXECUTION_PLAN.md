@@ -90,11 +90,11 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Category 5: Storage & Merge Remediation (P0)
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **MOB-123** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | Master Storage Reconciliation: Fix missing buckets & RLS drift. |
+| **MOB-123** | Antigravity | P0 | 8 | ✅ DONE | Master Storage Reconciliation: Fix missing buckets & RLS drift. |
 | **MOB-124** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | Resolve Analytics Merge conflicts & satisfy static analysis. |
 | **MOB-125** | Antigravity | P0 | 3 | 🔵 IN PROGRESS | Finalize Production Branding & OG Asset Reconciliation. |
 | **MOB-126** | Tapologo | P1 | 8 | 🟡 TO DO | [RE-DESIGN] Premium Auth Landing experience (Desktop & Mobile). [View Plan](MOB_126_AUTHENTICATION_REDESIGN_IMPLEMENTATION.md) |
-| **S14-004** | Antigravity | P1 | 3 | 🟡 TO DO | Execute Master Storage Migration & Verify Multi-Tenant Isolation. |
+| **S14-004** | Antigravity | P1 | 3 | ✅ DONE | Execute Master Storage Migration & Verify Multi-Tenant Isolation. |
 | **MOB-PAY-003** | Antigravity | P0 | 5 | 🟡 TO DO | [REMEDIATION] Finalize Realtime subscriptions and Pay Now UI actions. [View Plan](../plans/20260507_BOOKING_PAYMENT_REALTIME_REMEDIATION_PLAN.md) |
 
 ### Category 6: Documentation Reconciliation & Audit (P1)
@@ -120,8 +120,8 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 2 of 17 |
-| **Current Blockers** | Storage Policy Inconsistency (BUG-054-058), Analytics Merge Parity (BUG-059), Branding Regression (BUG-060) |
+| **Tasks Completed** | 4 of 17 |
+| **Current Blockers** | Analytics Merge Parity (BUG-059), Branding Regression (BUG-060) |
 
 ---
 
