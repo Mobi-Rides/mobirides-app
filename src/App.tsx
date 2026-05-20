@@ -53,6 +53,7 @@ const CommunityGuidelines = lazy(() => import("@/pages/CommunityGuidelines"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const ProfileView = lazy(() => import("@/pages/ProfileView"));
 const Map = lazy(() => import("@/pages/Map"));
+const HandoverPage = lazy(() => import("@/pages/HandoverPage"));
 const More = lazy(() => import("@/pages/More"));
 const CarDetails = lazy(() => import("@/pages/CarDetails"));
 const AddCar = lazy(() => import("@/pages/AddCar"));
@@ -361,6 +362,13 @@ function App() {
                               <HandoverRoute>
                                 <Map />
                               </HandoverRoute>
+                            </ProtectedRoute>
+                          </Suspense>
+                        } />
+                        <Route path="/handover/:sessionId" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <ProtectedRoute>
+                              <HandoverPage />
                             </ProtectedRoute>
                           </Suspense>
                         } />

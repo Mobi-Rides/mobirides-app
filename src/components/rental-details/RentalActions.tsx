@@ -143,12 +143,15 @@ export const RentalActions = ({
               <Button
                 className="w-full sm:w-auto flex items-center gap-2"
                 variant="outline"
-                onClick={() =>
-                  navigate(
-                    `/map?handover=true&bookingId=${bookingId}&role=${isRenter ? "renter" : "host"
-                    }`
-                  )
-                }
+                onClick={() => {
+                  const activeSession = booking.handover_sessions
+                    ?.find(s => !s.handover_completed);
+                  if (activeSession) {
+                    navigate(`/handover/${activeSession.id}`);
+                  } else {
+                    navigate(`/map?handover=true&bookingId=${bookingId}&role=${isRenter ? "renter" : "host"}`);
+                  }
+                }}
               >
                 <MapPin className="h-4 w-4" />
                 View Handover Status
