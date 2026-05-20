@@ -32,6 +32,14 @@ const RentalDetailsRefactored = () => {
 
   // Handle Android hardware back button
   useHardwareBackButton();
+
+  const handleBack = () => {
+    if (location.key === "default") {
+      navigate('/bookings');
+    } else {
+      navigate(-1);
+    }
+  };
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
@@ -120,7 +128,7 @@ const RentalDetailsRefactored = () => {
     <div className="container mx-auto px-4 py-8 pb-20 animate-fade-in">
       <RentalDetailsHeader
         status={booking?.status || 'unknown'}
-        onBack={() => navigate('/bookings')}
+        onBack={handleBack}
       />
 
       <div className="space-y-6">
