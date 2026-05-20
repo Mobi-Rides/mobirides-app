@@ -745,7 +745,7 @@ export const BookingDialog = ({ car, isOpen, onClose }: BookingDialogProps): Rea
                       htmlFor="renter-terms"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
-                      I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Rental Terms and Conditions</a>
+                      I agree to the <a href="/terms/renter" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Rental Terms and Conditions</a>
                     </label>
                     <p className="text-xs text-muted-foreground">
                       By checking this, you confirm that you have read, understood, and agree to be bound by the Mobi Rides rental agreement.
