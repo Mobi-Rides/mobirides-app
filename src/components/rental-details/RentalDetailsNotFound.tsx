@@ -2,15 +2,22 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 
 export const RentalDetailsNotFound = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
-      <Button variant="ghost" className="mb-6" onClick={() => navigate('/bookings')}>
+      <Button variant="ghost" className="mb-6" onClick={() => {
+        if (location.key === "default") {
+          navigate('/bookings');
+        } else {
+          navigate(-1);
+        }
+      }}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
