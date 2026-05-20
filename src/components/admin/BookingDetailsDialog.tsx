@@ -22,7 +22,7 @@ const useBookingDetails = (id: string | null) =>
           destination_type,
           cars:car_id (brand, model, year, price_per_day, location),
           renter:renter_id (full_name, phone_number),
-          payment_transactions (id, amount, status, payment_method, created_at)
+          payment_transactions:payment_transactions!payment_transactions_booking_id_fkey (id, amount, status, payment_method, created_at)
         `)
         .eq("id", id!)
         .single();
