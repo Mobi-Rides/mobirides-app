@@ -234,12 +234,13 @@ Deno.serve(async (req) => {
     // Construct the reset URL with the token
     const resetUrl = `${appUrl}/reset-password?token=${token}&redirectedFromEmail=true`;
 
-    // Call the resend-service function to send branded email
+    // Call the resend-service function to send branded email — must use service role key,
+    // not the requesting user's JWT, otherwise resend-service rejects with invalid JWT.
     const resendResponse = await fetch(`${SUPABASE_URL}/functions/v1/resend-service`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
         'apikey': SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({

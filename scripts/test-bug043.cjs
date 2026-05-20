@@ -17,8 +17,10 @@
  *    This silently returns null if GoTrue changes the URL format.
  *    Fix: primary source is now properties.hashed_token with URL-parse as fallback.
  *
- * 3. supabase/functions/send-password-reset/index.ts — same fragility as #2.
- *    Fix: same hashed_token-first approach.
+ * 3. supabase/functions/send-password-reset/index.ts — same fragility as #2, plus
+ *    resend-service was called with the requesting user's JWT (authHeader) instead of
+ *    the service role key → resend-service returned UNAUTHORIZED_INVALID_JWT_FORMAT.
+ *    Fix: hashed_token-first approach + service role key used for resend-service call.
  */
 
 const fs = require('fs');
@@ -109,6 +111,12 @@ assert(
 assert(
   'send-password-reset edge fn: URL-parse is kept as fallback',
   edgeFn.includes('action_link') && edgeFn.includes('searchParams.get')
+);
+
+assert(
+  'send-password-reset edge fn: resend-service called with service role key, not user JWT',
+  edgeFn.includes('Bearer ${SUPABASE_SERVICE_ROLE_KEY}') &&
+  !edgeFn.includes("'Authorization': authHeader")
 );
 
 // ── Shared: reset URL always includes token ────────────────────────────────
