@@ -12,7 +12,7 @@ export const CarActions = ({ onViewDetails, onBookNow }: CarActionsProps) => {
         View Details
       </Button>
       <Button className="flex-1" onClick={onBookNow}>
-        Book Now
+        Request to Book
       </Button>
     </div>
   );

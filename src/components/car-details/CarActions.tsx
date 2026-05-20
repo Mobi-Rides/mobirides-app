@@ -147,7 +147,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
 
   return (
     <div
-      className="sticky bottom-[72px] md:bottom-0 bg-background dark:bg-gray-800 p-4 rounded-t-2xl border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] safe-area-pb"
+      className="sticky bottom-[72px] md:bottom-[84px] bg-background dark:bg-gray-800 p-4 rounded-t-2xl border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] safe-area-pb"
       role="region"
       aria-label="Car booking actions"
     >
@@ -206,7 +206,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
             </Button>
           </TouchTarget>
 
-          {/* Book Now Button - Full height for easy tapping */}
+          {/* Request to Book Button - Full height for easy tapping */}
           <Button
             className={cn(
               "flex-1 h-12 min-h-[48px] rounded-xl",
@@ -215,10 +215,10 @@ export const CarActions = ({ car }: CarActionsProps) => {
               "touch-manipulation"
             )}
             onClick={handleBookNow}
-            aria-label={`Book ${car.brand} ${car.model} now`}
+            aria-label={`Request to book ${car.brand} ${car.model}`}
           >
             <Calendar className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>Request</span>
+            <span>Request to Book</span>
           </Button>
         </div>
       )}
