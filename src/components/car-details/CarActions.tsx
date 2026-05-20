@@ -147,7 +147,7 @@ export const CarActions = ({ car }: CarActionsProps) => {
 
   return (
     <div
-      className="sticky bottom-[72px] md:bottom-0 bg-background dark:bg-gray-800 p-4 rounded-t-2xl border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] safe-area-pb"
+      className="sticky bottom-[72px] md:bottom-[84px] bg-background dark:bg-gray-800 p-4 rounded-t-2xl border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] safe-area-pb"
       role="region"
       aria-label="Car booking actions"
     >
