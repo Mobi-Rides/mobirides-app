@@ -5,6 +5,12 @@ import { Calendar, MapPin, User, Car, Download, Receipt } from "lucide-react";
 import { format } from "date-fns";
 import { BookingWithRelations } from "@/types/booking";
 import { UnifiedPriceSummary } from "../booking/UnifiedPriceSummary";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: { finalY: number };
+}
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -18,8 +24,76 @@ export const ReceiptModal = ({ isOpen, onClose, booking }: ReceiptModalProps) =>
   };
 
   const handleDownload = () => {
-    // Future implementation for PDF download
-    console.log('Download receipt for booking:', booking.id);
+    const receiptNo = booking.id.slice(-8).toUpperCase();
+    const exportDate = new Date().toISOString().slice(0, 10);
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(0, 51, 102);
+    doc.text('MobiRides Receipt', 105, 18, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Receipt #${receiptNo}`, 105, 25, { align: 'center' });
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
+
+    doc.setDrawColor(200);
+    doc.line(14, 34, 196, 34);
+
+    // Booking details table
+    autoTable(doc, {
+      startY: 39,
+      head: [['Booking Details', '']],
+      body: [
+        ['Vehicle',         `${booking.cars.brand} ${booking.cars.model}`],
+        ['Renter',          booking.renter?.full_name || 'N/A'],
+        ['Pickup Location', booking.cars.location || 'Not specified'],
+        ['Rental Period',   `${format(new Date(booking.start_date), 'MMM dd, yyyy')} – ${format(new Date(booking.end_date), 'MMM dd, yyyy')}`],
+        ['Duration',        `${days} day${days !== 1 ? 's' : ''}`],
+        ['Payment Date',    format(new Date(booking.created_at), 'MMM dd, yyyy')],
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [0, 51, 102] },
+      styles: { fontSize: 10 },
+    });
+
+    // Payment summary table
+    const paymentRows: [string, string][] = [
+      [`Daily Rate × ${days} day${days !== 1 ? 's' : ''}`, `BWP ${basePrice.toFixed(2)}`],
+    ];
+    if (dynamicPricing) {
+      paymentRows.push(['Dynamic Pricing Multiplier', `×${dynamicPricing.multiplier.toFixed(2)}`]);
+    }
+    if (booking.insurance_premium && booking.insurance_premium > 0) {
+      paymentRows.push(['Insurance Premium', `BWP ${booking.insurance_premium.toFixed(2)}`]);
+    }
+    if (booking.discount_amount && booking.discount_amount > 0) {
+      paymentRows.push(['Discount', `-BWP ${booking.discount_amount.toFixed(2)}`]);
+    }
+    paymentRows.push(['Total Paid', `BWP ${booking.total_price.toFixed(2)}`]);
+
+    const afterDetails = (doc as jsPDFWithAutoTable).lastAutoTable.finalY + 10;
+    autoTable(doc, {
+      startY: afterDetails,
+      head: [['Payment Summary', '']],
+      body: paymentRows,
+      theme: 'grid',
+      headStyles: { fillColor: [40, 167, 69] },
+      styles: { fontSize: 10 },
+      didParseCell: (data) => {
+        if (data.row.index === paymentRows.length - 1) {
+          data.cell.styles.fontStyle = 'bold';
+        }
+      },
+    });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text('MobiRides | support@mobirides.com', 105, 285, { align: 'center' });
+
+    doc.save(`receipt_${receiptNo}_${exportDate}.pdf`);
   };
 
   // Derive calculations if fields missing (migration fallback)
