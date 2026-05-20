@@ -27,6 +27,25 @@ interface ProfileData {
   updated_at: string | null;
 }
 
+const parsePhoneNumber = (fullNumber: string | null) => {
+  if (!fullNumber) return { countryCode: "+267", localNumber: "" };
+  const normalized = fullNumber.trim();
+  if (normalized.startsWith("+")) {
+    const sortedCodes = [...countryCodes].sort((a, b) => b.code.length - a.code.length);
+    for (const { code } of sortedCodes) {
+      if (normalized.startsWith(code)) {
+        return { countryCode: code, localNumber: normalized.slice(code.length) };
+      }
+    }
+    return { countryCode: normalized.slice(0, 4), localNumber: normalized.slice(4) };
+  } else {
+    if (normalized.startsWith("267")) {
+      return { countryCode: "+267", localNumber: normalized.slice(3) };
+    }
+    return { countryCode: "+267", localNumber: normalized };
+  }
+};
+
 interface ProfileEditViewProps {
   profileData: ProfileData | null;
 }
@@ -34,8 +53,10 @@ interface ProfileEditViewProps {
 const ProfileEditView: React.FC<ProfileEditViewProps> = ({ profileData }) => {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(profileData?.full_name || "");
-  const [phoneNumber, setPhoneNumber] = useState(profileData?.phone_number ? profileData.phone_number.slice(4) : "");
-  const [countryCode, setCountryCode] = useState(profileData?.phone_number ? profileData.phone_number.slice(0, 4) : "+267");
+  
+  const initialPhone = parsePhoneNumber(profileData?.phone_number || null);
+  const [phoneNumber, setPhoneNumber] = useState(initialPhone.localNumber);
+  const [countryCode, setCountryCode] = useState(initialPhone.countryCode);
   const [avatarUrl, setAvatarUrl] = useState(profileData?.avatar_url || "");
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
@@ -43,8 +64,9 @@ const ProfileEditView: React.FC<ProfileEditViewProps> = ({ profileData }) => {
   useEffect(() => {
     if (profileData) {
       setFullName(profileData.full_name || "");
-      setPhoneNumber(profileData?.phone_number ? profileData.phone_number.slice(4) : "");
-      setCountryCode(profileData?.phone_number ? profileData.phone_number.slice(0, 4) : "+267");
+      const parsed = parsePhoneNumber(profileData.phone_number);
+      setPhoneNumber(parsed.localNumber);
+      setCountryCode(parsed.countryCode);
       setAvatarUrl(profileData.avatar_url || "");
     }
   }, [profileData]);

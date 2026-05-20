@@ -5,7 +5,7 @@
  * and returns identifier, title, assignee name, and updatedAt.
  */
 
-import { createClient } from '@linear/sdk';
+import { LinearClient } from '@linear/sdk';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -17,7 +17,7 @@ if (!LINEAR_API_KEY) {
   process.exit(1);
 }
 
-const linearClient = createClient({
+const linearClient = new LinearClient({
   apiKey: LINEAR_API_KEY,
 });
 
@@ -30,26 +30,32 @@ interface IssueData {
 
 const fetchInProgressIssues = async (): Promise<IssueData[]> => {
   try {
-    const issues = await linearClient.issues({
+    const issuesResponse = await linearClient.issues({
       filter: {
         state: {
           type: { eq: 'started' },
         },
       },
-      orderBy: { field: 'UPDATED_AT', direction: 'DESC' },
       first: 50,
     });
+
+    const issues = issuesResponse.nodes;
 
     if (!issues || issues.length === 0) {
       return [];
     }
 
-    return issues.map((issue) => ({
-      identifier: issue.identifier,
-      title: issue.title,
-      assigneeName: issue.assignee?.name,
-      updatedAt: issue.updatedAt,
-    }));
+    return Promise.all(
+      issues.map(async (issue) => {
+        const assignee = await issue.assignee;
+        return {
+          identifier: issue.identifier,
+          title: issue.title,
+          assigneeName: assignee?.name,
+          updatedAt: issue.updatedAt,
+        };
+      })
+    );
   } catch (error) {
     console.error('Error fetching issues:', error instanceof Error ? error.message : String(error));
     throw error;
