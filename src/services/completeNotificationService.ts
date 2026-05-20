@@ -95,7 +95,7 @@ export class CompleteNotificationService {
               totalAmount: (metadata?.totalAmount as number) || 0,
               bookingReference: (metadata?.bookingReference as string) || ''
             },
-            typeStr === 'booking_request_received' || typeStr.includes('_host') // isHost if received or host-specific type
+            typeStr === 'booking_request_received' || typeStr === 'booking_request_sent' || typeStr.includes('_host') // use request template for pending bookings, confirmation only after host approval
           );
         }
         // Add more WhatsApp mappings as needed
@@ -200,7 +200,7 @@ export class CompleteNotificationService {
         };
 
         // Add specific data mappings for known templates
-        if (templateKey === 'booking-confirmation') {
+        if (templateKey === 'booking-confirmation' || templateKey === 'booking-request-received') {
           templateData.customerName = name;
         } else if (templateKey === 'booking-request' || templateKey === 'owner-booking-notification') {
           templateData.hostName = name;
@@ -237,7 +237,7 @@ export class CompleteNotificationService {
       case 'booking_request_received':
         return 'booking-request-received';
       case 'booking_request_sent':
-        return 'booking-request';
+        return 'booking-request-received';
       case 'awaiting_payment':
       case 'payment_required':
         return 'awaiting-payment';

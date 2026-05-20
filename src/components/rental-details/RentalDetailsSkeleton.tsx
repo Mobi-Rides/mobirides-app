@@ -2,16 +2,23 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 
 export const RentalDetailsSkeleton = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   return (
     <div className="container mx-auto px-4 py-8 pb-20">
       <div className="flex items-center mb-6">
-        <Button variant="ghost" onClick={() => navigate('/bookings')}>
+        <Button variant="ghost" onClick={() => {
+          if (location.key === "default") {
+            navigate('/bookings');
+          } else {
+            navigate(-1);
+          }
+        }}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>

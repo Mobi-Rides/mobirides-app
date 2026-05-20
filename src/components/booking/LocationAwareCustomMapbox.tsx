@@ -27,68 +27,99 @@ export const LocationAwareCustomMapbox = ({
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [mapInitialized, setMapInitialized] = useState(false);
 
-  // Initialize map
+  // Initialize map — deferred until the container has real dimensions (dialog animations)
   useEffect(() => {
     if (!mapboxToken || !mapContainer.current || map.current) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    const isMounted = { current: true };
+    let observer: ResizeObserver | null = null;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: mapStyle,
-      center: [25.9087, -24.6541], // Gaborone, Botswana
-      zoom: 14,
-      interactive: true,
-    });
+    const initMap = (container: HTMLDivElement) => {
+      if (!isMounted.current || map.current) return;
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      mapboxgl.accessToken = mapboxToken;
 
-    // Add geolocation control
-    const geolocateControl = new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-      },
-      trackUserLocation: true,
-      showUserHeading: true,
-    });
-
-    map.current.addControl(geolocateControl, "top-right");
-    onGeolocateRef(geolocateControl);
-
-    // Handle geolocation events
-    geolocateControl.on("geolocate", (e: { coords: { latitude: number; longitude: number } }) => {
-      console.log("Geolocate event:", e.coords);
-      onUserLocationUpdate({
-        latitude: e.coords.latitude,
-        longitude: e.coords.longitude,
+      map.current = new mapboxgl.Map({
+        container,
+        style: mapStyle,
+        center: [25.9087, -24.6541], // Gaborone, Botswana
+        zoom: 14,
+        interactive: true,
       });
-    });
 
-    geolocateControl.on("error", (e: GeolocationPositionError) => {
-      console.error("Geolocation error:", e);
-      toast.error("Unable to access your location. Please check permissions.");
-    });
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-    // Handle map events
-    map.current.on("load", () => {
-      console.log("Map loaded successfully");
-      setMapInitialized(true);
-      onMapRef(map.current);
-    });
+      // Add geolocation control
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+        },
+        trackUserLocation: true,
+        showUserHeading: true,
+      });
 
-    map.current.on("error", (e) => {
-      console.error("Map error:", e);
-      toast.error("Error loading map. Please refresh.");
-    });
+      map.current.addControl(geolocateControl, "top-right");
+      onGeolocateRef(geolocateControl);
 
-    // Add click handler for location selection
-    map.current.on("click", (e) => {
-      console.log("Map clicked at:", e.lngLat);
-      onMapClick(e.lngLat.lng, e.lngLat.lat);
-    });
+      // Handle geolocation events
+      geolocateControl.on("geolocate", (e: { coords: { latitude: number; longitude: number } }) => {
+        if (!isMounted.current) return;
+        console.log("Geolocate event:", e.coords);
+        onUserLocationUpdate({
+          latitude: e.coords.latitude,
+          longitude: e.coords.longitude,
+        });
+      });
+
+      geolocateControl.on("error", (e: GeolocationPositionError) => {
+        if (!isMounted.current) return;
+        console.error("Geolocation error:", e);
+        toast.error("Unable to access your location. Please check permissions.");
+      });
+
+      // Handle map events
+      map.current.on("load", () => {
+        if (!isMounted.current) return;
+        console.log("Map loaded successfully");
+        setMapInitialized(true);
+        onMapRef(map.current);
+      });
+
+      map.current.on("error", (e) => {
+        if (!isMounted.current) return;
+        console.error("Map error:", e);
+        toast.error("Error loading map. Please refresh.");
+      });
+
+      // Add click handler for location selection
+      map.current.on("click", (e) => {
+        if (!isMounted.current) return;
+        console.log("Map clicked at:", e.lngLat);
+        onMapClick(e.lngLat.lng, e.lngLat.lat);
+      });
+    };
+
+    const container = mapContainer.current;
+
+    // Guard against zero-size container (e.g., during dialog open animation)
+    if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+      initMap(container);
+    } else {
+      observer = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          observer?.disconnect();
+          observer = null;
+          initMap(container);
+        }
+      });
+      observer.observe(container);
+    }
 
     return () => {
+      isMounted.current = false;
+      observer?.disconnect();
       if (map.current) {
         map.current.remove();
         map.current = null;

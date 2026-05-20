@@ -39,6 +39,7 @@ dist
 
 # MCP configuration (contains sensitive tokens)
 mcp-config.json
+kilo.json
 
 # Avoid shadowing Scoop-managed Supabase CLI
 supabase.exe
