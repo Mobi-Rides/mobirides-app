@@ -18,6 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { BookingWithRelations, BookingStatus } from "@/types/booking";
 import { pushNotificationService } from "@/services/pushNotificationService";
 import { bookingLifecycle } from "@/services/bookingLifecycle";
+import { exportToCSV } from "@/utils/exportToCSV";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type BookingFilterStatus = "all" | "pending" | "confirmed" | "completed" | "cancelled" | "expired" | "awaiting_payment";
 type SortOption = "date_asc" | "date_desc" | "earnings_asc" | "earnings_desc" | "status" | "renter";
@@ -204,12 +207,77 @@ export const HostBookings = () => {
   }, [queryClient, toast, selectedBookings]);
 
   const exportData = useCallback((format: "csv" | "pdf") => {
-    // Export functionality implementation
-    toast({
-      title: "Export Started",
-      description: `Exporting data as ${format.toUpperCase()}...`,
-    });
-  }, [toast]);
+    if (!filteredAndSortedBookings.length) {
+      toast({ title: "Nothing to export", description: "No bookings match the current filter.", variant: "destructive" });
+      return;
+    }
+
+    const date = new Date().toISOString().slice(0, 10);
+
+    if (format === "csv") {
+      const columns = [
+        { key: "id",             label: "Booking ID"      },
+        { key: "car",            label: "Vehicle"         },
+        { key: "renter",         label: "Renter"          },
+        { key: "start_date",     label: "Start Date"      },
+        { key: "end_date",       label: "End Date"        },
+        { key: "status",         label: "Status"          },
+        { key: "total_price",    label: "Total (BWP)"     },
+        { key: "payment_status", label: "Payment Status"  },
+        { key: "created_at",     label: "Booked On"       },
+      ];
+
+      const rows = filteredAndSortedBookings.map(b => ({
+        id:             b.id,
+        car:            `${b.cars.brand} ${b.cars.model}`,
+        renter:         b.renter?.full_name ?? "Unknown",
+        start_date:     b.start_date,
+        end_date:       b.end_date,
+        status:         b.status,
+        total_price:    b.total_price,
+        payment_status: b.payment_status ?? "",
+        created_at:     b.created_at,
+      }));
+
+      exportToCSV(rows, `host_bookings_${date}.csv`, columns);
+      toast({ title: "Export complete", description: `${rows.length} bookings exported as CSV.` });
+      return;
+    }
+
+    if (format === "pdf") {
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.setTextColor(0, 51, 102);
+      doc.text("MobiRides — Host Bookings Export", 105, 16, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 23, { align: "center" });
+
+      doc.setDrawColor(200);
+      doc.line(14, 27, 196, 27);
+
+      autoTable(doc, {
+        startY: 32,
+        head: [["Vehicle", "Renter", "Start Date", "End Date", "Status", "Total (BWP)"]],
+        body: filteredAndSortedBookings.map(b => [
+          `${b.cars.brand} ${b.cars.model}`,
+          b.renter?.full_name ?? "Unknown",
+          b.start_date,
+          b.end_date,
+          b.status,
+          b.total_price.toFixed(2),
+        ]),
+        theme: "striped",
+        headStyles: { fillColor: [0, 51, 102] },
+        styles: { fontSize: 8 },
+      });
+
+      doc.save(`host_bookings_${date}.pdf`);
+      toast({ title: "Export complete", description: `${filteredAndSortedBookings.length} bookings exported as PDF.` });
+    }
+  }, [filteredAndSortedBookings, toast]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
