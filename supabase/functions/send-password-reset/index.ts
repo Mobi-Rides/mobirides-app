@@ -211,10 +211,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Extract token from the generated action_link
-    const actionLinkUrl = new URL(linkData.properties.action_link);
-    const token = actionLinkUrl.searchParams.get('token');
-    
+    // Prefer the dedicated hashed_token field — more reliable than parsing the action_link URL
+    const token = linkData.properties.hashed_token || (() => {
+      try {
+        return new URL(linkData.properties.action_link).searchParams.get('token');
+      } catch {
+        return null;
+      }
+    })();
+
     if (!token) {
       console.error('Failed to extract token in send-password-reset');
       return new Response(
