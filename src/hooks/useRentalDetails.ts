@@ -89,11 +89,12 @@ export const useRentalDetails = () => {
     }
   }, [shouldPrint, booking, isBookingLoading]);
 
-  // Realtime subscription for booking changes
+  // Realtime subscription for booking changes and handover session creation
   useEffect(() => {
     if (!id) return;
 
-    console.log("Setting up Realtime subscription for booking:", id);
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: ["rental-details", id] });
+
     const channel = supabase
       .channel(`booking-details-${id}`)
       .on(
@@ -104,15 +105,21 @@ export const useRentalDetails = () => {
           table: 'bookings',
           filter: `id=eq.${id}`
         },
-        (payload) => {
-          console.log('Realtime update received for booking:', payload);
-          queryClient.invalidateQueries({ queryKey: ["rental-details", id] });
-        }
+        invalidate
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'handover_sessions',
+          filter: `booking_id=eq.${id}`
+        },
+        invalidate
       )
       .subscribe();
 
     return () => {
-      console.log("Cleaning up Realtime subscription for booking:", id);
       supabase.removeChannel(channel);
     };
   }, [id, queryClient]);
