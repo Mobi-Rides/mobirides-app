@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,9 +68,12 @@ const toSafeCarWithProfiles = (car: CarWithProfiles): SafeCarWithProfiles => ({
 
 const CarDetails = () => {
   const { carId } = useParams();
+  const location = useLocation();
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const viewIncremented = useRef(false);
+
+  const backDestination = location.key === "default" ? "/" : "back";
 
   // Handle Android hardware back button
   useHardwareBackButton();
@@ -141,7 +144,7 @@ const CarDetails = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
-        <MobileHeader title="Car Details" showBackButton backTo="/" />
+        <MobileHeader title="Car Details" showBackButton backTo={backDestination} />
         <div className="container mx-auto">
           <div className="p-4">
             <Skeleton className="h-6 w-32 mb-4" />
@@ -172,7 +175,7 @@ const CarDetails = () => {
   if (error || !car) {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
-        <MobileHeader title="Error" showBackButton backTo="/" />
+        <MobileHeader title="Error" showBackButton backTo={backDestination} />
         <div className="container mx-auto">
           <div className="p-4 text-center space-y-4 mt-8">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
@@ -192,7 +195,7 @@ const CarDetails = () => {
       <MobileHeader
         title={`${car.brand} ${car.model}`}
         showBackButton
-        backTo="/"
+        backTo={backDestination}
       />
       <div className="container mx-auto">
         <div className="space-y-4 p-4">
