@@ -43,7 +43,7 @@ export const BookingActions = ({
               htmlFor="host-terms"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-left"
             >
-              I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Host Terms and Conditions</a>
+              I agree to the <a href="/terms/host" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Host Terms and Conditions</a>
             </label>
             <p className="text-xs text-muted-foreground text-left">
               By checking this, you agree to fulfill the rental request in compliance with Mobi Rides terms, including vehicle maintenance, insurance coverage, and payout schedules.
