@@ -116,7 +116,7 @@ export const HostView = ({ searchQuery }: HostViewProps) => {
       if (session) {
         toast.success("Handover process started");
         // Navigate to map with handover mode
-        navigate(`/map?bookingId=${bookingId}&mode=handover&role=host`);
+        navigate(`/handover/${session.id}`);
         refetchPrompts(); // Refresh prompts
       }
     } catch (error) {

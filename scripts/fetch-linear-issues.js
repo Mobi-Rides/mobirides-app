@@ -5,7 +5,7 @@
  * and returns identifier, title, assignee name, and updatedAt.
  */
 
-import { createClient } from '@linear/sdk';
+import { LinearClient } from '@linear/sdk';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -18,21 +18,22 @@ if (!LINEAR_API_KEY) {
   process.exit(1);
 }
 
-const linearClient = createClient({
+const linearClient = new LinearClient({
   apiKey: LINEAR_API_KEY,
 });
 
 const fetchInProgressIssues = async () => {
   try {
-    const issues = await linearClient.issues({
+    const issuesResponse = await linearClient.issues({
       filter: {
         state: {
           type: { eq: 'started' },
         },
       },
-      orderBy: { field: 'UPDATED_AT', direction: 'DESC' },
       first: 50,
     });
+
+    const issues = issuesResponse.nodes;
 
     if (!issues || issues.length === 0) {
       console.log('No in-progress issues found.');
@@ -40,15 +41,16 @@ const fetchInProgressIssues = async () => {
     }
 
     console.log('\n=== In-Progress Issues (Started) ===\n');
-    issues.forEach((issue) => {
-      const assigneeName = issue.assignee?.name || 'Unassigned';
+    for (const issue of issues) {
+      const assignee = await issue.assignee;
+      const assigneeName = assignee?.name || 'Unassigned';
       console.log(
         `ID: ${issue.identifier}`,
         `| Title: ${issue.title}`,
         `| Assignee: ${assigneeName}`,
         `| Updated: ${new Date(issue.updatedAt).toLocaleString()}`
       );
-    });
+    }
     console.log(`\nTotal: ${issues.length} in-progress issues found.`);
   } catch (error) {
     console.error('Error fetching issues:', error.message);

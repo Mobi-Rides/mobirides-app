@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { mockBookingPaymentService, BookingPaymentRequest, BookingPaymentResult } from '../services/mockBookingPaymentService';
 import { useToast } from './use-toast';
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
   const [processingStep, setProcessingStep] = useState<UseBookingPaymentReturn['processingStep']>('idle');
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const initiatePayment = async (request: BookingPaymentRequest) => {
     setIsProcessing(true);
@@ -50,11 +52,15 @@ export const useBookingPayment = (options: UseBookingPaymentOptions = {}): UseBo
 
       if (data?.paymentUrl) {
         setProcessingStep('confirming');
-        
-        // In a real scenario, this would be an external gateway URL (PayGate).
-        // Since we are returning a local /payment/return URL for the mock, we can
-        // do a window redirect.
-        window.location.href = data.paymentUrl;
+
+        // Use SPA navigation for same-origin URLs to preserve React state.
+        // External gateway URLs (e.g. PayGate) require a hard redirect.
+        const paymentUrl = new URL(data.paymentUrl, window.location.origin);
+        if (paymentUrl.origin === window.location.origin) {
+          navigate(paymentUrl.pathname + paymentUrl.search + paymentUrl.hash);
+        } else {
+          window.location.href = data.paymentUrl;
+        }
       } else {
         throw new Error('No payment URL returned from provider');
       }

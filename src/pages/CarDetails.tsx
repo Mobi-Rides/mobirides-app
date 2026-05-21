@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,9 +68,12 @@ const toSafeCarWithProfiles = (car: CarWithProfiles): SafeCarWithProfiles => ({
 
 const CarDetails = () => {
   const { carId } = useParams();
+  const location = useLocation();
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const viewIncremented = useRef(false);
+
+  const backDestination = location.key === "default" ? "/" : "back";
 
   // Handle Android hardware back button
   useHardwareBackButton();
@@ -90,6 +93,7 @@ const CarDetails = () => {
 
   const { data: car, isLoading, error } = useQuery({
     queryKey: ["car", carId],
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
@@ -141,7 +145,7 @@ const CarDetails = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
-        <MobileHeader title="Car Details" showBackButton backTo="/" />
+        <MobileHeader title="Car Details" showBackButton backTo={backDestination} />
         <div className="container mx-auto">
           <div className="p-4">
             <Skeleton className="h-6 w-32 mb-4" />
@@ -170,14 +174,21 @@ const CarDetails = () => {
   }
 
   if (error || !car) {
+    const isNotFound = !car || (error instanceof Error && error.message === "Car not found");
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900">
-        <MobileHeader title="Error" showBackButton backTo="/" />
+        <MobileHeader title={isNotFound ? "Not Found" : "Error"} showBackButton backTo={backDestination} />
         <div className="container mx-auto">
           <div className="p-4 text-center space-y-4 mt-8">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
-            <h2 className="text-xl font-semibold text-red-500">Error loading vehicle details</h2>
-            <p className="text-muted-foreground dark:text-gray-400">Please try again later</p>
+            <h2 className="text-xl font-semibold text-red-500">
+              {isNotFound ? "Vehicle not found" : "Error loading vehicle details"}
+            </h2>
+            <p className="text-muted-foreground dark:text-gray-400">
+              {isNotFound
+                ? "This vehicle listing may have been removed or the link is invalid."
+                : "Please try again later"}
+            </p>
           </div>
         </div>
         <Navigation />
@@ -192,7 +203,7 @@ const CarDetails = () => {
       <MobileHeader
         title={`${car.brand} ${car.model}`}
         showBackButton
-        backTo="/"
+        backTo={backDestination}
       />
       <div className="container mx-auto">
         <div className="space-y-4 p-4">

@@ -552,7 +552,7 @@ Selenium run against local Vite and live Supabase created booking `a3dbeb76-4e50
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Blocks KYC verification) |
-| **Status** | 🔵 Tracked via MOB-129 |
+| **Status** | ✅ Resolved |
 | **Affects** | `verification-documents`, `verification-selfies`, `avatars`, `return-photos` |
 | **Visible Result** | Users see failed verification document upload errors when submitting ID/selfie documents. |
 
@@ -573,7 +573,7 @@ Confirmed via comparison of `src/services/verificationService.ts` vs `2026050808
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can block host vehicle listing documents) |
-| **Status** | 🔵 Tracked via MOB-129 |
+| **Status** | ✅ Resolved |
 | **Affects** | `car-documents`, `/add-car`, vehicle document upload |
 | **Visible Result** | Vehicle document uploads fail with "Bucket not found" errors. |
 
@@ -594,7 +594,7 @@ Confirmed via `grep` and migration history analysis. No reference to `car-docume
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can break chat file attachments) |
-| **Status** | 🔵 Tracked via MOB-129 |
+| **Status** | ✅ Resolved |
 | **Affects** | `chat-attachments`, `message-attachments`, chat attachment upload |
 | **Visible Result** | Users unable to upload/view chat attachments; storage 404/403 errors. |
 
@@ -615,7 +615,7 @@ Confirmed naming collision. Resolution: Standardize on `chat-attachments` in the
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Can block handover photo documentation) |
-| **Status** | 🔵 Tracked via MOB-129 |
+| **Status** | ✅ Resolved |
 | **Affects** | `handover-photos`, enhanced handover photo uploads |
 | **Visible Result** | Rental handover photos fail to upload during check-in/check-out. |
 
@@ -636,7 +636,7 @@ Confirmed via `enhancedHandoverService.ts` dependency check. Restoration require
 |-------|--------|
 | **Date Reported** | 2026-05-11 |
 | **Severity** | High (Multiple upload workflows can fail) |
-| **Status** | 🔵 Tracked via MOB-129 |
+| **Status** | ✅ Resolved |
 | **Affects** | `avatars`, `car-images`, `insurance-claims`, `return-photos`, public upload/read flows |
 | **Visible Result** | Profile avatars, car images, insurance claim evidence, or return photos may fail to upload or display depending on online bucket/policy state. |
 
@@ -843,9 +843,14 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 |-------|--------|
 | **Date Reported** | 2026-05-16 |
 | **Severity** | High (UX/UI) |
-| **Status** | 🔵 IN PROGRESS |
+| **Status** | ✅ Resolved |
 | **Affects** | `src/components/ui/calendar.tsx` |
 | **Visible Result** | Calendar headers (Weekdays) are scrunched and misaligned; cell spacing is broken in both mobile and desktop views. |
+
+**Description:**  
+The upgrade to `react-day-picker` v9 introduced layout structure changes that caused custom styling regressions. Calendar days, weekday labels, and cell paddings were misaligned and scrunched.
+
+**Resolution:** Refactored `calendar.tsx` to leverage `react-day-picker` v9 `UI` enum layout styles, correctly mapping navigation buttons and grid days to modern Tailwind/CSS classes.
 
 ---
 
@@ -855,10 +860,70 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 |-------|--------|
 | **Date Reported** | 2026-05-16 |
 | **Severity** | Medium (UI) |
-| **Status** | 🔵 IN PROGRESS |
+| **Status** | ✅ Resolved |
 | **Affects** | `src/components/insurance/InsurancePackageSelector.tsx` |
-| **Visible Result** | Pricing labels overlap with value amounts when currency strings or coverage caps are long (e.g., \"P 1,500.00\"). |
+| **Visible Result** | Pricing labels overlap with value amounts when currency strings or coverage caps are long (e.g., "P 1,500.00"). |
 
+**Description:**  
+When long currency formats or high coverage values were displayed (e.g., "P 1,500.00"), labels collided or overflowed the bounds of the package selection cards.
+
+**Resolution:** Updated `InsurancePackageSelector.tsx` to make the pricing and coverage labels dynamically wrap, adjusting grid/flex layouts to handle multi-line strings cleanly on both mobile and desktop views.
+
+---
+
+### BUG-071: Renter Dynamic Pricing RLS Policy & Duration Discrepancy
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-20 |
+| **Severity** | Critical (Financial / Pricing Discrepancy) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/services/dynamicPricingService.ts`, `supabase/migrations/20260520220000_fix_superadmin_profile_editing_and_settings.sql` |
+| **Visible Result** | Renters got computed base rental rates up to double what admins calculated because they were blocked from loading database dynamic pricing rules due to RLS, falling back to hardcoded client rules with mismatching duration thresholds. |
+
+**Description:**  
+The `dynamic_pricing_rules` table lacked a SELECT policy allowing authenticated/public read access, causing regular renters' pricing calculations to fall back to hardcoded default values. In addition, the seeded database rules lacked duration-based rules entirely, and the client-side weekly/monthly boundaries did not align with intended thresholds.
+
+**Resolution:** Added a public RLS `SELECT` policy `Allow public read access to dynamic pricing rules` to allow renters to read active rules. Seeded database duration-based rules (Weekly: 7–13 days at 0.90 multiplier, Monthly: 14+ days at 0.80 multiplier) and synchronized client-side default fallback rules in `getDefaultPricingRules()` to match.
+
+---
+
+### BUG-072: SuperAdmin Profile Modification RLS Blocker
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-20 |
+| **Severity** | High (Functional Blocker for Administrators) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/pages/EditProfile.tsx`, `supabase/migrations/20260520220000_fix_superadmin_profile_editing_and_settings.sql` |
+| **Visible Result** | SuperAdmins (but not standard Admins) were blocked from editing other users' profile details (e.g. manually correcting a phone number format by adding a `+` symbol). |
+
+**Description:**  
+The `profiles` table lacked an RLS `UPDATE` policy allowing `super_admin` users to make writes, even though `Admins can view all profiles` existed for reading. Furthermore, the frontend `EditProfile.tsx` parsed phone numbers by raw string slicing, resulting in state synchronization failures for numbers starting with `+` or country codes.
+
+**Resolution:**
+- Added an RLS `UPDATE` policy `Super admins can update all profiles` using the `public.is_super_admin(auth.uid())` helper. Specifying `auth.uid()` explicitly resolved a Postgres function signature overloading ambiguity.
+- Implemented a robust `parsePhoneNumber()` utility in `EditProfile.tsx` that dynamically matches leading country codes (with or without `+`) and populates state properties gracefully.
+
+---
+
+### BUG-073: Platform Settings Update RPC Failure & Pre-seed Deficit
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-20 |
+| **Severity** | High (Functional Blocker for Platform Configuration) |
+| **Status** | ✅ Resolved |
+| **Affects** | `supabase/migrations/20260520220000_fix_superadmin_profile_editing_and_settings.sql` |
+| **Visible Result** | Admins were unable to update the support email, support phone number, or other contact settings; attempts to save failed or had no effect. |
+
+**Description:**  
+The `update_platform_setting` database RPC only performed an `UPDATE` on existing keys, preventing insertion of newly added configuration keys. Furthermore, the frontend settings panel expected keys (like `support_email` and `support_phone`) that were completely missing from the database, leading to silent save failures.
+
+**Resolution:**
+- Redefined `public.update_platform_setting(p_key text, p_value text)` using `INSERT ... ON CONFLICT (setting_key) DO UPDATE` (upsert behavior) to support dynamic configuration insertion.
+- Resolved Postgres function overloading conflict by explicitly checking `public.is_admin(auth.uid())`.
+- Pre-seeded default setting keys including `support_email` and `support_phone` in the migration file to ensure immediate accessibility.
 
 ---
 
@@ -898,6 +963,11 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 | **BUG-037** | 2026-05-08 | Admin NotificationMonitoring canonical file missing — Created canonical component, updated AdminCampaigns import, removed orphan "Fixed" file. |
 | **BUG-038** | 2026-05-08 | Navigation realtime channel collision + cleanup leak — User-scoped channel name; cleanup now returned from useEffect itself. |
 | **BUG-039** | 2026-05-08 | useConversationMessages auth listener unreachable + receipts channel leak — Removed dead-code early return; tracked receipts channel on outer scope. |
+| **BUG-069** | 2026-05-19 | Date Picker Layout Regression (v9 Breaking Changes) — Refactored calendar.tsx to map v9 UI elements correctly. |
+| **BUG-070** | 2026-05-19 | Insurance Package Pricing Text Overflow — Updated grid and responsive styling to prevent overlap on long currency formats. |
+| **BUG-071** | 2026-05-20 | Renter Dynamic Pricing RLS Policy & Duration Discrepancy — Deployed SELECT policy for dynamic pricing rules, seeded DB rules, and synced client-side fallbacks. |
+| **BUG-072** | 2026-05-20 | SuperAdmin Profile Modification RLS Blocker — Created profiles UPDATE policy for super admins and implemented robust frontend phone number parsing. |
+| **BUG-073** | 2026-05-20 | Platform Settings Update RPC Failure & Pre-seed Deficit — Redefined update_platform_setting to use UPSERT and pre-seeded default contact configuration keys. |
 
 ---
 
@@ -910,4 +980,4 @@ To align with the Turo-style model, the primary CTA should be "Request to Book" 
 
 ---
 
-*Updated by: Modisa Maphanyane — May 8, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026*
+*Updated by: Modisa Maphanyane — May 20, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026 | BUG-069–070 resolved by Antigravity & Modisa — May 19, 2026 | BUG-071–073 resolved by Antigravity — May 20, 2026*

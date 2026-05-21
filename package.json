@@ -128,6 +128,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@linear/sdk": "^84.0.0",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/dom": "^10.4.0",
@@ -137,7 +138,6 @@
     "@types/jest": "^30.0.0",
     "@types/jspdf": "^2.0.0",
     "@types/lodash": "^4.17.23",
-    "@types/next": "^9.0.0",
     "@types/node": "^25.0.9",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",

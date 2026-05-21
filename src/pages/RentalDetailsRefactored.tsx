@@ -23,6 +23,7 @@ import { RenterPaymentModal } from "@/components/booking/RenterPaymentModal";
 import { PaymentDeadlineTimer } from "@/components/booking/PaymentDeadlineTimer";
 import { handleExpiredBookings } from "@/services/bookingService";
 import { useHardwareBackButton } from "@/hooks/useHardwareBackButton";
+import { toast } from "sonner";
 
 const RentalDetailsRefactored = () => {
   const navigate = useNavigate();
@@ -32,6 +33,14 @@ const RentalDetailsRefactored = () => {
 
   // Handle Android hardware back button
   useHardwareBackButton();
+
+  const handleBack = () => {
+    if (location.key === "default") {
+      navigate('/bookings');
+    } else {
+      navigate(-1);
+    }
+  };
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
@@ -79,18 +88,27 @@ const RentalDetailsRefactored = () => {
   // Auto-open payment modal via URL param (?pay=true)
   useEffect(() => {
     const shouldOpen = searchParams.get('pay') === 'true';
-    if (shouldOpen && booking?.status === 'awaiting_payment') {
-      // Defer state updates to avoid synchronous setState warnings during render
+    if (!shouldOpen) return;
+
+    const cleanUrl = () => setSearchParams(prev => {
+      const p = new URLSearchParams(prev);
+      p.delete('pay');
+      return p;
+    }, { replace: true });
+
+    if (booking?.status === 'awaiting_payment') {
       const timer = setTimeout(() => {
         setIsPaymentModalOpen(true);
-        // Clean up the URL param so refreshing doesn't re-trigger
-        setSearchParams(prev => {
-          const newParams = new URLSearchParams(prev);
-          newParams.delete('pay');
-          return newParams;
-        }, { replace: true });
+        cleanUrl();
       }, 0);
-      
+      return () => clearTimeout(timer);
+    }
+
+    if (booking?.status === 'pending') {
+      const timer = setTimeout(() => {
+        toast.info("Your booking is awaiting host approval. Payment will be available once approved.");
+        cleanUrl();
+      }, 0);
       return () => clearTimeout(timer);
     }
   }, [booking?.status, searchParams, setSearchParams]);
@@ -102,9 +120,7 @@ const RentalDetailsRefactored = () => {
   const onInitiateHandover = async () => {
     const session = await handleInitiateHandover();
     if (session) {
-      // Navigate to map with handover mode
-      const role = isRenter ? "renter" : "host";
-      navigate(`/map?bookingId=${booking.id}&mode=handover&role=${role}`);
+      navigate(`/handover/${session.id}`);
     }
   };
 
@@ -120,7 +136,7 @@ const RentalDetailsRefactored = () => {
     <div className="container mx-auto px-4 py-8 pb-20 animate-fade-in">
       <RentalDetailsHeader
         status={booking?.status || 'unknown'}
-        onBack={() => navigate('/bookings')}
+        onBack={handleBack}
       />
 
       <div className="space-y-6">

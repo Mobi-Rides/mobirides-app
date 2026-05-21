@@ -66,21 +66,17 @@ export async function forgotPassword(req, res) {
             });
         }
 
-        // Compose email content
-        let token;
-        try {
-            const url = new URL(data.properties.action_link);
-            token = url.searchParams.get('token');
-        } catch (urlError) {
-            console.error('[Forgot Password API] Failed to parse action_link URL');
-            return res.status(500).json({
-                success: false,
-                error: 'Internal error processing reset link'
-            });
-        }
+        // Prefer the dedicated hashed_token field — more reliable than parsing the action_link URL
+        const token = data.properties.hashed_token || (() => {
+            try {
+                return new URL(data.properties.action_link).searchParams.get('token');
+            } catch {
+                return null;
+            }
+        })();
 
         if (!token) {
-            console.error('[Forgot Password API] No token found in action_link');
+            console.error('[Forgot Password API] Could not extract recovery token from generateLink response');
             return res.status(500).json({
                 success: false,
                 error: 'Invalid reset link generated'

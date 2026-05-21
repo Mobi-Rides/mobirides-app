@@ -67,6 +67,7 @@ const CustomMapbox = ({
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const geolocateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoRouteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
   const [mapInit, setMapInit] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState({ latitude, longitude });
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
@@ -114,6 +115,14 @@ const CustomMapbox = ({
     onHostSelect: (hostId) => handleViewHostCars(hostId),
     HostPopup
   });
+
+  // Track mount state so stale map event handlers don't fire toasts after navigation
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Memoize returnLocation callback to prevent unnecessary re-renders
   const returnLocationCallback = useCallback(() => {
@@ -168,6 +177,7 @@ const CustomMapbox = ({
           geolocateControlRef.current = geolocateControl;
 
           geolocateControl.on("error", (e: GeolocationPositionError) => {
+            if (!isMountedRef.current) return;
             console.error("Geolocation error:", e);
 
             // If geolocation fails (e.g. denied or timeout), fallback to default
@@ -250,6 +260,7 @@ const CustomMapbox = ({
       map.current.on("moveend", () => setIsMapMoving(false));
 
       map.current.on("error", (e) => {
+        if (!isMountedRef.current) return;
         console.error("Map error:", e);
         toast.error("Error loading map. Please refresh.");
       });

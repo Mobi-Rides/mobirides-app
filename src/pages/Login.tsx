@@ -250,7 +250,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <img
@@ -258,17 +258,17 @@ const Login = () => {
             alt="Mobirides Logo"
             className="mx-auto h-48 w-48"
           />
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Welcome to <span className="text-[#7C3AED]">Mobirides</span>
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             Sign in to start sharing or renting cars
           </p>
         </div>
 
-        <div className="mt-8 bg-white p-6 sm:p-8 rounded shadow border border-gray-100">
+        <div className="mt-8 bg-card p-6 sm:p-8 rounded shadow border border-border">
           <SignInForm />
-          <p className="mt-6 text-center text-sm text-gray-600">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}

@@ -195,7 +195,7 @@ export const HostDashboard = () => {
       if (session) {
         toast.success(`${prompt.handoverType === 'pickup' ? 'Pickup' : 'Return'} process started`);
         // Navigate to map with handover mode and the correct handover type
-        navigate(`/map?bookingId=${bookingId}&mode=handover&role=host&handoverType=${prompt.handoverType}`);
+        navigate(`/handover/${session.id}`);
         refetchPrompts(); // Refresh prompts
       }
     } catch (error) {

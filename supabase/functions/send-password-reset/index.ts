@@ -211,10 +211,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Extract token from the generated action_link
-    const actionLinkUrl = new URL(linkData.properties.action_link);
-    const token = actionLinkUrl.searchParams.get('token');
-    
+    // Prefer the dedicated hashed_token field — more reliable than parsing the action_link URL
+    const token = linkData.properties.hashed_token || (() => {
+      try {
+        return new URL(linkData.properties.action_link).searchParams.get('token');
+      } catch {
+        return null;
+      }
+    })();
+
     if (!token) {
       console.error('Failed to extract token in send-password-reset');
       return new Response(
@@ -229,12 +234,13 @@ Deno.serve(async (req) => {
     // Construct the reset URL with the token
     const resetUrl = `${appUrl}/reset-password?token=${token}&redirectedFromEmail=true`;
 
-    // Call the resend-service function to send branded email
+    // Call the resend-service function to send branded email — must use service role key,
+    // not the requesting user's JWT, otherwise resend-service rejects with invalid JWT.
     const resendResponse = await fetch(`${SUPABASE_URL}/functions/v1/resend-service`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
         'apikey': SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({

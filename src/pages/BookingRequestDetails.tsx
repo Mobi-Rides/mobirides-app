@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,10 @@ import { LoadingView } from "@/components/home/LoadingView";
 const BookingRequestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  const backDestination = location.key === "default" ? "/host-bookings" : "back";
   const queryClient = useQueryClient();
   const { userId } = useAuthStatus();
   const isMobile = useIsMobile();
@@ -191,7 +194,7 @@ const BookingRequestDetails = () => {
   if (!booking) {
     return (
       <div className="min-h-screen bg-background">
-        <MobileHeader title="Booking Request" showBackButton backTo="/host-bookings" />
+        <MobileHeader title="Booking Request" showBackButton backTo={backDestination} />
         <div className="container mx-auto px-4 py-8">
           <p className="text-gray-600 dark:text-gray-300">Booking request not found</p>
         </div>
@@ -206,7 +209,7 @@ const BookingRequestDetails = () => {
       <MobileHeader
         title="Booking Request"
         showBackButton
-        backTo="/host-bookings"
+        backTo={backDestination}
       />
       <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="overflow-hidden">

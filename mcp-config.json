@@ -14,7 +14,7 @@
                 "@linear/mcp-server@latest"
             ],
             "env": {
-                "LINEAR_API_KEY": "YOUR_LINEAR_PERSONAL_API_KEY"
+                "LINEAR_API_KEY": "lin_api_zo4GOhyBBOozAM5msjM7RFCERra4iS1o2yDaiCRK"
             }
         }
     }
