@@ -79,7 +79,7 @@ Account No: [ACCOUNT NUMBER]
 Branch: [BRANCH CODE]
 ```
 
-3. Send proof of payment to: founders@mobirides.co.bw
+3. Send proof of payment to: hello@mobirides.africa
 
 ---
 
@@ -87,7 +87,7 @@ Branch: [BRANCH CODE]
 
 For questions:
 - [FOUNDER NAME]: [PHONE]
-- Email: founders@mobirides.co.bw
+- Email: hello@mobirides.africa
 
 ---
 

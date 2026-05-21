@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'MobiRides <noreply@mobirides.com>',
+            from: 'MobiRides <no-reply@mobirides.com>',
             to: [email],
             subject: 'Action Required: Complete New Verification Process',
             html: getEmailTemplate(fullName),
