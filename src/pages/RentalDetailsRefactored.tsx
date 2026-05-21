@@ -120,9 +120,7 @@ const RentalDetailsRefactored = () => {
   const onInitiateHandover = async () => {
     const session = await handleInitiateHandover();
     if (session) {
-      // Navigate to map with handover mode
-      const role = isRenter ? "renter" : "host";
-      navigate(`/map?bookingId=${booking.id}&mode=handover&role=${role}`);
+      navigate(`/handover/${session.id}`);
     }
   };
 

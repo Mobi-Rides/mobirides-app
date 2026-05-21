@@ -142,7 +142,7 @@ export const RenterDashboard = () => {
       if (session) {
         toast.success("Handover process started");
         // Navigate to map with handover mode
-        navigate(`/map?bookingId=${bookingId}&mode=handover&role=renter`);
+        navigate(`/handover/${session.id}`);
         refetchPrompts(); // Refresh prompts
       }
     } catch (error) {
