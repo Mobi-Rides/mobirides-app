@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChatPopup } from './ChatPopup';
 import { FloatingChatButton } from './FloatingChatButton';
 import { useOptimizedConversations } from '@/hooks/useOptimizedConversations';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTutorialContext } from '@/components/tutorial/TutorialContext';
 
 interface ChatManagerProps {
@@ -16,6 +16,7 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
   const [viewMode, setViewMode] = useState<'popup' | 'fullscreen'>('popup');
   const { conversations } = useOptimizedConversations(); // Will be empty array since no userId provided
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const tutorialCtx = useTutorialContext();
 
   // Calculate unread messages count from conversations
@@ -53,16 +54,16 @@ export function ChatManager({ recipientId, recipientName }: ChatManagerProps) {
     });
   };
 
-  // Don't show floating button if we're already on the messages page
-  const isOnMessagesPage = window.location.pathname === '/messages';
-  
+  const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password'];
+  const hideFloatingButton = pathname === '/messages' || AUTH_ROUTES.includes(pathname);
+
   // Feature flag to control floating chat button visibility
   const SHOW_FLOATING_CHAT = true;
 
   return (
     <>
       {/* Floating Chat Button */}
-      {SHOW_FLOATING_CHAT && !isOnMessagesPage && !isPopupOpen && (
+      {SHOW_FLOATING_CHAT && !hideFloatingButton && !isPopupOpen && (
         <FloatingChatButton
           onClick={handleOpenChat}
           unreadCount={unreadCount}
