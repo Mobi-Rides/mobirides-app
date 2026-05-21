@@ -176,7 +176,7 @@
 ## Contact
 
 **Founder:** [Name]  
-**Email:** founders@mobirides.co.bw  
+**Email:** hello@mobirides.africa  
 **Phone:** +267 XXX XXXX
 
 ---

@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
     if (adminEmails.length > 0) {
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
-        from: "MobiRides Compliance <noreply@app.mobirides.com>",
+        from: "MobiRides Compliance <no-reply@mobirides.com>",
         to: adminEmails,
         subject: `MobiRides Compliance Report — ${reportMonth}`,
         html: `

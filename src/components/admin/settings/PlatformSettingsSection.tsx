@@ -16,7 +16,7 @@ export const PlatformSettingsSection = () => {
 
   // General settings
   const [appName, setAppName] = useState('MobiRides');
-  const [supportEmail, setSupportEmail] = useState('support@mobirides.co.bw');
+  const [supportEmail, setSupportEmail] = useState('hello@mobirides.africa');
   const [supportPhone, setSupportPhone] = useState('+267 XX XXX XXX');
 
   // Notification settings
@@ -38,7 +38,7 @@ export const PlatformSettingsSection = () => {
   useEffect(() => {
     if (!loading && Object.keys(settings).length > 0) {
       setAppName(getSetting('app_name', 'MobiRides'));
-      setSupportEmail(getSetting('support_email', 'support@mobirides.co.bw'));
+      setSupportEmail(getSetting('support_email', 'hello@mobirides.africa'));
       setSupportPhone(getSetting('support_phone', '+267 XX XXX XXX'));
       setEmailNotifications(getSetting<string>('email_notifications_enabled', 'true') === 'true');
       setSmsNotifications(getSetting<string>('sms_notifications_enabled', 'false') === 'true');
@@ -97,7 +97,7 @@ export const PlatformSettingsSection = () => {
     try {
       const resets = [
         updateSetting('app_name', 'MobiRides'),
-        updateSetting('support_email', 'support@mobirides.co.bw'),
+        updateSetting('support_email', 'hello@mobirides.africa'),
         updateSetting('support_phone', '+267 XX XXX XXX'),
         updateSetting('email_notifications_enabled', 'true'),
         updateSetting('sms_notifications_enabled', 'false'),
@@ -117,7 +117,7 @@ export const PlatformSettingsSection = () => {
       }
 
       setAppName('MobiRides');
-      setSupportEmail('support@mobirides.co.bw');
+      setSupportEmail('hello@mobirides.africa');
       setSupportPhone('+267 XX XXX XXX');
       setEmailNotifications(true);
       setSmsNotifications(false);

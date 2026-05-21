@@ -164,8 +164,8 @@ const CommunityGuidelines = () => {
             <div className="bg-red-50 border border-red-100 p-6 rounded-xl text-center">
               <h3 className="text-red-900 font-bold mb-2">Report a Violation</h3>
               <p className="text-red-800 text-sm mb-4">If you witness or experience a violation, report it immediately via the app or email.</p>
-              <a href="mailto:community@app.mobirides.com" className="text-red-600 font-bold underline hover:text-red-700 transition-colors">
-                community@app.mobirides.com
+              <a href="mailto:community@mobirides.com" className="text-red-600 font-bold underline hover:text-red-700 transition-colors">
+                community@mobirides.com
               </a>
             </div>
           </section>

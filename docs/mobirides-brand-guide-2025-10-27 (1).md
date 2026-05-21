@@ -1343,13 +1343,13 @@ P.S. Join our host community WhatsApp group and learn tips from successful hosts
 ### Contact Information
 
 **Brand Inquiries:**
-- Email: brand@mobirides.co.bw
-- Website: https://mobirides.co.bw/contact
+- Email: hello@mobirides.africa
+- Website: https://mobirides.africa/contact
 
 **Support:**
 - Phone: +267 123 4567
 - WhatsApp: +267 123 4567
-- Email: support@mobirides.co.bw
+- Email: hello@mobirides.africa
 
 **Social Media:**
 - Instagram: @mobirides.bw

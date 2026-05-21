@@ -131,7 +131,7 @@ async function sendWebPushNotification(
   const jwtPayload = {
     aud: new URL(subscription.endpoint).origin,
     exp: now + 12 * 60 * 60,
-    sub: "mailto:noreply@mobirides.com",
+    sub: "mailto:no-reply@mobirides.com",
   };
 
   const privateKeyBuffer = urlBase64ToUint8Array(vapidPrivateKey);
