@@ -33,9 +33,10 @@ export const PlatformSettingsSection = () => {
   const [primaryColor, setPrimaryColor] = useState('#3B82F6');
   const [fontSize, setFontSize] = useState('medium');
 
-  // Load settings when hook completes loading
+  // Load settings into local form state when data arrives from the database.
+  // Depend on `settings` (the state object) — fires once when data loads, not on every render.
   useEffect(() => {
-    if (!loading) {
+    if (!loading && Object.keys(settings).length > 0) {
       setAppName(getSetting('app_name', 'MobiRides'));
       setSupportEmail(getSetting('support_email', 'support@mobirides.co.bw'));
       setSupportPhone(getSetting('support_phone', '+267 XX XXX XXX'));
@@ -48,7 +49,8 @@ export const PlatformSettingsSection = () => {
       setPrimaryColor(getSetting('primary_color', '#3B82F6'));
       setFontSize(getSetting('font_size', 'medium'));
     }
-  }, [loading, getSetting]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]);
 
   const handleSave = async () => {
     setSaving(true);
