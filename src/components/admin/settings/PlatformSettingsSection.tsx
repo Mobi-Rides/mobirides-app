@@ -16,7 +16,7 @@ export const PlatformSettingsSection = () => {
 
   // General settings
   const [appName, setAppName] = useState('MobiRides');
-  const [supportEmail, setSupportEmail] = useState('support@mobirides.co.bw');
+  const [supportEmail, setSupportEmail] = useState('hello@mobirides.africa');
   const [supportPhone, setSupportPhone] = useState('+267 XX XXX XXX');
 
   // Notification settings
@@ -33,11 +33,12 @@ export const PlatformSettingsSection = () => {
   const [primaryColor, setPrimaryColor] = useState('#3B82F6');
   const [fontSize, setFontSize] = useState('medium');
 
-  // Load settings when hook completes loading
+  // Load settings into local form state when data arrives from the database.
+  // Depend on `settings` (the state object) — fires once when data loads, not on every render.
   useEffect(() => {
-    if (!loading) {
+    if (!loading && Object.keys(settings).length > 0) {
       setAppName(getSetting('app_name', 'MobiRides'));
-      setSupportEmail(getSetting('support_email', 'support@mobirides.co.bw'));
+      setSupportEmail(getSetting('support_email', 'hello@mobirides.africa'));
       setSupportPhone(getSetting('support_phone', '+267 XX XXX XXX'));
       setEmailNotifications(getSetting<string>('email_notifications_enabled', 'true') === 'true');
       setSmsNotifications(getSetting<string>('sms_notifications_enabled', 'false') === 'true');
@@ -48,7 +49,8 @@ export const PlatformSettingsSection = () => {
       setPrimaryColor(getSetting('primary_color', '#3B82F6'));
       setFontSize(getSetting('font_size', 'medium'));
     }
-  }, [loading, getSetting]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -95,7 +97,7 @@ export const PlatformSettingsSection = () => {
     try {
       const resets = [
         updateSetting('app_name', 'MobiRides'),
-        updateSetting('support_email', 'support@mobirides.co.bw'),
+        updateSetting('support_email', 'hello@mobirides.africa'),
         updateSetting('support_phone', '+267 XX XXX XXX'),
         updateSetting('email_notifications_enabled', 'true'),
         updateSetting('sms_notifications_enabled', 'false'),
@@ -115,7 +117,7 @@ export const PlatformSettingsSection = () => {
       }
 
       setAppName('MobiRides');
-      setSupportEmail('support@mobirides.co.bw');
+      setSupportEmail('hello@mobirides.africa');
       setSupportPhone('+267 XX XXX XXX');
       setEmailNotifications(true);
       setSmsNotifications(false);

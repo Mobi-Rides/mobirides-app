@@ -34,7 +34,7 @@ $$;
 INSERT INTO public.platform_settings (setting_key, setting_value, description)
 VALUES 
   ('app_name', 'MobiRides', 'Name of the application/platform'),
-  ('support_email', 'support@mobirides.co.bw', 'Support contact email address'),
+  ('support_email', 'hello@mobirides.africa', 'Support contact email address'),
   ('support_phone', '+267 XX XXX XXX', 'Support contact phone number'),
   ('email_notifications_enabled', 'true', 'Enable email notification channel'),
   ('sms_notifications_enabled', 'false', 'Enable SMS notification channel'),

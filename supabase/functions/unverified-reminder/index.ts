@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "MobiRides <noreply@mobirides.com>",
+            from: "MobiRides <no-reply@mobirides.com>",
             to: [email],
             subject: "Complete your MobiRides verification",
             html: `

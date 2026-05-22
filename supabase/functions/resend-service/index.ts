@@ -2042,7 +2042,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Construct email payload
     const emailPayload: { from: string; to: string[]; subject?: string; html?: string } = {
-      from: "MobiRides <noreply@mobirides.com>",
+      from: "MobiRides <no-reply@mobirides.com>",
       to: [to],
     };
 

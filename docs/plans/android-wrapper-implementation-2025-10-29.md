@@ -1225,7 +1225,7 @@ Edit `android/app/src/main/AndroidManifest.xml`:
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https"
-                      android:host="mobirides.co.bw" />
+                      android:host="mobirides.africa" />
             </intent-filter>
 
         </activity>
@@ -1291,7 +1291,7 @@ android {
 #### Acceptance Criteria
 - ✅ All required permissions declared
 - ✅ Minimum SDK set to 24 (Android 7.0+)
-- ✅ Deep links configured for mobirides.co.bw
+- ✅ Deep links configured for mobirides.africa
 - ✅ Hardware acceleration enabled
 - ✅ Firebase messaging service configured
 
@@ -1733,10 +1733,10 @@ Download now and experience the future of car rental in Botswana!
 
 ---
 
-Support: support@mobirides.co.bw
-Website: https://mobirides.co.bw
-Terms: https://mobirides.co.bw/terms
-Privacy: https://mobirides.co.bw/privacy
+Support: hello@mobirides.africa
+Website: https://mobirides.africa
+Terms: https://mobirides.africa/terms
+Privacy: https://mobirides.africa/privacy
 ```
 
 **5.3.4 Configure App Settings**
@@ -1752,7 +1752,7 @@ Privacy: https://mobirides.co.bw/privacy
 - Age: 18+ (due to driver's license requirement)
 
 **Privacy Policy**:
-- URL: https://mobirides.co.bw/privacy
+- URL: https://mobirides.africa/privacy
 - Ensure policy covers:
   - Data collection (email, phone, location, photos)
   - Data usage (booking management, navigation)
