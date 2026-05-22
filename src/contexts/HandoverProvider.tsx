@@ -19,7 +19,8 @@ import {
   updateHandoverLocation, 
   getHandoverSession,
   createHandoverSession,
-  hasCompletedPickupHandover
+  hasCompletedPickupHandover,
+  subscribeToHandoverUpdates
 } from "@/services/handoverService";
 
 import { HandoverContext, HandoverContextType } from "./HandoverContext";
@@ -27,6 +28,7 @@ import { HandoverContext, HandoverContextType } from "./HandoverContext";
 
 interface HandoverProviderProps {
   children: ReactNode;
+  bookingId?: string | null;
 }
 
 // Helper function to safely convert database JSON to our typed format
@@ -106,9 +108,10 @@ const determineHandoverType = (bookingDetails: { start_date: string; end_date: s
 
 export const HandoverProvider: React.FC<HandoverProviderProps> = ({
   children,
+  bookingId: propBookingId,
 }) => {
   const [searchParams] = useSearchParams();
-  const bookingId = searchParams.get("bookingId");
+  const bookingId = propBookingId || searchParams.get("bookingId");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [destination, setDestination] = useState<{
     latitude: number;
@@ -289,6 +292,26 @@ export const HandoverProvider: React.FC<HandoverProviderProps> = ({
     
     fetchOrCreateHandoverSession();
   }, [bookingId, currentUserId, ownerId, bookingDetails]);
+
+  // Subscribe to real-time handover updates (BUG-067)
+  useEffect(() => {
+    if (!handoverId) return;
+
+    console.log("[HandoverProvider] Subscribing to realtime updates for handover:", handoverId);
+
+    const unsubscribe = subscribeToHandoverUpdates(handoverId, (updatedSession) => {
+      console.log("[HandoverProvider] Received realtime update for handover session:", updatedSession);
+      const converted = convertDatabaseHandoverToHandoverStatus(updatedSession as unknown as Record<string, unknown>);
+      if (converted) {
+        setHandoverStatus(converted);
+      }
+    });
+
+    return () => {
+      console.log("[HandoverProvider] Unsubscribing from realtime updates for handover:", handoverId);
+      unsubscribe();
+    };
+  }, [handoverId]);
 
   // Determine if current user is host or renter
   const isHost = currentUserId === ownerId;

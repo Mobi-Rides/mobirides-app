@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { toast } from "@/utils/toast-utils";
+import { bookingLifecycle } from "./bookingLifecycle";
 
 // Types for handover process
 export interface HandoverLocation {
@@ -576,9 +577,9 @@ export const completeHandover = async (handoverId: string) => {
     if (error) throw error;
 
     if (session.handover_type === 'pickup') {
-      await supabase.from("bookings").update({ status: 'in_progress' }).eq("id", session.booking_id);
+      await bookingLifecycle.updateStatus(session.booking_id, 'in_progress');
     } else if (session.handover_type === 'return') {
-      await supabase.from("bookings").update({ status: 'completed' }).eq("id", session.booking_id);
+      await bookingLifecycle.updateStatus(session.booking_id, 'completed');
       await supabase.rpc('release_pending_earnings', { p_booking_id: session.booking_id });
     }
 

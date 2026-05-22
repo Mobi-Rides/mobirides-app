@@ -66,7 +66,7 @@ const HandoverPage = () => {
 
   return (
     <ErrorBoundary>
-      <HandoverProvider>
+      <HandoverProvider bookingId={bookingId}>
         <div className="flex flex-col h-screen bg-background">
           <main className="flex-1 relative overflow-hidden">
             {mapToken && (
