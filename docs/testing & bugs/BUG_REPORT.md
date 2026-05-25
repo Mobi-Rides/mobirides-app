@@ -925,6 +925,75 @@ The `update_platform_setting` database RPC only performed an `UPDATE` on existin
 - Resolved Postgres function overloading conflict by explicitly checking `public.is_admin(auth.uid())`.
 - Pre-seeded default setting keys including `support_email` and `support_phone` in the migration file to ensure immediate accessibility.
 
+
+---
+
+### BUG-074: Admin Panel Direct Confirmation (Payment Modal Bypass)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-22 |
+| **Severity** | High (Bypasses core renter payment flow) |
+| **Status** | 🔵 Tracked via S15-001 |
+| **Affects** | `src/components/admin/BookingManagementTable.tsx` |
+| **Visible Result** | Admins approving pending bookings directly change status to `'confirmed'`, bypassing `'awaiting_payment'`, meaning renters are never prompted to pay in their dashboard. |
+
+**Description:**  
+Approving a pending booking inside the Admin Dashboard executes a raw Supabase update setting `status: 'confirmed'` directly, bypassing the system's `bookingLifecycle.updateStatus` service logic. This fails to set the payment status to `'unpaid'`, fails to assign a payment deadline, and bypasses the renter notifications required to open their payment modal.
+
+**Proposed Remedy:** Update `BookingManagementTable.tsx` to transition pending bookings to `'awaiting_payment'` using `bookingLifecycle.updateStatus` and implement a manual `"Confirm Payment"` button inside the admin bookings table for bookings in the `"awaiting_payment"` state.
+
+---
+
+### BUG-075: Admins Only See Themselves in Admin Management Table
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-22 |
+| **Severity** | High (Restricts admin directory access) |
+| **Status** | 🔵 Tracked via S15-002 |
+| **Affects** | `src/components/admin/AdminManagementTable.tsx` |
+| **Visible Result** | Admins checking the Admin Management table only see their own profile, preventing them from viewing or managing other administrators. |
+
+**Description:**  
+The `useAdmins` and `useNonAdminUsers` hooks query the `user_roles` table directly from the client. PostgreSQL Row Level Security (RLS) policies on `user_roles` restrict users to seeing only their own role maps to avoid recursion limits, which limits visibility for all admins to their own profiles.
+
+**Proposed Remedy:** Use the security definer RPC function `public.get_admin_users_complete(show_deleted, limit_val, offset_val)` to retrieve all profiles with their role arrays, and filter the admin/non-admin lists on the client side.
+
+---
+
+### BUG-076: Missing Insurance Policies & Potential Revenue Splits Admin Views
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-22 |
+| **Severity** | Medium (Lacks core admin business intelligence) |
+| **Status** | 🔵 Tracked via S15-003 |
+| **Affects** | `src/components/admin/ComplianceReportDashboard.tsx`, `src/components/admin/BookingDetailsDialog.tsx` |
+| **Visible Result** | Admins have no tab to inspect generated insurance policies, and booking details show only flat totals without the 15% platform split breakdown or linked policy details. |
+
+**Description:**  
+No UI dashboard displays the `insurance_policies` table data. Furthermore, booking detail modal popups do not query `commission_amount`, `commission_status`, or the booking's associated insurance policy, failing to present platform earnings or risk coverage.
+
+**Proposed Remedy:** Create an "Insurance Policies" tab under `ComplianceReportDashboard.tsx` to fetch and search policies directly, and modify `BookingDetailsDialog.tsx` to display dynamic 15%/85% splits and details of any associated policy.
+
+---
+
+### BUG-077: Renter Review Submission Saving Crash (NULL payment_transaction_id)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-22 |
+| **Severity** | Critical (Blocks review submissions) |
+| **Status** | 🔵 Tracked via S15-004 |
+| **Affects** | `src/pages/RentalReview.tsx`, `release_pending_earnings` SQL Function |
+| **Visible Result** | Renters attempting to submit rental reviews receive a generic error, and reviews fail to save. |
+
+**Description:**  
+Saving renter reviews updates booking status to `'completed'`. This triggers the `release_pending_earnings` DB routine, which attempts to read host earnings by joining on `payment_transactions` via `b.payment_transaction_id = pt.id`. Since `bookings.payment_transaction_id` is left as `NULL` during payment confirmation (which instead sets `payment_transactions.booking_id`), the query returns `NULL` host earnings and throws a database exception, aborting the entire transaction.
+
+**Proposed Remedy:** Update the `release_pending_earnings` SQL function to match transactions by either the direct key or the reverse `booking_id` link, add a robust 85% dynamic host earnings fallback, and implement automatic host wallet initialization to prevent missing-wallet crashes. Update `RentalReview.tsx` to use the `bookingLifecycle.updateStatus` service.
+
 ---
 
 ## Resolved Bugs
@@ -980,4 +1049,4 @@ The `update_platform_setting` database RPC only performed an `UPDATE` on existin
 
 ---
 
-*Updated by: Modisa Maphanyane — May 20, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026 | BUG-069–070 resolved by Antigravity & Modisa — May 19, 2026 | BUG-071–073 resolved by Antigravity — May 20, 2026*
+*Updated by: Modisa Maphanyane — May 20, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026 | BUG-069–070 resolved by Antigravity & Modisa — May 19, 2026 | BUG-071–073 resolved by Antigravity — May 20, 2026 | BUG-074–077 logged for Action in Sprint 15 by Antigravity — May 25, 2026*
