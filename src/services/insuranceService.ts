@@ -104,8 +104,9 @@ export class InsuranceService {
     );
 
     // Apply flat daily rate (SLA model) if available, otherwise fall back to % of rental
-    const premiumPerDay = (insurancePackage.daily_premium_amount && insurancePackage.daily_premium_amount > 0)
-      ? insurancePackage.daily_premium_amount * premiumMultiplier
+    const dailyRate = (insurancePackage as any).daily_rate ? Number((insurancePackage as any).daily_rate) : insurancePackage.daily_premium_amount;
+    const premiumPerDay = (dailyRate && dailyRate > 0)
+      ? dailyRate * premiumMultiplier
       : dailyRentalAmount * insurancePackage.premium_percentage * premiumMultiplier;
     const totalPremium = premiumPerDay * numberOfDays;
 
@@ -129,7 +130,7 @@ export class InsuranceService {
       features: insurancePackage.features || [],
       exclusions: insurancePackage.exclusions || [],
 
-      isFlatDailyRate: !!(insurancePackage.daily_premium_amount && insurancePackage.daily_premium_amount > 0),
+      isFlatDailyRate: !!(dailyRate && dailyRate > 0),
       excessPercentage: insurancePackage.excess_percentage ?? null,
     };
   }

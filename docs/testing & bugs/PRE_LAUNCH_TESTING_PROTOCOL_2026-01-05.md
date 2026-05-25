@@ -67,17 +67,19 @@ This document establishes the comprehensive pre-launch testing protocol for Mobi
 - **100%** route accessibility (no 404 errors)
 - **All** security vulnerabilities resolved
 
-### Current Status (as of March 2, 2026)
+### Current Status (Sprint 14 reconciliation — May 2026)
+
+Updated under **MOB-128 / AUD-003**. The March 2 status is retained below for historical detail, but the launch-facing status table now reflects the Sprint 14 baseline after the handover fixes and Tapologo QA pass.
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| Critical bugs | 0 | 1 (HAND-011 return handover) | ❌ Not met |
-| High-priority bugs | <5 | 5 (MSG-005, AUTH-009, HAND-012/013, REV-001) | ❌ Not met |
-| Medium-priority bugs | — | 15 | ⚠️ Under review |
-| Test execution rate | 100% | ~62% (271/438 test executions) | ⚠️ In progress |
+| Critical bugs | 0 | 0 launch-blocking criticals from March QA remain open; HAND-011 is resolved | ✅ Met |
+| High-priority bugs | <5 | Sprint 14 residuals moved to `BUG_REPORT.md` and Sprint 15 remediation | ⚠️ Managed |
+| Medium-priority bugs | — | Tracked in `BUG_REPORT.md`; no longer duplicated here | ⚠️ Managed |
+| Test execution rate | 100% | 197 defined cases attempted; Tapologo April QA added independent pass baseline | ✅ Met for defined suite |
 | Unique test cases covered | 197 | 197 executed of 197 defined | ✅ All attempted |
 
-> ⚠️ **Action Required:** See [Testing Coverage Status Report](./TESTING_COVERAGE_STATUS_2026_03_02.md) for the full bug registry (MOB-201 through MOB-225) and Round 2 test assignments.
+> **Current source of truth:** See [BUG_REPORT.md](./BUG_REPORT.md) for active post-Sprint 14 regressions and [TESTING_COVERAGE_STATUS_2026_03_02.md](./TESTING_COVERAGE_STATUS_2026_03_02.md) for the historical March QA registry.
 
 ### Tapologo QA Testing Results (April 2026)
 
@@ -128,15 +130,15 @@ An independent QA verification was conducted by **Tapologo** in April 2026 using
 
 **Combined:** ~271 pass, 12 fail, 6 blocked across 197 test cases.
 
-### Critical & High-Priority Open Bugs
+### Historical March Critical & High-Priority Bugs
 
-| Ticket | Test ID | Description | Severity | Confirmed By |
-|--------|---------|-------------|----------|--------------|
-| MOB-202 | HAND-011 | Return handover flow broken | 🔴 Critical | Loago |
-| MOB-201 | MSG-005 | Mark-as-read badge persists | 🔴 High | Kelvin, Loago, Pearl |
-| MOB-210 | AUTH-009 | Signup broken for some users | 🔴 High | Loago |
-| MOB-203 | HAND-012/013 | GPS + real-time sync broken | 🔴 High | Arnold, Loago |
-| MOB-204 | REV-001 | Review submission fails | 🔴 High | Arnold |
+| Ticket | Test ID | Description | Historical Severity | Sprint 14 Reconciliation |
+|--------|---------|-------------|---------------------|--------------------------|
+| MOB-202 | HAND-011 | Return handover flow broken | Resolved P0 | ✅ Resolved before Sprint 14 baseline |
+| MOB-201 | MSG-005 | Mark-as-read badge persists | 🔴 High | Superseded by `BUG_REPORT.md` active registry |
+| MOB-210 | AUTH-009 | Signup broken for some users | 🔴 High | Superseded by `BUG_REPORT.md` active registry |
+| MOB-203 | HAND-012/013 | GPS + real-time sync broken | 🔴 High | Superseded by `BUG_REPORT.md` active registry |
+| MOB-204 | REV-001 | Review submission fails | 🔴 High | Superseded by `BUG_REPORT.md` active registry |
 
 ### Coverage Gaps Requiring Round 2 Testing
 
@@ -576,10 +578,10 @@ Test on the following browsers:
 
 ### Module 5: Payment & Wallet
 
-**Priority:** 🔴 Critical (Currently Mock)  
+**Priority:** 🔴 Critical (Mock/Pending provider integration)  
 **Reference:** Epic 5, `src/pages/Wallet.tsx`
 
-> ⚠️ **Note:** Payment integration is mock. Test wallet functionality only.
+> **MOB-128 / AUD-004 payment label:** Payment and wallet flows are **Mock/Pending** for real-money processing. The UI and lifecycle tests exercise simulated payments, pending wallet balances, and admin review paths only. PayGate/Ooze/DPO provider integration is not live.
 
 #### Unit Tests
 

@@ -45,19 +45,27 @@ Tasks attributed to Teboho in Sprint 11 (Phase 3-4) for the SuperAdmin dashboard
 
 ---
 
-## 4. Critical Logic Gaps (The "Ghost" RPCs)
-The most severe finding of the audit is the absence of core administrative logic that was previously reported as "Done."
+## 4. Critical Logic Gaps (Sprint 14 Reconciliation)
+This section has been reconciled under **MOB-128 / AUD-001** against the Sprint 14 production codebase. The original April audit correctly identified missing SuperAdmin restriction RPCs at the time, but that finding is now stale.
 
 | Feature | Logic Requirement | Current Status | Impact |
 | :--- | :--- | :--- | :--- |
-| **User Suspension** | `suspend_user()` RPC | **MISSING** | Admin cannot suspend users via UI. |
-| **User Banning** | `ban_user()` RPC | **MISSING** | High-risk users cannot be blocked. |
-| **Asset Transfer** | `transfer_vehicle()` RPC | **MISSING** | Vehicle ownership changes are manual. |
+| **User Suspension** | `suspend_user()` RPC | **VERIFIED / IMPLEMENTED** | Admin user management can temporarily suspend users through the UI and `user_restrictions` workflow. |
+| **User Banning** | `ban_user()` RPC | **VERIFIED / IMPLEMENTED** | Admin user management can permanently ban high-risk users through the UI and audit trail. |
+| **Asset Transfer** | `transfer_vehicle()` RPC | **BACKLOG / SEPARATE SCOPE** | Vehicle ownership transfer remains a separate admin-operations enhancement, not part of AUD-001. |
+
+**Code references verified for AUD-001:**
+- `src/components/admin/UserActionsDropdown.tsx` calls `supabase.rpc('suspend_user')` and `supabase.rpc('ban_user')`.
+- `src/components/admin/AdvancedUserManagement.tsx` exposes suspend/ban restrictions in the advanced user workflow.
+- `supabase/migrations/20260508083755_remote_schema.sql` contains `public.suspend_user(...)`, `public.ban_user(...)`, and `public.bulk_suspend_users(...)`.
+- `src/integrations/supabase/types.ts` includes generated RPC types for `suspend_user`, `ban_user`, and `bulk_suspend_users`.
 
 ---
 
 ## 5. Scope & Deferral Note
-Because the scope of remediation for these logic gaps and "Phase 2-4" features is broad and involves deep database integration, **these tasks are deferred to Sprint 13 (May 2026)** to avoid over-scoping the current Sprint 12 launch preparation.
+The suspend/ban logic gaps are no longer deferred. They were implemented before the Sprint 14 reconciliation baseline and are treated as **complete** for MOB-128.
+
+Remaining SuperAdmin roadmap work, including asset transfer and deeper automation modules, should stay in the broader SuperAdmin backlog rather than being conflated with the resolved suspend/ban status.
 
 See the full [SuperAdmin Core Logic Remediation Plan](file:///c:/Users/Administrator/.cursor/Mobi%20Rides%20v1/docs/plans/20260423_SUPERADMIN_CORE_LOGIC_REMEDIATION_PLAN.md) for detailed task breakdowns.
 
@@ -80,6 +88,5 @@ See the full [SuperAdmin Core Logic Remediation Plan](file:///c:/Users/Administr
 ---
 
 **Auditor**: Antigravity (AI Assistant)  
-**Status**: AUDITED (Remediation deferred to S13)  
+**Status**: RECONCILED (MOB-128 / AUD-001 complete)  
 **Date**: 2026-04-23
-
