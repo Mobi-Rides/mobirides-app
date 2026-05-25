@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Car, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthLandingShellProps {
   children: React.ReactNode;
@@ -29,6 +30,71 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
   footerActionLabel,
   footerActionTo,
 }) => {
+  const [featuredRide, setFeaturedRide] = useState({
+    title: "Premium SUV",
+    price: "P650 / day",
+    imageUrl: "/suv-preview.png",
+    type: "Featured ride",
+  });
+
+  useEffect(() => {
+    let rotationInterval: NodeJS.Timeout;
+    
+    const fetchComparableCars = async () => {
+      try {
+        console.log("Fetching real available premium cars for rotation...");
+        const { data, error } = await supabase
+          .from("cars")
+          .select("brand, model, price_per_day, image_url, vehicle_type")
+          .eq("is_available", true)
+          .limit(8);
+
+        if (error) {
+          console.error("Error fetching comparable cars:", error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          console.log(`Comparable cars found for slideshow: ${data.length}`);
+          
+          // Function to set featured ride state based on car index
+          const setFeaturedCar = (index: number) => {
+            const car = data[index];
+            setFeaturedRide({
+              title: `${car.brand} ${car.model}`,
+              price: `P${car.price_per_day} / day`,
+              imageUrl: car.image_url || "/suv-preview.png",
+              type: car.vehicle_type ? `${car.vehicle_type.toUpperCase()} RIDE` : "FEATURED RIDE",
+            });
+          };
+
+          // 1. Select a random car on initial load to keep it fresh
+          const initialIndex = Math.floor(Math.random() * data.length);
+          setFeaturedCar(initialIndex);
+
+          // 2. Set up interval rotation to cycle through cars every 7 seconds
+          let currentIndex = initialIndex;
+          rotationInterval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % data.length;
+            setFeaturedCar(currentIndex);
+          }, 7000);
+        } else {
+          console.log("No available cars found in database, using premium defaults.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch comparable cars:", err);
+      }
+    };
+
+    fetchComparableCars();
+    
+    // Cleanup interval on component unmount
+    return () => {
+      if (rotationInterval) {
+        clearInterval(rotationInterval);
+      }
+    };
+  }, []);
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] min-h-screen w-screen bg-[#F8F9FA] text-neutral-950 overflow-x-hidden">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]">
@@ -68,17 +134,17 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
             <div className="mt-10 w-full max-w-[22rem] rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
               <div className="flex items-center justify-between">
                 <div className="text-left">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Featured ride</p>
-                  <p className="mt-0.5 text-lg font-bold text-neutral-800">Premium SUV</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{featuredRide.type}</p>
+                  <p className="mt-0.5 text-lg font-bold text-neutral-800">{featuredRide.title}</p>
                 </div>
                 <div className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-100">
-                  P650 / day
+                  {featuredRide.price}
                 </div>
               </div>
               <div className="mt-4 flex h-36 items-center justify-center rounded-xl bg-neutral-50 border border-neutral-100 overflow-hidden shadow-inner relative group/image">
                 <img
-                  src="/suv-preview.png"
-                  alt="Premium SUV"
+                  src={featuredRide.imageUrl}
+                  alt={featuredRide.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover/image:scale-105"
                 />
               </div>
