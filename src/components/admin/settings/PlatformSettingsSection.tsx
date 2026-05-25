@@ -11,7 +11,7 @@ import { Settings, Bell, Shield, Palette, Loader2 } from 'lucide-react';
 
 export const PlatformSettingsSection = () => {
   const { toast } = useToast();
-  const { getSetting, updateSetting, loading, error } = usePlatformSettings();
+  const { settings, getSetting, updateSetting, loading, error } = usePlatformSettings();
   const [saving, setSaving] = useState(false);
 
   // General settings
