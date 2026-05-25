@@ -105,11 +105,20 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
         </section>
 
         {/* Right Pane (Form side) - Premium Brand Gradient Background */}
-        <main className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#7C3AED] via-[#6D28D9] to-[#4C1D95] px-4 py-12 sm:px-6 lg:px-12 overflow-hidden">
+        <main 
+          className="relative flex min-h-screen flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-12 overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 50%, #4C1D95 100%)' }}
+        >
           
           {/* Subtle decorative glowing background patterns */}
-          <div className="absolute -right-40 -top-40 h-[30rem] w-[30rem] rounded-full bg-white/10 blur-[100px] pointer-events-none" />
-          <div className="absolute -left-40 -bottom-40 h-[30rem] w-[30rem] rounded-full bg-black/20 blur-[100px] pointer-events-none" />
+          <div 
+            className="absolute -right-40 -top-40 h-[30rem] w-[30rem] rounded-full pointer-events-none" 
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', filter: 'blur(100px)' }}
+          />
+          <div 
+            className="absolute -left-40 -bottom-40 h-[30rem] w-[30rem] rounded-full pointer-events-none" 
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)', filter: 'blur(100px)' }}
+          />
 
           {/* Mobile brand header (shown only on mobile) */}
           <div className="flex flex-col items-center mb-8 lg:hidden z-10">
@@ -134,7 +143,13 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
           {/* Floating Auth Card with Premium Glassmorphism */}
           <div className="relative z-10 w-full max-w-[29rem]">
             {/* Ambient background glow behind the card */}
-            <div className="absolute inset-0 -m-1.5 rounded-[2.5rem] bg-gradient-to-tr from-purple-400/40 via-purple-500/20 to-pink-400/40 blur-2xl opacity-75 pointer-events-none" />
+            <div 
+              className="absolute inset-0 -m-1.5 rounded-[2.5rem] opacity-75 pointer-events-none"
+              style={{
+                background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.4) 0%, rgba(244, 114, 182, 0.4) 100%)',
+                filter: 'blur(24px)'
+              }}
+            />
             
             <div className="relative rounded-3xl border border-white/35 bg-white/80 p-6 shadow-[0_25px_60px_rgba(76,29,149,0.35)] backdrop-blur-xl sm:p-9 transition-all duration-500 hover:border-white/45">
               <div className="mb-6">
