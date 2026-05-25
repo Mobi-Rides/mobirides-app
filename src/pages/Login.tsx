@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { AuthLandingShell } from "@/components/auth/AuthLandingShell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -250,36 +251,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <img
-            src="/lovable-uploads/MOBI_LOGO.png"
-            alt="Mobirides Logo"
-            className="mx-auto h-48 w-48"
-          />
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            Welcome to <span className="text-[#7C3AED]">Mobirides</span>
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Sign in to start sharing or renting cars
-          </p>
-        </div>
-
-        <div className="mt-8 bg-card p-6 sm:p-8 rounded shadow border border-border">
-          <SignInForm />
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <button
-              onClick={() => navigate("/signup")}
-              className="font-medium text-[#7C3AED] hover:text-[#6D28D9]"
-            >
-              Sign up
-            </button>
-          </p>
-        </div>
-      </div>
-
+    <AuthLandingShell
+      eyebrow="Welcome back"
+      title="Sign in to MobiRides"
+      description="Access your bookings, host dashboard, wallet, and verified trip tools in one place."
+      mode="signin"
+      footerText="Don't have an account?"
+      footerActionLabel="Create one"
+      footerActionTo="/signup"
+    >
+      <SignInForm />
       <Dialog open={showProfilePrompt} onOpenChange={setShowProfilePrompt}>
         <DialogContent className="max-w-3xl rounded-2xl">
           <DialogHeader>
@@ -349,7 +330,7 @@ const Login = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </AuthLandingShell>
   );
 };
 
