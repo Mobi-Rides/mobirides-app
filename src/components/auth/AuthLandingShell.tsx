@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Car, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthLandingShellProps {
   children: React.ReactNode;
@@ -29,6 +30,47 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
   footerActionLabel,
   footerActionTo,
 }) => {
+  const [featuredRide, setFeaturedRide] = useState({
+    title: "Premium SUV",
+    price: "P650 / day",
+    imageUrl: "/suv-preview.png",
+  });
+
+  useEffect(() => {
+    const fetchComparableSUV = async () => {
+      try {
+        console.log("Fetching real comparable SUV from database...");
+        const { data, error } = await supabase
+          .from("cars")
+          .select("brand, model, price_per_day, image_url")
+          .eq("vehicle_type", "suv")
+          .eq("is_available", true)
+          .order("price_per_day", { ascending: false }) // premium
+          .limit(1);
+
+        if (error) {
+          console.error("Error fetching comparable SUV:", error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const car = data[0];
+          console.log("Comparable SUV found:", car);
+          setFeaturedRide({
+            title: `${car.brand} ${car.model}`,
+            price: `P${car.price_per_day} / day`,
+            imageUrl: car.image_url || "/suv-preview.png",
+          });
+        } else {
+          console.log("No comparable available SUVs found in database, using defaults.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch comparable SUV:", err);
+      }
+    };
+
+    fetchComparableSUV();
+  }, []);
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] min-h-screen w-screen bg-[#F8F9FA] text-neutral-950 overflow-x-hidden">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]">
@@ -69,16 +111,16 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
               <div className="flex items-center justify-between">
                 <div className="text-left">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Featured ride</p>
-                  <p className="mt-0.5 text-lg font-bold text-neutral-800">Premium SUV</p>
+                  <p className="mt-0.5 text-lg font-bold text-neutral-800">{featuredRide.title}</p>
                 </div>
                 <div className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-100">
-                  P650 / day
+                  {featuredRide.price}
                 </div>
               </div>
               <div className="mt-4 flex h-36 items-center justify-center rounded-xl bg-neutral-50 border border-neutral-100 overflow-hidden shadow-inner relative group/image">
                 <img
-                  src="/suv-preview.png"
-                  alt="Premium SUV"
+                  src={featuredRide.imageUrl}
+                  alt={featuredRide.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover/image:scale-105"
                 />
               </div>
