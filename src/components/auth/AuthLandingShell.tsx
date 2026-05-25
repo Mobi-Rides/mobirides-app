@@ -34,42 +34,66 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
     title: "Premium SUV",
     price: "P650 / day",
     imageUrl: "/suv-preview.png",
+    type: "Featured ride",
   });
 
   useEffect(() => {
-    const fetchComparableSUV = async () => {
+    let rotationInterval: NodeJS.Timeout;
+    
+    const fetchComparableCars = async () => {
       try {
-        console.log("Fetching real comparable SUV from database...");
+        console.log("Fetching real available premium cars for rotation...");
         const { data, error } = await supabase
           .from("cars")
-          .select("brand, model, price_per_day, image_url")
-          .eq("vehicle_type", "suv")
+          .select("brand, model, price_per_day, image_url, vehicle_type")
           .eq("is_available", true)
-          .order("price_per_day", { ascending: false }) // premium
-          .limit(1);
+          .limit(8);
 
         if (error) {
-          console.error("Error fetching comparable SUV:", error);
+          console.error("Error fetching comparable cars:", error);
           return;
         }
 
         if (data && data.length > 0) {
-          const car = data[0];
-          console.log("Comparable SUV found:", car);
-          setFeaturedRide({
-            title: `${car.brand} ${car.model}`,
-            price: `P${car.price_per_day} / day`,
-            imageUrl: car.image_url || "/suv-preview.png",
-          });
+          console.log(`Comparable cars found for slideshow: ${data.length}`);
+          
+          // Function to set featured ride state based on car index
+          const setFeaturedCar = (index: number) => {
+            const car = data[index];
+            setFeaturedRide({
+              title: `${car.brand} ${car.model}`,
+              price: `P${car.price_per_day} / day`,
+              imageUrl: car.image_url || "/suv-preview.png",
+              type: car.vehicle_type ? `${car.vehicle_type.toUpperCase()} RIDE` : "FEATURED RIDE",
+            });
+          };
+
+          // 1. Select a random car on initial load to keep it fresh
+          const initialIndex = Math.floor(Math.random() * data.length);
+          setFeaturedCar(initialIndex);
+
+          // 2. Set up interval rotation to cycle through cars every 7 seconds
+          let currentIndex = initialIndex;
+          rotationInterval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % data.length;
+            setFeaturedCar(currentIndex);
+          }, 7000);
         } else {
-          console.log("No comparable available SUVs found in database, using defaults.");
+          console.log("No available cars found in database, using premium defaults.");
         }
       } catch (err) {
-        console.error("Failed to fetch comparable SUV:", err);
+        console.error("Failed to fetch comparable cars:", err);
       }
     };
 
-    fetchComparableSUV();
+    fetchComparableCars();
+    
+    // Cleanup interval on component unmount
+    return () => {
+      if (rotationInterval) {
+        clearInterval(rotationInterval);
+      }
+    };
   }, []);
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] min-h-screen w-screen bg-[#F8F9FA] text-neutral-950 overflow-x-hidden">
@@ -110,7 +134,7 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
             <div className="mt-10 w-full max-w-[22rem] rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
               <div className="flex items-center justify-between">
                 <div className="text-left">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Featured ride</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{featuredRide.type}</p>
                   <p className="mt-0.5 text-lg font-bold text-neutral-800">{featuredRide.title}</p>
                 </div>
                 <div className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-100">
