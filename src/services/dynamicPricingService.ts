@@ -61,7 +61,7 @@ export class DynamicPricingService {
           rules = dbRules.map((dbRule) => ({
             id: dbRule.id,
             name: dbRule.rule_name,
-            type: dbRule.condition_type as PricingRuleType,
+            type: (dbRule.condition_type as string).toLowerCase() as PricingRuleType,
             is_active: dbRule.is_active,
             multiplier: dbRule.multiplier,
             conditions: dbRule.condition_value as unknown as PricingConditions,
@@ -436,7 +436,7 @@ export class DynamicPricingService {
     const { min_duration_days, max_duration_days } = rule.conditions;
     if (min_duration_days === undefined) return false;
 
-    const totalDays = differenceInDays(returnDate, pickupDate);
+    const totalDays = differenceInDays(returnDate, pickupDate) + 1;
     if (totalDays < min_duration_days) return false;
     if (max_duration_days !== undefined && totalDays > max_duration_days) return false;
 
