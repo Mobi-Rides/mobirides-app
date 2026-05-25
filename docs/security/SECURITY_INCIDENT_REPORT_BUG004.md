@@ -91,18 +91,20 @@ All registered users of the MobiRides platform are potentially affected, as the 
 
 ---
 
-## 6. Remaining Security Hardening (MOB-701 through MOB-709)
+## 6. Remaining Security Hardening (Sprint 14 Reconciliation)
+
+This section was realigned under **MOB-128 / AUD-002**. The original BUG-004 incident is remediated; the table below now separates incident closure from later Sprint 14 RLS and hardening work. Current Sprint 14 security posture is also tracked in `docs/Product Status/SPRINT_14_MAY_2026_JIRA_EXECUTION_PLAN.md` and `docs/hotfixes/SECURITY_REMEDIATION_2026_04_04.md`.
 
 | Task | Description | Status |
 |------|-------------|--------|
-| MOB-701 | Remove hardcoded keys from all scripts | ✅ Complete |
-| MOB-702 | Auth-gate `add-admin` edge function | 🔲 Pending |
-| MOB-703 | Drop blanket read policies on notifications | 🔲 Pending |
-| MOB-704 | Enable RLS on internal financial tables | 🔲 Pending |
-| MOB-705 | Implement Zod input validation in admin edge functions | 🔲 Pending |
-| MOB-706 | Secure 11 DB functions against search_path injection | 🔲 Pending |
-| MOB-707 | Replace plaintext passwords in `pending_confirmations` with pgcrypto | 🔲 Pending |
-| MOB-708 | Create public blog view masking author emails | 🔲 Pending |
+| MOB-701 | Remove hardcoded keys from all scripts and rotate exposed credentials | ✅ Complete |
+| MOB-702 | Auth-gate `add-admin` edge function | ✅ Complete / superseded by RPC-gated admin role management |
+| MOB-703 | Drop blanket read policies on notifications | ✅ Complete via targeted notification RLS cleanup |
+| MOB-704 | Enable RLS on internal financial tables | ✅ Complete for Sprint 14 baseline; monitor future finance tables during migrations |
+| MOB-705 | Implement input validation in admin edge functions | 🟡 Partially complete; continue per-function validation hardening in active backlog |
+| MOB-706 | Secure DB functions against search_path injection | 🟡 Partially complete; recurring migration review item |
+| MOB-707 | Replace plaintext passwords in `pending_confirmations` with safer confirmation handling | 🟡 Reconciled as legacy-risk item; continue verification before public launch |
+| MOB-708 | Reduce public profile/blog PII exposure | 🟡 Sprint 14 security focus; tracked as MOB-46/S14-001 in Sprint 14 |
 | MOB-709 | Push notification endpoint whitelist | ✅ Complete |
 
 ---
@@ -121,7 +123,7 @@ All registered users of the MobiRides platform are potentially affected, as the 
 
 - [ ] Monitor Supabase edge function logs daily for 30 days for any new blocked endpoint attempts
 - [ ] Review Postgres query logs for the exposure window (pre-2026-04-06) for bulk `SELECT` patterns
-- [ ] Complete remaining MOB-702 through MOB-708 security tasks within Sprint 10
+- [ ] Continue Sprint 14/Sprint 15 follow-up hardening for MOB-705 through MOB-708; do not track these as unresolved BUG-004 incident blockers
 - [ ] Schedule quarterly secret rotation policy
 
 ---

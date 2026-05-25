@@ -110,11 +110,11 @@ To hit these strict pre-launch exit criteria, Sprint 15 is divided into two prim
 ### Category 7: Documentation Reconciliation & Audit (P1) — Rollover from Sprint 14
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
-| **AUD-001** | Antigravity | P1 | 2 | 🟡 TO DO | Update `20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md` (suspend/ban user status). |
-| **AUD-002** | Antigravity | P1 | 2 | 🟡 TO DO | Realign Section 6 of `SECURITY_INCIDENT_REPORT_BUG004.md` with Sprint 14. |
-| **AUD-003** | Antigravity | P1 | 2 | 🟡 TO DO | Update "Current Status" table in `PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`. |
-| **AUD-004** | Tapologo | P2 | 1 | 🟡 TO DO | Enforce "Mock/Pending" labeling across all payment documentation. |
-| **AUD-005** | Modisa | P1 | 3 | 🟡 TO DO | funding/data_room — Ensure investor-facing docs are launch-ready. |
+| **AUD-001** | Antigravity | P1 | 2 | ✅ DONE | Updated `20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md` (suspend/ban user status). |
+| **AUD-002** | Antigravity | P1 | 2 | ✅ DONE | Realigned Section 6 of `SECURITY_INCIDENT_REPORT_BUG004.md` with Sprint 14. |
+| **AUD-003** | Antigravity | P1 | 2 | ✅ DONE | Updated "Current Status" table in `PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`. |
+| **AUD-004** | Tapologo | P2 | 1 | ✅ DONE | Enforced "Mock/Pending" labeling across payment documentation. |
+| **AUD-005** | Modisa | P1 | 3 | ✅ DONE | funding/data_room financials and SWOT reconciled for investor launch readiness. |
 
 ---
 
