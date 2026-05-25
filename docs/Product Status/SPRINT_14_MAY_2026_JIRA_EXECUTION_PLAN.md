@@ -4,7 +4,7 @@
 **Prepared by:** Modisa Maphanyane  
 **Sprint:** Sprint 14  
 **Date:** May 8, 2026  
-**Status:** 🟡 IN PROGRESS  
+**Status:** ✅ COMPLETED (with Rollovers to Sprint 15)  
 **Week 1 May Status Report:** [WEEK_1_MAY_2026_STATUS_REPORT.md](WEEK_1_MAY_2026_STATUS_REPORT.md)
 
 ---
@@ -127,3 +127,30 @@ This sprint also marks the initiation of the **Native Mobile Integration** phase
 
 ## 🏁 Final Sprint Goal
 Achieve **Zero P0 Technical Debt** and **100% Documentation Compliance** for the June V1.0 Launch.
+
+---
+
+## 🏁 Sprint 14 Retrospective
+
+### 🌟 What Went Well
+- **Storage Infrastructure Restored**: Successfully resolved critical storage policy and bucket drifts by executing the Master Storage Reconciliation plan. Multi-tenant folder-level isolation is now secure and fully compliant.
+- **Legal Compliance Parity**: Successfully finalized renter and host Terms of Service interfaces and integrated them seamlessly in the UI, fulfilling primary launch criteria.
+- **UI Stabilizations**: Resolved the scrunched layout issues from `react-day-picker` v9 and dynamic spacing overflows in the dynamic insurance pricing screens.
+
+### 🛠️ Challenges & Rollovers
+- **Analytics Merge Reductions**: Redundant hooks and concurrent analytics changes caused some static analysis conflicts that delayed merge parity.
+- **Role RLS Visibility Blocks**: We identified that direct client queries on PostgreSQL RLS-protected tables (like `user_roles`) blocked admins from seeing other profiles, resulting in self-only visibility.
+- **Review Saving Failures**: High-priority database trigger regressions were identified where missing or unlinked `payment_transaction_id` columns caused `release_pending_earnings()` to throw exceptions and abort review submissions.
+- **Outstanding Backlog Items**: The premium auth redesign, co-hosting/fleet management infrastructure, and Firebase configuration setups (`google-services.json`) were rolled over to Sprint 15 due to stabilization priority shifts.
+
+### 📈 Action Items for Sprint 15
+- [ ] **Bugs Remediation (S15-001 through S15-004)**: Actively resolve the four new high-priority bugs captured in `BUG_REPORT.md` (BUG-074 through BUG-077).
+- [ ] **Premium Auth Landing Page Redesign (MOB-126)**: Implement high-fidelity Login/Signup pages using approved modern aesthetics.
+- [ ] **Co-Hosting Fleet Management (MOB-160)**: Deploy full fleet co-hosting permissions and multi-user dashboard extensions.
+- [ ] **Firebase Native Integration (MOB-122)**: Resolve Google services provisioning blocks to enable native push notification deliveries.
+
+---
+
+*Document finalized and archived — May 15, 2026.*  
+*Reviewer: Modisa Maphanyane (CEO)*  
+*System Auditor: Antigravity AI*
