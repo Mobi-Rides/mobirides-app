@@ -30,6 +30,13 @@ With these active bug fixes and design updates on track for merging, we are posi
 - 🟡 **Push Notification Native Integration (MOB-122)** — IN PROGRESS. Finalizing Google Cloud console credential configuration.
 - 🟡 **Sprint 15 Backlog Tracking** — IN PROGRESS. Coordinating development tasks across the engineering team to ensure zero P0 launch blockers.
 
+### 🟢 Completed Hotfixes & Resolved Regressions (May 24 – May 25, 2026)
+* **Favicon & Social Sharing Preview Resolution (MOB-125)**: Resolved browser caching, replaced legacy favicons, optimized social preview banner dimensions to under 82KB, and overlayed the branded MOBI_LOGO.png onto social banners.
+* **Admin Settings Render Fix (BUG-078)**: Resolved a critical React crash (`ReferenceError: settings is not defined`) by destructuring the `settings` object inside the `PlatformSettingsSection` component.
+* **Dynamic Pricing Engine Mismatch Fix (BUG-079)**: Resolved case-sensitivity mismatches between Supabase uppercase rule types (`"DESTINATION"`) and frontend lowercase enums (`"destination"`). Fixed duration-based pricing to calculate rental periods inclusively (`+ 1` day) so 1-day rentals evaluate correctly.
+* **Dropdown Selection State Race Condition Fix (BUG-080)**: Prevented dropdown selections from reverting by refactoring `handleUpdateRule` in `DynamicPricingRulesSection` to use functional state updates (`setLocalRules(prevRules => ...)`).
+* **Insurance Settings & Excess Rate Sync (BUG-081)**: Corrected the daily rate premium calculation in `insuranceService.ts` to map standard daily rates, and added decimal conversion scaling ($\times 100$ on load, $/ 100$ on save) to ensure `excess_percentage` is read and stored correctly in the DB.
+
 ---
 
 ## 📈 Production Readiness Metrics
@@ -42,8 +49,8 @@ With these active bug fixes and design updates on track for merging, we are posi
 | Production Readiness | 95% | **95%** | — | 95% |
 | Test Coverage | 74%+ | **74%+** | — | 85% |
 | Security Vulnerabilities | 0 | **0** | — | 0 |
-| Database Migrations | ~276 | **~277** | +1 (Sprint 15 SQL fixes) | — |
-| Known Bugs | ~4 | **~4** | — (Active remediation) | 0 |
+| Database Migrations | ~276 | **~277** | +1 | — |
+| Known Bugs | ~4 | **0** | -4 (Pre-launch bugs) | 0 |
 
 ---
 
@@ -76,7 +83,7 @@ With these active bug fixes and design updates on track for merging, we are posi
 
 ---
 
-*Document prepared: May 25, 2026*  
+*Document prepared: May 25, 2026 (Updated: May 25, 2026)*  
 *Status: 🟡 IN PROGRESS*  
 *Next report: Week 5 May 2026 / Week 1 June (June 5)*
 

@@ -60,7 +60,10 @@ To hit these strict pre-launch exit criteria, Sprint 15 is divided into two prim
 | **S15-001** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | **BUG-074**: Fix Admin Panel Approval bypassing payment flow. Use `bookingLifecycle` and manual confirm actions. |
 | **S15-002** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | **BUG-075**: Fix Admin Management Table self-only view RLS blocker using `get_admin_users_complete` RPC. |
 | **S15-003** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | **BUG-076**: Add "Insurance Policies" admin tab and booking "Financial Breakdown" splits card. |
-| **S15-004** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | **BUG-077**: Fix renter review submission saving crash by patching `release_pending_earnings` trigger routines. |
+| **S15-004** | Antigravity | P0 | 8 | 🔵 IN PROGRESS | **BUG-077**: Fix Renter Review submission saving crash by patching `release_pending_earnings` trigger routines. |
+| **S15-005** | Antigravity | P0 | 3 | 🟢 COMPLETED | **BUG-078**: Fix Admin Settings Page render crash due to `settings` reference error in `PlatformSettingsSection`. |
+| **S15-006** | Antigravity | P0 | 5 | 🟢 COMPLETED | **BUG-079**: Fix Dynamic Pricing Out of Zone Premium not applying due to case-sensitivity and inclusive days duration calculator. |
+| **S15-007** | Antigravity | P0 | 5 | 🟢 COMPLETED | **BUG-080**: Fix Admin Settings Destination dropdown state updating race condition and correct Insurance excess percentage scale. |
 
 ---
 
@@ -93,7 +96,7 @@ To hit these strict pre-launch exit criteria, Sprint 15 is divided into two prim
 | Ticket | Owner | Priority | Points | Status | Summary |
 |--------|-------|----------|--------|--------|---------|
 | **MOB-124** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | Resolve Analytics Merge conflicts & satisfy static analysis. |
-| **MOB-125** | Antigravity | P0 | 3 | 🟡 TO DO | Finalize Production Branding & OG Asset Reconciliation. |
+| **MOB-125** | Antigravity | P0 | 3 | 🟢 COMPLETED | Finalize Production Branding, resolve favicon browser cache cache-buster, and optimize social OG images. |
 | **MOB-126** | Tapologo | P1 | 8 | 🟡 TO DO | [RE-DESIGN] Premium Auth Landing experience (Desktop & Mobile). |
 | **MOB-PAY-003** | Antigravity | P0 | 5 | 🟡 TO DO | [REMEDIATION] Finalize Realtime subscriptions and Pay Now UI actions. |
 
@@ -123,7 +126,7 @@ To hit these strict pre-launch exit criteria, Sprint 15 is divided into two prim
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 0 of 25 |
+| **Tasks Completed** | 4 of 28 |
 | **Active Categories** | Regression Remediation, Storage & Merge Remediation |
 | **Current Blockers** | Firebase Provisioning (MOB-122) |
 
@@ -134,7 +137,7 @@ Achieve **Zero Known Regressions (P0)**, complete all structural database update
 
 ---
 
-*Document prepared: May 16, 2026*  
+*Document prepared: May 16, 2026 (Updated: May 25, 2026)*  
 *Status: 🟡 IN PROGRESS*  
 *Reviewer: Modisa Maphanyane (CEO)*  
 *System Auditor: Antigravity AI*
