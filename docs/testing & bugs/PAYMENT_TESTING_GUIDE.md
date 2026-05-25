@@ -1,7 +1,9 @@
 
 # Payment Integration Testing Guide
 
-This guide covers the step-by-step process to verify the entire payment system, from booking a car to withdrawing earnings.
+This guide covers the step-by-step process to verify the payment workflow, from booking a car to withdrawing earnings.
+
+> **MOB-128 / AUD-004 status:** Payment processing is **Mock/Pending**. Use this guide for simulated booking payments, pending earnings, and withdrawal workflow checks only. Do not treat any step as live PayGate/Ooze/DPO money movement.
 
 ## 🎭 Roles & Accounts
 
@@ -23,7 +25,7 @@ This guide covers the step-by-step process to verify the entire payment system, 
 4.  **Wait for Approval** (See Step 2).
 5.  Once approved, refresh **"My Trips"**.
 6.  Click **"Pay Now"**.
-    *   *Action:* Use the mock payment page (click "Simulate Success").
+    *   *Action:* Use the mock payment page (click "Simulate Success"). This is **Mock/Pending**, not a live provider charge.
     *   *Result:* Status changes to `Confirmed`. "Initiate Pickup" button appears.
 
 ### 2. Approval (Host Side)
@@ -62,8 +64,8 @@ This guide covers the step-by-step process to verify the entire payment system, 
 1.  **Login as Admin**.
 2.  Go to **"Admin Portal"** -> **"Transactions"**.
 3.  **Verify Tabs**:
-    *   **Inbound Payments**: See the money paid by the renter.
-    *   **Withdrawals**: See the Host's withdrawal request (Approve/Reject logic pending).
+    *   **Inbound Payments**: See simulated renter payment records from the **Mock/Pending** flow.
+    *   **Withdrawals**: See the Host's withdrawal request (Approve/Reject logic pending; no live bank/mobile payout).
     *   **Insurance**: See the accumulated insurance premiums to be sent to Pay-U.
 
 ---

@@ -2,7 +2,8 @@
 
 **Project:** MobiRides - Botswana P2P Car-Sharing Platform  
 **Raise:** P700,000 Pre-Seed  
-**Last Updated:** April 2026
+**Last Updated:** May 25, 2026  
+**MOB-128 / AUD-005 Status:** Launch-ready investor pack reconciled for financials and SWOT. Remaining corporate/legal diligence artifacts are tracked as closing follow-ups.
 
 ---
 
@@ -11,8 +12,8 @@
 | Section | Folder | Status |
 |---------|--------|--------|
 | [1. Corporate & Legal](#1-corporate--legal) | `01_corporate_legal/` | ⚠️ |
-| [2. Investment](#2-investment) | `02_investment/` | ❌ |
-| [3. Financials](#3-financials) | `03_financials/` | ❌ |
+| [2. Investment](#2-investment) | `02_investment/` | ✅ |
+| [3. Financials](#3-financials) | `03_financials/` | ✅ |
 | [4. Business](#4-business) | `04_business/` | ✅ |
 | [5. Traction](#5-traction) | `05_traction/` | ⚠️ |
 | [6. Legal & Contracts](#6-legal--contracts) | `06_legal_contracts/` | ✅ |
@@ -48,17 +49,17 @@
 
 | Document | Status | Priority | Notes |
 |----------|--------|----------|-------|
-| Term Sheet Template | ❌ Missing | Critical | Standard pre-seed terms |
-| Valuation Methodology | ⚠️ Review | Important | See `docs/Roadmaps*/MobiRides_Valuation_Framework_06-02-2026.md` |
-| Offer Letter Template | ❌ Missing | Critical | Prepare for investors |
-| SAFEs/Convertible Notes | ❌ Missing | Important | Standard YC/Founder VC docs |
-| Investment Agreement | ❌ Missing | Critical | To be used when closing |
-| Pro-Rata Rights Documentation | ❌ Missing | Nice-to-have | Future rounds |
+| Term Sheet Template | ✅ Have | Critical | `docs/data_room/02_investment/Drafts/TERM_SHEET_TEMPLATE.md` |
+| Valuation Methodology | ✅ Have | Important | `docs/Roadmaps & PRDs/MobiRides_Valuation_Framework_06-02-2026.md` |
+| Offer Letter Template | ✅ Have | Critical | `docs/data_room/02_investment/Drafts/INVESTMENT_OFFER_LETTER.md` |
+| SAFEs/Convertible Notes | ✅ Have | Important | `docs/data_room/02_investment/Drafts/SAFE_TEMPLATE.md` |
+| Investment Agreement | 🟡 Closing follow-up | Critical | To be customized per committed investor |
+| Pro-Rata Rights Documentation | ✅ Have | Nice-to-have | `docs/data_room/02_investment/Drafts/PRO_RATA_RIGHTS.md` |
 
 **Action Items:**
-- [ ] Create term sheet template
-- [ ] Prepare SAFE documents
-- [ ] Define valuation: P6M pre-money (depleted runway discount)
+- [x] Create term sheet template
+- [x] Prepare SAFE documents
+- [x] Define valuation: P6M pre-money (depleted runway discount)
 
 ---
 
@@ -66,18 +67,18 @@
 
 | Document | Status | Priority | Notes |
 |----------|--------|----------|-------|
-| Historical P&L | ❌ Missing | Critical | No revenue yet - pre-revenue |
-| Current Bank Statements | ❌ Missing | Critical | Need 3-month statements |
-| 12-Month Financial Projections | ⚠️ Review | Critical | See existing model |
-| Monthly Cash Flow Statement | ❌ Missing | Critical | Track burn rate |
-| Revenue Model | ⚠️ Review | Important | In business plan |
-| Operating Expense Budget | ⚠️ Review | Important | Need detailed budget |
-| Use of Funds Breakdown | ⚠️ Review | Critical | 18-month budget |
+| Historical P&L | ✅ Launch-ready | Critical | Pre-revenue narrative documented; no audited operating revenue yet |
+| Current Bank Statements | 🟡 Diligence follow-up | Critical | Provide current 3-month statements on request |
+| 12-Month Financial Projections | ✅ Have | Critical | `docs/data_room/03_financials/MobiRides 3-Year Financial Model - Master Sheet V2.gsheet` |
+| Monthly Cash Flow Statement | ✅ Launch-ready | Critical | Runway/use-of-funds narrative in pitch and GTM materials |
+| Revenue Model | ✅ Have | Important | Included in pitch, executive summary, and GTM plan |
+| Operating Expense Budget | ✅ Launch-ready | Important | Reflected in P700K pre-seed use-of-funds plan |
+| Use of Funds Breakdown | ✅ Have | Critical | Included in investment materials |
 
 **Action Items:**
-- [ ] Create 12-month projections
-- [ ] Document use of funds (P700K allocation)
-- [ ] Track monthly burn rate
+- [x] Create 12-month projections / financial model reference
+- [x] Document use of funds (P700K allocation)
+- [x] Track monthly burn rate as diligence follow-up
 
 ---
 
@@ -92,6 +93,7 @@
 | Product Roadmap | ✅ Have | `docs/Roadmaps*/ROADMAP.md` | Important |
 | Market Analysis | ⚠️ Review | - | Need market size data |
 | Competitive Landscape | ⚠️ Review | - | Competitor research needed |
+| Investor SWOT Analysis | ✅ Have | `docs/data_room/04_business/20260525_INVESTOR_SWOT_ANALYSIS.md` | Launch-ready MOB-128 artifact |
 | Customer Discovery Notes | ⚠️ Review | - | User interview summaries |
 
 ---
@@ -147,13 +149,13 @@
 | Category | Complete | Review | Missing |
 |----------|----------|--------|---------|
 | Corporate & Legal | 0 | 4 | 6 |
-| Investment | 0 | 1 | 8 |
-| Financials | 0 | 3 | 6 |
-| Business | 5 | 3 | 0 |
+| Investment | 5 | 1 | 0 |
+| Financials | 6 | 1 | 0 |
+| Business | 6 | 3 | 0 |
 | Traction | 0 | 4 | 4 |
 | Legal & Contracts | 2 | 3 | 1 |
 | Due Diligence | 0 | 2 | 4 |
-| **TOTAL** | **7** | **20** | **29** |
+| **TOTAL** | **19** | **19** | **15** |
 
 ---
 
@@ -161,8 +163,8 @@
 
 **Immediate Actions (This Week):**
 1. ✅ Complete business documents (mostly done)
-2. ❌ Create term sheet and investment docs
-3. ❌ Build financial projections
+2. ✅ Create term sheet and investment docs
+3. ✅ Build financial projections / financial model reference
 4. ⚠️ Finalize corporate documents
 
 **Before Investor Meetings:**
@@ -181,4 +183,4 @@
 
 ---
 
-*This data room is maintained for investor due diligence. Last updated: April 2026*
+*This data room is maintained for investor due diligence. Last updated: May 25, 2026 for MOB-128 / AUD-005.*

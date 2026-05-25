@@ -5,6 +5,8 @@
 **Raise:** P700,000 pre-seed  
 **Pre-Money Valuation:** P6,000,000  
 
+> **MOB-128 / AUD-004 payment note:** Payment rails are **Mock/Pending** for real-money processing. Provider integration with DPO/PayGate/Ooze is part of the launch-readiness roadmap, not a live production claim.
+
 ---
 
 ## 🎯 The Problem
@@ -110,7 +112,7 @@ MobiRides is Botswana's first peer-to-peer car-sharing and Rent2Buy marketplace.
 3. **CIPA registered trademark** — legal exclusivity
 4. **Dual-product platform** (P2P + Rent2Buy) expands TAM
 5. **Proven unit economics** with validated demand
-6. **Strategic partnerships** (Trillo, Pay-U, payment rails)
+6. **Strategic partnerships** (Trillo, Pay-U, payment rails pending provider integration)
 
 ---
 
