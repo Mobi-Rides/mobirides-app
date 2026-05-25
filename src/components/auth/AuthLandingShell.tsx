@@ -75,8 +75,12 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
                   P650 / day
                 </div>
               </div>
-              <div className="mt-4 flex h-32 items-center justify-center rounded-xl bg-gradient-to-br from-neutral-50 to-neutral-100 border border-neutral-100">
-                <Car className="h-16 w-16 text-purple-600/80" strokeWidth={1.2} aria-hidden="true" />
+              <div className="mt-4 flex h-36 items-center justify-center rounded-xl bg-neutral-50 border border-neutral-100 overflow-hidden shadow-inner relative group/image">
+                <img
+                  src="/suv-preview.png"
+                  alt="Premium SUV"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover/image:scale-105"
+                />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-medium text-neutral-600">
                 <div className="rounded-lg bg-neutral-50 py-1.5 border border-neutral-100">Automatic</div>
@@ -129,7 +133,10 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
 
           {/* Floating Auth Card with Premium Glassmorphism */}
           <div className="relative z-10 w-full max-w-[29rem]">
-            <div className="rounded-3xl border border-white/25 bg-white/95 p-6 shadow-[0_20px_50px_rgba(76,29,149,0.3)] backdrop-blur-xl sm:p-9">
+            {/* Ambient background glow behind the card */}
+            <div className="absolute inset-0 -m-1.5 rounded-[2.5rem] bg-gradient-to-tr from-purple-400/40 via-purple-500/20 to-pink-400/40 blur-2xl opacity-75 pointer-events-none" />
+            
+            <div className="relative rounded-3xl border border-white/35 bg-white/80 p-6 shadow-[0_25px_60px_rgba(76,29,149,0.35)] backdrop-blur-xl sm:p-9 transition-all duration-500 hover:border-white/45">
               <div className="mb-6">
                 <span className="text-xs font-bold uppercase tracking-widest text-purple-600 block mb-1">{eyebrow}</span>
                 <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
