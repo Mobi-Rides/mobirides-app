@@ -2,7 +2,7 @@
 
 **Version:** 1.3  
 **Date:** February 3, 2026  
-**Status:** Active Development
+**Status:** Active Development — Mock/Pending provider integration
 **Authors:** Development Team  
 **Reviewers:** Dev Team & Engineers
 
@@ -31,8 +31,10 @@
 
 ## Executive Summary
 
+> **Sprint 15 / AUD-004 payment label:** This is the target technical architecture. In the Sprint 15 production codebase, provider calls are **Mock/Pending**: PayGate/Ooze/DPO are planned or scaffolded but not live for real-money collection or payout.
+
 ### Purpose
-Implement end-to-end payment processing for MobiRides car rental platform, enabling:
+Implement end-to-end payment processing for MobiRides car rental platform. The target production architecture enables:
 - Card payments via PayGate (DVLP Botswana/FNB Merchant)
 - Mobile money via Ooze Botswana (OrangeMoney now, MyZaka & Smega Q2 2026)
 - Automated host payouts and withdrawals
@@ -66,10 +68,10 @@ The P50 minimum wallet balance requirement serves multiple purposes:
 
 | Provider | Purpose | Status |
 |----------|---------|--------|
-| PayGate (PayWeb3) | Card payments | Ready for integration |
-| Ooze Botswana | OrangeMoney | Ready for integration |
-| Ooze Botswana | MyZaka | Q2 2026 |
-| Ooze Botswana | Smega | Q2 2026 |
+| PayGate (PayWeb3) | Card payments | Mock/Pending — credentials and sandbox verification required |
+| Ooze Botswana | OrangeMoney | Mock/Pending — API credentials and test environment required |
+| Ooze Botswana | MyZaka | Planned |
+| Ooze Botswana | Smega | Planned |
 
 ---
 

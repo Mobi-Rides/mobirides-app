@@ -97,7 +97,7 @@ To hit these strict pre-launch exit criteria, Sprint 15 is divided into two prim
 |--------|-------|----------|--------|--------|---------|
 | **MOB-124** | Antigravity | P0 | 5 | 🔵 IN PROGRESS | Resolve Analytics Merge conflicts & satisfy static analysis. |
 | **MOB-125** | Antigravity | P0 | 3 | 🟢 COMPLETED | Finalize Production Branding, resolve favicon browser cache cache-buster, and optimize social OG images. |
-| **MOB-126** | Tapologo | P1 | 8 | 🟡 TO DO | [RE-DESIGN] Premium Auth Landing experience (Desktop & Mobile). |
+| **MOB-126** | Tapologo | P1 | 8 | ✅ DONE | [RE-DESIGN] Premium Auth Landing experience (Desktop & Mobile). Implemented via `AuthLandingShell`, `Login.tsx`, and `signup.tsx`. |
 | **MOB-PAY-003** | Antigravity | P0 | 5 | 🟡 TO DO | [REMEDIATION] Finalize Realtime subscriptions and Pay Now UI actions. |
 
 ---
@@ -116,7 +116,7 @@ To hit these strict pre-launch exit criteria, Sprint 15 is divided into two prim
 | **AUD-001** | Antigravity | P1 | 2 | 🟡 TO DO | Update `20260423_ADMIN_PORTAL_FUNCTIONALITY_AUDIT.md` (suspend/ban user status). |
 | **AUD-002** | Antigravity | P1 | 2 | 🟡 TO DO | Realign Section 6 of `SECURITY_INCIDENT_REPORT_BUG004.md` with Sprint 14. |
 | **AUD-003** | Antigravity | P1 | 2 | 🟡 TO DO | Update "Current Status" table in `PRE_LAUNCH_TESTING_PROTOCOL_2026-01-05.md`. |
-| **AUD-004** | Tapologo | P2 | 1 | 🟡 TO DO | Enforce "Mock/Pending" labeling across all payment documentation. |
+| **AUD-004** | Tapologo | P2 | 1 | ✅ DONE | Enforced "Mock/Pending" labeling across active payment documentation and investor-facing payment claims. |
 | **AUD-005** | Modisa | P1 | 3 | 🟡 TO DO | funding/data_room — Ensure investor-facing docs are launch-ready. |
 
 ---
@@ -126,9 +126,17 @@ To hit these strict pre-launch exit criteria, Sprint 15 is divided into two prim
 ### Overall Progress
 | Metric | Status |
 |--------|--------|
-| **Tasks Completed** | 4 of 28 |
-| **Active Categories** | Regression Remediation, Storage & Merge Remediation |
+| **Tasks Completed** | 6 of 28 |
+| **Active Categories** | Regression Remediation, Storage & Merge Remediation, Tapologo QA/UI |
 | **Current Blockers** | Firebase Provisioning (MOB-122) |
+
+### Tapologo Sprint 15 Progress
+
+| Responsibility | Status | Evidence |
+|----------------|--------|----------|
+| Regression Testing | ✅ DONE | Targeted checks completed for MOB-126 auth shell, corrected slogan, and AUD-004 payment labels. |
+| MOB-126 Auth Redesign | ✅ DONE | `AuthLandingShell` powers `Login.tsx` and `signup.tsx`; split-screen desktop and stacked mobile layout implemented. |
+| AUD-004 Mock Labels | ✅ DONE | Active payment docs and investor-facing payment references explicitly state `Mock/Pending`. |
 
 ---
 
