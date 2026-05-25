@@ -5,6 +5,8 @@
 **Raise:** P700,000 pre-seed  
 **Pre-Money Valuation:** P6,000,000  
 
+> **Sprint 15 / AUD-004 payment note:** Payment rails are **Mock/Pending** for real-money processing. Pay-U damage protection and Trillo fleet work are active partnership tracks; DPO/PayGate/Ooze payment processing remains pending provider credentials and sandbox validation.
+
 ---
 
 ## 🚀 The Opportunity
@@ -16,7 +18,7 @@ Botswana's transportation market is broken. With limited options, inefficient se
 - **Two-product strategy**: P2P car sharing (live) + Rent2Buy marketplace (Q2 2026 pilot)
 - **Exceptional traction**: 247 registered users, 66 active vehicles, P311K revenue (+305% YoY)
 - **Validated unit economics**: Host LTV:CAC 60.75:1, Renter LTV:CAC 4.05:1
-- **Strong partnerships**: Pay-U (Damage Protection), Trillo Rentals (fleet), DPO/Paygate (payments)
+- **Strong partnerships**: Pay-U (Damage Protection), Trillo Rentals (fleet), DPO/PayGate/Ooze payment-provider integration pending
 
 ---
 
@@ -95,7 +97,7 @@ Botswana's transportation market is broken. With limited options, inefficient se
 3. **CIPA registered trademark** — legal exclusivity
 4. **Dual-product platform** (P2P + Rent2Buy) expands TAM
 5. **Proven unit economics** with validated demand
-6. **Strategic partnerships** (Pay-U, Trillo, payment rails)
+6. **Strategic partnerships** (Pay-U, Trillo, payment rails pending provider integration)
 
 ---
 

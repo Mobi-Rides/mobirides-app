@@ -2,8 +2,10 @@
 
 **Date:** 23 March 2026  
 **Sprint:** Sprint 8+ Candidate  
-**Status:** DRAFT — Awaiting Review  
+**Status:** Active Gap Plan — Mock/Pending provider integration  
 **Objective:** Map all gaps between the current mock-based payment system and production-ready PayGate/Ooze integration, providing a phased plan to close them.
+
+> **Sprint 15 / AUD-004 payment label:** Sprint 15 production uses **Mock/Pending** payment processing. Phase 0 mock-flow correctness is implemented, but PayGate/Ooze/DPO provider credentials, sandbox validation, webhook verification, and real disbursement APIs remain pending.
 
 ---
 

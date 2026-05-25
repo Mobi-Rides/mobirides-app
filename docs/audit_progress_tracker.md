@@ -141,7 +141,7 @@ This document tracks the systematic review of all `.md` files in the `docs` fold
 ### 4. Payment Gateway "Done" Hallucinations (Ticket: AUD-004)
 *   **Issue:** Some planning docs suggest PayGate/Ooze is live.
 *   **Reality:** Codebase verifies `mockPaymentService.ts` is the active driver.
-*   **Proposed Fix:** Ensure all docs explicitly label payments as "Mock/Pending".
+*   **Resolution:** ✅ Complete in Sprint 15 for Tapologo-owned AUD-004 scope. Active payment docs and investor-facing payment references explicitly label provider integration as "Mock/Pending".
 
 ## ✅ V1.0 Final Production Documentation Suite
 

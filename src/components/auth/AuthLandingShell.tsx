@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Car, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ArrowRight, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react";
 
 interface AuthLandingShellProps {
   children: React.ReactNode;
@@ -20,6 +19,13 @@ const highlights = [
   { icon: Star, label: "Premium hosts", value: "Rated experiences", color: "text-amber-600 bg-amber-50" },
 ];
 
+const featuredRide = {
+  title: "Premium SUV",
+  price: "P650 / day",
+  imageUrl: "/suv-preview.png",
+  type: "Featured ride",
+};
+
 export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
   children,
   eyebrow,
@@ -30,118 +36,51 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
   footerActionLabel,
   footerActionTo,
 }) => {
-  const [featuredRide, setFeaturedRide] = useState({
-    title: "Premium SUV",
-    price: "P650 / day",
-    imageUrl: "/suv-preview.png",
-    type: "Featured ride",
-  });
-
-  useEffect(() => {
-    let rotationInterval: NodeJS.Timeout;
-    
-    const fetchComparableCars = async () => {
-      try {
-        console.log("Fetching real available premium cars for rotation...");
-        const { data, error } = await supabase
-          .from("cars")
-          .select("brand, model, price_per_day, image_url, vehicle_type")
-          .eq("is_available", true)
-          .limit(8);
-
-        if (error) {
-          console.error("Error fetching comparable cars:", error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          console.log(`Comparable cars found for slideshow: ${data.length}`);
-          
-          // Function to set featured ride state based on car index
-          const setFeaturedCar = (index: number) => {
-            const car = data[index];
-            setFeaturedRide({
-              title: `${car.brand} ${car.model}`,
-              price: `P${car.price_per_day} / day`,
-              imageUrl: car.image_url || "/suv-preview.png",
-              type: car.vehicle_type ? `${car.vehicle_type.toUpperCase()} RIDE` : "FEATURED RIDE",
-            });
-          };
-
-          // 1. Select a random car on initial load to keep it fresh
-          const initialIndex = Math.floor(Math.random() * data.length);
-          setFeaturedCar(initialIndex);
-
-          // 2. Set up interval rotation to cycle through cars every 7 seconds
-          let currentIndex = initialIndex;
-          rotationInterval = setInterval(() => {
-            currentIndex = (currentIndex + 1) % data.length;
-            setFeaturedCar(currentIndex);
-          }, 7000);
-        } else {
-          console.log("No available cars found in database, using premium defaults.");
-        }
-      } catch (err) {
-        console.error("Failed to fetch comparable cars:", err);
-      }
-    };
-
-    fetchComparableCars();
-    
-    // Cleanup interval on component unmount
-    return () => {
-      if (rotationInterval) {
-        clearInterval(rotationInterval);
-      }
-    };
-  }, []);
   return (
-    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] min-h-screen w-screen bg-[#F8F9FA] text-neutral-950 overflow-x-hidden">
-      <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] min-h-screen w-screen overflow-x-hidden bg-[#F8F9FA] text-neutral-950">
+      <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
         
         {/* Left Pane (Brand side) - Desktop Only */}
-        <section className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-neutral-50 px-12 py-12 border-r border-neutral-100">
+        <section className="relative hidden overflow-hidden border-r border-neutral-100 bg-neutral-50 px-12 py-12 lg:flex lg:flex-col lg:justify-between">
           {/* Subtle branding grid/pattern overlay */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
-          <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-purple-200/20 blur-3xl pointer-events-none" />
-          <div className="absolute -right-20 -bottom-20 h-80 w-80 rounded-full bg-emerald-200/20 blur-3xl pointer-events-none" />
 
           {/* Logo Header */}
           <div className="relative z-10 flex items-center gap-3">
             <img
               src="/lovable-uploads/MOBI_LOGO.png"
               alt="MobiRides"
-              className="h-10 w-10 rounded-full bg-white object-contain p-1.5 shadow-md border border-neutral-100"
+              className="h-10 w-10 rounded-lg border border-neutral-100 bg-white object-contain p-1.5 shadow-md"
             />
             <span className="text-xl font-bold tracking-tight text-neutral-900">MobiRides</span>
           </div>
 
           {/* Centered Main Brand Content */}
-          <div className="relative z-10 my-auto flex flex-col items-center text-center max-w-xl mx-auto px-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-purple-100 bg-purple-50/50 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-purple-700 mb-6">
+          <div className="relative z-10 mx-auto my-auto flex max-w-xl flex-col items-center px-4 text-center">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-lg border border-purple-100 bg-purple-50/70 px-3.5 py-1 text-xs font-semibold uppercase text-purple-700">
               <Sparkles className="h-3.5 w-3.5 text-amber-500 animate-pulse" aria-hidden="true" />
               Botswana's Largest Marketplace
             </div>
             
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-neutral-900 sm:text-5xl">
-              MobiRides: <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Cars for You, By You</span>
+            <h1 className="text-4xl font-extrabold leading-tight text-neutral-900 sm:text-5xl">
+              MobiRides: <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Cars for You, By You</span> - Botswana's Largest Rental Marketplace
             </h1>
             <p className="mt-6 text-base leading-relaxed text-neutral-600 max-w-md">
               Book trusted local cars or turn your vehicle into income with Botswana's largest premium car sharing platform.
             </p>
 
             {/* Premium Featured Ride Preview Card */}
-            <div className="mt-10 w-full max-w-[22rem] rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+            <div className="mt-10 w-full max-w-[22rem] rounded-lg border border-neutral-200/80 bg-white p-5 shadow-xl transition-all duration-300 hover:shadow-2xl">
               <div className="flex items-center justify-between">
                 <div className="text-left">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{featuredRide.type}</p>
+                  <p className="text-[10px] font-bold uppercase text-neutral-400">{featuredRide.type}</p>
                   <p className="mt-0.5 text-lg font-bold text-neutral-800">{featuredRide.title}</p>
                 </div>
-                <div className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-100">
+                <div className="rounded-lg bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-100">
                   {featuredRide.price}
                 </div>
               </div>
-              <div className="mt-4 flex h-36 items-center justify-center rounded-xl bg-neutral-50 border border-neutral-100 overflow-hidden shadow-inner relative group/image">
+              <div className="group/image relative mt-4 flex h-36 items-center justify-center overflow-hidden rounded-lg border border-neutral-100 bg-neutral-50 shadow-inner">
                 <img
                   src={featuredRide.imageUrl}
                   alt={featuredRide.title}
@@ -149,9 +88,9 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
                 />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-medium text-neutral-600">
-                <div className="rounded-lg bg-neutral-50 py-1.5 border border-neutral-100">Automatic</div>
-                <div className="rounded-lg bg-neutral-50 py-1.5 border border-neutral-100">Full Insurance</div>
-                <div className="rounded-lg bg-neutral-50 py-1.5 border border-neutral-100 font-semibold text-purple-700">★ 4.9</div>
+                <div className="rounded-md bg-neutral-50 py-1.5 border border-neutral-100">Automatic</div>
+                <div className="rounded-md bg-neutral-50 py-1.5 border border-neutral-100">Full Insurance</div>
+                <div className="rounded-md bg-neutral-50 py-1.5 border border-neutral-100 font-semibold text-purple-700">4.9 rating</div>
               </div>
             </div>
           </div>
@@ -159,8 +98,8 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
           {/* Highlights Footer */}
           <div className="relative z-10 grid gap-4 sm:grid-cols-3 w-full">
             {highlights.map(({ icon: Icon, label, value, color }) => (
-              <div key={label} className="rounded-xl border border-neutral-200/50 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5">
-                <div className={`inline-flex rounded-lg p-2 ${color}`}>
+              <div key={label} className="rounded-lg border border-neutral-200/50 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5">
+                <div className={`inline-flex rounded-md p-2 ${color}`}>
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <p className="mt-3 text-xs font-bold text-neutral-800">{value}</p>
@@ -188,7 +127,7 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
 
           {/* Mobile brand header (shown only on mobile) */}
           <div className="flex flex-col items-center mb-8 lg:hidden z-10">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white p-2.5 shadow-xl border border-white/20">
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-white p-2.5 shadow-xl border border-white/20">
               <img
                 src="/lovable-uploads/MOBI_LOGO.png"
                 alt="MobiRides"
@@ -208,19 +147,10 @@ export const AuthLandingShell: React.FC<AuthLandingShellProps> = ({
 
           {/* Floating Auth Card with Premium Glassmorphism */}
           <div className="relative z-10 w-full max-w-[29rem]">
-            {/* Ambient background glow behind the card */}
-            <div 
-              className="absolute inset-0 -m-1.5 rounded-[2.5rem] opacity-75 pointer-events-none"
-              style={{
-                background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.4) 0%, rgba(244, 114, 182, 0.4) 100%)',
-                filter: 'blur(24px)'
-              }}
-            />
-            
-            <div className="relative rounded-3xl border border-white/35 bg-white/80 p-6 shadow-[0_25px_60px_rgba(76,29,149,0.35)] backdrop-blur-xl sm:p-9 transition-all duration-500 hover:border-white/45">
+            <div className="relative rounded-lg border border-white/35 bg-white/85 p-6 shadow-[0_25px_60px_rgba(76,29,149,0.35)] backdrop-blur-xl transition-all duration-500 hover:border-white/45 sm:p-9">
               <div className="mb-6">
-                <span className="text-xs font-bold uppercase tracking-widest text-purple-600 block mb-1">{eyebrow}</span>
-                <h2 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
+                <span className="text-xs font-bold uppercase text-purple-600 block mb-1">{eyebrow}</span>
+                <h2 className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">
                   {title}
                 </h2>
                 <p className="mt-2 text-xs leading-relaxed text-neutral-500">
