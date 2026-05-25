@@ -149,16 +149,18 @@ export const DynamicPricingRulesSection = () => {
   };
 
   const handleUpdateRule = (id: string, updates: Partial<PricingRule>) => {
-    const currentRule = localRules.find((rule) => rule.id === id);
-    if (!currentRule) return;
+    setLocalRules((prevRules) => {
+      const currentRule = prevRules.find((rule) => rule.id === id);
+      if (!currentRule) return prevRules;
 
-    const candidateRule: PricingRule = {
-      ...currentRule,
-      ...updates,
-      conditions: updates.conditions ?? currentRule.conditions,
-    };
+      const candidateRule: PricingRule = {
+        ...currentRule,
+        ...updates,
+        conditions: updates.conditions ?? currentRule.conditions,
+      };
 
-    setLocalRules(localRules.map((r) => (r.id === id ? candidateRule : r)));
+      return prevRules.map((r) => (r.id === id ? candidateRule : r));
+    });
     setIsDirty(true);
   };
 
