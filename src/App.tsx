@@ -183,6 +183,11 @@ function App() {
                             <HostTerms />
                           </Suspense>
                         } />
+                        <Route path="/host-requirements" element={
+                          <Suspense fallback={<LoadingView />}>
+                            <HostTerms />
+                          </Suspense>
+                        } />
                         <Route path="/reset-password" element={
                           <Suspense fallback={<LoadingView />}>
                             <ResetPassword />
