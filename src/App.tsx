@@ -47,6 +47,7 @@ const HandoverRoute = ({ children }: { children: React.ReactNode }) => {
 const Index = lazy(() => import("@/pages/Index"));
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/signup"));
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const CommunityGuidelines = lazy(() => import("@/pages/CommunityGuidelines"));
@@ -151,6 +152,11 @@ function App() {
                         <Route path="/signup" element={
                           <Suspense fallback={<LoadingView />}>
                             <Signup />
+                          </Suspense>
+                        } />
+                        <Route path="/auth/callback" element={
+                          <Suspense fallback={<LoadingView message="Completing sign-in..." />}>
+                            <AuthCallback />
                           </Suspense>
                         } />
                         <Route path="/terms-of-service" element={

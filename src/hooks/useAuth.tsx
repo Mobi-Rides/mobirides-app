@@ -1,4 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
+import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import AuthTriggerService from '@/services/authTriggerService';
@@ -102,6 +105,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+
+    let appUrlOpenListener: PluginListenerHandle | undefined;
+
+    const setupNativeOAuthListener = async () => {
+      appUrlOpenListener = await App.addListener('appUrlOpen', async ({ url }) => {
+        if (!url.startsWith('com.mobirides.app://auth/callback')) {
+          return;
+        }
+
+        try {
+          await Browser.close();
+
+          const callbackUrl = new URL(url);
+          const code = callbackUrl.searchParams.get('code');
+          const authError =
+            callbackUrl.searchParams.get('error_description') ||
+            callbackUrl.searchParams.get('error');
+
+          if (authError) {
+            throw new Error(authError);
+          }
+
+          if (!code) {
+            throw new Error('Missing social sign-in code');
+          }
+
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            throw error;
+          }
+
+          window.location.assign('/login');
+        } catch (error) {
+          console.error('[AuthProvider] Native OAuth callback failed:', error);
+          toast.error('Social sign-in failed. Please try again.');
+        }
+      });
+    };
+
+    void setupNativeOAuthListener();
+
+    return () => {
+      void appUrlOpenListener?.remove();
+    };
   }, []);
 
   const signOut = async () => {
