@@ -999,6 +999,57 @@ Saving renter reviews updates booking status to `'completed'`. This triggers the
 
 ---
 
+### BUG-081: 404 Route Mismatch on "More" Page Links
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-27 |
+| **Severity** | High (UX / Broken Links) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/pages/More.tsx`, `src/App.tsx` |
+| **Visible Result** | Clicking "Terms of Service" and "Privacy Policy" leads to a 404 Page Not Found screen. |
+
+**Description:**  
+Clicking "Terms of Service" and "Privacy Policy" on the "More" page triggered 404 Page Not Found errors because the client navigated to `/terms` and `/privacy` whereas the actual routes registered in React Router were `/terms-of-service` and `/privacy-policy`.
+
+**Resolution:** Standardized the click handler navigation destinations inside `More.tsx` to match registered routes, and implemented backward-compatible `<Route>` redirects in `App.tsx` to automatically map `/terms` and `/privacy` requests to `/terms-of-service` and `/privacy-policy` with replace history.
+
+---
+
+### BUG-082: Support & Contact Emails Domain Migration (.com ➔ .africa)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-27 |
+| **Severity** | High (Communications / Support Alignment) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/pages/TermsOfService.tsx`, `src/pages/PrivacyPolicy.tsx`, `src/pages/InsuranceTerms.tsx`, `src/pages/CommunityGuidelines.tsx`, `src/pages/More.tsx` |
+| **Visible Result** | Legacy support emails route questions to old unmaintained .com mailboxes. |
+
+**Description:**  
+Support, legal, privacy, and community guidelines emails used legacy `.com` domains, risking undelivered support emails or policy questions. 
+
+**Resolution:** Migrated all legal, privacy, and insurance claims contact emails from `@mobirides.com` to `compliance@mobirides.africa` across all policy pages and components. Migrated community standards emails to `hello@mobirides.africa`.
+
+---
+
+### BUG-083: Direct Host Contact Messaging Crash ("Contact Host" button)
+
+| Field | Detail |
+|-------|--------|
+| **Date Reported** | 2026-05-27 |
+| **Severity** | Critical (Functional Blocker for messaging/bookings) |
+| **Status** | ✅ Resolved |
+| **Affects** | `src/hooks/useOptimizedConversations.ts` (`createConversationMutation`), `src/components/chat/ChatWindow.tsx` |
+| **Visible Result** | Clicking "Contact" next to a host's profile on the vehicle detail screen immediately crashes the messaging screen. |
+
+**Description:**  
+When clicking the "Contact" button next to a Host's profile on the vehicle detail screen, the application navigated to `/messages` and immediately crashed with a `TypeError: Cannot read properties of undefined (reading 'find')`. This occurred because the database secure creation RPC returns a raw database record without joining profiles, which then overwrote the optimistic frontend `Conversation` cache entry and set the `participants` property to `undefined`.
+
+**Resolution:** Modified `createConversationMutation`'s `mutationFn` to intercept the RPC return value, query the `profiles` table to resolve all involved participant records, and return a fully populated frontend-compliant `Conversation` object. This ensures that the frontend cache is populated immediately and prevents `participants` from ever being evaluated as `undefined`.
+
+---
+
 ## Resolved Bugs
 
 | ID | Resolution Date | Summary |
@@ -1040,6 +1091,10 @@ Saving renter reviews updates booking status to `'completed'`. This triggers the
 | **BUG-071** | 2026-05-20 | Renter Dynamic Pricing RLS Policy & Duration Discrepancy — Deployed SELECT policy for dynamic pricing rules, seeded DB rules, and synced client-side fallbacks. |
 | **BUG-072** | 2026-05-20 | SuperAdmin Profile Modification RLS Blocker — Created profiles UPDATE policy for super admins and implemented robust frontend phone number parsing. |
 | **BUG-073** | 2026-05-20 | Platform Settings Update RPC Failure & Pre-seed Deficit — Redefined update_platform_setting to use UPSERT and pre-seeded default contact configuration keys. |
+| **BUG-081** | 2026-05-27 | Fixed 404 navigation links for Terms and Privacy on More page and added redirects in App.tsx. |
+| **BUG-082** | 2026-05-27 | Migrated legal, privacy, insurance and community guidelines emails to compliance/hello @mobirides.africa. |
+| **BUG-083** | 2026-05-27 | Resolved Messaging crash when contacting host by fetching participants inside useOptimizedConversations. |
+
 
 ---
 
@@ -1052,4 +1107,4 @@ Saving renter reviews updates booking status to `'completed'`. This triggers the
 
 ---
 
-*Updated by: Modisa Maphanyane — May 20, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026 | BUG-069–070 resolved by Antigravity & Modisa — May 19, 2026 | BUG-071–073 resolved by Antigravity — May 20, 2026 | BUG-074–077 logged for Action in Sprint 15 by Antigravity — May 25, 2026*
+*Updated by: Modisa Maphanyane — May 20, 2026 | BUG-032–039 added by Arnold T. Bathoen — May 8, 2026 | UI audit bugs BUG-040–053 added via Codex — May 8, 2026 | Storage audit bugs BUG-054–058 added via Codex — May 11, 2026 | BUG-059–068 added via Antigravity — May 12, 2026 | BUG-069–070 resolved by Antigravity & Modisa — May 19, 2026 | BUG-071–073 resolved by Antigravity — May 20, 2026 | BUG-074–077 logged for Action in Sprint 15 by Antigravity — May 25, 2026 | BUG-081–083 resolved by Antigravity — May 27, 2026*

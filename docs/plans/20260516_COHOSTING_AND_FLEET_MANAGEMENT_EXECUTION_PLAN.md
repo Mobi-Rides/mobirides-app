@@ -1,9 +1,15 @@
-# Sprint 14 Execution Plan: Co-hosting & Fleet Management (MOB-160)
-## MobiRides Application — May 16, 2026
+# Sprint 16 Execution Plan: Co-hosting & Fleet Management (MOB-180)
+## MobiRides Application — May 31, 2026
 
 **Prepared by:** Antigravity (AI Assistant)  
-**Status:** 🟡 DRAFT (Awaiting Approval)  
-**Epic:** Fleet Scalability & Operational Efficiency
+**Status:** 🔴 DEFERRED TO SPRINT 16 (Due to ID Collision & Stabilization Focus)  
+**Epic:** Fleet Scalability & Operational Efficiency  
+
+---
+
+> [!IMPORTANT]
+> **Planning & Generation Directive:** This plan has been formally deferred from Sprint 15 to resolve a ticket ID collision in Linear (where `MOB-160` was assigned to DFS Labs). 
+> **Action Item:** The official Sprint 16 execution plan, documentation, and Linear tickets (`MOB-180` through `MOB-191`) must be formally generated on **Sunday, May 31, 2026**.
 
 ---
 
@@ -23,29 +29,29 @@ To support larger fleet operators and commercial partners, MobiRides requires a 
 ### Category 1: Infrastructure & Permissions (P0)
 | Ticket | Status | Summary |
 |--------|--------|---------|
-| **MOB-161** | 🟡 TO DO | Create `host_team_members` table and implement Invitation state machine. |
-| **MOB-162** | 🟡 TO DO | Update RLS Policies on `cars`, `bookings`, and `vehicle_condition_reports` for team access. |
-| **MOB-163** | 🟡 TO DO | Implement `getAuthorizedFleets` logic to scope dashboard queries. |
+| **MOB-181** | 🟡 DEFERRED | Create `host_team_members` table and implement Invitation state machine. |
+| **MOB-182** | 🟡 DEFERRED | Update RLS Policies on `cars`, `bookings`, and `vehicle_condition_reports` for team access. |
+| **MOB-183** | 🟡 DEFERRED | Implement `getAuthorizedFleets` logic to scope dashboard queries. |
 
 ### Category 2: Invitation & Team Management (P1)
 | Ticket | Status | Summary |
 |--------|--------|---------|
-| **MOB-164** | 🟡 TO DO | Build "Team Management" Settings UI (Invite by Email, Role Assignment). |
-| **MOB-165** | 🟡 TO DO | Develop Invitation acceptance flow with deep-linking/notifications. |
-| **MOB-166** | 🟡 TO DO | Implement Permission Toggle logic (JSONB updates in DB). |
+| **MOB-184** | 🟡 DEFERRED | Build "Team Management" Settings UI (Invite by Email, Role Assignment). |
+| **MOB-185** | 🟡 DEFERRED | Develop Invitation acceptance flow with deep-linking/notifications. |
+| **MOB-186** | 🟡 DEFERRED | Implement Permission Toggle logic (JSONB updates in DB). |
 
 ### Category 3: Dashboard & Operational UI (P1)
 | Ticket | Status | Summary |
 |--------|--------|---------|
-| **MOB-167** | 🟡 TO DO | Refactor `useHostCars` and `useHostBookings` hooks to include delegated items. |
-| **MOB-168** | 🟡 TO DO | Add "Managed by [Team]" badges to dashboard items for clarity. |
-| **MOB-169** | 🟡 TO DO | Update Chat/Messaging to allow co-hosts to participate in booking threads. |
+| **MOB-187** | 🟡 DEFERRED | Refactor `useHostCars` and `useHostBookings` hooks to include delegated items. |
+| **MOB-188** | 🟡 DEFERRED | Add "Managed by [Team]" badges to dashboard items for clarity. |
+| **MOB-189** | 🟡 DEFERRED | Update Chat/Messaging to allow co-hosts to participate in booking threads. |
 
 ### Category 4: Notifications & Alerts (P2)
 | Ticket | Status | Summary |
 |--------|--------|---------|
-| **MOB-170** | 🟡 TO DO | Implement Multi-target notification triggers for team-wide alerts. |
-| **MOB-171** | 🟡 TO DO | Add "Action Performed By" metadata to audit logs and activity feeds. |
+| **MOB-190** | 🟡 DEFERRED | Implement Multi-target notification triggers for team-wide alerts. |
+| **MOB-191** | 🟡 DEFERRED | Add "Action Performed By" metadata to audit logs and activity feeds. |
 
 ---
 
