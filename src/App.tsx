@@ -153,6 +153,8 @@ function App() {
                             <Signup />
                           </Suspense>
                         } />
+                        <Route path="/terms" element={<Navigate to="/terms-of-service" replace />} />
+                        <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
                         <Route path="/terms-of-service" element={
                           <Suspense fallback={<LoadingView />}>
                             <TermsOfService />

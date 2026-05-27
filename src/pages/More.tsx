@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import {
   Settings,
   Info,
@@ -21,10 +21,18 @@ import { toast } from "@/utils/toast-utils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const More = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -118,7 +126,7 @@ const More = () => {
           icon: Info,
           label: "About Mobirides",
           description: "Version 1.0.0",
-          onClick: () => { },
+          onClick: () => setAboutOpen(true),
           color: "text-indigo-600",
         },
       ]
@@ -130,7 +138,7 @@ const More = () => {
           icon: FileText,
           label: "Terms of Service",
           description: "General platform terms",
-          onClick: () => navigate("/terms"),
+          onClick: () => navigate("/terms-of-service"),
           color: "text-blue-600",
         },
         {
@@ -151,7 +159,7 @@ const More = () => {
           icon: Lock,
           label: "Privacy Policy",
           description: "How we protect your data",
-          onClick: () => navigate("/privacy"),
+          onClick: () => navigate("/privacy-policy"),
           color: "text-purple-600",
         },
         {
@@ -244,6 +252,79 @@ const More = () => {
           <p className="text-[10px] text-gray-300 dark:text-gray-700 mt-1">© 2025 Mobirides Inc.</p>
         </div>
       </main>
+
+      <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-gray-800 rounded-2xl p-6 border-none shadow-xl">
+          <DialogHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mb-3">
+              <Info className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">About Mobirides</DialogTitle>
+            <DialogDescription className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Version 1.0.0 (Build 2025.12)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 mt-2">
+            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+              Mobirides is Botswana's premier peer-to-peer car sharing community, connecting trusted vehicle hosts with renters to provide reliable, convenient, and secure transportation options across Gaborone and beyond.
+            </p>
+
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
+              <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 text-center sm:text-left">
+                Official Support & Policy Contacts
+              </h3>
+
+              <div className="grid gap-2.5">
+                {[
+                  {
+                    icon: Info,
+                    label: "General & Legal Support",
+                    email: "compliance@mobirides.africa",
+                    color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10",
+                  },
+                  {
+                    icon: Lock,
+                    label: "Privacy & Data Protection",
+                    email: "compliance@mobirides.africa",
+                    color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/10",
+                  },
+                  {
+                    icon: Shield,
+                    label: "Insurance & Claims",
+                    email: "compliance@mobirides.africa",
+                    color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10",
+                  },
+                  {
+                    icon: Heart,
+                    label: "Community Guidelines",
+                    email: "hello@mobirides.africa",
+                    color: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10",
+                  },
+                ].map((item, index) => (
+                  <a
+                    key={index}
+                    href={`mailto:${item.email}`}
+                    className="flex items-center gap-3 p-3 bg-gray-50/50 dark:bg-gray-900/30 rounded-xl hover:bg-gray-100/50 dark:hover:bg-gray-900/50 transition-colors border border-gray-100/30 dark:border-gray-800"
+                  >
+                    <div className={`p-2 rounded-lg ${item.color}`}>
+                      <item.icon className="w-4 h-4" />
+                    </div>
+                    <div className="text-left flex-1 min-w-0">
+                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{item.label}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{item.email}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-center text-[10px] text-gray-400 dark:text-gray-600 font-medium pt-2">
+              © 2025 Mobirides Inc. All rights reserved.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Navigation />
     </div>
