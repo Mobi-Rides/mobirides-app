@@ -156,7 +156,7 @@ const TermsOfService = () => {
               <div className="flex flex-col gap-2">
                 <p className="flex items-center gap-2 text-foreground font-medium">
                   <span className="text-primary font-bold">Email:</span>
-                  <a href="mailto:legal@mobirides.com" className="underline hover:text-primary transition-colors">legal@mobirides.com</a>
+                  <a href="mailto:compliance@mobirides.africa" className="underline hover:text-primary transition-colors">compliance@mobirides.africa</a>
                 </p>
                 <p className="flex items-center gap-2 text-foreground font-medium">
                   <span className="text-primary font-bold">Address:</span>

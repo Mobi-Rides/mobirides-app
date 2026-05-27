@@ -163,7 +163,7 @@ const PrivacyPolicy = () => {
                 If you have any questions about this Privacy Policy or wish to exercise your statutory rights (Access, Rectification, Erasure, Objection, Restriction), please contact us:
               </p>
               <div className="space-y-2 text-sm">
-                <p><span className="text-slate-400">Email:</span> privacy@mobirides.com</p>
+                <p><span className="text-slate-400">Email:</span> compliance@mobirides.africa</p>
                 <p><span className="text-slate-400">Authority:</span> The Information and Data Protection Commissioner, Gaborone, Botswana.</p>
               </div>
             </div>

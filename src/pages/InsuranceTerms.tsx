@@ -190,10 +190,10 @@ const InsuranceTerms = () => {
             <h2 className="text-xl font-bold text-slate-900 mb-2">Need Help?</h2>
             <p className="text-slate-500 mb-6">Our dedicated insurance team is here to help with your coverage or active claims.</p>
             <a 
-              href="mailto:insurance@mobirides.com" 
+              href="mailto:compliance@mobirides.africa" 
               className="inline-block px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg"
             >
-              insurance@mobirides.com
+              compliance@mobirides.africa
             </a>
           </section>
         </div>
