@@ -586,7 +586,37 @@ export const useOptimizedConversations = (userId?: string) => {
 
         // Reset attempt counter on successful creation
         conversationAttempts.current.delete(attemptKey);
-        return rpcResult;
+
+        const createdConvId = (rpcResult && typeof rpcResult === 'object') 
+          ? (rpcResult as any).id 
+          : rpcResult;
+
+        // Fetch profiles of all participants to construct a valid Conversation object
+        const allParticipantIds = [...participantIds, user.id];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', allParticipantIds);
+
+        const participantUsers: User[] = (profiles || []).map(p => ({
+          id: p.id,
+          name: p.full_name || 'Unknown User',
+          avatar: getAvatarPublicUrl(p.avatar_url),
+          status: 'offline' as const
+        }));
+
+        const completeConversation: Conversation = {
+          id: createdConvId || `temp-${Date.now()}`,
+          title: title || (participantIds.length === 1 ? '' : 'New Group'),
+          type: participantIds.length === 1 ? 'direct' : 'group',
+          participants: participantUsers,
+          unreadCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          lastMessage: undefined
+        };
+
+        return completeConversation;
 
       } catch (error) {
         console.error('RPC conversation creation error:', error);
